@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Subtract rule</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6860,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Subtract rule</h1>
+<!--Subtract rule--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Subtracts the value of one attribute to the value of another attribute when inserting.<br />
+Adds the value of one attribute to the value of another attribute when deleting.<br />
+Calculates the difference between the new and old value of the attribute you update and that difference is subtracted from another attribute when updating.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><strong>Subtract(</strong>att1 , att2<strong>)</strong> [ if <em>cond </em>] ;</p>
+
+<p>In mode:</p>
+
+<ul>
+	<li><strong>Insert: </strong>the value of the att1 attribute is subtracted from the value of the att2 attribute (if the specified condition is true)</li>
+	<li><strong>Delete:</strong> the value of the att1 attribute is added to the value of the att2 attribute (if the specified condition is true)</li>
+	<li><strong>Update:</strong> the difference between the new and old value of the att1 attribute is subtracted from the value of the att2 attribute (if the specified condition is true)</li>
+</ul>
+
+<p>Look at the following example.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer                              Trip                      Prize                    Country  
+{                                     {                         {                        {
+    CustomerId*                          TripId*                  PrizeId*                  CountryId*
+    CustomerName                         TripDate                 PrizeDate                 CountryName
+    CustomerLastName                     CountryId                PrizeDescription          City
+    CustomerPhone                        CountryName              PrizeMiles                {
+    CustomerTotalMiles                   CityId                   CustomerId                  CityId*
+    Trip                                 CityName                 CustomerName                CityName
+    {                                    TripMiles                CustomerTotalMiles        }
+      TripId*                          }                        }                         }
+      TripDate                                                                     
+      CountryId
+      CountryName
+      CityId
+      CityName
+      TripMiles
+    }
+}</pre>
+
+<p>The Prize Transaction allows defining rewards to be traded for miles.</p>
+
+<p>Each prize requires a number of miles to be assigned to a customer who has accrued that number of miles (or who has an even larger number of miles). Therefore, when trying to assign one customer to one prize, you must check if the customer has enough miles to be able to assign this prize. If the customer has enough miles and accepts the prize, you must subtract the miles he traded. If the customer doesn’t have enough miles, you need to show an error message.</p>
+
+<p>In the Prize transaction the two following rules were defined:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Subtract(PrizeMiles, CustomerTotalMiles);
+Error(“Customer doesn’t have enough miles accrued”) if CustomerTotalMiles &lt; 0;</pre>
+
+<p>The following behavior is provided by Subtract rule:</p>
+
+<ul>
+	<li>If a new prize is inserted, the value of PrizeMiles is subtracted from CustomerTotalMiles.</li>
+	<li>If a prize is deleted, the value of PrizeMiles is added to CustomerTotalMiles.</li>
+	<li>If the value of PrizeMiles is changed, its old value is automatically added to the customer’s total miles and the new value is subtracted from the customer’s total miles.</li>
+</ul>
+
+<p>Since the Subtract and Error rules involve the CustomerTotalMiles attribute and one of the rules updates the attribute while the other one assesses its value, GeneXus determines that first, it must make the subtraction that updates the CustomerTotalMiles attribute and after that, it evaluates what happened with its value.</p>
+
+<p>Because the subtraction is made first, if the customer has fewer miles than those required by the reward, the CustomerTotalMiles attributes will have a negative value. For this reason, the Error rule evaluates if CustomerTotalMiles&lt;0. If this happens, the Error rule is triggered, the error message is displayed and the subtract rule is undone; that is to say, its execution is reverted as if nothing was done and the customer’s total number of miles is not modified.</p>
+
+<p>If CustomerTotalMiles doesn’t have a negative value (CustomerTotalMiles&lt;0) after making the subtraction, it means that the subtract operation has been performed. </p>
+
+<p>Note that if the record of a prize assigned to the customer is deleted, the subtract rule adds instead of subtracting. That is to say, to the total number of miles accrued by the customer (CustomerTotalMiles) it adds the number of miles corresponding to the reward (PrizeMiles).</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="6845.html">Add rule</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6845.html">Add rule</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="8213.html">Transaction rules</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

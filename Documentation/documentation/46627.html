@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>MSBuild Tasks for Running Tests (GeneXus 16)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/servlet/wiki?46627,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">MSBuild Tasks for Running Tests (GeneXus 16)</h1>
+<!--MSBuild Tasks for Running Tests (GeneXus 16)--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Running test cases in a batch mode is easy using MSBuild tasks. There are 2 specific tasks* used for this purpose: <strong>RunTests</strong> and <strong>RunTestsList</strong>.</p>
+
+<p>* Note: Instead of using these tasks isolated, we recommend to start using the GXtest.msbuild file that should be present on your GeneXus installation root folder, and modify it at your own needs. You will see an example in the next article. </p>
+
+<h2><a id="1+-+UpdateTestRefs+%28MSBuild+Task%29" class="HashLink" href="#1+-+UpdateTestRefs+%28MSBuild+Task%29">1 - UpdateTestRefs (MSBuild Task)</a></h2>
+
+<p>This task must be used before executing RunTests, RunTestsList, and RecordMockingData tasks. Tests to run must exist at the moment this task is used. After this task, Runner procedure must be built (see examples below).</p>
+
+<p>Parameters:<br />
+<u>Type</u>: <em>{All, Unit, Web, UI, SD} </em><br />
+Specifies the type of test to run. (RunTests task only).</p>
+
+<p>Set:<br />
+All: to run all Unit tests first, then web UI tests, and at last all SD UI tests. <strong>Default value.</strong><br />
+Unit: to run all Unit tests.<br />
+Web: to run all web UI tests.<br />
+SD: to run all SD tests.<br />
+UI: to run all web and SD UI tests.</p>
+
+<p><u>TestName</u>: <em>string</em><br />
+Specifies the name of the test to record mocking data for (RecordMockingData task only).</p>
+
+<p><u>ExecutionDataFilePath</u>: <em>string</em><br />
+An absolute path to the JSON file containing test cases and options. (RunTestsList task only).</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical)</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre>
+&lt;UpdateTestRefs Type=&quot;All&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+&lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;Runner&quot;/&gt;
+&lt;RunTests Type=&quot;All&quot; DetailedResults=&quot;true&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<pre>
+&lt;UpdateTestRefs TestName=&quot;testExample&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;/&gt;
+&lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;Runner&quot;/&gt;
+&lt;RecordMockingData TestName=&quot;testExample&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt;</pre>
+
+<pre>
+&lt;UpdateTestRefs ExecutionDataFilePath=&quot;MyPath/ExecData.json&quot; DetailedResults=”true” ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+&lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;Runner&quot;/&gt;
+&lt;RunTestsList ExecutionDataFilePath=&quot;MyPath/ExecData.json&quot; DetailedResults=”true” ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<h2><a id="2+-+RunTests+%28MSBuild+Task%29" class="HashLink" href="#2+-+RunTests+%28MSBuild+Task%29">2 - RunTests (MSBuild Task)</a></h2>
+
+<p>This task runs all the test cases (Unit, UI, or both) in a specific Knowledge Base. <br />
+The sequence/order of execution is alphabetically grouped by folders.</p>
+
+<p><u>Type</u>: <em>{All, Unit, Web, UI, SD} </em><br />
+Specifies the type of test to run. Set:<br />
+All: to run all Unit tests first, then web UI tests, and at last all SD UI tests. <strong>Default value.</strong><br />
+Unit: to run all Unit tests.<br />
+Web: to run all web UI tests.<br />
+SD: to run all SD tests.<br />
+UI: to run all web and SD UI tests.</p>
+
+<p><u>DetailedResults</u> (optional): <em>bool</em><br />
+A boolean parameter to set verbosity. <br />
+If true, detailed results will be displayed on the console output.<br />
+If false, only a summary is shown. <strong>Default value.</strong></p>
+
+<p><u>Browser (optional)</u>: <em>{Chrome, IE, Firefox, Edge }</em><br />
+Specifies the browser name where web UI tests will run.<br />
+The default value is the one set in the Default Browser property on selected KB.</p>
+
+<p><u>BaseURL (optional)</u>: <em>string</em><br />
+Specifies the base URL name where web UI tests will run on go commands, except when a full URL is used.<br />
+The default value is the one set in Base URL property on the selected environment.</p>
+
+<p><u>FileUploadBasePath (optional)</u>: <em>string</em><br />
+Specifies the base directory path where files for web tests will be looked for in FileUploadBy commands.<br />
+The default value is the one set in File Upload Base Path property on the selected environment.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local\username or gxtechnical\username)</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p><u>AllowFailedTests</u>: <em>boolean</em><br />
+true: the task will succeed even if exists a test that failed.<br />
+false: if there is any failed test, this task is set as failed. <strong>Default value.</strong></p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre>
+&lt;RunTests Type=&quot;All&quot; Browser=&quot;Chrome&quot; BaseURL=&quot;http://mytestingenvironment/myApp/&quot; FileUploadBasePath=&quot;/testingDir/&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<pre>
+&lt;RunTests Type=&quot;Unit&quot; DetailedResults=&quot;true&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<pre>
+&lt;RunTests Type=&quot;UI&quot; Browser=&quot;Firefox&quot; BaseURL=&quot;http://mytestingenvironment/myApp/&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot; AllowFailedTests=&quot;true&quot;/&gt;</pre>
+
+<h2><a id="3+-+RunTestsList+%28MSBuild+Task%29" class="HashLink" href="#3+-+RunTestsList+%28MSBuild+Task%29">3 - RunTestsList (MSBuild Task)</a></h2>
+
+<p>This task runs a list of test cases defined by you (in a JSON file). The sequence/order of execution will depend on the order written in that file. You can see JSON file examples below in this section. Note that every test MUST have its fully qualified name in order to execute properly.</p>
+
+<p>Parameters:<br />
+<u>ExecutionDataFilePath</u>: <em>string</em><br />
+An absolute path to the JSON file containing test cases and options.</p>
+
+<p><u>DetailedResults</u> (optional): <em>bool</em><br />
+A boolean parameter to set verbosity. <br />
+If true, detailed results will be displayed on the console output.<br />
+If false, only a summary is shown.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical)</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p><u>AllowFailedTests</u>: <em>boolean</em><br />
+true: the task will succeed even if exists a test that failed.<br />
+false: If there is any failed test, this task is set as failed and pipeline fails.</p>
+
+<p>Example of use in an MSBuild file:</p>
+
+<pre>
+&lt;RunTestsList ExecutionDataFilePath=&quot;MyPath/ExecData.json&quot; DetailedResults=”true” ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<p>JSON execution data file example:</p>
+
+<pre>
+{
+  &quot;UI&quot;: {
+    &quot;Settings&quot;: {
+      &quot;BaseURL&quot;: &quot;&quot;,
+      &quot;Browser&quot;: &quot;Chrome&quot;
+    },
+    &quot;Tests&quot;: <a href=' &quot;FrontendModule.SubModule1.CustomersInsertTest&quot; '> &quot;FrontendModule.SubModule1.CustomersInsertTest&quot; </a>
+  },
+  &quot;Unit&quot;: { &quot;Tests&quot;: <a href=' &quot;MathModule.Sum1UnitTest&quot;, &quot;AppendUTest&quot; '> &quot;MathModule.Sum1UnitTest&quot;, &quot;AppendUTest&quot; </a> }
+}</pre>
+
+<h2><a id="4+-+RecordMockingData%28MSBuild+task%29" class="HashLink" href="#4+-+RecordMockingData%28MSBuild+task%29">4 - RecordMockingData(MSBuild task)</a></h2>
+
+<p>Mocking works by recording data (SQLs / results) used for a test. This information is stored (as mocking data) and will be used in all future executions of the test in different environments. </p>
+
+<p>Parameters:<br />
+<u>TestName</u>: <em>string</em><br />
+Specifies the name of the test to run. </p>
+
+<p><u>MockDataFilePath (output)</u>: <em>string</em><br />
+The absolute path where the mocking data file was saved.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical)</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in a MSBuild file:</p>
+
+<pre>
+&lt;RecordMockingData TestName=&quot;testExample&quot;  ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;&gt;
+    &lt;Output TaskParameter=&quot;MockDataFilePath&quot; PropertyName=&quot;MockPath&quot;/&gt;
+&lt;/RecordMockingData&gt;
+</pre>
+
+<pre>
+&lt;RecordMockingData TestName=&quot;testExample&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt;
+    &lt;Output TaskParameter=&quot;MockDataFilePath&quot; PropertyName=&quot;MockPath&quot;/&gt;
+&lt;/RecordMockingData&gt;</pre>
+
+<h2><a id="5+-+JUnitExportTests%28MSBuild+task%29" class="HashLink" href="#5+-+JUnitExportTests%28MSBuild+task%29">5 - JUnitExportTests(MSBuild task)</a></h2>
+
+<p>Converts the last execution test results to JUnit format.</p>
+
+<p>Parameters:<br />
+<u>JUnitTestFilePath (input/output)</u>: <em>string</em><br />
+An absolute directory path where the JUnit file will be saved / As output, contains the JUnit file's absolute path.</p>
+
+<p>Some considerations:<br />
+If the directory path does not exist then GXtest will try to create it.<br />
+It is supported to passing an absolute file path where test results will be exported.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical).</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre>
+&lt;JUnitExportTests JUnitTestFilePath=&quot;C:/path&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;&gt;  
+    &lt;Output TaskParameter=&quot;JUnitTestFilePath&quot; PropertyName=&quot;JUnitTestFilePathOutput&quot;/&gt;
+&lt;/JUnitExportTests&gt;
+</pre>
+
+<pre>
+&lt;JUnitExportTests JUnitTestFilePath=&quot;C:/non-existingPath&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt; 
+    &lt;Output TaskParameter=&quot;JUnitTestFilePath&quot; PropertyName=&quot;JUnitTestFilePathOutput&quot;/&gt;
+&lt;/JUnitExportTests&gt;</pre>
+
+<pre>
+&lt;JUnitExportTests JUnitTestFilePath=&quot;C:/path/customName.xml&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt; 
+    &lt;Output TaskParameter=&quot;JUnitTestFilePath&quot; PropertyName=&quot;JUnitTestFilePathOutput&quot;/&gt;
+&lt;/JUnitExportTests&gt;</pre>
+
+<p><br />
+</p>
+</td></tr></tbody></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/29/20 06:13 PM</em></font></td></TR></table></font>

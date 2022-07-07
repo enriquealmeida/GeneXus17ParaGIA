@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>New command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6714,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">New command</h1>
+<!--New command--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Procedures include a command called New to insert records in a table. Using this command, you can assign values to the attributes of <u>one</u> physical table. </p>
+
+<p><img src="./images/28559.jpg" id="28559" class="WikiImage"/></p>
+
+<p>It is a low-level command, used to insert a <a href="https://wiki.genexus.com/commwiki/wiki?6739,," target="_blank">New Record</a> in a table. Since the New record modifies the database, it is only suitable for the <a href="6293.html">Procedure object</a>, not even for the <a href="1908.html">Transaction object</a>, where the addition is performed differently.</p>
+
+<p><strong>Note:</strong> <span style="">Reading</span> <span style="">the <span style="letter-spacing: 0.0px;">paper &quot;<a href="https://wiki.genexus.com/commwiki/wiki?6720,," target="_blank">GeneXus and Relational Databases: the Essence</a>&quot; by Breogán Gonda and Nicolás Jodal is highly recommended. Also, if you want to learn more or refresh your knowledge of relational databases (primary key, foreign keys, indexes, referential integrity, etc.) a little distance course called &quot;<a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,8,77,O,E,0,,2674'>Fundamentals of Relational Databases</a>&quot; may be interesting for you.</span></span></p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>There is a “Product” Transaction for saving the information related to the products managed in a system, with its corresponding price list. The structure is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Product
+{</strong>
+   ProductId*
+   ProductDescription
+   ProductStock
+<strong>   PriceList
+   {
+    </strong> ProductPriceListDate*
+<strong>    </strong> ProductPriceListPrice
+   <strong>}
+}</strong></pre>
+
+<p>Based on this, GeneXus creates two tables: PRODUCT and PRODUCTPRICELIST, each one corresponding to a level in the structure. The last one, PRODUCTPRICELIST, will have three attributes: ProductId, ProductPriceListDate and ProductPriceListPrice, with <a href="1868.html">Primary Key</a> {ProductId, ProductPriceListDate}.</p>
+
+<p>Suppose you want to implement a <a href="6293.html">Procedure object</a> so that the product whose code is received as a parameter adds the new price (also received as a parameter) to its price list, for the date when the procedure is executed. Therefore, within its rules section, the Procedure will include the following:</p>
+
+<p><strong>Parm( in: &amp;ProductId, in:&amp;price );</strong></p>
+
+<p>In Source, type the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+New
+    ProductId = &amp;ProductId
+    ProductPriceListDate = &amp;Today
+    ProductPriceListPrice = &amp;price
+EndNew</pre>
+
+<p>Note that within the New command there are assignment commands, where each attribute in the table where the record is intended to be inserted is given a value. In this case, you want to add a record in the PRODUCTPRICELIST table.</p>
+
+<p>Also, read a detailed <a href="6742.html">explanation of the concepts behind the example</a>.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+New<strong>
+</strong>   [Defined by <em>attributeList</em>]
+   [Blocking <em>NumericExpression</em>]
+             <em>BodyCode
+</em>[When duplicate<strong>
+</strong>   { <em>AnotherCode |
+</em>       For each<strong>
+</strong>         {<em>att</em> <strong>=</strong> <em>exp</em>}
+         …
+       Endfor<strong>
+</strong>     | <em>AnotherCode </em>} ]
+ EndNew
+
+</pre>
+
+<p><strong>Where:</strong></p>
+
+<p><em>attributeList</em><br />
+    A list of attributes (comma or space-separated) used to determine (together with the attributes on the left in an assignment inside the <em>BodyCode</em>) the table where the record will be added.</p>
+
+<p><em>NumericExpression</em><br />
+    The 'blocking factor.' Its presence activates the <a href="4538.html">Block (Batch) insertion mechanism</a> and controls the number of records to be added per block.</p>
+
+<p><em>BodyCode</em><br />
+    A sequence of commands, most of which, if not all, will be the form assignment:<br />
+           <em>att</em> <strong>=</strong> <em>exp</em></p>
+
+<p>    <strong>where:</strong><br />
+<em>    att</em><br />
+        Attribute to assign (for the record to be added).<br />
+<br />
+    e<em>xp</em><br />
+        The expression assigned can be an Attribute, Variable, Constant, Function, or Arithmetic Expression (Date and Numeric type only).</p>
+
+<h4><a id="When+duplicate" class="HashLink" href="#When+duplicate"><strong>When duplicate</strong></a></h4>
+
+<p>It specifies the code to be executed when a duplicate record is detected (when a record with the same <a href="1868.html">primary key</a> or <a href="https://wiki.genexus.com/commwiki/wiki?2199,," target="_blank">candidate key</a> already exists in the table). Most times, some attributes of that existing record need to be updated. In these cases, a <a href="24744.html">For Each command</a> must be used, and the attributes to be updated are assigned within it. Even though it's not so common, other commands can be executed as well (<em>AnotherCode</em>).</p>
+
+<p><strong>Note</strong>: If there is a Blocking clause, When Duplicate commands are executed <strong>after</strong> an attempt to insert the entire block and a duplicate record is found. In this case, an insertion attempt is made for each record in the block; all the records may be successfully inserted, or 'When duplicate' commands may have to be used. See an in-depth explanation of <a href="4538.html">Block (Batch) insertion mechanism</a>.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>The <a href="6029.html">extended table</a> concept is not used here –  the command works by adding a single record in a single physical table, determined by the attributes in the <em>BodyCode</em> together with those in the 'Defined by' clause, if applicable. Duplicate keys are checked in <a href="1868.html">primary</a> and <a href="https://wiki.genexus.com/commwiki/wiki?2199,," target="_blank">candidate</a> keys. Even if the command has the <a href="4538.html"><strong>Blocking clause</strong></a>, it adds a single record in a single table. The blocking clause only improves performance when the New command is inside a repetitive structure, not in a loop.</p>
+
+<p>If an assignment to an attribute that doesn't belong to the <strong>base table</strong> is detected within a New command, an error is shown in the Specification report, and the program is not generated.</p>
+
+<p>The New command can be included in other iterative structures, such as Do while, <a href="24744.html">For Each command</a>, For to step, which allow for batch insertions (here, the Blocking clause improves performance). Many New commands can be concatenated one after the other as another way to insert multiple records. Also, New commands can be nested.</p>
+
+<h4><a id="How+does+GeneXus+determine+%27the+table%27+of+the+New+command%3F" class="HashLink" href="#How+does+GeneXus+determine+%27the+table%27+of+the+New+command%3F">How does GeneXus determine 'the table' of the New command?</a></h4>
+
+<p>Every time GeneXus finds a “new” command, it must identify the table where the records will be inserted. This table is identified based on the attributes in the <em>BodyCode </em>block of the “new” command (not the When Duplicate clause), on the <strong>left in an assignment</strong>, together with the attributes included in the 'Defined by' clause, if it exists, and it’s referred to as the <strong>base table</strong> of the &quot;new&quot; command. GeneXus will look for a <strong>physical table</strong> that contains all these attributes. If this table doesn't exist, an error message describing the issue will be displayed in the navigation report after the procedure specification, and the object will not be generated.</p>
+
+<h4><a id="Do+all+attributes+of+the+base+table+have+to+be+assigned+inside+the+New+command%3F" class="HashLink" href="#Do+all+attributes+of+the+base+table+have+to+be+assigned+inside+the+New+command%3F">Do all attributes of the base table have to be assigned inside the New command?</a></h4>
+
+<p>Not necessarily. What happens to a record to be added depends on the context, when the table attributes are not explicitly assigned inside the <em>BodyCode</em> of the New command. </p>
+
+<ul>
+	<li>If the attribute is not instantiated: it will be empty (or null, depending on the corresponding property of the attribute) for the record to be added.</li>
+	<li>If the attribute is instantiated: the attribute, in the record to be added, will take the value of that attribute in the context, at the moment the addition is made.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">What does context mean?</p>
+
+<ul style="margin-left: 40.0px;">
+	<li>If an attribute is received as a parameter, its scope is the entire code. It keeps its value everywhere it is mentioned or needed.</li>
+	<li>If a command (such as New) is inside another (that is, in the scope of the latter), all the attributes 'instantiated' in the latter are in the 'context' of the former. For example, if a New command is inside a For Each command, all the attributes of the For Each command's <a href="6029.html">extended table</a> are in the context of the New command. What does it mean? For example, suppose a For Each command is iterating the Customers table and, after some calculations, a New command is added to its code, trying to insert for the current customer a record in a summarizing customer table. If the New command doesn't have an explicit assignment for the CustomerId attribute, its value will be taken from the For Each command (its context).</li>
+</ul>
+
+<h4><a id="What+happens+if+the+primary+key+or+any+candidate+key+already+exist%3F" class="HashLink" href="#What+happens+if+the+primary+key+or+any+candidate+key+already+exist%3F">What happens if the primary key or any candidate key already exist?</a></h4>
+
+<ul>
+	<li>The commands specified within the <em>BodyCode</em> block of the New command are not executed for that record.</li>
+	<li>The When duplicate command can be used to specify the action to be executed when duplicates are detected. All commands, between When duplicate and Endnew are executed when a Duplicate Key is detected during insertion.</li>
+	<li>A GeneXus variable: &amp;ERR, could be created and if so, is set to code = 1.      </li>
+	<li>A GeneXus variable: &amp;ERRMSG could be created, and if so, is set to a message.          </li>
+	<li>If the record to be inserted already exists and you want to update data in this record, a For Each command must be specified within the 'When duplicate' clause.</li>
+	<li>See the above note about the 'Blocking' clause.</li>
+</ul>
+
+<h4><a id="When+is+the+insertion+performed%3F" class="HashLink" href="#When+is+the+insertion+performed%3F">When is the insertion performed?</a></h4>
+
+<p>It depends on the presence of the '<a href="4538.html">Blocking clause</a>'. If it doesn't exist, the insertion will be performed at the end of the command (when the Endnew is reached). Otherwise, the actual insertion will be performed at the end of the block. Suppose the New command has a blocking factor N and is inside a repetitive structure (such as a For Each command). Every time the For Each command body is executed (and the New command inside it), the record of the New is not actually inserted, but is added into a memory block (a buffer) of size N. Afterwards, if the buffer is filled, a special insert (of many rows) is sent to the database, in order to insert the entire block. Then, if some of the N records to be added are found duplicated, the special insertion fails, and a one-by-one insertion is done, running through the N block, using the simple insert command. </p>
+
+<h4><a id="Calling+other+programs+within+a+New+command" class="HashLink" href="#Calling+other+programs+within+a+New+command">Calling other programs within a New command</a></h4>
+
+<p>If you call another program within a New command (whether you use <a href="16224.html">Call</a>] or <a href="3964.html">Udp</a>), the call is always executed, even if the key already existed. </p>
+
+<p>Example</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+New
+    A = 1
+    B = 1
+    Calculation.call()  //The call method can be omitted. You can write: Calculation()
+When Duplicate
+    For each
+         B = 2
+     Endfor
+EndNew</pre>
+
+<p>The “Calculation” Procedure is always called even if the key of the record to be inserted already existed in the table and the call is placed before the When duplicate clause. This behavior occurs because the Call command can be used to fetch some values to assign to the attributes.</p>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li><strong>Referential Integrity</strong> is <strong>NOT</strong> checked during insertion.</li>
+	<li>Redundancy will <strong>NOT</strong> be automatically maintained during insertion in Procedures. This maintenance is the programmer's responsibility. That is, if redundancy has been defined for an attribute in the table you are inserting, GeneXus will not search or calculate data to store in that attribute. In case of a Formula Redundancy, the Formula will not be available and the value must be calculated explicitly and assigned to the associated attribute.</li>
+</ul>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><strong>Objects   </strong><a href="6293.html">Procedure object</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="24843.html">When duplicate clause</a><br />
+<a href="4837.html">Blocking clause in a 'For each' command</a></p>
+
+<p><br />
+<br />
+</p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="4538.html">Blocking Clause in 'New' Command</a></TD><TD><a href="7924.html">Commands in Procedures</a></TD><TD><a href="6826.html">Category:Database update through procedures</a></TD></TR><TR><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="6442.html">Inline Formulas outside a contextual table</a></TD><TD><a href="37092.html">Last Modified Date Time Attribute property</a></TD></TR><TR><TD><a href="6664.html">Procedure Source</a></TD><TD><a href="6774.html">Specification Codes from spc0150 onwards</a></TD><TD><a href="24767.html">What is a subroutine?</a></TD><TD><a href="24843.html">When duplicate clause</a></TD></TR><TR><TD><a href="8640.html">Xnew Command</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/09/21 01:04 PM</em></font></td></TR></table></font>

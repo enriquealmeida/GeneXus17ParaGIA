@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Sum, Count, Average formulas</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6500,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Sum, Count, Average formulas</h1>
+<!--Sum, Count, Average formulas--><div class="TableWikiBody" id="tblwikibody"><p><font size="2">Sum, Count and Average are <a href="5868.html">Aggregate Formulas</a>.</font></p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><span style="font-family: sans-serif , Arial , Verdana , &quot;Trebuchet MS&quot;;line-height: 1.6em;">{</span><strong style="font-family: sans-serif , Arial , Verdana , &quot;Trebuchet MS&quot;;line-height: 1.6em;">S</strong><span style="font-family: sans-serif , Arial , Verdana , &quot;Trebuchet MS&quot;;line-height: 1.6em;"><strong>um</strong> | <strong>Count</strong> | <strong>Average</strong>}<strong>( </strong><em>&lt;aggregateExpression&gt;</em>, <em>&lt;aggregateCondition&gt;</em>, <em>&lt;defaultValue&gt;</em> <strong>) </strong>[<strong>if </strong><em>&lt;triggeringCondition&gt;</em>]</span><span style="font-family: sans-serif , Arial , Verdana , &quot;Trebuchet MS&quot;;line-height: 1.6em;"></span></p>
+
+<p><span style="font-family: sans-serif , Arial , Verdana , &quot;Trebuchet MS&quot;;line-height: 1.6em;">where:</span></p>
+
+<p><em>&lt;aggregateExpression&gt;</em></p>
+
+<p style="margin-left: 40.0px;"><font face="Arial"><font face="Arial"><font size="2"><font face="Verdana">Is the expression to be aggregated, that is to say, the expression to be summed up, or averaged. It may contain attributes (even formula attributes), constants and variables (variables only are allowed in <a href="6441.html">inline formulas</a>).<br />
+<br />
+For <em>Sum</em> and <em>Average</em>, the </font></font></font></font><em>&lt;aggregateExpression&gt;</em><font face="Arial"><font face="Arial"><font size="2"><font face="Verdana"> result data type must be numeric. For <em>Count</em>, the first parameter must be an attribute (not an expression) that belongs to the table in which you need to count records (*).</font></font></font></font></p>
+
+<p><em>&lt;aggregateCondition&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is a combination of a search condition with a <a href="5271.html">Data Selector</a> invocation. Both parts are optional:</p>
+
+<p style="margin-left: 40.0px;">[<em>&lt;SearchCondition&gt;</em>] [<strong>USING</strong> <em>&lt;DataSelector&gt;</em> '<strong>(</strong>' <em>&lt;Parameter&gt;<sub>1</sub></em><strong>,</strong> <em>&lt;Parameter&gt;<sub>2</sub></em><strong>,</strong> <em>&lt;Parameter&gt;<sub>n</sub></em> '<strong>)</strong>']</p>
+
+<p style="margin-left: 40.0px;"><em>&lt;SearchCondition&gt;</em></p>
+
+<p style="margin-left: 80.0px;">Is the condition that records must verify to be considered in the aggregation. It may contain attributes, constants and variables (user variables are allowed only in <a href="6441.html">inline formulas</a>, GeneXus standard variables in <a href="6440.html">global formulas</a> and inline formulas).<em> </em></p>
+
+<div>
+<p><em>&lt;defaultValue&gt;</em></p>
+
+<p style="margin-left: 40.0px;"><span style="line-height: 1.6em;">Is the returned value when no records match the </span><em>&lt;aggregateCondition&gt;</em><span style="line-height: 1.6em;">. It is a constant and it is optional.</span></p>
+
+<p><em style="line-height: 1.6em;">&lt;triggeringCondition&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is the condition that determines if the formula must be triggered or not. It is optional. The only attributes allowed are those belonging to the contextual table (that the formula attribute would belong to if it were stored) and its extended.</p>
+</div>
+
+<p> </p>
+
+<p><font face="Arial"><font face="Arial"><font face="Verdana" size="2"><strong>Note</strong>: Return value is rounded according to the definition of the attribute or variable which is assigned with the aggregate expression.<br />
+For instance, if you assign <em>AttributeB=Average(AttributeA)</em> having 3 records of AttributeA with values 1, 3 and 1, </font></font></font></p>
+
+<ul>
+	<li><font face="Arial"><font face="Arial"><font face="Verdana" size="2">if AttributeB is defined as N(10.5), will have value 1,66667</font></font></font></li>
+	<li><font face="Arial"><font face="Arial"><font face="Verdana" size="2">if AttributeB is defined as N(7.2), will have value 1,67</font></font></font></li>
+</ul>
+
+<p>(*) All records are count, even those where the mentioned attribute is null.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples"><font face="Arial"><font face="Arial">Examples</font></font></a></h3>
+
+<h4><a id="Transactions" class="HashLink" href="#Transactions"><font face="Arial"><font face="Arial">Transactions</font></font></a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Flight
+{
+   FlightId*
+   FlightDescription
+   FlightPrice
+   FlightInstanceAveragePrice <strong>= Average(FlightInstancePrice, FlightInstanceDate = Today(), 0)</strong>;
+   FlightInstanceTotalPrice <strong>= Sum(FlightInstancePrice)</strong>;
+   FlightInstanceCountDate <strong>= Count(FlightInstanceNumber) if FlightPrice &gt; 100</strong>;
+}
+
+FlightInstance
+{
+   FlightInstanceNumber*
+   FlightId
+   FlightDescription
+   FlightPrice
+   FlightInstanceDate
+   FlightInstanceNumberOfPassengers
+   FlightInstancePrice = <strong>FlightPrice if FlightInstanceNumberOfPassengers &lt;= 100;
+	FlightPrice * 0.9  if  FlightInstanceNumberOfPassengers &gt; 100 and FlightInstanceNumberOfPassengers &lt; 200;
+	FlightPrice * 0.8  otherwise</strong>;
+   FlightInstanceNumberOfPassengers = <strong>Count(PassengerName,PassengerName = &quot;Smith&quot;,0)</strong>;
+   {
+      PassengerId*
+      PassengerName
+   }
+}</pre>
+
+<p><font face="Arial"><font face="Arial"><font face="Verdana" size="2">The above example shows several Aggregate <a href="6440.html">global formulas</a> with their associated definitions (note that all the defined formulas are Aggregate formulas except for the <em>FlightInstancePrice </em>formula).</font></font></font></p>
+
+<p><span style="font-family: arial;font-size: small;line-height: 1.6em;"></span></p>
+
+<p><span style="font-size: small;"><span style="font-family: arial;"></span></span></p>
+
+<p><span style="font-size: small;"><span style="font-family: arial;"></span></span></p>
+
+<p><span style="font-size: small;"><span style="font-family: arial;"></span></span></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5868.html">Aggregate Formulas</a></TD><TD><a href="5879.html">Compound Formulas</a></TD></TR><TR><TD><a href="36732.html">Dynamic Transactions that receive parameters</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD></TR><TR><TD><a href="6442.html">Inline Formulas outside a contextual table</a></TD><TD><a href="24592.html">Unique Clause</a></TD><TD><a href="24593.html">Unique clause in For Each command</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/17/22 03:27 AM</em></font></td></TR></table></font>

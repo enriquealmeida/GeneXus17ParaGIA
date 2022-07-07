@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>DFROpen function</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8369,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">DFROpen function</h1>
+<!--DFROpen function--><div class="TableWikiBody" id="tblwikibody"><p>Opens a text file for its processing.  It is the first function to be called to begin reading a text file.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><b>DFROpen(</b>FileName [ , length [ ,  fdel [ ,  sdel [ ,  encoding ] ] ] ]<b> )</b></p>
+
+<p><b>Where:</b><br />
+<em>FileName</em><br />
+    It can be an attribute, variable or constant of the char type.  Its value will be considered as the file name to be processed.  It may contain directory specifications or not.  If it doesn’t, it will be searched in the current directory.</p>
+
+<p><em>length (deprecated)</em><br />
+    It can be an attribute, variable or constant of the numeric type, optional, which indicates the maximum size, in number of characters, of the record to be read.  See that the delimited ASCII files have records (lines) of variable length.  If it is specified, the value should correspond to the maximum quantity of characters that a line may have.  The default value is 1024.</p>
+
+<p><em>fdel</em><br />
+    It can be an attribute, variable or constant of the character type, optional, which indicates the delimiting character among fields.  If you wish to specify the tab character as separator, the value of this parameter must be the string “\t”.  The default value is "," (comma). </p>
+
+<p><em>sdel</em><br />
+    It can be an attribute, variable or constant of the character type, optional,  which indicates  the delimiting character of the string fields.  Only the first character of the parameter value is considered.  Its value may be any character not appearing in the texts.  Thedefault value is “ (quotation mark).</p>
+
+<p><em>encoding</em><br />
+    It can be an attribute, variable or constant of the character type, optional, which indicates the encoding to be used to read the file. If you specify this parameter, it means that the length used in the function <a href="8367.html">DFRGTxt</a> means “number of bytes”.</p>
+
+<p><b>Type Returned:</b><br />
+Numeric</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><b>Objects:</b> <a href="6293.html">Procedure</a>, <a href="1908.html">Transaction</a>, <a href="6916.html">Web Panel</a><br />
+<b>Generators:</b> <a href="38604.html">.NET</a>, <a href="12258.html">Java</a>, Ruby (up to GeneXus X Evolution 3)</p>
+
+<h3><a id="Values" class="HashLink" href="#Values">Values</a></h3>
+
+<p>This function may return some of the following values:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="2" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="text-align: center;border-color: rgb(221,221,221);"><strong>Value</strong></td>
+			<td style="text-align: center;border-color: rgb(221,221,221);"><strong>Result</strong></td>
+			<td style="border-color: rgb(221,221,221);"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;border-color: rgb(221,221,221);"><b>0</b></td>
+			<td style="text-align: center;border-color: rgb(221,221,221);">Successful operation.</td>
+			<td style="border-color: rgb(221,221,221);">The file has been opened.</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;border-color: rgb(221,221,221);"><b>-1</b></td>
+			<td style="text-align: center;border-color: rgb(221,221,221);">Wrong sequence.</td>
+			<td style="border-color: rgb(221,221,221);">It occurs when this function is called more than once without previously calling the dfrclose function. If the trace is activated you will see the ADF0005 message indicating this error.</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;border-color: rgb(221,221,221);"><b>-2</b></td>
+			<td style="text-align: center;border-color: rgb(221,221,221);">Opening error.</td>
+			<td style="border-color: rgb(221,221,221);">It occurs when the file identified as &lt;filename&gt; could not be opened.  The cause may be clearly identified by enabling the trace and looking for the message with ADF0001 code. It is most common that the file does not exist.</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;border-color: rgb(221,221,221);"><b>-8</b></td>
+			<td style="text-align: center;border-color: rgb(221,221,221);">Not enough memory.</td>
+			<td style="border-color: rgb(221,221,221);">It occurs when it isn’t possible to reserve a buffer of &lt;length&gt; bytes.  If the trace is activated, you will see the ADF0007 message indicating this error.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<p>For this example, the parameter field separator is not required.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Text = ""
+<strong>&amp;i = dfropen( "Test.txt",1024,,"")</strong> 
+If &amp;I = 0
+    Do while dfrnext( ) = 0
+       &amp;i = dfrgtxt(&amp;Linetxt) // The length of the line is given by the size of the variable.
+       &amp;Text = &amp;Text + Newline() + &amp;Linetxt
+    EndDo
+    &amp;i = dfrclose( )
+else
+    &amp;Text = "Could not open file"
+EndIf</pre>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="8364.html">Delimited ASCII files functions</a></p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8364.html">Delimited ASCII files functions</a></TD><TD><a href="8367.html">DFRGTxt function</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/07/22 12:46 PM</em></font></td></TR></table></font>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Consuming JSON with GeneXus Properties Data Type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37750,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Consuming JSON with GeneXus Properties Data Type</h1>
+<!--Consuming JSON with GeneXus Properties Data Type--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Perhaps one of the simplest ways to consume JSON with GeneXus is to use <a href="https://wiki.genexus.com/commwiki/wiki?1878,," target="_blank">Structured Data Type</a>s (SDTs).</p>
+
+<p>What you have to do is to declare the structure of the JSON in an SDT and then use the SDT <a href="37809.html">FromJson Method</a> to move content from the JSON string to the SDT.</p>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SDT.FromJson( jsonString )</pre>
+
+<p>A problem may occur when the properties of a certain object of a JSON are variable, and it may be worse if they are variable and with high cardinality.</p>
+
+<p>For example, <a href='https://www.cryptocompare.com/api/#-api-data-coinlist-'>CryptoCompare</a> API exposes your coins as:</p>
+
+<p><img src="./images/37753.png" id="37753" class="WikiImage"/></p>
+
+<p>Note that it is not feasible to declare all the elements of the &quot;Data&quot; property because there are thousands of coins and we would have an SDT with thousands of elements. On top of that, when a new currency appears it would not be declared in the SDT structure.<br />
+<br />
+In these cases, the <a href="31606.html">Properties Data Type</a> comes into action to solve the parsing of this structure.</p>
+
+<p>The Properties data type conceptually maps a dictionary. And that is exactly what a JSON is.</p>
+
+<p>A JSON Object, delimited by {}, is essentially a dictionary. Therefore, it can be represented perfectly by a Properties object.</p>
+
+<p>In case of JSON Array, delimited by [], use Properties Data Type with the Collection property as True.</p>
+
+<h3><a id="The+solution" class="HashLink" href="#The+solution">The solution</a></h3>
+
+<p>To do the parsing of this JSON, the following is enough:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Properties.FromJson(&amp;jsonString) //Properties is of Properties Data Type</pre>
+
+<p>After this you can check the value of any of its properties as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Properties.Get(!&quot;Response&quot;) // Returns Success for the example shown above</pre>
+
+<p>Or, interestingly, you can ask for the &quot;Data&quot; property which will return a string with another JSON of the form:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{
+       &quot;LTC&quot;: {
+            &quot;Id&quot;: &quot;3808&quot;,
+            &quot;Url&quot;: &quot;/coins/ltc/overview&quot;,
+            &quot;ImageUrl&quot;: &quot;/media/19782/ltc.png&quot;,
+            &quot;Name&quot;: &quot;LTC&quot;,
+            &quot;CoinName&quot;: &quot;Litecoin&quot;,
+            &quot;FullName&quot;: &quot;Litecoin (LTC)&quot;,
+            &quot;Algorithm&quot;: &quot;Scrypt&quot;,
+            &quot;ProofType&quot;: &quot;PoW&quot;,
+            &quot;SortOrder&quot;: &quot;2&quot;
+        },
+        “BTC” : { … },
+                          ...
+
+},</pre>
+
+<p>Now, you can turn this value into a variable of type Properties again:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CoinsProperties.FromJson(&amp;dataString) //&amp;CoinsProperties is of Properties data type</pre>
+
+<p>Going through the elements of that dictionary can be done as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;Coin in &amp;CoinProperties //&amp;Coin is of Property data type
+    msg(&amp;Coin.Key) // this prints LTC, BTC, ...
+    msg(&amp;Coin.Value) 
+EndFor</pre>
+
+<p>Therefore, the final result of parsing that JSON using Properties Data Type would be as follows:</p>
+
+<div style="background-color: rgb(221,255,221);border-left: 6.0px solid rgb(76,175,80);">if &amp;CoinsListProperties.Get(!&quot;Response&quot;) = !&quot;Success&quot;<br />
+        &amp;CoinProperties.FromJson(&amp;CoinsListProperties.Get(!&quot;Data&quot;))<br />
+        for &amp;Coin in &amp;CoinProperties<br />
+            &amp;CoinDataStructure.FromJson(&amp;Coin.Value)<br />
+            &amp;CoinDataStructureCollection.Add(&amp;CoinDataStructure)<br />
+            &amp;CoinDataStructure = new()<br />
+        endfor<br />
+  else<br />
+        msg(!&quot;Failed to retrieve the information.&quot;)<br />
+  endif</div>
+
+<p>Note: The Coin data structure can be represented in an SDT as follows:</p>
+
+<p><img src="./images/37755.png" id="37755" class="WikiImage"/></p>
+
+<p>Download the sample from <a href="https://wiki.genexus.com/commwiki/wiki?37757,," target="_blank">here</a>.</p>
+
+<h3><a id="How+to+execute+the+sample" class="HashLink" href="#How+to+execute+the+sample">How to execute the sample</a></h3>
+
+<p>Run the web panel SampleJsonConsumer and enter the following JSON:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{
+    &quot;Response&quot;: &quot;Success&quot;,
+    &quot;Message&quot;: &quot;Coin list succesfully returned!&quot;,
+    &quot;BaseImageUrl&quot;: &quot;https://www.cryptocompare.com&quot;,
+    &quot;BaseLinkUrl&quot;: &quot;https://www.cryptocompare.com&quot;,
+    &quot;Data&quot;: {
+        &quot;LTC&quot;: {
+            &quot;Id&quot;: &quot;3808&quot;,
+            &quot;Url&quot;: &quot;/coins/ltc/overview&quot;,
+            &quot;ImageUrl&quot;: &quot;/media/19782/ltc.png&quot;,
+            &quot;Name&quot;: &quot;LTC&quot;,
+            &quot;CoinName&quot;: &quot;Litecoin&quot;,
+            &quot;FullName&quot;: &quot;Litecoin (LTC)&quot;,
+            &quot;Algorithm&quot;: &quot;Scrypt&quot;,
+            &quot;ProofType&quot;: &quot;PoW&quot;,
+            &quot;SortOrder&quot;: &quot;2&quot;
+        },
+        &quot;IN&quot;: {
+            &quot;Id&quot;: 0,
+            &quot;Url&quot;: &quot;/coins/in/overview&quot;,
+            &quot;ImageUrl&quot;: &quot;/media/1381987/in.png&quot;,
+            &quot;Name&quot;: &quot;IN&quot;,
+            &quot;CoinName&quot;: &quot;InCoin&quot;,
+            &quot;FullName&quot;: &quot;InCoin (IN)&quot;,
+            &quot;Algorithm&quot;: &quot;X11&quot;,
+            &quot;ProofType&quot;: &quot;PoW/PoS&quot;,
+            &quot;SortOrder&quot;: 988
+        },
+        &quot;AURS&quot;: {
+            &quot;Id&quot;: 0,
+            &quot;Url&quot;: &quot;/coins/aurs/overview&quot;,
+            &quot;ImageUrl&quot;: &quot;/media/12318345/aurs.png&quot;,
+            &quot;Name&quot;: &quot;AURS&quot;,
+            &quot;CoinName&quot;: &quot;Aureus&quot;,
+            &quot;FullName&quot;: &quot;Aureus (AURS)&quot;,
+            &quot;Algorithm&quot;: &quot;Scrypt&quot;,
+            &quot;ProofType&quot;: &quot;N/A&quot;,
+            &quot;SortOrder&quot;: 1711
+        }
+
+    },
+    &quot;Type&quot;: 100
+}</pre>
+
+<p>View the results.</p>
+
+<p><img src="./images/37759.png" id="37759" class="WikiImage"/></p>
+
+<h3><a id="Examples+with+Array+JSON" class="HashLink" href="#Examples+with+Array+JSON">Examples with Array JSON</a></h3>
+
+<p>Here are some canonical examples.</p>
+
+<p>Suppose you have this JSON and you want to print all the Student's names:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{
+  &quot;Students&quot;: [
+    {
+      &quot;Name&quot;: &quot;Amit Goenka&quot;,
+      &quot;Major&quot;: &quot;Physics&quot;
+    },
+    {
+      &quot;Name&quot;: &quot;Smita Pallod&quot;,
+      &quot;Major&quot;: &quot;Chemistry&quot;
+    },
+    {
+      &quot;Name&quot;: &quot;Rajeev Sen&quot;,
+      &quot;Major&quot;: &quot;Mathematics&quot;
+    }
+  ]
+}</pre>
+
+<p>The GeneXus code would be: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Properties.FromJson(&amp;json)
+&amp;StudentsProperties.FromJson(&amp;Properties.Get(!&quot;Students&quot;))
+For &amp;StudentProperties in &amp;StudentsProperties
+    msg(&amp;StudentProperties.Get(!&quot;Name&quot;))
+Endfor</pre>
+
+<p>Where &amp;StudentProperties and &amp;StudentsProperties are defined as Properties Data Type but the last one has the Collection property set to True.</p>
+
+<p>Output:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Amit Goenka
+Smita Pallod
+Rajeev Sen
+</pre>
+
+<p>The following example is an Array JSON (it starts and ends with '[' and ']').</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ [ { &quot;Name&quot;: &quot;Amit Goenka&quot;, &quot;Major&quot;: &quot;Physics&quot; }, { &quot;Name&quot;: &quot;Smita Pallod&quot;, &quot;Major&quot;: &quot;Chemistry&quot; }, { &quot;Name&quot;: &quot;Rajeev Sen&quot;, &quot;Major&quot;: &quot;Mathematics&quot; } ]
+</pre>
+
+<p>The GeneXus code to print the student's names within the collection is: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;PropertiesCollection.FromJson(&amp;json)
+For &amp;StudentProperties in &amp;PropertiesCollection
+    msg(&amp;StudentProperties.Get(!&quot;Name&quot;))
+endfor</pre>
+
+<p>Where &amp;PropertiesCollection is defined as Properties Data Type with Collection property set to True. &amp;StudentProperties is just defined as Properties Data Type.</p>
+
+<p>Output:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Amit Goenka
+Smita Pallod
+Rajeev Sen</pre>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31606.html">Properties Data Type</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

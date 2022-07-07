@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Blob data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6704,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Blob data type</h1>
+<!--Blob data type--><div class="TableWikiBody" id="tblwikibody"><p>The <a href="6704.html">Blob data type</a> allows you to store images, spreadsheets, videos, audio files, and any other type of documents in the database, taking advantage of the different integrity and control mechanisms provided by the DMBS.</p>
+
+<p>There is a way to save blob fields automatically in the database using a web interface (web transaction). There is also an easy way to display a blob field in the web form: a <a href="30574.html">File Upload control</a> control is generated, and, optionally, an embedded window in which the content (image, video, etc) is shown. </p>
+
+<div style="background-color: rgb(221,255,221);border-left: 6.0px solid rgb(76,175,80);">
+<p>Note: Using  <a href="40420.html">BlobFile data type</a> instead of Blob data type, the data can be stored using any <a href="31120.html">external storage</a>. Because of its advantages, it is strongly recommended to use Blobfile instead of Blob.</p>
+</div>
+
+<p><strong>Summary:</strong></p>
+
+<p><ul><li><a class="HashLink" href="#Displaying+Blobs">Displaying Blobs</a></li><li><a class="HashLink" href="#When+does+the+blob+store+heterogeneous+types+of+files">When does the blob store heterogeneous types of files</a></li><ul><li><a class="HashLink" href="#File+Type+Attribute+Property">File Type Attribute Property</a></li><li><a class="HashLink" href="#File+Type+Runtime+property">File Type Runtime property</a></li><li><a class="HashLink" href="#File+Name+Attribute+Property">File Name Attribute Property</a></li><li><a class="HashLink" href="#Managing+different+Content+Types">Managing different Content Types</a></li><ul><li><a class="HashLink" href="#ContentType+Property">ContentType Property</a></li></ul></li></ul></li><li><a class="HashLink" href="#Retrieving+the+name+of+the+file">Retrieving the name of the file</a></li><li><a class="HashLink" href="#Display+control+properties">Display control properties</a></li><ul><li><a class="HashLink" href="#Width+%2F+Height">Width / Height</a></li><li><a class="HashLink" href="#Display">Display</a></li><ul><li><a class="HashLink" href="#Note%3A+">Note: </a></li></ul></li><li><a class="HashLink" href="#LinkTarget">LinkTarget</a></li><li><a class="HashLink" href="#Parameters">Parameters</a></li></ul></li><li><a class="HashLink" href="#Environment+Properties">Environment Properties</a></li><ul><li><a class="HashLink" href="#Blob+Local+Storage+Path">Blob Local Storage Path</a></li><li><a class="HashLink" href="#Temporary+Media+Directory">Temporary Media Directory</a></li></ul></li><li><a class="HashLink" href="#Example">Example</a></li><li><a class="HashLink" href="#Functions">Functions</a></li><li><a class="HashLink" href="#Appendix">Appendix</a></li><li><a class="HashLink" href="#Scope">Scope</a></li><li><a class="HashLink" href="#See+also">See also</a></li></ul></ul></p>
+
+<h2><a id="Displaying+Blobs" class="HashLink" href="#Displaying+Blobs">Displaying Blobs</a></h2>
+
+<p>A blob in the web form can be visualized automatically as an image, video, audio, document, etc, depending on the content of the blob field. It can be displayed as a link, to allow the user to click on it and display the blob, or it can be shown embedded in the web form.</p>
+
+<p>To insert or update blob fields in the database, a file selection dialog appears, which enables the end user to browse the file system structure of the client PC (where the Internet browser is running). The process of uploading the file is then automatic. The user chooses a file that will be uploaded to the server and saved in the database.<br />
+The file selection dialog is shown by clicking a &quot;browse&quot; button associated to an edit control in which the selected file is loaded. This is known as an &quot;upload control&quot;, and it's shown in the following image:</p>
+
+<p><img src="./images/6708.jpg" id="6708" class="WikiImage"/></p>
+
+<p>And in runtime you will see:</p>
+
+<p><img src="./images/6707.jpg" id="6707" class="WikiImage"/></p>
+
+<p>The file selected is uploaded temporarily to a directory in the web server, and then, on the next POST (when the user confirms the transaction) it is saved in the database.</p>
+
+<h2><a id="When+does+the+blob+store+heterogeneous+types+of+files" class="HashLink" href="#When+does+the+blob+store+heterogeneous+types+of+files">When does the blob store heterogeneous types of files</a></h2>
+
+<p>In some cases, it is necessary to work with different types of files, for example, the same database field contains Word documents, photographs in JPG and GIF format, and video files.</p>
+
+<div>As a result, in some cases, it may be necessary to capture and save the extension of the files while uploading them, so this knowledge is available when you download the same files.</div>
+
+<p>Having the file extension helps in many cases in which the Internet navigator need to know the file format in order to display it, or in cases in which the WebServer prohibits uploading files without extension.</p>
+
+<div>There is a way of automatically capturing the Name and Extension of the file that is being uploaded. This information will also be used when the file is downloaded.</div>
+
+<p>The main goal is to be able to run the application in servers that have a maximum level of security and don't allow uploading files without extension.</p>
+
+<div>In sum, you have two alternatives if you want to keep heterogeneous files in the same field of the table (docs, jpgs, xmls, etc):</div>
+
+<div> </div>
+
+<ol style="margin-top: 0.0cm;">
+	<li>Define the blob as it is. When the file is uploaded and downloaded, a temporary file without extension will be saved in the file system of the WebServer. When it is downloaded, as the file has no extension, it may be necessary to assign a content type (*) to it, in order to give the navigator a hint about the file's format. Some navigators (like IE) don't need that hint.</li>
+	<li>If you have a WebServer with very strict security policies (like Windows 2003 server using IIS), by default, it won't allow files without extension to be uploaded. In that case it is better to configure the <a href="8902.html"><em><strong>FileTypeAttribute</strong></em></a> and <a href="https://wiki.genexus.com/commwiki/wiki?3122,," target="_blank"><em><strong>FileNameAttribute</strong></em></a> blob properties in order to enable the blob's extension and name to be captured when it is uploaded. The file will be saved temporarily with the corresponding extension. In addition, when downloading (getting) the blob, it will also be saved with this extension, and its original name.</li>
+</ol>
+
+<div><img src="./images/6711.jpg" id="6711" class="WikiImage"/></div>
+
+<p>Let's look at the attribute properties:  </p>
+
+<h3><a id="File+Type+Attribute+Property" class="HashLink" href="#File+Type+Attribute+Property">File Type Attribute Property</a></h3>
+
+<div>It is available only for blob type attributes. The possible values for this property are any char or varchar attribute of the same table which the blob attribute belongs to. This property identifies an attribute that holds the extension of a Blob data type attribute. A Blob data type attribute may store files. Those files may all be the same type of files (i.e. Word documents, pictures in a specified format, etc.) or they may be heterogeneous. When working with heterogeneous files you should store the &quot;file type&quot; (extension) in a different attribute (because the extension isn't stored with the blob itself). In other words, the Blob data type attribute stores the file content and the File Type Attribute stores the file type (or extension).</div>
+
+<p class="MsoNormal" style="margin-bottom: 12.0pt;">Every time the Blob data type attribute is assigned (either in the user interface or by an assignment command) the value of the FileTypeAttribute is also automatically assigned. That is to say that the FileTypeAttribute is assigned when you upload a blob from a Web Interface (a Web Transaction), a procedure or a Business Component in a batch mode (from a procedure).</p>
+
+<p class="MsoNormal">The default value is (none), stating that no attribute holds the file type.</p>
+
+<p class="MsoNormal">Constraints on the FileTypeAttribute:</p>
+
+<ul>
+	<li class="MsoNormal">It must be Character or VarChar (not Long Varchar) data type.</li>
+	<li class="MsoNormal">It must belong to the same table that the referencing attribute belongs to.</li>
+	<li class="MsoNormal">It should not be a formula.</li>
+	<li class="MsoNormal">It cannot be used as the FileTypeAttribute or FileNameAttribute of any other Blob attribute.</li>
+</ul>
+
+<p style="margin: 0.0cm 0.0cm 0.0pt;"><em>Note:</em> If the FileTypeAttribute property is assigned with a value, the corresponding attribute assigned to this property cannot be explicitly modified through a web transaction.</p>
+
+<h3><a id="File+Type+Runtime+property" class="HashLink" href="#File+Type+Runtime+property">File Type Runtime property</a></h3>
+
+<p>As we've already explained the <a href="3116.html">FileType property</a>, let's now look at the FileType runtime property. You can use it to retrieve the file extension of a blob, or change it dinamically by using the following sintax:<br />
+<br />
+&amp;extension = Attblob.FileType<br />
+<br />
+The FileType property returns the actual file extension, when the blob is being uploaded.</p>
+
+<p>For instance, if you have the following rule in a web transaction:<br />
+<br />
+msg('The uploaded file is ' + Attblob.FileName + '.' + Attblob.FileType) if not Attblob.isempty() on aftervalidate;<br />
+<br />
+When uploading the file, Attblob.FileType returns the actual file extension.</p>
+
+<p>When the file is being downloaded, the FileType is obtained from:<br />
+<br />
+1. The FileType property, if it's assigned in the design model.<br />
+2. The FileTypeAttribute property of the blob (if it has one).<br />
+<br />
+Otherwise, it returns null.</p>
+
+<h3 style="margin: 0.0cm 0.0cm 0.0pt;"><a id="File+Name+Attribute+Property" class="HashLink" href="#File+Name+Attribute+Property">File Name Attribute Property</a></h3 style="margin: 0.0cm 0.0cm 0.0pt;">
+
+<h5 style="margin: 0.0cm 0.0cm 0.0pt;"><a id="+" class="HashLink" href="#+"> </a></h5 style="margin: 0.0cm 0.0cm 0.0pt;">
+
+<p style="margin: 0.0cm 0.0cm 0.0pt;">The FileNameAttribute property identifies an attribute that holds the File Name of a Blob data type attribute. A Blob data type attribute can store files. The attribute stores the file content but not it's original name. You should set this property if you want to keep track of the original file name.<br />
+<br />
+Every time the Blob data type attribute is assigned (either in the user interface or by an assignment command) the value of the FileNameAttribute is also automatically assigned.</p>
+
+<p class="MsoNormal">The default value is (none), stating that the original file name is lost.<br />
+<br />
+Constraints on the FileNameAttribute:</p>
+
+<ul>
+	<li class="MsoNormal">It must be Character or VarChar (not Long Varchar) data type</li>
+	<li class="MsoNormal">It must belong to the same table that the referencing attribute belongs to.</li>
+	<li class="MsoNormal">It should not be a formula</li>
+	<li class="MsoNormal">It cannot be used as the FileTypeAttribute or FileNameAttribute of any other Blob attribute.</li>
+</ul>
+
+<p class="MsoNormal"><em>Note:</em> When downloading the file, it is temporary saved with its original name (which is taken from the FileNameAttribute), plus a random number. So that each file is given a different name, in order to be able to run the application in multiuser and concurrent environments.</p>
+
+<h3><a id="Managing+different+Content+Types" class="HashLink" href="#Managing+different+Content+Types">Managing different Content Types</a></h3>
+
+<p>Content Types are a means of identifying web pages, images, and multimedia files on the Web and in email messages. They allow web browsers and email clients to display content in a correct and safe way. In the case of blobs, it may be necessary to set their Content Type, especially for certain kind of files, or for certain Internet navigators. Commonly used content types include text/html, image/jpeg, model/vrml, video/quicktime, etc.<br />
+<br />
+It's important to note that GeneXus automatically generates the corresponding Content Type of each blob, based on the extension it has. But there are ways to change this Content Type, if the user wants to.</p>
+
+<p>There are two ways to do this in GeneXus:</p>
+
+<p><strong>ContentType </strong>property (design and runtime control property)</p>
+
+<p><img src="./images/6718.jpg" id="6718" class="WikiImage"/> <img src="./images/6712.jpg" id="6712" class="WikiImage"/></p>
+
+<h4><a id="ContentType+Property" class="HashLink" href="#ContentType+Property">ContentType Property</a></h4>
+
+<p>It indicates the content type that should be associated with the Blob. For example, the content type of .wav documents is generally audio/wav, for an .xml file it's text/xml, etc.<br />
+<br />
+The Content Type depends on the browser, and that's why the GeneXus user is given the possibility of setting it programmatically. However, the corresponding Content Type is actually determined at runtime by the generated program.<br />
+That is to say, in most cases you only need to set the File Type properties or nothing at all, if the blob has a FileTypeAttribute associated to it. This is because GeneXus automatically determines the Content Type, from this information.<br />
+<br />
+The <a href="https://wiki.genexus.com/commwiki/wiki?3125,," target="_blank">ContentType Property</a> should be used when the extension doesn't allow unique identification of the Content Type, or when the GeneXus user wants to set it depending on the end user's browser.</p>
+
+<h2><a id="Retrieving+the+name+of+the+file" class="HashLink" href="#Retrieving+the+name+of+the+file">Retrieving the name of the file</a></h2>
+
+<p>You can query the name of the file by using the FileName property (runtime property). This is a ReadOnly property, which allows you to know the name of the file associated to a blob. When uploading the file, it returns the name of the file which is being uploaded. For instance, if you have the following rule in a web transaction:</p>
+
+<p class="MsoNormal">msg('The uploaded file is ' + Attblob.FileName + '.' + Attblob.FileType) if not Attblob.isempty() on aftervalidate;</p>
+
+<p class="MsoNormal">When uploading the file, Attblob.FileName returns the actual file name. On the contrary, when downloading a file (if it is in a webpanel, for instance), the value returned by the property is based on the value stored in the FileNameAttribute exclusively. This is because the blob by itself doesn't store any information other than the binary file. It doesn't store the extension or the name of the file.</p>
+
+<h2><a id="Display+control+properties" class="HashLink" href="#Display+control+properties">Display control properties</a></h2>
+
+<h3><a id="Width+%2F+Height" class="HashLink" href="#Width+%2F+Height">Width / Height</a></h3>
+
+<p>Determines the width / height of the blob control in the form. </p>
+
+<h3><a id="Display" class="HashLink" href="#Display">Display</a></h3>
+
+<p>It indicates the way the blob content is going to be displayed in the form. It's available in design model and at runtime. The possible values are:<br />
+ </p>
+
+<p><img src="./images/6707.jpg" id="6707" class="WikiImage"/></p>
+
+<p><img src="./images/6713.jpg" id="6713" class="WikiImage"/></p>
+
+<h4><a id="Note%3A+" class="HashLink" href="#Note%3A+">Note: </a></h4>
+
+<p>If you define a different value than 0 or 1 (only in runtime) in the property, the blob will not be displayed either Inline or Link.</p>
+
+<h3><a id="LinkTarget" class="HashLink" href="#LinkTarget">LinkTarget</a></h3>
+
+<p>When the display property is set to &quot;Link&quot;, by this property you can choose to show the blob content in a separate window.<br />
+For example: blobatt.linktarget = '_blank'</p>
+
+<h3><a id="Parameters" class="HashLink" href="#Parameters">Parameters</a></h3>
+
+<p class="Code">When the display property is set to &quot;Inline&quot;, and the blob content can't be managed by the Internet browser without providing additional information to it, the Parameters property has to be used to provide the necessary information to the browser.<br />
+For example, if you want to display a video in mpg format, in the IE (Internet Explorer), you have to have the following settings:</p>
+
+<p class="Code">(This example runs in Windows Media Player)<br />
+blobatt.parameters = '&lt;param name=&quot;Filename&quot; value=&quot;' + pathtourl( blobatt) + '&quot;&gt;' +<br />
+'&lt;param name=&quot;AutoStart&quot; value=&quot;True&quot;&gt;' +<br />
+'&lt;param name=&quot;ShowControls&quot; value=&quot;True&quot;&gt;' +<br />
+'&lt;param name=&quot;ShowStatusBar&quot; value=&quot;True&quot;&gt;' +<br />
+'&lt;param name=&quot;ShowDisplay&quot; value=&quot;False&quot;&gt;' +<br />
+'&lt;param name=&quot;AutoRewind&quot; value=&quot;True&quot;&gt;'</p>
+
+<p><em>Note:</em> The Internet browsers need to know which application to use to display certain type of files. That is what the ContentType property is for. For example, in the case of IE, when the content is .mpg, the ContentType should not be video/mpg (as it would be by default), but application/x-mplayer2. In these special cases, the ContentType refers to the application which should show the content instead of the real content type of the file.</p>
+
+<h2><a id="Environment+Properties" class="HashLink" href="#Environment+Properties">Environment Properties</a></h2>
+
+<h3><a id="Blob+Local+Storage+Path" class="HashLink" href="#Blob+Local+Storage+Path">Blob Local Storage Path</a></h3>
+
+<p>This environment property is used to set the web server path where files are temporarily saved when retrieved from the database. That is to say, when you Get data, a temporary file is saved in the Blob Local Storage Path. The extension of the saved file depends on the value of the Blob property called File Type.</p>
+
+<p>The Blob Local Storage Path must be accessible from the virtual directory (ie, if the virtual directory is C:\resin-2.0.2\webapps\test an acceptable value for the property would be: C:\resin-2.0.2\webapps\test\resources\rtrepository).</p>
+
+<h3><a id="Temporary+Media+Directory" class="HashLink" href="#Temporary+Media+Directory">Temporary Media Directory</a></h3>
+
+<p>This environment property is used to set the web server path where files are temporarily saved when loaded in the database. That is to say, when a Blob is added or updated, it is temporarily saved in this directory.</p>
+
+<p>The Temporary Media Directory must be accessible from the virtual directory.</p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>Let's see an example in which we use the Blob data type. We create a Country transaction, with attributes CountryId, CountryName, CountryFlag, and CountryAnthem. The latter two are of the blob type, so that we can store the flag of the country, and its national anthem. </p>
+
+<p><img src="./images/33109.png" id="33109" class="WikiImage"/></p>
+
+<p>We now go to the properties of the blob-type attributes, and in the File Type property, we set png for CountryFlag, and wav for CountryAnthem:</p>
+
+<p><img src="./images/33110.png" id="33110" class="WikiImage"/>   <img src="./images/33111.png" id="33111" class="WikiImage"/></p>
+
+<p>Finally, we press F5, and in the Country transaction we insert the country Uruguay, along with its flag and national anthem:</p>
+
+<p><img src="./images/33112.png" id="33112" class="WikiImage"/><br />
+<br />
+<em>Notes</em><strong>:</strong></p>
+
+<h2><a id="Functions" class="HashLink" href="#Functions">Functions</a></h2>
+
+<h5><a id="wiki%3F9563%2CPathToURL%2Bfunction+PathToURL+function" class="HashLink" href="#wiki%3F9563%2CPathToURL%2Bfunction+PathToURL+function"><a href="9563.html">PathToURL function</a></a></h5>
+
+<h2><a id="Appendix" class="HashLink" href="#Appendix">Appendix</a></h2>
+
+<p>I. In general, Internet Explorer doesn't respect the Content Type returned by web servers and uses a variety of strategies to automatically detect the content type of files.<br />
+<br />
+This means that different browsers have different behaviors. For example, when a blob field is displayed as a download (link), and a Content Type is specified, IE determines how to display the blob in the form by using the above strategies. Therefore, the Content Type is only considered as a hint for the browser.<br />
+This doesn't happen with Mozilla, which always considers the specified Content Type. Therefore, we recommend reading the corresponding documentation so as to know beforehand what the expected behavior is for the application.<br />
+<br />
+Our tests produced the following results:<br />
+<br />
+1. When the blob is displayed as a link, the Content Type is ignored by IE. It has its own rules for identifying the content type and ignores the one specified by the user. The same happens with Netscape. Consequently, the file will be correctly displayed in the HTML only if the file type can be identified by the browser. To solve this, give the file an extension through the FileType property when saving it temporarily. This problem doesn't exist in Mozilla FireFox.<br />
+<br />
+2. If you set the FileType property, the blob is temporarily saved in the server with an extension. In this case, the web server decides how to display the content through MIME Types, so the specified Content Type is ignored. Blobs that are Word documents, for example, are correctly viewed only if they are displayed as links, and they have an associated extension or &quot;FileType&quot; (the same happens with Excel worksheets).<br />
+<br />
+3. In some cases, when the blob display is Inline and has an associated extension (File Type), IE can't display the content, while Netscape and Mozilla try to download it (for example, it happens with .doc, .xls, .pdf).<br />
+<br />
+4. If the display is Inline and you work with File Type or Content Type, IE, Netscape and Mozilla all consider the specified Content Type, except in the case of Word documents and some other exceptions. Some MIME types, like graphics, can be displayed inside the browser. Others, such as word processing documents, require an external helper application in order for them to be displayed.<br />
+<br />
+The following table shows some Content Types which are assigned automatically, given a File Type (an associated extension).</p>
+
+<div style="overflow-x:auto"><table class="wikitable FCK__ShowTableBorders">
+	<tbody>
+		<tr>
+			<td class="wikicell"><strong>FileType</strong></td>
+			<td class="wikicell"><strong>Content-Type</strong></td>
+			<td class="wikicell"><br />
+			 </td>
+		</tr>
+		<tr>
+			<td class="wikicell">TXT</td>
+			<td class="wikicell" colspan="2">text/plain</td>
+		</tr>
+		<tr>
+			<td class="wikicell">RTX</td>
+			<td class="wikicell" colspan="2">text/richtext</td>
+		</tr>
+		<tr>
+			<td class="wikicell">HTML/HTM</td>
+			<td class="wikicell" colspan="2">text/html</td>
+		</tr>
+		<tr>
+			<td class="wikicell">XML</td>
+			<td class="wikicell" colspan="2">text/xml</td>
+		</tr>
+		<tr>
+			<td class="wikicell">AIF</td>
+			<td class="wikicell" colspan="2">audio/x-aiff</td>
+		</tr>
+		<tr>
+			<td class="wikicell">AU</td>
+			<td class="wikicell" colspan="2">audio/basic</td>
+		</tr>
+		<tr>
+			<td class="wikicell">WAV</td>
+			<td class="wikicell" colspan="2">audio/wav</td>
+		</tr>
+		<tr>
+			<td class="wikicell">BMP</td>
+			<td class="wikicell" colspan="2">image/bmp</td>
+		</tr>
+		<tr>
+			<td class="wikicell">GIF</td>
+			<td class="wikicell" colspan="2">image/gif</td>
+		</tr>
+		<tr>
+			<td class="wikicell">JPE/JPEG/JPG</td>
+			<td class="wikicell" colspan="2">image/jpeg</td>
+		</tr>
+		<tr>
+			<td class="wikicell">JFIF</td>
+			<td class="wikicell" colspan="2">image/pjpeg</td>
+		</tr>
+		<tr>
+			<td class="wikicell">TIF</td>
+			<td class="wikicell" colspan="2">image/tiff</td>
+		</tr>
+		<tr>
+			<td class="wikicell">MPEG</td>
+			<td class="wikicell" colspan="2">video/mpeg</td>
+		</tr>
+		<tr>
+			<td class="wikicell">MOV/QT</td>
+			<td class="wikicell" colspan="2">video/quicktime</td>
+		</tr>
+		<tr>
+			<td class="wikicell">AVI</td>
+			<td class="wikicell" colspan="2">video/x-msvideo</td>
+		</tr>
+		<tr>
+			<td class="wikicell">EXE</td>
+			<td class="wikicell" colspan="2">application/octet-stream</td>
+		</tr>
+		<tr>
+			<td class="wikicell">PS</td>
+			<td class="wikicell" colspan="2">application/postscript</td>
+		</tr>
+		<tr>
+			<td class="wikicell">PDF</td>
+			<td class="wikicell" colspan="2">application/pdf</td>
+		</tr>
+		<tr>
+			<td class="wikicell">TGZ</td>
+			<td class="wikicell" colspan="2">application/x-compressed</td>
+		</tr>
+		<tr>
+			<td class="wikicell">PNG</td>
+			<td class="wikicell" colspan="2">image/x-png</td>
+		</tr>
+		<tr>
+			<td class="wikicell">ZIP</td>
+			<td class="wikicell" colspan="2">application/x-zip-compressed</td>
+		</tr>
+		<tr>
+			<td class="wikicell">GZ</td>
+			<td class="wikicell" colspan="2">application/x-gzip</td>
+		</tr>
+		<tr>
+			<td class="wikicell">DLL</td>
+			<td class="wikicell" colspan="2">application/x-msdownload</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+II. Changing the Temporary Media Directory and Blob Local Storage Path at runtime<br />
+<br />
+You can change the Temporary Media Directory and the Blob Local Storage Path at runtime for the Java generator by changing the client.cfg. For example:<br />
+TMPMEDIA_DIR=C:\Program Files\Apache Software Foundation\Tomcat 5.0\webapps\YIBLOB\TempMedia<br />
+<br />
+CS_BLOB_PATH=C:\Program Files\Apache Software Foundation\Tomcat 5.0\webapps\YIBLOB\media</p>
+
+<p>Note</p>
+
+<p>When the blob's content is restricted to images, video or audio, the use of <a href="15204.html">Image</a>, <a href="16608.html">Video</a> or <a href="16529.html">Audio</a> data types should be considered instead the blob data type.</p>
+
+<ul>
+	<li><strong>FileType</strong> property (design and runtime property)</li>
+	<li><strong>0: Inline:</strong> The blob is displayed in the form, above the upload control.</li>
+	<li><strong>1: Link:</strong> An image is displayed with a link to the Blob.</li>
+	<li>For security reasons, there are two different properties. However, GeneXus users may set them to point to the same physical directory. The Blob Local Storage Path will always be accesible to the user.</li>
+	<li>The application must have read / write permissions for these directories</li>
+	<li>In NET generator, by default, the Temp Media directory and Blob Local Storage path properties are considered to be the WEB folder under the model directory.</li>
+	<li>In Java generator, both directories must exist. That is to say, they are not automatically created by GeneXus.</li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="width: 350.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="1908.html">Transaction object</a>, <a href="6916.html">Web Panel object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Languages</strong></td>
+			<td>.NET, Java</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<p><a href="7374.html">Blobs in Base64</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6704.html">Blob data type</a></TD><TD><a href="6979.html">Blob local storage directory property</a></TD></TR><TR><TD><a href="7374.html">Blobs in Base64</a></TD><TD><a href="7232.html">Data Type property</a></TD><TD><a href="6779.html">Data types list</a></TD><TD><a href="44917.html">Files external object</a></TD></TR><TR><TD><a href="8902.html">FileTypeAttribute property</a></TD><TD><a href="47224.html">FileUpload command examples</a></TD><TD><a href="8812.html">LinkTarget property</a></TD></TR><TR><TD><a href="45291.html">Load balancing considerations</a></TD><TD><a href="9563.html">PathToURL function</a></TD><TD><a href="46412.html">Security Scanner built-in tool</a></TD><TD><a href="48428.html">Security Scanner built-in tool (GeneXus 17 upgrade 4 and prior)</a></TD></TR><TR><TD><a href="7628.html">Temp media directory property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/19/21 01:09 PM</em></font></td></TR></table></font>

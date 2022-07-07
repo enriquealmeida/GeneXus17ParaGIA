@@ -1,0 +1,45 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Append transaction redirection" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="DynamicFilters" Type="DynamicFilterAttributesElement" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="ActualFilter" Type="System.Int32" %>
+<%@ SubTemplate Name="DynamicFiltersRefresh" File="DynamicFiltersRefresh.dkt" MergeProperties="True"%>
+&DynamicFiltersOperator<%= ActualFilter.ToString() %>.Clear()
+Do Case
+<%
+	int filterIndex = 0;
+	bool includeNamesInSDTGridState = Settings.IncludeNamesInSDTGridState;
+    foreach (IFilter filter in DynamicFilters.Items)
+    {
+		if (filter.HasOperators())
+		{
+%>
+	Case &DynamicFiltersSelector<%= ActualFilter.ToString() %> = <%= includeNamesInSDTGridState ? "!'" + filter.Name.ToUpper() + "'" : filterIndex.ToString() %>
+<%
+			int operIndex = 0;
+			foreach (FilterAttributeOperatorElement oper in filter.GetOperators())
+			{
+%>
+		&DynamicFiltersOperator<%= ActualFilter.ToString() %>.AddItem(<%= operIndex.ToString() %>, <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>)
+<%
+				operIndex++;
+			}
+		}
+		filterIndex++;
+    }
+%>
+EndCase
+<%
+	if (ActualFilter + 1 <= DynamicFilters.MaxFilters)
+	{
+		int newActualFilter = ActualFilter + 1;
+%>
+If &DynamicFiltersEnabled<%= newActualFilter.ToString() %>
+<%@ CallSubTemplate DynamicFiltersRefresh ActualFilter='newActualFilter' IndentLevel='newActualFilter' IndentLevelChar='"\t"' %>
+EndIf
+<%
+	}
+%>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Symmetric Block Encryption</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42681,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Symmetric Block Encryption</h1>
+<!--Symmetric Block Encryption--><div class="TableWikiBody" id="tblwikibody"><p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: This is part of <a href="43917.html">GeneXus Cryptography Module</a>.</div>
+</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Not all available block encryptions, paddings or modes of operation are safe. Most of them are included for legacy integration compatibility. If you are planning to select an algorithm for a brand new application, </span></span></span><span style="font-size: small;"><span style="font-family: courier new;"><span style="color: rgb(255,0,0);">choose</span></span></span><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;"> wisely. Read the OWASP or NIST bibliography and recommendations if you are not certain about what to choose for your application.</span></span></span></p>
+
+<h2><a id="SymmetricBlockAlgorithm+Domain" class="HashLink" href="#SymmetricBlockAlgorithm+Domain">SymmetricBlockAlgorithm Domain</a></h2>
+
+<p><u>Values</u>:</p>
+
+<pre>
+AES, BLOWFISH, CAMELLIA, CAST5, CAST6, DES, TRIPLEDES, DSTU7624_128, DSTU7624_256, DSTU7624_512, GOST28147, NOEKEON, RC2, RC532, RC564, RC6, RIJNDAEL_128, RIJNDAEL_160, RIJNDAEL_192, RIJNDAEL_224, RIJNDAEL_256, SEED, SERPENT, SKIPJACK, SM4, TEA, THREEFISH_256, THREEFISH_512, THREEFISH_1024, TWOFISH, XTEA</pre>
+
+<ul>
+	<li>THREEFISH keys must be of the same length as the block and the input must be the same length or longer than the block</li>
+	<li>DSTU7624 the input must be of the same length or longer than the block.</li>
+</ul>
+
+<h2><a id="SymmetricBlockMode+Domain" class="HashLink" href="#SymmetricBlockMode+Domain">SymmetricBlockMode Domain</a></h2>
+
+<p><u>Values</u>:</p>
+
+<pre>
+ECB, CBC, CFB, CTR, CTS, GOFB, OFB, OPENPGPCFB, SIC, /* AEAD */ AEAD_EAX, AEAD_GCM, AEAD_CCM
+</pre>
+
+<ul>
+	<li>ECB and OPENPGPCFB do not use an IV; the IV parameter will be ignored (actually, OPENPGPCFB uses an initialization vector (IV) of all zeros).</li>
+	<li>AEAD_CCM nonce length must be between 56 and 104 bits and only applies to 128-bit blocksize ciphers; it works with 64 and 128-bit MAC sizes.</li>
+	<li>AEAD_GCM cannot be used with ciphers that have less than 128 bits block sizes; it works with 128, 120, 112, 104 and 96-bit MAC sizes.</li>
+	<li>AEAD_EAX key sizes must be 128, 192 or 256 bits long, and MAC sizes must be in a range from 8 to 128 bits (recommended: 8, 16, 64 or 128-bit MAC sizes); it only works with 64 and 128 bits blocksize ciphers.</li>
+	<li>CFB and OFB modes do not work with algorithms with 160 or 224 block lenghts.</li>
+</ul>
+
+<h2><a id="SymmetricBlockPadding+Domain" class="HashLink" href="#SymmetricBlockPadding+Domain">SymmetricBlockPadding Domain</a></h2>
+
+<p><u>Values</u>:</p>
+
+<pre>
+NOPADDING, PKCS7PADDING, ISO10126D2PADDING, X923PADDING, ISO7816D4PADDING, ZEROBYTEPADDING, WITHCTS</pre>
+
+<ul>
+	<li>NOPADDING is available, but when using this option the input must be a multiple of 8 because it will not pad the input automatically. If NOPADDING is used and the input is not a multiple of 8, it will throw a runtime exception like this: &quot;org.bouncycastle.crypto.DataLengthException: data not block size aligned.&quot;</li>
+</ul>
+
+<h2><a id="SymmetricBlockCipher" class="HashLink" href="#SymmetricBlockCipher">SymmetricBlockCipher</a></h2>
+
+<h3><a id="DoEncrypt" class="HashLink" href="#DoEncrypt">DoEncrypt</a></h3>
+
+<pre>
+SymmetricBlockCipher.DoEncrypt(symmetricBlockAlgorithm, symmetricBlockMode, symmetricBlockPadding, key, IV, plainText)</pre>
+
+<ul>
+	<li>Input symmetricBlockAlgorithm: SymmetricBlockAlgorithm Domain value</li>
+	<li>Input symmetricBlockMode: SymmetricBlockMode Domain value</li>
+	<li>Input symmetricBlockPadding: SymmetricBlockPadding Domain value</li>
+	<li>Input key: VarChar(256) hexadecimal</li>
+	<li>Input IV:  VarChar(256) hexadecimal</li>
+	<li>Input plainText: VarChar(256) It uses UTF-8 by default unless <a href="43502.html">CryptographyEncodingUtil</a> is used.</li>
+	<li>Returns: VarChar(256) Base64 encoded</li>
+</ul>
+
+<p>Encrypts the plain text with the given parameters.</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Key and IV values in this document are just examples; do not use them in your applications.</span></span></span></p>
+
+<pre>
+Example: 
+
+&amp;plainText = &quot;Lorem ipsum dolor sit amet&quot;
+&amp;key = &quot;d8367b7d71af45fdf92bcde47aad653366ffdf918350f14539bdda3d2890b69c&quot;
+&amp;IV = &quot;10dd993308d37a15b55f64a0e763f353&quot;
+
+&amp;encrypted = &amp;SymmetricBlockCipher.DoEncrypt(SymmetricBlockAlgorithm.AES, SymmetricBlockMode.CBC, SymmetricBlockPadding.PKCS7PADDING, &amp;key, &amp;IV, &amp;plainText)</pre>
+
+<h3><a id="DoDecrypt" class="HashLink" href="#DoDecrypt">DoDecrypt</a></h3>
+
+<pre>
+SymmetricBlockCipher.DoDecrypt(symmetricBlockAlgorithm, symmetricBlockMode, symmetricBlockPadding, key, IV, encryptedInput)</pre>
+
+<ul>
+	<li>Input symmetricBlockAlgorithm: SymmetricBlockAlgorithm Domain value</li>
+	<li>Input symmetricBlockMode: SymmetricBlockMode Domain value</li>
+	<li>Input symmetricBlockPadding: SymmetricBlockPadding Domain value</li>
+	<li>Input key: VarChar(256) hexadecimal</li>
+	<li>Input IV:  VarChar(256) hexadecimal</li>
+	<li>Input encryptedInput: VarChar(256) Base64 encoded</li>
+	<li>Returns: VarChar(256) It uses UTF-8 by default unless <a href="43502.html">CryptographyEncodingUtil</a> is used.</li>
+</ul>
+
+<p>Decrypts the encrypted input with the given parameters.</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Key and IV values in this document are just examples; do not use them in your applications.</span></span></span></p>
+
+<pre>
+Example:
+
+&amp;encrypted = &quot;yLpJb86/rLA/9KKylktzY9i9hfFUeFduawKwyyYUFsk=&quot;
+&amp;key = &quot;d8367b7d71af45fdf92bcde47aad653366ffdf918350f14539bdda3d2890b69c&quot;
+&amp;IV = &quot;10dd993308d37a15b55f64a0e763f353&quot;
+
+&amp;decrypted = &amp;SymmetricBlockCipher.DoDecrypt(SymmetricBlockAlgorithm.AES, SymmetricBlockMode.CBC, SymmetricBlockPadding.PKCS7PADDING, &amp;key, &amp;IV, &amp;encrypted)</pre>
+
+<h3><a id="DoAEADEncrypt" class="HashLink" href="#DoAEADEncrypt">DoAEADEncrypt</a></h3>
+
+<pre>
+SymmetricBlockCipher.DoAEADEncrypt(symmetricBlockAlgorithm, symmetricBlockMode, key, macSize, nonce, plainText)</pre>
+
+<ul>
+	<li>Input symmetricBlockAlgorithm: SymmetricBlockAlgorithm Domain value</li>
+	<li>Input symmetricBlockMode: SymmetricBlockMode Domain value</li>
+	<li>Input key: VarChar(256) hexadecimal</li>
+	<li>Input macSize: Numeric(9.0) bit</li>
+	<li>Input nonce: VarChar(256) hexadecimal</li>
+	<li>Input plainText: VarChar(256) It uses UTF-8 by default unless <a href="43502.html">CryptographyEncodingUtil</a> is used.</li>
+	<li>Returns: VarChar(256) Base64 encoded</li>
+</ul>
+
+<p>Encrypts the plain text with the given parameters using AEAD type mode of operation.</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Key and nonce values in this document are just examples; do not use them in your applications.</span></span></span></p>
+
+<pre>
+Example:
+
+&amp;plainText = &quot;Lorem ipsum dolor sit amet&quot;
+&amp;key = &quot;d8367b7d71af45fdf92bcde47aad653366ffdf918350f14539bdda3d2890b69c&quot;
+&amp;nonce = &quot;10dd993308d37a15b55f64a0e763f353&quot;
+
+&amp;encrypted = &amp;SymmetricBlockCipher.DoAEADEncrypt(SymmetricBlockAlgorithm.AES, SymmetricBlockMode.AEAD_EAX, &amp;key, 128, &amp;nonce, &amp;plainText)</pre>
+
+<h3><a id="DoAEADDecrypt" class="HashLink" href="#DoAEADDecrypt">DoAEADDecrypt</a></h3>
+
+<pre>
+SymmetricBlockCipher.DoAEADDecrypt(symmetricBlockAlgorithm,  symmetricBlockMode, key, macSize, nonce, encryptedInput)</pre>
+
+<ul>
+	<li>Input symmetricBlockAlgorithm: SymmetricBlockAlgorithm Domain value</li>
+	<li>Input symmetricBlockMode: SymmetricBlockMode Domain value</li>
+	<li>Input key: VarChar(256) hexadecimal</li>
+	<li>Input macSize: Numeric(9.0) bit</li>
+	<li>Input nonce: VarChar(256) hexadecimal</li>
+	<li>Input encryptedInput: VarChar(256) Base64 encoded</li>
+	<li>Returns: VarChar(256) It uses UTF-8 by default unless <a href="43502.html">CryptographyEncodingUtil</a> is used.</li>
+</ul>
+
+<p>Decrypts the encrypted input with the given parameters using AEAD type mode of operation.</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Key and nonce values in this document are just examples; do not use them in your applications.</span></span></span></p>
+
+<pre>
+Example:
+
+&amp;encrypted = &quot;7TZOJ29QeyA5pkSHKdPKVmG35HWzG/rZrVPZjMK0XLVJB6hMfpjH9Mdo&quot;
+&amp;key = &quot;d8367b7d71af45fdf92bcde47aad653366ffdf918350f14539bdda3d2890b69c&quot;
+&amp;nonce = &quot;10dd993308d37a15b55f64a0e763f353&quot;
+
+&amp;decrypted = &amp;SymmetricBlockCipher.DoAEADDecrypt(SymmetricBlockAlgorithm.AES, SymmetricBlockMode.AEAD_EAX, &amp;key, 128, &amp;nonce, &amp;encrypted)</pre>
+
+<h2><a id="Implementation+-+specific+details" class="HashLink" href="#Implementation+-+specific+details">Implementation - specific details</a></h2>
+
+<ul>
+	<li>IV size must be the same as the block size</li>
+</ul>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<thead>
+		<tr>
+			<th scope="col">Algorithm</th>
+			<th scope="col">Key size(bits)</th>
+			<th scope="col">Block size (bits)</th>
+			<th scope="col">Comments</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>AES</td>
+			<td>128, 192, 256</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>BLOWFISH</td>
+			<td>up to 448</td>
+			<td>64</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>CAMELLIA</td>
+			<td>128, 192, 256</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>CAST5</td>
+			<td>up to 128</td>
+			<td>64</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>CAST6</td>
+			<td>up to 256</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>DES</td>
+			<td>64</td>
+			<td>64C</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>TRIPLEDES</td>
+			<td>128, 192</td>
+			<td>64</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>DSTU7624_128</td>
+			<td>128</td>
+			<td>128</td>
+			<td>
+			<p>Input must be of the same length or longer than the block</p>
+			</td>
+		</tr>
+		<tr>
+			<td>DSTU7624_256</td>
+			<td>256</td>
+			<td>256I</td>
+			<td>
+			<p>Input must be of the same length or longer than the block</p>
+
+			<p>Cannot be used with AEAD modes</p>
+			</td>
+		</tr>
+		<tr>
+			<td>DSTU7624_512</td>
+			<td>512</td>
+			<td>512</td>
+			<td>
+			<p>Input must be of the same length or longer than the block</p>
+
+			<p>Cannot be used with AEAD modes</p>
+			</td>
+		</tr>
+		<tr>
+			<td>GOST28147</td>
+			<td>256</td>
+			<td>64C</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>NOEKEON</td>
+			<td>128</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>RC2</td>
+			<td>up to 1024</td>
+			<td>64C</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>RC6</td>
+			<td>up to 256</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>RC532</td>
+			<td>up to 128</td>
+			<td>64</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>RIJNDAEL_128</td>
+			<td>128, 160, 224, 256</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>RIJNDAEL_160</td>
+			<td>128, 160, 224, 256</td>
+			<td>160</td>
+			<td>Only supports EAX of the AEAD modes</td>
+		</tr>
+		<tr>
+			<td>RIJNDAEL_192</td>
+			<td>128, 160, 224, 256</td>
+			<td>192 </td>
+			<td>Only supports EAX of the AEAD modes</td>
+		</tr>
+		<tr>
+			<td>RIJNDAEL_224</td>
+			<td>128, 160, 224, 256</td>
+			<td>224</td>
+			<td>Only supports EAX of the AEAD modes</td>
+		</tr>
+		<tr>
+			<td>RIJNDAEL_256</td>
+			<td>128, 160, 224, 256</td>
+			<td>256</td>
+			<td>Only supports EAX of the AEAD modes</td>
+		</tr>
+		<tr>
+			<td>SEED</td>
+			<td>128</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>SERPENT</td>
+			<td>128, 192, 256</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>SKIPJACK</td>
+			<td>128</td>
+			<td>128</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>TEA</td>
+			<td>128</td>
+			<td>64</td>
+			<td>Cannot be used with AEAD modes</td>
+		</tr>
+		<tr>
+			<td>THREEFISH_256</td>
+			<td>256</td>
+			<td>256</td>
+			<td>
+			<p>Key length must be the same as the block</p>
+
+			<p>Input must be of the same length or longer than the block</p>
+
+			<p>Cannot be used with AEAD modes</p>
+			</td>
+		</tr>
+		<tr>
+			<td>THREEFISH_512</td>
+			<td>512</td>
+			<td>512</td>
+			<td>
+			<p>Key length must be the same as the block</p>
+
+			<p>Input must be of the same length or longer than the block</p>
+
+			<p>Cannot be used with AEAD modes</p>
+			</td>
+		</tr>
+		<tr>
+			<td>THREEFISH_1024</td>
+			<td>1024</td>
+			<td>1024</td>
+			<td>
+			<p>Key length must be the same as the block</p>
+
+			<p>Input must be of the same length or longer than the block</p>
+
+			<p>Cannot be used with AEAD modes</p>
+			</td>
+		</tr>
+		<tr>
+			<td>TWOFISH</td>
+			<td>128, 192, 256</td>
+			<td>128</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>XTEA</td>
+			<td>128</td>
+			<td>64</td>
+			<td>Cannot be used with AEAD modes.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+</p>
+<br />
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/16/21 08:12 PM</em></font></td></TR></table></font>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Grids with Multiple Selection for Native Mobile Applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16149,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Grids with Multiple Selection for Native Mobile Applications</h1>
+<!--Grids with Multiple Selection for Native Mobile Applications--><div class="TableWikiBody" id="tblwikibody"><p>GeneXus lets you define that a <a href="24817.html">Grid</a> has multiple selecction, and then lets you scan all the selected items in the Grid with the <strong>for each selected line</strong> command. The code to execute an action on all selected items will look as follows.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each selected line [in &lt;GridName&gt;]
+     &lt;<em>action or set of actions to execute for each item</em>&gt;
+endfor
+</pre>
+
+<h2><a id="Adding+multiple+selections" class="HashLink" href="#Adding+multiple+selections">Adding multiple selections</a></h2>
+
+<p>To further explain the use of multiple selection actions, suppose that you have a set of customers and you want to apply a tax of 25% for some of them depending on their total amount.</p>
+
+<h3><a id="Step+1+-+Setting+the+UI+behavior" class="HashLink" href="#Step+1+-+Setting+the+UI+behavior">Step 1 - Setting the UI behavior</a></h3>
+
+<p>Previously, create a Customer <a href="1908.html">Transaction object</a> as follows and apply the WorkWithDevices pattern.</p>
+
+<p><img src="./images/36211.png" id="36211" class="WikiImage"/></p>
+
+<p>In the Grid control from the List section of WorkWithDevicesCustomer, set the following properties:</p>
+
+<ul>
+	<li><a href="20424.html">Default Action property</a> = &lt;default&gt;<br />
+	In this case, the end-user is able to see the Detail section of the WorkWithDevicesCustomer when tapping in a register.<br />
+	 </li>
+	<li><a href="36197.html">Enable Multiple Selection property</a> = True<br />
+	For allowing multiple selections over the Customer grid in the List Node.<br />
+	 </li>
+	<li><a href="36199.html">Show Selector property</a> = Always<br />
+	It sets the user interface behavior for multiple item selections as always show its selector.</li>
+</ul>
+
+<p><img src="./images/36212.jpg" id="36212" class="WikiImage"/></p>
+
+<h3><a id="Step+2+-+Creating+the+action" class="HashLink" href="#Step+2+-+Creating+the+action">Step 2 - Creating the action</a></h3>
+
+<p>Create a new action called &quot;Add tax&quot; (right-click on the Application Bar &gt; Insert Button).</p>
+
+<p><img src="./images/36213.jpg" id="36213" class="WikiImage"/></p>
+
+<p>This action will perform an <em>ApplyTax procedure</em> for updating the CustomerAmount by adding interest of 25% on the selected items. In this procedure, you have to write the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each
+     CustomerAmount = CustomerAmount * 1.25
+endfor</pre>
+
+<p>The procedure must have a <a href="6862.html">Parm rule</a> as it is shown below for automatically filtering the items in the for each command.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:CustomerId);
+</pre>
+
+<h3><a id="3.+Writing+the+action+execution+code" class="HashLink" href="#3.+Writing+the+action+execution+code">3. Writing the action execution code</a></h3>
+
+<p>Finally, you have to write the section code associated with the action 'Add tax' on the <em>Event section</em> as follows.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Add tax'
+     Composite
+          For each selected line in Grid1
+               ApplyTax(CustomerId)
+          Endfor
+          Refresh
+     EndComposite
+EndEvent</pre>
+
+<p><strong>Note</strong>:</p>
+
+<ul>
+	<li>For SDT or BC collection based Grids, the way to access to each item is by the CurrentItem runtime property.<br />
+	For example:</li>
+</ul>
+
+<pre class="Code" style="margin-left: 40.0px;">
+For each selected line in Grid1
+    ApplyTax(&amp;Customer.CurrentItem.CustomerId)
+Endfor</pre>
+
+<p style="margin-left: 40.0px;">where &amp;Customer is a variable based on an SDT or BC item.</p>
+
+<h2><a id="Application+runtime+behavior" class="HashLink" href="#Application+runtime+behavior">Application runtime behavior</a></h2>
+
+<p>1. You have to select the items that you would like to update. Every item can be selected by tapping on the left check-box.<br />
+<img src="./images/36214.jpg" id="36214" class="WikiImage"/></p>
+
+<p>2. Once you finish the selection, tap on &quot;Add tax&quot; action for executing the action to apply the 25% tax interest.<br />
+<img src="./images/36215.jpg" id="36215" class="WikiImage"/></p>
+
+<p>3. After the refresh of the device, you can see the total amount has changed correctly.<br />
+<img src="./images/36216.jpg" id="36216" class="WikiImage"/></p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>If you have an action with several <strong>for each selected line</strong> over different Grids, the behavior of the User Interface is the platform default.</li>
+	<li>An attribute used in a <strong>for each selected line</strong> command must be present in the grid on the form to work correctly.</li>
+	<li>In the <strong>for each selected line in &lt;grid&gt;</strong> command, the grid's name is optional when you have only one grid in the SD Panel or WorkWithDevices object.</li>
+	<li>If the grid row theme class has highlighted background color, this color will be used to mark the selected items.</li>
+	<li>For Android devices, the selection user interface may depend on the operating system version.</li>
+</ul>
+
+<p><br />
+</p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24332.html">Client-side Events in Native Mobile Applications</a></TD></TR><TR><TD><a href="36197.html">Enable Multiple Selection property</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD><TD><a href="36234.html">Select method</a></TD><TD><a href="36232.html">SelectedItem property</a></TD><TD><a href="36203.html">Selection Flag Field Specifier property</a></TD></TR><TR><TD><a href="36202.html">Selection Flag property</a></TD><TD><a href="24120.html">Selection Type property</a></TD></TR><TR><TD><a href="36199.html">Show Selector property</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/08/21 12:10 PM</em></font></td></TR></table></font>

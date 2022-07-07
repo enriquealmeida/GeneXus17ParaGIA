@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Creating New Repositories from a GAM deploy tool package</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20328,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Creating New Repositories from a GAM deploy tool package</h1>
+<!--HowTo: Creating New Repositories from a GAM deploy tool package--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>There are some scenarios where we need to create repositories without the presence of a user, that is: using the <a href="16535.html">GAM API</a>.</p>
+
+<p>To achieve this, we must be able to execute a process capable of the creation of a repository and initialize it with certain users, roles and permissions, and afterwards, if needed, leave the user connected to that repository created.</p>
+
+<p>One possible scenario where such functionality becomes necessary are multi-tenant applications, where it is possible to create a repository with different <a href="https://wiki.genexus.com/commwiki/wiki?18678,," target="_blank">Repository Namespace</a> for each company, with the corresponding <a href="16150.html">GAM Repository Connections</a>. <br />
+In order to do this, the CreateRepositoryFromPackage method of GAM object is used. </p>
+
+<h3><a id="CreateRepositoryFromPackage+GAM+method+" class="HashLink" href="#CreateRepositoryFromPackage+GAM+method+">CreateRepositoryFromPackage GAM method </a></h3>
+
+<p>Here we show the steps to be followed:</p>
+
+<ul>
+	<li>Create a pack (Export) with the <a href="18608.html">GAM Deploy Tool</a>, containing all the information necessary for initializing the repository to be created (users, roles, permissions, etc.). </li>
+</ul>
+
+<ul>
+	<li>Decompress the pack generated (.gpkg file) with any tool (for example: winzip), you need to decompress the Data directory only, which has all the information regarding the pack (.json files). This folder must be set in the &amp;GAMImportRepositoryConfiguration.PackageDirectoryPath, (see example below).<br />
+	 </li>
+	<li>Update the <a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,4,61,O,E,0,,30451'>connection.gam</a> file to include the <a href="16150.html">GAM Repository Connections</a> to the <a href="18617.html">GAM Manager Repository</a>, because it is required to perform a connection to the GAM Manager Repository before executing the CreateRepositoryFromPackage method. You can see how to do it, <a href="18625.html">HowTo: Connecting to GAM Manager Repository</a>.</li>
+</ul>
+
+<ul>
+	<li>Create a procedure for the configuration and creation of the new repository.<br />
+	Such procedure must include the following steps:
+	<ul>
+		<li>The first thing to do is connect to the <a href="18617.html">GAM Manager Repository</a>.<br />
+		 </li>
+		<li>Set the data of the repository to be created (GUID, NameSpace, Description, etc.)<br />
+		This is done in an SDT based on the<em> GAMRepositoryCreate</em> data type. <br />
+		<strong>Important:</strong>
+		<ul>
+			<li>Note that you need to specify a user name and user password which will be newly created, this user will be an administrator of the Repository which is being created. This user will be associated to the Role that you indicate to be the administrator Role of the package being imported.The administrator Role is indicated through the <em>GAMImportRepositoryConfiguration</em> SDT, explained below.</li>
+			<li>In this step you also specify a connection user and connection password, so a new <a href="16150.html">GAM Repository Connections</a> will be created for the new repository, with the information given.<br />
+			 </li>
+		</ul>
+		</li>
+		<li>Perform the configuration of the repository.<br />
+		Here you can indicate the location of the pack with the data for initializing it. This is done in an SDT based on the <em>GAMImportRepositoryConfiguration</em>. In this step you need to indicate the GUID of the administrator Role of the package, by executing &amp;GAMImportRepositoryConfiguration.AdministratorRole = &lt;GUID&gt;.<br />
+		In this step you also specify if you want to update the connection.gam file with the <a href="16150.html">GAM Repository Connections</a> created.<br />
+		Note: In case that the application is running in a load balancing environment, only the connection.gam of the node of the cluster where the program executes is updated. The connection.gam has to be replicated manually to the other nodes of the cluster.<br />
+		 </li>
+		<li>Perform the creation of the repository by executing the CreateRepositoryFromPackage method of GAM External Object.<br />
+		<br />
+		<img src="./images/20475.png" id="20475" class="WikiImage"/><br />
+		 </li>
+		<li>If needed, do the connection of the newly-created repository. You need to have updated the connection.gam file if you want to connect to the new repository. The login to the new repository (*) will work only if any of the <a href="15910.html">GAM Applications</a> imported in this new repository have the same GUID as the Application GUID specified in the application.gam file of the running application.</li>
+	</ul>
+	</li>
+</ul>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>The code below shows how to program a procedure including all the steps described for creating a repository with the GAM’s API, and leaving the user connected to the repository created.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// SetConnection to the GAM Manager Repository 
+&amp;isOK = GAM.SetConnection('GAM-Manager', &amp;Errors)
+
+// New Repository Data
+&amp;GAMRepositoryCreate.GUID = &amp;GAMGUID //&amp;GAMGUID is GAMGUID data type
+&amp;GAMRepositoryCreate.NameSpace = 'TestNameSpace'
+&amp;GAMRepositoryCreate.CanRegisterUsers = true
+&amp;GAMRepositoryCreate.GiveAnonymousSession = true
+&amp;GAMRepositoryCreate.Name = 'TestName'
+&amp;GAMRepositoryCreate.Description = 'Test Description'
+//Administrator user which is going to be created in the repository
+&amp;GAMRepositoryCreate.AdministratorUserName = 'admin'
+&amp;GAMRepositoryCreate.AdministratorUserPassword = 'admin123'
+//Connection user which is going to be created in the new repository
+&amp;GAMRepositoryCreate.ConnectionUserName = 'test'
+&amp;GAMRepositoryCreate.ConnectionUserPassword = 'test123'
+&amp;GAMRepositoryCreate.AllowOauthAccess = true
+
+// New Repository Configuration
+&amp;GAMImportRepositoryConfiguration.PackageDirectoryPath = &amp;PackageDirectoryPath // for example: 'C:\GAM\Data'
+&amp;GAMImportRepositoryConfiguration.RepositoryCreate = &amp;GAMRepositoryCreate
+&amp;GAMImportRepositoryConfiguration.UpdateConnectionFile = true //do you want to update the connection.gam file online?
+&amp;GAMImportRepositoryConfiguration.AdministratorRole = '9c4dcb46-3a86-4a3f-85fb-04a25f91f87c' //GAM GUID of &quot;Administrator&quot; Role in the package
+
+// New Repository creation
+&amp;isOK = GAM.CreateRepositoryFromPackage(&amp;GAMImportRepositoryConfiguration, &amp;Errors) //&amp;Errors is collection of GAMError
+do &quot;Process Errors&quot;
+
+//If needed, SetConnection to the New Repository
+&amp;isOK = GAM.SetConnection('TestName', &amp;Errors)
+do &quot;Process Errors&quot;
+
+// Login to the New Repository (*) if needed
+&amp;isOK = GAMRepository.Login(&amp;User, &amp;Password, &amp;AdditionalParameter, &amp;Errors)
+do &quot;Process Errors&quot;
+
+Sub &quot;Process Errors&quot;
+For &amp;Error in &amp;Errors
+ Msg(Format(!&quot;%1 (GAM%2)&quot;, &amp;Error.Message, &amp;Error.Code))
+EndFor
+EndSub</pre>
+
+<h4><a id="Note" class="HashLink" href="#Note">Note</a></h4>
+
+<p>1. CreateRepositoryFromPackage method does not create the GAM database tables. The GAM has to exist with its structure and its metadata (the <a href="18617.html">GAM Manager Repository</a> has to exist in the GAM database).<br />
+One possible way to create the GAM database structure and initialize its metadata is by running the <a href="18608.html">GAM Deploy Tool</a> and selecting the &quot;Create GAM database tables&quot; option.</p>
+
+<p>2.  For security reasons, the method should be executed after the user logs in as an administrator user of GAM-Manager Repository. The Genexus user has to make the final user to login with an administrator user of GAM Manager Repository. If the object which executes the method requires authentication, and if the user is not logged in, when you establish the connection to GAM Manager the login will be requested, and the user will have to login with the credentials of an administrator user of GAM Manager Repository.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="20929.html">HowTo: Update a repository from a GAM deploy tool package</a><br />
+<a href="18642.html">HowTo: Creating New Repositories</a></p>
+
+<p><br />
+<span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span></p>
+
+<p><span style="line-height: 1.6em;"></span></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18642.html">HowTo: Creating New Repositories</a></TD><TD><a href="20929.html">HowTo: Update a repository from a GAM deploy tool package</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

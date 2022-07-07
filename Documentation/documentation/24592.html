@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Unique Clause</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24592,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Unique Clause</h1>
+<!--Unique Clause--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Allows to specify attributes that should not have duplicated values in the output of the corresponding query.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p style="margin-left: 40.0px;"><strong>unique</strong> <em>&lt;attributeList&gt;</em></p>
+
+<p>where:</p>
+
+<p><em>&lt;attributeList&gt;</em></p>
+
+<p style="margin-left: 40.0px;">list of attributes (including <a href="6440.html">formula attributes</a>) that are going to be processed together —only once in the output. Thus, if two or more records have the same values for that list of attributes, only one of them is taken into account. The attributes should belong to the extended table corresponding to the query and place restrictions on the other attributes than can be used at that level (eg the other for each command attributes): those other attributes also have to assume unique values based on the values of the <em>&lt;attributeList&gt;</em>. That is to say: they have to be unique, as well (will be explained below, by means of some examples). </p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>There are two scenarios:</p>
+
+<ul>
+	<li>simple one: to avoid duplicates. For example, we need to list all the dates for which we have invoices, without repeating dates: </li>
+</ul>
+
+<pre class="Code" style="margin-left: 80.0px;">
+for each Invoice
+<strong>unique InvoiceDate</strong>
+   print datePB //print block with InvoiceDate attribute
+endfor</pre>
+
+<ul>
+	<li>more complex: to show groups of data with aggregation. For example, if we need to list for each invoice date, the total amount for all the invoices of that date:</li>
+</ul>
+
+<pre class="Code" style="margin-left: 80.0px;">
+for each Invoice
+<strong>unique InvoiceDate</strong>
+   &amp;total = Sum( InvoiceTotal)
+   print totalbyDate //print block with: InvoiceDate, &amp;total
+endfor</pre>
+
+<p style="margin-left: 40.0px;">Here the for each base table is the same as the <a href="6500.html">Sum</a> aggregate inline formula base table. Thus, the formula will add from the context an implicit condition for the evaluation: it will sum all the invoices for the <strong>given unique attribute</strong>, InvoiceDate, as the navigation report shows:</p>
+
+<p style="margin-left: 80.0px;"><img src="./images/25508.jpg" id="25508" class="WikiImage"/></p>
+
+<h3><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h3>
+
+<ol>
+	<li>Expressions are not allowed in the attributes list of the unique clause (eg &quot;unique CustomerBirthDate.Year()&quot;).</li>
+	<li><span style="line-height: 1.6em;">Only attributes that have a unique value from those of the unique clause can be included in </span><strong style="line-height: 1.6em;">the body</strong><span style="line-height: 1.6em;"> of the For Each command or the Data provider group statement, outside aggregate formulas. By 'body' we mean the code related to each iteration, which leaves out the clauses order, using, where, etc. That is, the restriction applies once the records are filtered, ordered, etc. For the resulting set, is executed the body code. </span></li>
+	<li>There can be no nesting levels. For now it can not be used to implement control breaks.</li>
+</ol>
+
+<h4><a id="Restrictions+examples" class="HashLink" href="#Restrictions+examples">Restrictions examples</a></h4>
+
+<p>Consider the following example (where InvoiceId attribute is not unique for that records that have a given value for InvoiceDate):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each Unique <strong>InvoiceDate</strong>
+    print PB //print block with: InvoiceDate, InvoiceId
+Endfor</pre>
+
+<p>This example will throw an error at specification time, because InvoiceId attribute has not a unique value for InvoiceDate.</p>
+
+<p>The specifier always indicates whether the For Each is valid. Otherwise, it throws an error as the following:</p>
+
+<p><em>error: spc0206: Cannot reference attribute(s) InvoiceId unless they are referenced in Unique clause in group starting at line 11.</em></p>
+
+<p>In case of formulas, the rule is that:</p>
+
+<ul>
+	<li><a href="5864.html">Horizontal Formulas</a> included in the body of the For Each: the attributes of the formula have to be reachable with a unique value from the attributes of the unique clause.</li>
+	<li><a href="5868.html">Aggregate Formulas</a>: the attributes of the formula do not need to be reachable with a unique value from the attributes of the unique clause.</li>
+</ul>
+
+<p>That is why the following example is valid. We want to print, for each customer with invoices from a certain date, his/her name and the total amount of those invoices:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each Invoice
+<strong>unique CustomerName</strong>
+where <strong>InvoiceDate</strong> &gt;= &amp;fromDate
+   &amp;total = Sum( InvoiceTotal, <strong>InvoiceDate</strong>&gt;=&amp;fromDate)
+   print customerInfo //printblock with: CustomerName, &amp;total
+endfor</pre>
+
+<p>Note InvoiceDate is not reachable with a unique value from CustomerName, but InvoiceDate is not in the body of the for each, outside an aggregate formula. It is only in the where clause, acting as a filter to obtain the records over with the body code itself will be executed. It is also in the Sum definition, indicating a filter over the records to be navigated in order to evaluate the formula.</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td>Commands: </td>
+			<td><a href="24744.html">For Each command</a>, <a href="25082.html">Data provider Group statement</a></td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="24593.html">Unique clause in For Each command</a> for more examples</li>
+	<li><a href="24594.html">Unique clause in Data Providers</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?23811,," target="_blank">Option Distinct clause</a> (replaced by Unique clause, maintained for compatibility reasons)</li>
+</ul>
+
+<p></p>
+
+<p> </p>
+
+<p></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5868.html">Aggregate Formulas</a></TD><TD><a href="25082.html">Data provider Group statement</a></TD><TD><a href="24744.html">For Each command</a></TD></TR><TR></TR><TR><TD><a href="5100.html">Order Clause Specification</a></TD><TD><a href="24594.html">Unique clause in Data Providers</a></TD><TD><a href="24593.html">Unique clause in For Each command</a></TD></TR><TR><TD><a href="39891.html">Unique property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

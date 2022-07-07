@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Parameter encryption on Dynamic calls</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?29842,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Parameter encryption on Dynamic calls</h1>
+<!--Parameter encryption on Dynamic calls--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Applies to <a href="https://wiki.genexus.com/commwiki/wiki?30520,," target="_blank">GeneXus X Evolution 3 Upgrade 8</a> and higher versions.</p>
+
+<p>When invocating (using a <a href="16224.html">Call method</a> or link) a Web object (<a href="6916.html">Web Panel</a>, <a href="1908.html">Transaction</a>, <a href="6293.html">Procedure</a> as HTTP) that receives parameters, their encryption depends on the <a href="8068.html">Encrypt URL Parameters property</a> value.</p>
+
+<p>You can set this property at object or Environment level (this option is available to determine the default value for objects included in the <a href="1836.html">Knowledge Base</a>).</p>
+
+<p>If the called object has the <a href="8068.html">Encrypt URL Parameters property</a> set as <strong>Session Key or Site Key</strong>, the parameters will be encrypted. Otherwise, if the property is set to <strong>No</strong>, they won't.</p>
+
+<h3><a id="What+happens+when+you+have+Dynamics+calls%2Flinks%3F" class="HashLink" href="#What+happens+when+you+have+Dynamics+calls%2Flinks%3F">What happens when you have Dynamics calls/links?</a></h3>
+
+<p>At first, you don't know what object will be called, so you can't possibly infer the <a href="8068.html">Encrypt URL Parameters property</a> value.</p>
+
+<p><span style="background-color: rgb(255,215,0);">Then, the default behavior is that dynamic calls are not encrypted.</span></p>
+
+<p>However, that behavior can be changed using the config.gx file. Only one of the following entries can be added to the config.gx file, which means that the dynamic calls will be encrypted using Session or Site Key, respectively.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+EncryptDynCalls=SESSION 
+EncryptDynCalls=SITE </pre>
+
+<p>If none of these entries is included in the config.gx file, the behavior is the default (no encryption is done).</p>
+
+<p>Tip: when using Call command and generating Java: remember to use fully qualified object name to be called. That is: to include package name before object name (e.g. &quot;com.myapp.myobject&quot;). </p>
+
+<h4><a id="Compatibility+Note" class="HashLink" href="#Compatibility+Note">Compatibility Note</a></h4>
+
+<p>From GeneXus X Evolution 3 Upgrade 4 until Upgrade 7, the <a href="8068.html">Encrypt URL Parameters property</a> value at Environment level used to be considered as a criterion to encrypt the dynamic calls. To keep the previous behavior use the config.gx file.</p>
+
+<h3><a id="What+about+the+wiki%3F8223%2CExpand%2BDynamic%2BCalls%2BModel%2BProperty%2B%2528GeneXus%2B9.0%2529+Expand+Dynamic+Calls+Property+" class="HashLink" href="#What+about+the+wiki%3F8223%2CExpand%2BDynamic%2BCalls%2BModel%2BProperty%2B%2528GeneXus%2B9.0%2529+Expand+Dynamic+Calls+Property+">What about the <a href="https://wiki.genexus.com/commwiki/wiki?8223,," target="_blank">Expand Dynamic Calls Property</a> </a></h3>
+
+<p>If the <a href="https://wiki.genexus.com/commwiki/wiki?8223,," target="_blank">Expand Dynamic Calls Property</a> value is <strong>No</strong>, the behavior is the same as mentioned before.</p>
+
+<p>However, if the property value is <strong>Yes</strong>, the behavior is as described below.</p>
+
+<p>When you have Dynamics calls/links, an attempt to establish a group of objects to invocate (based on parameters, types, etc. of the call and objects) is made.</p>
+
+<p>Then, in the caller object, a code structure is generated calling every possible object from the group, making the parameter encryption based on the called object <a href="8068.html">Encrypt URL Parameters property</a> value. This behavior is the same as that of a Static call (a 'weak reference' is generated and can be seen from the <a href="5272.html">IDE</a> References).</p>
+
+<p><em>Note: The code structure is an If's structure that includes an Otherwise to resolve all the cases where the called object is not contemplated. For this case, the criterion is the same as when </em>Expand Dynamic Calls Property = No. <em>So, use the config.gx file if you need to encrypt the parameters of those calls that are going to be considered inside the Otherwise group.</em></p>
+
+<h3><a id="What+if+you+invocate+wiki%3F5669%2CCategory%253AExternal%2Bobject+External+objects+dynamically+" class="HashLink" href="#What+if+you+invocate+wiki%3F5669%2CCategory%253AExternal%2Bobject+External+objects+dynamically+">What if you invocate <a href="5669.html">External objects</a> dynamically </a></h3>
+
+<p>If you have <a href="5669.html">External objects</a> (as an object from other <a href="1836.html">Knowledge Base</a>), the <a href="https://wiki.genexus.com/commwiki/wiki?8223,," target="_blank">Expand Dynamic Calls Property</a> value doesn't matter, this is because:</p>
+
+<p>If the property value is <strong>No</strong>, the parameters won't be encrypted by default, unless the config.gx file is configured.</p>
+
+<p>On the other hand, if the property value is <strong>Yes</strong>, it will be contemplated in the Otherwise case so the parameters won't be encrypted either (unless the config.gx file is configured as when the property value is No).</p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

@@ -1,0 +1,96 @@
+delimiters "$", "$"
+
+init(ws, today)::=<<
+{
+"userSays": [
+ $ws.DialogsTriggers:{example|$userSays(example)$};separator="\r\n,"$ 
+  ],
+  "id": "$ws.Id$",
+  "parentId": $NullIfEmptyString(ws.ParentIdString)$,
+  "rootParentId": $NullIfEmptyString(ws.RootParentIdString)$,
+  "name": "$ws.Name$",
+  "auto": true,
+  "contexts": [$if(ws.ContextsIn)$$ws.ContextsIn:{context|$contextIn(context)$};separator=","$ $endif$],
+  "responses": [
+  $ws.ReturnThis:{response|$response(response, ws)$};separator="\r\n,"$ 
+  ],
+  "priority": 500000,
+  "webhookUsed": true,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": [{
+		  "name": "$ws.Event$" 
+	}]
+}
+>>
+
+contextIn(context)::=<<
+ "$context$"
+>>
+
+contexts(context)::=<<
+ {
+          "name": "$context$",
+          "parameters": {},
+          "lifespan": 20
+  }
+>>
+
+userSays(message)::=<<
+		{
+			"id": "$message.Id$",	
+			"data": [
+				$message.Parts:{part|$messageData(part)$};separator="\r\n,"$
+			],
+			"count": 0
+		}
+>>
+
+messageData(part)::=<<
+	{
+		"text": "$part.Message$"$if(part.Parameter)$,$endif$
+		$if(part.Parameter)$"alias": "$part.Parameter$",$endif$
+		$if(part.Entity)$"meta" : "$part.Entity$",$endif$
+		$if(part.Parameter)$"userDefined": true$endif$
+	}
+>>
+
+response(r, ws)::=<<
+{
+	 "resetContexts": false,
+     "action": "$r.CustomActionName$",
+     "affectedContexts": [$ws.ContextsOut:{context|$contexts(context)$};separator="\r\n,"$],
+	 "parameters": [
+	 $r.APISlots:{param|$parameter(param, ws)$};separator="\r\n,"$ 
+	 ],
+	 "messages": [ $r.Responses:{response|$responses(response, ws)$};separator=", "$ 
+	 ]
+}
+>>
+
+parameter(p, ws)::=<<
+{
+    "required": $p.IsRequired$,
+    "dataType": "$p.GetEntity$",
+    "name": "$p.Name$",
+	$if(p.GetValueFormatted)$"defaultValue": "$p.GetValueFormatted$",$endif$
+    "prompts": [ $p.FormattedMessages:{message|"$message$"};separator=","$],
+	"isList" : $p.IsCollection$
+}
+>>
+
+responses(response, ws)::=<<
+	$response.ResponsesFormatted:{message|$messages(message, ws)$};separator="\r\n,"$
+>>
+
+messages(msg, ws)::=<<
+{
+    "type": 0,
+    "lang": "$ws.InternalInstanceLanguageTag$",
+	"speech": "$msg$"
+}
+>>
+
+NullIfEmptyString(value)::=<%
+$if(value)$"$value$"$else$null$endif$
+%>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>XML DSig Signer</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?43579,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">XML DSig Signer</h1>
+<!--XML DSig Signer--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: This object is part of <a href="43917.html">GeneXus Cryptography Module</a> and performs XML signing and XML signature verification for the XML Digital Signature standard..</div>
+</p>
+
+<p><u><strong>Valid Private Key </strong></u><u><strong>Formats</strong></u></p>
+
+<ul>
+	<li>Encoded Base64 key PKCS8 formatted (.pem extension). It can contain a public key, private key or both.  
+	<ul>
+		<li>Encrypted .pem files are not admitted.</li>
+		<li>Encrypted PKCS8 private keys are admitted since GeneXus 17 Upgrade 2</li>
+		<li>Files with .key extensions are supported since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a></li>
+	</ul>
+	</li>
+	<li>DER certificate (.crt or .cer extension). It contains only public keys.</li>
+	<li>PKCS12 certificate or keystore (.p12 or .pfx or .jks extension). It contains only private keys or both.
+	<ul>
+		<li>JKS format (JavaKeyStore) is available only for Java implementation.</li>
+		<li>For PKCS12 certificates the file password is needed for both Java and .Net implementations.</li>
+		<li>.Net implementation does not use the PKCS12 alias; it takes the public key from the first certificate on the certificate chain and the first default private key listed on the file.</li>
+		<li>Files with .pkcs12 extensions are supported since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a></li>
+	</ul>
+	</li>
+	<li>Every certificate must implement the X509 standard.</li>
+</ul>
+
+<p><u><strong>Available signature algorithms:</strong></u></p>
+
+<ul>
+	<li>RSA with
+	<ul>
+		<li>SHA1</li>
+		<li>SHA256</li>
+		<li>SHA512</li>
+	</ul>
+	</li>
+	<li>Just for Java; ECDSA with
+	<ul>
+		<li>SHA1</li>
+		<li>SHA256</li>
+	</ul>
+	</li>
+	<li>The algorithm is given by the configured certificate in DoSign parameters.</li>
+	<li>.Net Framework <a href='https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.xml?view=netframework-4.8'>System.Security.Cryptography.Xml</a><a href='https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.xml.signedxml?view=netframework-4.8'>.SignedXml</a> does not provide support for signatures based on Elliptic Curves.
+	<ul>
+		<li>If an ECDSA certificate is loaded on the XmlDSigSigner, the functions will return an Error with Code DS004 and Description &quot;XML signature with ECDSA keys is not implemented on Net Framework.&quot;</li>
+	</ul>
+	</li>
+</ul>
+
+<h2><a id="DoSignFile" class="HashLink" href="#DoSignFile">DoSignFile</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoSignFile(xmlFilePath, privateKey, certificate, outputPath, options)</pre>
+
+<p>Signs an indicated XML file obtained by xmlFilePath parameter and saves the signed version of the file on the given outputPath parameter. It signs <u>all elements</u> of the file.</p>
+
+<p>If the signature was not successfully performed, it returns false and the output file will be empty.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<ul>
+	<li>Input xmlFilePath: VarChar(256)</li>
+	<li>Input privateKey: PrivateKey object</li>
+	<li>Input certificate: Certificate object</li>
+	<li>Input outputPath: VarChar(256)</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Return: Boolean, true if the signature was successfully performed. </li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;xmlFilePath = &quot;C:\Temp\xmlToSign.xml&quot;
+&amp;privateKey.Load(&quot;C:\Temp\keys\privateKey.pem&quot;)
+&amp;Certificate.Load(&quot;C:\Temp\keys\publicKey.pem&quot;)
+&amp;outputPath = &quot;C:\Temp\signedXml.xml&quot;
+&amp;result = &amp;XmlDSigSigner.DoSignFile(&amp;xmlFilePath, &amp;privateKey, &amp;Certificate, &amp;outputPath, &amp;DSigOptions)</pre>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>xmlFilePath parameter only allows .xml extension files.</li>
+	<li>The PrivateKey must be preloaded before method invocation.</li>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature will not be performed. Only files with .xml, .dtd, and .xsd extension are allowed for schema definition.</li>
+	<li>The Certificate must be preloaded before method invocation.</li>
+	<li>For other optional signature parameters, read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+</ul>
+
+<h2><a id="DoSign" class="HashLink" href="#DoSign">DoSign</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoSign(xmlInput, privateKey, certificate, options)</pre>
+
+<p>Signs an indicated XML String obtained by xmlInput parameter and returns the signed version of the String. It signs <u>all elements</u> of the XML String.</p>
+
+<p>If the signature was not successfully performed, it returns an empty String.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<ul>
+	<li>Input xmlInput: VarChar(256)</li>
+	<li>Input privateKey: PrivateKeyObject</li>
+	<li>Input certificate: Certificate object</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Returns: VarChar(256)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;privateKey.Load(&quot;C:\Temp\keys\privateKey.pem&quot;)
+&amp;Certificate.Load(&quot;C:\Temp\keys\publicKey.pem&quot;)
+&amp;result = &amp;XmlDSigSigner.DoSign(&amp;xmlInput, &amp;privateKey,  &amp;Certificate, &amp;DSigOptions)</pre>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>PrivateKey must be preloaded before method invocation.</li>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature will not be performed. Only files with .xml, .dtd, and .xsd extension are allowed for schema definition.</li>
+	<li>The Certificate must be preloaded before method invocation.</li>
+	<li>For other optional signature parameters, read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+</ul>
+
+<h2><a id="DoSignFileElement" class="HashLink" href="#DoSignFileElement">DoSignFileElement</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoSignFileElement(xmlFilePath, xPath, privateKey, certificate, outputPath, options)</pre>
+
+<p>Signs an indicated element of an XML file obtained by xmlFilePath parameter and saves the signed version of the file on the given outputPath parameter. It signs <u>one</u> element of the file. If an xPath predicate is provided, it will sign the first element that matches the xPath.</p>
+
+<p>If the signature was not successfully performed, it returns false and the output file will be empty.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<ul>
+	<li>Input xmlFilePath: VarChar(256)</li>
+	<li>Input xPath: Character(100)</li>
+	<li>Input privateKey: PrivateKey object</li>
+	<li>Input certificate: Certificate object</li>
+	<li>Input outputPath: VarChar(256)</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Return: Boolean, true if the signature was successfully performed.</li>
+</ul>
+
+<p>Example with xPath predicate:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;xmlFilePath = &quot;C:\Temp\xmlToSign.xml&quot;
+&amp;xPath = &quot;/bookstore/book[1]&quot;
+&amp;privateKey.Load(&quot;C:\Temp\keys\privateKey.pem&quot;)
+&amp;Certificate.Load(&quot;C:\Temp\keys\publicKey.pem&quot;)
+&amp;outputPath = &quot;C:\Temp\signedXml.xml&quot;
+&amp;result = &amp;XmlDSigSigner.DoSignFileElement(&amp;xmlFilePath, &amp;xPath, &amp;privateKey, &amp;Certificate, &amp;outputPath, &amp;DSigOptions)</pre>
+
+<p>The same method can be used to sign an element indicating its identifier value. In XML, a special Identification parameter with <a href='https://www.w3.org/TR/SVGMobile12/types.html#DataTypeID'> type ID</a> can be defined which is unique to the document; on this implementation, <u>the identifier attribute name must be given on the DSigOptions property IdentifierAttribute</u>. More information on <a href="43578.html">Optional data</a>.</p>
+
+<p><u>When an ID attribute is used, the prefix &quot;#&quot; is required for the identifier value.</u></p>
+
+<p>Example with ID value:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;xmlFilePath = &quot;C:\Temp\xmlToSign.xml&quot;
+&amp;xPath = &quot;#tag1&quot;
+&amp;privateKey.Load(&quot;C:\Temp\keys\privateKey.pem&quot;)
+&amp;Certificate.Load(&quot;C:\Temp\keys\publicKey.pem&quot;)
+&amp;outputPath = &quot;C:\Temp\signedXml.xml&quot;
+&amp;DSigOptions.IdentifierAttribute = &quot;id&quot;
+&amp;result = &amp;XmlDSigSigner.DoSignFileElement(&amp;xmlFilePath, &amp;xPath, &amp;privateKey, &amp;Certificate, &amp;outputPath, &amp;DSigOptions)</pre>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>The PrivateKey must be preloaded before method invocation.</li>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature will not be performed. Only files with .xml, .dtd, and .xsd extension are allowed for schema definition.</li>
+	<li>The Certificate must be preloaded before method invocation.</li>
+	<li>For other optional signature parameters, read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+	<li>When an XPath predicate is used, it will add an xPath Transform on the Signature's Transforms element. Example</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+            &lt;ds:Transforms&gt;
+                &lt;ds:Transform Algorithm=&quot;http://www.w3.org/TR/1999/REC-xpath-19991116&quot;&gt;
+                    &lt;ds:XPath&gt;/bookstore/book[1]&lt;/ds:XPath&gt;
+                &lt;/ds:Transform&gt;
+            &lt;/ds:Transforms&gt;</pre>
+
+<ul>
+	<li><u>Net specific xPath Transform known Issue</u>: .Net Framework has disabled XPath Transform by default; if you are using an xPath predicate and it does not find the element this issue could be affecting your software. It only applies to xPath usage, and it is not needed in any other case. It will not affect Java applications even when running on Windows environments. More information: <a href='https://coding.abel.nu/2016/03/breaking-changes-to-signedxml-in-ms16-035/'>Breaking changes for XML; summary</a>, <a href='https://support.microsoft.com/en-us/help/3148821/after-you-apply-security-update-3141780-net-framework-applications-enc'>Security update and official patches</a></li>
+	<li>When an ID is used, it will indicate the identification value on the Reference URI attribute in the SignedInfo Signature element. Example:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &lt;SignedInfo&gt;
+        ....
+        &lt;Reference URI=&quot;#tag1&quot;&gt;
+        &lt;Transforms&gt;
+            &lt;Transform Algorithm=&quot;http://www.w3.org/2000/09/xmldsig#enveloped-signature&quot; /&gt;
+             &lt;Transform Algorithm=&quot;http://www.w3.org/TR/2001/REC-xml-c14n-20010315&quot; /&gt;
+            &lt;/Transforms&gt;
+            .......
+        &lt;/Reference&gt;
+    &lt;/SignedInfo&gt;</pre>
+
+<h2><a id="DoSignElement" class="HashLink" href="#DoSignElement">DoSignElement</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoSignElement(xmlInput, xPath, privateKey, certificate, options)</pre>
+
+<p>Signs an indicated element of an XML String obtained by xmlInput parameter and returns the signed version of the XML. It signs <u>one</u> element of the XML string. If an xPath predicate is provided, it will sign the first element that matches the xPath.</p>
+
+<p>If the signature was not successfully performed, it returns an empty String.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<ul>
+	<li>Input xmlInput: VarChar(256)</li>
+	<li>Input xPath: Character(100)</li>
+	<li>Input privateKey: PrivateKey object</li>
+	<li>Input certificate: Certificate object</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Returns: VarChar(256)</li>
+</ul>
+
+<p>Example with xPath predicate:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+
+&amp;xPath = &quot;/bookstore/book[1]&quot;
+&amp;privateKey.Load(&quot;C:\Temp\keys\privateKey.pem&quot;)
+&amp;Certificate.Load(&quot;C:\Temp\keys\publicKey.pem&quot;)
+&amp;result = &amp;XmlDSigSigner.DoSignElement(&amp;xmlInput, &amp;xPath, &amp;privateKey, &amp;Certificate, &amp;DSigOptions)</pre>
+
+<p>The same method can be used to sign an element indicating its identifier value. In XML a special Identification parameter with <a href='https://www.w3.org/TR/SVGMobile12/types.html#DataTypeID'> type ID</a> can be defined which is unique to the document; on this implementation, <u>the identifier attribute name must be given on the DSigOptions property IdentifierAttribute</u>. More information on <a href="43578.html">Optional data</a>.</p>
+
+<p><u>When an ID attribute is used, the prefix &quot;#&quot; is required for the identifier value.</u></p>
+
+<p>Example with ID value:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+
+
+&amp;xPath = &quot;#tag1&quot;
+&amp;privateKey.Load(&quot;C:\Temp\keys\privateKey.pem&quot;)
+&amp;Certificate.Load(&quot;C:\Temp\keys\publicKey.pem&quot;)
+&amp;DSigOptions.IdentifierAttribute = &quot;id&quot;
+&amp;result = &amp;XmlDSigSigner.DoSignFile(&amp;xmlInput, &amp;xPath, &amp;privateKey, &amp;Certificate, &amp;DSigOptions)</pre>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>The PrivateKey must be preloaded before method invocation.</li>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature will not be performed. Only files with .xml, .dtd, and .xsd extension are allowed for schema definition.</li>
+	<li>The Certificate must be preloaded before method invocation.</li>
+	<li>For other optional signature parameters, read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+	<li>When an XPath predicate is used, it will add an xPath Transform on the Signature's Transforms element. Example</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+            &lt;ds:Transforms&gt;
+                &lt;ds:Transform Algorithm=&quot;http://www.w3.org/TR/1999/REC-xpath-19991116&quot;&gt;
+                    &lt;ds:XPath&gt;/bookstore/book[1]&lt;/ds:XPath&gt;
+                &lt;/ds:Transform&gt;
+            &lt;/ds:Transforms&gt;</pre>
+
+<ul>
+	<li><u>.Net specific xPath Transform known Issues</u>: .Net Framework has disabled XPath Transform by default; if you are using an xPath predicate and it does not find the element, this issue could be affecting your software. It only applies to xPath usage, and it is not needed in any other case. It will not affect Java applications even when running on Windows environments. More information: <a href='https://coding.abel.nu/2016/03/breaking-changes-to-signedxml-in-ms16-035/'>Breaking changes for XML; summary</a>, <a href='https://support.microsoft.com/en-us/help/3148821/after-you-apply-security-update-3141780-net-framework-applications-enc'>Security update and official patches</a>. Signature verification does not work on .Net Core in conjunction with xPath transformations.</li>
+	<li>When an ID is used it will indicate the identification value on the Reference URI attribute in the SignedInfo Signature's element. Example:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &lt;SignedInfo&gt;
+        ....
+        &lt;Reference URI=&quot;#tag1&quot;&gt;
+        &lt;Transforms&gt;
+            &lt;Transform Algorithm=&quot;http://www.w3.org/2000/09/xmldsig#enveloped-signature&quot; /&gt;
+             &lt;Transform Algorithm=&quot;http://www.w3.org/TR/2001/REC-xml-c14n-20010315&quot; /&gt;
+            &lt;/Transforms&gt;
+            .......
+        &lt;/Reference&gt;
+    &lt;/SignedInfo&gt;</pre>
+
+<h2><a id="DoVerifyFile" class="HashLink" href="#DoVerifyFile">DoVerifyFile</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoVerifyFile( xmlFilePath,  options)</pre>
+
+<p>Verifies an XML document signature. If the document contains more than one signature, it will verify only the first one. Only files with .xml extension are allowed.</p>
+
+<p>It is meant to be used when it is expected to verify a signed XML that contains the KeyInfo element containing the public key information (as KeyValue or X509Data).</p>
+
+<p>If the signature does not verify correctly or an execution error occurs, it will return false.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<ul>
+	<li>Input xmlFilePath: VarChar(256)</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Returns: Boolean true if the signature verifies without any errors.</li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;xmlFilePath=&quot;C:\Temp\signedXml.xml&quot;
+&amp;result = XmlDSigSigner.DoVerifyFile( &amp;xmlFilePath,  &amp;DSigOptions)</pre>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature verification will not be performed. Only files with .xml, .dtd, and .xsd extension are allowed for schema definition. The signature schema definition should be provided on the schema, not just the signed XML.</li>
+	<li>If an element signature based on an identifier is expected, DSigOptions's IdentifierAttribute property must be configured; otherwise, the verification will fail.</li>
+	<li>For other optional signature parameters, read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+	<li><u>Net specific xPath Transform known Issue</u>: .Net Framework has disabled XPath Transform by default; if you are using an xPath predicate and it does not find the element, this issue could be affecting your software. It only applies to xPath usage, and it is not needed in any other case. It will not affect Java applications even when running on Windows environments. More information: <a href='https://coding.abel.nu/2016/03/breaking-changes-to-signedxml-in-ms16-035/'>Breaking changes for XML; summary</a>, <a href='https://support.microsoft.com/en-us/help/3148821/after-you-apply-security-update-3141780-net-framework-applications-enc'>Security update and official patches</a>.</li>
+</ul>
+
+<h2><a id="DoVerify" class="HashLink" href="#DoVerify">DoVerify</a></h2>
+
+<p>Verifies an XML document signature. If the document contains more than one signature, it will verify only the first one. </p>
+
+<p>It is meant to be used when it is expected to verify a signed XML that contains the KeyInfo element containing the public key information (as KeyValue or X509Data).</p>
+
+<p>If the signature does not verify correctly or an execution error occurs, it will return false.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoVerify(xmlSigned, options)</pre>
+
+<ul>
+	<li>Input xmlSigned: VarChar(256)</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Returns: Boolean true if the signature verifies without any errors.</li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;result = XmlDSigSigner.DoVerify( &amp;xmlSigned, &amp;DSigOptions)</pre>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature verification will not be performed. Only files with .xml, .dtd and .xsd extension are allowed for schema definition. The signature schema definition should be provided on the schema, not just the signed XML.</li>
+	<li>If an element signature based on an identifier is expected, DSigOptions's IdentifierAttribute property must be configured; otherwise, the verification will fail.</li>
+	<li>For other signature optional parameters read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+	<li><u>Net specific xPath Transform known Issue</u>: .Net Framework has disabled XPath Transform by default; if you are using an xPath predicate and it does not find the element this issue could be affecting your software. It only applies to xPath usage, and it is not needed in any other case. It will not affect Java applications even when running on Windows environments. More information: <a href='https://coding.abel.nu/2016/03/breaking-changes-to-signedxml-in-ms16-035/'>Breaking changes for XML; summary</a>, <a href='https://support.microsoft.com/en-us/help/3148821/after-you-apply-security-update-3141780-net-framework-applications-enc'>Security update and official patches</a></li>
+</ul>
+
+<h2><a id="DoVerifyFileWithCert" class="HashLink" href="#DoVerifyFileWithCert">DoVerifyFileWithCert</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoVerifyFileWithCert(xmlFilePath, certificate, options)</pre>
+
+<p>Verifies an XML document signature. If the document contains more than one signature, it will verify only the first one. Only files with .xml extension are allowed.</p>
+
+<p>It is meant to be used when it is expected to verify a signed XML that does not contain the KeyInfo element with the public key information to validate. In this case, an external certificate is needed for validation.</p>
+
+<p>If the signature does not verify correctly or an execution error occurs, it will return false.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<ul>
+	<li>Input xmlFilePath: VarChar(256)</li>
+	<li>Input certificate: Certificate object</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Returns: boolean true if the signature verifies without any error</li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CertificateX509.Load(&quot;C:\Temp\keys\publicKey.pem&quot;)
+&amp;result = &amp;XmlDsigSigner.DoVerifyFileWithCert(&amp;xmlFilePath, &amp;CertificateX509, &amp;DSigOptions)</pre>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature verification will not be performed. Only files with .xml, .dtd, and .xsd extension are allowed for schema definition. The signature schema definition should be provided on the schema, not just the signed XML.</li>
+	<li>The Certificate must be preloaded before method invocation.</li>
+	<li>For other optional signature parameters, read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+	<li>If an element signature based on an identifier is expected, DSigOptions's IdentifierAttribute property must be configured; otherwise, the verification will fail.</li>
+	<li><u>Net specific xPath Transform known Issue</u>: .Net Framework has disabled XPath Transform by default; if you are using an xPath predicate and it does not find the element, this issue could be affecting your software. It only applies to xPath usage and it is not needed in any other case. It will not affect Java applications even when running on Windows environments. More information: <a href='https://coding.abel.nu/2016/03/breaking-changes-to-signedxml-in-ms16-035/'>Breaking changes for XML; summary</a>, <a href='https://support.microsoft.com/en-us/help/3148821/after-you-apply-security-update-3141780-net-framework-applications-enc'>Security update and official patches</a></li>
+</ul>
+
+<h2><a id="DoVerifyWithCert" class="HashLink" href="#DoVerifyWithCert">DoVerifyWithCert</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DoVerifyWithCert(xmlSigned, certificate, options)</pre>
+
+<p>Verifies an XML document signature. If the document contains more than one signature, it will verify only the first one. </p>
+
+<p>It is meant to be used when it is expected to verify a signed XML that does not contain the KeyInfo element with the public key information to validate. In this case, an external certificate is needed for validation.</p>
+
+<p>If the signature does not verify correctly or an execution error occurs, it will return false.</p>
+
+<p>Read Module Error Management for troubleshooting and more error details.</p>
+
+<ul>
+	<li>Input xmlSigned: VarChar(256)</li>
+	<li>Input certificate: Certificate object</li>
+	<li>Input options: DSigOptions object</li>
+	<li>Returns: Boolean true if the signature verifies without any errors.</li>
+</ul>
+
+<h3><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h3>
+
+<ul>
+	<li>If the property XmlSchemaPath of the DSigOptions is not empty, the signer will try to verify the XML to sign against the schema indicated by this property when it is loading. If it fails, the signature verification will not be performed. Only files with .xml, .dtd, and .xsd extension are allowed for schema definition. The signature schema definition should be provided on the schema, not just the signed XML.</li>
+	<li>The Certificate must be preloaded before method invocation.</li>
+	<li>For other optional signature parameters, read <a href="43578.html">DSig Optional data</a> and <a href="43565.html">DSig Domains</a>.</li>
+	<li>If an element signature based on an identifier is expected, DSigOptions's IdentifierAttribute property must be configured; otherwise, the verification will fail.</li>
+	<li><u>Net specific xPath Transform known Issue</u>: .Net Framework has disabled XPath Transform by default; if you are using an xPath predicate and it does not find the element, this issue could be affecting your software. It only applies to xPath usage and it is not needed in any other case. It will not affect Java applications even when running on Windows environments. More information: <a href='https://coding.abel.nu/2016/03/breaking-changes-to-signedxml-in-ms16-035/'>Breaking changes for XML; summary</a>, <a href='https://support.microsoft.com/en-us/help/3148821/after-you-apply-security-update-3141780-net-framework-applications-enc'>Security update and official patches</a></li>
+</ul>
+
+<h2><a id="Security+tips" class="HashLink" href="#Security+tips">Security tips</a></h2>
+
+<ul>
+	<li>When assigning file paths, do not use user input concatenations or sanitize user entries to avoid path traversal or path manipulation vulnerability risks.</li>
+</ul>
+
+<h3><a id="Key+pair+generation" class="HashLink" href="#Key+pair+generation">Key pair generation</a></h3>
+
+<p>The key pair can be generated locally with some tools, of which the most popular is <a href='https://www.openssl.org/'>OpenSSL</a>.</p>
+
+<p>Anyone can create, sign, and distribute a certificate, but most people will not trust it and, by default, software will not trust it either. This type of certificate is known as self-signed and is commonly used for testing.</p>
+
+<p>When the key pair is generated, the encryption and signing algorithms are established along with the hash algorithm that will be used to generate and verify signatures. The signature will always be verified using the algorithms preestablished on the certificate.</p>
+
+<h3><a id="Useful+tools%3A" class="HashLink" href="#Useful+tools%3A">Useful tools:</a></h3>
+
+<ul>
+	<li><a href='https://www.openssl.org/'>OpenSSL</a></li>
+	<li><a href='https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/certutil'>CertUtil</a></li>
+	<li><a href='https://keystore-explorer.org/'>KeyStore Explorer</a></li>
+	<li><a href='https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html'>Java KeyTool</a></li>
+</ul>
+
+<p><br />
+</p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/24/21 04:08 PM</em></font></td></TR></table></font>

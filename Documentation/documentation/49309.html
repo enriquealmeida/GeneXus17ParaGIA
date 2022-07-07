@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Design System Class</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49309,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Design System Class</h1>
+<!--Design System Class--><div class="TableWikiBody" id="tblwikibody"><p>A class determines a set of design characteristics that you want one or more controls to adopt in the UI at runtime (rendering).</p>
+
+<p>It is declared in the section <a href="47379.html">Design System Styles</a>. </p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>.</strong><em>class_name</em>  [,<strong>.</strong><em>class_name<sub>i</sub></em>]...
+‘<strong>{</strong>’
+       [<strong>@include</strong> <em>class_name<sub>j </sub></em>... <strong>;</strong>]      
+       {<em>property_name</em><strong>:</strong> {<em>value</em>[<em>unit</em>]|<strong>$</strong><em>token_group</em><strong>.</strong><em>token_name </em><strong>| </strong><em>gx-function</em>}...}<strong>;</strong> ...
+‘<strong>}</strong>’</pre>
+
+<p style="text-align: right;"><a href="49363.html">View Syntax conventions</a>.</p>
+
+<p>Where:</p>
+
+<p><i>class_name, class_name<sub>i</sub></i>: Name given to the class by the developer. This name will be used in the class properties of the controls. You can specify more than one class name if you want them to share the same block of property definitions (currently only for Web). Read about the <a href="49309.html">Temporary restriction on casing of Web class names</a>.</p>
+
+<p><i>class_name<sub>j</sub></i>: Name of a class declared in the same Style whose properties are to be included in this one. If there is no class with that name, it is ignored.</p>
+
+<p><em>property_name:</em> Valid style property name. Valid properties are both the existing ones for Web platform objects (for example, <a href="6916.html">Web Panel</a>) as well as Native or Angular (for example, <a href="24829.html">Panel</a>). See <a href="49323.html">Design System Class Properties</a>.</p>
+
+<p><em>value: </em>Valid value for the property <em>property_name</em>.</p>
+
+<p><em>unit:</em> Valid unit of measurement according to <em>property_name</em>. Some of them are <strong>px</strong>, <strong>dip</strong>, <strong>em</strong>, <strong>%</strong>.</p>
+
+<p><em>token_group:</em> Valid Token category. In the Token editor, you can see a combo box with all the possible values (colors, radius, spacing, etc.).</p>
+
+<p><em>token_name:</em> Name of the Token defined under the <i>token_group</i><sub> </sub>category in the Tokens section of the <a href="47375.html">DSO</a> or of a DSO (or Tokens section of a DSO) imported by it (in a sort of "extended DSO" if viewed as an analogy to the concept of an extended table).</p>
+
+<p><em>gx-function: </em>Function used to return a reference to a <a href="2428.html">KB</a> object as a value. For example, the <b>gx-image</b> function returns a reference to a KB image and is used for properties specifying images. The <b>gx-file</b> function returns a reference to a KB file.</p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: Among other things, CSS also allows you to select HTML tags or identifiers —not only classes— and combine selectors, etc. The Styles section of the DSO allows you to directly import or copy a CSS, and for this reason that syntax should be included here as well. However, it is not explained here because it has a lower level and is not supported for native objects (Panels type). This <a href='https://www.w3schools.com/css/css_syntax.asp'>tutorial</a> can be very helpful to access it.</div>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;">If there is an <a href="49353.html">Include rule</a>, the property declarations of each of the included classes are taken as if they were written within the class being declared, in that same order. Therefore, they are added to those of the class. If there is overlap, the last one applies.</div>
+
+<h3><a id="Example%3A" class="HashLink" href="#Example%3A">Example:</a></h3>
+
+<p>For the H1 class, the entire H1_Negative declaration block is valid except for the color declaration; in this case, the declaration explicitly specified in H1 is valid. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+.H1_Negative
+{
+    color: #FFFFFF;
+    font-family: $fonts.Title1;
+    font-size: $fontSizes.H1;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: -1.72px;
+    line-height: 75px;
+} 
+.H1
+{
+    @include H1_Negative;
+    color: $colors.Black;
+}</pre>
+
+<p>Note that values were used for some properties, while other properties have values with units of measurement or references to Tokens. If this DSO were to be applied to a Panel, then the px unit would be converted to dip (1 to 1 equivalence).</p>
+
+<h3><a id="Characteristics+of+classes" class="HashLink" href="#Characteristics+of+classes">Characteristics of classes</a></h3>
+
+<p>Classes are not specific, meaning that they have no restrictions as to the type of control to which they can be applied. When any of the style declarations of the associated class doesn't make sense for a control type, that declaration (and only that one) will not be taken into account. </p>
+
+<p>Thus, if a class defines text features such as font size, they will have an effect on Text Block or Attribute/Variable type controls but not on an Image type control. </p>
+
+<p>There may be classes not associated with any UI control, just as there may be controls that have classes associated with them that are not specified in the DSO (nor in any of the DSOs or Styles of DSOs imported by it). In the latter case, it’s as if they had no associated class.</p>
+
+<h3><a id="About+properties" class="HashLink" href="#About+properties">About properties</a></h3>
+
+<p>Some properties are valid for rendering both Web Panel and Panel controls, but others are specific.</p>
+
+<p>See more in <a href="49323.html">Design System Class Properties</a></p>
+
+<h3><a id="Class+structuring+in+the+Styles+section" class="HashLink" href="#Class+structuring+in+the+Styles+section">Class structuring in the Styles section</a></h3>
+
+<p>A class can be conditioned so that its declaration is only valid when the condition is met. For now, the condition is only related to the medium, such as screen size, and applies only to the Web.</p>
+
+<p>In addition, the same class can be selected in the same DSO with no condition (or with another condition), or in the Styles of an imported DSO. See <a href="49292.html">Structuring classes in Design System</a> to know what happens in those cases.</p>
+
+<p>See also <a href="49302.html">Rendering precedences for controls with Design System Object</a>.</p>
+
+<h3><a id="Temporary+restriction+on+casing+of+Web+class+names" class="HashLink" href="#Temporary+restriction+on+casing+of+Web+class+names">Temporary restriction on casing of Web class names</a></h3>
+
+<p>A DSO used in a Web application will generate a CSS file with the classes having the same casing as that of the DSO. </p>
+
+<p>While the DSO is not case-sensitive, nor is CSS, HTML considers selectors to be case-sensitive. So, for a control that has a MyClass class associated with it to take its values from that class in the CSS at runtime, it has to be called MyClass, and not, for example, myclass. </p>
+
+<p>At the moment (<a href="48684.html">GeneXus 17 Upgrade 6</a>), the first time a class name is typed in a DSO and saved, that will be the casing used from then on in the KB; even if the developer modifies it in the DSO, internally the first one will continue to be taken, so it will be the one used by the controls. </p>
+
+<h4><a id="This+has+some+drawbacks%3A" class="HashLink" href="#This+has+some+drawbacks%3A">This has some drawbacks:</a></h4>
+
+<p>1.    Suppose you have a DSO where you first declared:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles MyStyles
+{
+    .MyClass
+    {
+        color: brown;
+    }
+}</pre>
+
+<p>When you try to associate this class with a control, you will be offered the MyClass class. When the CSS is generated, it will be generated with the casing of the DSO object, so it will be MyClass. At runtime, the brown color will be displayed correctly.</p>
+
+<p>However, if you change the casing in the DSO (or delete the class and write it again with another casing) and call the class "myclass," when trying to associate that class with a control, even if you type "myclass" in the Class field value, you will see that the IDE will show "MyClass" after losing focus.</p>
+
+<p>The problem is that in the generated CSS the change will be applied —you will see "myclass"— but the HTML tag for the control will read MyClass. So, when you look for that class in the CSS it will not be found and you will not see the brown color at runtime.</p>
+
+<p>2.    The same will happen if you use the same class name in two different DSOs. The internal casing will be the one used the first time it was saved, regardless if it comes from two different DSOs.</p>
+
+<p>Therefore, once you have saved a class with a certain casing, you should always use that exact casing in all DSOs, even if they are independent of each other. No matter what casing you type, the controls will always map to the first one regardless of which DSO they come from. <br />
+The other option is to change something in the name to make it understood that it is another entity.</p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: All that has been said is also valid for Angular applications.</div>
+
+<h3><a id="Availabilty" class="HashLink" href="#Availabilty">Availabilty</a></h3>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46882.html">Design Import option</a></TD><TD><a href="49309.html">Design System Class</a></TD><TD><a href="48931.html">Design System Object - Automatic import of the designers’ design</a></TD></TR><TR><TD><a href="48690.html">Design System Object - Classes that can be combined</a></TD><TD><a href="48686.html">Design System Object - Classes to separate what is particular from what is shared</a></TD><TD><a href="48687.html">Design System Object - Declaring the classes of the application's Design System</a></TD><TD><a href="48675.html">Design System Object - Fundamental bases</a></TD></TR><TR><TD><a href="48696.html">Design System Object - How to associate a Design System Object to your screens</a></TD><TD><a href="48691.html">Design System Object - Tokens, design constants (semantized)</a></TD><TD><a href="48689.html">Design System Object - Untyped classes</a></TD><TD><a href="47472.html">Design System Style Rules</a></TD></TR><TR><TD><a href="47379.html">Design System Styles</a></TD><TD><a href="40108.html">Toc:Design Systems</a></TD><TD><a href="30896.html">gx-button-disabled-class property</a></TD><TD><a href="33517.html">gx-content-size-change property</a></TD></TR><TR><TD><a href="50630.html">gx-datepicker-image-class property</a></TD><TD><a href="35382.html">gx-grid-header-row-class property</a></TD><TD><a href="50634.html">gx-multimedia-upload-change-class property</a></TD><TD><a href="50632.html">gx-multimedia-upload-class property</a></TD></TR><TR><TD><a href="50633.html">gx-multimedia-upload-clear-class property</a></TD><TD><a href="50635.html">gx-multimedia-upload-empty-class property</a></TD><TD><a href="50631.html">gx-prompt-image-class property</a></TD><TD><a href="49346.html">Import style rule</a></TD></TR><TR><TD><a href="49353.html">Include style rule</a></TD><TD><a href="49344.html">Media style rule</a></TD><TD><a href="48293.html">Query viewer font size property</a></TD><TD><a href="50557.html">Sketch Import option (GeneXus 17 Upgrade 9)</a></TD></TR><TR><TD><a href="10348.html">Category:Web Master Panel object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/18/22 08:57 PM</em></font></td></TR></table></font>

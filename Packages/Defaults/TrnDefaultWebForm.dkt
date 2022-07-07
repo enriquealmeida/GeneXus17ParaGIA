@@ -1,0 +1,46 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template" %>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Common.Helpers" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Import Namespace="System.Collections.Generic" %>
+<%@ Import Namespace="Artech.Common.Helpers.Structure" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ SubTemplate Name="WebFormLayout" File="TrnWebFormLayout.dkt" MergeProterties="True" %>
+<%@ SubTemplate Name="DefaultAbstractForm" File="TrnDefaultAbstractForm.dkt" MergeProterties="True" %>
+<%@ SubTemplate Name="AbstractFormLayout" File="TrnAbstractFormLayout.dkt" MergeProterties="True" %>
+<%
+	Transaction transaction = Object as Transaction;
+	if (transaction == null)
+		throw new ArgumentNullException("Object");
+
+	Dictionary<string, int> Counters = new Dictionary<string, int>();
+	Counters.Add("TextBlockCounter", 1);
+	Counters.Add("TableCounter", 2);
+	Counters.Add("GridCounter", 1);
+	
+%>
+<Part type="<%= PartType.WebForm.ToString() %>">
+	<Source><![CDATA[
+<%
+	if (transaction.GetPropertyValue<int>(Artech.Genexus.Common.Properties.TRN.WebFormDefaults) == Artech.Genexus.Common.Properties.TRN.WebFormDefaults_Values.ResponsiveWebDesign)
+	{
+%>
+<%@ CallSubTemplate DefaultAbstractForm Object="Object" Part="Part" Counters="Counters" %>
+<%
+	}
+	else
+	{
+%>
+<body>
+<%@ CallSubTemplate WebFormLayout transaction="transaction" GenerateToolbar="true" GenerateDelete="true" Counters="Counters" %>
+</body>
+<%
+	}
+%>]]>
+	</Source>
+</Part>

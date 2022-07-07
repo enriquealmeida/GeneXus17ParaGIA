@@ -1,0 +1,95 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Level Update" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="level" Type="Artech.Genexus.Common.Parts.TransactionLevel" %>
+<%@ Property Name="levelName" Type="System.String" %>
+<%@ Property Name="gridLevelName" Type="System.String" %>
+<%@ Property Name="index" Type="System.String" %>
+<%@ Property Name="firstLevelAttributeName" Type="System.String" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ SubTemplate Name="DPNextAction" File="DPNextAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="GetValueTableAction" File="GetValueTableAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="GetValueAction" File="GetValueAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPCompareValidation" File="DPCompareValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="InsertItemInForm" File="InsertItemInForm.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="PressKeyAction" File="PressKeyAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ConcatenationAction" File="ConcatenationAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextValidation" File="VerifyControlTextValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextTableValidation" File="VerifyControlTextTableValidation.dkt" MergeProperties="True"%>
+	<!-- Level <%=levelName%>  -->
+<%
+
+if (level!= myInstance.Transaction.Transaction.Structure.Root) // not a Root Level
+{
+%>
+<%@ CallSubTemplate DPNextAction dataPoolName='levelName' dataPoolColumnName='firstLevelAttributeName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%	
+	gridLevelName = WebFormHelper.GetLevelControlTypeName(Object,level.Name,basicElements);
+	bool isGridLevel = WebFormHelper.IsAttributeUsedInGridLevel(firstLevelAttributeName,basicElements);
+	levelName = TransactionHelper.GetFullLevelName(level,myInstance.GXTest.DataPoolName);
+	
+	foreach (TransactionAttribute trnAtt in level.Attributes)
+	{
+		string tName = trnAtt.Name;
+		if (
+			(TransactionHelper.IsEditableControl(trnAtt,basicElements)) ||
+			(TransactionHelper.IsFormula(trnAtt) &&
+			 basicElements.CheckFormulas &&
+			 TransactionHelper.IsAttributeVisibleInWebForm(trnAtt,basicElements) &&
+			 !(basicElements.IsAttributeUsingDateFunctionsInRules(trnAtt))
+			 )
+			)
+		{
+			GenericElement ge = basicElements.ResolveBind(tName);
+			Artech.Genexus.Common.eDBType attType = WebFormHelper.IsControlComboListRadioBox(ge.RuntimeControlType)?Artech.Genexus.Common.eDBType.CHARACTER:ge.AtributeType;
+%>
+<%@ CallSubTemplate VerifyControlTextTableValidation Object='Object' model='model' byRow='true' gridName='gridLevelName' ControlGXName='tName' variable1='""' value1='""' dataPoolName1='levelName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' variable2='""' value2='""' dataPoolName2='levelName' dataPoolColumnName2='tName' AttType='attType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+	}
+}
+else
+{
+	// Root level
+	bool show = false;
+	foreach (TransactionAttribute trnAtt in level.Attributes)
+	{
+		string tName = trnAtt.Name;
+		if (!trnAtt.IsKey && TransactionHelper.IsEditableControl(trnAtt,basicElements))	
+		{
+			if (!trnAtt.IsForeignKey && !basicElements.IsAttributeUsingDateFunctionsInRules(trnAtt) && !TransactionHelper.IsAttributeBrowse(trnAtt))
+			{
+%>
+<%@ CallSubTemplate InsertItemInForm level='"0"' Object='Object' controlGXName='tName' model='model' value='""' variable='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='tName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate GetValueAction Object='Object' model='model' controlGXName='tName' variableName='GXTestConstants.MyVariableName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate DPCompareValidation variable='GXTestConstants.MyVariableName' value='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='tName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+			}
+			if (
+				TransactionHelper.IsAttributeBatchUpdatable(trnAtt) && 
+				TransactionHelper.GetControlType(null, model, Object, tName)==Artech.Genexus.Common.Types.RuntimeControlType.CTRL_EDIT &&
+				tName==basicElements.DescriptionAttribute
+				)
+			{	// Modify the Description Attribute Value
+				basicElements.IsDescriptionAttributeEditable = true;
+%>
+<%@ CallSubTemplate ConcatenationAction variableResult='GXTestConstants.MyVariableName' dataPoolName1='levelName' dataPoolColumnName1='tName' value2='GXTestConstants.TestCasePostFixValue' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate InsertItemInForm level='"0"' Object='Object' controlGXName='tName' model='model' variable='GXTestConstants.MyVariableName' value='""' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+			}
+			else if (TransactionHelper.IsFormula(trnAtt) && basicElements.CheckFormulas && TransactionHelper.IsAttributeVisibleInWebForm(trnAtt,basicElements))
+			{
+				Artech.Genexus.Common.eDBType attType = TransactionHelper.GetAttributeType(trnAtt);
+%>
+<%@ CallSubTemplate VerifyControlTextValidation Object='Object' model='model' ControlGXName='tName' variable='""' value='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='tName' AttType='attType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%				
+			}
+		}		
+	}
+}
+%>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Inserting an Image Inside FCK Editor Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15666,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Inserting an Image Inside FCK Editor Control</h1>
+<!--HowTo: Inserting an Image Inside FCK Editor Control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>There are two ways to upload an insert images inside a <a href="4858.html">FCK Editor’s control</a>:</p>
+
+<p>A. Using the control’s File Manager, which allows you to upload and insert images, browse previously uploaded files, etc. This solution implies that a script needs to be configured to call a <strong>PHP </strong>program to handle the file upload. For further information check <a href='http://docs.cksource.com/CKEditor_3.x/Developers_Guide/File_Browser_%28Uploader%29'>here</a>. This <a href='http://www2.gxtechnical.com/portal/hgxppredirect.aspx?15,26,0,,,30291'>SAC</a> details how to integrate it with GeneXus.</p>
+
+<p>B. Add a button to the FCKEditor and use a GeneXus object to upload and insert the image.</p>
+
+<p>This is an easy way to upload images just using GeneXus objects:<br />
+<br />
+Requirements:</p>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?9256,," target="_blank">GeneXus X Evolution 1</a> Upgrade 3 or higher</li>
+	<li><a href='http://marketplace.genexus.com/viewproduct.aspx?128'>Uploadify User Control</a> (Version 1.4)</li>
+</ul>
+
+<p>Follow these steps:</p>
+
+<ol>
+	<li>Add an “insert image” button in the FCKeditor toolbar.</li>
+	<li>Create the “uploader” object, which allow you select an image from your local disc and automatically sends it to the server.</li>
+	<li>Insert the new file reference on the FCKeditor body.</li>
+</ol>
+
+<h3><a id="1.+Insert+a+button+on+the+FCKEditor+Toolbar" class="HashLink" href="#1.+Insert+a+button+on+the+FCKEditor+Toolbar">1. Insert a button on the FCKEditor Toolbar</a></h3>
+
+<p>To insert a button in the FCKEditor toolbar, add this code in the object’s Start Event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    &amp;FCKEditorMenuItem.Id = &quot;upload&quot;
+    &amp;FCKEditorMenuItem.Description = &quot;Upload&quot;
+    &amp;FCKEditorMenuItem.Icon = ActionUpdate.Link()
+    &amp;FCKEditorMenuItem.ObjectInterface = FckEditorObjectInterface.Dialog
+    &amp;FCKEditorMenuItem.Link = FileUploader.Link(&quot;&quot;)  // Object URL that will be opened as a popup inside the dialog.
+    &amp;FCKEditorMenu.Add(&amp;FCKEditorMenuItem)
+    &amp;HTML.SetMenu(&amp;FCKEditorMenu)
+EndEvent
+</pre>
+
+<p>Where &amp;HTML is the control of type FCK html editor. It can be a Attribute or variable.</p>
+
+<p>Check the property <strong>&amp;FCKEditorMenuItem.Link</strong>; this is needed to be configured with the GeneXus Object that will upload the image.</p>
+
+<h3><a id="2.+Uploader+Object" class="HashLink" href="#2.+Uploader+Object">2. Uploader Object</a></h3>
+
+<p>Create the Web Panel “<em>FileUploader</em>” (the name that you set in &amp;FCKEditorMenuItem.Link). Then insert on it the Uploadify User Control.</p>
+
+<p>This control is just a button that will automatically upload the file (image) on the server once it has been clicked.</p>
+
+<h3><a id="3.+Insert+the+imagen+inside+the+dialog" class="HashLink" href="#3.+Insert+the+imagen+inside+the+dialog">3. Insert the imagen inside the dialog</a></h3>
+
+<p>In order to insert the uploaded imagen on the FCKEditor body, add this event in the “FileUploader” object:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Uploadify1.OnComplete
+    &amp;blob.FromString(Uploadify1.UploadedTemporalFileName)
+    &amp;url = pathtourl(&amp;blob)
+    &amp;ImgHtml = Format(!'&lt;img src=%1&gt;', &amp;url)
+    return
+EndEvent
+</pre>
+
+<p>And this rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(out: &amp;ImgHtml);
+</pre>
+
+<p>The event get the uploaded file from the server (<strong>Uploadify1.UploadedTemporalFileName</strong>) and returns its URL.</p>
+
+<p>The object first output parameter will be automatically inserted in the FCKEditor Body.</p>
+
+<p>That’s all.  You can get this example (xpz) from <a href="https://wiki.genexus.com/commwiki/wiki?15667,," target="_blank">here</a>.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="4858.html">FCK HTML Editor Control</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

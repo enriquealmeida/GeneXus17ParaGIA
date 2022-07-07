@@ -1,0 +1,2538 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pattern xmlns="http://schemas.genexus.com/Patterns/InstanceSpecification/v1.0"
+         Name="WorkWithDevices"
+         Version="16.0.0"
+         RootElement="instance"
+         RootType="Instance">
+  <ElementTypes>
+    <ElementType Name="Instance"
+                 Caption="Work With for Smart Devices"
+                 Icon="">
+      <Attributes>
+        <Attribute Name="businessComponent"
+                   Type="string"
+                   Description="Used by third party packages to associate this WWD to a BC" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="notifications"
+                      ElementType="Notifications"
+                      Multiple="false"
+                      Optional="true" />
+        <!-- Dummy to avoid "CodeGen incompatibility: root type cannot be a simple or mixed collection." error -->
+        <ChildElement Name="level"
+                      ElementType="Level"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="Notifications"
+                 Caption="Notifications"
+                 Icon="Event"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes />
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="Level"
+                 Caption="Level ({0})"
+                 CaptionParameters="name"
+                 KeyAttribute="id"
+                 Icon="Pattern_Level"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   NotNull="true"
+                   Visible="false" />
+        <Attribute Name="name"
+                   Type="string"
+                   Description="Level Name."
+                   NotNull="true" />
+        <Attribute Name="description"
+                   Type="string-t"
+                   Description="Level Description." />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="list"
+                      ElementType="List"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="detail"
+                      ElementType="Detail"
+                      Multiple="false"
+                      Optional="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="Panel"
+                 Caption=""
+                 ChildrenType="Sequence">
+      <!-- Abstract type -->
+      <Attributes>
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Description="Literal to appear in the Form&#39;s caption (description is the default)." />
+        <Attribute Name="variables"
+                   Type="custom(Variables)"
+                   Description="Event&#39;s Variables"
+                   Visible="false" />
+        <!-- variables must be loaded before any code() -->
+        <Attribute Name="dataSelector"
+                   Type="reference(DataSelector)"
+                   Category="Data Selector"
+                   Description="Data Selector for the list."
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="dataSelectorParameters"
+                   Type="code(ParameterList)"
+                   Category="Data Selector"
+                   Description="Parameters for the Data Selector (optional)."
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="autoRefreshTime"
+                   Type="int"
+                   Category="Refresh timeout"
+                   PrettyName="Lapse"
+                   Description="Automatic refresh in seconds (0 = off)"
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="events"
+                   Type="code(EventsSD)"
+                   Description="Action&#39;s event source."
+                   Visible="false" />
+        <Attribute Name="rules"
+                   Type="code(RulesSD)"
+                   Description="Rules"
+                   Visible="false" />
+        <Attribute Name="conditions"
+                   Type="code(ConditionsSD)"
+                   Description="Conditions"
+                   Visible="false" />
+        <Attribute Name="showAds"
+                   Type="bool"
+                   Category="Appearance"
+                   Description="Show ads in this panel."
+                   DefaultValue="true"
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="adsPosition"
+                   Type="enum{Top;Bottom}"
+                   Category="Appearance"
+                   Description="Ads position in this panel."
+                   DefaultValue="Bottom"
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39; and @showAds=&#39;True&#39;]" />
+        <Attribute Name="share"
+                   Type="string"
+                   Description="Attribute or Variable used for sharing in the panel."
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="PanelType"
+                   Type="enum{SD;Web}"
+                   DefaultValue="SD"
+                   Visible="false" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="layout"
+                      ElementType="Layout"
+                      Multiple="true"
+                      OrderRelevant="false" />
+        <ChildElement Name="gridData"
+                      ElementType="GridData"
+                      Multiple="true"
+                      Optional="true"
+                      OrderRelevant="false" />
+      </ChildrenElements>
+    </ElementType>
+    <!-- List -->
+    <ElementType Name="List"
+                 BaseType="Panel"
+                 ChildrenType="Sequence"
+                 Caption="List"
+                 Icon="WorkWithSDList"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="deepLinkName"
+                   Type="custom(DeepLinkNameProperty)"
+                   Category="Network"
+                   Description="String to find before the &#39;?&#39; or at the end if there isn&#39;t"
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <!-- Detail -->
+    <ElementType Name="Detail"
+                 BaseType="Panel"
+                 ChildrenType="Sequence"
+                 Caption="Detail"
+                 Icon="WorkWithSDDetail"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <Attributes>
+        <Attribute Name="deepLinkName"
+                   Type="string"
+                   Category="Network"
+                   Description="String to find before the &#39;?&#39; or at the end if there isn&#39;t"
+                   ApplyIf="self::*[@PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="sections"
+                      ElementType="Sections"
+                      Multiple="false"
+                      Optional="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="Sections"
+                 Caption="Sections"
+                 Icon="Tab"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes />
+      <ChildrenElements>
+        <ChildElement Name="section"
+                      ElementType="Section"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="Section"
+                 BaseType="Panel"
+                 ChildrenType="Sequence"
+                 Caption="Section ({0})"
+                 CaptionParameters="code"
+                 KeyAttribute="code"
+                 Icon="WebPanel"
+                 IconResource="Artech.Genexus.Common.Resources.Images,Artech.Genexus.Common">
+      <Attributes>
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Description="Literal to appear inside the Section."
+                   DefaultValueFrom="@code" />
+        <Attribute Name="code"
+                   Type="string"
+                   Description="Internal name. Must be unique."
+                   NotNull="true"
+                   PrettyName="Name" />
+        <Attribute Name="linkClass"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the section when used as link."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LinkClassResolver"
+                   Tag="runtime" />
+        <Attribute Name="image"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   Description="Image to be shown for the section." />
+        <Attribute Name="unselectedImage"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   Description="Image to be shown for the section when not selected" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <!-- Layout -->
+    <ElementType Name="Layout"
+                 Caption="Layout"
+                 KeyAttribute="id"
+                 Icon="Layout"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Visible="false" />
+        <Attribute Name="Type"
+                   Type="enum{Any Mode;View;Edit}"
+                   Description="Layout type."
+                   NotNull="true"
+                   DefaultValue="Any Mode" />
+        <Attribute Name="Orientation"
+                   Type="enum{Any Orientation;Landscape;Portrait}"
+                   Description="Layout orientation."
+                   NotNull="true"
+                   DefaultValue="Any Orientation" />
+        <Attribute Name="Platform"
+                   Type="select(pattern-settings:://Platforms/Platform)"
+                   Description="Platform this layout applies to (empty for all platforms)." />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="table"
+                      ElementType="LayoutTable"
+                      Multiple="false"
+                      Optional="false" />
+        <ChildElement Name="actionBar"
+                      ElementType="LayoutActionBar"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="actionGroups"
+                      ElementType="LayoutActionGroups"
+                      Multiple="false"
+                      Optional="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutBaseTableItem"
+                 Caption=""
+                 KeyAttribute="id">
+      <!-- Abstract type -->
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutTable"
+                 BaseType="LayoutBaseTableItem"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="id"
+                 Icon="Table"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutTableControlNameResolvers"
+                   Flag="FlagNoCacheDefault=Never" />
+        <Attribute Name="columnsStyle"
+                   Type="custom(TableStyleCollection)"
+                   Category="Appearance"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ColumnStyleResolvers"
+                   Flag="FlagNoCacheDefault,FlagNoCacheValue"
+                   ApplyIf="self::*[(@tableType = &#39;Tabular&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;) or (@tableType = &#39;SmartTable&#39; and ancestor::layout/parent::*/@PanelType = &#39;Web&#39;)]" />
+        <Attribute Name="rowsStyle"
+                   Type="custom(TableStyleCollection)"
+                   Category="Appearance"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.RowStyleResolvers"
+                   Flag="FlagNoCacheDefault,FlagNoCacheValue"
+                   ApplyIf="self::*[(@tableType = &#39;Tabular&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;) or (@tableType = &#39;SmartTable&#39; and ancestor::layout/parent::*/@PanelType = &#39;Web&#39;)]" />
+        <Attribute Name="width"
+                   Type="custom(ElementStyle)"
+                   Category="Appearance"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.TableWidthResolvers"
+                   ApplyIf="self::*[@tableType != &#39;Flex&#39; and (not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) or parent::layout]"
+                   Tag="runtimeweb*" />
+        <Attribute Name="height"
+                   Type="custom(ElementStyle)"
+                   Category="Appearance"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.TableHeightResolvers"
+                   Flag="FlagNoCacheDefault"
+                   ApplyIf="self::*[@tableType != &#39;Flex&#39; and (not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) or parent::layout]"
+                   Tag="runtimeweb*" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   ApplyIf="self::*[@tableType = &#39;Tabular&#39; and (not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="overflowBehavior"
+                   Description="Determines whether a control has scroll or not"
+                   Type="enum{Platform Default;Clip Content;Add Scroll}"
+                   Category="Appearance"
+                   DefaultValue="Platform Default"
+                   ApplyIf="self::*[@tableType = &#39;Tabular&#39; and @AutoGrow = &#39;False&#39; and (not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the attribute."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <!-- Runtime only Properties -->
+        <Attribute Name="background"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   Tag="runtime"
+                   Description="Background image for the table"
+                   ApplyIf="self::*[@tableType = &#39;Tabular&#39; or ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="ScrollFactor"
+                   Type="decimal"
+                   Category="Scroll Behavior"
+                   DefaultValue="1"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="ZoomFactor"
+                   Type="decimal"
+                   Category="Scroll Behavior"
+                   DefaultValue="0"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="ScrollAttachment"
+                   Type="string"
+                   NotNull="true"
+                   DefaultValue="Parent"
+                   Category="Scroll Behavior"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <!-- Stencil table type is deprecated, use IsStencil instead -->
+        <Attribute Name="tableType"
+                   Type="enum{Tabular;Responsive;Absolute;Flex;Stencil;SmartTable}" 
+                   PrettyName="Table Type"
+                   DefaultValue="Tabular"
+                   Visible="false" />
+        <Attribute Name="formClass"
+                   Type="theme-class"
+                   Category="Form"
+                   Description="Theme class for the Form."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.FormClassResolvers"
+                   Tag="runtime" />
+        <!-- header row pattern,  aka hero image -->
+        <Attribute Name="enableHeaderRowPattern"
+                   Type="bool"
+                   Category="Form"
+                   DefaultValue="false"
+                   PrettyName="Enable Header Row Pattern"
+                   Description="Enable Header Row Pattern."
+                   ApplyIf="parent::layout[parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="headerRowApplicationBarsClass"
+                   Type="theme-class"
+                   Category="Form"
+                   Description="Theme class for application bars when use Header Row Pattern."
+                   ApplyIf="self::*[@enableHeaderRowPattern=&#39;True&#39; and parent::layout/parent::*/@PanelType = &#39;SD&#39;]"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AplicationBarsHeaderRowResolvers" />
+        <Attribute Name="expandBounds"
+                   PrettyName="Expand Bounds"
+                   Type="enum{Background Only;Content &amp; Background;None}"
+                   Description="Expand Bounds of the control&apos;s content &amp; background, background only or none."
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutTableExpandBoundsResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="expandLimit"
+                   PrettyName="Expand Bounds Limit"
+                   Type="enum{Behind System Bars;Behind Application Bars}"
+                   Description="Expand Bounds Limit."
+                   Category="Layout Behavior"
+                   DefaultValue="Behind System Bars"
+                   ApplyIf="self::*[@expandBounds!=&#39;None&#39; and parent::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="expandDirection"
+                   PrettyName="Expand Bounds Directions"
+                   Type="custom(RectangleEdge)"
+                   Description="Expand Bounds Directions."
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutTableExpandBoundsDirectionResolvers"
+                   ApplyIf="self::*[@expandBounds!=&#39;None&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="responsiveSizes"
+                   Type="custom(ResponsiveSizes)"
+                   ApplyIf="self::*[@tableType = &#39;Responsive&#39;]"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="rowHeights"
+                   Type="custom(RowHeightsCollection)"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.RowHeightsWebResolvers"
+                   ApplyIf="self::*[@tableType = &#39;Responsive&#39;]"
+                   Flag="FlagNoCacheDefault,FlagNoCacheValue" />
+        <!-- flex properties -->
+        <Attribute Name="flexDirection"
+                   Description="This attribute determines the direction of the main axis (and the cross axis, perpendicular to the main axis). The direction children items are placed inside the Flexbox layout."
+                   Type="enum{Row;Row Reverse;Column;Column Reverse}"
+                   DefaultValue="Row"
+                   Category="Layout Behavior"
+                   ApplyIf="self::*[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="flexWrap"
+                   Description="This attribute controls whether the flex container is single-line or multi-line, and the direction of the cross axis."
+                   Type="enum{No Wrap;Wrap;Wrap Reverse}"
+                   DefaultValue="No Wrap"
+                   Category="Layout Behavior"
+                   ApplyIf="self::*[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="justifyContent"
+                   Description="This attribute controls the alignment along the main axis."
+                   Type="enum{Flex Start;Flex End;Center;Space Between;Space Around}"
+                   DefaultValue="Flex Start"
+                   Category="Layout Behavior"
+                   ApplyIf="self::*[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="alignItems"
+                   Description="This attribute controls the alignment along the cross axis."
+                   Type="enum{Stretch;Flex Start;Flex End;Center;Baseline}"
+                   DefaultValue="Stretch"
+                   Category="Layout Behavior"
+                   ApplyIf="self::*[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="alignContent"
+                   Description="This attribute controls the alignment of the flex lines in the flex container."
+                   Type="enum{Stretch;Flex Start;Flex End;Center;Space Between;Space Around}"
+                   DefaultValue="Stretch"
+                   Category="Layout Behavior"
+                   ApplyIf="self::*[@tableType = &#39;Flex&#39; and @flexWrap != &#39;No Wrap&#39;]" />
+        <Attribute Name="adjustContainerSize"
+                   Description="This attribute controls whether the flex container adjusts it's size with respect to it's children."
+                   Type="bool"
+                   DefaultValue="false"
+                   Category="Layout Behavior"
+                   ApplyIf="self::*[@tableType = &#39;Flex&#39; and @flexWrap = &#39;No Wrap&#39;]" />
+        <Attribute Name="containerSlotName"
+                   Type="string"
+                   Visible="false" />
+				<!-- SmartTable properties -->
+				<Attribute Name="ColumnsGap"
+                   Description="Determines the gap between columns."
+                   Type="custom(ElementStyle)"
+                   Category="Appearance"
+                   ApplyIf="self::*[@tableType = &#39;SmartTable&#39;]" />
+				<Attribute Name="RowsGap"
+                   Description="Determines the gap between rows."
+                   Type="custom(ElementStyle)"
+                   Category="Appearance"
+                   Flag="FlagNoCacheDefault"
+                   ApplyIf="self::*[@tableType = &#39;SmartTable&#39;]" />
+        <!-- Stencil properties -->
+        <Attribute Name="isStencil"
+                   Description="This attribute determines if the table should behave as a Stencil during edition."
+                   Type="string"
+                   DefaultValue="false"
+                   Category="Stencil"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+        <Attribute Name="ignoreInDevelopment"
+                   Description="This attribute contains the name of the controls to ignore in development."
+                   Type="string"
+                   DefaultValue="New"
+                   Category="Stencil"
+                   ApplyIf="self::*[@isStencil = &#39;True&#39; or @tableType = &#39;Stencil&#39;]"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+        <Attribute Name="stencilName"
+                   Description="This attribute contains the name of an external Stencil."
+                   Type="string"
+                   DefaultValue="New"
+                   Category="Stencil"
+                   ApplyIf="self::*[@isStencil = &#39;True&#39; or @tableType = &#39;Stencil&#39;]"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+        <Attribute Name="stencilRef"
+                   Description="This attribute references an external Stencil."
+                   Type="custom(StencilReference)"
+                   PrettyName="Referenced Stencil"
+                   ApplyIf="self::*[@isStencil = &#39;True&#39; or @tableType = &#39;Stencil&#39;]"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowAsReadOnlyResolvers"
+                   />
+        <Attribute Name="stencilCache"
+                   Description="This attribute contains the cached layout of the Stencil when last used."
+                   Type="string"
+                   DefaultValue="New"
+                   Category="Stencil"
+                   ApplyIf="self::*[@isStencil = &#39;True&#39; or @tableType = &#39;Stencil&#39;]"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="row"
+                      ElementType="LayoutTableRow"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutTableRow"
+                 BaseType="LayoutBaseTableItem"
+                 Caption="(row)"
+                 KeyAttribute="id"
+                 Icon="TableRow"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="rowHeight"
+                   Type="custom(ElementStyle)"
+                   Category="Row information"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.RowHeightResolvers"
+                   Visible="false"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="rowHeightWeb"
+                   Type="string"
+                   Category="Row information"
+                   PrettyName="Row Height"
+                   Description="Minimum height of the row."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.RowHeightWebResolvers"
+                   ApplyIf="parent::table[@tableType = &#39;Responsive&#39; and ancestor::layout/parent::*/@PanelType = &#39;Web&#39;]" />
+        <Attribute Name="rowClass"
+                   Type="theme-class"
+                   Category="Row information"
+                   Description="Theme class for the row."
+                   ApplyIf="parent::table[@tableType = &#39;Responsive&#39; and ancestor::layout/parent::*/@PanelType = &#39;Web&#39;]" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="cell"
+                      ElementType="LayoutTableCell"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutBaseCellItem"
+                 BaseType="LayoutBaseTableItem"
+                 Caption="(item)"
+                 ChildrenType="Choice">
+      <Attributes />
+      <ChildrenElements>
+        <!-- Choice of these elements (only one). -->
+        <ChildElement Name="table"
+                      ElementType="LayoutTable"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="grid"
+                      ElementType="LayoutGrid"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="tab"
+                      ElementType="LayoutTab"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="group"
+                      ElementType="LayoutGroup"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="data"
+                      ElementType="LayoutDataItem"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="uc"
+                      ElementType="LayoutUCItem"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="ucw"
+                      ElementType="LayoutUCWebItem"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="action"
+                      ElementType="LayoutActionItem"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="textblock"
+                      ElementType="LayoutTextblock"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="image"
+                      ElementType="LayoutImage"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="search"
+                      ElementType="LayoutSearch"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="oneContent"
+                      ElementType="LayoutOneContent"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="allContent"
+                      ElementType="LayoutAllContent"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="component"
+                      ElementType="LayoutComponent"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="html"
+                      ElementType="LayoutHtml"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="actiongroup"
+                      ElementType="LayoutActionGroupBlock"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="simplegrid"
+                      ElementType="LayoutSimpleGrid"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="errorviewer"
+                      ElementType="LayoutErrorViewer"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="contentholder"
+                      ElementType="LayoutContentPlaceHolder"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="embeddedpage"
+                      ElementType="LayoutEmbeddedPage"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="hyperlink"
+                      ElementType="LayoutHyperLink"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="horizontalrule"
+                      ElementType="LayoutHorizontalRule"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="section"
+                      ElementType="LayoutSection"
+                      Multiple="false"
+                      Optional="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutTableCell"
+                 BaseType="LayoutBaseCellItem"
+                 Caption="(cell)"
+                 KeyAttribute="id"
+                 Icon="TableCell"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="cellControlName"
+                   Type="string"
+                   Category="Cell information"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.TableCellControlNameResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;Web&#39;]" />
+        <Attribute Name="cellClass"
+                   Type="theme-class"
+                   Category="Cell information"
+                   Description="Theme class for the cell."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;Web&#39;]"
+                   Tag="runtime" />
+        <Attribute Name="rowSpan"
+                   Type="int"
+                   Category="Cell information"
+                   DefaultValue="1"
+                   Description="Rows spanned by the control."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.TableRowSpanResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Tabular&#39; or @tableType = &#39;SmartTable&#39;]" />
+        <Attribute Name="colSpan"
+                   Type="int"
+                   Category="Cell information"
+                   DefaultValue="1"
+                   Description="Columns spanned by the control."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.TableColSpanResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Tabular&#39; or @tableType = &#39;SmartTable&#39;]" />
+        <Attribute Name="hAlign"
+                   Type="enum{Default;Left;Center;Right;Justify}"
+                   Category="Cell information"
+                   DefaultValue="Default"
+                   Description="Horizontal alignment for the content of the layout element."
+                   PrettyName="Horizontal Alignment"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.HorizontalAlignResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType != &#39;Flex&#39; or ancestor::layout/parent::*/@PanelType = &#39;Web&#39;]"
+                   Tag="runtimeweb" />
+        <Attribute Name="vAlign"
+                   Type="enum{Default;Top;Middle;Bottom}"
+                   Category="Cell information"
+                   DefaultValue="Default"
+                   Description="Vertical alignment for the content of the layout element."
+                   PrettyName="Vertical Alignment"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.VerticalAlignResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType != &#39;Flex&#39; or ancestor::layout/parent::*/@PanelType = &#39;Web&#39;]"
+                   Tag="runtimeweb" />
+        <Attribute Name="userTop"
+                   Type="custom(ElementStyle)"
+                   PrettyName="Top"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverTop"
+                   Category="Absolute position" />
+        <Attribute Name="userLeft"
+                   Type="custom(ElementStyle)"
+                   PrettyName="Left"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverLeft"
+                   Category="Absolute position" />
+        <Attribute Name="userBottom"
+                   Type="custom(ElementStyle)"
+                   PrettyName="Bottom"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverBottom"
+                   Category="Absolute position" />
+        <Attribute Name="userRight"
+                   Type="custom(ElementStyle)"
+                   PrettyName="Right"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverRight"
+                   Category="Absolute position" />
+        <Attribute Name="userWidth"
+                   Type="custom(ElementStyle)"
+                   PrettyName="Width"
+                   DefaultValue="100%"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverWidth"
+                   Category="Absolute position" />
+        <Attribute Name="userHeight"
+                   Type="custom(ElementStyle)"
+                   PrettyName="Height"
+                   DefaultValue="100%"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverHeight"
+                   Category="Absolute position" />
+        <Attribute Name="zOrder"
+                   PrettyName="Z-Order"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolver"
+                   Category="Absolute position" />
+        <Attribute Name="absX"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverX"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="absRX"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverRX"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="absY"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverY"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="absRY"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverRY"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="absWidth"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverW"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="absRWidth"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverRW"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="absHeight"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverH"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <Attribute Name="absRHeight"
+                   Type="int"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.AbsolutePositionResolverRH"
+                   Category="Advanced absolute position"
+                   Flag="FlagNoCacheDefault" />
+        <!-- flex properties -->
+        <!-- Not implemented in yoga 1.4.0, and it doesn't seem usefull
+                        Attribute Name="flexOrder"
+                                                  Description="This attribute can change how the ordering of the children views are laid out. By default, children are displayed and laid out in the same order as they appear in design."
+                                                  Type="int"
+                                                  DefaultValue="1"
+                                                  Category="Layout Behavior"
+                                                  ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" /-->
+        <Attribute Name="flexGrow"
+                   Description="This attribute determines how much this child will grow if positive free space is distributed relative to the rest of other flex items included in the same flex line. If a flex item has a positive Flex Grow value, the item will take up the remaining space in the flex line. If multiple flex items in the same flex line have positive Flex Grow values, the remaining free space is distributed depending on the proportion of their declared Flex Grow value."
+                   Type="string"
+                   DefaultValue="1"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberFloatResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="flexShrink"
+                   Description="This attribute determines how much this child will shrink if negative free space is distributed relative to the rest of other flex items included in the same flex line."
+                   Type="string"
+                   DefaultValue="1"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberFloatResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="alignSelf"
+                   Description="This attribute determines the alignment along the cross axis (perpendicular to the main axis). The alignment in the same direction can be determined by the Align Items in the parent, but if this is set to other than auto, the cross axis alignment is overridden for this child."
+                   Type="enum{Auto;Flex Start;Flex End;Center;Baseline;Stretch}"
+                   DefaultValue="Auto"
+                   Category="Layout Behavior"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="flexWidth"
+                   Description="This attribute determines the width in dips of the control."
+                   Type="string"
+                   PrettyName="Width"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberPercentageOrEmptyResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="flexHeight"
+                   Description="This attribute determines the height in dips of the control."
+                   Type="string"
+                   PrettyName="Height"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberPercentageOrEmptyResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="minWidth"
+                   Description="This attribute impose minimum width constraint in dips. The control won&#39;t be shrank less than the value of these attributes (varies based on the Flex Direction attribute as to which attribute imposes the size constraint along the main axis) regardless of the Flex Shrink attribute."
+                   Type="string"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberPercentageOrEmptyResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="minHeight"
+                   Description="This attribute impose minimum height constraint in dips. The control won&#39;t be shrank less than the value of these attributes (varies based on the Flex Direction attribute as to which attribute imposes the size constraint along the main axis) regardless of the Flex Shrink attribute."
+                   Type="string"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberPercentageOrEmptyResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="maxWidth"
+                   Description="This attribute impose maximum width constraint in dips. The control won&#39;t be expanded more than the value of these attributes (varies based on the Flex Direction attribute as to which attribute imposes the size constraint along the main axis) regardless of the Flex Grow attribute."
+                   Type="string"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberPercentageOrEmptyResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+        <Attribute Name="maxHeight"
+                   Description="This attribute impose maximum height constraint in dips. The control won&#39;t be expanded more than the value of these attributes (varies based on the Flex Direction attribute as to which attribute imposes the size constraint along the main axis) regardless of the Flex Grow attribute."
+                   Type="string"
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NumberPercentageOrEmptyResolvers"
+                   ApplyIf="parent::row/parent::table[@tableType = &#39;Flex&#39;]" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutNamedTable"
+                 BaseType="LayoutTable"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="id"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="layoutName"
+                   Type="string"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutGrid"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="id"
+                 Icon="Grid"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Visible="false" />
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="ControlType"
+                   Type="custom(GridControlType)"
+                   Category="Control Info"
+                   Description="Custom control for display."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.GridControlTypeResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Control Info"
+                   DefaultValue="false"
+                   ApplyIf="self::*[(not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the grid."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="collection"
+                   Type="custom(LayoutGridCollection)"
+                   Description="Level of the SDT/BC used for this grid." />
+        <Attribute Name="rows"
+                   Type="enum{&lt;default&gt;;&lt;unlimited&gt;;*}"
+                   Category="Appearance"
+                   Description="Number of rows in lists per page."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.GridRowsResolver"
+                   Tag="runtimeweb" />
+        <Attribute Name="defaultAction"
+                   Type="custom(GxEventReference)"
+                   Description="Default event to execute when selecting a list item. If none is specified and a detail is defined for this level, it will be used."
+                   DefaultValue="&lt;default&gt;"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="defaultActionObject"
+                   Type="custom(WeakKBObjReference)"
+                   Description="Object used for default action"
+                   ReadOnly="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.DefaultActionObjectResolver" />
+        <Attribute Name="selectionType"
+                   Type="enum{Platform Default;No selection;Keep selection while executing;Keep until new selection}"
+                   DefaultValue="Platform Default"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enableMultipleSelection"
+                   Type="bool"
+                   DefaultValue="false"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="showSelector"
+                   Type="enum{Always;On Action;Platform Default}"
+                   Description="Always = Show the selector if there is at least one event with a &#39;for each selected line&#39; over this Grid, On Action = Show the selector when an event with a &#39;for each selected line&#39; over this Grid is executed."
+                   DefaultValue="Platform Default"
+                   ApplyIf="self::*[@enableMultipleSelection = &#39;True&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="selectionFlag"
+                   Type="custom(AttributeVariableReference)"
+                   Description="Attribute or Variable with the selection state"
+                   ApplyIf="self::*[@enableMultipleSelection = &#39;True&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="selectionFlagFieldSpecifier"
+                   Type="custom(LayoutDataItemFieldSpecifier)"
+                   Description="Member of the SDT/BC for Selection Flag."
+                   ApplyIf="self::*[@enableMultipleSelection = &#39;True&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="dataSelector"
+                   Type="reference(DataSelector)"
+                   Category="Data Selector"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NotSDTBasedGridFromLayoutGridResolver"
+                   Description="Data Selector for the list." />
+        <Attribute Name="dataSelectorParameters"
+                   Type="code(ParameterList)"
+                   Category="Data Selector"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NotSDTBasedGridFromLayoutGridResolver"
+                   Description="Parameters for the Data Selector (optional)." />
+        <Attribute Name="emptyDataSetBackground"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   PrettyName="Empty Grid Background Image"
+                   Description="Image to be shown when there isn&#39;t any data available."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="emptyDataSetBackgroundClass"
+                   Type="theme-class"
+                   Category="Appearance"
+                   PrettyName="Empty Grid Background Class"
+                   Description="Theme class for Empty Grid Background Image."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.EmptyDataSetBackgroundClassResolver"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="emptyDataSetText"
+                   Type="string-t"
+                   Category="Appearance"
+                   PrettyName="Empty Grid Text"
+                   Description="Text to be shown when there isn&#39;t any data available."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="emptyDataSetTextClass"
+                   Type="theme-class"
+                   Category="Appearance"
+                   PrettyName="Empty Grid Text Class"
+                   Description="Theme class for Empty Grid Text."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.EmptyDataSetTextClassResolver"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="defaultTable"
+                   Type="string"
+                   Visible="false" />
+        <Attribute Name="pullToRefresh"
+                   Type="bool"
+                   DefaultValue="false"
+                   PrettyName="Pull To Refresh"
+                   Description="Allow to refresh grid data with pull to refresh gesture."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="inverseLoad"
+                   Type="bool"
+                   DefaultValue="false"
+                   PrettyName="Inverse Loading"
+                   Description="When set to true, the grid items will be loaded in inverse order, with the first element at the bottom and de &#39;Loading&#39; message at the top."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="defaultSelectedItemLayout"
+                   DefaultValue="(none)"
+                   Type="custom(LayoutTypeReference)"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutTypeReferenceResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="expandBounds"
+                   PrettyName="Expand Bounds"
+                   Type="enum{Background Only;Content &amp; Background;None}"
+                   Description="Expand Bounds of the control&apos;s content &amp; background, background only or none."
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ExpandBoundsResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="expandLimit"
+                   PrettyName="Expand Bounds Limit"
+                   Type="enum{Behind System Bars;Behind Application Bars}"
+                   Description="Expand Bounds Limit."
+                   Category="Layout Behavior"
+                   DefaultValue="Behind System Bars"
+                   ApplyIf="self::*[@expandBounds!=&#39;None&#39; and parent::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="expandDirection"
+                   PrettyName="Expand Bounds Directions"
+                   Type="custom(RectangleEdge)"
+                   Description="Expand Bounds Directions."
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ExpandBoundsDirectionResolvers"
+                   ApplyIf="self::*[@expandBounds!=&#39;None&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="table"
+                      ElementType="LayoutNamedTable"
+                      Multiple="true"
+                      Optional="false" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutSimpleGrid"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="id"
+                 Icon="Grid"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Visible="false" />
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the grid."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="collection"
+                   Type="custom(LayoutGridCollection)"
+                   Description="Level of the SDT/BC used for this grid." />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="item"
+                      ElementType="LayoutSimpleGridItem"
+                      Multiple="true"
+                      Optional="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutSimpleGridItem"
+                 Caption="{0}"
+                 CaptionParameters="attribute"
+                 KeyAttribute="id"
+                 Icon="LayoutData"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Visible="false" />
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemControlNameResolver" />
+        <Attribute Name="attribute"
+                   Type="custom(AttributeVariableReference)"
+                   Description="Associated attribute or Variable" />
+        <Attribute Name="fieldSpecifier"
+                   Type="custom(LayoutDataItemFieldSpecifier)"
+                   Description="Member of the SDT/BC."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemFieldSpecifierResolver" />
+        <Attribute Name="titleExp"
+                   PrettyName="Title"
+                   Type="string-t"
+                   Description="Title for the column"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutSimpleGridItemTitleResolver" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Description="Theme class for the column."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="WebUserControlProperties"
+                   Type="string"
+                   Visible="false" />
+        <Attribute Name="controlNameForStencil"
+                   Type="string"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutTab"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="id"
+                 Icon="Tab"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Visible="false" />
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Control Info"
+                   DefaultValue="false"
+                   ApplyIf="self::*[(not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="TabControl Appearance"
+                   Description="Theme class for the tab."
+                   PrettyName="TabControl Class"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="TabControl Appearance"
+                   DefaultValue="true"
+                   PrettyName="TabControl Visible"
+                   Tag="runtime" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="TabControl Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="TabControl Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="tabsBehavior"
+                   PrettyName="Tabs Distribution"
+                   Type="enum{Platform Default;Fixed Size;Scroll}"
+                   Category="Tabs Behavior"
+                   DefaultValue="Platform Default"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="tabsNavigation"
+                   PrettyName="Interactive Navigation"
+                   Type="enum{Platform Default;True;False}"
+                   Category="Tabs Behavior"
+                   DefaultValue="Platform Default"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="moreButtonSelectedImage"
+                   Type="reference(Image)"
+                   Category="Tabs Behavior"
+                   ApplyIf="self::*[@tabsBehavior != &#39;Scroll&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="moreButtonUnselectedImage"
+                   Type="reference(Image)"
+                   Category="Tabs Behavior"
+                   ApplyIf="self::*[@tabsBehavior != &#39;Scroll&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="scrollLeftIndicator"
+                   Type="reference(Image)"
+                   Category="Tabs Behavior"
+                   ApplyIf="self::*[@tabsBehavior != &#39;Fixed Size&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="scrollRightIndicator"
+                   Type="reference(Image)"
+                   Category="Tabs Behavior"
+                   ApplyIf="self::*[@tabsBehavior != &#39;Fixed Size&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="historyManagement"
+                   Type="bool"
+                   Category="Tabs Behavior"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;Web&#39;]"
+                   Description="True to enable automatic history management. When enabled, every time a user clicks on a tab, a new entry is added to the browser History. When the user presses the browser&#39;s back button, the previous tab is activated, and the TabChange event is fired." />
+        <Attribute Name="expandBounds"
+                   PrettyName="Expand Bounds"
+                   Type="enum{Background Only;Content &amp; Background;None}"
+                   Description="Expand Bounds of the control&apos;s content &amp; background, background only or none."
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ExpandBoundsResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="expandLimit"
+                   PrettyName="Expand Bounds Limit"
+                   Type="enum{Behind System Bars;Behind Application Bars}"
+                   Description="Expand Bounds Limit."
+                   Category="Layout Behavior"
+                   DefaultValue="Behind System Bars"
+                   ApplyIf="self::*[@expandBounds!=&#39;None&#39; and parent::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="expandDirection"
+                   PrettyName="Expand Bounds Directions"
+                   Type="custom(RectangleEdge)"
+                   Description="Expand Bounds Directions."
+                   Category="Layout Behavior"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ExpandBoundsDirectionResolvers"
+                   ApplyIf="self::*[@expandBounds!=&#39;None&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="item"
+                      ElementType="LayoutTabItem"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutTabItem"
+                 Caption="Tab ({0})"
+                 CaptionParameters="caption"
+                 KeyAttribute="id"
+                 Icon="icons\tabItem.ico"
+                 CustomAttributes="true">
+      <!-- SD control -->
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Visible="false" />
+        <Attribute Name="itemControlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="selClass"
+                   Type="theme-class"
+                   Category="TabPage Appearance"
+                   Description="Theme class for the selected tabpage."
+                   PrettyName="Selected TabPage Class"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.SelectedClassResolvers"
+                   Tag="runtime(SelectedClass)"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="itemClass"
+                   Type="theme-class"
+                   Category="TabPage Appearance"
+                   Description="Theme class for the unselected tabpage."
+                   PrettyName="Unselected TabPage Class"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.UnselectedClassResolvers"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Category="TabPage Appearance"
+                   Description="Tab caption."
+                   DefaultValueFrom="@itemControlName"
+                   Tag="runtimesd" />
+        <Attribute Name="itemVisible"
+                   Type="bool"
+                   Category="TabPage Appearance"
+                   DefaultValue="true"
+                   PrettyName="TabPage Visible"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="itemEnabled"
+                   Type="bool"
+                   Category="TabPage Appearance"
+                   DefaultValue="true"
+                   PrettyName="TabPage Enabled"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="image"
+                   Type="reference(Image)"
+                   Description="Image for this tab page selector"
+                   Category="TabPage Appearance"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="unselectedImage"
+                   Type="reference(Image)"
+                   Description="Image for this tab page selector when not selected"
+                   Category="TabPage Appearance"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="imagePosition"
+                   Type="enum{Platform Default;Above Text;Below Text;Before Text;After Text;Behind Text}"
+                   DefaultValue="Platform Default"
+                   Category="TabPage Appearance"
+                   Description="Specify the relative location of the image to the text."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="table"
+                      ElementType="LayoutTable"
+                      Optional="false" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutGroup"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="id"
+                 Icon="Group"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="id"
+                   Type="unique-id"
+                   Visible="false" />
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Description="Group caption."
+                   Tag="runtimeweb" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   ApplyIf="self::*[(not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the group."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="table"
+                      ElementType="LayoutTable"
+                      Optional="false" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutOneContent"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="SDComponent"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="content"
+                   Type="custom(LayoutContent)"
+                   Description="Component reference."
+                   NotNull="true" />
+        <Attribute Name="parameters"
+                   Type="custom(SectionParameters)"
+                   Description="Section parameters (optional)." />
+        <Attribute Name="display"
+                   Type="enum{Inline;Link}"
+                   Category="Component"
+                   Description="Display style (shown in the detail, or linked from detail)." />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Component"
+                   DefaultValue="true"
+                   ApplyIf="self::*[@display = &#39;Inline&#39; and (not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;)]" />
+        <Attribute Name="showSectionTitle"
+                   Type="bool"
+                   Category="Component"
+                   ApplyIf="self::*[@display = &#39;Inline&#39;]"
+                   Description="Show section title." />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutAllContent"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="SDComponent"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="display"
+                   Type="enum{Platform Default;Tab;Inline;Link}"
+                   Category="Component"
+                   Description="Display style (as a separate tab, shown in the detail, or linked from detail)."
+                   DefaultValue="Platform Default" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Component"
+                   DefaultValue="true"
+                   ApplyIf="self::*[@display = &#39;Inline&#39; and (not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;)]" />
+        <Attribute Name="showSectionTitle"
+                   Type="bool"
+                   Category="Component"
+                   ApplyIf="self::*[@display = &#39;Inline&#39;]"
+                   Description="Show section title." />
+        <Attribute Name="tabSectionClass"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for section tab control."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutComponent"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="SDComponent"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="webObject"
+                   PrettyName="Object"
+                   Type="custom(WebComponentObject)"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;Web&#39;]" />
+        <Attribute Name="object"
+                   Type="reference(SDPanel;Dashboard;WorkWithDevices)"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="objectPanel"
+                   Type="custom(WorkWithDevicesPanel)"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.WorkWithDevicesPanelResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="parameters"
+                   Type="custom(SectionParameters)"
+                   Description="Component parameters" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   ApplyIf="self::*[(not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the component."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutHtml"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="LayoutHtml"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="formId"
+                   Type="int"
+                   Visible="false" />
+        <Attribute Name="formType"
+                   Type="enum{Html;Layout}"
+                   DefaultValue="Html"
+                   Visible="false" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   Visible="false" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutErrorViewer"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="ErrorViewer"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Description="Theme class for the ErrorViewer."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   Visible="false" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutContentPlaceHolder"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="ContentPlaceHolder"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutEmbeddedPage"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="EmbeddedPage"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Description="Theme class for the EmbeddedPage."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutHyperLink"
+                 Caption=""
+                 Icon="Hyperlink"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="text"
+                   Type="string"
+                   NotNull="true" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Description="Theme class for the HyperLink."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers" />
+        <Attribute Name="controlNameForStencil"
+                   Type="string"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutHorizontalRule"
+                 Caption=""
+                 Icon="Line"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes />
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutActionGroupBlock"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 CustomAttributes="true"
+                 Icon="Pattern_ActionBar"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   Visible="false" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutDataItem"
+                 Caption="{0}"
+                 CaptionParameters="attribute"
+                 KeyAttribute="attribute"
+                 Icon="LayoutData"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemControlNameResolver"
+                   Flag="FlagOnlyDefault=IfReadonly" />
+        <Attribute Name="attribute"
+                   Type="custom(AttributeVariableReference)"
+                   Description="Associated attribute or Variable" />
+        <Attribute Name="fieldSpecifier"
+                   Type="custom(LayoutDataItemFieldSpecifier)"
+                   Description="Member of the SDT/BC."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemFieldSpecifierResolver" />
+        <Attribute Name="labelPosition"
+                   Type="enum{Platform Default;None;Left;Top;Right;Bottom;Float}"
+                   Category="Appearance"
+                   DefaultValue="Platform Default"
+                   Description="Visualization position of the associated label."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemLabelPositionResolver" />
+        <Attribute Name="labelWidth"
+                   Type="string"
+                   Category="Appearance"
+                   DefaultValue="25%"
+                   Description="Width of the associated label."
+				   ApplyIf="self::*[@labelPosition = &#39;Left&#39; and ancestor::layout/parent::*/@PanelType = &#39;Web&#39; and ((parent::cell/parent::row/parent::table/@tableType != &#39;Responsive&#39;) or (parent::item/parent::section))]"
+				   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemLabelWidthResolver" />
+        <Attribute Name="labelCaption"
+                   Type="string-t"
+                   Description="Caption for the associated label."
+                   ApplyIf="self::*[@labelPosition != &#39;None&#39;]"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemLabelCaptionResolver"
+                   Tag="runtime" />
+        <Attribute Name="readonly"
+                   Type="enum{True;False;Auto}"
+                   Description="Indicates if the control is readonly"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemReadonlyResolver"
+                   DefaultValue="True" />
+        <Attribute Name="autolink"
+                   Type="bool"
+                   Category="Link"
+                   Description="Automatically generate links to other pattern instances for description attributes and supertypes."
+                   DefaultValue="true"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the attribute."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="format"
+                   Type="enum{Text;HTML}"
+                   Category="Appearance"
+                   DefaultValue="Text"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemFormatResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="inviteMessage"
+                   Type="string-t"
+                   Description="Text to invite the user to interact with the control"
+                   Category="Appearance"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemInviteMessageResolvers"
+                   Tag="runtimeweb(InviteMessage)" />
+        <Attribute Name="timeInviteMessage"
+                   Type="string-t"
+                   Description="Text to invite the user to interact with the control in the time field"
+                   Category="Appearance"
+                   DefaultValue="Time"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemTimeInviteMessageResolvers" />
+        <Attribute Name="EnterKeyCaption"
+                   Category="Virtual Keyboard"
+                   Type="enum{Default;Go;Search;Send;Join}"
+                   DefaultValue="Default"
+                   ApplyIf="self::*[@EnterEvent != &#39;&#39; and not(starts-with(@EnterEvent,&#39;&lt;&#39;))]" />
+        <Attribute Name="EnterEvent"
+                   Type="custom(GxEventReference)"
+                   DefaultValue="&lt;Platform Default&gt;"
+                   Category="Virtual Keyboard"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="ReturnOnClick"
+                   Type="bool"
+                   DefaultValue="false"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemReturnOnClickResolver"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;Web&#39;]" />
+        <Attribute Name="WebUserControlProperties"
+                   Type="string"
+                   Visible="false" />
+        <Attribute Name="controlNameForStencil"
+                   Type="string"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ShowInDebugResolvers" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutUCItem"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="LayoutData"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.LayoutDataItemControlNameResolver" />
+        <Attribute Name="controlType"
+                   Type="int"
+                   Visible="false" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="table"
+                      ElementType="LayoutTable"
+                      Optional="true"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutUCWebItem"
+                 Caption="UCWeb"
+                 Icon="LayoutData"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributesFrom="gxControlType">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="gxControlType"
+                   Type="int"
+                   Visible="false" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="table"
+                      ElementType="LayoutTable"
+                      Optional="true"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutSectionItem"
+                 BaseType="LayoutBaseCellItem"
+                 Caption="(item)">
+      <!-- Web control -->
+      <Attributes />
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutSection"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="controlName"
+                 Icon="Section"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Description="Theme class for the Section."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="item"
+                      ElementType="LayoutSectionItem"
+                      Optional="true"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutActionItem"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="controlName"
+                 Icon="Button"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="onClickEvent"
+                   Type="custom(GxEventReference)"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ActionClickEventResolver" />
+        <Attribute Name="width"
+                   Type="int"
+                   Category="Appearance"
+                   Description="Width for control associated to this button"
+                   ApplyIf="parent::cell[ancestor::layout/parent::*/@PanelType = &#39;SD&#39; and parent::row/parent::table/@tableType = &#39;Tabular&#39;]" />
+        <Attribute Name="height"
+                   Type="int"
+                   Category="Appearance"
+                   Description="Height for control associated to this button"
+                   ApplyIf="parent::cell[ancestor::layout/parent::*/@PanelType = &#39;SD&#39; and parent::row/parent::table/@tableType = &#39;Tabular&#39;]" />
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Description="Caption (text shown in the UI)."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ActionCaptionResolver"
+                   Tag="runtime" />
+        <Attribute Name="ControlType"
+                   Type="custom(ActionControlType)"
+                   Category="Control Info"
+                   Description="User control associated to this button"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ActionControlTypeResolvers" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the button (if no class is specified, the one set in the configuration file will be used)."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ActionClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="format"
+                   Type="enum{Text;HTML}"
+                   Category="Appearance"
+                   DefaultValue="Text"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="image"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   Description="Image to be shown for the button."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="disabledImage"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   Description="Image to appear in the grid when the button is not enabled (to make the button invisible, use a transparent image)."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="imagePosition"
+                   Type="enum{Above Text;Below Text;Before Text;After Text;Behind Text}"
+                   DefaultValue="Above Text"
+                   Category="Appearance"
+                   Description="Specify the relative location of the image to the text."
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutImage"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 KeyAttribute="controlName"
+                 Icon="Image"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="image"
+                   Type="reference(Image)"
+                   Tag="runtimeweb" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="false"
+                   ApplyIf="self::*[(not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the image."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutTextblock"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="TextBlock"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Tag="runtime" />
+        <Attribute Name="AutoGrow"
+                   Type="bool"
+                   Category="Appearance"
+                   ApplyIf="self::*[(not(parent::cell) or parent::cell/parent::row/parent::table/@tableType != &#39;Flex&#39;) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for the attribute."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime" />
+        <!--Attribute Name="ForeColor"
+                   Type="string"
+                   Category="Appearance"
+                   Tag="runtime"
+                   Visible="false" />
+        <Attribute Name="BackColor"
+                   Type="string"
+                   Category="Appearance"
+                   Tag="runtime"
+                   Visible="false" /-->
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+        <Attribute Name="format"
+                   Type="enum{Text;HTML}"
+                   Category="Appearance"
+                   DefaultValue="Text"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;SD&#39;]" />
+				<Attribute Name="ControlType"
+								Type="custom(ActionControlType)"
+								Category="Control Info"
+								Description="User control associated to this textblock"
+								Resolver="Artech.Patterns.WorkWithDevices.Custom.ElementControlTypeResolvers" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <ElementType Name="LayoutActionBar"
+                 Caption="Application Bar"
+                 Icon="Pattern_ActionBar"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources"
+                 CustomAttributes="true">
+      <!-- SD control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   ReadOnly="true"
+                   DefaultValue="ApplicationBar"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="showApplicationBars"
+                   Type="bool"
+                   Category="Appearance"
+                   Description="Show application bars."
+                   DefaultValue="true"
+                   Tag="runtime(Visible)" />
+        <Attribute Name="applicationBarsClass"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for application bars."
+                   ApplyIf="self::*[@showApplicationBars=&#39;True&#39;]"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   Tag="runtime(Class)" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="item"
+                      ElementType="LayoutActionGroupItem"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutActionGroups"
+                 Caption="Action Groups"
+                 Icon="Tab"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <!-- SD control -->
+      <Attributes />
+      <ChildrenElements>
+        <ChildElement Name="actionGroup"
+                      ElementType="LayoutActionGroup"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutActionGroup"
+                 Caption="{0}"
+                 CaptionParameters="controlName"
+                 Icon="Pattern_ActionBar"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <!-- SD+Web control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="class"
+                   Type="theme-class"
+                   Category="Appearance"
+                   Description="Theme class for action group."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ClassResolvers"
+                   ApplyIf="ancestor::*[layout and @PanelType = &#39;Web&#39;]" />
+        <!-- Check SerializationHelper.cs use of InstanceAttributes.LayoutActionGroup.Class if class property is used for SD -->
+        <Attribute Name="controlWebType"
+                   Type="enum{ToolBar;Menu}"
+                   PrettyName="Control Type"
+                   Category="Appearance"
+                   DefaultValue="ToolBar"
+                   ApplyIf="self::*[parent::actionGroups and ancestor::layout/parent::*/@PanelType = &#39;Web&#39;]"
+                   Description="Indicates if the group will be rendered as a ToolBar or a Menu." />
+        <Attribute Name="controlType"
+                   Type="enum{Bar;Action Sheet;Menu}"
+                   Category="Appearance"
+                   DefaultValue="Bar"
+                   ApplyIf="self::*[parent::actionGroups and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Description="Caption (text shown in the UI)."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ActionGroupCaptionResolver"
+                   Tag="runtime" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="self::*[not(parent::actionGroups) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="enabled"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime"
+                   ApplyIf="self::*[not(parent::actionGroups) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="image"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   Description="Image to be shown for the group."
+                   ApplyIf="self::*[not(parent::actionGroups) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39; or parent::actionGroups and ancestor::layout/parent::*/@PanelType = &#39;Web&#39;]" />
+        <Attribute Name="disabledImage"
+                   Type="reference(Image)"
+                   Category="Appearance"
+                   Description="Image to appear in the grid when the button is not enabled (to make the button invisible, use a transparent image)."
+                   ApplyIf="self::*[not(parent::actionGroups) and ancestor::layout/parent::*/@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="position"
+                   Type="enum{Fixed Top;Fixed Bottom;Default}"
+                   Category="Appearance"
+                   DefaultValue="Default"
+                   ApplyIf="self::*[parent::actionGroups and @controlWebType=&#39;Menu&#39; and ancestor::layout/parent::*/@PanelType = &#39;Web&#39;]"
+                   Description="Select &#39;Default&#39; to render the Menu where it was included. Select &#39;Fixed Top&#39; to render the Menu fixed to the top of the page. Select &#39;Fixed Bottom&#39; to render it fixed to the bottom of the page." />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="item"
+                      ElementType="LayoutActionGroupItem"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutActionGroupItem"
+                 Caption=""
+                 Icon="Pattern_ActionBar"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <!-- SD control -->
+      <Attributes>
+        <Attribute Name="priority"
+                   Type="enum{High;Normal;Low}"
+                   Category="Position"
+                   DefaultValue="Normal"
+                   ApplyIf="self::*[ancestor::layout/parent::*/@PanelType = &#39;SD&#39; and (ancestor::actionBar or ancestor::actionGroup/@controlType=&#39;Bar&#39;)]" />
+        <Attribute Name="position"
+                   Type="custom(LayoutActionGroupItemPosition)"
+                   Category="Position"
+                   DefaultValue="Default"
+                   ApplyIf="self::*[ancestor::layout/parent::*/@PanelType = &#39;SD&#39; and (ancestor::actionBar or ancestor::actionGroup/@controlType=&#39;Bar&#39;)]" />
+        <Attribute Name="hAlign"
+                   Type="enum{Left;Center;Right}"
+                   Category="Position"
+                   PrettyName="Horizontal Position"
+                   DefaultValue="Left"
+                   ApplyIf="self::*[@position=&#39;Custom&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39; and (ancestor::actionBar or ancestor::actionGroup/@controlType=&#39;Bar&#39;)]"
+                   Description="Horizontal alignment for the content of the layout element." />
+        <Attribute Name="vAlign"
+                   Type="enum{Top;Bottom}"
+                   Category="Position"
+                   PrettyName="Vertical Position"
+                   DefaultValue="Top"
+                   ApplyIf="self::*[@position=&#39;Custom&#39; and ancestor::layout/parent::*/@PanelType = &#39;SD&#39; and (ancestor::actionBar or ancestor::actionGroup/@controlType=&#39;Bar&#39;)]"
+                   Description="Vertical alignment for the content of the layout element." />
+      </Attributes>
+      <ChildrenElements>
+        <!-- Choice of these elements (only one). -->
+        <ChildElement Name="action"
+                      ElementType="LayoutActionItem"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="actionGroup"
+                      ElementType="LayoutActionGroup"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="data"
+                      ElementType="LayoutDataItem"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="search"
+                      ElementType="LayoutSearch"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="textblock"
+                      ElementType="LayoutTextblock"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="image"
+                      ElementType="LayoutImage"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="ucw"
+                      ElementType="LayoutUCWebItem"
+                      Multiple="false"
+                      Optional="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="LayoutSearch"
+                 Caption="Search"
+                 Icon="Search"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <!-- SD control -->
+      <Attributes>
+        <Attribute Name="controlName"
+                   Type="string"
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.ControlNameResolvers" />
+        <Attribute Name="inviteMessage"
+                   Type="string-t"
+                   Description="Text to invite the user to interact with the object" />
+        <Attribute Name="visible"
+                   Type="bool"
+                   Category="Appearance"
+                   DefaultValue="true"
+                   Tag="runtime" />
+        <Attribute Name="invisibleMode"
+                   Type="enum{Keep Space;Collapse Space}"
+                   Category="Appearance"
+                   DefaultValue="Keep Space"
+                   ApplyIf="parent::cell" />
+      </Attributes>
+      <ChildrenElements />
+    </ElementType>
+    <!-- Grid Data -->
+    <ElementType Name="GridData"
+                 Caption=""
+                 KeyAttribute="name">
+      <Attributes>
+        <Attribute Name="name"
+                   Type="string"
+                   NotNull="true" />
+        <Attribute Name="autoRefreshTime"
+                   Type="int"
+                   Category="Refresh timeout"
+                   PrettyName="Lapse"
+                   Description="Automatic refresh in seconds (0 = off)"
+                   ApplyIf="parent::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="ordersProperty"
+                   Type="custom(PatternTree)"
+                   Category="Data"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NotSDTBasedGridFromGridDataResolver"
+                   PrettyName="Orders"
+                   Description="Orders and Break by."
+                   ApplyIf="parent::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="ordersWebProperty"
+                   Type="code(OrderSentence)"
+                   Category="Data"
+                   PrettyName="Orders"
+                   Description="Grid orders."
+                   ApplyIf="parent::*[@PanelType = &#39;Web&#39;]" />
+        <Attribute Name="searchProperty"
+                   Type="custom(PatternTree)"
+                   Category="Data"
+                   PrettyName="Search"
+                   Description="Search and Advanced Search."
+                   ApplyIf="parent::*[@PanelType = &#39;SD&#39;]" />
+        <Attribute Name="conditions"
+                   Type="code(Conditions)"
+                   Category="Data"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NotSDTBasedGridFromGridDataResolver"
+                   Description="Grid conditions." />
+        <Attribute Name="basetrn"
+                   Type="code(BaseTrnSentence)"
+                   Category="Data"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NotSDTBasedGridFromGridDataResolver"
+                   PrettyName="Base Trn"
+                   Description="Grid base trn" />
+        <Attribute Name="unique"
+                   Type="code(AttributeList)"
+                   Category="Data"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.NotSDTBasedGridFromGridDataResolver"
+                   Description="Grid unique." />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="orders"
+                      ElementType="Orders"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="breakBy"
+                      ElementType="BreakBy"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="search"
+                      ElementType="FilterSearch"
+                      Multiple="false"
+                      Optional="true" />
+        <ChildElement Name="advanced"
+                      ElementType="FilterAttributes"
+                      Multiple="false"
+                      Optional="true" />
+      </ChildrenElements>
+    </ElementType>
+    <!-- Filter -->
+    <ElementType Name="FilterSearch"
+                 Caption="Search"
+                 Icon="Search"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="caption"
+                   Type="string-t"
+                   Description="Search caption" />
+        <Attribute Name="optionForIndividualFields"
+                   Type="bool"
+                   Description="Include an option to select which of the search fields is used in the search (instead of all of them)."
+                   DefaultValue="false" />
+        <Attribute Name="alwaysVisible"
+                   Type="bool"
+                   Description="Search field always visible or only on demand." />
+        <Attribute Name="filterOperator"
+                   Type="enum{Begins with;Contains}"
+                   DefaultValue="Contains"
+                   Description="Search type."
+                   NotNull="true" />
+        <Attribute Name="caseSensitive"
+                   Type="bool"
+                   Description="Search is case sensitive." />
+        <Attribute Name="breakBy"
+                   Type="enum{Platform Default;Disabled;Use order's break by}"
+                   DefaultValue="Platform Default"
+                   Description="Break by behavior while searching." />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="attribute"
+                      ElementType="FilterSearchAttribute"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="FilterSearchAttribute"
+                 Caption="{0}"
+                 CaptionParameters="attribute"
+                 KeyAttribute="attribute"
+                 Icon="ObjectAttribute"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="attribute"
+                   Type="custom(AttributeReferenceOrVariable)"
+                   Description="Attribute/Variable."
+                   NotNull="true" />
+        <Attribute Name="description"
+                   Type="string-t"
+                   Description="Search caption." />
+      </Attributes>
+      <ChildrenElements />
+      <Initialization>
+        <InitializationFrom Type="Attribute"
+                            ReferenceProperty="attribute"
+                            PropertyValues="description=ContextualTitle" />
+      </Initialization>
+    </ElementType>
+    <ElementType Name="FilterAttributes"
+                 Caption="Advanced"
+                 Icon="Pattern_Filter"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="displayName"
+                   Type="string-t"
+                   Description="Title of filter group for this grid"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.FilterNameResolvers" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="filterAttribute"
+                      Description="Filter Attribute/Variable"
+                      ElementType="FilterAttribute"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="FilterAttribute"
+                 Caption="{0}"
+                 CaptionParameters="attribute"
+                 KeyAttribute="attribute"
+                 Icon="ObjectAttribute"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="attribute"
+                   Type="custom(AttributeReferenceOrVariable)"
+                   Description="Attribute/Variable to filter for."
+                   NotNull="true" />
+        <Attribute Name="description"
+                   Type="string-t"
+                   Description="Filter caption."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.FilterDescriptionResolvers" />
+        <Attribute Name="type"
+                   Type="enum{Standard;Range}"
+                   DefaultValue="Standard"
+                   Description="Filter type"
+                   NotNull="true" />
+        <Attribute Name="expression"
+                   Type="code(ConditionsSD)"
+                   Description="Custom condition for the filter."
+                   NotNull="true"
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.FilterExpressionResolvers" />
+        <Attribute Name="default"
+                   Type="code(Expressions)"
+                   Category="Values"
+                   ApplyIf="self::*[@type=&#39;Standard&#39;]"
+                   Description="Default value. Must be an expression of the same type of the attribute/variable." />
+        <Attribute Name="defaultBeginRange"
+                   Type="code(Expressions)"
+                   Category="Values"
+                   ApplyIf="self::*[@type=&#39;Range&#39;]"
+                   Description="Default value for the starting point of the range. Must be an expression of the same type of the attribute/variable." />
+        <Attribute Name="defaultEndRange"
+                   Type="code(Expressions)"
+                   Category="Values"
+                   ApplyIf="self::*[@type=&#39;Range&#39;]"
+                   Description="Default value for the ending point of the range. Must be an expression of the same type of the attribute/variable." />
+        <Attribute Name="allValue"
+                   Type="bool"
+                   Category="Values"
+                   Description="Add an &#39;all&#39; option in ComboBox. (Use only when the attribute is a ComboBox)."
+                   DefaultValue="false"
+                   PrettyName="All" />
+      </Attributes>
+      <ChildrenElements />
+      <Initialization>
+        <InitializationFrom Type="Attribute"
+                            ReferenceProperty="attribute"
+                            PropertyValues="description=ContextualTitle" />
+      </Initialization>
+    </ElementType>
+    <!-- Orders -->
+    <ElementType Name="Orders"
+                 Caption="Orders"
+                 Icon="Pattern_Orders"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes />
+      <ChildrenElements>
+        <ChildElement Name="order"
+                      ElementType="Order"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="Order"
+                 Caption="Order ({0})"
+                 CaptionParameters="name"
+                 KeyAttribute="name"
+                 Icon="Pattern_Order"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="name"
+                   Type="string-t"
+                   Description="Name of the Order, for user selection."
+                   NotNull="true" />
+        <Attribute Name="GroupBy"
+                   Type="bool"
+                   Description="Group items in sections, based on the attributes of the order."
+                   PrettyName="Break by" />
+        <Attribute Name="EnableAlphaIndexer"
+                   Type="bool"
+                   Description="Enable use Alpha Indexer in the list for the first attribute of this order."
+                   Resolver="Artech.Patterns.WorkWithDevices.Custom.EnableAlphaIndexerResolvers" />
+        <Attribute Name="groupByUpTo"
+                   Type="custom(AttributeReferenceOrVariable)"
+                   ApplyIf="self::*[@GroupBy=&#39;True&#39;]"
+                   Description="Last attribute/variable to group by (if none is specified, all the order attributes will be used). Set it to specify aditional order attributes that do not participate in grouping."
+                   PrettyName="Break by up to" />
+        <Attribute Name="descriptionAttribute"
+                   Type="custom(AttributeReferenceOrVariable)"
+                   ApplyIf="self::*[@GroupBy=&#39;True&#39;]"
+                   Description="Specify the attribute/variable value to be shown on the UI for this Group"
+                   PrettyName="Description Attribute" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="attribute"
+                      ElementType="OrderAttribute"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="OrderAttribute"
+                 Caption="{0}"
+                 CaptionParameters="attribute"
+                 KeyAttribute="attribute"
+                 Icon="ObjectAttribute"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="attribute"
+                   Type="custom(AttributeReferenceOrVariable)"
+                   Description="Attribute/Variable."
+                   NotNull="true" />
+        <Attribute Name="description"
+                   Type="string-t"
+                   Description="Description." />
+        <Attribute Name="ascending"
+                   Type="bool"
+                   Description="Ascending Order."
+                   DefaultValue="true" />
+      </Attributes>
+      <ChildrenElements />
+      <Initialization>
+        <InitializationFrom Type="Attribute"
+                            ReferenceProperty="attribute"
+                            PropertyValues="description=Description" />
+      </Initialization>
+    </ElementType>
+    <!-- Break By -->
+    <ElementType Name="BreakBy"
+                 Caption="Break By"
+                 Icon="Pattern_Orders"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="descriptionAttribute"
+                   Type="custom(AttributeReferenceOrVariable)"
+                   Description="Specify the attribute/variable value to be shown on the UI for this Group" />
+      </Attributes>
+      <ChildrenElements>
+        <ChildElement Name="attribute"
+                      ElementType="BreakByAttribute"
+                      Multiple="true" />
+      </ChildrenElements>
+    </ElementType>
+    <ElementType Name="BreakByAttribute"
+                 Caption="{0}"
+                 CaptionParameters="attribute"
+                 KeyAttribute="attribute"
+                 Icon="ObjectAttribute"
+                 IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+      <Attributes>
+        <Attribute Name="attribute"
+                   Type="custom(AttributeReferenceOrVariable)"
+                   Description="Attribute/Variable."
+                   NotNull="true" />
+      </Attributes>
+      <ChildrenElements />
+      <Initialization>
+        <InitializationFrom Type="Attribute"
+                            ReferenceProperty="attribute"
+                            PropertyValues="description=Description" />
+      </Initialization>
+    </ElementType>
+  </ElementTypes>
+</Pattern>

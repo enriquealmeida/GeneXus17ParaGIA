@@ -1,0 +1,123 @@
+/*	
+	This procedure is used to execute tests.
+	Do not modify. Created automatically.
+*/
+
+do 'LoadExecutionData'
+do 'RunTests'
+do 'SaveResults'
+
+Sub 'LoadExecutionData'
+	&File.Source = &ExecutionDataFilePath
+	&File.OpenRead()
+	if not &ExecutionData.FromJson(&File.ReadAllText())
+		msg(!"Error loading ExecutionData from " + &ExecutionDataFilePath, status)
+		&File.Close()
+		return
+	endif
+	&File.Close()
+	
+	&Cache = Cache.GetCache(!"TESTCACHE")
+EndSub
+
+Sub 'RunTests'
+	
+	// Run Unit Tests
+	For &TestName in &ExecutionData.Unit.Tests
+		do 'TryRunUnitTestAndProcessError'	
+		
+	Endfor
+
+	// Run Web UI Tests
+	&Driver.SetXmlReporterFilePath(&ExecutionData.XmlResultsFile)
+	For &TestName in &ExecutionData.UI.Tests	
+		
+		do 'TryRunUITestAndProcessError'
+
+	Endfor
+EndSub
+
+Sub 'TryRunUnitTestAndProcessError'
+	
+	do 'CreateEmptyTestResult'
+	
+	msg(!"STARTING Unit Test " + &TestName + !"...", status)
+	
+	CSHARP try { 
+	JAVA try { 
+		Call(&TestName)
+		&Test.Status = true
+	CSHARP } catch (Exception e) {[!&ExceptionDetailed!] = e.ToString(); [!&Exception!] = e.Message;}
+	JAVA } catch (Exception e) {
+		JAVA     java.io.StringWriter sw = new java.io.StringWriter(); 
+		JAVA     java.io.PrintWriter pw = new java.io.PrintWriter(sw, true); e.printStackTrace(pw); 
+		JAVA     [!&ExceptionDetailed!] = sw.getBuffer().toString(); 
+	JAVA     [!&Exception!] = e.getMessage();}
+
+	do 'EndTestInfo'
+EndSub
+
+Sub 'TryRunUITestAndProcessError'
+	
+	do 'CreateEmptyTestResult'
+	
+	msg(!"STARTING UI test " + &TestName + !"...", status)
+	
+	CSHARP try { 
+	JAVA try { 
+		&Driver.SetBrowser(&ExecutionData.UI.Settings.Browser)
+		&Driver.SetBaseURL(&ExecutionData.UI.Settings.BaseURL)
+		&Driver.SetScreenshotMode(&ExecutionData.UI.Settings.ScreenshotMode)
+		&Driver.SetHtmlMode(&ExecutionData.UI.Settings.HtmlMode)
+		&Driver.SetFileUploadBasePath(&ExecutionData.UI.Settings.FileUploadBasePath)
+		Call(&TestName, &Driver)
+		&Test.Status = true
+	CSHARP } catch (Exception e) {[!&ExceptionDetailed!] = e.ToString(); [!&Exception!] = e.Message;}
+	JAVA } catch (Exception e) {
+		JAVA     java.io.StringWriter sw = new java.io.StringWriter(); 
+		JAVA     java.io.PrintWriter pw = new java.io.PrintWriter(sw, true); e.printStackTrace(pw); 
+		JAVA     [!&ExceptionDetailed!] = sw.getBuffer().toString(); 
+	JAVA     [!&Exception!] = e.getMessage();}
+
+	//CLOSE BROWSER Driver.
+	&Driver.SilentEnd()
+
+	do 'EndTestInfo'
+EndSub
+
+Sub 'CreateEmptyTestResult'
+	&Test = new TestCase()
+	&Test.Name = &TestName
+	&Test.Status = true
+	&Cache.Set(!"TestName", &TestName)
+	SetSession(!'gxtest4', &Test.ToXml())
+	&TimeStart = DateTime.Now()
+	&Exception = !""
+	&ExceptionDetailed = !""
+EndSub
+
+sub 'EndTestInfo'
+	&TimeEnd = DateTime.Now()
+	&TimeElapsed = &TimeEnd.Difference(&TimeStart)*1000
+	&Cache.Set(!"TestExecutionEnded", &TestName)
+	&Test.FromXml(GetSession(!'gxtest4'))
+	if not &Exception.IsEmpty()	
+		&Test.Status = false
+		&Test.ErrorMsg = &Exception
+		&Test.Error = &ExceptionDetailed
+		msg(&ExceptionDetailed, status)
+	endif
+	msg(!"ENDED " + &TestName + !". Time elapsed: " + &TimeElapsed + !" ms" , status)
+	msg(!"--------------------", status)
+	&Test.ElapsedTime = &TimeElapsed
+	&Test.StartedAt = &TimeStart
+	&TestCases.Add(&Test)
+EndSub
+	
+sub 'SaveResults'
+	&XmlWriter.Open(!'..\..\TestResults.xml')
+	&XmlWriter.WriteStartDocument(!"UTF-8")
+	&XmlWriter.WriteRawText(&TestCases.ToXml())
+	&XmlWriter.Close()
+	TestsReferences()
+EndSub

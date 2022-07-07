@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Files external object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44917,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Files external object</h1>
+<!--Files external object--><div class="TableWikiBody" id="tblwikibody"><p>The Files external object enables you to programmatically select files from your device to be assigned to <a href="6704.html">Blob</a> and <a href="40420.html">BlobFile</a> attributes and variables.</p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><img src="./images/50057.png" id="50057" class="WikiImage"/></td>
+			<td><img src="./images/50058.png" id="50058" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="Properties" class="HashLink" href="#Properties"><strong>Properties</strong></a></h2>
+
+<p>It does not have any.</p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods"><strong>Methods</strong></a></h2>
+
+<h3><a id="ChooseFile+method" class="HashLink" href="#ChooseFile+method"><strong>ChooseFile method</strong></a></h3>
+
+<p>Selects a file from the device.</p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Return value </strong></td>
+			<td><a href="40420.html">BlobFile</a></td>
+		</tr>
+		<tr>
+			<td><strong>Parameters</strong></td>
+			<td>[ acceptedTypes:<a href="6778.html">VarChar data type</a> ]</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<p>The method will display the available sources in the device to select a file. In the case of iOS applications, these sources will be:</p>
+
+<ul>
+	<li>Local file (files in the application's sandbox)</li>
+	<li><a href='https://support.apple.com/en-us/HT206481'>Files application</a> (introduced from iOS 11)</li>
+	<li>Image gallery</li>
+</ul>
+
+<p><img src="./images/44919.png" id="44919" class="WikiImage"/></p>
+
+<p>The optional <em>acceptedTypes </em>parameter must be specified as a comma-separated list of mime types, such as:</p>
+
+<ul>
+	<li><em>&quot;image/*&quot;</em> to indicate that only images files can be selected,</li>
+	<li>&quot;<em>application/pdf</em>&quot; for PDF files, or</li>
+	<li>&quot;<em>image/*,application/pdf</em>&quot; to allow selecting images and PDF files.</li>
+</ul>
+
+<p><u>Note</u>: the <em>acceptedTypes </em>parameter is available in Android since <a href="https://wiki.genexus.com/commwiki/wiki?45624,," target="_blank">GeneXus 16 upgrade 10</a>. It is not yet available in iOS.</p>
+
+<p>If the <em>acceptedTypes </em>parameter is not present, then all file types are shown.</p>
+
+<p> </p>
+
+<h3><a id="SaveToFolder+method" class="HashLink" href="#SaveToFolder+method"><strong>SaveToFolder method</strong></a></h3>
+
+<p>Saves the specified File to the device system folder.</p>
+
+<p><strong>Return Value </strong><a href="4374.html">Boolean</a></p>
+
+<p><strong>Parameters  </strong>fileUri<b>:</b><a href="15668.html">URL</a>, destination:DeviceFolder, /* saveMode: SaveMode */.</p>
+
+<p>The parameter saveMode is optional. The default behavior is Rename.</p>
+
+<h2><a id="Events" class="HashLink" href="#Events"><strong>Events</strong></a></h2>
+
+<p>It does not have any</p>
+
+<h2><a id="Domains" class="HashLink" href="#Domains"><strong>Domains</strong></a></h2>
+
+<p><strong>DeviceFolder</strong></p>
+
+<p>Values: Documents, Dowloads.</p>
+
+<p><strong>SaveMode</strong></p>
+
+<p>Values: </p>
+
+<p>Rename: If a file already exists in destination, creates a copy.<br />
+Replace: If a file already exists in destination, will replace the content if possible. If not possible for secure reason, do a Renamed<br />
+AskUser: If file already exists in destination, will ask the user if to do a Replacement or Rename.</p>
+
+<h2><a id="Considerations" class="HashLink" href="#Considerations"><strong>Considerations</strong></a></h2>
+
+<p>If the file already exists in the destination folder, by default it is renamed so that both files are kept. Override with the new name is composed by the original name, an index between parentheses, and the file extension.<br />
+For example, when saving Name.ext, if it already exists, it will be saved as Name(1).ext. If Name(1).ext also exists, Name(2).ext will be used. And so on.</p>
+
+<p>If SaveMode is Replace, If the file already exists in the destination folder, it is overriding with the new content if possible. If not, a Renamed is performing.</p>
+
+<p> </p>
+
+<h2><a id="Example" class="HashLink" href="#Example"><strong>Example</strong></a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'SelectFile'
+  Composite
+    &amp;BlobFile = Files.ChooseFile()
+    SaveFile(&amp;BlobFile)
+  EndComposite
+EndEvent
+
+Event 'SaveToFolder'
+
+&amp;fileUrl = Reporte(&quot;MyPublicReport&quot;)
+<strong>Files.</strong>SaveToFolder( &amp;fileUrl, DeviceFolder.Documents)
+
+EndEvent</pre>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><b>Platforms </b></td>
+			<td>Smart Devices</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<p><br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="50048.html">Files external object (GeneXus 17 Upgrade 7)</a></TD><TD><a href="15288.html">Category:Smart Devices API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/07/22 09:55 AM</em></font></td></TR></table></font>

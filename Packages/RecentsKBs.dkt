@@ -1,0 +1,46 @@
+<%@ Template Language="C#" TargetLanguage="C#" Description="Recents" %>
+<%@ Assembly Name="Artech.Architecture.UI.Framework" %>
+<%@ Property Name="KBs" Type="Artech.Architecture.UI.Framework.Objects.IRecentList<Artech.Architecture.UI.Framework.Objects.IRecentKB>" %>
+<%@ Property Name="MsgKBNotFound" Type="System.String" %>
+<%@ Property Name="MsgKBCulture" Type="System.Globalization.CultureInfo" %>
+<%@ Property Name="RecentsName" Type="System.String" %>
+<%@ Property Name="RecentsFolder" Type="System.String" %>
+<%@ Property Name="RecentsLastOpened" Type="System.String" %>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		<td>
+			<div align="center">
+			<% if (KBs.Count > 0) { %>
+				<table width="100%" border="0" cellpadding="10" cellspacing="0">
+					<tr><td class="recentsTitle"><%= RecentsName %></td><td class="recentsTitle"><%= RecentsFolder %></td><td class="recentsTitle"><%= RecentsLastOpened %></td></tr>
+				<% for (int i = 0 ; i < KBs.Count ; i++)
+				{ %>
+				<% if (i % 2 == 0) { %>
+					<tr class="recentKBOddLine">
+				<% } else { %>
+					<tr class="recentKBEvenLine">
+				<% } %>
+						<td>
+							<% if (KBs[i].Exists)
+							{ %>
+								<div align="left">
+									<a class="recentKBValidLink" title="<%= KBs[i].Path %>" href="<%= KBs[i].Command.StartsWith(@"\\") ? "gx://" + "///" + KBs[i].Command.Substring(2) : KBs[i].Command %>" ><%= KBs[i].Name %></a>
+								</div>
+							<% } %>
+							<% else
+							{ %>
+								<div class="recentKBDeletedLink" align="left" title="<%= String.Format(MsgKBCulture, MsgKBNotFound, KBs[i].Path) %>" >
+									<%= KBs[i].Name %>
+								</div>
+							<% } %>
+						</td>
+						<td><%= KBs[i].Path %></td>
+						<td><%= KBs[i].LastAccess.ToShortDateString() %></td>
+					</tr>
+				<% } %>
+				</table>
+			<% } %>
+			</div>
+		</td>
+	</tr>
+</table>

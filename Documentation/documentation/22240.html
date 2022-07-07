@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>The Data Synchronization Problem</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22240,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">The Data Synchronization Problem</h1>
+<!--The Data Synchronization Problem--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As mentioned in the <a href="22221.html">Offline Native Mobile applications architecture</a> document, an offline application may interact with a server. This interaction is done to send or receive information to keep the devices and the server information synchronized. This mechanism of sending and receiving data is called: Synchronization.</p>
+
+<h3><a id="Why+do+you+need+to+synchronize%3F" class="HashLink" href="#Why+do+you+need+to+synchronize%3F">Why do you need to synchronize?</a></h3>
+
+<p>Because:</p>
+
+<ul>
+	<li>The application might be a subset of a bigger system, so the interaction with this system is required.</li>
+	<li>Having the whole system's database on the devices is sometimes unnecessary. In most cases, only a subset of tables and registers are needed for the device to fulfill the tasks.</li>
+	<li>The server may have more power to do some heavy processing, tasks that can't be done on the devices, or consume too many resources.</li>
+	<li>There is some business logic that can only be executed on the main application. For example inventory management.</li>
+	<li>The devices need to have updated data, so from time to time, there is data that should be sent from the server to the devices.</li>
+</ul>
+
+<h3><a id="How+can+this+synchronization+be+done%3F" class="HashLink" href="#How+can+this+synchronization+be+done%3F">How can this synchronization be done?</a></h3>
+
+<p>Via web services. The devices can consume and execute web services, and this will get or take data to and from the server.<br />
+<strong>Note</strong>: Not all the services may be hosted on the same server.</p>
+
+<h4><a id="Strategy" class="HashLink" href="#Strategy"><strong>Strategy</strong></a></h4>
+
+<p>First things is to define:</p>
+
+<ul>
+	<li>What does the application need to do when offline?</li>
+	<li>Which of the involved tables are going to be used offline?</li>
+	<li>Which records of the tables are needed offline?</li>
+</ul>
+
+<h3><a id="Who+starts+the+Synchronization%3F+" class="HashLink" href="#Who+starts+the+Synchronization%3F+">Who starts the Synchronization? </a></h3>
+
+<p>The synchronization always begins with the device by asking for information or sending it. This is because the device is the one that knows when it is connected to the internet and when the connection is good enough. So the ability to ask for the information or send the information is from the device.</p>
+
+<p>In this context is that the name of the synchronization operations is defined. The operations are named as seen from the device:</p>
+
+<ul>
+	<li>Receive: the process of getting data FROM the server</li>
+	<li>Send: the process of uploading local modifications TO the server.</li>
+</ul>
+
+<h3><a id="When+to+Synchronize%3F" class="HashLink" href="#When+to+Synchronize%3F">When to Synchronize?</a></h3>
+
+<p>The best moment to synchronize depends on the application context. There are no rules that can be followed, different scenarios will have different requirements, some will need to stay as synchronized as possible while others may require less frequent synchronizations.</p>
+
+<p>Even though there is no recipe, there are several things to take into consideration on this matter:</p>
+
+<ul>
+	<li>To be able to synchronize, the device needs to have a network connection.</li>
+	<li>Sending information: The device knows exactly how much data is going to be sent. If a lot of data is required to be sent, then a good internet connection is needed.</li>
+	<li>Receiving information: The device has no clue on how much information he is going to receive. An intermediate step may be recommended so the device can decide if the synchronization can be done or not. Taking into consideration the network connection status and the amount of data needed to be transported.</li>
+	<li>Synchronization may need to stop before finishing since a moving device may lose connection at some point, so the synchronization has to be able to recap if the connection was lost during the process.</li>
+</ul>
+
+<h3><a id="Other+issues+to+be+aware+of" class="HashLink" href="#Other+issues+to+be+aware+of">Other issues to be aware of</a></h3>
+
+<h4><a id="What+data+is+going+to+be+received%3F" class="HashLink" href="#What+data+is+going+to+be+received%3F">What data is going to be received?</a></h4>
+
+<p>For data reception, you have two possibilities:</p>
+
+<ul>
+	<li>always receive all the required information and replace the existing data.</li>
+	<li>only receive the modifications and apply them to the existing data.</li>
+</ul>
+
+<p>The first option may involve more data being transferred while the second option may require more server processing.</p>
+
+<h4><a id="Security+of+the+communication" class="HashLink" href="#Security+of+the+communication">Security of the communication</a></h4>
+
+<p>When data has to travel forward and backward from the server to the device it may involve data over a LAN or even the Internet. So the security in this matter is crucial.</p>
+
+<h4><a id="Synchronization+conflicts" class="HashLink" href="#Synchronization+conflicts">Synchronization conflicts</a></h4>
+
+<p>There are some cases where our apps can present synchronization conflicts. Some of those problems and the solutions are explained in the following document:</p>
+
+<ul>
+	<li><a href="23543.html">Automatically generated identifiers synching conflicts</a></li>
+</ul>
+
+<h4><a id="Orders+of+actions" class="HashLink" href="#Orders+of+actions">Orders of actions</a></h4>
+
+<p>The actions executed offline have to be replicated on the server in the same order as they were executed on the device. This will ensure the coherence of the actions. Some actions that were registered offline can invalidate future events. For example, when a device inserts purchase orders, and the product went out of stock, future events will have to fail because of this.</p>
+
+<h4><a id="Failure+Feedback" class="HashLink" href="#Failure+Feedback">Failure Feedback</a></h4>
+
+<p>It is necessary to give feedback to the device after the synchronization. When events fail because of some server validation, the device has to be notified that this happened so the user can take an action or at least knows that an error occurred on the synchronization.</p>
+
+<h4><a id="Images+synchronization" class="HashLink" href="#Images+synchronization">Images synchronization</a></h4>
+
+<p>Multimedia (image, video, audio) can be a source of problems for synchronization.</p>
+
+<p>Multimedia files are likely to be massive and depending on the number of images or videos they may take lots of space and time to synchronize.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p>To see how GeneXus solves the Offline App Generation follow this link -&gt; <a href="22262.html">Offline Native Mobile Applications Generation</a>.<br />
+To see how GeneXus solves the Synchronization Problem follow this link -&gt; <a href="22269.html">Data Synchronization</a>.</p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="23543.html">Automatically generated identifiers synching conflicts</a></TD><TD><a href="22223.html">Data Receive Criteria property</a></TD></TR><TR><TD><a href="22269.html">Data Synchronization</a></TD><TD><a href="24591.html">HowTo: Converting online applications into offline applications</a></TD><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD><TD><a href="22237.html">Offline Native Mobile applications</a></TD></TR><TR><TD><a href="22221.html">Offline Native Mobile applications architecture</a></TD><TD><a href="42733.html">Synchronization by Chunks</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/19/20 12:40 AM</em></font></td></TR></table></font>

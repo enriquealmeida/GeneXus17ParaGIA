@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component GetMessages method</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?23475,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component GetMessages method</h1>
+<!--Business Component GetMessages method--><div class="TableWikiBody" id="tblwikibody"><p>Gets the collection of errors(*) that occurred after executing the <a href="23229.html">Save</a>, <a href="23401.html">Check</a>, <a href="23211.html">Load</a> or <a href="23238.html">Delete</a> methods.</p>
+
+<p>(*) Those automatically checked by GeneXus as well as the <a href="6854.html">Msg</a> and <a href="6852.html">Error</a> rules defined in the <a href="1908.html">Transaction object</a>.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p>&amp;messages=&amp;VbleBasedOnBC.<strong>GetMessages()</strong></p>
+
+<p><strong>Where:</strong><br />
+<em>&amp;messages</em><br />
+     Is a variable defined in a GeneXus object, based on the <a href="40335.html">Messages structured data type</a> which is automatically defined by GeneXus in every <a href="1836.html">Knowledge Base</a>:</p>
+
+<p>     <img src="./images/23254.png" id="23254" class="WikiImage"/></p>
+
+<p>  <em>&amp;VbleBasedOnBC</em><br />
+      Is a variable defined in a GeneXus object, based on a Business Component.</p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p>Suppose you define the following <a href="1908.html">Transaction</a> as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+  CustomerId*     (Autonumber property = True)
+  CustomerName
+  CustomerAddress
+  CustomerPhone
+  CustomerEmail
+  CustomerAddedDate
+  CustomerTotalMiles
+}</pre>
+
+<p>Customer rules:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Default(CustomerAddedDate,&amp;today);
+Error("The customer can't be deleted because he has miles to use") if delete and CustomerTotalMiles&gt;0;</pre>
+
+<p>Accordingly, a Business Component data type of the Customer Transaction is automatically created in the Knowledge Base and you can define a variable of the new type created in any object. Thus, you can define a variable named &amp;Customer based on the Customer type.</p>
+
+<p>In the same object, the following two variables are also indicated:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Messages: of the Messages data type, collection
+&amp;oneMessage: of the Messages.Message data type, which is 1 element in the collection</pre>
+
+<p>Then, specify the following code in the object (for example in <a href="6664.html">Procedure Source</a>):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer.Load(18)
+&amp;Customer.Delete()
+if &amp;Customer.success()
+   commit
+else
+   &amp;Messages = &amp;customer.GetMessages()
+   for &amp;oneMessage in &amp;Messages
+       msg(&amp;oneMessage.Description)
+   endfor   
+endif</pre>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="2279.html">Error handling in Business Components</a><br />
+<a href="2277.html">Business Components Methods</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5846.html">Toc:Business Component</a></TD><TD><a href="6852.html">Error rule</a></TD><TD><a href="40335.html">Messages structured data type</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/16/22 06:14 PM</em></font></td></TR></table></font>

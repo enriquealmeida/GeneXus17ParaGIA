@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>AfterLevel Event</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8285,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">AfterLevel Event</h1>
+<!--AfterLevel Event--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>To indicate the completion of a specific Transaction level.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><b>AfterLevel </b>[<strong>level </strong><i>att</i>…<strong></strong>]<strong></strong>;</p>
+
+<h4><a id="Type+Returned%3A" class="HashLink" href="#Type+Returned%3A">Type Returned:</a></h4>
+
+<p>Boolean (True or False)</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>The evaluation of the AfterLevel event returns a Boolean value (TRUE or FALSE).</p>
+
+<p>The AfterLevel level att… event is used to trigger a rule after a level is related to certain attributes. If the section level is not used, it applies to the first level of the transaction.</p>
+
+<h4><a id="Note%3A" class="HashLink" href="#Note%3A">Note:</a></h4>
+
+<p>In Java, .Net Win environments, or web interfaces, the rule will always be executed after validating the whole transaction.</p>
+
+<h4><a id="Compatibility%3A" class="HashLink" href="#Compatibility%3A">Compatibility:</a></h4>
+
+<p>The After(Level(att) function is maintained for backward compatibility reasons. We highly recommend that you use the AfterLevel event instead. For further information see Triggering Events.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Supposing we receive supplier invoices and we want to verify that invoice total amount was calculated correctly:</p>
+
+<p>Transaction Invoice Supplier</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SupId*
+InvNbr*
+ ...
+
+InvTot
+  (PrdId*
+   ...
+   InvAmtLin)
+...
+InvTotCalc=SUM(InvAmtLin)</pre>
+
+<p>InvTot will be the value the supplier calculated as the invoice total.</p>
+
+<p>InvTotCalc is the value calculated adding amounts of all lines entered.</p>
+
+<p>To prevent differences between these two values, we define the following rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Error('Invoice Total does not match Calculated Total') If InvTot &lt;&gt; InvTotCalc;</pre>
+
+<p>InvTotCalc is calculated adding the line amounts (InvAmtLin), so that every time a line amount value changes we obtain a new value for InvTotCalc.</p>
+
+<p>Every time an attribute changes, everything that depends on its value will have to be re-calculated. If InvAmtLin changes, InvTotCalc is re-calculated and the Error Rule must then be triggered for each line entered, if the condition becomes true. This will be true until ALL lines are entered. So, we will have an error as soon as InvTot is entered, and for every line in the grid (actually, we won't be able to advance the focus to the first line in the grid because the error rule will keep the focus on InvTot).</p>
+
+<p>We must then change the MOMENT at which the error rule is evaluated, awaiting for all lines to be entered; that is: at the time of exiting the Lines level.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Error('Invoice Total does not match Calculated Total') If InvTotCalc &lt;&gt; InvTot On AfterLevel level InvAmtLin;</pre>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><b>Objects:</b> <a href="1908.html">Transactions</a><br />
+<b>Languages:</b> .NET, Ruby (up to GeneXus X Evolution 3), Java, RPG, Visual FoxPro (up to GeneXus X Evolution 3), Cobol</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="8321.html">After function</a><br />
+<a href="8213.html">Transaction rules</a><br />
+<a href="6840.html">Rule Triggering Events</a></p>
+
+<p><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8321.html">After function</a></TD><TD><a href="8546.html">Functions in Transactions</a></TD><TD><a href="6840.html">Category:Triggering events for rules in Transactions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

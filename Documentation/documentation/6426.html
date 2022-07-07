@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Inline Formulas within a contextual table</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6426,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Inline Formulas within a contextual table</h1>
+<!--Inline Formulas within a contextual table--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As it was mentioned before when introducing  <a href="6441.html">Inline Formulas</a>, the fact a formula has a table in its context at evaluation time will affect its result. And its very definition, either. </p>
+
+<p>Whether <a href="5864.html">horizontal</a>, the context is required in order to determine which record of its base table is &quot;the one&quot;. Also the formula itself will affect this contextual table determination. Thus, you have a mutual influence.</p>
+
+<p>Whether <a href="5868.html">aggregate</a>, however, the context is not necessary, but if there exists, will cause not all the records the formula explicitly states are considered, but only those also matching implicit conditions arising from that context. When this happens, you are allowed to include attributes of that contextual table (and its extended) into the formula definition as known values (from context, indeed). Contrary to what happens with horizontal formulas, aggregation ones are not involved in determining the context base table at all. In other words, its attributes are only involved in determining the formula base table itself.</p>
+
+<p>What scenarios state <strong>contextual table</strong>?</p>
+
+<ul>
+	<li><a href="24744.html">For Each command</a></li>
+	<li><a href="25082.html">Data provider Group</a> with base table</li>
+	<li>A grid control with base table (and its related events; e.g.: Load)</li>
+	<li>Form fixed part of a panel in Smart Devices with base table (and its related events; e.g.: Refresh)</li>
+	<li>Conditions (general conditions as well as related to grids or those of where clauses) </li>
+	<li><a href="8213.html">Transaction rules</a></li>
+</ul>
+
+<p> </p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p><span style="line-height: 1.6em;">Given the following transaction:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>FlightInstance      //transaction name = first level name</strong>
+{
+<em>FlightInstanceId* 
+FlightInstanceDate
+FlightInstanceNumberOfPassengers
+FlightNumber 
+FlightDescription 
+    </em><strong>Seat<em><strong>                   </strong></em>//level name</strong>    
+          {<em> PassengerId* 
+            PassengerName 
+            FlightInstancePassengerSeatNumber </em>} 
+
+}</pre>
+
+<p>Look at the following examples of <strong>inline formulas programmed inside a context with base table</strong>:</p>
+
+<h4><a id="Example+1" class="HashLink" href="#Example+1">Example 1</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+     FlightInstanceNumberOfPassengers = Count(FlightInstancePassengerSeatNumber)
+EndFor
+</pre>
+
+<p>First of all, note that you are assigning a formula to an attribute. As it is an inline formula (local calculation), the attribute physically exists in a table. So, the result of the calculation is assigned to the attribute, to be stored in the corresponding record with which you are working (so, the code must be inside a <a href="6293.html">Procedure object</a> source). Only when defining a <a href="6440.html">Global Formulas</a> the attribute is a &quot;virtual&quot; definition.</p>
+
+<p>In this example, the table navigated by the formula is FLIGHTINSTANCESEAT because the unique attribute involved in the formula definition is: <em>FlightInstancePassengerSeatNumber, </em>which is stored in that table. And the For Each base table is FLIGHTINSTANCE (this is determined by the unique attribute which is present inside the For Each and outside of the formula: <em>FlightInstanceNumberOfPassengers). </em></p>
+
+<p>Note: as of <a href="https://wiki.genexus.com/commwiki/wiki?20247,," target="_blank">GeneXus X Evolution 3</a> you would probably have specified the <a href="https://wiki.genexus.com/commwiki/wiki?23945,," target="_blank">BaseTrn</a> in the for each (i.e. for each FlightInstance...)</p>
+
+<p>Thus, the For Each command is navigating all the flight instances, and for each one, the Count formula is navigating <strong>its</strong> passengers and counting them. As there is a common attribute in both navigated tables (FLIGHTINSTANCE and FLIGHTINSTANCESEAT), which is <em>FlightInstanceId</em>, the formula automatically counts for each flight instance, <strong>its</strong> assigned passengers (in other words, the filter FLIGHTINSTANCESEAT.<em>FlightInstanceId = </em>FLIGHTINSTANCE.<em>FlightInstanceId </em>is included automatically in the generated code associated to the formula). </p>
+
+<h4><a id="Example+2" class="HashLink" href="#Example+2"><span style="line-height: 1.2em;">Example 2</span></a></h4>
+
+<p>Note the same is valid for formulas assigned to any <a href="25096.html">Data provider Element</a> inside a <a href="25082.html">Data provider Group statement</a> with base table, due to the equivalence between for each command and group of a Data Provider.</p>
+
+<p>Having a Data Provider that returns a collection SDT as output, ActualFlights:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ActualFlights 
+{
+   FlightInstance 
+   {
+       Date = FlightInstanceDate
+       NumberOfPassengers = Count( FlightInstancePassengerSeatNumber)
+   }
+}</pre>
+
+<p>Note that you are doing the same than the previous example: the group ActualFlights is navigating all the flight instances (its base table is FLIGHTINSTANCE by means of the attribute FlightInstanceDate at the right of the &quot;=&quot;), and for each one, the Count formula is navigating <strong style="line-height: 1.6em;">its</strong><span style="line-height: 1.6em;"> passengers and counting them (the table navigated by the formula is FLIGHTINSTANCESEAT).</span></p>
+
+<p><span style="line-height: 1.6em;">Remember that the </span><em style="line-height: 1.6em;">FlightInstancePassengerSeatNumber</em><span style="line-height: 1.6em;"> attribute participates in the formula definition, but not in the group definition.</span></p>
+
+<h4><a id="Example+3" class="HashLink" href="#Example+3">Example 3</a></h4>
+
+<p>An analogous context than before you would have if you had a grid in a web panel (with base table: FLIGHTINSTANCE):</p>
+
+<p><img src="./images/25361.jpg" id="25361" class="WikiImage"/></p>
+
+<p>with the following Event code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Load
+   FlightInstanceNumberOfPassengers = Count( FlightInstancePassengerSeatNumber)
+endevent</pre>
+
+<p>Due to the grid base table, the Load will be executed once for each FlightInstance record being loaded into the grid.</p>
+
+<h4><a id="Example+4" class="HashLink" href="#Example+4"><span style="line-height: 1.2em;">Example 4</span></a></h4>
+
+<p><span style="line-height: 15.6px;">Having a Panel for Smart Devices that receives as parameter FlightInstanceId and then shows its information:</span></p>
+
+<p><img src="./images/25362.jpg" id="25362" class="WikiImage"/></p>
+
+<p>In order to assign the variable &amp;NumberOfPassengers the corresponding value, and remembering the Refresh event executes when the form fixed part is being loaded:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Refresh
+   &amp;NumberOfPassengers = Count( FlightInstancePassengerSeatNumber )
+endevent</pre>
+
+<h4><a id="Example+5" class="HashLink" href="#Example+5"><span style="line-height: 1.2em;">Example 5</span></a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each order FlightInstanceDate
+     where Count(FlightInstancePassengerSeatNumber) &gt; 50
+         ....
+Endfor</pre>
+
+<p>Here you have an example in which an inline formula is defined in the <a href="8578.html">Where clause</a>.</p>
+
+<p>The For Each base table is FLIGHTINSTANCE (this is determined by the unique attribute which is present in the For Each command and outside of the formula: <em>FlightInstanceDate</em>); and the table navigated by the formula is FLIGHTINSTANCESEAT because the unique attribute involved in the formula definition is: <em>FlightInstancePassengerSeatNumber</em>.</p>
+
+<p>Note that there is an implicit filter determined by GeneXus for the formula, which is: FLIGHTINSTANCE.<em>FlightInstanceId</em> = FLIGHTINSTANCESEAT.<em>FlightInstanceId</em> (as <em>FlightInstanceId</em> is a common attribute between the For Each base table and the navigated table by the formula, the formula automatically counts the assigned passengers <strong>for the flight instance which is being navigated</strong>).</p>
+
+<p>Summing up, the For Each command is navigating all the flight instances that have more than 50 passengers.</p>
+
+<p><span style="line-height: 1.6em;"> </span></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5882.html">Examples of Using Formulas</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="6441.html">Inline Formulas</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/07/21 02:44 PM</em></font></td></TR></table></font>

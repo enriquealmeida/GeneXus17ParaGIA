@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Error rule</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6852,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Error rule</h1>
+<!--Error rule--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Displays an error announcement and does not allow continuing with the execution while the condition is complied with.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><strong>Error(</strong>'announcement' | &amp;var | character_expression [,ExceptionName]<strong>)</strong> [ IF condition ] [ON triggering event];</p>
+
+<p><strong>Where:</strong></p>
+
+<p><em>'</em><em>announcement</em><em>'</em><em> (or &amp;var or character_expression)</em><br />
+         Is the phrase (string) you want to display when the condition is complied with.<br />
+        When using a variable or character_expression, GeneXus controls the resulting type is character (if not, it is adviced in the navigation report).</p>
+
+<p><em>ExceptionName</em><br />
+         If the transaction is configured as <a href="5846.html">Business Component</a>, the ExceptionName parameter can be set as the ID of the error to solve <a href="2279.html">Error handling in Business Components</a></p>
+
+<p><em>condition</em><br />
+         Is any valid logic condition</p>
+
+<p><em>triggering event</em><br />
+         Is one of the predefined events available in GeneXus for transaction rules, which allows you to define the precise time for executing a rule</p>
+
+<h3>Examples<br />
+<br />
+1)</h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer                   
+{                                    
+    CustomerId*          
+    CustomerName    
+    CustomerLastName
+    CustomerAddress
+    CustomerPhone
+    CustomerBirthDate       
+}</pre>
+
+<p>Customer rules:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error('Enter the customer name please') if CustomerName.isempty();
+error('Enter the customer last name please') if CustomerLastName.isempty();
+error('The customer must be 18 years old or older') if CustomerBirthDate.age()&lt;18;
+error('Customers can not be deleted') if delete;</pre>
+
+<h3><a id="2%29" class="HashLink" href="#2%29">2)</a></h3>
+
+<p>Suppose the Customer transaction is configured as Business Component and the transaction has the following rule defined:</p>
+
+<p>error('The customer must be 18 years old or older', 'CustomerMustBe18YearsOld') if CustomerBirthDate.age()&lt;18;</p>
+
+<p>The value referenced in the ExceptionName parameter will be charged in the &amp;Messages collection variable based on the Messages SDT (in the &quot;ID&quot; property) which you can load using the <a href="23475.html">GetMessages() method</a>.</p>
+
+<p>Example code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CustomerBc is a Customer variable
+
+&amp;CustomerBc.save()
+If &amp;CustomerBc.Fail()
+   &amp;Messages = &amp;CutomerBc.GetMessages()
+    If &amp;Messages.Item(1).ID = 'CustomerMustBe18YearsOld'
+        .......</pre>
+
+<p>The ExceptionName parameter is an identifier so it does not accept spaces or special characters: / : ” | = &lt; &gt; |<br />
+Functions neither are accepted.</p>
+
+<p>If the syntax is not correct, GeneXus will show the following compilation error:</p>
+
+<p>xxx.cs(yy,yy): error CS0103: the name 'pushError' does not exist in the actual context.</p>
+
+<h3><a id="3%29" class="HashLink" href="#3%29">3)</a></h3>
+
+<p>Working with the same Customer transaction, the following rule can be defined:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Error(&amp;ReturnedText) if ProcedureCheck(&amp;ReturnedText);</pre>
+
+<p>The previous definition is valid, but you must take into account that the variable &amp;ReturnedText is considered a procedure input parameter. So, the rule will only be triggered if the variable is assigned (for example, if it is an output variable in another rule).<br />
+ </p>
+
+<p><strong>Notes</strong></p>
+
+<p>When deleting a record from a Transaction, the rules won't execute unless the developer specifies the condition &quot;if delete&quot;.</p>
+
+<h3><br />
+Scope</h3>
+
+<p><strong>Objects    </strong><a href="1908.html">Transaction object</a></p>
+
+<h3><br />
+See also</h3>
+
+<p><a href="8213.html">Transaction rules</a><br />
+<br />
+</p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="23475.html">Business Component GetMessages method</a></TD><TD><a href="2279.html">Error handling in Business Components</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD></TR><TR><TD><a href="7258.html">Category:Language object</a></TD><TD><a href="6854.html">Msg rule</a></TD><TD><a href="8213.html">Transaction rules</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

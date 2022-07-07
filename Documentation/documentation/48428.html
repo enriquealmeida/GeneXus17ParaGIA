@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Security Scanner built-in tool (GeneXus 17 upgrade 4 or prior)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48428,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Security Scanner built-in tool (GeneXus 17 upgrade 4 or prior)</h1>
+<!--Security Scanner built-in tool (GeneXus 17 upgrade 4 or prior)--><div class="TableWikiBody" id="tblwikibody"><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: This tool replaces the <a href="https://wiki.genexus.com/commwiki/wiki?39951,," target="_blank">GeneXus Security Scanner extension</a> available in the GeneXus Marketplace. You need to be familiar with the OWASP security issues to use it.</div>
+
+<p>The Security Scanner tool scans/checks objects within a <a href="1836.html">Knowledge Base</a> looking for potential security issues according to OWASP's Top 10 Security Risks.</p>
+
+<p>You can open the Security Scanner Configuration Window by selecting the following options from the GeneXus IDE toolbar: Tools &gt; Security &gt; Security Scanner</p>
+
+<p><img src="./images/46438.jpg" id="46438" class="WikiImage"/></p>
+
+<p>or apply it to a particular object or a subset of them using the "Security Scanner" Contextual Menu:</p>
+
+<p><img src="./images/46439.jpg" id="46439" class="WikiImage"/></p>
+
+<p>The Environment rules will be applied only when a full scan is triggered. When a partial scan is executed (using the Contextual Menu) the Environment rules will not be applied.</p>
+
+<h2><a id="Scan+configuration" class="HashLink" href="#Scan+configuration">Scan configuration</a></h2>
+
+<p>The tool will scan the following types of objects:</p>
+
+<ul>
+	<li>Environment (rules #136 and #137)</li>
+	<li>Generator (rule #106)</li>
+	<li>Web Panels</li>
+	<li>Transactions</li>
+	<li>Procedures</li>
+	<li>Attributes</li>
+	<li>Domains</li>
+</ul>
+
+<p>The tool will not scan the following types of objects:</p>
+
+<ul>
+	<li>Referenced module objects</li>
+	<li>Unit test objects</li>
+</ul>
+
+<h2><a id="Output" class="HashLink" href="#Output">Output</a></h2>
+
+<p>When the scan is performed using the IDE the result will be shown on a new Output Section called Security Scanner.</p>
+
+<p><img src="./images/47877.jpg" id="47877" class="WikiImage"/></p>
+
+<h2><a id="Rules+configuration" class="HashLink" href="#Rules+configuration">Rules configuration</a></h2>
+
+<p>For every rule, you can configure its level of severity or disable it in the Configuration Window.</p>
+
+<p><img src="./images/46440.jpg" id="46440" class="WikiImage"/></p>
+
+<h3><a id="Parameter+encryption+%23100" class="HashLink" href="#Parameter+encryption+%23100">Parameter encryption #100</a></h3>
+
+<p><em>Security Scanner</em> analyzes objects to check if their parameters are encrypted; that is, if their <a href="8068.html">Encrypt URL parameters property</a> is set to "<em>Session key</em>" or "<em>Site key.</em>"<br />
+If a <em>&lt;Parameter encryption&gt;</em> issue is found, <em>Security Scanner </em>will show the following message:</p>
+
+<pre>
+error 100: Parameters encryption is not set</pre>
+
+<h3><a id="HTML+format+%23101" class="HashLink" href="#HTML+format+%23101">HTML format #101</a></h3>
+
+<p><em>Security Scanner </em>analyzes attributes, variables, and textblocks checking if their <a href="31666.html">Format property for Web</a> has been set to "<em>HTML</em>" or "<em>Raw HTML.</em>"<br />
+If an <em>&lt;HTML format&gt;</em> issue is found, <em>Security Scanne</em>r will show a message like this:</p>
+
+<pre>
+error 101: HTML Textblock detected in WebForm (Name 'htmltxtblock' Type 'HTML'. Name 'rawhtmltxtblock' Type 'Raw HTML'. )</pre>
+
+<h3><a id="Authorization+%23102" class="HashLink" href="#Authorization+%23102">Authorization #102</a></h3>
+
+<p>Security Scanner analyzes Web Panels and Transactions in the KB checking if they call an Authorization program (procedure). This rule does not apply to Master Pages and Web Components.<br />
+If an <em>&lt;Authorization&gt;</em> issue is found, <em>Security Scanner</em> will show a message like this:</p>
+
+<pre>
+error 102: No access control configured for this object</pre>
+
+<p>When using Xev2, the <a href="15214.html">Integrated Security Level property</a> is checked (<a href="19888.html">GeneXus Access Manager</a> usage).</p>
+
+<h3><a id="SQL+Command+%23103" class="HashLink" href="#SQL+Command+%23103">SQL Command #103</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects looking for <a href="8623.html">SQL commands</a>.<br />
+If a <em>&lt;SQL Command&gt;</em> issue is found, <em>Security Scanner </em>will show a message like this:</p>
+
+<pre>
+error 103: SQL Command usage found in source</pre>
+
+<p>i.e.: <strong>SQL UPDATE UserInfo SET UserWelcomeMessage='[!&amp;UserWelcomeMessage!]' WHERE UserId=[!&amp;UserId!]</strong></p>
+
+<h3><a id="Link+Command+%23104" class="HashLink" href="#Link+Command+%23104">Link Command #104</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects to check if there is a dynamic command link without parameters.<br />
+If a <em>&lt;Link command&gt;</em> issue is found,<em> Security Scanner</em> will show a message like this:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error 104: Parameterless LINK command usage found in source</pre>
+
+<p>i.e.: <strong>Link(&amp;SomeWebPanel)</strong></p>
+
+<h3><a id="Http+Protocol+%23105" class="HashLink" href="#Http+Protocol+%23105">Http Protocol #105</a></h3>
+
+<p><em>Security Scanner</em> analyzes Web Panels and Procedures checking if HTTPS protocol has been specified. This means checking if the <a href="8079.html">Protocol specification property</a> has been set to “<em>Secure (HTTPS).</em>”</p>
+
+<p>In the case of a SOAP Procedure, it will inherit the protocol specification from the environment so it will trigger the rule when an insecure protocol specification is configured on the environment. This apply since <a href="47936.html">GeneXus 17 upgrade 4</a>.<br />
+If an <em>&lt;Http protocol&gt;</em> issue is found, <em>Security Scanner</em> will show a message like this:</p>
+
+<pre>
+error 105: HTTP protocol is not Secure
+</pre>
+
+<h3><a id="Javascript+Debug+Mode+%23106+" class="HashLink" href="#Javascript+Debug+Mode+%23106+">Javascript Debug Mode #106 </a></h3>
+
+<p>Security Scanner analyzes the <a href="17384.html">Javascript debug mode property</a> at generator level; when enabled, the following message will be displayed:</p>
+
+<pre>
+error 106: Javascript Debug Mode is enabled</pre>
+
+<h3><a id="Web+Components+URL+Access+%23107" class="HashLink" href="#Web+Components+URL+Access+%23107">Web Components URL Access #107</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects set as Web Components checking if URL Access for them has been enabled. This means checking if the <a href="7868.html">URL Access property</a> has been set to “<em>Yes.</em>”<br />
+If a <em>&lt;WC URL Access&gt;</em> issue is found, <em>Security Scanner</em> will show a message like this:</p>
+
+<pre>
+error 107: Web Component with URL Access enabled </pre>
+
+<h3><a id="C%23%2C+Java%2C+Ruby+native+code+usage+%23108" class="HashLink" href="#C%23%2C+Java%2C+Ruby+native+code+usage+%23108">C#, Java, Ruby native code usage #108</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the Java or C-Sharp command.<br />
+The following message is displayed:</p>
+
+<pre>
+error 108: Native Code usage found in source</pre>
+
+<h3><a id="HttpResponse+data+type+usage+%23109" class="HashLink" href="#HttpResponse+data+type+usage+%23109">HttpResponse data type usage #109</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' variables section checking for <a href="6934.html">HttpResponse data type</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 109: HttpResponse Data Type usage in variables (Name 'HttpResponse' Type 'HttpResponse'. )</pre>
+
+<h3><a id="LDAPClient+GetAttribute+method+usage+%23110" class="HashLink" href="#LDAPClient+GetAttribute+method+usage+%23110">LDAPClient GetAttribute method usage #110</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for <a href="6886.html">LDAPClient Data Type</a> GetAttribute method usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 110: LDAPClient.GetAttribute() pattern detected in source </pre>
+
+<h3><a id="Directory+data+type+usage+%23111" class="HashLink" href="#Directory+data+type+usage+%23111">Directory data type usage #111</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' variables section checking for <a href="6567.html">Directory data type</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 111: Directory Data Type usage in variables (Name 'Directory' Type 'Directory'. )</pre>
+
+<h3><a id="File+data+type+usage+%23112" class="HashLink" href="#File+data+type+usage+%23112">File data type usage #112</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' variables section checking for <a href="6915.html">File data type</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 112: File Data Type usage in variables (Name 'File' Type 'File'. )</pre>
+
+<h3><a id="XMLReader+ValidationType+property+usage+%23113" class="HashLink" href="#XMLReader+ValidationType+property+usage+%23113">XMLReader ValidationType property usage #113</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for <a href="6928.html">XMLReader Data Type</a> ValidationType property usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 113: XmlReader Validation type property misconfiguration </pre>
+
+<h3><a id="Shell+function+%23114" class="HashLink" href="#Shell+function+%23114">Shell function #114</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for <a href="8502.html">Shell function</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 114: Shell function usage found in source</pre>
+
+<h3><a id="Random+function+%23115" class="HashLink" href="#Random+function+%23115">Random function #115</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for <a href="8479.html">Random function</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 115: Random function usage found in source</pre>
+
+<h3><a id="SetCookie+function+%23116" class="HashLink" href="#SetCookie+function+%23116">SetCookie function #116</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for <a href="6878.html">SetCookie function</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 116: SetCookie function usage found in source </pre>
+
+<p>Whenever possible, use the <a href="21582.html">Cookie data type</a> and enable the HttpOnly property.</p>
+
+<h3><a id="Form.HeaderRawHTML+property+%23117" class="HashLink" href="#Form.HeaderRawHTML+property+%23117">Form.HeaderRawHTML property #117</a></h3>
+
+<p><em>Security Scanner</em> analyzes the source section of WebPanels and Transactions checking for Form.HeaderRawHTML property usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 117: HeaderRawHTML method usage found in source</pre>
+
+<h3><a id="Form.JScriptSrc+property+%23118" class="HashLink" href="#Form.JScriptSrc+property+%23118">Form.JScriptSrc property #118</a></h3>
+
+<p><em>Security Scanner</em> analyzes the source section of WebPanels and Transactions checking for Form.JScriptSrc property usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 118: JScriptSrc method usage found in source</pre>
+
+<h3><a id="IsPassword+property+%23119" class="HashLink" href="#IsPassword+property+%23119">IsPassword property #119</a></h3>
+
+<p><em>Security Scanner</em> analyzes the source section of WebPanels and Transactions checking for IsPassword property usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 119: IsPassword Property enabled in WebForm</pre>
+
+<h3><a id="External+Object+usage+%23120" class="HashLink" href="#External+Object+usage+%23120">External Object usage #120</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for <a href="5669.html">External object</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 120: External Object usage in variablesName 'CustomType' Type 'CustomType'. </pre>
+
+<p>For Xev2; GAM and GXflow External Objects are excluded.</p>
+
+<h3><a id="User+Control+usage+%23121" class="HashLink" href="#User+Control+usage+%23121">User Control usage #121</a></h3>
+
+<p><em>Security Scanner</em> analyzes the WebForm section of WebPanels and Transactions for <a href="5273.html">User Controls</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 121: UserControl detected in WebForm Name 'CustomControl' Type 'CustomControl'.</pre>
+
+<h3><a id="Cookie+data+type+usage+%23124" class="HashLink" href="#Cookie+data+type+usage+%23124">Cookie data type usage #124</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' variables section checking for <a href="21582.html">Cookie data type</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 124: Cookie Data Type usage in variables (Name 'Cookie' Type 'cookie'. )</pre>
+
+<p>Whenever possible, enable the HttpOnly property.</p>
+
+<h3><a id="XmlWriter+WriteRawText+method+usage+%23125" class="HashLink" href="#XmlWriter+WriteRawText+method+usage+%23125">XmlWriter WriteRawText method usage #125</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="6938.html">XMLWriter</a> <a href="7075.html">WriteRawText method</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 125: XmlWriter.WriteRawText() pattern detected in source </pre>
+
+<h3><a id="SDT.FromXml%28%29+pattern+usage+%28%23126%29" class="HashLink" href="#SDT.FromXml%28%29+pattern+usage+%28%23126%29">SDT.FromXml() pattern usage (#126)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="8788.html">FromXml method</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 126: SDT.FromXml() pattern detected in source</pre>
+
+<h3><a id="SDT.FromJson%28%29+pattern+usage+%28%23127%29" class="HashLink" href="#SDT.FromJson%28%29+pattern+usage+%28%23127%29">SDT.FromJson() pattern usage (#127)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="37809.html">Business Component FromJson method</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 127: SDT.FromJson() pattern detected in source</pre>
+
+<h3><a id="XMLReader+ReadRawXML+method+usage+%28%23128%29" class="HashLink" href="#XMLReader+ReadRawXML+method+usage+%28%23128%29">XMLReader ReadRawXML method usage (#128)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="6928.html">XMLReader Data Type</a>'s <a href="7099.html">ReadRawXML Method</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 128: XmlReader.ReadRawXML() pattern detected in source </pre>
+
+<h3><a id="Blob+usage+%28%23129%29" class="HashLink" href="#Blob+usage+%28%23129%29">Blob usage (#129)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' variables section checking for <a href="6704.html">Blob data type</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 129: Blob usage detected in object (Variable: blob) </pre>
+
+<h3><a id="JSEvent+usage+%28%23130%29" class="HashLink" href="#JSEvent+usage+%28%23130%29">JSEvent usage (#130)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="8809.html">JSEvent Method</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 130: JSEvent usage found in source </pre>
+
+<h3><a id="SoapHeaderRaw+%28%23131%29" class="HashLink" href="#SoapHeaderRaw+%28%23131%29">SoapHeaderRaw (#131)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="https://wiki.genexus.com/commwiki/wiki?33708,," target="_blank">SoapHeaderRaw</a> nonstandard function usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 131: soapHeaderRaw usage found in source</pre>
+
+<h3><a id="PathToURL+usage+%28%23132%29" class="HashLink" href="#PathToURL+usage+%28%23132%29">PathToURL usage (#132)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="9563.html">PathToURL function</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 132: PathtoUrl usage found in source</pre>
+
+<h3><a id="XMLReader+ReadExternalEntities+%28%23133%29" class="HashLink" href="#XMLReader+ReadExternalEntities+%28%23133%29">XMLReader ReadExternalEntities (#133)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="6928.html">XMLReader Data Type</a> <a href="6967.html">ReadExternalEntities Property</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 133: XmlReader ReadExternalEntities pattern detected in source
+</pre>
+
+<h3><a id="SDT.FromXmlFile%28%29+pattern+usage+%28%23134%29" class="HashLink" href="#SDT.FromXmlFile%28%29+pattern+usage+%28%23134%29">SDT.FromXmlFile() pattern usage (#134)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="24070.html">FromXmlFile method</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 134: SDT.FromXmlFile() pattern detected in source</pre>
+
+<h3><a id="SDT.FromJsonFile%28%29+pattern+usage+%28%23135%29" class="HashLink" href="#SDT.FromJsonFile%28%29+pattern+usage+%28%23135%29">SDT.FromJsonFile() pattern usage (#135)</a></h3>
+
+<p><em>Security Scanner</em> analyzes KB objects' source section checking for the <a href="24070.html">FromJsonFile method</a> usage.<br />
+The following message is displayed:</p>
+
+<pre>
+error 135: SDT.FromJsonFile() pattern detected in source</pre>
+
+<h3><a id="Parameter+encryption+%28Environment%29+%23136" class="HashLink" href="#Parameter+encryption+%28Environment%29+%23136">Parameter encryption (Environment) #136</a></h3>
+
+<p><em>Security Scanner</em> analyzes the KB Environment to check if its parameters are encrypted; that is, if its <a href="8068.html">Encrypt URL parameters property</a> is set to "<em>Session key</em>" or "<em>Site key.</em>"<br />
+If a <em>&lt;Parameter encryption&gt;</em> issue is found, <em>Security Scanner </em>will show the following message:</p>
+
+<pre>
+error #136: Parameters encryption is not set (Environment)</pre>
+
+<h3><a id="Http+Protocol+%23137" class="HashLink" href="#Http+Protocol+%23137">Http Protocol #137</a></h3>
+
+<p><em>Security Scanner</em> analyzes the KB Environment checking if HTTPS protocol has been specified. This means checking if the <a href="8079.html">Protocol specification property</a> has been set to “<em>Secure (HTTPS).</em>”<br />
+If an <em>&lt;Http protocol&gt;</em> issue is found, <em>Security Scanner</em> will show a message like this:</p>
+
+<pre>
+error #137: Http protocol is not Secure</pre>
+
+<h2><a id="Advanced+configuration" class="HashLink" href="#Advanced+configuration">Advanced configuration</a></h2>
+
+<h3><a id="Security+objects+Whitelist" class="HashLink" href="#Security+objects+Whitelist">Security objects Whitelist</a></h3>
+
+<p><img src="./images/46418.jpg" id="46418" class="WikiImage"/></p>
+
+<p>Using this field, you can select objects and rules to be whitelisted on the analysis.</p>
+
+<p><img src="./images/46419.jpg" id="46419" class="WikiImage"/></p>
+
+<p><img src="./images/46420.jpg" id="46420" class="WikiImage"/></p>
+
+<h3><a id="Authorization+Procedure" class="HashLink" href="#Authorization+Procedure">Authorization Procedure</a></h3>
+
+<p><img src="./images/46418.jpg" id="46418" class="WikiImage"/></p>
+
+<p>If you are not using GAM, this field allows you to insert a Procedure or Master Page that contains the authorization logic. The scan will signal with an error the objects that do not contain the call for the authentication Procedure or use the Master Page selected.</p>
+
+<p><img src="./images/46421.jpg" id="46421" class="WikiImage"/></p>
+
+<p>If you put some other type of object (not Master Page and not Procedure) the scan will ignore this configuration.</p>
+
+<h2><a id="Running+Security+Scanner+using+MsBuild+task" class="HashLink" href="#Running+Security+Scanner+using+MsBuild+task">Running Security Scanner using MsBuild task</a></h2>
+
+<p>Define a new Task called Scan that allows you to run the scanner in an MSBuild script. This task can be included in any server-side pipeline of CI/CD.</p>
+
+<p>This task will execute the configuration previously set through the Security Scanner Configuration Window.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project DefaultTargets="SecurityScan" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+
+    &lt;Import Project="$(GXInstall)\genexus.tasks.targets"/&gt;
+    &lt;Import Project="$(GXInstall)\security.tasks.targets"/&gt;
+
+    &lt;Target Name="SecurityScan"&gt;
+        &lt;OpenKnowledgeBase Directory="$(KBDir)"    /&gt;
+        &lt;SecurityScan XmlOutputFile="securityTest.xml"/&gt;
+    &lt;/Target&gt;
+&lt;/Project&gt;</pre>
+
+<p>By specifying the XmlOutputFile you get Errors and Warnings in XML format.</p>
+
+<h3><a id="Running+the+Scanner+from+the+command+line" class="HashLink" href="#Running+the+Scanner+from+the+command+line">Running the Scanner from the command line</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild securityscantest.msbuild /verbosity:minimal /t:SecurityScan /p:KBDir=c:\mykbpath /p:GXInstall=c:\genexusinstalldir</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This tool is available since <a href="47659.html">GeneXus 17 upgrade 3</a>.</p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/16/22 07:11 PM</em></font></td></TR></table></font>

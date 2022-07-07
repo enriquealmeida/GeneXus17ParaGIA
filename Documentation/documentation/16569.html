@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM: Facebook Interaction Sample</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16569,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM: Facebook Interaction Sample</h1>
+<!--GAM: Facebook Interaction Sample--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When <a href="14960.html">GAM</a> <a href="16508.html">Authentication Type</a> is Facebook, by using an ExternalToken which is given by Facebook, you can call the Facebook API.</p>
+
+<p>In the following example we get the list of friends of the user who is logged in.<br />
+<br />
+1. You need to have a <a href="https://wiki.genexus.com/commwiki/wiki?16516,," target="_blank">GAM Facebook Authentication Type</a> defined in GAM Repository.<br />
+<br />
+2. In this example, if the Authentication Type of the user who is logged in is &quot;Facebook&quot;, we ask for his friends following the instructions of the Facebook API (graph.facebook.com). This is done using the <em>ExternalToken </em>returned by the current GAM Session.<br />
+<br />
+The code of the web panel should be similar to the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Refresh
+    &amp;SessionValid = GAMSession.IsValid(&amp;Session, &amp;Errors) //&amp;Session is GAMSession data type, &amp;Errors is collection of GAMError data type
+    If &amp;SessionValid and not &amp;Session.IsAnonymous
+        &amp;User = GAMUser.Get() //&amp;User is GAMUser data type    
+        
+        if &amp;User.AuthenticationTypeName = 'facebook'
+            &amp;ExternalToken = &amp;Session.ExternalToken
+        endif
+
+        &amp;httpClient.Host = &quot;graph.facebook.com&quot; //&amp;httpclient is HTTPClient data type
+        &amp;httpClient.BaseUrl = &quot;/&quot;
+        &amp;HttpClient.Secure = 1
+        &amp;StrCall = &quot;me/friends&quot; + &quot;?&quot; + &quot;access_token=&quot; + &amp;ExternalToken
+        &amp;httpClient.Execute(&quot;GET&quot;, &amp;StrCall)
+        &amp;ResultHttp = &amp;httpClient.ToString()
+        &amp;data.fromJson(&amp;ResultHttp)
+        &amp;data2 = &amp;data.data
+    
+        for &amp;dataitem in &amp;data2  //&amp;dataitem is &amp;data2.data 
+            //Display Friends
+            msg(&amp;dataitem.name)
+        endfor
+
+     else
+        do 'ProcessErrors'
+     Endif
+EndEvent
+
+Sub 'ProcessErrors'
+    For &amp;Error in &amp;Errors
+        If &amp;Error.Code &lt;&gt; GAMErrorMessages.SessionExpired
+            Msg(Format(&quot;%1 (GAM%2)&quot;, &amp;Error.Message, &amp;Error.Code))
+        Endif
+    EndFor
+EndSub</pre>
+
+<p>As calling this method of Facebook API returns a Json structure, we defined an SDT where the information could be loaded, so &amp;data and &amp;data2 are like the following, acording to the format of the Json data returned.</p>
+
+<p><img src="./images/16570.png" id="16570" class="WikiImage"/></p>
+
+<p><img src="./images/16571.png" id="16571" class="WikiImage"/></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="29007.html">GAM Facebook Authentication Type</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

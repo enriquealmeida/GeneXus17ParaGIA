@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GXtest UI Commands - Selectors (GeneXus 17 upgrade 0 and 1)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47724,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GXtest UI Commands - Selectors (GeneXus 17 upgrade 0 and 1)</h1>
+<!--GXtest UI Commands - Selectors (GeneXus 17 upgrade 0 and 1)--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In order to interact and get information from displayed elements on a web page, there are some locators to do so. They are presented below.</p>
+
+<h2><a id="Control+Name+selector" class="HashLink" href="#Control+Name+selector">Control Name selector</a></h2>
+
+<p>This is a GeneXus locator in the sense of it is HTML-independent. You can write your test without having to worry about dealing with the HTML selectors explained below. </p>
+
+<p>You can recognize where this selector can be used because the parameter name is usually called ControlName or TableName and the command does not include HTML locators on its name such as ByID, ByXPath, etc.; you will just see Click(ControlName: character), Type(ControlName: Character, Text: character), etc.</p>
+
+<p>In GeneXus, you can not define two elements with the same <a href="40117.html">control name</a>, except when the control is replicated as a grid or table column. For the last scenario, a new parameter (the row number) must be added.</p>
+
+<p>So, there are 2 flavors for this selector:</p>
+
+<ul>
+	<li>Simple control: unique control in a web panel.</li>
+	<li>Grid/Table control: control included on a grid or table, it can be in different rows, the Row parameter is needed to unequivocally locate a control.</li>
+</ul>
+
+<p>For example, for the following web panel:</p>
+
+<p><img src="./images/47723.png" id="47723" class="WikiImage"/>If you want to click the &amp;Name variable at the third row in the grid you must write</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.Click(&quot;&amp;Name&quot;, 3)</pre>
+
+<p>If you want to click the variable outside the table, the simple control, you must write:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.Click(&quot;&amp;Name&quot;)</pre>
+
+<p>Note 1: Variables require that the ampersand symbol (&amp;) be included as a part of the control name selector.</p>
+
+<p>Note 2: Error viewer controls don't have a control name property. Usually, you want to get their text, for those cases use GetMessages() command.</p>
+
+<h2><a id="Id+selector" class="HashLink" href="#Id+selector">Id selector</a></h2>
+
+<p>This is the most recommended selector because the <a href='https://www.w3.org/TR/2011/WD-html5-20110525/elements.html#the-id-attribute'>id attribute must be unique</a> amongst all elements in a DOM. This attribute <strong>is case-sensitive</strong>.</p>
+
+<p>Use it every time it is available; not all elements have it.</p>
+
+<p>For example, for this button we have the following HTML element:</p>
+
+<p><img src="./images/47720.png" id="47720" class="WikiImage"/></p>
+
+<p>So, for example, to click it write on your test:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.ClickByID(&quot;BTN2&quot;)</pre>
+
+<h2><a id="Name+selector" class="HashLink" href="#Name+selector">Name selector</a></h2>
+
+<p>This selector is available for some common elements such as buttons, forms, inputs, selects, and others. </p>
+
+<p>For example, for the same button shown in the previous image, to get its text you should write on your test:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.GetValueByName(&quot;BTN2&quot;)</pre>
+
+<h2><a id="CSS+selector" class="HashLink" href="#CSS+selector">CSS selector</a></h2>
+
+<p>CSS selector allows different ways of locating an element. For example, using Google Chrome, an easy way to obtain a CSS selector for an element is to inspect the element and right-click over it, then select the option Copy -&gt; Copy Selector. It is very similar when using other browsers.</p>
+
+<p>For example, for the following HTML element:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;div class=&quot;gx-warning-message&quot;&gt;Button 2 pressed&lt;/div&gt;</pre>
+
+<p>You can get its text executing the following command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.GetTextByCSS(&quot;.gx-warning-message&quot;) // It uses element class</pre>
+
+<h2><a id="XPath+selector" class="HashLink" href="#XPath+selector">XPath selector</a></h2>
+
+<p>If the elements are not found by the previous locators like id, CSS, and name, then another option is using an XPath selector. This selector is from XML structure and it is powerful since it allows different search criteria such as by text, class name, tag name, attribute, etc.</p>
+
+<p>For example, if you want to get the text of this element:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;div class=&quot;gx-warning-message&quot;&gt;Button 2 pressed&lt;/div&gt;</pre>
+
+<p>You can write the command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<code>&amp;driver.GetTextByXPath('//div[@class=&quot;</code>gx-warning-message<code>&quot;]')</code></pre>
+
+<h2><a id="LinkText+selector" class="HashLink" href="#LinkText+selector">LinkText selector</a></h2>
+
+<p>This selector can be used with link elements only. For example, for the following link:</p>
+
+<p><img src="./images/47721.png" id="47721" class="WikiImage"/></p>
+
+<p>You can add the command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.ClickByLinkText(&quot;gxtest doc&quot;)</pre>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/18/21 05:09 PM</em></font></td></TR></table></font>

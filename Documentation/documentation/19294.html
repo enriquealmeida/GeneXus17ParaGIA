@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using LocalNotifications external object in Smart Devices</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19294,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using LocalNotifications external object in Smart Devices</h1>
+<!--HowTo: Using LocalNotifications external object in Smart Devices--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The <a href="39554.html">LocalNotifications external object</a> enable your app to alert users of scheduled events or alarms in the background, with no servers required as in <a href="19945.html">Push Notifications in Smart Devices Application</a>.</p>
+
+<p>This document is a brief guide of how to use Local Notifications in GeneXus for Smart Devices.</p>
+
+<h3><a id="Step+1%3A+Checking+the+objects+that+will+let+me+add+Local+Notifications" class="HashLink" href="#Step+1%3A+Checking+the+objects+that+will+let+me+add+Local+Notifications">Step 1: Checking the objects that will let me add Local Notifications</a></h3>
+
+<p>There are two objects that are going to be used to enable Local Notifications on the <a href="31268.html">GeneXus Core module</a>.</p>
+
+<p><img src="./images/39557.png" id="39557" class="WikiImage"/></p>
+
+<p style="margin-left: 40.0px;"><strong>LocalNotifications structured data types </strong><br />
+This <a href="6286.html">Structured Data Type</a> (SDT) is used to define the configuration of the Local Notification. It is a collection of Items with DateTime and Text. The DateTime will be used to know when that Local Notification will be triggered, and the text will be the info shown to the user. You can define as many Local Notifications as you want. A single item on the SDT LocalNotifications Item is equivalent to one Local Notification.<br />
+<img src="./images/39558.png" id="39558" class="WikiImage"/></p>
+
+<p style="margin-left: 40.0px;"><strong>LocalNotifications external object</strong><br />
+This external object has a method called <span style="font-family: courier new;">CreateAlerts</span> which expects as an input parameter an instance of a variable based on SDT LocalNotifications. When this action is executed, the app will schedule all the local notifications passed on the SDT LocalNotifications. <br />
+<img src="./images/39556.png" id="39556" class="WikiImage"/></p>
+
+<h3><a id="Step+2%3A+Programming+the+Local+Notifications" class="HashLink" href="#Step+2%3A+Programming+the+Local+Notifications">Step 2: Programming the Local Notifications</a></h3>
+
+<p>To make them work just to create the following Procedure (e.g: named &quot;SendLocalNotificationsServer&quot;).</p>
+
+<p>In this example, we are creating this procedure to load the SDTLocal Notifications, but this can be done differently because it is not compulsory to do it with a procedure.</p>
+
+<p>Parm:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(out: &amp;MySdtLocalNotifications);</pre>
+
+<p>Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;MySdtLocalNotificationsItems.DateTime = ymdhmstot(2012,06,07,16,56,00)
+&amp;MySdtLocalNotificationsItems.Text = &quot;My Local Test&quot;
+&amp;MySdtLocalNotifications.Add(&amp;MySdtLocalNotificationsItems)</pre>
+
+<p>Variables:</p>
+
+<p>MySdtLocalNotifications -&gt; SDTLocalNotifications<br />
+MySdtLocalNotificationsItems -&gt; SDTLocalNotifications.Item</p>
+
+<p>Next, let's create a <a href="24829.html">Panel object</a>:</p>
+
+<p>Layout:</p>
+
+<p><img src="./images/19297.PNG" id="19297" class="WikiImage"/></p>
+
+<p>Events:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ Event 'SendNotification'
+      Composite
+          &amp;MySdtLocalNotifications = SendLocalNotificationsServer()
+          LocalNotifications.CreateAlerts(&amp;MySdtLocalNotifications)
+      EndComposite
+ EndEvent</pre>
+
+<h3><a id="Step+3%3A+Execution" class="HashLink" href="#Step+3%3A+Execution">Step 3: Execution</a></h3>
+
+<p>Run your application.</p>
+
+<p>First, hit the Panel for Smart Device button to start scheduling Local Notifications. After that, the Notifications have been scheduled and they will appear on your device at the time specified.</p>
+
+<p>When the local notification is added:</p>
+
+<p><img src="./images/19295.PNG" id="19295" class="WikiImage"/></p>
+
+<p>When the local notification is fired.</p>
+
+<p><img src="./images/19296.PNG" id="19296" class="WikiImage"/></p>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<p>A working example of this method can be downloaded from: <a href="https://wiki.genexus.com/commwiki/wiki?20392,," target="_blank">WorkingWithLocalNotifications</a>.</p>
+
+<h3><a id="TroubleShooting" class="HashLink" href="#TroubleShooting">TroubleShooting</a></h3>
+
+<p>The Create method of the external object returns a numeric value. If the value returned is 0, it means that there was no error in the execution. Otherwise, if the numeric value is different than 0, an execution error occurred.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This feature has been added to GeneXus in:</p>
+
+<ul>
+	<li>iOS as of GeneXus Evolution 2 Upgrade 1</li>
+	<li>Android as of GeneXus Evolution 2 Upgrade 3</li>
+</ul>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li>Since iOS 8, the local notifications require an authorization from the user. The user will be automatically asked for this authorization the first time you use this API. In case that the developer wants to do it manually, it can be done by using <a href="31311.html">Permissions external object</a> (e.g. when the app is in the background). </li>
+	<li>If the DateTime field of the LocalNotification SDT is empty, the notification will be triggered instantly.</li>
+</ul>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><b>Platforms </b></td>
+			<td>Smart Devices (iOS, Android)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="39554.html">LocalNotifications external object</a></li>
+</ul>
+
+<p><br />
+<br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR></TR><TR><TD><a href="19356.html">HowTo: Using iOS Badge operations</a></TD><TD><a href="39554.html">LocalNotifications external object</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

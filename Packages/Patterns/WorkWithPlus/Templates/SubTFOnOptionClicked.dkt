@@ -1,0 +1,107 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="SubTFOnOptionClicked" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Architecture.Common.Objects" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="name" Type="System.String" %>
+<%@ Property Name="ddoName" Type="System.String" %>
+<%@ Property Name="gridItem" Type="DVelop.Patterns.WorkWithPlus.IFilterableByTitle" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%
+					if (gridItem.PredefinedOperators != null)
+					{
+%>
+			&TF<%= name %>Operator = 0
+<%
+					}
+					if (TitleFilterProcedureHelper.ConsiderFilterCondition(gridItem))
+					{
+						bool isDateTime;
+						string searchBoxType = TitleFilterProcedureHelper.GetSearchBoxType(gridItem, out isDateTime);
+						if (searchBoxType == "Character")
+						{
+%>
+			&TF<%= name %> = DDO_<%= ddoName %>.FilteredText_get
+<%
+							if (gridItem.IsSearchBoxRange())
+							{
+%>
+			&TF<%= name %>_To = DDO_<%= ddoName %>.FilteredTextTo_get
+<%
+							}
+						}
+						else
+						{
+							if (searchBoxType == "Date" && Settings.UseCharToDateProc)
+							{
+%>
+			&TF<%= name %> = WWP_CharToDate(DDO_<%= ddoName %>.FilteredText_get)
+<%
+							}
+							else
+							{
+%>
+			&TF<%= name %>.FromString(DDO_<%= ddoName %>.FilteredText_get)
+<%
+							}
+							if (gridItem.IsSearchBoxRange())
+							{
+								if (searchBoxType == "Date" && Settings.UseCharToDateProc)
+								{
+%>
+			&TF<%= name %>_To = WWP_CharToDate(DDO_<%= ddoName %>.FilteredTextTo_get)
+<%
+								}
+								else
+								{
+%>
+			&TF<%= name %>_To.FromString(DDO_<%= ddoName %>.FilteredTextTo_get)
+<%
+								}
+								if (searchBoxType == "Date" && isDateTime)
+								{
+%>
+			If Not &TF<%= name %>_To.IsEmpty()
+				&TF<%= name %>_To.Set(&TF<%= name %>_To.Year(), &TF<%= name %>_To.Month(), &TF<%= name %>_To.Day(), 23, 59, 59)
+			EndIf
+<%
+								}
+							}
+						}
+					}
+					if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(gridItem))
+					{
+						if (gridItem.AllowMultipleSelection)
+						{
+%>
+			&TF<%= name %>_SelsJson = DDO_<%= ddoName %>.SelectedValue_get
+			&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson<%= gridItem.eDBType == Artech.Genexus.Common.eDBType.NUMERIC ? ".Replace(!'\"', '')" : "" %>)
+<%
+						}
+						else
+						{
+							if (TitleFilterProcedureHelper.IsSelectedItemTypeCharacter(gridItem)
+								&& !TableAttributeElement.IsBasedOnEnumerated(gridItem) && !TitleFilterProcedureHelper.IsItemCheckBoxWithEmptyValue(gridItem))
+							{
+%>
+			&TF<%= name %>_Sel = DDO_<%= ddoName %>.SelectedValue_get
+<%
+							}
+							else
+							{
+%>
+			&TF<%= name %>_Sel.FromString(DDO_<%= ddoName %>.SelectedValue_get)
+<%
+							}
+							if (TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(gridItem))
+							{
+%>
+			&TF<%= name %>_SelDsc = DDO_<%= ddoName %>.SelectedText_get
+<%
+							}
+						}
+					}
+%>

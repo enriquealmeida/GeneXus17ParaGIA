@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pattern xmlns="http://schemas.genexus.com/Patterns/InstanceSpecification/v1.0" Name="Dashboard" Version="15.0.1" RootElement="Dashboard" RootType="Dashboard">
+	<ElementTypes>
+		<ElementType Name="Dashboard" Caption="Menu" PropertyTitle="Menu" Icon="ObjectDashboard" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="Title" Type="string-t" Description="Menu title." />
+				<Attribute Name="Background" Type="reference(Image)" Description="Menu background image." />
+				<Attribute Name="Header" Type="reference(Image)" Description="Menu header image." />
+				<Attribute Name="Class" Type="theme-class" Resolver="Artech.Patterns.Dashboard.Resolvers.ClassResolvers" />
+				<Attribute Name="Control" Type="enum{Platform Default;List;Table;Tabs}" Description="Menu control type." DefaultValue="Platform Default" />
+        <Attribute Name="TabsBehavior" PrettyName="Tabs Distribution" Type="enum{Platform Default;Fixed Size;Scroll}" DefaultValue="Platform Default" ApplyIf="self::*[@Control = 'Tabs']" />
+
+        <Attribute Name="ImagePosition" PrettyName="Tabs Image Position" Type="enum{Platform Default;Above Text;Below Text;Before Text;After Text;Behind Text}" DefaultValue="Platform Default" ApplyIf="self::*[@Control = 'Tabs']" />
+
+        <Attribute Name="showApplicationBars" Type="bool" Category="Appearance" Description="Show application bars." DefaultValue="true"/>
+				<Attribute Name="applicationBarsClass" Type="theme-class" Category="Appearance" Description="Theme class for application bars." VisibleIf="self::*[@showApplicationBars='True']" Resolver="Artech.Patterns.Dashboard.Resolvers.ApplicationBarsClassResolver" />
+				<Attribute Name="showAds" Type="bool" Category="Appearance" Description="Show ads in this panel." DefaultValue="true" />
+				<Attribute Name="adsPosition" Type="enum{Top;Bottom}" Category="Appearance" Description="Ads position in this panel." DefaultValue="Bottom" VisibleIf="self::*[@showAds='True']" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="notifications" ElementType="Notifications" Multiple="false" Optional="true" />
+				<ChildElement Name="items" ElementType="Items" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+
+		<ElementType Name="Notifications" Caption="Notifications" Icon="Pattern_Actions" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="Action" ElementType="Action" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+
+		<ElementType Name="Items" Caption="Items" Icon="ObjectDashboard" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="Action" ElementType="Action" Multiple="true" />
+				<ChildElement Name="Link" ElementType="Link" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		
+		<ElementType Name="BaseItem" Caption="">
+			<Attributes>
+				<Attribute Name="Name" Type="string" Description="Item name." />
+				<Attribute Name="Description" Type="string-t" Description="Item description." DefaultValueFrom="@Name" />
+				<Attribute Name="Image" Type="reference(Image)"/>
+				<Attribute Name="Class" Type="theme-class" Resolver="Artech.Patterns.Dashboard.Resolvers.ClassResolvers" />
+			</Attributes>
+			<ChildrenElements/>
+		</ElementType>
+		<ElementType Name="Action" BaseType="BaseItem" Caption="Action ({0})" CaptionParameters="Name" KeyAttribute="Name" Icon="DashboardItem" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes/>
+			<ChildrenElements/>
+			<Initialization>
+				<InitializationFrom Type="Procedure" PropertyValues="Name=Name;Description=Description" />
+				<InitializationFrom Type="Transaction" PropertyValues="Name=Name;Description=Description" />
+				<InitializationFrom Type="ExternalObject" PropertyValues="Name=Name;Description=Description" />
+				<InitializationFrom Type="WebPanel" PropertyValues="Name=Name;Description=Description" />
+				<InitializationFrom Type="WorkWithDevices" PropertyValues="Name=Name;Description=Description" />
+				<InitializationFrom Type="Dashboard" PropertyValues="Name=Name;Description=Description" />
+				<InitializationFrom Type="SDPanel" PropertyValues="Name=Name;Description=Description" />
+			</Initialization>
+		</ElementType>
+		<ElementType Name="Link" BaseType="BaseItem" Caption="Link ({0})" CaptionParameters="Name" KeyAttribute="Name" Icon="DashboardItem" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="Link" Type="string" Description="Link to a web resource." NotNull="true" />
+			</Attributes>
+			<ChildrenElements/>
+		</ElementType>
+	</ElementTypes>
+</Pattern>

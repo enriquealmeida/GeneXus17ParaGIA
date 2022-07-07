@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>TabbedView Web Component</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?4796,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">TabbedView Web Component</h1>
+<!--TabbedView Web Component--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Quite often, while developing a form you may need to organize its data into Tabs. For example, in the <a href="https://wiki.genexus.com/commwiki/wiki?1837,," target="_blank">Web Based Work With Pattern</a>, the View panel (like this page itself) uses a Tabbed View. The problem is that until now it was necessary to have codes for handling tabs in every View panel, but in GeneXus all these codes can be encapsulated in a single Web Component. The GeneXus Work With Pattern already provides a web component named TabbedView that can be used in other objects.</p>
+<h3><a id="How+to+use+it+" class="HashLink" href="#How+to+use+it+">How to use it<br /></a></h3>
+
+<p>Suppose you need to implement a tabbed view for the Customer transaction, with the following tabs:</p>
+<ul>
+    <li>General. Shows just the general information, like Name and Address;</li>
+    <li>Invoices. Shows the Customer's Invoices;</li>
+    <li>Payments. Shows the Customer's Payments.</li>
+</ul>
+<p>The first step is to create a Web Component for each Tab (in this case named: CustomerGeneral, CustomerInvoices and CustomerPayments). This is necessary because the tabbed view should only have one Tab loaded at a time in order to avoid very heavy pages.</p>
+<p>The second step is to create the ViewCustomer Webpanel and drag into the WebForm the TabbedView web component (it comes with the Work With Pattern, so just generate one to have it in the KB). The TabbedView Web Component has two parameteres: an SDT representing available Tabs and an identifier telling you which of these tabs are active. The SDT is a collection of a structure as described below.</p>
+<p>
+</p><pre class="prettyprint lang-genexus" style="max-width: 100%">TabOptionsItem [IsCollection]<br />{<br />   Code<br />   Description<br />   Link<br />   WebComponent<br />}</pre>
+<p>The collection must be loaded with every available Tab, before calling the TabbedView. To load an item in the collection, members must have the following information:</p>
+
+<ul>
+    <li>Code = a unique item identifier. It identifies the item among all the other items in the collection</li>
+    <li>Description = a brief description of what the tab is intended  for.</li>
+    <li>Link = the URL of the object to be called if the tab is selected (usually obtained by using the Link method of a Web object)</li>
+    <li>WebComponent = the URL of the Web Component that must be shown when the item is selected</li>
+</ul>
+<p>For instance, in the ViewCustomer objects the SDT can be loaded with this information:</p>
+<p>
+</p><pre class="prettyprint lang-genexus" style="max-width: 100%"><p>Rules:<br />Parm(in:CustomerId, in:&amp;TabCode);</p><p>Event Start<br />   ...<br />   &amp;Tabs = new()<br />   &amp;TabsItem.Code         = 'General'<br />   &amp;TabsItem.Description  = 'General info'<br />   &amp;TabsItem.Link         = ViewCustomer.Link(CustomerId, 'General')<br />   &amp;TabsItem.WebComponent = CustomerGeneral.Link(CustomerId)<br />   &amp;Tabs.add(&amp;TabsItem)<br />    ...<br /> </p><p>TabWC.Object = TabbedView.Create(&amp;Tabs, &amp;TabCode)<br />Endevent</p></pre>
+<p>Once the TabbedView is called, it builds the tabs (handles selected, unselected, drawings, etc. and, for the active tab, it uses the information in the WebComponent member to create the active Web Component. <br />
+</p>
+<p>(see <a href="4955.html">Data Provider Use Case: TabbedView usage</a> for a simpler code).</p>
+<h3><a id="How+does+the+TabbedView+Web+Component+work%3F" class="HashLink" href="#How+does+the+TabbedView+Web+Component+work%3F">How does the TabbedView Web Component work?</a></h3>
+<p>The TabbedView Web Component is, of course, a standard GeneXus Web Component that uses a GeneXus feature to encapsulate tab-handling codes. This GeneXus feature lets you create a <a href="5404.html">Web Component at runtime</a> based on a link to it, as follows:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">&amp;WebComponentUrl = &amp;Tab.WebComponent<br />Control.Object = CreateFromURL(&amp;WebComponentUrl)</pre>
+<br />
+
+<p><br />
+<br />
+   <br />
+</p><br /><br />   <br />    <br /> <br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="20509.html">CreateFromURL function</a></TD><TD><a href="5270.html">Category:Data Provider object</a></TD></TR><TR><TD><a href="4955.html">Data Provider Use Case: TabbedView usage</a></TD><TD><a href="5404.html">Dynamic Component Creation</a></TD><TD><a href="22724.html">HistoryManager User Control</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

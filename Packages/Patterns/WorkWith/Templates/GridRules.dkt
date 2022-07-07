@@ -1,0 +1,32 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tabs Rules" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Common.Collections" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Patterns.WorkWith.WorkWithInstance" %>
+<%@ Property Name="GridObject" Type="Artech.Patterns.WorkWith.IGridObject" %>
+
+<Part type="<%= PartType.Rules %>">
+	<Source><![CDATA[<%= GridObject.Parameters.RuleWithVariables() %>
+<%
+	if (GridObject.Filter != null)
+	{
+		IBaseCollection<FilterAttributeElement> filterPrompts = GridObject.Filter.Attributes.FindAll(delegate (FilterAttributeElement filterAttribute) { return (filterAttribute.Prompt != null); });
+		if (filterPrompts.Count > 0)
+		{
+%>
+
+<%
+			foreach (FilterAttributeElement filterAttribute in filterPrompts)
+			{
+%>
+prompt(<%= filterAttribute.Prompt.Name %>, <%= filterAttribute.VariableName %>);
+<%
+			}
+		}
+	}
+%>]]>
+	</Source>
+</Part>

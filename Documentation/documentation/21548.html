@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - External Authentication: version 1.0</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?21548,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - External Authentication: version 1.0</h1>
+<!--GAM - External Authentication: version 1.0--><div class="TableWikiBody" id="tblwikibody"><p><a href="21755.html">External Authentication Type with GAM</a> can be defined using a SOAP web service or an external program.</p>
+
+<p>In case of using a Web Service (SOAP) it  must meet certain requirements in order to be used as <a href="16512.html">External Web Services Authentication Type</a>:</p>
+
+<ul>
+	<li>The exposed Namespace of the webservice, must be "GAM".</li>
+	<li>If the web service is generated with Genexus and the <a href="2428.html">KB</a> uses <a href="19888.html">GeneXus Access Manager</a>, check that the <a href="15214.html">Integrated Security Level property</a> of the web service is set to None.</li>
+	<li>It has to receive 2 parameters:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Type GAMWSLoginInSDT : in parameter
+Type GAMWSLoginOutSDT: out parameter</pre>
+
+<p>In case of the <a href="21751.html">Custom Authentication Type</a>, the same data types should be used, except that in this case they are passed to the program as strings in json format.</p>
+
+<h3><a id="External+authentication+program+1.0+data+types" class="HashLink" href="#External+authentication+program+1.0+data+types">External authentication program 1.0 data types</a></h3>
+
+<h4><a id="Type+GAMWSLoginInSDT" class="HashLink" href="#Type+GAMWSLoginInSDT">Type GAMWSLoginInSDT</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 700.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Name</strong></td>
+			<td><strong>Description</strong></td>
+			<td><strong>Type</strong></td>
+		</tr>
+		<tr>
+			<td>GAMUsrLogin</td>
+			<td>User identification login</td>
+			<td>String</td>
+		</tr>
+		<tr>
+			<td>GAMUsrPwd</td>
+			<td>User Password</td>
+			<td>String</td>
+		</tr>
+		<tr>
+			<td>GAMUsrAddPar</td>
+			<td>Collection of additional parameters</td>
+			<td>GAMWSLoginInAddParSDT (Collection)</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h4><a id="Type+GAMWSLoginInAddParSDT" class="HashLink" href="#Type+GAMWSLoginInAddParSDT">Type GAMWSLoginInAddParSDT</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Name</strong></td>
+			<td><strong>Description</strong></td>
+			<td><strong>Type</strong></td>
+		</tr>
+		<tr>
+			<td>GAMAddParId</td>
+			<td>Additional parameter identifier</td>
+			<td>String</td>
+		</tr>
+		<tr>
+			<td>GAMAddParValue</td>
+			<td>Additional parameter value</td>
+			<td>String</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+<img src="./images/21568.png" id="21568" class="WikiImage"/></p>
+
+<h3><a id="Type+GAMWSLoginOutSDT" class="HashLink" href="#Type+GAMWSLoginOutSDT">Type GAMWSLoginOutSDT</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 700.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Name</strong></td>
+			<td><strong>Description</strong></td>
+			<td><strong>Type</strong></td>
+		</tr>
+		<tr>
+			<td>WSVersion</td>
+			<td>web service version (1.0)</td>
+			<td>String</td>
+		</tr>
+		<tr>
+			<td>WSStatus</td>
+			<td>
+			<p>Response status:<br />
+			1 = User and password ok<br />
+			2 = Unknown user<br />
+			3 = Invalid password<br />
+			4 = User is not active</p>
+			</td>
+			<td>Short</td>
+		</tr>
+		<tr>
+			<td>WSMessage</td>
+			<td>Custom message when the user tries to authenticate</td>
+			<td>String</td>
+		</tr>
+		<tr>
+			<td>User</td>
+			<td>Information of the connected user</td>
+			<td>GAMWSLoginOutUserSDT</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+<strong>Note:</strong> WSStatus can be any other value than 1 to 4. Numbers above 4 correspond to custom messages. In that case, the string value in WSMessage will be shown to the user when he tries to login.</p>
+
+<h4><a id="Type+GAMWSLoginOutUserSDT" class="HashLink" href="#Type+GAMWSLoginOutUserSDT">Type GAMWSLoginOutUserSDT</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 600.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Name</strong></td>
+			<td><strong>Description</strong></td>
+			<td colspan="2"><strong>Type</strong></td>
+		</tr>
+		<tr>
+			<td>Code</td>
+			<td>User identifier</td>
+			<td colspan="2">String</td>
+		</tr>
+		<tr>
+			<td>FirstName</td>
+			<td>User first name</td>
+			<td colspan="2">String</td>
+		</tr>
+		<tr>
+			<td>LastName</td>
+			<td>User last name</td>
+			<td colspan="2">String</td>
+		</tr>
+		<tr>
+			<td>Email</td>
+			<td>User email</td>
+			<td colspan="2">String</td>
+		</tr>
+		<tr>
+			<td>Roles</td>
+			<td>User roles list</td>
+			<td>Collection of RoleItem </td>
+			<td>RoleItem has RoleCode (String) child.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h4><a id="wiki%3F21567%2CGAMWSlogoutSDTWS1.0%2C+" class="HashLink" href="#wiki%3F21567%2CGAMWSlogoutSDTWS1.0%2C+"><img src="./images/21567.png" id="21567" class="WikiImage"/></a></h4>
+
+<p><strong>Note:</strong> The Code (*) of the user will be mapped to the <a href="https://wiki.genexus.com/commwiki/wiki?21734,," target="_blank">ExternalId property of GAMUser object</a> when the user registers to the application.</p>
+
+<h3><a id="Example+of+the+HTTP+response+of+the+webservice+1.0%3A" class="HashLink" href="#Example+of+the+HTTP+response+of+the+webservice+1.0%3A">Example of the HTTP response of the webservice 1.0:</a></h3>
+
+<p>&lt;GAMWSLoginOutSDT xmlns="GAM"&gt;<br />
+  &lt;WSVersion&gt;1.0&lt;/WSVersion&gt;<br />
+  &lt;WSStatus&gt;1&lt;/WSStatus&gt;<br />
+  &lt;WSMessage /&gt;<br />
+  &lt;User&gt;<br />
+              &lt;Code&gt;500&lt;/Code&gt;<br />
+              &lt;FirstName&gt;Juan&lt;/FirstName&gt;<br />
+              &lt;LastName&gt;Perez&lt;/LastName&gt;<br />
+              &lt;EMail&gt;jperez@gxportal.com&lt;/EMail&gt;<br />
+              &lt;Roles&gt;<br />
+                          &lt;GAMWSLoginOutUserSDT.RoleItem&gt;<br />
+                                      &lt;RoleCode&gt;4&lt;/RoleCode&gt;<br />
+                          &lt;/GAMWSLoginOutUserSDT.RoleItem&gt;<br />
+                          &lt;GAMWSLoginOutUserSDT.RoleItem&gt;<br />
+                                      &lt;RoleCode&gt;10&lt;/RoleCode&gt;<br />
+                          &lt;/GAMWSLoginOutUserSDT.RoleItem&gt;<br />
+                          &lt;GAMWSLoginOutUserSDT.RoleItem&gt;<br />
+                                      &lt;RoleCode&gt;15&lt;/RoleCode&gt;<br />
+                          &lt;/GAMWSLoginOutUserSDT.RoleItem&gt;<br />
+              &lt;/Roles&gt;<br />
+  &lt;/User&gt;<br />
+&lt;/GAMWSLoginOutSDT&gt;</p>
+
+<h3><a id="Download" class="HashLink" href="#Download">Download</a></h3>
+
+<ul>
+	<li>xpz of the web service 1.0 sample <a href="https://wiki.genexus.com/commwiki/wiki?16927,," target="_blank">here</a></li>
+	<li>wsdl of the web service 1.0 sample <a href="https://wiki.genexus.com/commwiki/wiki?21554,," target="_blank">here</a></li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?21555,," target="_blank">GAM - External Authentication: version 2.0</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="21751.html">GAM - Custom Authentication Type</a></TD><TD><a href="16512.html">GAM - External Web Services Authentication Type</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD><TD><a href="21752.html">HowTo: Pass additional parameters to external authentication programs using GAM</a></TD><TD><a href="16929.html">Managing Roles through external authentication programs</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/07/22 04:43 PM</em></font></td></TR></table></font>

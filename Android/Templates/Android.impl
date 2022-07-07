@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<GeneratorSpecification xmlns="http://schemas.genexus.com/GeneratorImplementation.xsd">
+  <Strategies>
+    <Strategy Name="RootProject">
+      <Variable Name="RootProject" Class="Artech.Generator.SmartDevices.CustomGenerators.AndroidRootProjectGenerator"/>
+
+      <!-- Root project files -->
+      <CopyFile Name="RootProject\ext.gradle" Output="ext.gradle"/>
+      <Template Id="RootProject\build.gradle" Output="build.gradle"/>
+      <Template Id="RootProject\local.properties" Output="local.properties"/>
+      <Template Id="RootProject\settings.gradle" Output="settings.gradle"/>
+      <Template Id="RootProject\gradle.properties" Output="gradle.properties"/>
+    </Strategy>
+
+    <Strategy Name="Bootstrapping">
+      <!-- Deletes the generated Android project if the build version used for their generation differs from the one currently being used. -->
+      <CopyDirectory Name="Version" Output="." Force="true"/>
+      <!-- Main project files -->
+      <Template Id="ApplicationProject\src\main\java\com\genexus\namespace\AppEntityDataProvider.java" Output="$Main.AndroidSourcesDir$\AppEntityDataProvider.java"/>
+      <Template Id="ApplicationProject\src\main\java\com\genexus\namespace\AppEntityService.java" Output="$Main.AndroidSourcesDir$\AppEntityService.java"/>
+      <Template Id="ApplicationProject\src\main\java\com\genexus\namespace\Main.java" Output="$Main.AndroidSourcesDir$\Main.java"/>
+      <Template Id="ApplicationProject\src\main\java\com\genexus\namespace\MainApplication.java" Output="$Main.AndroidSourcesDir$\MainApplication.java"/>
+      <Template Id="ApplicationProject\src\main\res\values\config.xml" Output="$Main.AndroidResourcesDir$\values\config.xml"/>
+      <Template Id="ApplicationProject\src\main\res\xml\searchable.xml" Output="$Main.AndroidResourcesDir$\xml\searchable.xml"/>
+      
+      <Template Id="ApplicationProject\src\main\res\xml\network_security_config.xml" Output="$Main.AndroidResourcesDir$\xml\network_security_config.xml"/>
+
+      <Template Id="ApplicationProject\src\main\AndroidManifest.xml" Output="src\main\AndroidManifest.xml"/>
+      <Template Id="ApplicationProject\build.gradle" Output="build.gradle"/>
+      <Template Id="ApplicationProject\multidex-config.txt" Output="multidex-config.txt"/>
+      $if(Main.HasAssociatedUITests)$
+        <Template Id="ApplicationProject\src\androidTest\java\namespace\MainNameUITests.java" Output="$Main.AndroidUiTestsSourcesDir$\$Main.Name$UITests.java"/>
+      $endif$
+      
+      <Extension Generator="Artech.Generator.SmartDevices.AndroidLibraryTemplateGenerator"/>
+    </Strategy>
+    <Strategy Name="BootstrappingHuawei">
+      $if(IsHuawei)$
+      $endif$
+      <Template Id="ApplicationProject\hmscore.gradle" Output="hmscore.gradle" />
+			<Template Id="ApplicationProject\hmsInAppBilling.gradle" Output="hmsInAppBilling.gradle" />
+    </Strategy>
+  </Strategies>
+</GeneratorSpecification>

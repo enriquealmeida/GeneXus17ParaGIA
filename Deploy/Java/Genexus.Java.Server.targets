@@ -1,0 +1,555 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Import Project="$(GX_PROGRAM_DIR)\Packages\Gxpm\Platforms\GeneXus.Java.WorkflowEngine.targets"/>
+	<Import Project="$(GX_PROGRAM_DIR)\Packages\Gxpm\Platforms\GeneXus.Java.WorkflowClient.targets"/>
+	<Import Project="$(GX_PROGRAM_DIR)\gxjava\JavaLibs.targets"/>
+	<Import Project="$(GX_PROGRAM_DIR)\Library\GAM\GAM_Backend\Java\GAM_Backend.targets" Condition="'$(IncludeGAMBackend)' == 'true'"/>
+
+	<!-- General Properties -->
+	<PropertyGroup>
+		<WebXmlTemplate>$(ApplicationServerTemplate)</WebXmlTemplate>
+		<WebServicesPath>$(WebPath)\services</WebServicesPath>
+		<DataSourcesPath>$(WebPath)\datasources</DataSourcesPath>
+		<PrivateDir>WEB-INF\private\</PrivateDir>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(IsCMD)' == 'false'">
+		<ClassesDir>WEB-INF\classes\</ClassesDir>
+		<LibDir>WEB-INF\lib\</LibDir>
+		<ConfigsDir>$(DeployFullPath)\WEB-INF</ConfigsDir>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(IsCMD)' == 'true'">
+		<ClassesDir>classes\</ClassesDir>
+		<LibDir></LibDir>
+		<ConfigsDir>$(DeployFullPath)\classes</ConfigsDir>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(PackageFormat)' == 'EAR'">
+		<ForceEJB>true</ForceEJB>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(PackageFormat)' != 'EAR'">
+		<ForceEJB>false</ForceEJB>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<JakartaEE Condition=" '$(ApplicationServer)' == 'Generic Servlet 5.0' or '$(ApplicationServer)' == 'Tomcat 10.x'">true</JakartaEE>
+		<JakartaEE Condition=" '$(ApplicationServer)' != 'Generic Servlet 5.0' and '$(ApplicationServer)' != 'Tomcat 10.x' ">false</JakartaEE>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+		<WebPathWSGenJakarta>$(WebPath)\wsGenJakarta</WebPathWSGenJakarta>
+	</PropertyGroup>
+
+	<Target Name="GetStandardFiles" DependsOnTargets="CheckNeededSupport" Condition="'$(Incremental)' != 'true'">
+		<ItemGroup Label="ConfigFiles">
+			<ClassFile Include="$(RootModulePath)\client.cfg" />
+			<ClassFile Include="$(WebPath)\log4j2.xml" />
+		</ItemGroup>
+		
+		<ItemGroup Label="WSConfigFiles">
+			<WsClassFile Include="$(WebPath)\gx_handler_chain.xml" Condition="'$(SoapSupport)' == 'true' AND $(JakartaEE) == 'false' AND Exists('$(WebPath)\gx_handler_chain.xml')"/>
+			<WsClassFile Include="$(WebPathWSGenJakarta)\gx_handler_chain.xml" Condition="'$(SoapSupport)' == 'true' AND $(JakartaEE) == 'true' AND Exists('$(WebPath)\wsGenJakarta\gx_handler_chain.xml')" />
+		</ItemGroup>
+
+		<PropertyGroup Condition="'$(SourceFiles)' != 'true'">
+			<StandardExtension>.class</StandardExtension>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(SourceFiles)' == 'true'">
+			<StandardExtension>.java</StandardExtension>
+		</PropertyGroup>
+
+		<ItemGroup Label="Base Classes">
+			<ClassFile Include="$(RootModulePath)\GXcfg$(StandardExtension)" />
+			<ClassFile Include="$(RootModulePath)\SoapParm$(StandardExtension)" Condition="Exists('$(RootModulePath)\SoapParm$(StandardExtension)')" />
+			<ClassFile Include="$(RootModulePath)\GXApplication$(StandardExtension)" Condition=" '$(RestSupport)' == 'true' " />
+			<ClassFile Include="$(RootModulePath)\GxFullTextSearchReindexer$(StandardExtension)" Condition=" '$(Searchable)' == 'true'" />
+		</ItemGroup>
+		
+
+		<PropertyGroup>
+			<ThemesDeployPath>$(DeployFullPath)\themes\</ThemesDeployPath>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<ExternalObjectsPath>$(DeployFullPath)\$(LibDir)</ExternalObjectsPath>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<LocationXmlDestination>$(DeployFullPath)\WEB-INF\</LocationXmlDestination>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<PdfSupportDestination>$(DeployFullPath)\WEB-INF\</PdfSupportDestination>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<GAMDestination>$(DeployFullPath)\WEB-INF\lib\</GAMDestination>
+			<GAMBAckendSourcePath>$(WebPath)\GAM_Backend</GAMBAckendSourcePath>
+			<GAMBackendModulePath>$(WebPath)\GAM_Backend\WEB-INF\classes\genexus\security\backend</GAMBackendModulePath>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<GAMConfig Include="$(WebPath)\application.gam">
+				<RelativeTargetDir>$(DeployFullPath)\WEB-INF\</RelativeTargetDir>
+			</GAMConfig>
+			<GAMConfig Include="$(WebPath)\connection.gam">
+				<RelativeTargetDir>$(DeployFullPath)\WEB-INF\</RelativeTargetDir>
+			</GAMConfig>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<OfflineDestination>$(DeployFullPath)\$(ClassesDir)\$(RootModuleRelativePath)</OfflineDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<OfflineLib Include="$(RootModulePath)\gxrowlevelcache.class" Condition="Exists('$(RootModulePath)\gxrowlevelcache.class')" />
+			<OfflineLib Include="$(RootModulePath)\gxrowlevelcache__default.class" Condition="Exists('$(RootModulePath)\gxrowlevelcache__default.class')" />
+		</ItemGroup>
+
+		<ItemGroup Condition="'@(UserControlFolder->Count())' > 0">
+			<UCFile Include="$(WebPath)\%(UserControlFolder.Identity)\**\*.*">
+				<UCFolder>%(UserControlFolder.Identity)</UCFolder>
+				<RelativeTargetDir>$(DeployFullPath)\$(StaticDir)\%(UserControlFolder.Identity)</RelativeTargetDir>
+			</UCFile>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<SearchableDestination>$(DeployFullPath)\$(LibDir)</SearchableDestination>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<CSDestination>$(DeployFullPath)\WEB-INF\lib</CSDestination>
+			<CSDestination Condition="'$(IsCMD)' == 'true'">$(DeployFullPath)</CSDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<CSFile Include="$(WebPath)\CloudServices.config">
+				<RelativeTargetDir>$(ConfigsDir)</RelativeTargetDir>
+			</CSFile>
+		</ItemGroup>
+
+		<ItemGroup Label="URLRewrite Files">
+			<RewriteFile Include="$(WebPath)\*.rewrite">
+				<RelativeTargetDir>$(DeployFullPath)\$(ClassesDir)$(RootModuleRelativePath)</RelativeTargetDir>
+			</RewriteFile>
+			<RewriteFile Include="$(WebPath)\rewrite.config" Condition="Exists('$(WebPath)\rewrite.config')">
+				<RelativeTargetDir>$(ConfigsDir)</RelativeTargetDir>
+			</RewriteFile>
+		</ItemGroup>	
+		
+		<PropertyGroup>
+			<CBDestination>$(DeployFullPath)\WEB-INF\lib</CBDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<CBFile Include="$(WebPath)\GXCF_Chatbots.config">
+				<RelativeTargetDir>$(ConfigsDir)</RelativeTargetDir>
+			</CBFile>
+		</ItemGroup>
+		
+		<PropertyGroup>
+			<CSRefDirectory>$(WebServicesPath)</CSRefDirectory>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<SAPDestination>$(DeployFullPath)\$(LibDir)</SAPDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<EOSAP Include="@(ExternalObjectFile)" Condition="'%(Identity)' == 'com.genexus.sap'" />
+			<SAPFile Include="$(WebPath)\drivers\sapjco3.jar"/>
+			<SAPFile Include="$(WebPath)\drivers\libsapjco3.so"/>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<NotificationDestination>$(DeployFullPath)\private</NotificationDestination>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<SDNotificationLib Include="$(WebPath)\private\notifications.json"/>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<UCviewDestination>$(DeployFullPath)\WEB-INF\gxusercontrols</UCviewDestination>
+		</PropertyGroup>
+
+	</Target>
+
+	<Target Name="GetResourcesFiles" Condition="'$(Incremental)' != 'true'">
+		<ItemGroup Label="Languages">
+			<ClassFile Include="@(Language -> '$(RootModulePath)\messages.%(MessageCode).txt')" />
+			<ClassFile Include="$(RootModulePath)\GXflowImages.txt" Condition="'$(HasWorkflow)' == 'true'" />
+		</ItemGroup>
+		<ItemGroup Label="Images">
+			<ClassFile Include="$(RootModulePath)\$(ResourcesPrefix)Images.txt" >
+				<RelativeTargetDir>$(RootModuleRelativePath)\</RelativeTargetDir>
+			</ClassFile>
+		</ItemGroup>
+		<ItemGroup Label="GAMImages">
+			<GAMImagesMapping Include="$(GAMBackendModulePath)\GAMImages.txt" Condition="'$(IncludeGAMBackend)' == 'true'" />
+		</ItemGroup>
+	</Target>
+
+	<Target Name="GetWebXml" DependsOnTargets="GetWorkflowEngineItems;GetWorkflowClientItems;GetStandardFiles;GetQueryViewerClasses;GetResourcesFiles;CheckNeededSupport" Condition="'$(Incremental)' != 'true'">
+
+		<Message Text="Generating{web.xml}" Importance="high"/>
+
+		<PropertyGroup>
+			<PackageNameDot Condition=" '$(PackageName)' == '' ">$(PackageName)</PackageNameDot>
+			<PackageNameDot Condition=" '$(PackageName)' != '' ">$(PackageName).</PackageNameDot>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<Model Include="Java" />
+
+			<ClassFile Condition="'%(ClassFile.GeneratedPackage)' != 'false'">
+				<PackageNamePrefix>$(PackageNameDot)</PackageNamePrefix>
+			</ClassFile>
+
+			<Servlet Include="@(ClassFile)" Condition="'%(ClassFile.DeclareServlet)' == 'true'" >
+				<Name>%(ClassFile.PackageNamePrefix)$([System.String]::new('%(ClassFile.ModulePath)%(Filename)').Replace('\','.'))</Name>
+				<Class>%(ClassFile.PackageNamePrefix)$([System.String]::new('%(ClassFile.ModulePath)%(Filename)').Replace('\','.'))</Class>
+			</Servlet>
+		</ItemGroup>
+
+		<Error Condition="!Exists('$(WebXmlTemplate)')" Text="CouldNotFindWebXmlTemplate{$(ApplicationServer)}{$(WebXmlTemplate)}" />
+
+		<ItemGroup>
+			<Servlet Include="null" Condition="'@(Servlet)' == ''"></Servlet>
+		</ItemGroup>
+		
+		<GenerateFromTemplate
+			TemplateGroupFile="$(WebXmlTemplate)"
+			TemplateName="generateConfig"
+			Properties="
+				DisplayName=$(AppName);
+				GAMSupport=$(IntegratedSecurity);
+				RestSupport=$(RestSupport);
+				SDSupport=$(SDSupport);
+				APIRestSupport=$(APIRestSupport);
+				HasAPIObject=$(HasAPIObject);
+				PackageGXApplication=$(PackageNameDot)GXApplication;
+				PackageGXcfg=$(PackageNameDot)GXcfg;
+				CacheExpiration=$(CacheExpiration);
+				UseJDBCDatasource=$(UseJDBCDatasource);
+				JDBCDatasource=$(JDBCDatasource);
+				UseAppServerDataSource=$(UseAppServerDataSource);
+				JakartaEE=$(JakartaEE)"
+			Items="@(Model);@(Servlet)"
+			ItemTypes="@(Model -> 'Model');@(Servlet -> 'Servlets[]')"
+			OutputFile="$(DeployFullPath)\WEB-INF\web.xml"  Condition="'$(IsCMD)' == 'false'"/>
+
+		<PropertyGroup>
+			<JaxwsTemplate>$(GX_PROGRAM_DIR)\sun-jaxws.xml.stg</JaxwsTemplate>
+		</PropertyGroup>
+
+		<GenerateFromTemplate
+			TemplateGroupFile="$(JaxwsTemplate)"
+			TemplateName="generate"
+			Properties="JavaPackageName=$(PackageName)"
+			Items="@(SoapObject)"
+			ItemTypes="@(SoapObject -> 'SoapObject[]')"
+			OutputFile="$(DeployFullPath)\WEB-INF\sun-jaxws.xml"  Condition="'$(UseNativeSoap)' == 'true' AND '$(SoapSupport)' == 'true'"/>
+
+	</Target>
+
+	<Target Name="FixSecureSettings" AfterTargets="CommonCopy" Condition="'$(Incremental)' != 'true' AND '$(ApplicationKey)' != ''">
+
+		<Message Text="ApplyingSecuredKeys" Importance="high"/>
+
+		<PropertyGroup>
+			<FlagFile>$(ConfigsDir)\dflag.me</FlagFile>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<Lines Include="Hello World"/>
+		</ItemGroup>
+		
+		<WriteLinesToFile File="$(FlagFile)" Lines="@(Lines)" Overwrite="true" Condition="Exists('$(ConfigsDir)')" />
+		<Error Text="Flag file not created" Condition="!Exists('$(FlagFile)')"/>
+		
+		<SecureConfig ConfigFile="$(DeployFullPath)\$(ClassesDir)%(ClientCfg.RelativeTargetDir)%(ClientCfg.Filename)%(ClientCfg.Extension)"
+					  GenexusDir="$(GX_PROGRAM_DIR)"
+					  Generator="$(Generator)"
+					  PrivatePath="$(DeployFullPath)\$(PrivateDir)"
+					  ApplicationKey="$(ApplicationKey)"
+					  KeysTargetPath="$(ConfigsDir)"
+					  SiteKey="$(SiteKey)"/>
+	</Target>
+
+	<Target Name="GetObjectFiles" DependsOnTargets="CreateObjects">
+		<Message Text="AnalyzingFiles" Importance="high"/>
+
+		<GetJavaObjectFiles
+			Objects="@(WebPanel);@(Procedure);@(Transaction);@(DataProvider);@(SDService);@(Grid);@(File);@(API)"
+			EnvironmentPath="$(NormalizedSourcePath)"
+			PackageName="$(PackageName)"
+			ProjectName="$(ProjectName)"
+			ModelId="$(ModelId)"
+			Generator="$(Generator)"
+			ForceEJB="$(ForceEJB)"
+			Incremental="$(Incremental)"
+			SourceFiles="$(SourceFiles)"
+			IsCMD="$(IsCMD)"
+			DeploymentUnit="$(DeploymentUnit)">
+			<Output TaskParameter="Files" ItemName="ClassFile"/>
+			<Output TaskParameter="UserControlFolders" ItemName="UserControlFolder"/>
+			<Output TaskParameter="PDFSupport" PropertyName="PDFSupport"/>
+			<Output TaskParameter="SearchableSupport" PropertyName="SearchableSupport"/>
+			<Output TaskParameter="MailSupport" PropertyName="MailSupport"/>
+			<Output TaskParameter="OfficeSupport" PropertyName="OfficeSupport"/>
+			<Output TaskParameter="GeographySupport" PropertyName="GeographySupport"/>
+			<Output TaskParameter="FileSupport" PropertyName="FileSupport"/>
+			<Output TaskParameter="SDNotificationSupport" PropertyName="SDNotificationSupport"/>
+			<Output TaskParameter="WebNotificationSupport" PropertyName="WebNotificationSupport"/>
+			<Output TaskParameter="CryptoSupport" PropertyName="CryptoSupport"/>
+			<Output TaskParameter="ModuleInfo" ItemName="ModuleData"/>
+			<Output TaskParameter="FrontEndSupport" PropertyName="FrontEndSupport"/>
+			<Output TaskParameter="EJBs" ItemName="EJBs"/>
+			<Output TaskParameter="EJBSupport" PropertyName="EJBSupport"/>
+			<Output TaskParameter="ChatbotSupport" PropertyName="ChatbotSupport"/>
+		</GetJavaObjectFiles>
+
+		<PropertyGroup>
+			<MailSupport Condition ="'$(IntegratedSecurity)' == 'true'">true</MailSupport>
+		</PropertyGroup>
+		
+		<PropertyGroup Condition="'$(FrontEndSupport)' == 'true'">
+			<CopyStaticFiles>true</CopyStaticFiles>
+		</PropertyGroup>
+
+		<PropertyGroup Condition="'$(Incremental)' == 'true'">
+			<CopyStaticFiles>false</CopyStaticFiles>
+		</PropertyGroup>
+
+	</Target>
+
+	<Target Name="GetQueryViewerClasses" Condition="'$(Incremental)' != 'true'">
+		<PropertyGroup>
+			<QueryViewerRelativePath>qviewer\services</QueryViewerRelativePath>
+		</PropertyGroup>
+		<ItemGroup Label="QueryViewerClasses" Condition="'$(IncludeQueryViewer)' == 'true'" >
+			<QVClassFile Include="$(WebPath)\$(QueryViewerRelativePath)\agxpl_get.class" />
+			<QVClassFile Include="$(WebPath)\$(QueryViewerRelativePath)\agxpl_get_impl.class" >
+				<DeclareServlet>false</DeclareServlet>
+			</QVClassFile>
+			<QVClassFile Include="$(WebPath)\$(QueryViewerRelativePath)\gxqueryviewerforsd.class" />
+			<QVClassFile Include="$(WebPath)\$(QueryViewerRelativePath)\gxqueryviewerforsd_impl.class" >
+				<DeclareServlet>false</DeclareServlet>
+			</QVClassFile>
+			<ClassFile Include="@(QVClassFile)">
+				<ModulePath Condition="'%(QVClassFile.ModulePath)' == ''">$(QueryViewerRelativePath)\</ModulePath>
+				<DeclareServlet Condition="'%(QVClassFile.DeclareServlet)' == ''">true</DeclareServlet>
+				<GeneratedPackage Condition="'%(QVClassFile.GeneratedPackage)' == ''">false</GeneratedPackage>
+			</ClassFile>
+		</ItemGroup>
+	</Target>
+
+	<Target Name="CopyQueryViewerResources" Condition="'$(Incremental)' != 'true' AND '$(IncludeQueryViewer)' == 'true' AND '$(IsCMD)' == 'false'">
+		<Message Text="CopyingQueryViewerResources" Importance="high" />
+		<ItemGroup Label="QueryViewerResources">
+			<QVResource Include="$(WebPath)\private\$(PackageNameDot)QueryViewerQueries.xml" Condition="Exists('$(WebPath)\private\$(PackageNameDot)QueryViewerQueries.xml')" />
+			<QVResource Include="$(WebPath)\private\$(PackageNameDot)QueryViewerObjects.xml" Condition="Exists('$(WebPath)\private\$(PackageNameDot)QueryViewerObjects.xml')"/>
+			<QVResource Include="$(WebPath)\private\$(PackageNameDot)QueryViewerSecurity.xml" Condition="Exists('$(WebPath)\private\$(PackageNameDot)QueryViewerSecurity.xml')"/>
+			<QVResource Include="$(WebPath)\private\$(PackageNameDot)DashboardViewerObjects.xml" Condition="Exists('$(WebPath)\private\$(PackageNameDot)DashboardViewerObjects.xml')"/>
+			<QVResource Include="$(WebPath)\private\QueryViewerQueries.xsd"/>
+			<QVResource Include="$(WebPath)\private\QueryViewerObjects.xsd"/>
+			<QVResource Include="$(WebPath)\private\QueryViewerSecurity.xsd"/>
+			<QVResource Include="$(WebPath)\private\DashboardViewerObjects.xsd" Condition="Exists('$(WebPath)\private\DashboardViewerObjects.xsd')"/>
+			<QVResource Include="$(WebPath)\private\Interfaces\*.*">
+				<RelativeTargetDir>$(DeployFullPath)\$(PrivateDir)Interfaces</RelativeTargetDir>
+			</QVResource>
+			<QVResource Include="$(WebPath)\gxqueryviewerforsd.js" Condition="Exists('$(WebPath)\gxqueryviewerforsd.js')">
+				<RelativeTargetDir>$(DeployFullPath)\$(StaticDir)</RelativeTargetDir>
+			</QVResource>
+		</ItemGroup>
+
+		<Copy SourceFiles="@(QVResource)" DestinationFiles="@(QVResource -> '$(DeployFullPath)\$(PrivateDir)\%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="'%(QVResource.RelativeTargetDir)' == ''" />
+		<Copy SourceFiles="@(QVResource)" DestinationFiles="@(QVResource -> '%(RelativeTargetDir)\%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="'%(QVResource.RelativeTargetDir)' != ''" />
+
+	</Target>
+
+	<Target Name="CopyLibs" DependsOnTargets="GetLibs" Condition="'$(Incremental)' != 'true'">
+		<Message Text="CopyingLibs" Importance="high" />
+
+		<ItemGroup>
+			<JLib Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.Deploy)' != 'false' and '%(Lib.Android)' != 'true' and '%(Lib.VersionSpecific)' == ''"/>
+			<JLib Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.Deploy)' != 'false' and '%(Lib.Android)' != 'true' and '%(Lib.VersionSpecific)' != '' AND $(TargetJRE) &gt; 6 AND %(Lib.VersionSpecific) == 7"/>
+			<JLib Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.Deploy)' != 'false' and '%(Lib.Android)' != 'true' and '%(Lib.VersionSpecific)' != '' AND $(TargetJRE) &lt;= 6 AND %(Lib.VersionSpecific) == 6"/>
+			<JLib Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.Deploy)' != 'false' and '%(Lib.Android)' != 'true' and '%(Lib.VersionSpecific)' != '' AND $(TargetJRE) &gt; 8 AND %(Lib.VersionSpecific) == 8"/>
+		</ItemGroup>
+
+		<Copy SourceFiles="@(JLib)"	DestinationFolder="$(DeployFullPath)\$(LibDir)" SkipUnchangedFiles="true" Condition="'%(JLib.Extension)' == '.jar'"/>
+	</Target>
+
+	<Target Name="CopyModules" Condition="'$(Incremental)' != 'true'">
+		<Copy SourceFiles="@(ModuleData -> '$(WebPath)\%(Value)')" DestinationFolder="$(DeployFullPath)\$(ClassesDir)$(RootModuleRelativePath)" Condition="'%(ModuleData.Name)' == 'Service' AND Exists('$(WebPath)\%(Value)')" SkipUnchangedFiles="true"/>
+		<Copy SourceFiles="@(ModuleData -> '$(WebPath)\modules\%(Value)')" DestinationFolder="$(DeployFullPath)\$(LibDir)" Condition="'%(ModuleData.Name)' == 'PackageName'" SkipUnchangedFiles="true" />
+	</Target>
+
+	<Target Name="CopyQueryViewerLibs" Condition="'$(IncludeQueryViewer)' == 'true' and '$(IsCMD)' == 'false'">
+		<Message Text="CopyingQueryviewerLibs" Importance="high" />
+		<ItemGroup Label="QueryViewerLibs" Condition="'$(IncludeQueryViewer)' == 'true'" >
+			<QVLib Include="$(WebPath)\QueryviewerServicesCommon.jar"></QVLib>
+			<QVLib Include="$(WebPath)\QueryviewerServicesRuntime.jar"></QVLib>
+			<QVLib Include="$(WebPath)\ExternalObjects.jar"></QVLib>
+		</ItemGroup>
+		<Copy SourceFiles="@(QVLib)" DestinationFolder="$(DeployFullPath)\WEB-INF\lib\" SkipUnchangedFiles="true" Condition="'%(QVLib.Extension)' == '.jar'"/>
+	</Target>
+
+	<Target Name="CopyWEB_INF">
+		<ItemGroup>
+			<ClassFile Condition="'%(ClassFile.RelativeTargetDir)' == ''">
+				<RelativeTargetDir>$([System.String]::new('%(RelativeDir)').Substring($([MSBuild]::Add($(WebPath.Length), 1))))</RelativeTargetDir>
+			</ClassFile>
+		</ItemGroup>
+
+		<Copy SourceFiles="@(ClassFile)" DestinationFiles="@(ClassFile -> '$(DeployFullPath)\$(ClassesDir)%(RelativeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="'%(Extension)' != '.js'" />
+
+		<Copy SourceFiles="@(ClassFile)" DestinationFiles="@(ClassFile -> '$(DeployFullPath)\$(StaticDir)\%(ModulePath)%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="'%(Extension)' == '.js'" />
+
+		<Copy SourceFiles="@(GAMImagesMapping)" DestinationFolder="$(DeployFullPath)\WEB-INF\classes\$(RootModuleRelativePath)" SkipUnchangedFiles="true" Condition="'$(IncludeGAMBackend)' == 'true'" />
+
+		<Copy SourceFiles="@(WsClassFile)" DestinationFolder="$(DeployFullPath)\WEB-INF\classes" SkipUnchangedFiles="true" />
+		
+		<ItemGroup>
+			<ClientCfg Include="@(ClassFile)" Condition="'%(Filename)' == 'client' AND '%(Extension)' == '.cfg'" />
+		</ItemGroup>
+
+	</Target>
+
+	<Target Name="CalculateWarInputs">
+		<ItemGroup>
+			<WarInput Include="$(DeployFullPath)\**\*.*" />
+		</ItemGroup>
+	</Target>
+
+	<Target Name="CopyGXAppClassFile" Condition="'$(RestSupport)' == 'true'">
+		<Message Text="Copying{GXApplicationClasses}" Importance="high"/>
+		<ItemGroup>
+			<GXAppClassFile Include="$(WebPath)\GXApplicationClasses_$(ProjectName).txt"/>
+		</ItemGroup>
+
+		<Copy SourceFiles="@(GXAppClassFile)" DestinationFiles="@(GXAppClassFile -> '$(DeployFullPath)\WEB-INF\classes\$(RootModuleRelativePath)\GXApplicationClasses%(Extension)')" Condition="Exists('%(GXAppClassFile.Identity)')" />
+
+	</Target>
+
+	<Target Name="ScriptedTasks">
+		<!-- Tasks like configs fixes should be done here -->
+	</Target>
+	
+	<Target Name="PrepareFiles" DependsOnTargets="GetObjectFiles;GetWebXml;CopyWEB_INF;CopyLibs;CopyModules;CopyQueryViewerLibs;CopyQueryViewerResources;CopyStatic;CopyResourcesFolder;CommonCopy;CopyGXAppClassFile"/>
+	<Target Name="CreatePackage" DependsOnTargets="ValidateDeployment;CheckJavaRequirements;PrepareFiles;BeforePackaging;ScriptedTasks;CreateWar" />
+
+	<Target Name="CheckJavaRequirements" DependsOnTargets="CheckRequirements">
+		<!-- TODO: Fill with requirements -->
+		<Error Condition="'$(TargetJRE)' == ''" Text="RequiredParameterMissing{TargetJRE}"/>
+		<Error Condition="'$(AppName)' == ''" Text="RequiredParameterMissing{AppName}"/>
+	</Target>
+
+	<Target Name="CreateWar" Inputs="@(WarInput)"  Outputs="$(ProjectName).war" DependsOnTargets="CalculateWarInputs" Condition="'$(SourceFiles)' != 'true' AND '$(DeployFileFullPath)' != ''">
+
+		<PropertyGroup Condition="$(IsCMD) == true">
+			<PackageExtension>jar</PackageExtension>
+		</PropertyGroup>
+		<PropertyGroup Condition="$(IsCMD) == false">
+			<PackageExtension>war</PackageExtension>
+		</PropertyGroup>
+
+		<PropertyGroup Condition="'@(SelectedObject->Count())' == 1">
+			<OneMain>true</OneMain>
+		</PropertyGroup>
+		
+		<CreateJARManifest Condition ="$(IsCMD) == true AND '$(OneMain)' == 'true'"
+			DeployFullPath="$(DeployFullPath)"
+			JavaPackageName="$(PackageName)"
+			MainProgram="%(SelectedObject.Identity)"
+			MainProgramQualified="%(SelectedObject.QualifiedName)"
+			JarFile="$(ProjectName).jar">
+			<Output TaskParameter="ManifestFile" PropertyName="ManifestFile"/>
+			<Output TaskParameter="ExitCode" PropertyName="ExitCode"/>
+		</CreateJARManifest>
+		
+		<Message Text="GeneratingOutputFile{$(PackageExtension)}" Importance="high"/>
+		<Exec Command='"$(JavaPath)\jar" cf "$(DeployFileFullPath)\$(ProjectName).war" .' WorkingDirectory="$(DeployFullPath)" Condition="$(IsCMD) == false" EchoOff="true" />
+		<Exec Command='"$(JavaPath)\jar" cf "$(DeployFileFullPath)\$(ProjectName).jar" .' WorkingDirectory="$(DeployFullPath)\$(ClassesDir)" Condition="$(IsCMD) == true AND (!Exists('$(ManifestFile)') OR ('@(SelectedObject->Count())' &gt; 1) OR '$(ExitCode)' == 1)" EchoOff="true" />
+		<Exec Command='"$(JavaPath)\jar" cfm "$(DeployFileFullPath)\$(ProjectName).jar" "$(ManifestFile)" .' WorkingDirectory="$(DeployFullPath)\$(ClassesDir)" Condition="$(IsCMD) == true AND Exists('$(ManifestFile)') AND '@(SelectedObject->Count())' == 1 AND '$(ExitCode)' == 0" EchoOff="true" />
+		<Message Text="ApplicationSuccessfullyPackaged{$(DeployFileFullPath)\$(ProjectName).$(PackageExtension)}" Importance="high" Condition="'$(EJBSupport)' != 'true'"/>
+	</Target>
+
+	<Target Name="JarEJBs" Condition="'$(SourceFiles)' != 'true' AND '$(EJBSupport)' == 'true'" AfterTargets="CreateWar">
+
+		<GetEJBSupport AppName="$(AppName)"
+					   ProjectName="$(ProjectName)"
+					   EJBs="@(EJBs)"
+					   PackageName="$(PackageName)"
+					   AppServer="$(ApplicationServer)">
+			<Output TaskParameter="TempDir" PropertyName="TempDir"/>
+		</GetEJBSupport>
+
+		<PropertyGroup>
+			<TempEJBs>$(TempDir)\EJBs</TempEJBs>
+		</PropertyGroup>
+
+		<MakeDir Directories="$(TempEJBs)"/>
+
+		<Copy SourceFiles="@(ClassFile)" DestinationFiles="$(TempEJBs)\$(RootModuleRelativePath)\%(Filename)%(Extension)" Condition="'%(Extension)' == '.class'" />
+		<Copy SourceFiles="@(EJBs)" DestinationFiles="$(TempEJBs)\$(RootModuleRelativePath)\%(Filename)%(Extension)" />
+
+		<Exec Command='"$(JavaPath)\jar" cf "$(TempDir)\ejbs.jar" .' WorkingDirectory="$(TempEJBs)" EchoOff="true" />
+
+		<Copy SourceFiles="@(ZipLib)" DestinationFiles="$(TempDir)\%(Filename)%(Extension)" />
+
+		<RemoveDir Directories="$(TempEJBs)"/>
+
+		<Copy SourceFiles="$(DeployFileFullPath)\$(ProjectName).war" DestinationFolder="$(TempDir)" Condition="$(IsCMD) == false"/>
+		<Copy SourceFiles="$(DeployFileFullPath)\$(ProjectName).jar" DestinationFolder="$(TempDir)" Condition="$(IsCMD) == true"/>
+
+		<Message Text="GeneratingOutputFile{ear}" Importance="high"/>
+
+		<Exec Command='"$(JavaPath)\jar" cf "$(DeployFileFullPath)\$(ProjectName).ear" .' WorkingDirectory="$(TempDir)" EchoOff="true" />
+
+		<Message Text="ApplicationSuccessfullyPackaged{$(DeployFileFullPath)\$(ProjectName).ear}" Importance="high"/>
+	</Target>
+
+	<!-- REORGANIZATION -->
+	<Target Name="PrepareReorgFiles" DependsOnTargets="GetLibs">
+		<ItemGroup>
+			<ReorgFile Include="$(RootModulePath)\messages.*txt" />
+			<ReorgFile Include="$(RootModulePath)\reorg.cfg" Condition="'$(IncludeCFG)' == 'true'"/>
+		</ItemGroup>
+
+		<GetBldJavaFiles RootModulePath="$(RootModulePath)"
+						EnvironmentPath="$(WebPath)"
+						BldFile="bld12reorg.info">
+			<Output TaskParameter="Files" ItemName="ReorgFile"/>
+		</GetBldJavaFiles>
+
+		<ItemGroup>
+			<ReorgDriver Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.Reorg)' == 'true'"/>
+			<ReorgDriver Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.VersionSpecific)' != '' AND $(TargetJRE) &gt; 6 AND %(Lib.VersionSpecific) == 7 AND '%(Lib.Reorg)' == 'true'"/>
+			<ReorgDriver Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.VersionSpecific)' != '' AND $(TargetJRE) &lt;= 6 AND %(Lib.VersionSpecific) == 6 AND '%(Lib.Reorg)' == 'true'"/>
+			<ReorgDriver Include="@(Lib -> '$(WebPath)\%(Identity)')" Condition="'%(Lib.VersionSpecific)' != '' AND $(TargetJRE) &gt; 8 AND %(Lib.VersionSpecific) == 8 AND '%(Lib.Reorg)' == 'true'"/>
+			<ReorgFile Include="$(RootModulePath)\gxrtctls__default.class" Condition="Exists('$(RootModulePath)\gxrtctls__default.class')"/>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<Line>java -cp ./* $(PackageName).Reorganization -force -nogui</Line>
+		</PropertyGroup>
+
+		<Message Text="Creating exec bat at $(ReorgDestination)" Importance="high" Condition="'$(GenerateExecScript)' == 'true'"/>
+		<WriteLinesToFile File="$(ReorgDestination)\execReorg.bat" Lines="$(Line)" Overwrite="true" Condition="'$(GenerateExecScript)' == 'true'"/>
+
+	</Target>
+
+	<Target Name="CreateReorgJar" AfterTargets="ExportReorganization">
+		
+		<PropertyGroup>
+			<JarCommand>jar</JarCommand>
+			<JarCommand Condition="'$(JavaPath)' != ''">$(JavaPath)\$(JarCommand)</JarCommand>
+		</PropertyGroup>
+		
+		<Exec Command='"$(JarCommand)" cf "$(ReorgDestination)\$(FileName)" .' WorkingDirectory="$(TempDir)" EchoOff="true"/>
+		<RemoveDir Directories="$(TempDir)"/>
+		<Message Text="ReorganizationSuccessfullyExported{$(ReorgDestination)\$(FileName)}" Importance="high" />
+	</Target>
+
+</Project>

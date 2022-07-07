@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Test case sets from JSON</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47773,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Test case sets from JSON</h1>
+<!--Test case sets from JSON--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The test case set is a series of values that can be used as input values in a unit test or UI test workflow. </p>
+
+<p>The values contained in the data pool will be the input, output, or expected values of the test. For example, the UI tests typically will be typed using the <a href="41649.html">type command</a>. <b> </b></p>
+
+<p>The test cases can be read from a JSON file. You must load the test cases in the JSON file, load in the KB, and read it from any test object.</p>
+
+<p>Suppose that your application has a WebPanel with two input fields and a confirm button: <br />
+<b id="docs-internal-guid-39acb84f-7fff-9250-c46a-9cae25f2aa1d"><img height="242" src="https://lh3.googleusercontent.com/46y2g0X-g96UT9JlVgUolKZ9EdNOBZdE_N4dY3icS9rAhfV5UypkXHFHm7DRyyYFvJ_oWgLreqlQGvzGeZJh9zXjbwrxaI0155WEb5coMz8WQ2mKvBBnnpexJwDf-bPXXBJF_DxH" width="575" /></b></p>
+
+<p>The first step is to write the input values in a JSON file: </p>
+
+<p class="Code"><img src="./images/47775.png" id="47775" class="WikiImage"/></p>
+
+<p>The second step is to add the JSON <a href="5852.html">file</a> in Customization -&gt; Files, in order for it to be used from a test and the <a href="5852.html">Extract property</a> of the respective environment must be set in True.</p>
+
+<p><b id="docs-internal-guid-4bb899ea-7fff-0b03-9365-e602567d2300"><img height="253" src="https://lh5.googleusercontent.com/YD1gLhKdMNBl7RmInA4Sb9HfeZnNzds8QWmdtC6TmH2_z9lVseQdxfbE-ee6xu32_FgHflgck3H1p_Vfz7krRv1blVU4pQKGxx1T5YuGuATUlpOG-nvQRd-aM1-fGERflwtqhNgM" width="602" /></b></p>
+
+<p>During the building process, the JSON file will be copied to the environment folder (<a href="5852.html">Extract property</a> must be set to True).</p>
+
+<p><b id="docs-internal-guid-efb90b4b-7fff-b899-f119-23424e64484d"><img height="228" src="https://lh4.googleusercontent.com/-Etf-bMEia32XfkjmWfuDLm6BstEO2WC5nyMnFCWy9plTqAJvFhx-eMQDq07MN0-24kMMSC3KoqJKpnoj57Ln20Wbx6TlhapCrmAzXPF3QJJTfzSErEMPPl9NyNctUUjxEmlZ3rm" width="602" /></b></p>
+
+<p>Then, you have to update the test to read the test values from the JSON. The JSON values will be saved in an SDT data collection and the test will iterate over it.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.Start()
+&amp;driver.Maximize()
+
+&amp;File.Source = &quot;TestDataFile.json&quot;
+&amp;TestCases.FromJsonFile(&amp;File)
+
+for &amp;TestCase in &amp;TestCases
+<b id="docs-internal-guid-13c742dd-7fff-e23f-3379-99812d5e6774">   </b>&amp;driver.Go(WebPanel.Link())
+<b id="docs-internal-guid-13c742dd-7fff-e23f-3379-99812d5e6774">   </b>&amp;driver.Type(&quot;&amp;Field1&quot;,&amp;TestCase.InputValue1)
+<b id="docs-internal-guid-13c742dd-7fff-e23f-3379-99812d5e6774">   </b>&amp;driver.Type(&quot;&amp;Field2&quot;,&amp;TestCase.InputValue2)
+<b id="docs-internal-guid-13c742dd-7fff-e23f-3379-99812d5e6774">   </b>&amp;driver.ClickByID(&quot;Confirm&quot;)
+endfor
+
+// End driver
+&amp;driver.End()</pre>
+
+<p>To define the below variables, an SDT structure should be created and the variables should be defined:</p>
+
+<p><b id="docs-internal-guid-6415e9dc-7fff-ee50-dfd1-3c4513a4d9df"><img height="133" src="https://lh4.googleusercontent.com/idS7tMxZzaMGUgv6dL3TwJ1LSf-Yz9ZavYy2SiL05Y-orfeIfunLD14bML6eFaAd4DQhnp6Ao_55WcuDh-76T7c3wxsR5wQaQlMdKhsVCffk3iTea5pWQkhuZOrD7J-llMdTbygk" width="602" /></b></p>
+
+<p><b id="docs-internal-guid-7fba3ee3-7fff-0f78-5a81-1a8efed643ff"><img height="188" src="https://lh5.googleusercontent.com/modDea5l4SwsNrKWjNK8aNFYTEr_snrmJcoHyKell2NSdAJVR4X3YNwv_uEhmGSGgssiAM0s6so4hQMspPGpHVFEprTqTTVliuBptQnqB2vElfVhijBoIBCvPOx3mG9f7aKHLmM9" width="602" /></b></p>
+
+<p>Note that you can use the test case sets for all test types.</p>
+
+<p>Another possible solution to manage test case sets values is to implement a data provider, in which you write the different test cases, and the test iterates over this (like in the automatic generated unit tests).<b>  </b></p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38327.html">Toc:GXtest v4</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/08/21 11:02 PM</em></font></td></TR></table></font>

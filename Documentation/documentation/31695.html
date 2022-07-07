@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component Insert method</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31695,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component Insert method</h1>
+<!--Business Component Insert method--><div class="TableWikiBody" id="tblwikibody"><p>Inserts the content assigned to a Business Component variable into the database. </p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p>&amp;BCVariable.<strong>Insert()</strong></p>
+
+<p><strong>Where:</strong><br />
+<em>&amp;BCVariable</em><br />
+     Is a scalar or collection variable based on a Business Component.  </p>
+
+<p><strong>Type returned:</strong><br />
+Boolean</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>When the Insert method is executed, the content assigned in the memory will be inserted, only if the referential integrity doesn't fail and if error rules don't occur.<br />
+This method always returns a boolean value that informs whether the addition to the database could be executed successfully or not. You can evaluate this boolean value if you want to.</p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p>Consider the following Transaction as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+  CustomerId*     (Autonumber property = True)
+  CustomerName
+  CustomerAddress
+  CustomerPhone
+  CustomerEmail
+  CustomerAddedDate
+  CustomerTotalMiles
+}
+
+Customer rule: 
+Default(CustomerAddedDate,&amp;today);</pre>
+
+<p>Thus, a Business Component data type of the Customer Transaction is automatically created in the <a href="1836.html">Knowledge Base</a> and you can define a variable of the new type created in any object.</p>
+
+<p>Assume you define a variable named &amp;Customer, based on the Customer type, in any object.</p>
+
+<p><strong>1)</strong> The following code (defined for example in a <a href="6293.html">Procedure</a> Source or inside an Event in a <a href="6916.html">Web Panel object</a>) is inserting a customer:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer=new() //in this case the new operator can be omitted, but if more than one customer is inserted, it must be used
+&amp;Customer.CustomerName = 'Mary'
+&amp;Customer.CustomerLastName = 'Brown'
+&amp;Customer.CustomerAddress = '767 5th Avenue'
+&amp;Customer.CustomerEmail = 'mbrown@gmail.com'
+<strong>&amp;Customer.Insert()</strong>
+if &amp;Customer.Success()
+   commit   
+else   
+   msg(&amp;Customer.GetMessages().ToJson(), status)
+endif </pre>
+
+<p><br />
+<strong>2) </strong>The following code (defined for example in a <a href="6664.html">Procedure Source</a> or inside an Event in a Web Panel) is inserting a customer. It is almost equal to the previous example, with the unique variant that the result of applying the Insert method is directly evaluated with an if sentence:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer=new() //in this case the new operator can be omitted, but if more than one customer is inserted, it must be used
+&amp;Customer.CustomerName = 'Mary'
+&amp;Customer.CustomerLastName = 'Brown'
+&amp;Customer.CustomerAddress = '767 5th Avenue'
+&amp;Customer.CustomerEmail = 'mbrown@gmail.com'
+if <strong>&amp;Customer.Insert()</strong>
+    commit    
+else
+    msg(&amp;Customer.GetMessages().ToJson(), status)
+endif</pre>
+
+<p><br />
+<strong>3) </strong>The following Procedure is called from several objects. It receives a &amp;Customer variable based on the Customer type and it only has to perform the addition to the database:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Procedure: InsertCustomer
+   Rules
+      parm(in:&amp;Customer)
+   Source
+      <strong>&amp;Customer.Insert()
+    </strong>  if &amp;Customer.Success()
+         commit   
+      else
+         msg(&amp;Customer.GetMessages().ToJson(), status)
+      endif
+</pre>
+
+<p><br />
+<strong>4) </strong>Now, suppose you define the following Transaction as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product
+{
+  ProductId*     
+  ProductName
+  ProductStock
+}</pre>
+
+<p>So, a Business Component data type of the Product Transaction is automatically created in the Knowledge Base and you can define a variable of the new type created in any object (and it can be set as a collection).</p>
+
+<p>Thus, in a certain object, a variable named &amp;Products is defined based on the Product type and it is set as a collection. The DPProducts Data Provider loads the &amp;Products variable (for example inside an Event). Once the &amp;Products variable is loaded, the Insert method is applied to it as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Products=DPProducts()
+<strong>if &amp;Products.Insert()</strong>
+    Commit
+else 
+    msg(&amp;Products.GetMessages().ToJson(), status) 
+endif
+</pre>
+
+<p>Look at the DPProducts <a href="5270.html">Data Provider</a> definition:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Data Provider: DPProducts
+Properties: Output:Product / Collection:True
+   
+Source:
+Product
+{
+    ProductId = 100
+    ProductName = 'X Muscular Pain Medicine'
+    ProductStock = 1000
+}
+Product
+{ 
+   ProductId = 101
+   ProductName = 'J Headache Medicine'
+   ProductStock = 1500
+}
+</pre>
+
+<p>In conclusion, a collection of products is loaded and after that, the Insert method is applied to the collection variable. Each product in the collection will be inserted.</p>
+
+<p><strong>If there's an error in a BC from the list, are the following BCs processed?</strong> </p>
+
+<p>Yes, all elements in the list are processed whether an error occurs or not. Then, it's up to you to commit the changes depending on the errors. </p>
+
+<p>If you want to know which Business Components had an error, you have to scan the list and check each one; for example, after applying the Insert method, you may write the following code: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;Product in &amp;Products
+    if &amp;Product.GetMessages().Count &gt; 0
+       //msg(...)
+    endif
+endfor</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This method is available since <a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a>.<br />
+ </p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="31703.html">Business Components - Differences between the Save method and the Insert and Update methods</a><br />
+<a href="2279.html">Error handling in Business Components</a></p>
+
+<p><br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49778.html">API Object - Insert service definition and declaration</a></TD><TD><a href="5846.html">Toc:Business Component</a></TD><TD><a href="9548.html">Business Component property</a></TD></TR><TR><TD><a href="2278.html">Business Component samples</a></TD><TD><a href="31703.html">Business Components - Differences between the Save method and the Insert and Update methods</a></TD><TD><a href="41179.html">Collection property</a></TD><TD><a href="17664.html">GAM - Full Control Permissions and inheritance</a></TD></TR><TR><TD><a href="41037.html">Output property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/15/22 03:38 PM</em></font></td></TR></table></font>

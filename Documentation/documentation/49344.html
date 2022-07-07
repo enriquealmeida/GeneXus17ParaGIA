@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Media style rule</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49344,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Media style rule</h1>
+<!--Media style rule--><div class="TableWikiBody" id="tblwikibody"><p>Allows creating media in your <a href="47375.html">Design System Object</a> to achieve responsive displays.</p>
+
+<p>A Media rule encapsulates a set of classes that take that value if the conditions specified in the media header are met. It is equivalent to <a href='https://www.w3schools.com/css/css3_mediaqueries.asp'>CSS Media Queries</a>.</p>
+
+<p>It is only taken into account if the Design System object is used for Web.</p>
+
+<p>Media queries can be used to check many things, such as:</p>
+
+<p>●    width and height of the viewport<br />
+●    width and height of the device<br />
+●    orientation (is the tablet/phone in landscape or portrait mode?)<br />
+●    resolution</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+@media  [not | only] <em>media_type</em> and <em>media_feature</em> [<strong>and | or| not</strong> <em>media_feature</em>]...
+|
+<strong>@media $mediaQueries</strong><em>.token_name</em>
+‘{‘
+    <em>class_declaration...</em>
+‘}’
+</pre>
+
+<p style="text-align: right;"><a href="49363.html">View Syntax conventions</a>.</p>
+
+<p>Where:</p>
+
+<p><em>media_type:</em> Specifies the type of media/device: <br />
+    all (default, used for all media type devices)<br />
+    print (used for printers)<br />
+    screen (used for computer screens, tablets, smartphones, etc.)<br />
+    speech (used for screen readers that ‘read’ the page out loud).</p>
+
+<p><em>media_feature:</em> Here goes the feature used to apply a condition. The most common ones are mix-width, man-width, width, orientation, but there are more. See <a href='https://www.w3schools.com/cssref/css3_pr_mediaquery.asp'>CSS @media Rule</a>.</p>
+
+<p><em>token_name:</em> Name of a token defined in the <a href="47378.html">Tokens</a> section of the same DSO or of an imported one inside the <strong>#mediaqueries</strong> category. There the token definition follows the syntax: <br />
+<em>token_name:</em><strong> </strong><strong>[</strong><strong> not | only </strong><strong>]</strong> media_type and media_feature [<strong> and | or| not</strong> media_feature ]...;</p>
+
+<p><em>class_declaration:</em> <a href="49309.html">Class declaration</a>. The ellipses indicate that a number of class declarations can be specified.</p>
+
+<h3><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h3>
+
+<p>●    The headers cannot be combined; that is, you have one made up of a single token, or one made up of the rule as in CSS.</p>
+
+<p>Example:</p>
+
+<p>The H1_Negative class is defined both without any condition and with two disjoint conditions (one with tokens and the other without them).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles TravelAgencyFrontendExtended
+{
+   .H1_Negative
+   {
+        color: white;
+        font-family: AbhayaLibre-Bold;
+   } 
+    @media $mediaQueries.XS
+    {
+        .H1_Negative {
+            font-size: $fontSizes.H1_XS;
+        }
+        .H2 {
+            font-size: $fontSizes.H2_XS;
+        }
+    }
+    @media screen and (min-width: 768px) and (max-width: 991px)
+    {
+        .H1_Negative {
+            font-size: $fontSizes.H1_S;
+        }
+        .H2 {
+            font-size: $fontSizes.H2_S;
+        }
+    }
+}
+
+tokens TravelAgencyFrontendExtended
+{
+    #fontSizes
+    {
+       H1: 95px; 
+       H1_XS: 50px;
+       H1_S: 80px;
+       H2: 60px;
+       H2_XS: 24px;
+       H2_S: 60px;
+
+   }    
+    #mediaQueries
+    {
+        XS: screen and (max-width: 767px);
+    }
+}
+</pre>
+
+<p> A Text Block control that has the H1_Negative class associated with it will be rendered in the output as follows. If the screen width is:</p>
+
+<p>●    Larger than 991px, it will take the properties &quot;color: white&quot; and &quot;font-family: AbhayaLibre-Bold.&quot;<br />
+●    Between 768 and 991px, it will take, in addition to the properties &quot;color: white&quot; and &quot;font-family: AbhayaLibre-Bold,&quot; the property &quot;font-size:$fontSizes.H1_S&quot; (80px).<br />
+●    Smaller than 768, it will take, in addition to the properties &quot;color: white&quot; and &quot;font-family: AbhayaLibre-Bold,&quot; the property &quot;font-size:$fontSizes.H1_XS&quot; (50px).</p>
+
+<p>See more at <a href="49292.html">Structuring classes in Design System</a>.</p>
+
+<p>Example 2</p>
+
+<p>styles myStyles<br />
+{<br />
+          //Classes…</p>
+
+<p>         @media print and (min-width: 30em) and (orientation: landscape)<br />
+                  {<br />
+                       .class1<br />
+                       {<br />
+                          //Properties...<br />
+                       }<br />
+                       .class3<br />
+                      {<br />
+                         //Properties...<br />
+                      }<br />
+                        //More classes....<br />
+                 }<br />
+        //Classes…<br />
+}</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p>See the general topic <a href="47472.html">Design System Style Rules</a>.</p>
+
+<p> </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="47472.html">Design System Style Rules</a></TD><TD><a href="47379.html">Design System Styles</a></TD><TD><a href="47378.html">Design System Tokens</a></TD></TR><TR><TD><a href="40108.html">Toc:Design Systems</a></TD><TD><a href="49292.html">Structuring classes in Design System</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/07/22 06:49 PM</em></font></td></TR></table></font>

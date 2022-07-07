@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>About key, IV, and nonce encoding</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46572,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">About key, IV, and nonce encoding</h1>
+<!--About key, IV, and nonce encoding--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The GeneXusSecurityAPI's modules use different symmetric keys, IVs, and nonces.</p>
+
+<p>The majority of them specify a hexadecimal string as input. It means a literal hex representation of bits that is different from a UTF (or other character encodings) representation of bits.</p>
+
+<p>Verify if your key is hexa or another encoding before using it and if it is compliant with the algorithm specification. If it is not or is on a wrong encoding, the execution could fail or it could return the wrong result.</p>
+
+<p>The easiest way to discover the encoding is by counting the characters to find out if it reaches the expected length for the algorithm or a given length if a specific encoding is used.</p>
+
+<p>To change the encoding, you can use the <a href="42675.html">HexaEncoder</a> object on this module.</p>
+
+<h2><a id="Hexadecimal+representation+" class="HashLink" href="#Hexadecimal+representation+">Hexadecimal representation </a></h2>
+
+<p>Hexadecimal representation, also known as Hex or Hexa is a base 16 numerical system made up of 16 symbols.</p>
+
+<p>0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F</p>
+
+<p>It does not distinguish capital letters from small letters, A is the same as a.</p>
+
+<p>On computer systems, it is translated to the binary numerical system using 4 bits by symbol as shown on the following table:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<thead>
+		<tr>
+			<th scope="col">Hexa</th>
+			<th scope="col">Binary</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>0</td>
+			<td>0000</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>0001</td>
+		</tr>
+		<tr>
+			<td>2</td>
+			<td>0010</td>
+		</tr>
+		<tr>
+			<td>3</td>
+			<td>0011</td>
+		</tr>
+		<tr>
+			<td>4</td>
+			<td>0100</td>
+		</tr>
+		<tr>
+			<td>5</td>
+			<td>0101</td>
+		</tr>
+		<tr>
+			<td>6</td>
+			<td>0110</td>
+		</tr>
+		<tr>
+			<td>7</td>
+			<td>0111</td>
+		</tr>
+		<tr>
+			<td>8</td>
+			<td>1000</td>
+		</tr>
+		<tr>
+			<td>9</td>
+			<td>1001</td>
+		</tr>
+		<tr>
+			<td>A</td>
+			<td>1010</td>
+		</tr>
+		<tr>
+			<td>B</td>
+			<td>1011</td>
+		</tr>
+		<tr>
+			<td>C</td>
+			<td>1100</td>
+		</tr>
+		<tr>
+			<td>D</td>
+			<td>1101</td>
+		</tr>
+		<tr>
+			<td>E</td>
+			<td>1110</td>
+		</tr>
+		<tr>
+			<td>F</td>
+			<td>1111</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Then, the binary interpretation of a sample key will be as follows:</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<th scope="row">Hexa key</th>
+			<td>1E</td>
+			<td>D1</td>
+			<td>D4</td>
+			<td>C8</td>
+			<td>70</td>
+			<td>7B</td>
+			<td>53</td>
+			<td>99</td>
+		</tr>
+		<tr>
+			<th scope="row">Binary key</th>
+			<td>00011110</td>
+			<td>11010001</td>
+			<td>11010100</td>
+			<td>11001000</td>
+			<td>01110000</td>
+			<td>01111011</td>
+			<td>01010011</td>
+			<td>10011001</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>In conclusion, a hexadecimal key made up of 16 characters will translate to a 64-bit key.</p>
+
+<h2><a id="UTF+representation" class="HashLink" href="#UTF+representation">UTF representation</a></h2>
+
+<p>UTF encoding or Unicode Translation Format is a coding system for character sets.</p>
+
+<p>It defines 3 types of encodings:</p>
+
+<ul>
+	<li><strong>UTF-8</strong> − It comes in 8-bit units (bytes); a character in UTF8 can have between 1 to 4 bytes, making UTF8 variable length.</li>
+	<li><strong>UTF-16</strong> − It comes in 16-bit units (shorts); it can be 1 or 2 shorts long, making UTF16 variable length.</li>
+	<li><strong>UTF-32</strong> − It comes in 32-bit units (longs). It is a fixed-width format and is always 1 &quot;long&quot; in length.</li>
+</ul>
+
+<h3><a id="About+UTF-8" class="HashLink" href="#About+UTF-8">About UTF-8</a></h3>
+
+<p>It is the most commonly used in computer systems and allows representing common language symbols and control characters.</p>
+
+<p>The most common alphabetical symbols are represented by 8 bits (1 Byte) as shown in <a href='https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=bin'>this table</a>.</p>
+
+<p>So, it is really different from the hexa representation and distinguishes capital letters from small letters: A(01000001) is not the same as a(01100001).</p>
+
+<p>Translating the hexa example key from UTF-8 to binary:</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<th scope="row">UTF-8 key</th>
+			<td>1E</td>
+			<td>D1</td>
+			<td>D4</td>
+			<td>C8</td>
+			<td>70</td>
+			<td>7B</td>
+			<td>53</td>
+			<td>99</td>
+		</tr>
+		<tr>
+			<th scope="row">Hexa key</th>
+			<td>3145</td>
+			<td>4431</td>
+			<td>4434</td>
+			<td>4338</td>
+			<td>3730</td>
+			<td>3742</td>
+			<td>3533</td>
+			<td>3939</td>
+		</tr>
+		<tr>
+			<th scope="row">Binary key</th>
+			<td>0011000101000101</td>
+			<td>0100010000110001</td>
+			<td>0100010000110100</td>
+			<td>0100001100111000</td>
+			<td>0011011100110000</td>
+			<td>0011011101000010</td>
+			<td>0011010100110011</td>
+			<td>0011100100111001</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+In conclusion, the same string key interpreted as UTF-8 is a 128-bit key and it will change if capital letters are replaced with small letters, as shown in the next example.</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<th scope="row">UTF-8 key</th>
+			<td>1e</td>
+			<td>d1</td>
+			<td>d4</td>
+			<td>c8</td>
+			<td>70</td>
+			<td>7b</td>
+			<td>53</td>
+			<td>99</td>
+		</tr>
+		<tr>
+			<th scope="row">Hexa key</th>
+			<td>3165</td>
+			<td>6431</td>
+			<td>6434</td>
+			<td>6338</td>
+			<td>3730</td>
+			<td>3762</td>
+			<td>3533</td>
+			<td>3939</td>
+		</tr>
+		<tr>
+			<th scope="row">Binary key</th>
+			<td>0011000101100101</td>
+			<td>0110010000110001</td>
+			<td>0110010000110100</td>
+			<td>0110001100111000</td>
+			<td>0011011100110000</td>
+			<td>0011011101100010</td>
+			<td>0011010100110011</td>
+			<td>0011100100111001</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<h2><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h2>
+
+<p>Related errors classified by the module's object:</p>
+
+<ul>
+	<li>SymmetricBlockCipher
+	<ul>
+		<li>Error codes between SB022 and SB030</li>
+	</ul>
+	</li>
+	<li>SymmetricStreamCipher
+	<ul>
+		<li>Error codes between SS007 and SS012</li>
+	</ul>
+	</li>
+	<li>CMAC
+	<ul>
+		<li>Error codes CM003 and CM004</li>
+	</ul>
+	</li>
+	<li>HMAC
+	<ul>
+		<li>Error codes HS 002 and HS003</li>
+	</ul>
+	</li>
+	<li>JWTOptions and JWTCreator
+	<ul>
+		<li>Error code OP001</li>
+	</ul>
+	</li>
+</ul>
+
+<p> </p>
+
+<p> </p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/15/20 02:48 PM</em></font></td></TR></table></font>

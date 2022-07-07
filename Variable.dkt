@@ -1,0 +1,29 @@
+<%@ Template Language="C#" TargetLanguage="C#" Description="Variable Template." %>
+<%@ Assembly Name="Artech.Architecture.Common"%>
+<%@ Assembly Name="Artech.Genexus.Common"%>
+<%@ Assembly Name="Artech.Udm.Framework"%>
+<%@ Assembly Name="Artech.Common"%>
+<%@ Assembly Name="Artech.Common.Properties"%>
+<%@ Import Namespace="Artech.Architecture.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Import Namespace="Artech.Genexus.Common.Types" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Property Name="KBObject" Type="KBObject"%>
+<%@ Property Name="Name" Type="System.String"%>
+<%@ Property Name="Type" Type="System.String"%>
+<%	if (Name.StartsWith("&"))
+		Name = Name.Substring(1);
+
+	VariablesPart varPart = KBObject.Parts.Get<VariablesPart>();
+	Variable var = varPart.GetVariable(Name, true);
+	if (var == null)
+	{
+		var = new Variable(varPart);
+		var.Name = Name;
+		DataType.ParseInto(KBObject.Model, Type, var);
+		varPart.Add(var);
+	}
+	AttributeVariableReference attVarRef = new AttributeVariableReference(var);
+	%>
+<span gxControl='Attribute' gxProp='AttID=<%=attVarRef.ObjData%>'/>

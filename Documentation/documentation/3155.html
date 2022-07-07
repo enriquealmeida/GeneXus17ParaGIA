@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Formulas/Generating SQL</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?3155,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Formulas/Generating SQL</h1>
+<!--Formulas/Generating SQL--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>GeneXus will generate a single SQL statement to retrieve all the attributes in a For Each statement, including formulas. This happens for every aggregation formula (sum/count/find/min/max), even if they are defined over other formula attributes. This will boost your application's performance. </p>
+
+<h5><a id="Examples" class="HashLink" href="#Examples">Examples</a></h5>
+
+<p>If you define the following transactions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+   CustomerId*
+   CustomerName
+   CustomerTotal = sum(InvoiceTotal)
+}
+
+Invoice
+{
+   InvoiceId*
+   CustomerId
+   {
+      ItemId*
+      ItemPrice
+      InvoiceLineQty
+      InvoiceLineTotal = ItemPrice * InvoiceLineQty
+   }
+
+   InvoiceTotal = sum(InvoiceLineTotal)
+}
+
+Item
+{
+   ItemId*
+   ItemPrice
+}
+</pre>
+
+<p>And then create a procedure such as: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+
+ </pre>
+
+<p>For Each<br />
+    &amp;CustomerTotal = CustomerTotal<br />
+    &amp;CustomerName = CustomerName<br />
+Endfor</p>
+
+<p>GeneXus will create the following SQL statement for SQL Server:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT T1.[CustomerId], COALESCE( T2.[CustomerTotal], 0) AS CustomerTotal, T1.[CustomerName] 
+        FROM ([CUSTOMER] T1  
+        LEFT JOIN (
+            SELECT SUM(COALESCE( T4.[InvoiceTotal], 0)) AS CustomerTotal, T3.[CustomerId] 
+                FROM ([INVOICE] T3  
+                LEFT JOIN (
+                    SELECT SUM(T6.[ItemPrice] * T5.[InvoiceLineQty]) AS InvoiceTotal, T5.[InvoiceId] 
+                    FROM ([INVOICELEVEL1] T5 
+                        INNER JOIN [ITEM] T6  ON T6.[ItemId] = T5.[ItemId])
+                    GROUP BY T5.[InvoiceId] ) T4 
+                ON T4.[InvoiceId] = T3.[InvoiceId])
+                GROUP BY T3.[CustomerId] ) T2 ON T2.[CustomerId] = T1.[CustomerId]) 
+        ORDER BY T1.[CustomerId]</pre>
+
+<p>Basically, the inner SELECT calculates the InvoiceTotal over the InvoiceLines, the next SELECT calculates the CustomerTotal over the InvoiceTotal, and the top SQL Sentence reads the Customer data and combines it with the second level to get the value of the formula.<br />
+<br />
+If, instead of having Customer as base table, the For Each command has Invoice as base table :</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ For Each
+    &amp;CustomerTotal = CustomerTotal
+    &amp;CustomerName = CustomerName
+    &amp;InvoiceDate= InvoiceDate
+EndFor</pre>
+
+<p>Then the SQL statement for SQL Server is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT T1.[CustomerId], T1.[InvoiceId], COALESCE( T4.[InvoiceTotal], 0) AS InvoiceTotal, 
+     COALESCE( T3.[CustomerTotal], 0) AS CustomerTotal, T1.[InvoiceDate], T2.[CustomerName] 
+       FROM ((([INVOICE] T1  INNER JOIN [CUSTOMER] T2  ON T2.[CustomerId] = T1.[CustomerId]) 
+       LEFT JOIN (
+            SELECT SUM(COALESCE( T6.[InvoiceTotal], 0)) AS CustomerTotal, T5.[CustomerId] 
+                   FROM ([INVOICE] T5  
+                   LEFT JOIN (
+					   SELECT SUM(T8.[ItemPrice] * T7.[InvoiceLineQty]) AS InvoiceTotal, T7.[InvoiceId], T7.[ItemId] 
+					   FROM ([INVOICELEVEL1] T7  
+					         INNER JOIN [ITEM] T8  ON T8.[ItemId] = T7.[ItemId]) 
+					   GROUP BY T7.[InvoiceId], T7.[ItemId] ) T6 
+				   ON T6.[InvoiceId] = T5.[InvoiceId]) 
+				   GROUP BY T5.[CustomerId] ) T3 ON T3.[CustomerId] = T1.[CustomerId]) 
+		LEFT JOIN (
+		     SELECT SUM(T6.[ItemPrice] * T5.[InvoiceLineQty]) AS InvoiceTotal, T5.[InvoiceId] 
+		            FROM ([INVOICELEVEL1] T5  
+		            INNER JOIN [ITEM] T6  ON T6.[ItemId] = T5.[ItemId]) 
+		            GROUP BY T5.[InvoiceId] ) T4 
+		     ON T4.[InvoiceId] = T1.[InvoiceId]) 
+	  ORDER BY T1.[InvoiceId] </pre>
+
+<p>Other examples: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+     Order CustomerTotal                  // Formulas in the Order clause
+     Where CustomerTotal &gt; &amp;CustomerTotal // Formulas in conditions
+    &amp;CustomerName = CustomerName
+    &amp;InvoiceDate= InvoiceDate
+EndFor </pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    &amp;DescriptionForMostExpensiveItem = max(ItemPrice, 1=1, 0, ItemDescription)  // Max formula defined over the invoice lines 
+    //that returns an attribute in Invoice Lines' extended table
+    &amp;InvoiceDate= InvoiceDate
+EndFor</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    &amp;DescriptionForMostExpensiveItem = max(ItemPrice, ItemId &gt; &amp;ItemId, 0, ItemDescription)  // Variables in formulas' conditions
+    &amp;InvoiceDate= InvoiceDate
+EndFor</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    &amp;InvoiceTotalAverage = sum(InvoiceTotal) / Count(InvoiceDate)  // Expressions with formulas that are defined over formulas
+    &amp;CustomerName = CustomerName
+EndFor</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    Where Sum(InvoiceTotal) &gt;  100 // Filter by aggregation formulas
+    &amp;CustomerName = CustomerName
+EndFor</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    Where Sum(InvoiceTotal) / Count(InvoiceDate) &gt;  100 // Filter by compound aggregation formulas
+    &amp;CustomerName = CustomerName
+EndFor</pre>
+
+<p><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5882.html">Examples of Using Formulas</a></TD><TD><a href="5861.html">Category:Formulas</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

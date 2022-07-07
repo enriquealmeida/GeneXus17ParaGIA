@@ -1,0 +1,163 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Web Form" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="System.Diagnostics" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+<%@ SubTemplate Name="PromptAbstractForm" File="PromptAbstractForm.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.WebForm.ToString() %>">
+	<Source><![CDATA[<%
+	
+	if (Model.GetDesignModel().GetPropertyValue<int>(Properties.MODEL.WebFormDefaults) == Properties.MODEL.WebFormDefaults_Values.ResponsiveWebDesign)
+	{
+%>
+<%@ CallSubTemplate PromptAbstractForm %>
+<%
+	}
+	else
+	{
+%>
+<body>
+	<%= WebForm.BeginTable("Table1", "Table") %>
+		<tr>
+			<td align="center">
+				<%= WebForm.ErrorViewer("ctlError", null) %>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<fieldset class="FieldSet" style="-moz-border-radius: 3pt;" CaptionExpression="Filters">
+					<%= WebForm.BeginTable("Table2", "Table") %>
+<%
+		// Find the "return on click" attribute.
+		Table table = Table.Get(Model, Definition.Info.Table.TableId);
+		int linkedAttId = table.TableStructure.DescriptionAttribute.Id;
+
+		Transaction trn = null;
+		TransactionLevel trnLevel = null;
+		if (table.AssociatedTransactions.Count > 0)
+		{
+			trn = table.AssociatedTransactions[0];
+			trnLevel = trn.Structure.GetLevelOfTable(table);
+		}
+
+		foreach (PromptAttribute fixedAtt in Definition.Fixed)
+		{
+			if (fixedAtt.FixType == "c")
+			{
+				Artech.Genexus.Common.Objects.Attribute att = GetAttribute(fixedAtt.AttriId);
+%>
+						<tr>
+							<td>
+								<%= WebForm.TextBlock("TextBlock" + att.Name, null, String.Format("={0}.Title", att.Name)) %>
+							</td>
+							<td>
+								<%= WebForm.Variable("&" + GetConditionVarName(att.Name)) %>
+							</td>
+						</tr>
+<%
+			}
+		}
+%>
+					<%= WebForm.EndTable() %>
+				</fieldset>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<fieldset class="FieldSet" style="-moz-border-radius: 3pt;" CaptionExpression="GXM_sltlst">
+					<%= WebForm.BeginTable("Table3", "Table") %>
+						<tr>
+							<td colSpan="3">
+<%
+		// Grid properties
+		const int k_maxRows = 10;
+		const Properties.HTMLSFL.BackColorStyle_Enum k_backColorStyle = Properties.HTMLSFL.BackColorStyle_Enum.Header;
+		const int k_cellSpacing = 0;
+		const int k_cellPadding = 1;
+		
+		Dictionary<string, object> k_gridProperties = new Dictionary<string, object>();
+		
+		Dictionary<string, object> k_selectionColumnProperties = new Dictionary<string, object>();
+		k_selectionColumnProperties[Properties.HTMLSFLCOL.ReturnOnClick] = true;
+		k_selectionColumnProperties[Properties.HTMLSFLCOL.Tooltiptext] = "GX_BtnSelect";
+
+%>
+								<%= WebForm.BeginGrid("Grid1", null, null, null, k_maxRows, k_backColorStyle, k_cellSpacing, k_cellPadding, k_gridProperties) %>
+									<%= WebForm.GridVariable("&LinkSelection", null, String.Empty, null, null, k_selectionColumnProperties) %>
+<%
+		for (int i = 0; i < Definition.SubFile.Length; i++)
+		{
+			Artech.Genexus.Common.Objects.Attribute att = GetAttribute(Definition.SubFile[i]);
+
+			string titleProperty = "ColumnTitle";
+			if (trnLevel != null)
+			{
+				// TrnAttribute can be null (especially for prompts for transaction sublevels).
+				TransactionAttribute trnAttribute = trnLevel.GetAttribute(att.Id);
+				if (trnAttribute != null && trnAttribute.IsLocal)
+					titleProperty = "ContextualTitle";
+			}
+
+			string colTitleExpression = String.Format("={0}.{1}", att.Name, titleProperty);
+
+			Dictionary<string, object> columnProps = null;
+			if (Definition.SubFile[i] == linkedAttId)
+				columnProps = k_selectionColumnProperties;
+
+%>
+									<%= WebForm.GridAttribute(att.Name, null, colTitleExpression, null, null, columnProps) %>
+<%
+		}
+		
+		// Add hidden attributes in grid, since rule is deprecated.
+		for (int i = 0; i < Definition.Hidden.Length; i++)
+		{
+			Artech.Genexus.Common.Objects.Attribute att = GetAttribute(Definition.Hidden[i]);
+			if (att != null)
+			{
+%>
+									<%= WebForm.GridAttribute(att.Name, null, null, false) %>
+<%
+			}
+			else
+				Debug.Assert(false);
+		}
+%>
+								<%= WebForm.EndGrid() %>
+							</td>
+						</tr>
+						<tr>
+							<td align="right">
+								<%= WebForm.BeginTable() %>
+									<tr>
+										<td>
+											<%= WebForm.Button("btn_cancel", "BtnCancel", "GX_BtnCancel", "Cancel") %>
+										</td>
+									</tr>
+								<%= WebForm.EndTable() %>
+							</td>
+						</tr>
+					<%= WebForm.EndTable() %>
+				</fieldset>
+			</td>
+		</tr>
+	<%= WebForm.EndTable() %>
+</body><%
+	}
+%>]]>
+	</Source>
+</Part>

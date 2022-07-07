@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component - Publication as Web Service</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?2282,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component - Publication as Web Service</h1>
+<!--Business Component - Publication as Web Service--><div class="TableWikiBody" id="tblwikibody"><p>To publish a <a href="5846.html">Business Component</a> as a Web Service in order to bring the possibility of inserting, modifying and deleting the database, you have to:</p>
+
+<p>1) Set the <a href="9548.html">Business Component property</a> of the <a href="1908.html">Transaction</a> to True.<br />
+2) Set the <a href="36480.html">Expose as Web Service property</a> of the Transaction to True.</p>
+
+<p>Once these properties are set, you have to generate and compile the Transaction, so that the Web Service associated to the Transaction is generated and transfered to the corresponding directory (as every generated Web object is transfered).</p>
+
+<p>The name of the generated program will be:</p>
+
+<ul>
+	<li>In .Net Enviroment: TransactionName_bc (i.e.: customer_bc)</li>
+	<li>
+	<p>In Java Enviroment: TransactionName_bc_ws (i.e.: customer_bc_ws)</p>
+	</li>
+</ul>
+
+<p><span style="line-height: 1.6em;">By adding the </span><a href="6154.html">WSDL</a><span style="line-height: 1.6em;"> parameter to the URL in the browser  </span>(i.e.:http://localhost/BillingSystem.NetEnvironment/customer_bc.aspx?wsdl) <span style="line-height: 1.6em;">you can see all the information that describes the Web Service (it's location, methods, parameters, etc.).</span></p>
+
+<p>The following methods will be offered:</p>
+
+<div class="simplebox">
+<div class="code">
+<ul>
+	<li>LoadKeySvc</li>
+	<li>SaveSvc</li>
+	<li>CheckSvc</li>
+	<li>DeleteSvc</li>
+</ul>
+</div>
+</div>
+
+<p>These methods -as it's names let see- offer the same as the <a href="23211.html">Load</a> , <a href="23229.html">Save</a> , <a href="23401.html">Check</a> and <a href="23238.html">Delete</a> Business Component methods.</p>
+
+<p><strong>Important: The only difference between the W</strong><strong>eb Service methods you</strong><strong> are introducing </strong><strong>and the common Business Component methods, is that the Web Service methods execute commit after executing their operations.</strong></p>
+
+<p>Suppose now that in another <a href="1836.html">Knowledge Base</a> you want to consume the Web Service published. In that Knowledge Base, you have to select in the GeneXus Menubar: <strong>Tools &gt;Application Integration &gt; WSDL Import</strong>.<strong> </strong>Then, the <a href="6181.html">WSDL Import Wizard</a> will be opened:</p>
+
+<p><img src="./images/23940.png" id="23940" class="WikiImage"/></p>
+
+<p>In the WSDL Location file field, you have to enter the URL where the Web Service is published with the WSDL parameter (i.e. : http://localhost/BillingSystem.NetEnvironment/customer_bc.aspx?wsdl)</p>
+
+<p>In the second page of the WSDL Import Wizard you have to enter the name of the <a href="5669.html">external object</a> (EO) which will be created in the KB in order to store all the information related to the Web Service (name, properties, methods, parameters, etc.). Also, an <a href="10021.html">SDT</a> similar to the Transaction structure is created in the KB (the SDT has one property for each attribute and another property for each old value of each attribute (named: AttributeName_Z). In case of multi-level Transactions, besides the first level SDT, nested collections are defined.</p>
+
+<p>Thus, you will be able to define variables based on that external object, and invoke the Web Service methods.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p><strong>1) Invoking a remote service to insert a Customer</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ws.LoadKeySvc(10,&amp;Customer)
+&amp;Customer.CustomerName = 'Susan Parker'
+&amp;ws.SaveSvc(&amp;Customer)</pre>
+
+<p>Where:<br />
+<br />
+<em>&amp;ws</em><br />
+    Is based on the external object created in the KB.</p>
+
+<p><em>&amp;Customer</em><br />
+    Is based on the SDT created by the WSDL Import Wizard when the WSDL was consumed.</p>
+
+<p><strong>2) Invoking a remote service to insert an Invoice</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Invoice.InvoiceId = 111
+&amp;Invoice.CustomerId = 1
+
+&amp;Invoiceline.Mode = 'INS'
+&amp;Invoiceline = new()
+&amp;Invoiceline.ProductId = 1
+&amp;Invoiceline.InvoiceLineQuantity = 10
+&amp;Invoice.InvoiceLevel.Add(&amp;Invoiceline)
+
+&amp;Invoiceline = new()
+&amp;Invoiceline.ProductId = 2
+&amp;Invoiceline.InvoiceLineQuantity = 20
+&amp;Invoice.InvoiceLevel.Add(&amp;Invoiceline)
+
+&amp;ws.SaveSvc(&amp;Invoice)  </pre>
+
+<p>Where:</p>
+
+<p><em>&amp;Invoice</em> <span style="line-height: 1.6em;"><em>and InvoiceLine</em></span><br />
+<em style="line-height: 1.6em;">    </em><span style="line-height: 1.6em;">Are based on the SDT created by the WSDL Import Wizard when the WSDL was consumed.</span><span style="line-height: 1.6em;"> </span></p>
+
+<p><em>&amp;ws</em> <br />
+ <span style="line-height: 1.6em;">   Is based on the external object created in the KB.</span></p>
+
+<p><strong>3) Invoking a remote service to update an invoice line</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Invoice.InvoiceId = 111
+&amp;ws.LoadKeySvc(&amp;Invoice.InvoiceId,&amp;Invoice)  
+
+For &amp;Invoiceline in &amp;Invoice.Level
+  IF &amp;Invoiceline.ProductId = 1
+        &amp;Invoiceline.InvoiceLineQuantity = 5
+        &amp;InvoiceLine.Modified = 1
+  Endif
+endfor
+&amp;ws.SaveSvc(&amp;Invoice)  </pre>
+
+<p>Where:</p>
+
+<p><em>&amp;Invoice and InvoiceLine</em><br />
+    Are based on the SDT created by the WSDL Import Wizard when the WSDL was consumed. </p>
+
+<p><em>&amp;ws </em><br />
+    Is based on the external object created in the KB.</p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5846.html">Toc:Business Component</a></TD><TD><a href="2278.html">Business Component samples</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/02/22 06:24 PM</em></font></td></TR></table></font>

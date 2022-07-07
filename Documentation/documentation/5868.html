@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Aggregate Formulas</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5868,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Aggregate Formulas</h1>
+<!--Aggregate Formulas--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Aggregate <a href="5861.html">Formulas</a> allow defining several types of calculations or searches, involving many records of a table (and its associated by means of the extended table).</p>
+
+<p><img src="./images/25295.jpg" id="25295" class="WikiImage"/></p>
+
+<p>They are:</p>
+
+<ul>
+	<li><font size="2"><a href="6500.html">Sum</a> </font></li>
+	<li><font size="2"><a href="6500.html">Count</a> </font></li>
+	<li><font size="2"><a href="6500.html">Average</a></font></li>
+	<li><font size="2"><a href="6502.html">Max</a> </font></li>
+	<li><font size="2"><a href="6502.html">Min</a> </font></li>
+	<li><font size="2"><a href="6547.html">Find</a> </font></li>
+</ul>
+
+<p>For instance, having the following transaction:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>FlightInstance</strong> {    //transaction name
+   FlightInstanceId*
+   FlightInstanceDate
+   FlightInstanceNumberOfPassengers
+   FlightNumber
+   FlightDescription
+      <strong>Seat</strong> {       //transaction level name for storing the passengers of a flight
+         PassengerId*
+         PassengerName
+         FlightInstancePassengerSeatNumber}</pre>
+
+<p>inside a procedure we could write:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>&amp;NumberOfPassengers </em>= <strong>Count</strong>( <em>FlightInstancePassengerSeatNumber</em>, <em>FlightInstanceDate</em> = <em>&amp;importantDate</em> and <em>PassengerType</em> = 'Premium')</pre>
+
+<p>Count all the records of the FLIGHTINSTANCESEAT table (table A in diagram) whose related <em>FlighInstanceDate </em>in FLIGHTINSTANCE table (table B in diagram) is equal to the value of the <em>&amp;importantDate</em> local variable and whose related passenger in PASSENGER table (table D in diagram) is of 'Premium' type. Thus, we will obtain the total quantity of seats stored for <em>&amp;importantDate</em> for premium passengers. </p>
+
+<p>Aggregate formulas can be either <a href="6440.html">global</a> (assigned to attributes at transaction structure level, indicating those attributes always assume the result of a calculation) or <a href="6441.html">local</a> (or inline, assigned to attributes or variables, elements of Data Providers, SDTs, etc., or being part of conditions that are evaluated in runtime). That is:</p>
+
+<p><strong>Aggregate Global Formula</strong>: <em>&lt;attribute&gt;</em> <strong>=</strong> <em>&lt;aggregateConditionalFormula&gt;</em><br />
+<strong>Aggregate Inline Formula</strong>: {{<em>&lt;variable&gt;</em>|<em>&lt;attribute&gt;</em>} <strong>=</strong> <em>&lt;aggregateUnconditionalFormula&gt;</em>} | <em>&lt;aggregateUnconditionalFormula&gt;</em></p>
+
+<p>The main difference between global and inline, is the triggering condition (in inline is not part of the formula definition), and that in global, user variables could not be involved. </p>
+
+<p>Meanwhile a <a href="5864.html">Horizontal formula</a> needs a context to be evaluated, an aggregate not neccesarily, as in the previous example. There, for the formula be evaluated the only data needed is the <em>&amp;importantDate</em> user variable. However, although not necessary, if a contextual table exists, it will cause certain inferences, as we will see below by means of some examples. </p>
+
+<h2><a id="General+syntax+scheme" class="HashLink" href="#General+syntax+scheme">General syntax scheme</a></h2>
+
+<p><em>&lt;agregateConditionalFormula&gt;::= </em><em style="line-height: 1.6em;">&lt;aggregateFormulaName&gt;</em><strong style="line-height: 1.6em;">(</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;aggregateExpression&gt;</em><strong style="line-height: 1.6em;">,</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;aggregateCondition&gt;</em><strong style="line-height: 1.6em;">,</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;defaultValue&gt; </em><span style="line-height: 1.6em;">[</span><strong style="line-height: 1.6em;">,</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;returnedAttributeValue&gt;</em><span style="line-height: 1.6em;">] </span><strong style="line-height: 1.6em;">)  </strong><span style="line-height: 1.6em;">[ </span><strong style="line-height: 1.6em;">if</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;triggeringCondition&gt;</em><span style="line-height: 1.6em;"> ]</span></p>
+
+<p><em>&lt;agregateUnconditionalFormula&gt;::= </em><em style="line-height: 1.6em;">&lt;aggregateFormulaName&gt;</em><strong style="line-height: 1.6em;">(</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;aggregateExpression&gt;</em><strong style="line-height: 1.6em;">,</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;aggregateCondition&gt;</em><strong style="line-height: 1.6em;">,</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;defaultValue&gt; </em><span style="line-height: 1.6em;">[</span><strong style="line-height: 1.6em;">,</strong><span style="line-height: 1.6em;"> </span><em style="line-height: 1.6em;">&lt;returnedAttributeValue&gt;</em><span style="line-height: 1.6em;">] </span><strong style="line-height: 1.6em;">)</strong><span style="line-height: 1.6em;"></span></p>
+
+<p>where:</p>
+
+<p><em>&lt;aggregateFormulaName&gt;</em>::= {<strong>Find</strong> | <strong>Max</strong> | <strong>Min</strong> | <strong>Sum</strong> | <strong>Count</strong> | <strong>Average</strong>}</p>
+
+<p><em>&lt;aggregateExpression&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is the expression that will be searched for, maximized, minimized, added or averaged, among the records fulfilling the <em>&lt;aggregateCondition&gt;</em>. It may contain attributes (even formula attributes), constants and variables (user variables are allowed only in <a href="6441.html">inline formulas</a>). For Count case only, its value is not an Expression but an attribute. For Sum and Average, the result of <em>&lt;aggregateExpression&gt;</em> must be a numerical value.</p>
+
+<p><em>&lt;aggregateCondition&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is a combination of a search condition with a <a href="5271.html">Data Selector</a> invocation. Both parts are optional:</p>
+
+<p style="margin-left: 40.0px;">[<em>&lt;SearchCondition&gt;</em>] [<strong>USING</strong> <em>&lt;DataSelector&gt;</em> '<strong>(</strong>' <em>&lt;Parameter&gt;<sub>1</sub></em><strong>,</strong> <em>&lt;Parameter&gt;<sub>2</sub></em><strong>,</strong> <em>&lt;Parameter&gt;<sub>n</sub></em> '<strong>)</strong>']]</p>
+
+<p style="margin-left: 40.0px;"><em>&lt;SearchCondition&gt;</em></p>
+
+<p style="margin-left: 80.0px;">Is the condition that records must verify to be considered in the aggregation. It may contain attributes, constants and variables (user variables are allowed only in <a href="6441.html">inline formulas</a>, GeneXus standard variables in <a href="6440.html">global formulas</a> and inline formulas).<em> </em></p>
+
+<p><em>&lt;defaultValue&gt;</em></p>
+
+<p style="margin-left: 40.0px;"><span style="line-height: 1.6em;">Is the returned value when no records match the </span><em>&lt;aggregateCondition&gt;</em><span style="line-height: 1.6em;">. It is a constant and it is optional.</span></p>
+
+<p><em>&lt;returnedAttributeValue&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Only for <strong>Max</strong> and <strong>Min</strong> formulas. Attribute whose value is returned by the formula when it finds records that fulfill the <em>&lt;aggregateCondition&gt; </em>and after maximizing/minimizing the <em>&lt;aggregateExpression&gt;. </em></p>
+
+<p><em style="line-height: 1.6em;">&lt;triggeringCondition&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is the condition that determines if the formula must be triggered or not. It is optional. The only attributes allowed are those belonging to the contextual table (that the formula attribute would belong to if it were stored) and its extended.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Count( FlightInstancePassengerSeatNumber, FlightInstanceDate &gt;= &amp;dateFrom and PassengerType = &quot;Premium&quot;)</pre>
+
+<p>It counts only those records for what InvoiceDate &gt;= &amp;dateFrom and the related passenger record has the &quot;Premium&quot; type. </p>
+
+<h3><a id="Contextual+table" class="HashLink" href="#Contextual+table">Contextual table</a></h3>
+
+<p>Depending on the context the formula is used, GeneXus will add automatically filters by equality for the attributes that belonging to the formula navigated table (and its extended), are already instantiated in the context.</p>
+
+<p>For example, we could have a procedure that needs to know at the begining if there already are more than 100 seats assigned to 'premium' passengers in the corresponding table:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   &amp;success = Count( FlightInstancePassengerSeatNumber, FlightInstanceDate &gt;= &amp;dateFrom and PassengerType = &quot;Premium&quot;) &gt; 100</pre>
+
+<p>Here there is not a context table for the formula. It is triggered isolated, counting all the records of its base table, FlightInstanceSeat, matching the conditions. It will count all the 'premium' passengers for all the flight instances from &amp;dateFrom.</p>
+
+<p><span style="line-height: 1.6em;">On the other hand, if the above code were inside a for each command, such as:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   for each FlightInstance
+   where <strong>Count( FlightInstancePassengerSeatNumber, FlightInstanceDate &gt;= &amp;dateFrom and PassengerType = 'Premium') &gt; 100</strong>
+      print flightInstanceInfo //FlightInstanceId, FlightInstanceDate
+   endfor</pre>
+
+<p>The formula does have a context: the FlightInstance table (base table of the For each). Thus, not all the 'premium' passenger seats were going to be counted, but only those corresponding to each FlightInstance record considered in each &quot;for each&quot; iteration. So, only the flights with more than one hundred 'premium' passengers from &amp;dateFrom date will be printed in output. </p>
+
+<p>Each time the formula is evaluated it already has an instantiated flight instance (FlightInstanceId). This means GeneXus will also apply the following filter for the records considered in FLIGHTINSTANCESEAT table:</p>
+
+<p style="margin-left: 40.0px;">FLIGHTINSTANCESEAT.FlightInstanceId = FLIGHTINSTANCE.FlightInstanceId</p>
+
+<h4><a id="What+happens+when+the+formula+base+table+is+the+same+than+the+context+one%3F" class="HashLink" href="#What+happens+when+the+formula+base+table+is+the+same+than+the+context+one%3F">What happens when the formula base table is the same than the context one?</a></h4>
+
+<p>In the following example we want to print for each invoice date, the total sum of all the invoices <strong>with that</strong> invoice date:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each Unique InvoiceDate
+   &amp;total = Sum(InvoiceTotal)
+   print totalbydate //InvoiceDate, &amp;total
+endfor</pre>
+
+<p>Here, as the Sum base table is Invoice, the same than the for each base table, and there is a <a href="24592.html">Unique Clause</a>, then GeneXus will group the information by InvoiceDate, either in the for each, or in the Sum calculation. In other words, the Sum formula will have an <strong>implicit condition by equality</strong> by the InvoiceDate attribute, that will be considered given. </p>
+
+<p><span style="font-size: x-small;"><strong>Note</strong>: If there wasn't unique clause, as the only attribute inside the for each body is InvoiceDate (InvoiceTotal is inside the sum formula) the bahavior would be the same.</span></p>
+
+<h3><a id="Why+the+context+is+meaningful%3F" class="HashLink" href="#Why+the+context+is+meaningful%3F">Why the context is meaningful?</a></h3>
+
+<p>Because it will affect the calculation result, allowing to add filtering conditions to the data considered, as well as another attributes (those known by context). </p>
+
+<p>Thus, if a context table exists, it will cause not all the records the formula explicitly states to be considered, but only those also matching implicit conditions arising from that context. When this happens, the developer is allowed to include attributes of that contextual table (and its extended) into the formula definition. Contrary to what happens with horizontal formulas, aggregation ones are not involved at all in determining the context base table. In other words, its attributes are only involved in determining the formula base table itself.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6490.html">Attributes and Tables that can be Involved in Formulas</a></TD><TD><a href="5879.html">Compound Formulas</a></TD><TD><a href="12566.html">Conditional Orders and Filters</a></TD></TR><TR><TD><a href="25103.html">Data provider Element statement</a></TD><TD><a href="25082.html">Data provider Group statement</a></TD><TD><a href="5432.html">Data Selectors in Aggregations</a></TD><TD><a href="5882.html">Examples of Using Formulas</a></TD></TR><TR><TD><a href="6547.html">Find Formula</a></TD><TD><a href="5861.html">Category:Formulas</a></TD><TD><a href="25327.html">Toc:Formulas</a></TD><TD><a href="6440.html">Global Formulas</a></TD></TR><TR><TD><a href="5864.html">Horizontal Formulas</a></TD><TD><a href="6441.html">Inline Formulas</a></TD><TD><a href="6442.html">Inline Formulas outside a contextual table</a></TD><TD><a href="6426.html">Inline Formulas within a contextual table</a></TD></TR><TR><TD><a href="6502.html">Max, Min Formulas</a></TD><TD><a href="6500.html">Sum, Count, Average formulas</a></TD><TD><a href="24592.html">Unique Clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

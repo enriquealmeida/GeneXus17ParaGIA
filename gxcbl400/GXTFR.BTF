@@ -1,0 +1,26 @@
+@ECHO OFF
+gxtff #1.cob #4 QLBLSRC
+if errorlevel 1 goto error
+gxtff #2.dds #4 QDDSSRC        #10
+if errorlevel 1 goto error     #10
+gxtff #3.clp #4 QCLSRC
+if errorlevel 1 goto error
+gxtff #11.clp #4 QCLSRC \
+if errorlevel 1 goto error
+if .%1. == .*INTER. goto inter
+if .%1. == .*NOCOMP. goto end
+echo ÿ
+rmtcmd "sbmjob cmd(call pgm(#5/gxcgcl) parm(#5 #4 #6 #3 #7 #8)) msgq(*NONE) job(#1)" /z
+goto end
+:inter
+echo ÿ
+rmtcmd "call pgm(#5/gxcgcl) parm(#5 #4 #6 #3 #7 #8)" /z
+goto end
+:error
+echo * Unexpected error transfering #1 or #2 or #3.
+goto eob
+:end
+rem Remove compile_required flags
+if exist #9 del #9
+gxdelrqd #12 #13 #14
+:eob

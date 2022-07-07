@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to create a dynamic menu for WEB applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33589,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to create a dynamic menu for WEB applications</h1>
+<!--How to create a dynamic menu for WEB applications--><div class="TableWikiBody" id="tblwikibody"><p>The way to create a dynamic menu in your web application is through the use of the Dynamic Items of the Action Group. An <a href="25631.html">Action Group</a> can be dynamic, which means that some or all of its items are loaded using an SDT structure.</p>
+
+<p>See <a href="25631.html">Action Group</a> to know the ways to insert an action group into the form.</p>
+
+<p>After creating the action group, dynamic items are added by dragging the &quot;Dynamic Items&quot; option of the GeneXus toolbox (grouped under Extended Controls) to the toolbar.</p>
+
+<p><img src="./images/33590.png" id="33590" class="WikiImage"/><br />
+Note: Click on the gray area - where the action group is defined - to be able to see the Dynamic Items extended control.</p>
+
+<p>The <em>Action group dynamic items</em> control has the Items property, where you can specify the <a href="https://wiki.genexus.com/commwiki/wiki?1878,," target="_blank">Structured Data Type</a> variable which will load the items of the menu (&amp;ActionGroupItemCollection in the example).</p>
+
+<p><img src="./images/33591.png" id="33591" class="WikiImage"/></p>
+
+<p>The &amp;ActionGroupItemCollection variable is a collection of ActionGroupItem SDT, which is automatically defined in the KB when you use an <em>Action group dynamic items</em> control. </p>
+
+<p><img src="./images/33593.png" id="33593" class="WikiImage"/></p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>In the following example, we have a <a href="17088.html">What is a Master Page</a> where we've defined an action group called &quot;MainMenu&quot;. It includes an <em>Action group dynamic items</em> control, and its Control Type property is set to Menu (so it will behave like a <a href="31918.html">Web Navigation Bar</a>).</p>
+
+<p><img src="./images/33592.png" id="33592" class="WikiImage"/></p>
+
+<p>In the Events of the Master Page, we call a subroutine where we load the &amp;ActionGroupItemCollection variable calling a <a href="4417.html">Data Provider</a>.<br />
+And we also add the events to bind the DataProvider &quot;EventName&quot; properties:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+           
+Event Start
+    Do 'Add Action Group Items'
+Endevent
+
+Sub 'Add Action Group Items'
+  &amp;ActionGroupItemCollection = LoadActions()
+EndSub
+
+Event 'VisitWebsite'
+    link(&quot;https://www.youtube.com/&quot;)
+EndEvent
+
+Event 'AuthorActions'
+    Do Case
+    Case &amp;ActionGroupItemPressed.Id = &quot;AuthorInfo&quot;
+        wwAuthor.Link()
+    Case &amp;ActionGroupItemPressed.Id = &quot;LiteraryWork&quot;
+        wwLiteraryWork.Link()
+    EndCase
+EndEvent
+        </pre>
+
+<p>The Data Provider is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ActionGroupItem
+{
+    Caption = &quot;Visit Website&quot;
+    EventName = &quot;VisitWebsite&quot;
+    Class = ThemeClass:MenuLiterature1
+    TooltipText = &quot;Visit Website&quot;
+}
+
+ActionGroupItem
+{
+    Id = &quot;AuthorInfo&quot;
+    Caption = &quot;Author&quot;
+    EventName = &quot;AuthorActions&quot;
+    Class = ThemeClass:MenuLiterature1
+    TooltipText = &quot;Author&quot;
+}
+
+ActionGroupItem
+{
+    Id = &quot;LiteraryWork&quot;
+    Caption = &quot;Literary Work&quot;
+    EventName = &quot;AuthorActions&quot;
+    Class = ThemeClass:MenuLiterature1
+    TooltipText = &quot;Literary Work&quot;
+}
+
+ActionGroupItem
+{
+    Caption = &quot;Editorial Topic&quot;
+    Link = wweditorialTopic.Link()
+    Class = ThemeClass:MenuLiterature1
+    TooltipText = &quot;Editorial Topic&quot;
+}
+
+
+</pre>
+
+<p>Note that the &quot;EventName&quot; properties must be the exact same as defined on the Events of the Master Page or WebPanel.</p>
+
+<p>At runtime:</p>
+
+<p><img src="./images/33598.png" id="33598" class="WikiImage"/></p>
+
+<p><img src="./images/33599.png" id="33599" class="WikiImage"/></p>
+
+<p>Download sample from <a href="https://wiki.genexus.com/commwiki/wiki?33597,," target="_blank">here</a>.</p>
+
+<p class="Code">Note that:</p>
+
+<ol>
+	<li>
+	<p>Using the Toolbar control type, you can nest as many items as you want, using the children node of the SDT. In the case of the Menu control type, only two levels of nesting is supported.</p>
+	</li>
+	<li>
+	<p>The Link property must be empty when the toolbar item has children items.</p>
+	</li>
+	<li>
+	<p>You can assign a Theme Class to each link item. Remember that the class associated with the action group control has precedence over the class assigned to the link item.</p>
+	</li>
+</ol>
+
+<h3><a id="Limitations" class="HashLink" href="#Limitations">Limitations</a></h3>
+
+<p>The only items supported are text items. Buttons, images and edit boxes are not supported.</p>
+
+<p> </p>
+
+<p></p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25631.html">Action Group Control for the Web</a></TD><TD><a href="38477.html">Menu for Web Applications</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/20/22 07:04 PM</em></font></td></TR></table></font>

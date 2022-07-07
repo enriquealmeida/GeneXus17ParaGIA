@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>XML Schema Import</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?7200,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">XML Schema Import</h1>
+<!--XML Schema Import--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><font face="Verdana" size="2">One way to introduce structured data in a GeneXus Knowledge Base is to define the structure itself inside the SDT editor.<br />
+Another possibility is to import external Objects, such as Web Services or native classes, or to drag controls to the form that provides this kind of definition.<br />
+In addition, GeneXus allows you to import structured data through the XML schema definition itself (**). It means that by getting the XSD file of any structure, you can create an SDT object inside the GeneXus Knowledge base, based on this schema file. Despite the fact that this is not the most common practice, it could be useful for integrating applications or for reuse purposes, especially in prototype environments.<br />
+As a result, we have increased ways to interact with external definitions in GeneXus Knowledge Bases.</font></p>
+
+<p><font face="Verdana" size="2">(**) An XML schema describes the structure of an XML document. The XML Schema language is also referred to as XML Schema Definition (XSD). </font></p>
+
+<h3><br />
+Example</h3>
+
+<p><font face="Verdana" size="2">A simple, real world example is given by the Information Clearing Office of Uruguay, where a set of Web Services are provided for consumption by different customers. These XSD files are also published as a way to simplify Web Service consumption.<br />
+One of these files could be imported into the GeneXus Knowledge Base, by creating one or more SDT objects, thus allowing you to work on other modules without the need to import the Web Service and a large number of other structures.<br />
+Another simple example is given by the Shiporder.xsd file:</font></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="Verdana" size="2"><span class="058153212-21122007"><font color="#0000ff" face="Arial" size="2"><span class="058153212-21122007">&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot; ?&gt;
+ &lt;xs:schema xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+   &lt;xs:element name=&quot;shiporder&quot;&gt; 
+     &lt;xs:complexType&gt; 
+       &lt;xs:sequence&gt;
+         &lt;xs:element name=&quot;orderperson&quot; type=&quot;xs:string&quot;/&gt;
+         &lt;xs:element name=&quot;shipto&quot;&gt;
+            &lt;xs:complexType&gt;
+               &lt;xs:sequence&gt;
+                 &lt;xs:element name=&quot;name&quot; type=&quot;xs:string&quot;/&gt; 
+                 &lt;xs:element name=&quot;address&quot; type=&quot;xs:string&quot;/&gt; 
+                 &lt;xs:element name=&quot;city&quot; type=&quot;xs:string&quot;/&gt; 
+                 &lt;xs:element name=&quot;country&quot; type=&quot;xs:string&quot;/&gt;
+               &lt;/xs:sequence&gt;
+            &lt;/xs:complexType&gt; 
+         &lt;/xs:element&gt; 
+         &lt;xs:element name=&quot;item&quot; maxOccurs=&quot;unbounded&quot;&gt;
+            &lt;xs:complexType&gt;
+               &lt;xs:sequence&gt;
+                  &lt;xs:element name=&quot;title&quot; type=&quot;xs:string&quot;/&gt; 
+                  &lt;xs:element name=&quot;note&quot; type=&quot;xs:string&quot; minOccurs=&quot;0&quot;/&gt; 
+                  &lt;xs:element name=&quot;quantity&quot; type=&quot;xs:positiveInteger&quot;/&gt;
+                  &lt;xs:element name=&quot;price&quot; type=&quot;xs:decimal&quot;/&gt;
+               &lt;/xs:sequence&gt; 
+            &lt;/xs:complexType&gt;
+          &lt;/xs:element&gt;
+        &lt;/xs:sequence&gt; 
+       &lt;xs:attribute name=&quot;orderid&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/&gt;
+     &lt;/xs:complexType&gt;
+    &lt;/xs:element&gt;
+  &lt;/xs:schema&gt;</span></font></span></font></pre>
+
+<p><font face="Verdana" size="2"><span class="058153212-21122007"><font color="#0000ff" face="Arial" size="2"><span class="058153212-21122007"><font face="Verdana"><font color="#000000">After importing this scheme definition, a structure data type like the one bellow is created:</font> </font></span></font></span></font></p>
+
+<p align="center"><font face="Verdana" size="2"><span class="058153212-21122007"><font color="#0000ff" face="Arial" size="2"><span class="058153212-21122007"><img src="./images/7202.png" id="7202" class="WikiImage"/></span></font></span></font></p>
+
+<p align="left"><font face="Verdana" size="2"><span class="058153212-21122007"><font color="#0000ff" face="Arial" size="2"><span class="058153212-21122007"><font color="#000000"><font face="Verdana">After this, it is possible to populate an Xml instance of this definition by using a <a href="5270.html">Data Provider</a>. The Xml file looks as follows</font> :</font></span></font></span></font></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="Verdana" size="2"><span class="058153212-21122007"><font color="#0000ff" face="Arial" size="2"><span class="058153212-21122007">&lt;shiporder orderid=&quot;889923&quot;
+xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+xsi:noNamespaceSchemaLocation=&quot;shiporder.xsd&quot;&gt;
+&lt;orderperson&gt;John Smith&lt;/orderperson&gt;
+&lt;shipto&gt;
+&lt;name&gt;Ola Nordmann&lt;/name&gt;
+&lt;address&gt;Langgt 23&lt;/address&gt;
+&lt;city&gt;4000 Stavanger&lt;/city&gt;
+&lt;country&gt;Norway&lt;/country&gt;
+&lt;/shipto&gt;
+&lt;item&gt;
+&lt;title&gt;Empire Burlesque&lt;/title&gt;
+&lt;note&gt;Special Edition&lt;/note&gt;
+&lt;quantity&gt;1&lt;/quantity&gt;
+&lt;price&gt;10.90&lt;/price&gt;
+&lt;/item&gt;
+&lt;item&gt;
+&lt;title&gt;Hide your heart&lt;/title&gt;
+&lt;quantity&gt;1&lt;/quantity&gt;
+&lt;price&gt;9.90&lt;/price&gt;
+&lt;/item&gt;
+&lt;/shiporder&gt;</span></font></span></font></pre>
+
+<h3><a id="Description+" class="HashLink" href="#Description+"><font face="Verdana" size="2">Description </font> </a></h3>
+
+<p><font face="Verdana" size="2">This import dialog is located at Tools/Application integration/XML schema Import.<br />
+To import a schema file, three simple steps must be performed:<br />
+   1.- Choose the XSD file. </font></p>
+
+<p align="center"><font face="Verdana" size="2">   <img src="./images/7203.png" id="7203" class="WikiImage"/></font></p>
+
+<p align="left"><font face="Verdana" size="2">   2.- Specify a prefix and the GeneXus folder location where the SDT object will be created.</font></p>
+
+<p align="center"><br />
+<font face="Verdana" size="2">   <img src="./images/7204.png" id="7204" class="WikiImage"/></font></p>
+
+<p align="left"><font face="Verdana" size="2">   3.- Show the structure and import.</font></p>
+
+<p align="center"><font face="Verdana" size="2"><font face="Verdana" size="2">   <img src="./images/7205.png" id="7205" class="WikiImage"/></font></font></p>
+
+<h3><a id="Considerations+" class="HashLink" href="#Considerations+"><font face="Verdana" size="2">Considerations </font></a></h3>
+
+<p align="left"><font face="Verdana" size="2">This feature only applies to XSD files, and it is not valid for other kinds of XML definitions such as DTD.</font></p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  To get an XSD from an XML, you can use tooling available on the internet. eg.:<a href='https://xmlgrid.net/xml2xsd.html'>https://xmlgrid.net/xml2xsd.html</a>.</div>
+</p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/27/20 10:33 AM</em></font></td></TR></table></font>

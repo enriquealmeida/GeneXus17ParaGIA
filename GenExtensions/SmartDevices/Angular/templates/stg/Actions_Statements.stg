@@ -1,0 +1,184 @@
+delimiters "$", "$"
+import "Actions_Statements_Call.stg"
+import "Expressions.stg"
+
+statementToTemplate ::= [
+  "assign" : "g_assign_statement",
+  "call" : "g_call_statement",
+  "calloption" : "g_calloption_statement",
+  "if" : "g_if_statement",
+  "docase" : "g_docase_statement",
+  "dowhile" : "g_dowhile_statement",
+  "foreachline" : "g_foreachline_statement",
+  "forin" : "g_forin_statement",
+  "async" : "g_call_async_statement",
+  "method" : "g_method_statement",
+  "compositebehavior": "g_compositebehavior_statement",
+  "execute_control": "g_execute_control_statement",
+  default: "g_default_statement"
+]
+
+foreachlineIteratorTemplateMap ::= [
+  "all" : "g_foreachline_statement_all",
+  "selected" : "g_foreachline_statement_selected",
+  default : "g_foreachline_statement_all"
+]
+
+doCaseOptionToTemplate ::= [
+  "case" : "g_docase_option_case",
+  "otherwise" : "g_docase_option_otherwise"
+]
+
+g_one_statement( stmt) ::= <<
+$(statementToTemplate.(stmt.StatementName))(stmt)$
+>>
+
+g_call_async_statement(stmt) ::= <<
+$if (stmt.OutputExpression.ExprType)$
+$g_call_await_with_output(stmt.OutputExpression, stmt.OutputParameters, stmt.Statement)$
+$else$
+$g_call_await(stmt.Statement)$
+$endif$
+$if (stmt.MustRefreshOnReturn)$
+await this.Refresh();
+$endif$
+>>
+
+g_call_await_with_output(outputExpression, outputParameters, stmt) ::= <<
+let $outputExpression:g_expression()$ = await $stmt:g_one_statement()$
+$outputParameters.Parameter:{p|$g_call_await_with_output_parm(p,outputExpression)$};separator="\r\n"$
+>>
+
+g_call_await_with_output_parm( p, outputExpression ) ::= <%
+$if (p.Name)$
+  $p.Expression:g_expression()$ = $outputExpression:g_expression()$.$p.Name$;
+$else$
+  $p.Expression:g_expression()$ = $outputExpression:g_expression()$;
+$endif$
+%>
+
+
+g_call_await(stmt) ::= <%
+await $stmt:g_one_statement()$
+%>
+
+g_assign_statement( stmt) ::= <%
+$if (stmt.AssignExpression)$
+	$g_assign_statement1(stmt)$
+$else$
+	$stmt.Expression:g_expression()$;
+$endif$
+%>
+
+g_assign_statement1( stmt) ::= <%
+$[(stmt.AssignExpression:g_expression()), (stmt.Expression:g_expression_and_convert( stmt.AssignExpression.ExprDataType ))];separator=" = "$;
+%>
+
+g_expression_and_convert( expression, to_type) ::= <%
+$g_convert_to( expression.ExprDataType, to_type, (expression:g_expression()))$
+%>
+
+g_if_statement( stmt) ::= <<
+if($stmt.IfCondition:g_expression()$) {
+  $stmt.IfTrueStatementBlock:g_one_statement();separator="\r\n"$
+}
+$if (stmt.IfFalseStatementBlock)$
+else {
+  $stmt.IfFalseStatementBlock:g_one_statement();separator="\r\n"$
+}
+$endif$
+>>
+
+g_docase_statement(stmt) ::= <<
+$stmt.DoCaseOptions:g_docase_option()$
+>>
+
+g_docase_option( opt) ::= <<
+$(doCaseOptionToTemplate.(opt.OptionType))(opt)$
+>>
+
+g_docase_option_case( opt ) ::= <<
+$if(opt.IsFirst)$if$else$ else if$endif$($opt.CaseCondition:g_expression()$) {
+  $opt.CaseStatementBlock:g_one_statement();separator="\r\n"$
+}
+>>
+
+g_docase_option_otherwise( opt )::= <<
+ else {
+  $opt.DefaultStatementBlock:g_one_statement();separator="\r\n"$
+}
+>>
+
+try_case_option_first(stmt) ::= <<
+$if(stmt.CaseCondition)$
+if($stmt.CaseCondition:g_expression()$) {
+  $stmt.CaseStatementBlock:g_one_statement();separator="\r\n"$
+$endif$
+}
+>>
+
+try_case_option_rest(stmt) ::= <<
+$if(stmt.CaseCondition.ExprType)$
+else if($stmt.CaseCondition:g_expression()$) {
+  $stmt.CaseStatementBlock:g_one_statement();separator="\r\n"$
+}
+$endif$
+>>
+
+try_case_option_default(stmt) ::= <<
+$if(stmt.DoCaseDefault)$
+else {
+  $stmt.DoCaseDefault:g_one_statement();separator="\r\n"$
+}
+$endif$
+>>
+
+g_dowhile_statement( stmt) ::= <<
+while($stmt.DoWhileCondition:g_expression()$) {
+  $stmt.DoWhileStatementBlock:g_one_statement();separator="\r\n"$
+}
+>>
+
+g_forin_statement( stmt) ::= <<
+for ($stmt.ForInVariableExpression:g_expression()$ of $stmt.ForInCollectionExpression:g_expression()$) {
+  $stmt.ForInStatementBlock:g_one_statement();separator="\r\n"$
+}
+>>
+
+g_foreachline_statement( stmt) ::= <%
+$(foreachlineIteratorTemplateMap.(stmt.ForEachLineType))(stmt)$
+%>
+
+g_foreachline_statement_all( stmt) ::= <<
+let $stmt.GridIteratorIx$ = 0;
+for (let item of $stmt.GridEntityCollectionExpression:g_expression()$) {
+  this.$stmt.ForEachLineGrid$SetContext($stmt.GridIteratorIx$);
+  $stmt.GridEntityCollectionExpression:g_expression()$.CurrentItem = item;
+  $stmt.ForEachLineStatementBlock:g_one_statement();separator="\r\n"$
+  $stmt.GridIteratorIx$++;
+}
+>>
+
+g_foreachline_statement_selected( stmt) ::= <<
+let $stmt.GridIteratorIx$ = 0;
+for (let item of $stmt.GridEntityCollectionExpression:g_expression()$) {
+  this.$stmt.ForEachLineGrid$SetContext($stmt.GridIteratorIx$);
+  if ($stmt.GridUIEntityCurrentExpression:g_expression()$.Selected) {
+    $stmt.GridEntityCollectionExpression:g_expression()$.CurrentItem = item;
+    $stmt.ForEachLineStatementBlock:g_one_statement();separator="\r\n"$
+  }
+  $stmt.GridIteratorIx$++;
+}
+>>
+
+g_compositebehavior_statement(stmt) ::= <%
+let _continue = $stmt.Statement:g_one_statement()$
+await this.abortIfFalse(_continue);
+%>
+
+g_execute_control_statement(stmt) ::= <%
+$stmt.expression:g_expression()$;
+%>
+
+g_default_statement( stmt) ::= <%
+%>

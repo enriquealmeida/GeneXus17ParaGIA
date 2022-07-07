@@ -1,0 +1,87 @@
+delimiters "$", "$"
+import "PanelHtml_Properties.stg"
+import "Expressions.stg"
+
+actionBarItemTemplateMap ::= [
+  "Group"  : "g_actionbar_group",
+  "Action"  : "g_actionbar_button"
+]
+
+actionPriorityMap ::= [
+  "High": "high-priority-action",
+  "Low": "low-priority-action",
+  default: "high-priority-action"
+]
+
+g_actionbar(actionbar)::=<<
+$actionbar.Action:{actionItem| $g_actionbar_item(actionItem)$};separator="\r\n"$
+>>
+
+g_actionbar_item(actionItem) ::= <<
+$(actionBarItemTemplateMap.(actionItem.ItemType))(actionItem)$
+>>
+
+g_actionbar_button( action) ::= <<
+<gx-button
+  #$action.ControlName$
+  name="$action.ControlName$"
+  $if (action.ActionElement)$(click)="callAction( this.$action.ActionElement$); \$event.stopPropagation()"$endif$
+  $if (action.InlineExecuteExpression.ExprType)$(click)="$action.InlineExecuteExpression:g_expression()$"$endif$
+  $g_class_property(action, action.Class)$
+  $g_visible_property(action, action.Visible)$
+  $g_enabled_property(action, action.Enabled)$
+  image-position="$action.ImagePosition$"
+  slot="$actionPriorityMap.(action.Priority)$"
+  *ngIf="showAsCard"
+>
+  $if (action.HasImage)$
+  <img src="{{getImageSource('$action.image$')}}" slot="main-image" />
+  $endif$
+  $g_caption_property(action, action.Caption)$
+</gx-button>
+>>
+
+g_actionbar_group( actionItem) ::= <<
+<gx-button
+  #$actionItem.ActionGroup.ControlName$
+  name="$actionItem.ActionGroup.ControlName$"
+  (click) = "uiModel.$actionItem.ActionGroup.ControlName$.visible = !uiModel.$actionItem.ActionGroup.ControlName$?.visible"
+  $g_visible_property(actionItem.ActionGroup, actionItem.ActionGroup.Visible)$
+  $g_enabled_property(actionItem.ActionGroup, actionItem.ActionGroup.Enabled)$
+  image-position="$actionItem.ImagePosition$"
+  slot="$actionPriorityMap.(actionItem.ActionGroup)$"
+>
+  $g_caption_property(actionItem.ActionGroup, actionItem.ActionGroup.Caption)$
+</gx-button>
+<gx-action-group
+  #$actionItem.ActionGroup.ControlName$_Menu
+  [show] = "uiModel.$actionItem.ActionGroup.ControlName$?.visible | default:false"
+  (close) = "uiModel.$actionItem.ActionGroup.ControlName$.visible = false"
+>
+  $actionItem.ActionGroup.Action:{subActionItem| $g_actionbar_item(subActionItem)$};separator="\r\n"$
+</gx-action-group>
+
+>>
+
+g_actionsheet( groupItem) ::= <<
+<gx-action-sheet 
+  #$groupItem.ControlName$
+  [opened] = "uiModel.$groupItem.ControlName$?.visible | default:false"
+  (close) = "uiModel.$groupItem.ControlName$.visible = false"
+  [closeButtonLabel]="translate('GXM_cancel')"
+>
+  $groupItem.Action:{subActionItem| $g_actionsheet_item(subActionItem)$};separator="\r\n"$
+</gx-action-sheet>
+>>
+
+g_actionsheet_item(action) ::= <<
+<gx-action-sheet-item
+  #$action.ControlName$
+  $if (action.ActionElement)$(click)="callAction( this.$action.ActionElement$)"$endif$
+  $if (action.InlineExecuteExpression.ExprType)$(click)="$action.InlineExecuteExpression:g_expression()$"$endif$
+  $g_visible_property(action, action.Visible)$
+  $g_enabled_property(action, action.Enabled)$
+>
+  $g_caption_property(action, action.Caption)$
+</gx-action-sheet-item>
+>>

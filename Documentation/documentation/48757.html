@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>MSBuild Tasks for Running Tests (GeneXus 17 upgrade 5)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48757,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">MSBuild Tasks for Running Tests (GeneXus 17 upgrade 5)</h1>
+<!--MSBuild Tasks for Running Tests (GeneXus 17 upgrade 5)--><div class="TableWikiBody" id="tblwikibody"><p>Running tests in batches is easy using MSBuild tasks. You can do it using the <strong>RunTests </strong>task.</p>
+
+<p>Note: Instead of using this task by itself, we recommend starting using the GXtest.msbuild file that should be present on your GeneXus installation root folder, and modifying it to fit your own needs. You will see an example in the next article. </p>
+
+<h2><a id="1+-+UpdateTestRefs+%28MSBuild+Task%29" class="HashLink" href="#1+-+UpdateTestRefs+%28MSBuild+Task%29">1 - UpdateTestRefs (MSBuild Task)</a></h2>
+
+<p>This task must be used before executing RunTests, and RecordMockingData tasks. Tests to run must exist at the moment this task is used. After this task, the TestsRunner procedure must be built (see examples below).</p>
+
+<p>Parameters:<br />
+<u>Type</u>: <em>{All, Unit, Web, UI, SD} </em><br />
+Specifies the type of tests to build before the execution. (before RunTests task only). Set:<br />
+All: to run all Unit tests first, then web UI tests, and at last all SD UI tests.<br />
+Unit: to run all Unit tests.<br />
+Web: to run all web UI tests.<br />
+SD: to run all SD tests.<br />
+UI: to run all web and SD UI tests.</p>
+
+<p><u>TestObjects</u>: List of test object names separated by semicolons: Unit tests, UI tests, and Test Suites<br />
+Specifies the tests to build before the execution.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical)</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;UpdateTestRefs Type=&quot;All&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+&lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;TestsRunner&quot;/&gt;
+&lt;RunTests Type=&quot;All&quot; DetailedResults=&quot;true&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;UpdateTestRefs TestName=&quot;testExample&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;/&gt;
+&lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;TestsRunner&quot;/&gt;
+&lt;RecordMockingData TestName=&quot;testExample&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt;</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;UpdateTestRefs TestObjects=&quot;MyUnitTest;MyWebUITest&quot; DetailedResults=”true” ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+&lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;TestsRunner&quot;/&gt;
+&lt;RunTests TestObjects=&quot;MyUnitTest;MyWebUITest&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<h2><a id="2+-+RunTests+%28MSBuild+Task%29" class="HashLink" href="#2+-+RunTests+%28MSBuild+Task%29">2 - RunTests (MSBuild Task)</a></h2>
+
+<p>This task allows running all the tests by their type (Unit, UI, or both) in a specific Knowledge Base, or listed by their names using the TestObjects parameter.</p>
+
+<p><u>Type</u>: <em>{All, Unit, Web, UI, SD} </em><br />
+Specifies the type of test to run. Set:<br />
+All: to run all enabled Unit tests first, then enabled web UI tests, and at last, all enabled SD UI tests. <strong>Default value.</strong><br />
+Unit: to run all enabled Unit tests.<br />
+Web: to run all enabled web UI tests.<br />
+SD: to run all enabled SD tests.<br />
+UI: to run all enabled web and SD UI tests.</p>
+
+<p><u>TestObjects</u>: List of test object names separated by semicolons(;): Unit tests, UI tests, and Test Suites<br />
+Specifies the tests to build before the execution.</p>
+
+<p>Note: when used from an MSBuild step in Jenkins semicolons (;) must be escaped so they are correctly passed from Jenkins to MSBuild. There are two options:</p>
+
+<p>1- Surround parameters with single quotes e.g.:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+'/p:TestObjects=&quot;Test1;Test2;Test3&quot;'</pre>
+
+<p>2- Use %3B instead of ; e.g.:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+/p:TestObjects=&quot;Test1%3BTest2%3BTest3&quot;</pre>
+
+<p><u>DetailedResults</u> (optional): <em>bool</em><br />
+A boolean parameter to set the verbosity of test results in the console output. <br />
+If true, detailed results will be displayed on the console output.<br />
+If false, only a summary is shown. <strong>Default value.</strong></p>
+
+<p><u>Browser (optional)</u>: <em>{Chrome, IE, Firefox, Edge }</em><br />
+Specifies the browser name where web UI tests will run.<br />
+The default value is the one set in the Default Browser property on the selected KB.</p>
+
+<p><u>FullPageScreenshot (optional)</u>: <em>boolean</em><br />
+Specifies the default screenshot command behavior.<br />
+The default value is the one set in <a href="45420.html"><i>Full Page Screenshot</i> property</a> on the selected environment.</p>
+
+<p><u>VerifyStopsExecution (optional)</u>: <em>boolean</em><br />
+Specifies whether a failed Verify check will stop the test run.<br />
+The default value is the one set in <a href="45420.html"><i>Verify Stops Execution </i>property</a> on the selected environment.</p>
+
+<p><u>BaseURL (optional)</u>: <em>string</em><br />
+Specifies the base URL name where web UI tests will run on go commands, except when a full URL is used.<br />
+The default value is the one set in <a href="45420.html"><em>Base URL</em> property</a> on the selected environment.</p>
+
+<p><u>FileUploadBasePath (optional)</u>: <em>string</em><br />
+Specifies the base directory path to where files for web UI tests will be looked for in FileUploadBy commands.<br />
+The default value is the one set in the <a href="45420.html"><em>File Upload Base Path</em> property</a> on the selected environment.</p>
+
+<p><u>Arguments (optional)</u>: <em>string</em><br />
+Useful for setting properties for the browser at the moment it is opened. Each browser has its own set of properties defined although there are some common arguments for most of them: for example --headless to run tests without visible interface.<br />
+The default value is the one set in the <a href="45420.html"><em>Arguments</em> property</a> on the selected environment.</p>
+
+<p><u>ScreenshotMode (optional)</u>: <em>string</em><br />
+Specifies when the screenshots are taken and saved during web UI tests execution. <br />
+The default value is the one set in the <a href="45420.html"><em>Screenshot saving mode</em> property</a> on the selected environment.</p>
+
+<p><u>HtmlMode (optional)</u>: <em>string</em><br />
+Specifies when the page's HTML is saved during web UI tests execution<br />
+The default value is the one set in the <a href="45420.html"><em>Html saving mode</em> property</a> on the selected environment.</p>
+
+<p><u>ExecutedCount (output)</u>: numeric<br />
+Contains the total number of executed tests</p>
+
+<p><u>SuccessCount (output)</u>: numeric<br />
+Contains the total number of successful tests (includes WarningCount)</p>
+
+<p><u>WarningCount (output)</u>: numeric<br />
+Contains the total number of warned tests</p>
+
+<p><u>SkippedCount (output)</u>: numeric<br />
+Contains the total number of skipped tests</p>
+
+<p><u>ErrorCount (output)</u>: numeric<br />
+Contains the total number of failed tests (exception + error results).</p>
+
+<p><u>ResultsFile (input/output) (optional)</u>: string </p>
+
+<p>A path where to save the GXtest XML results file. As output contains the path of the mentioned file.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local\username or gxtechnical\username)</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p><u>AllowFailedTests</u>: <em>boolean</em><br />
+true: the task will succeed even if a test failed.<br />
+false: if there are any failed tests, this task is set as failed. <strong>Default value.</strong></p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RunTests Type=&quot;All&quot; Browser=&quot;Chrome&quot; BaseURL=&quot;http://mytestingenvironment/myApp/&quot; FileUploadBasePath=&quot;/testingDir/&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RunTests Type=&quot;Unit&quot; DetailedResults=&quot;true&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;/&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RunTests Type=&quot;UI&quot; Browser=&quot;Firefox&quot; BaseURL=&quot;http://mytestingenvironment/myApp/&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot; AllowFailedTests=&quot;true&quot;/&gt;
+
+&lt;RunTests TestObjects=&quot;BasicTestsSuite;SmokeTestsHomePage;LooseTest2&quot; Browser=&quot;Firefox&quot; Arguments=&quot;--headless&quot; AllowFailedTests=&quot;true&quot;&gt;
+      &lt;Output TaskParameter=&quot;ExecutedCount&quot; PropertyName=&quot;ExecutedCount&quot;/&gt;
+      &lt;Output TaskParameter=&quot;SuccessCount&quot; PropertyName=&quot;SuccessCount&quot;/&gt;
+      &lt;Output TaskParameter=&quot;ErrorCount&quot; PropertyName=&quot;ErrorCount&quot;/&gt;
+      &lt;Output TaskParameter=&quot;WarningCount&quot; PropertyName=&quot;WarningCount&quot;/&gt;
+      &lt;Output TaskParameter=&quot;SkippedCount&quot; PropertyName=&quot;SkippedCount&quot;/&gt;
+      &lt;Output TaskParameter=&quot;ResultsFile&quot; PropertyName=&quot;ResultsFile&quot;/&gt;
+&lt;/RunTests&gt;</pre>
+
+<h2><a id="3+-+RunTestsList+%28MSBuild+Task%29+DEPRECATED" class="HashLink" href="#3+-+RunTestsList+%28MSBuild+Task%29+DEPRECATED">3 - RunTestsList (MSBuild Task) DEPRECATED</a></h2>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  This task was deprecated and will be removed in future versions.</div>
+</p>
+
+<h2><a id="4+-+RecordMockingData+%28MSBuild+task%29" class="HashLink" href="#4+-+RecordMockingData+%28MSBuild+task%29">4 - RecordMockingData (MSBuild task)</a></h2>
+
+<p>Mocking works by recording data (SQLs / results) used for a test. This information is stored (as mocking data) and will be used in all future executions of the test in different environments. </p>
+
+<p>Parameters:<br />
+<u>TestName</u>: <em>string</em><br />
+Specifies the name of the test to record the mocking data for.</p>
+
+<p><u>MockDataFilePath (output)</u>: <em>string</em><br />
+The absolute path where the mocking data file was saved.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical)</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RecordMockingData TestName=&quot;testExample&quot;  ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;&gt;
+    &lt;Output TaskParameter=&quot;MockDataFilePath&quot; PropertyName=&quot;MockPath&quot;/&gt;
+&lt;/RecordMockingData&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RecordMockingData TestName=&quot;testExample&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt;
+    &lt;Output TaskParameter=&quot;MockDataFilePath&quot; PropertyName=&quot;MockPath&quot;/&gt;
+&lt;/RecordMockingData&gt;</pre>
+
+<h2><a id="5+-+JUnitExportTests+%28MSBuild+task%29" class="HashLink" href="#5+-+JUnitExportTests+%28MSBuild+task%29">5 - JUnitExportTests (MSBuild task)</a></h2>
+
+<p>Converts the last execution test results to JUnit format.</p>
+
+<p>Parameters:</p>
+
+<p><u>SourceResultsFile</u>: <em>string (optional)</em><br />
+A source GXtest XML results file to convert to JUnit XML format.</p>
+
+<p><br />
+<u>JUnitTestFilePath (input/output)</u>: <em>string (optional)</em><br />
+An absolute directory path where the JUnit file will be saved / As output contains the JUnit file's absolute path.<br />
+If the directory path does not exist then GXtest will try to create it.<br />
+Passing an absolute file path where test results will be exported is supported.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical).</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;JUnitExportTests JUnitTestFilePath=&quot;C:/path&quot; ServerUserName=&quot;gxtechnical\username&quot; ServerPassword=&quot;password&quot;&gt;  
+    &lt;Output TaskParameter=&quot;JUnitTestFilePath&quot; PropertyName=&quot;JUnitTestFilePathOutput&quot;/&gt;
+&lt;/JUnitExportTests&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;JUnitExportTests JUnitTestFilePath=&quot;C:/non-existingPath&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt; 
+    &lt;Output TaskParameter=&quot;JUnitTestFilePath&quot; PropertyName=&quot;JUnitTestFilePathOutput&quot;/&gt;
+&lt;/JUnitExportTests&gt;</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;JUnitExportTests JUnitTestFilePath=&quot;C:/path/customName.xml&quot; ServerUserName=&quot;local\admin&quot; ServerPassword=&quot;password&quot;&gt; 
+    &lt;Output TaskParameter=&quot;JUnitTestFilePath&quot; PropertyName=&quot;JUnitTestFilePathOutput&quot;/&gt;
+&lt;/JUnitExportTests&gt;</pre>
+
+<h2><a id="6+-+ExportResultsToHTML+%28MSBuild+task%29" class="HashLink" href="#6+-+ExportResultsToHTML+%28MSBuild+task%29">6 - ExportResultsToHTML (MSBuild task)</a></h2>
+
+<p>Converts the last execution test results to custom GXtest HTML format.</p>
+
+<p>Parameters:<br />
+<u>HTMLFilePath (input/output)</u>: <em>string</em><br />
+An absolute directory path where the HTML file will be saved / As output contains the HTML file's absolute path.<br />
+If the directory path does not exist then GXtest will try to create it.<br />
+Passing an absolute file path where test results will be exported is supported.<br />
+If empty, the target directory used is a folder 'TestResults' located inside the KB path.</p>
+
+<p><u>ExportType</u>: string<br />
+All: all tests will be exported.<br />
+Failed: only failed test results (result is Error or Exception) will be exported.<br />
+Passed: only passed test results (result is OK or Warning) will be exported.<br />
+If empty, all test results are exported.</p>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical).</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ExportResultsToHTML ExportType=&quot;All&quot; HTMLFilePath=&quot;C:\folder\&quot; &gt;
+      &lt;Output TaskParameter=&quot;HTMLFilePath&quot; PropertyName=&quot;HTMLFilePath&quot; /&gt;
+&lt;/ExportResultsToHTML&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ExportResultsToHTML HTMLFilePath=&quot;myPath\&quot; &gt;
+      &lt;Output TaskParameter=&quot;HTMLFilePath&quot; PropertyName=&quot;HTMLFilePath&quot; /&gt;
+&lt;/ExportResultsToHTML&gt;</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ExportResultsToHTML ExportType=&quot;Failed&quot; HTMLFilePath=&quot;$(FilePath)&quot; &gt;
+      &lt;Output TaskParameter=&quot;HTMLFilePath&quot; PropertyName=&quot;HTMLFilePath&quot; /&gt;
+&lt;/ExportResultsToHTML&gt;
+</pre>
+
+<h2><a id="7+-+ExportResultsToAllure+%28MSBuild+task%29" class="HashLink" href="#7+-+ExportResultsToAllure+%28MSBuild+task%29">7 - ExportResultsToAllure (MSBuild task)</a></h2>
+
+<p>Converts GXtest execution results to <a href='http://allure.qatools.ru/'>Allure</a> format. The goal is to have integration with tools that allow us to see execution results including successful steps and screenshots for UI commands.</p>
+
+<p><strong>Parameters</strong>:</p>
+
+<p><u>SourceFile</u>: <em>string (optional)</em><br />
+Source GXtest formatted results file to be converted to Allure format. Default value: the path of the current opened KB.</p>
+
+<p><u>TargetDir (input/output)</u>: <em>string (optional)</em><br />
+An absolute directory path where the Allure file will be saved.<br />
+If empty, the target directory used is the same directory as the SourceFile parameter value.<br />
+If the directory path does not exist then GXtest will try to create it.<br />
+It is NOT supported by passing an absolute file path where test results will be exported, since Allure requires a UUID base file name.</p>
+
+<p>Note: this directory is cleaned before the export of results so everything works fine at the Allure report level. Removed files are the ones that end on '<em>-testsuite.xml</em>' or contains '<em>-attachment.</em>'</p>
+
+<p><u>Properties</u>: <em>string (optional)</em><br />
+Properties to be shown as environment variables on Allure reports. Typical values can be the KB path, KB version, and environment name, among others.</p>
+
+<p>The format for this is <em>Properties=&quot;var1=value1;var2=value2;var3=value3&quot;</em></p>
+
+<p>Note: when used from an MSBuild step in Jenkins semicolons (;) must be escaped so they are correctly passed from Jenkins to MSBuild. There are two options:</p>
+
+<p>1- Surround parameters with single quotes e.g.:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+'/p:OtherVariables=&quot;var1=value1;var2=value2;var3=value3&quot;'</pre>
+
+<p>2- Use %3B instead of ; e.g.:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+/p:OtherVariables=&quot;var1=value1%3Bvar2=value2%3Bvar3=value3&quot;</pre>
+
+<p><u>ServerUserName</u>: <em>string</em><br />
+Specifies the server user name (local or gxtechnical).</p>
+
+<p><u>ServerPassword</u>: <em>string</em><br />
+Specifies the server password.</p>
+
+<p>Examples of use in an MSBuild file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ExportResultsToAllure Properties=&quot;KB=$(KBPath);Environment=$(EnvironmentName);CustomFixedVar=customValue;$(OtherVariables)&quot; &gt;
+      &lt;Output TaskParameter=&quot;OutputFile&quot; PropertyName=&quot;OutputFile&quot; /&gt;
+&lt;/ExportResultsToAllure&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ExportResultsToAllure SourceFile=&quot;customPath/myFile.xml&quot; &gt;
+      &lt;Output TaskParameter=&quot;OutputFile&quot; PropertyName=&quot;OutputFile&quot; /&gt;
+&lt;/ExportResultsToAllure&gt;</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Jenkins example: invoked as /p:AllureResultsPath=&quot;$WORKSPACE\allure-results&quot;
+&lt;ExportResultsAllure TargetDir=&quot;$(AllureResultsPath)&quot; Properties=&quot;KB=$(KBPath);Environment=$(EnvironmentName);CustomFixedVar=customValue;$(OtherVariables)&quot; &gt;
+      &lt;Output TaskParameter=&quot;OutputFile&quot; PropertyName=&quot;OutputFile&quot; /&gt;
+&lt;/ExportResultsToAllure&gt;</pre>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+   <br /></div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/18/21 05:22 PM</em></font></td></TR></table></font>

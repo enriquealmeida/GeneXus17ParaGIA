@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>DeepLink external object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?36160,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">DeepLink external object</h1>
+<!--DeepLink external object--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The DeepLink external object helps you manually manage <a href="36163.html">deep linking</a> on your applications.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><img src="./images/39628.png" id="39628" class="WikiImage"/></td>
+			<td style="vertical-align: top;"><img src="./images/39629.png" id="39629" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Properties" class="HashLink" href="#Properties">Properties</a></h2>
+
+<p>It does not have any.</p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods">Methods</a></h2>
+
+<p>It does not have any.</p>
+
+<h2><a id="Events" class="HashLink" href="#Events">Events</a></h2>
+
+<h3><a id="Handle+event" class="HashLink" href="#Handle+event">Handle event</a></h3>
+
+<p>Every link whose base is given by the <a href="36161.html">Deep Link Base URL property</a> will be captured by this event when the device tries to open it. When the event is triggered, it receives a URI and you as a developer must advice when the processing has been handling successful. This action is done by setting an output parameter to True (by default is False) before calling the appropriate panel.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>Input</strong></td>
+			<td style="vertical-align: top;">Uri:<a href="15668.html">URL</a></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Output</strong> </td>
+			<td style="vertical-align: top;">Handled:<a href="4374.html">Boolean</a><br />
+			 </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>Suppose you have an e-commerce website and you are developing the mobile app. It is desirable that the end user will be able to view products on the app when it receives a URL of the website (e.g. by email, WhatsApp, Facebook, or another third-party resource). Also, you want to handle such request for processing or register other information. In such case, in the Smart Device's Main object (which has <a href="36161.html">Deep Link Base URL property</a> set), you must write the following event.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event DeepLink.Handle( &amp;URL, &amp;IsHandled )
+    Composite
+      // Suppose that our website handles URIs such https://www.mystore.com/viewproduct?1
+      if &amp;URL.ToLower().StartsWith(&quot;https://www.mystore.com/&quot;)
+      and &amp;URL.Contains(&quot;viewproduct&quot;) 
+         &amp;Index = &amp;URL.indexof( &quot;?&quot; )+1
+         &amp;Query = &amp;URL.Substring( &amp;Index)
+         &amp;ProductId = &amp;Query.Trim().ToNumeric()
+         &amp;IsHandled = True 
+         SDViewProduct(&amp;ProductId)
+      endIf
+    EndComposite
+EndEvent</pre>
+
+<p>Note how the code is written. First, we must ensure that the request is made to the desired domain (because we can handle a set of different URIs) and then we identify which content has been requested (in our case, &quot;viewproduct&quot;). The following lines parse the parameters in the query (the ProductId), set the process as handled and finally call the Smart Device Panel which knows how to process the request. </p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>This external object must be used only in the <a href="17817.html">Smart Devices Main object</a>.</li>
+	<li>A call for a panel which serves a deep link follows the <a href="23666.html">CallOptions</a> set.</li>
+	<li>When the Handled out parameter is set to True, won't trigger the <a href="36163.html">automatic</a> deep linking mechanism.</li>
+	<li>For parsing multiple parameters, the following code might be helpful.<br />
+	 
+	<ul>
+		<li><strong>Nominated scenario</strong> (i.e. &amp;Query.Contains(&quot;&amp;&quot;) condition is satisfied)
+		<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for &amp;Parm in &amp;Query.SplitRegEx(&quot;&amp;&quot;) // Paramters are separated by ampersand as key=value
+    &amp;i   = &amp;Parm.IndexOf(&quot;=&quot;)
+    &amp;Key = &amp;Parm.Substring(1,&amp;i-1)
+    &amp;Val = &amp;Parm.Substring(&amp;i+1)
+    do Case
+        case &amp;Key = &quot;parm<sub><span style="font-size: 10.8333px;">1</span></sub>&quot;
+            &amp;parm<sub>1</sub> = transform<sub>1</sub>(&amp;Val)
+        case &amp;Key = &quot;parm<sub>2</sub>&quot;
+            &amp;parm<sub>2 </sub>= transform<sub>2</sub>(&amp;Val)
+        ...
+     endCase
+ endFor&lt;/parm2&gt;&lt;/parm1&gt;
+</pre>
+		</li>
+		<li><strong>Positioned scenario</strong> 
+		<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;i = 1
+for &amp;Parm in &amp;Query.SplitRegEx(&quot;,&quot;) // Paramters are separated by comma
+    do Case
+        case &amp;i = 1
+            &amp;parm<sub>1</sub> = transform<sub>1</sub>(&amp;Parm)
+        case &amp;i = 2
+            &amp;parm<sub>2</sub> = transform<sub>2</sub>(&amp;Parm)
+        ...
+    endCase
+    &amp;i += 1
+endFor
+</pre>
+		</li>
+	</ul>
+	For both cases, <span style="font-family: courier new;">transform</span><span style="font-family: courier new;"><sub>i </sub></span>operation will transform a string value to the appropriate <span style="font-family: courier new;">parm<sub>i</sub></span>  data type.<br />
+	For example, If <span style=""><span style="font-family: courier new;">parm<sub>1</sub>:Numeric(4.0)</span></span> and <span style=""><span style="font-family: courier new;">parm2:VarChar(40)</span></span>, the transform operations could be:<br />
+	- <span style=""><span style="font-family: courier new;">&amp;parm<sub>1</sub> = &amp;str.Trim().ToNumeric()</span></span><br />
+	- <span style=""><span style="font-family: courier new;">&amp;parm<sub>2</sub> = &amp;str.Replace(&quot;%20&quot;,&quot; &quot;) </span></span></li>
+</ul>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This external object is available as of <a href="https://wiki.genexus.com/commwiki/wiki?35908,," target="_blank">GeneXus 15 Upgrade 6</a>.</p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><b>Platforms </b></td>
+			<td>Smart Devices (iOS, Android)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li><a href="36161.html">Deep Link Base URL property</a></li>
+	<li><a href="36163.html">HowTo: Deep Linking on Smart Devices</a></li>
+</ul>
+
+<p></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31268.html">GeneXus Core module</a></TD><TD><a href="36163.html">HowTo: Deep Linking on Smart Devices</a></TD><TD><a href="15288.html">Category:Smart Devices API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

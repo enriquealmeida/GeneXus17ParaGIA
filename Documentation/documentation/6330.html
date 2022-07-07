@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Application Localization</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6330,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Application Localization</h1>
+<!--Application Localization--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Automatic translation is a process carried out at specification time that changes every string constant (see exceptions below) into its translated counterpart (static translation) or into an automatically generated message identifier reference (run-time translation). Message identifier references are resolved at run-time by the generated code.</p>
+
+<p>How is automatic translation activated? At the <a href="13601.html">Environment</a> level, select the proper value for the <a href="https://wiki.genexus.com/commwiki/wiki?9126,," target="_blank">Translation type</a> instead of &quot;No translations&quot; value.</p>
+
+<h3><a id="What+is+translated%3F" class="HashLink" href="#What+is+translated%3F">What is translated?</a></h3>
+
+<p>The automatic translation process translates every string constant that appears in your <a href="1756.html">GeneXus</a> code. Exceptions are:</p>
+
+<ul>
+	<li>String literals in HTML forms (those that are <strong>not</strong> the <a href="5948.html">Text Block control</a>).</li>
+	<li>String literals that you do <strong>not</strong> want to be translated (see below).</li>
+	<li>Help (see more in <a href="https://wiki.genexus.com/commwiki/wiki?2091,," target="_blank">HelpTranslation</a>).</li>
+	<li>The first parameter of the <a href="18757.html">SetLanguage function</a> and GetMessageText function.</li>
+	<li>String literals in formulas' definition.</li>
+	<li>String that follows the commands Do, Sub, Event (*) (i.e. Subroutines and Events names)</li>
+</ul>
+
+<p>A &quot;string constant&quot; is a set of characters enclosed in single or double quotes used in your application code. Value ranges, <a href="9918.html">Enumerated Domains Methods and Properties</a>, Combo box and Radio button values are also string constants. They are case sensitive and leading/trailing spaces are ignored.</p>
+
+<p>To avoid translating a string constant you must prefix it with the ! character as in:</p>
+
+<ul>
+	<li>!&quot;Client name&quot; or !'Client name'</li>
+</ul>
+
+<h3><a id="The+translation+cycle" class="HashLink" href="#The+translation+cycle">The translation cycle</a></h3>
+
+<p>When automatic translation is activated, GeneXus automatically builds a list of string constants used in your GeneXus code as objects are specified. These string constants are assumed to be in the Language specified in the <a href="7671.html">Kb Language property</a>. Once the above list is complete and translated into any required language, your application is also translated.</p>
+
+<p>The steps required to translate you application are:</p>
+
+<ol>
+	<li>Set the <a href="https://wiki.genexus.com/commwiki/wiki?9126,," target="_blank">Translation Type Property</a> to either <strong>Static</strong> or <strong>Run-time</strong> (please note that Run-time is not available for all generators).</li>
+	<li>Select a predefined <a href="7258.html">Language object</a> (in the Localization node in the <a href="3210.html">KB Explorer</a>) or create a new one for the target language you want your application to be translated into.</li>
+	<li>Specify the entire application. This way, all strings to be translated are created in the Language objects and are ready for translation.</li>
+	<li>Translate every string constant into the target language. (<a href="https://wiki.genexus.com/commwiki/wiki?2135,," target="_blank">You can use GeneXus Translation Tool</a>)</li>
+	<li>If you selected Run-time translation, just add a <a href="18757.html">SetLanguage function</a> call (see below) to your code, specify, generate and... translate.</li>
+	<li>If you selected Static translation you must select the Language in the Translate to language Environment property, specify, generate and... translate.</li>
+</ol>
+
+<h3><a id="Static+translation" class="HashLink" href="#Static+translation">Static translation</a></h3>
+
+<p>Static translation is achieved at specification time. The resulting application cannot change the language at runtime. Static translation is the best performing translation option as no runtime code is added. To activate Static translation set the &quot;Translation type&quot; property (at <a href="7115.html">Environment</a> level) to Static, and select the language you want to translate into in the <a href="13242.html">Translate to language property</a>. The full translation cycle is described above.</p>
+
+<h3><a id="When+to+use+static+translation" class="HashLink" href="#When+to+use+static+translation">When to use static translation</a></h3>
+
+<p>Static translation is available for all generators (many generators only have this value for the Translate environment property). Static translation provides the best performing code as no runtime overhead is added: translation is performed at specification time. Having your application in different languages requires different executables (one for each language). If you plan to have your application translated into different languages using Static translation, you should set up a new Environment for every new language you want to translate into.</p>
+
+<p><u>Notice</u> that if your languages references different ISO code pages, you will need to change the windows regional settings configuration for each language generation process.</p>
+
+<p>For instance, if you have languages such as Japanese, Chinese, Thai and so on; the static translation process needs to correctly configure the associated <a href="https://wiki.genexus.com/commwiki/wiki?2626,," target="_blank">Language for non-Unicode programs</a> (Windows configuration). If this is problem for your environment switch to run-time translation.</p>
+
+<h3><a id="Run-time+Translation" class="HashLink" href="#Run-time+Translation">Run-time Translation</a></h3>
+
+<p>Run-time translation is available for .NET, Java and .NET Core generators. Run-time translation is the most versatile solution with a little performance overhead (compared to Static translation). When using Run-time translation you can:</p>
+
+<ul>
+	<li>Manage a single set of executables running in different languages;</li>
+	<li>Allow the end-user to select the desired application language among the list of available languages;</li>
+	<li>Add new languages to your application without changing the executable code.</li>
+</ul>
+
+<h3><a id="The+Language+object" class="HashLink" href="#The+Language+object">The Language object</a></h3>
+
+<p>To be able to translate your application you must first select one of the predefined Language objects, or create a new one. A Language object defines a new language that can be referenced later for translation. Language objects have several properties and the list of string constants already found in your code (<strong>none if you did not specify any program</strong>) ready to be translated.</p>
+
+<h3><a id="Predefined+GeneXus+languages" class="HashLink" href="#Predefined+GeneXus+languages">Predefined GeneXus languages</a></h3>
+
+<p>When you create a new <a href="1836.html">Knowledge Base</a> or open an existing one, a set of predefined string constants and Languages are created in it (or updated if they already existed). They are used in the generated code for messages, button captions, labels, etc.</p>
+
+<p>The predefined languages are:</p>
+
+<ul>
+	<li>English</li>
+	<li>German</li>
+	<li>Italian</li>
+	<li>Japanese</li>
+	<li>Portuguese</li>
+	<li>Simplified Chinese</li>
+	<li>Spanish</li>
+	<li>Traditional Chinese</li>
+	<li>Arabic</li>
+</ul>
+
+<p>You can view them in the <a href="3210.html">KB Explorer</a>, in the localization node (under customization):</p>
+
+<p><img src="./images/32864.png" id="32864" class="WikiImage"/></p>
+
+<h4><a id="Cross+reference" class="HashLink" href="#Cross+reference">Cross reference</a></h4>
+
+<p>GeneXus provides a cross reference to where string constants are used.</p>
+
+<h3><a id="Language+consolidation+and+distribution" class="HashLink" href="#Language+consolidation+and+distribution">Language consolidation and distribution</a></h3>
+
+<p>Several options for language management are included.</p>
+
+<p><strong>Export options</strong></p>
+
+<ul>
+	<li>Include GeneXus Messages --&gt; Include the GeneXus messages in the XPZ.</li>
+	<li>Include Untranslated Messages --&gt; Include the untranslated messages in the XPZ.</li>
+</ul>
+
+<p><strong>Import options</strong></p>
+
+<ul>
+	<li>An option called <a href="7616.html">Language Translations</a> is included for managing Language object imports.</li>
+</ul>
+
+<h3><a id="Programming+considerations" class="HashLink" href="#Programming+considerations">Programming considerations</a></h3>
+
+<h4><a id="Language+names+and+description+criteria" class="HashLink" href="#Language+names+and+description+criteria">Language names and description criteria</a></h4>
+
+<p>Shared translations among GeneXus users worldwide can save translation time. It can be achieved if we all have a well-known Language naming convention. GeneXus suggests using the English name for languages as Language object names, and the language name of each language in its language as the Language object description. For example, Spanish:Español, Italian:Italiano, etc.</p>
+
+<h3><a id="Format+function" class="HashLink" href="#Format+function">Format function</a></h3>
+
+<p>Syntax: Format( &lt;FormatExpression&gt;[, &lt;StringExpression1&gt;[, ...]] )</p>
+
+<p>The Format() function is very important for translation purposes as statements may be built differently in different languages.</p>
+
+<p>FormatExpression is a string expression (character or varchar) having zero or more parameter markers (up to 9, from 1 to 9). For example: Format( &quot;%1's age is %2 years old.&quot;, &quot;John&quot;, &quot;13&quot;). In the example, parameter markers are %1 and %2. They state where the values of &quot;John&quot; and &quot;13&quot; are to be embedded in the resulting string. The result must be &quot;John's age is 13 years old&quot;.</p>
+
+<p>If a '%' sign must be included in FormatExpression, it must be preceded by the '\' (backslash) sign. For example: &quot;This is not a parameter marker: \%1&quot;.</p>
+
+<h4><a id="GetMessageText+function" class="HashLink" href="#GetMessageText+function">GetMessageText function</a></h4>
+
+<p>Syntax: GetMessageText(&lt;MessageCode&gt;, [LanguageObjectName])</p>
+
+<p>The GetMessageText function searches the Language &quot;LanguageObjectName&quot; (or the current language if that parameter is omitted) for a given message code. No errors are returned by this function. If the MessageCode is not found in the current Language, the MessageCode is returned. It is, therefore, a good design method to use full-text message codes that can be used as message texts.</p>
+
+<h4><a id="SetLanguage+function" class="HashLink" href="#SetLanguage+function">SetLanguage function</a></h4>
+
+<p>Syntax: SetLanguage (LanguageObjectName)</p>
+
+<p>LanguageObjectName is the name (not the description) of a Language in your Knowledge Base. The SetLanguage function returns 0 if the Language can be changed. Otherwise, it returns a non-zero value. If the specified <a href="7258.html">language</a> cannot be loaded, then no language change is performed and the current language remains as if the method had not been executed. Once the SetLanguage function has been executed successfully, the Language setting remains active for the rest of the session. In Web applications, this means that the GeneXus code automatically saves the value of the current language in the current session.</p>
+
+<p>Note: in order to refresh all the texts and language-dependent elements of the web page, a <strong>refresh</strong> command should be added after the call to SetLanguage function. This refresh command will make a GET of the web page, a different behavior than if the command is not used after a SetLanguage function (check <a href='http://www2.gxtechnical.com/portal/hgxppredirect.aspx?15,26,0,,,24129'>SAC #24129</a>). (remember that making a GET of the web page implies that values inputted on editable fields will be lost)</p>
+
+<h4><a id="GetLanguage+function" class="HashLink" href="#GetLanguage+function">GetLanguage function</a></h4>
+
+<p>Syntax: GetLanguage()</p>
+
+<p>The GetLanguage function returns the name (not the description) of the currently active Language object. The most common usage is to set a variable of your own with the currently selected Language as in the following example. Variable &amp;MyLanguage holds the value of the currently active Language. It is also shown on the screen as a Combo Box allowing the user to select any other available languages.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span style="font-size: small;">Event Start
+    &amp;MyLanguage = GetLanguage()
+    ...
+EndEvent</span>
+
+Event &amp;MyLanguage.Click
+    If SetLanguage(&amp;MyLanguage)&lt;&gt;0
+       ...
+    EndIf
+EndEvent</pre>
+
+<h3><a id="Avoiding+translation+of+automatic+string+constants" class="HashLink" href="#Avoiding+translation+of+automatic+string+constants">Avoiding translation of automatic string constants</a></h3>
+
+<p>Applications include constants that should not be translated. To avoid translating a string constant, you must specify the '<b>!</b>' sign as the starting string constant character, like in the following examples.</p>
+
+<ul>
+	<li>&quot;Client name&quot; or 'Client name' will be translated</li>
+	<li>!&quot;Client name&quot; or !'Client name' will not be translated</li>
+</ul>
+
+<h3><a id="Common+translation+problems" class="HashLink" href="#Common+translation+problems">Common translation problems</a></h3>
+
+<p>Translated Conditions/Where/If Commands In some cases the translated application does not properly work with existing data. Such is the case, for example, of the following comparison: ClientCategory = &quot;Good&quot;. When translated into Spanish, the generated code should look like this: ClientCategory = &quot;Bueno&quot;. This is fine as long as you want to run it against your current Spanish data. The underlying problem is that Data Base data has translatable text (&quot;Good&quot; in the example). Alternatives for fixing the problem are:</p>
+
+<ul>
+	<li>Use Enumerated domains. Enumerated Domain codes are not translated, but their descriptions are.</li>
+	<li>Change the literal to a non-translatable literal !&quot;Good&quot;.</li>
+</ul>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li>As of Android 7.0 (Nutshell), it is possible to define multiple languages on the device settings. Taking advantage of this feature, GeneXus automatically infers which language of the Knowledge Base is closer than the primary dialect set on the device. In this terms, if the primary user language setting is not supported by the application, it will prefer the secondary language (and so on). This process continues until finding one language that matches the user preferences, or it will be used those set on the <a href="7671.html">Kb Language property</a> as default.<br />
+	For example, suppose that the app uses English/Italian, and the default is English.<br />
+	- If the device is set to use Spanish (only), then the app will be displayed in English (default).<br />
+	- But, if the device is set to use Spanish/Italian, then the app will be displayed in Italian.</li>
+</ul>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="7671.html">Kb Language property</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?9126,," target="_blank">Translation type</a><br />
+<a href="13242.html">Translate to language property</a><br />
+<a href="13601.html">Environment Preferences</a><br />
+<a href="9057.html">Autoresize form controls property</a></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="10038.html">Export Translations File</a></TD></TR><TR><TD><a href="42322.html">Getting ready for Right-to-Left Development</a></TD></TR><TR><TD><a href="10040.html">Import Translations File</a></TD><TD><a href="3289.html">Category:Internationalization</a></TD><TD><a href="7616.html">Language Translations Property</a></TD><TD><a href="42319.html">RTL checklist</a></TD></TR><TR><TD><a href="21777.html">SetTheme function (for Web)</a></TD><TD><a href="13242.html">Translate to language property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/14/21 01:24 PM</em></font></td></TR></table></font>

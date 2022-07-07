@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Defining conditions or events that determine the path(s) to follow in a BPD</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?13757,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Defining conditions or events that determine the path(s) to follow in a BPD</h1>
+<!--HowTo: Defining conditions or events that determine the path(s) to follow in a BPD--><div class="TableWikiBody" id="tblwikibody"><p>To define conditions you have the following process symbols:</p>
+
+<p><img src="./images/13758.jpg" id="13758" class="WikiImage"/><b> Inclusive Gateway:</b> This type of Gateway supports situations in which more than one decision may be possible. When a signal reaches this Gateway, a complete evaluation is performed of all the conditions considered in the control. Each condition evaluated as true will result in a signal towards that outflow. There will always have to be at least one true condition.</p>
+
+<p><img src="./images/13759.jpg" id="13759" class="WikiImage"/><b> Event Gateway:</b> It makes it possible to establish a forking of different paths where the decision is based on two or more events that may happen, instead of conditions.</p>
+
+<p><img src="./images/13760.jpg" id="13760" class="WikiImage"/><b> Exclusive Gateway:</b> This type of Gateway divides the flow in two or more paths but the process flow will follow only one of these paths. The choice of the path to follow will be based on the evaluation of the conditions imposed on each path. If no condition is true, the process will be stuck in the Gateway, and for this reason the use of 'default' paths is suggested.</p>
+
+<h3><a id="Inclusive+Gateway" class="HashLink" href="#Inclusive+Gateway">Inclusive Gateway</a></h3>
+
+<p>In this case, the condition can be defined in three different ways based on the complexity of the evaluation to perform.</p>
+
+<p>These options are described below:</p>
+
+<ol>
+	<li>Define an evaluation rule of each edge</li>
+	<li>Define a procedure to evaluate all edges</li>
+	<li>Define a procedure for each edge</li>
+</ol>
+
+<h4><a id="Define+an+evaluation+rule+of+each+edge" class="HashLink" href="#Define+an+evaluation+rule+of+each+edge">Define an evaluation rule of each edge</a></h4>
+
+<p>When you are positioned on an edge you can see that it has the following properties:</p>
+
+<p><img src="./images/13761.jpg" id="13761" class="WikiImage"/></p>
+
+<p>In this case the condition type is Rule and it is an arithmetic expression, which can be defined using attributes of the Transactions included in the diagrams and relevant data together with the following operations: &lt;,&gt;,=,+,*, &lt;&gt;, -.</p>
+
+<p>Example:</p>
+
+<p>There is a car rental process that is started with a Rental task in which the rental details are entered in a Transaction. Some of these details are: person, number of days, make of the car to be rented, etc. Next, the selected make is evaluated using the rule RentalMake = 2; what’s being evaluated here is a secondary attribute of the Rental Transaction. And if the person effectively chose Chevrolet, the flow will continue through the Chevrolet subprocess.</p>
+
+<p><img src="./images/13762.jpg" id="13762" class="WikiImage"/></p>
+
+<h4><a id="Define+a+procedure+to+evaluate+all+edges" class="HashLink" href="#Define+a+procedure+to+evaluate+all+edges">Define a procedure to evaluate all edges</a></h4>
+
+<p>When you are positioned on a Gateway you see the following properties:</p>
+
+<p><img src="./images/13763.jpg" id="13763" class="WikiImage"/></p>
+
+<p>This is the place to define the procedure that will be executed when deciding which path to take. Once a procedure has been defined, the edges will have different properties from those you saw in the previous case, as in this case what has to be defined in each one is their value (condition code), and if it matches the value returned by the procedure it will continue through this path.</p>
+
+<p><img src="./images/13764.jpg" id="13764" class="WikiImage"/></p>
+
+<p>The procedure to evaluate the condition must have the following parameter rule and it can have a maximum of 100 characters:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:&amp;WorkflowProcessDefinition,in:&amp;WorkflowProcessInstance, in: &amp;WorkflowWorkitem, out: &amp;conditionCode);</pre>
+
+<p>Where:</p>
+
+<ul>
+	<li>&amp;WorkflowProcessDefinition is of WorkflowProcessDefinition type</li>
+	<li>&amp;WorkflowProcessInstance is of Workflow ProcessInstance type</li>
+	<li>&amp;WorkflowWorkitem is of WorkflowWorkitem type</li>
+	<li>&amp;conditionCode is of Numeric(4) type</li>
+</ul>
+
+<p><b>Note:</b> The user is responsible for defining that the procedure returns a valid value, that is to say, that it matches any one of the edges.</p>
+
+<p>Example:</p>
+
+<p>Given the car rental process defined above you will create a procedure to evaluate the condition that has the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+  Where RentalId = &amp;WorkflowProcessInstance.GetApplicationDataByName('RentalId').NumericValue
+    if RentalMake = 1
+        &amp;conditionCode = 1
+    Else
+        If RentalMake = 2
+            &amp;conditionCode = 2
+        Endif
+    Endif
+Endfor</pre>
+
+<p>In addition, the parameter rule will have to be defined as explained above.</p>
+
+<p>Once the procedure has been defined, it has to be associated with the Gateway through its properties, and the conditional codes corresponding to each one of them have to be defined in the edges.</p>
+
+<p><img src="./images/13766.jpg" id="13766" class="WikiImage"/></p>
+
+<p><b>Define a procedure for each edge</b></p>
+
+<p>When you are positioned on an edge just like in the case of defining a rule as condition, you can see that it has the following properties:</p>
+
+<p><img src="./images/13767.jpg" id="13767" class="WikiImage"/></p>
+
+<p>In this case the type of condition is Procedure. Next, you need to define the procedure and each edge will be evaluated according to the associated procedure. The associated procedure must have the format defined in the previous case.</p>
+
+<p>The result of the procedure must be 1 if the condition is met and the flow must go on; otherwise, it must be 0.</p>
+
+<h3><a id="Event+Gateway" class="HashLink" href="#Event+Gateway">Event Gateway</a></h3>
+
+<p>In this case the condition must be evaluated in terms of intermediate events, such as:</p>
+
+<ul>
+	<li>Timer</li>
+	<li>Signal</li>
+	<li>Conditional</li>
+</ul>
+
+<p><img src="./images/13768.jpg" id="13768" class="WikiImage"/></p>
+
+<p>For the timer, the process will continue when the time specified in the event has elapsed.<br />
+On the other hand, for the signal it will continue when a signal event of throw type has been defined in an execution thread that is parallel to this one.</p>
+
+<p></p>
+
+<p> </p>
+<br />
+<br />
+<br />
+<br />
+<br />
+
+<link />
+<link />
+<link />
+<link />
+<style type="text/css"><!<a href='CDATA[* {
+}
+'>CDATA[* {
+}
+</a>]></style>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17496.html">Category:BPD Gateways</a></TD><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR><TR><TD><a href="17506.html">Inclusive Gateway</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/23/21 06:41 PM</em></font></td></TR></table></font>

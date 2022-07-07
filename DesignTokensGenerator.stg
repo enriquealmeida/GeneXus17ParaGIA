@@ -1,0 +1,64 @@
+group DesignTokensGroups;
+
+delimiters "$", "$"
+
+generate_tokens(tokens,generateHTMLTags,images, imagesNames) ::=<<
+
+$tokens: {tokenOption | $generate_tokenOption(tokenOption)$};separator="\r\n"$
+$images.keys: {key | $generate_imageOptions(key)$};separator="\r\n"$
+$imagesNames: {name | $generate_image_class(name)$};separator="\r\n"$
+
+>>
+
+generate_tokenOption(tokenOption) ::=<<
+$if (!tokenOption.options)$
+:root
+$else$
+$tokenOption.options: {option | $generate_options(option)$};separator="\r"$
+$endif$
+{
+$tokenOption.tokens: {tokens | $generate_all_tokens(tokens)$};separator="\r\n"$
+}
+>>
+
+generate_all_tokens(tokens) ::=<<
+$tokens.colors.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.spacing.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.fonts.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.fontSizes.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.borders.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.shadows.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.radius.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.mediaQueries.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.times.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.opacity.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.zIndex.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.timingFunction.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+$tokens.custom.tokens:{ prop | $generate_var(prop)$};separator="\r\n"$
+>>
+
+generate_var(prop) ::=<<
+	--$prop.fullName$ : $prop.value$;
+>>
+generate_image_var(image) ::=<<
+	--GX-Image_$image.Name$ : url($image.Url_prefix$$image.Url$);
+>>
+
+generate_image_class(name) ::=<<
+.GX_Image_$name$_Class{content: var(--GX-Image_$name$);}
+>>
+
+generate_options(option) ::=<<
+$if (option.IsDefault)$:root:is([gx-data-$option.Name$="$option.Value$"],:not([gx-data-$option.Name$]))$else$[gx-data-$option.Name$="$option.Value$"]$endif$
+>>
+
+generate_imageOptions(key) ::=<<
+$if (!images.(key).options)$
+:root
+$else$
+$images.(key).options: {opt | $generate_options(opt)$};separator="\r"$
+$endif$
+{
+$images.(key).images : {img | $generate_image_var(img)$};separator="\r\n"$
+}
+>>

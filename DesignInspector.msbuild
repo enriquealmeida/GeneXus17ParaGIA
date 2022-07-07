@@ -1,0 +1,238 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="ImportSketch">
+
+	<PropertyGroup>
+		<GX_PROGRAM_DIR Condition=" '$(GX_PROGRAM_DIR)' == '' ">$(MSBuildProjectDirectory)</GX_PROGRAM_DIR>
+	</PropertyGroup>
+	<Import Project="$(GX_PROGRAM_DIR)\genexus.tasks.targets"/>
+
+	<!--Input Parameters-->
+	<PropertyGroup>
+		<!-- Working KB Properties -->
+		<KBPath></KBPath>
+		<KBVersion></KBVersion>
+		<KBEnvironment></KBEnvironment>
+		<XmlOutputFile></XmlOutputFile>
+		<GxOutput Condition=" '$(GxOutput)' == '' ">Normal</GxOutput>
+		<RedirectIPC Condition="'$(RedirectIPC)' == '' ">false</RedirectIPC>
+		<IgnoreByUserPropertyFlag Condition=" '$(IgnoreByUserPropertyFlag)' == '' ">true</IgnoreByUserPropertyFlag>
+		<!-- Design Inspector Properties-->
+		<DesignSource></DesignSource>
+		<DesignSettings></DesignSettings>
+		<GxmlFilesPath></GxmlFilesPath>
+		<RelativeLayouts></RelativeLayouts>
+		<CreatePalette></CreatePalette>
+		<CreateImages></CreateImages>
+		<CreateFonts></CreateFonts>
+		<CreateMenu></CreateMenu>
+		<CreatePanelAsStencils></CreatePanelAsStencils>
+		<CreateImportForWeb></CreateImportForWeb>
+		<CreateDesignSystem></CreateDesignSystem>
+		<Artboards></Artboards>
+		<Stencils></Stencils>
+		<Style></Style>
+		<Images></Images>
+		<Fonts></Fonts>
+		<Module Condition=" '$(Module)' == '' ">Root Module</Module>
+	</PropertyGroup>
+
+	<Target Name="Open" DependsOnTargets="OpenKB;SelectVersion;SelectEnvironment"/>
+
+	<Target Name="OpenKB">
+		<Error Condition="'$(KBPath)'==''" Text="KB cannot be null" />
+		<Message Text="OpenKnowledgeBase Directory=$(KBPath)" />
+		<OpenKnowledgeBase
+			Directory="$(KBPath)"
+			XmlOutputFile="$(XmlOutputFile)"
+			DatabaseUser  ="$(DatabaseUser)"
+			DatabasePassword ="$(DatabasePassword)"
+			IgnoreByUserPropertyFlag="$(IgnoreByUserPropertyFlag)"
+			Output="$(GxOutput)"
+			RedirectIPC="$(RedirectIPC)"/>
+	</Target>
+
+	<Target Name="SelectVersion" Condition="'$(KBVersion)'!=''" >
+		<SetActiveVersion VersionName="$(KBVersion)" />
+	</Target>
+
+	<Target Name="SelectEnvironment" Condition="'$(KBEnvironment)'!=''">
+		<SetActiveEnvironment EnvironmentName="$(KBEnvironment)" />
+	</Target>
+
+	<Target Name="ImportDesign" DependsOnTargets="Open">
+
+		<!-- Clean output path -->
+		<RemoveDir Directories="$(GxmlFilesPath)"/>
+
+		<!-- Generate gxml files -->
+		<Message Text="Processing Sketch File" Importance="high"/>
+		<Message Text ="F: $(DesignSource)"/>
+		<SketchToGxmlTask
+			Condition="$(GenerateGXML) != false"
+			DesignSource="$(DesignSource)"
+			DesignSettings="$(DesignSettings)"
+			OutputFolder="$(GxmlFilesPath)"
+			RelativeLayouts="$(RelativeLayouts)"
+			CreatePalette="$(CreatePalette)"
+			CreateImages="$(CreateImages)"
+			CreateMenu="$(CreateMenu)"
+			CreatePanelsAsStencils="$(CreatePanelsAsStencils)"
+			CreateImportForWeb="$(CreateImportForWeb)"
+			CreateDesignSystem="$(CreateDesignSystem)"
+			Stencils="$(Stencils)"
+			Artboards="$(Artboards)"
+			Style="$(Style)"
+			Module="$(Module)">
+
+			<!-- LocalDesignPath can be:
+				 - A file path when DesignSource is a file path
+				 - A directory path when DesignSource is an URL -->
+			<Output TaskParameter="LocalDesignPath" PropertyName="LocalDesignPath"/>
+
+		</SketchToGxmlTask>
+
+		<Error Condition="!Exists($(LocalDesignPath))" Text="Source '$(LocalDesignPath)' could not be found"/>
+
+		<!-- Set looking-paths -->
+		<PropertyGroup>
+
+			<!-- Design file data -->
+			<DesignFileName>$([System.IO.Path]::GetFileNameWithoutExtension($(LocalDesignPath)).Replace('.','_'))</DesignFileName>
+			<DesignFilePath>$([System.IO.Path]::GetDirectoryName($(LocalDesignPath)))</DesignFilePath>
+
+			<!-- XML filepaths for CreateExportForImages task -->
+			<InternalImagesXmlPath>$([System.IO.Path]::Combine($(GxmlFilesPath), "InternalImages.xml"))</InternalImagesXmlPath>
+			<ExternalImagesXmlPath>$([System.IO.Path]::Combine($(GxmlFilesPath), "ExternalImages.xml"))</ExternalImagesXmlPath>
+			<ExternalImagesXmlPath2>$([System.IO.Path]::Combine($(GxmlFilesPath), "ExternalImages2.xml"))</ExternalImagesXmlPath2>
+
+			<!-- Images filepaths for inspecting -->
+			<InternalImagesDirectoryPath>$([System.IO.Path]::Combine($(GxmlFilesPath), "Images"))</InternalImagesDirectoryPath>
+			<ExternalImagesDirectoryPath>$([System.IO.Path]::Combine($(DesignFilePath), $([System.String]::Join("",$(DesignFileName), "Images"))))</ExternalImagesDirectoryPath>
+			<ExternalImagesDirectoryPath2>$([System.IO.Path]::Combine($(GxmlFilesPath), $([System.String]::Join("",$(DesignFileName), "Images"))))</ExternalImagesDirectoryPath2>
+
+			<!-- Fonts filepaths for inspecting -->
+			<InternalFontsDirectoryPath>$([System.IO.Path]::Combine($(GxmlFilesPath), "Fonts"))</InternalFontsDirectoryPath>
+			<ExternalFontsDirectoryPath>$([System.IO.Path]::Combine($(DesignFilePath), $([System.String]::Join("",$(DesignFileName), "Fonts"))))</ExternalFontsDirectoryPath>
+			<ExternalFontsDirectoryPath2>$([System.IO.Path]::Combine($(GxmlFilesPath), $([System.String]::Join("",$(DesignFileName), "Fonts"))))</ExternalFontsDirectoryPath2>
+
+		</PropertyGroup>
+
+		<!-- Import Images (before creating panels) -->
+		<Message Condition="$(CreateImages)" Text="Processing Images" Importance="high"/>
+
+		<Message Condition="$(CreateImages)" Text="I: $(InternalImagesDirectoryPath)"/>
+		<CreateExportForImages
+			Condition="$(CreateImages) And Exists($(InternalImagesDirectoryPath))"
+			Folder="$(InternalImagesDirectoryPath)"
+			Filter="$(Images)"
+			Parent="$(Module)"
+			RenderingMode="Original"
+			OutputFile="$(InternalImagesXmlPath)" />
+		<Import
+			Condition="Exists($(InternalImagesXmlPath))"
+			file="$(InternalImagesXmlPath)"/>
+
+		<Message Condition="$(CreateImages)" Text="E1: $(ExternalImagesDirectoryPath)"/>
+		<CreateExportForImages
+			Condition="$(CreateImages) And Exists($(ExternalImagesDirectoryPath))"
+			Filter="$(Images)"
+			Folder="$(ExternalImagesDirectoryPath)"
+			Parent="$(Module)"
+			RenderingMode="Original"
+			OutputFile="$(ExternalImagesXmlPath)" />
+		<Import
+			Condition="Exists($(ExternalImagesXmlPath))"
+			file="$(ExternalImagesXmlPath)"/>
+
+		<Message Condition="$(CreateImages)" Text="E2: $(ExternalImagesDirectoryPath2)"/>
+		<CreateExportForImages
+			Condition="$(CreateImages) And Exists($(ExternalImagesDirectoryPath2)) And '@(ExternalImagesDirectoryPath)' != '@(ExternalImagesDirectoryPath2)'"
+			Filter="$(Images)"
+			Folder="$(ExternalImagesDirectoryPath2)"
+			Parent="$(Module)"
+			RenderingMode="Original"
+			OutputFile="$(ExternalImagesXmlPath2)" />
+		<Import
+			Condition="Exists($(ExternalImagesXmlPath2))"
+			file="$(ExternalImagesXmlPath2)"/>
+
+		<!-- Load Fonts -->
+		<Message Condition="$(CreateFonts)" Text="I: $(InternalFontsDirectoryPath)"/>
+		<ItemGroup Condition="$(CreateFonts) And Exists($(InternalFontsDirectoryPath))">
+			<InternalFontFile Include="$(InternalFontsDirectoryPath)\**\*.ttf" />
+			<InternalFontFile Include="$(InternalFontsDirectoryPath)\**\*.eot" />
+			<InternalFontFile Include="$(InternalFontsDirectoryPath)\**\*.woff" />
+			<InternalFontFile Include="$(InternalFontsDirectoryPath)\**\*.otf" />
+		</ItemGroup>
+		<Message Condition="$(CreateFonts)" Text="E1: $(ExternalFontsDirectoryPath)"/>
+		<ItemGroup Condition="$(CreateFonts) And Exists($(ExternalFontsDirectoryPath))">
+			<ExternalFontFile Include="$(ExternalFontsDirectoryPath)\**\*.ttf" />
+			<ExternalFontFile Include="$(ExternalFontsDirectoryPath)\**\*.eot" />
+			<ExternalFontFile Include="$(ExternalFontsDirectoryPath)\**\*.woff" />
+			<ExternalFontFile Include="$(ExternalFontsDirectoryPath)\**\*.otf" />
+		</ItemGroup>
+		<Message Condition="$(CreateFonts)" Text="E2: $(ExternalFontsDirectoryPath2)"/>
+		<ItemGroup Condition="$(CreateFonts) And Exists($(ExternalFontsDirectoryPath2)) And '@(ExternalFontsDirectoryPath)' != '@(ExternalFontsDirectoryPath2)'">
+			<ExternalFontFile2 Include="$(ExternalFontsDirectoryPath2)\**\*.ttf" />
+			<ExternalFontFile2 Include="$(ExternalFontsDirectoryPath2)\**\*.eot" />
+			<ExternalFontFile2 Include="$(ExternalFontsDirectoryPath2)\**\*.woff" />
+			<ExternalFontFile2 Include="$(ExternalFontsDirectoryPath2)\**\*.otf" />
+		</ItemGroup>
+
+		<!-- Import Fonts (when Design System must be done before creating the desig-system-object) -->
+		<Message Text="Processing Fonts" Importance="high" Condition="$(CreateDesignSystem) And $(CreateFonts)"/>
+		<BulkAddExternalFiles
+			Filter="$(Fonts)"
+			Files="@(InternalFontFile)"
+			IfExists="Overwrite"
+			Parent="$(Module)"
+			Condition="$(CreateDesignSystem) And $(CreateFonts) And '@(InternalFontFile)' != ''"/>
+		<BulkAddExternalFiles
+			Filter="$(Fonts)"
+			Files="@(ExternalFontFile)"
+			IfExists="Overwrite"
+			Parent="$(Module)"
+			Condition="$(CreateDesignSystem) And $(CreateFonts) And '@(ExternalFontFile)' != ''"/>
+		<BulkAddExternalFiles
+			Filter="$(Fonts)"
+			Files="@(ExternalFontFile2)"
+			IfExists="Overwrite"
+			Parent="$(Module)"
+			Condition="$(CreateDesignSystem) And $(CreateFonts) And '@(ExternalFontFile2)' != ''"/>
+
+		<!-- Generate objects from gxml -->
+		<ItemGroup>
+			<GxmlFile Include="$(GxmlFilesPath)\**\*.gxml" />
+		</ItemGroup>
+		<Message Text="Importing Objects into Knowledge Base" Importance="high"/>
+		<CreateFromGxml
+			GxmlFiles="@(GxmlFile)"
+			ImportForWeb="$(CreateImportForWeb)" />
+
+		<!-- Import Fonts (when Theme must be done after creating the theme-object) -->
+		<Message Text="Processing Fonts" Importance="high" Condition="!$(CreateDesignSystem) And $(CreateFonts)"/>
+		<AddExternalFontsToTheme
+			Filter="$(Fonts)"
+			Fonts="@(InternalFontFile)"
+			Theme="$(Style)"
+			Condition="!$(CreateDesignSystem) And $(CreateFonts) And '@(InternalFontFile)' != ''"/>
+		<AddExternalFontsToTheme
+			Filter="$(Fonts)"
+			Fonts="@(ExternalFontFile)"
+			Theme="$(Style)"
+			Condition="!$(CreateDesignSystem) And $(CreateFonts) And '@(ExternalFontFile)' != ''"/>
+		<AddExternalFontsToTheme
+			Filter="$(Fonts)"
+			Fonts="@(ExternalFontFile2)"
+			Theme="$(Style)"
+			Condition="!$(CreateDesignSystem) And $(CreateFonts) And '@(ExternalFontFile2)' != ''"/>
+
+		<!-- Include design file as file object -->
+		<AddExternalFile
+			File="$(DesignSource)"
+			Object="$(DesignFileName)+backup"
+			IfExists="Overwrite"
+			Condition="!$(DesignSource.ToLower().StartsWith('http')) And Exists($(DesignSource))"/>
+
+	</Target>
+
+</Project>

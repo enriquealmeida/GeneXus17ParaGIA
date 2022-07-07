@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Permissions in SD Applications, WW and CRUD Restricted</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17943,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Permissions in SD Applications, WW and CRUD Restricted</h1>
+<!--HowTo: Permissions in SD Applications, WW and CRUD Restricted--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h4><a id="Problem+description" class="HashLink" href="#Problem+description">Problem description</a></h4>
+
+<p>Suppose we have a Smart Devices Application which allows users to see all the products a company distributes.<br />
+Imagine that a security requirement is that both for navigating the products catalog and updating the data, authorization is required.<br />
+Besides, the authorization permissions for the former are not the same as for the latter.</p>
+
+<p>Objects of the application:</p>
+
+<ul>
+	<li>Product Transaction (Business Component)</li>
+	<li>Dashboard1 (<a href="https://wiki.genexus.com/commwiki/wiki?46149,," target="_blank">Dasboard object up to GeneXus Evolution 3</a>) which has the following item:
+	<ul>
+		<li>WorkWithDevicesProduct (<a href="15974.html">WWSD</a> object which lists all the products). By selecting one item of this list you can view the detail of the product; and update, or delete the product if desired. There is also the possibility of adding a new product by using the menu of this object.</li>
+	</ul>
+	</li>
+</ul>
+
+<p>Only authorized users can execute the WorkWithDevicesProduct object (see the products list and products detail), and other users with different permissions, can execute insert, update, delete over the &quot;products&quot; Business Component.<br />
+<br />
+Note that the actions in WWSD panels (insert, update, delete) are related directly to the Business Component associated with the WWSD and not the WWSD itself. That means that, if you apply <a href="https://wiki.genexus.com/commwiki/wiki?9413,," target="_blank">Work With Pattern for Smart Devices</a> to a transaction (&quot;Product&quot;), the &quot;Product&quot; transaction is automatically saved as Business Component exposed as REST web service. In order to control permissions over the actions insert, update, delete, you need to declare permissions over the Business Component itself.</p>
+
+<p>On the other hand, the permissions over the list and view of the item's list are managed in the WWSD object.</p>
+
+<h3><a id="Solution" class="HashLink" href="#Solution">Solution</a></h3>
+
+<p>One possibility is to set <a href="15214.html">Default Integrated Security Level Property</a> to &quot;Authentication&quot; at version level, and configure <a href="15214.html">Integrated Security Level Property</a> to &quot;Authorization&quot; for &quot;WorkWithDevicesProduct&quot; object and &quot;Product&quot; transaction.</p>
+
+<h6><img src="./images/17947.png" id="17947" class="WikiImage"/><br />
+Figure 1.</h6>
+
+<h6><img src="./images/17948.png" id="17948" class="WikiImage"/><br />
+Figure 2.</h6>
+
+<p>Otherwise, <a href="15214.html">Default Integrated Security Level Property</a> at version level can be set to &quot;Authorization&quot; and &quot;WorkWithDevicesProduct&quot; and &quot;Product&quot; transaction objects can take the property value from the environment.</p>
+
+<p>Afterward, we need to create two different roles, one of them (Role1) will enable users to execute the products list, see the products detail, and update the data also (insert, update and delete products).<br />
+Another role (Role2) will enable users to execute the products list but deny the permissions over data update, insert, and delete.</p>
+
+<p>See the following figures for the definition of the roles:</p>
+
+<h6><img src="./images/17949.png" id="17949" class="WikiImage"/><br />
+Figure 3. Role1 definition.</h6>
+
+<h6><img src="./images/17950.png" id="17950" class="WikiImage"/><br />
+Figure 4. Role2 definition.</h6>
+
+<p>In order to give the user permissions to insert a new product, you need to give to him &quot;product_services_insert&quot; permission, where &quot;product&quot; is the Permission Prefix Property value set in Product transaction (see figure 2).</p>
+
+<p>The same idea with the update and delete permissions, &quot;product_services_update&quot; and &quot;product_services_delete&quot; permissions need to be defined.</p>
+
+<p>These permissions (&quot;product_services_insert&quot;, &quot;product_services_update&quot;, and &quot;product_services_delete&quot;) require &quot;product_services_execute&quot; permission (that is to say, if this permission is not allowed, none of the others can be).</p>
+
+<p>&quot;product_services_execute&quot; is the permission to GET the Business Component data.</p>
+
+<p>Note that <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix Property</a> of WorkWithDevicesProduct is set by default to the &quot;Product services&quot; value (see Figure 1).</p>
+
+<p>This means that if &quot;product_services_execute&quot; permission is allowed (which implies that the user can GET the Business Component data), he will also be able to execute WorkWithDevicesProduct <em>by default</em>. That's why users with Role2 will be able to execute WorkWithDevicesProduct and navigate through the products list.</p>
+
+<h4><a id="Conclusion" class="HashLink" href="#Conclusion">Conclusion</a></h4>
+
+<p>As a consequence of the configuration shown, users with role2 will not be allowed to update products, and users with role1 will be able to do it (to be strict, if a user has any role where the permissions are denied, they will not be able to update data, see <a href="https://wiki.genexus.com/commwiki/wiki?20603,," target="_blank">Permission Access Type</a> for more details).</p>
+
+<p>Users with Role1 as well as users with Role2 have &quot;product_services_execute&quot; permission, so both will be able to execute the Product Business Component in order to GET data (read data). Both will be able to execute &quot;WorkWithDevicesProduct&quot; object because of the Permission Prefix property value of this object.</p>
+
+<h4><a id="Important+notes%3A" class="HashLink" href="#Important+notes%3A">Important notes:</a></h4>
+
+<p>1. <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix Property</a> of WorkWithDevicesProduct is set by default to the &quot;Product_services&quot; value.</p>
+
+<p>This is in order to make easier the administration of permissions, it's assumed that a user who will be able to GET (read) the Business Component data, will also be able to execute the WWSD related to this Business Component. But this is a default option and can be changed as Approach #2 explains at the bottom of this page.</p>
+
+<p>2. We define &quot;&lt;BusinessComponentPermissionPrefix&gt;_services_mode&quot; permissions because the transaction in case of SD applications is executed as a Business Component exposed as <a href="14573.html">REST Web Services</a>. See <a href="17916.html">Automatic Permissions generated by GeneXus</a> for more details.</p>
+
+<h4><a id="Approach+%23+2%3A" class="HashLink" href="#Approach+%23+2%3A">Approach # 2:</a></h4>
+
+<p>If you want to discriminate the permission to execute the Business Component and GET the data, from executing the WorkWithDevicesProduct object, you may do the following:</p>
+
+<p>Assign a different <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> for WorkWithDevicesProduct object (other than &quot;product_services&quot;). See the following figure where the permission prefix assigned is &quot;wwdevicesproducts&quot;:</p>
+
+<h6><img src="./images/17952.png" id="17952" class="WikiImage"/><br />
+Figure 5.</h6>
+
+<p>Define a role where &quot;wwdevicesproducts_execute&quot; permission is denied and &quot;product_services_execute&quot; is allowed. The users assigned to this role will be able to GET the Business Component data, but not to execute the WorkWithDevicesProduct object.</p>
+
+<h6><img src="./images/17953.png" id="17953" class="WikiImage"/><br />
+Figure 6.</h6>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="17916.html">Automatic Permissions generated by GeneXus</a><br />
+<a href="17569.html">GAM Roles</a><br />
+<a href="17583.html">GAM Authorization Scenarios</a></p>
+
+<p></p>
+
+<p> </p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18064.html">HowTo: Manage Execute Permissions on WWSD LIST and SD Panels</a></TD><TD><a href="17925.html">HowTo: Permissions in SD Applications</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

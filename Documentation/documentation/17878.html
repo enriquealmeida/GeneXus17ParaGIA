@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>External Object for Android</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17878,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">External Object for Android</h1>
+<!--External Object for Android--><div class="TableWikiBody" id="tblwikibody"><p>Suppose we want to mimic the GeneXus msg method which shows a notification which automatically fades in and out.</p>
+
+<p>You can create a <a href="6148.html">Native External Object</a> within GeneXus; publish the desired method and properties to be called and do the implementation to integrate to the Android platform.</p>
+
+<p>Below there is a walkthrough you can follow to create an External object for the <a href="14453.html">Android platform</a>.</p>
+
+<p>We will use <a href='http://developer.android.com/guide/topics/ui/notifiers/toasts.html'>Toast Notifications</a> for the Android platform which enables sending short and long toasts.</p>
+
+<p>What steps should be followed to add this feature in GeneXus?</p>
+
+<ul>
+	<li>Create an External object: this is the definition in GeneXus and your objects will call the properties, methods and events defined.</li>
+	<li>Create an <a href="33545.html">Extension Library</a> implementing the neccesary code for the desired platform, in this case Android.</li>
+</ul>
+
+<h3><a id="Create+an+External+Object" class="HashLink" href="#Create+an+External+Object">Create an External Object</a></h3>
+
+<p>Create a New <em>Native External object</em> called <em>MyApi</em>; make sure to set the following property values:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="10" cellspacing="0">
+	<tbody>
+		<tr>
+			<td>Android External name</td>
+			<td>MyApi</td>
+		</tr>
+		<tr>
+			<td>External Package Name</td>
+			<td>com.example.samplemodule<sup>1</sup></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><sup>1</sup> - This value may change depending on the name used for your library; for this case we will add the component to <a href="38277.html">this</a> existing sample.</p>
+
+<p>Add a new <strong>method </strong>called <em>ShortToast</em> with the following values:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="10" cellspacing="0">
+	<tbody>
+		<tr>
+			<td>Is Static</td>
+			<td>True</td>
+		</tr>
+		<tr>
+			<td>External Member Type</td>
+			<td>Instance</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p>... and a character <strong>parameter </strong>using:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="10" cellspacing="0">
+	<tbody>
+		<tr>
+			<td>Access Type</td>
+			<td>In</td>
+		</tr>
+		<tr>
+			<td>Type</td>
+			<td>VarChar, Length: 128</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p>Add a second <strong>method </strong>called <em>LongToast</em> with the same parameters, the following figure details the desired result:</p>
+
+<p><img src="./images/33541.gif" id="33541" class="WikiImage"/></p>
+
+<p>Done! this is the declaration needed from the GeneXus perspective.</p>
+
+<h4><a id="Usage+in+GeneXus" class="HashLink" href="#Usage+in+GeneXus">Usage in GeneXus</a></h4>
+
+<p>Once you save the external object, you can use it with the following syntax:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MyApi.ShortToast(&quot;Hello Toast!&quot;)
+MyApi.LongToast(&amp;myMessage)
+</pre>
+
+<p>Now, we have to do some implementation to get this External Object working.</p>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>The next step is to implement the <em>MyApi</em> class in a <a href="33545.html">Extension Library</a>. If you want to get started from scratch check <a href="33546.html">this article</a>.</p>
+
+<h4><a id="MyApi.Java" class="HashLink" href="#MyApi.Java">MyApi.Java</a></h4>
+
+<p>Create a new class <em>MyApi.java</em> on the package <em>com.example.samplemodule</em>:</p>
+
+<pre>
+package com.example.samplemodule;
+
+import android.support.annotation.NonNull;
+import android.widget.Toast;
+import com.artech.base.services.Services;
+import com.artech.externalapi.ExternalApi;
+import com.artech.externalapi.ExternalApiResult;
+
+import java.util.List;
+
+public class MyApi extends ExternalApi
+{
+    // GeneXus API Object Name
+    final static String NAME = &quot;MyApi&quot;;
+
+    // API Method Names
+    private static final String METHOD_SHORT_TOAST = &quot;shortToast&quot;;
+    private static final String METHOD_LONG_TOAST = &quot;longToast&quot;;
+
+    public MyApi(ApiAction action) {
+        addMethodHandler(METHOD_SHORT_TOAST, 1, mShortToast);
+        addMethodHandler(METHOD_LONG_TOAST, 1, mLongToast);
+    }
+
+    @SuppressWarnings(&quot;FieldCanBeLocal&quot;)
+    private final IMethodInvoker mShortToast = new IMethodInvoker() {
+        @Override
+        public @NonNull ExternalApiResult invoke(List&lt;Object&gt; parameters) {
+            final String parValue = (String) parameters.get(0);
+            sendToast(parValue,Toast.LENGTH_SHORT);
+            return ExternalApiResult.SUCCESS_CONTINUE;
+        }
+    };
+
+    @SuppressWarnings(&quot;FieldCanBeLocal&quot;)
+    private final IMethodInvoker mLongToast = new IMethodInvoker() {
+        @Override
+        public @NonNull ExternalApiResult invoke(List&lt;Object&gt; parameters) {
+            final String parValue = (String) parameters.get(0);
+            sendToast(parValue,Toast.LENGTH_LONG);
+            return ExternalApiResult.SUCCESS_CONTINUE;
+        }
+    };
+
+    private void sendToast(final String value, final int duration)
+    {
+        Services.Log.debug(NAME,&quot;Toast:'&quot;+value+&quot;' duration:&quot;+duration); //$NON-NLS-1$
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getContext(),value,duration).show();
+            }
+        });
+    }
+}</pre>
+
+<h4><a id="External+Object+methods" class="HashLink" href="#External+Object+methods">External Object methods</a></h4>
+
+<p>Declare your method handlers on the class constructor; you can use the following methods:</p>
+
+<ul>
+	<li>addSimpleMethodHandler</li>
+	<li>addMethodHandler</li>
+	<li>addMethodHandlerRequestingPermissions</li>
+</ul>
+
+<p>for the sample we used addMethodHandler:</p>
+
+<pre>
+addMethodHandler(METHOD_SHORT_TOAST, 1, mShortToast);
+addMethodHandler(METHOD_LONG_TOAST, 1, mLongToast);
+</pre>
+
+<p>And then define the invoke method and detail the implementation detail; for the case you will need it for the <em>mShortToast</em> and <em>mLongToast</em> handlers:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+@SuppressWarnings(&quot;FieldCanBeLocal&quot;)
+private final IMethodInvoker mShortToast = new IMethodInvoker() {
+    @Override
+    public @NonNull ExternalApiResult invoke(List&lt;Object&gt; parameters) {
+        final String parValue = (String) parameters.get(0);
+        sendToast(parValue,Toast.LENGTH_SHORT);
+        return ExternalApiResult.SUCCESS_CONTINUE;
+    }
+};</pre>
+
+<p>For further detail check <a href="33546.html">this article</a>.</p>
+
+<p>The method arguments for the invoke method are the following:</p>
+
+<ul>
+	<li><em>parameters</em>: list of parameters defined in the GeneXus External object.</li>
+</ul>
+
+<p>The developer must get the list of parameters for the method; do the casting needed and delegate to the code that implements the feature. When using basic data type arguments, you can use the toString method to get a list of String parameters:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+final String parValue = (String) parameters.get(0);</pre>
+
+<p>For those cases, when you are using an SDT or SDT collection object, you will need to cast it to Entity or EntityList (package com.artech.base.model).</p>
+
+<p>In relation to the <em>Toast</em> sample, the external object defines the <em>ShortToast</em> and <em>LongToast</em> methods using string arguments; when executing <em>MyApi.ShortToast(&quot;Hello Toast!&quot;)</em> the following code will actually be executed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+private void sendToast(final String value, final int duration)
+{
+    Services.Log.debug(NAME,&quot;Toast:'&quot;+value+&quot;' duration:&quot;+duration); //$NON-NLS-1$
+    getActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(getContext(),value,duration).show();
+        }
+    });
+}
+</pre>
+
+<p>The <em>value</em> variable gets the &quot;Hello Toast!&quot; value and the <em>duration</em> parameter the Toast type (short or long) to execute. The final result is:</p>
+
+<p><img src="./images/33540.gif" id="33540" class="WikiImage"/></p>
+
+<h4><a id="Initialization" class="HashLink" href="#Initialization">Initialization</a></h4>
+
+<p>You need to initialize the External object, locate the <em>initialize</em> method from Module class and add the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ExternalApiDefinition mAPI = new ExternalApiDefinition(
+        MyApi.NAME,
+        MyApi.class
+);</pre>
+
+<p>Notice in this case we are using the <em>SampleModule.java</em> because we are reusing the class from the <em>AndroidExtensionSample</em> and it defines it in the \Android\ModuleClass tag defined in the .library file</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ModuleClass&gt;com.example.samplemodule.SampleModule&lt;/ModuleClass&gt;
+</pre>
+
+<h4><a id="Declaration" class="HashLink" href="#Declaration">Declaration</a></h4>
+
+<p>Locate the GENEXUS_HOME\Libraries\SampleLibrary\SampleLibrary.library file and add a new value for the external object under the <em>Implements</em> tag</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Implements&gt;
+    ...
+    &lt;ExternalObject name=&quot;MyApi&quot;/&gt;
+    ...
+&lt;/Implements&gt;
+</pre>
+
+<p>Great, you finished the implementation section.</p>
+
+<h3><a id="Compilation" class="HashLink" href="#Compilation">Compilation</a></h3>
+
+<p>Execute the following command from your Android module location:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+gradlew publishDebugPublicationToLocalRepository</pre>
+
+<p>After the process finished the library gets compiled and is copied to the GENEXUS_HOME\Android\m2Repository location so it will be included in the next Android compilation. A successful build should look like the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&gt;gradlew publishDebugPublicationToLocalRepository
+:library:androidSourcesJar
+...
+:library:compileReleaseJavaWithJavac
+Incremental compilation of X classes completed in Y secs.
+...
+:library:bundleRelease
+:library:publishDebugPublicationToLocalRepository
+BUILD SUCCESSFUL</pre>
+
+<p>Done! You are ready to test your Android <em>MyApi</em> external object.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>When using extension points; the <a href="14974.html">Knowledge Base navigator</a> utility is no longer a valid option because it does not contain the platform-specific code added via the defined extensibility points. For those cases use the APK file instead.</p>
+
+<p>When calling an EO from an offline procedure, a few conditions have to be taken into consideration:</p>
+
+<ul>
+	<li>The methods of the EO have to be static.</li>
+	<li>The names of the methods have to be the same as the ones defined in the EO: <a href="17880.html">https://wiki.genexus.com/commwiki/servlet/wiki?17880,External+Objects+for+Smart+Devices</a>,</li>
+</ul>
+
+<h3><a id="Compatibility" class="HashLink" href="#Compatibility">Compatibility</a></h3>
+
+<p>The article is valid since GeneXus #15 upgrade #3 or higher versions.</p>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>You can add log messages in your extension point to do some basic troubleshooting. For example, you could add the following line in the execute method to log the External Object method called:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+android.util.Log.v(&quot;GeneXusApplication&quot;, &quot;MyApi::&quot;+method);</pre>
+
+<p>or you can use the <em>Services.Log</em> GeneXus Helper class from the package com.artech.base.services.Services</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Services.Log.debug(&quot;GeneXusApplication&quot;, &quot;MyApi::&quot;+method); //$NON-NLS-1$</pre>
+
+<p>Check the <a href='http://developer.android.com/guide/developing/tools/logcat.html'>Android logging system</a> for the result; something similar to the following should appear:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+V/GeneXusApplication(ProcessID): MyApi::ShortToast</pre>
+
+<h3><a id="Installation+checklist" class="HashLink" href="#Installation+checklist">Installation checklist</a></h3>
+
+<p>To deploy the external object to a GeneXus installation:</p>
+
+<ul>
+	<li>Make sure you have set the following environment variables; otherwise the project will not compile:
+	<ul>
+		<li>GENEXUS_HOME to your Genexus installation directory.</li>
+		<li>ANDROID_HOME to your Android SDK directory.</li>
+	</ul>
+	</li>
+	<li>Run the command <em>gradlew publishDebugPublicationToLocalRepository</em> from the Androild extension library location; for this case SampleModule.</li>
+	<li>Copy the .library file to the GENEXUS_HOME\Libraries\LibraryName\ folder; it added the MyAPI External object information.</li>
+	<li>Import an xpz with the External Object definition and use it.</li>
+	<li>Rebuild the Smart Devices objects.</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<ul>
+	<li><a href="33545.html">Extension Library</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?48117,," target="_blank">Android Flexible Client Deprecations</a></li>
+</ul>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6148.html">External Object: Native Object</a></TD><TD><a href="17880.html">External Objects for Smart Devices</a></TD></TR><TR><TD><a href="29656.html">HowTo: Compile Android's FlexibleClient</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/21/22 06:29 PM</em></font></td></TR></table></font>

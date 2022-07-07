@@ -1,0 +1,59 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WinForm Template for Leaf Levels" %>
+<%@ Property Name="helper" Type="Artech.Genexus.Common.Helpers.TemplateHelper" %>
+<%@ Property Name="TransactionLevel" Type="TransactionLevel" %>
+<%@ Property Name="Counters" Type="Dictionary<string,int>"%>
+
+<%
+	if (helper.CurrentPoint.Y + helper.UISettings.GridInsets.Top + helper.UISettings.GridHeight <= helper.UISettings.MaximumControlAttributeBottom)
+	{	
+		string levelFullName = TransactionLevel.FullType.Replace(".", "_");
+		IDictionary<TransactionAttribute, Artech.Genexus.Common.Objects.Attribute> descAttNames;
+		IList<int> toExclude = DefaultFormHelper.CalculateExcluded(TransactionLevel, out descAttNames);		
+		helper.CurrentPoint.Y = helper.CurrentPoint.Y + helper.UISettings.GridInsets.Top;
+		helper.CurrentPoint.X = Math.Max(helper.CurrentPoint.X, helper.UISettings.MinimumGridLeft);
+		
+		IList<Artech.Genexus.Common.ITypedObject> gridAtts = new List<Artech.Genexus.Common.ITypedObject>();
+		IList<string> gridColTitleExpr = new List<string>();
+		foreach (TransactionAttribute trnAttribute in TransactionLevel.Attributes)
+		{
+			if (!toExclude.Contains(trnAttribute.Attribute.Id) && !DefaultFormHelper.IsHiddenAttribute(trnAttribute))
+			{
+				string colTitleProperty = "ColumnTitle";
+				Artech.Genexus.Common.Objects.Attribute attName;
+				if (!descAttNames.TryGetValue(trnAttribute, out attName))
+				{
+					attName = trnAttribute.Attribute;
+					if (trnAttribute.IsLocal)
+						colTitleProperty = "ContextualTitle";
+				}
+
+				gridAtts.Add(trnAttribute.Attribute);
+				string colTitleExpr = String.Format("={0}.{1}", attName.Name, colTitleProperty);
+				gridColTitleExpr.Add(colTitleExpr);
+			}
+		}
+		Size gridSize = helper.UISettings.GetGridSize(gridAtts, gridColTitleExpr, helper.UISettings.GridHeight);
+		int gridSizeWidth = gridSize.Width;
+		if (gridSize.Width <= helper.UISettings.MaximumGridWidth)
+			gridSize.Width = 0;	// Para que quede con AutoResize.
+%>
+		<%= WinForm.BeginGrid("Grid" + levelFullName, null, helper.CurrentPoint, gridSize, null, null) %>
+<%
+		IEnumerator<string> colTitleEnum = gridColTitleExpr.GetEnumerator();
+		foreach (Artech.Genexus.Common.ITypedObject column in gridAtts)
+		{
+			if (colTitleEnum.MoveNext())
+			{
+%>
+				<%= WinForm.GridAttribute(column.Name, null, null, colTitleEnum.Current) %>
+<%			
+			}
+		}
+%>
+		<%= WinForm.EndGrid() %>
+<%
+		helper.CurrentPoint.Y = helper.CurrentPoint.Y + gridSize.Height + helper.UISettings.GridInsets.Bottom; 
+		helper.MaxX = Math.Max(helper.MaxX, helper.CurrentPoint.X + gridSizeWidth + helper.UISettings.GridInsets.Right);
+		helper.CurrentPoint.X = helper.UISettings.FormInsets.Left ;
+	}
+%>

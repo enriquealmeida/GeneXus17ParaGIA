@@ -1,0 +1,69 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ SubTemplate Name="AbstractFormInnerLevel" File="TrnAbstractFormLayout_InnerLevel_FioriTemplate.dkt"  MergeProperties="True"  %>
+<%@ SubTemplate Name="WebFormLayoutButton" File="TrnWebFormLayout_Button.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="WebFormLayoutButtonToolbar" File="TrnWebFormLayout_ButtonToolbar.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="AbstractFormLayoutToolbar" File="TrnAbstractFormLayout_Toolbar.dkt" MergeProperties="True" %>
+<%@ SubTemplate Name="AbstractFormLayoutFormButtons" File="TrnAbstractFormLayout_FormButtons.dkt" MergeProperties="True" %>
+<%@ Property Name="transaction" Type="Artech.Genexus.Common.Objects.Transaction" %>
+<%@ Property Name="GenerateToolbar" Type="System.Boolean" %>
+<%@ Property Name="GenerateDelete" Type="System.Boolean" %>
+<%@ Property Name="Counters" Type="System.Collections.Generic.Dictionary<string,int>"%>
+
+<%
+	IDictionary<TransactionAttribute, Artech.Genexus.Common.Objects.Attribute> descAttNames;
+	IList<int> toExclude = DefaultFormHelper.CalculateExcluded(transaction.Structure.Root, out descAttNames);
+	ResponsiveSizes sizes = DefaultFormHelper.CalculateResponsiveSizes(transaction.Structure.Root, GenerateToolbar, false, false, true);
+	ResponsiveSizes MainTableSizes = DefaultFormHelper.CalculateContainerSizes();
+	ResponsiveSizes TableTopSizes = DefaultFormHelper.CalculateTableTopSizes();
+%>
+<%= WebLayout.BeginLayout() %>
+	<%= WebLayout.BeginResponsiveTable(TableTopSizes, "MainTable", "WWAdvancedFormContainer") %>		
+		<%= WebLayout.BeginTableRow() %>
+			<%= WebLayout.BeginTableCell() %>		
+				<%= WebLayout.BeginResponsiveTable(sizes, "FormContainer", "FormContainer") %>	
+					<%= WebLayout.BeginTableRow() %>
+						<%= WebLayout.BeginTableCell() %>
+							<%= WebLayout.BeginResponsiveTable(TableTopSizes, "TitleContainer", "TableTop") %>	
+								<%= WebLayout.BeginTableRow() %>
+									<%= WebLayout.BeginTableCell() %>
+										<%= WebLayout.TextBlock("Title", "Title", System.Security.SecurityElement.Escape(transaction.Description)) %>
+									<%= WebLayout.EndTableCell() %>
+								<%= WebLayout.EndTableRow() %>
+								<%= WebLayout.BeginTableRow() %>
+									<%= WebLayout.BeginTableCell() %>
+										<%= WebLayout.ErrorViewer("ErrorViewer") %>
+									<%= WebLayout.EndTableCell() %>
+								<%= WebLayout.EndTableRow() %>	
+							<%= WebLayout.EndResponsiveTable() %>		
+						<%= WebLayout.EndTableCell() %>	
+					<%= WebLayout.EndTableRow() %>	
+	<%
+			if (GenerateToolbar) 
+			{
+	%>
+					<%= WebLayout.BeginTableRow() %>
+						<%= WebLayout.BeginTableCell("ToolbarCell", "ToolbarCellClass") %>
+							<%= WebLayout.BeginActionGroupBlock("Toolbar") %>
+							<%= WebLayout.EndActionGroupBlock() %>
+						<%= WebLayout.EndTableCell() %>
+					<%= WebLayout.EndTableRow() %>
+			<%
+					}
+			%>					
+			<%@ CallSubTemplate AbstractFormInnerLevel TransactionLevel='transaction.Structure.Root' Counters="Counters" %>					
+				<%= WebLayout.EndResponsiveTable() %>	
+			<%= WebLayout.EndTableCell() %>	
+		<%= WebLayout.EndTableRow() %>		
+		<%= WebLayout.BeginTableRow() %>
+			<%= WebLayout.BeginTableCell(null,null,null,null,"Right",null) %>
+				<%= WebLayout.BeginActionGroupBlock("FormButtons") %>
+				<%= WebLayout.EndActionGroupBlock() %>
+			<%= WebLayout.EndTableCell() %>
+		<%= WebLayout.EndTableRow() %>
+	<%= WebLayout.EndResponsiveTable() %>
+	<%= WebLayout.BeginActionGroups() %>
+	<%@ CallSubTemplate AbstractFormLayoutFormButtons Layout="Artech.Genexus.Common.Parts.DefaultFormHelper.FormTemplate.Fiori"%>
+	<%@ CallSubTemplate AbstractFormLayoutToolbar Layout="Artech.Genexus.Common.Parts.DefaultFormHelper.FormTemplate.Fiori"%>
+	<%= WebLayout.EndActionGroups() %>
+<%= WebLayout.EndLayout() %>

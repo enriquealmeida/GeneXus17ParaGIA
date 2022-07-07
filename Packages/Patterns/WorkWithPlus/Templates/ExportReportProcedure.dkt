@@ -1,0 +1,1266 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="ReportTemplate" Type="Artech.Genexus.Common.Objects.Procedure" %>
+<%@ Property Name="HasReportTemplateInstance" Type="System.Boolean" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersLoadState" File="DynamicFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="RegularFiltersLoadState" File="RegularFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubGridEventsForEachConditions" File="GridEventsForEachConditions.dkt" MergeProperties="True"%>
+
+// Exports the contents of a grid (using the selected order and filters) to a PDF file.
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+	DynamicFilterAttributesElement dynamicFilters = gridObject.Table.GetDynamicFilters();
+	bool hasDynamicFilters = (dynamicFilters != null && dynamicFilters.Items.Count > 0);
+
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	SettingsTemplateElement template = wwInstance.GetAppropiateTemplate();
+	SettingsExportReportActionElement exportSettings = settings.StandardActions.ExportReport;
+	bool generateDataSelector = DataSelectorHelper.GenerateDataSelector(gridObject, settings);
+	bool printFilters = exportSettings.IsShowFiltersOnlyModified();
+	bool hasReportTemplate = ReportTemplate != null;
+	bool addSecurityEndIf = false;
+	string mainIndentation = "";
+	IStandardActionReportElement actionElement = null;
+
+	HierarchySettingsElement hierarchySettings = (gridObject is SelectionElement ? ((SelectionElement)gridObject).HierarchySettings : null);
+	
+	bool hasReportTemplateInstance = (exportSettings.ReportTemplatePI != null);
+	
+	string ConditionalPrintblockVariableName = "ConditionalRecordVariable";
+	Procedure proc = (Procedure)Object;
+    Variable varConditionToPrintBlock = proc.Variables.GetVariable(ConditionalPrintblockVariableName);
+	bool showConditionToPrintPrintblock = (varConditionToPrintBlock != null);
+
+	bool hasAttsSecurity = settings.Security.HasAttributesSecurity();
+	List<IAttributesItem> attAndVarsWithSec = new List<IAttributesItem>();
+
+	IGrid iGrid = gridObject.GetGrid();
+	bool hasConditionalFormattingFilters = iGrid is GridGeneralElement && ((GridGeneralElement)iGrid).ConditionalFormatting != null && ((GridGeneralElement)iGrid).ConditionalFormatting.HasFilter;
+	bool exportTotalizers = exportSettings.IncludeTotalizers && iGrid.HasTotalizers();
+	List<IAttributesItem> allGridAttsAndVars = iGrid.GetAllAttributesAndVariablesOfThisGrid(true, true);
+	bool sendParametersBySession = settings.Grid.IsSendGridStateToProceduresBySession();
+	bool hasRuntimeColumnTitle = false;
+	List<IAttributesItem> totAtts = exportTotalizers ? new List<IAttributesItem>() : null;
+
+	foreach (IAttributesItem item in allGridAttsAndVars)
+	{
+		if (item.ShowInExportReport())
+		{
+			if (hasAttsSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue())
+			{
+				attAndVarsWithSec.Add(item);
+			}
+			hasRuntimeColumnTitle = hasRuntimeColumnTitle || proc.Variables.GetVariable(item.ControlName.TrimStart('&') + "ColumnTitle") != null;
+			if (exportTotalizers && item.HasTotalizer())
+			{
+				totAtts.Add(item);
+			}
+		}
+	}
+	exportTotalizers = exportTotalizers && totAtts.Count > 0;
+	bool hasAttsSecurityCode = attAndVarsWithSec != null && attAndVarsWithSec.Count > 0;
+	if (wwInstance.Settings.Security.IsAdvancedOrGAM())
+	{
+		actionElement = (IStandardActionReportElement)gridObject.GetStandardAction(StandardAction.ExportReport);
+		bool isTypeAdvanced = wwInstance.Settings.Security.IsTypeAdvanced();
+		if (actionElement != null && (isTypeAdvanced || !Object.GetPropertyValue<bool>(Properties.PRC.MainProgram)))
+		{
+			string secFuntionKey = actionElement.SecFuntionKey;
+			if (isTypeAdvanced && (secFuntionKey == null || secFuntionKey.Trim() == "") && !string.IsNullOrEmpty(actionElement.GetOriginalSecFuntionKey()))
+			{
+				secFuntionKey = gridObject.GetSecurityFunctionKey();
+			}
+			if (secFuntionKey != null && secFuntionKey.Trim() != "")
+			{
+				addSecurityEndIf = true;
+				mainIndentation = "	";
+				if (isTypeAdvanced)
+				{
+%>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' SecurityFunction='secFuntionKey' IndentLevelChar='"\t"' %>
+
+<%
+				}
+				else
+				{
+					List<string> functionList = SettingsSecurityAdvancedElement.GetFunctionsList(secFuntionKey);
+					if (functionList.Count > 0)
+					{
+						if (functionList.Count > 1)
+						{
+%>
+&SecurityFunctionalityKeys = new()
+<%
+							foreach(string function in functionList)
+							{
+%>
+&SecurityFunctionalityKeys.Add(!'<%= function.Trim() %>')
+<%
+							}
+%>
+&IsAuthorized = <%= settings.Security.SecurityGAM.CheckByFunctionKeysName %>.Udp(&SecurityFunctionalityKeys)
+<%
+						}
+						else
+						{
+%>
+&IsAuthorized = <%= settings.Security.SecurityGAM.CheckByFunctionKeyName %>.Udp(!'<%= functionList[0] %>') 
+<%
+						}
+					}
+				}
+%>
+If &IsAuthorized
+
+<%
+			}
+		}
+	}
+%>
+<%= mainIndentation %><%@ CallSubTemplate SubLoadContext Settings='settings' %>
+<%
+	bool splitTitles = hasReportTemplate || printFilters;
+	string printBlockMainTitle = splitTitles ? "printBlockMainTitle" : "printBlockTitles";
+	if (sendParametersBySession)
+	{
+%>
+
+Do 'LoadGridState'
+<%
+	}
+	if (hasReportTemplate)
+	{
+		if (actionElement == null)
+		{
+			actionElement = (IStandardActionReportElement)gridObject.GetStandardAction(StandardAction.ExportReport);
+		}
+%>
+
+&Title = <%= DVelop.Patterns.WorkWithPlus.Helpers.WorkWithStringValues.StringWithQuotes(LayoutHelper.GetTitle(actionElement.Title, exportSettings.Title, gridObject)) %>
+
+//Report Template Source
+<%
+		if (addSecurityEndIf)
+		{
+%>
+<%= Indentation.Indent(SettingsExportReportActionElement.GetProcedureSourceWithoutSubs(ReportTemplate), 1) %>
+<%
+		}
+		else
+		{
+%>
+<%= SettingsExportReportActionElement.GetProcedureSourceWithoutSubs(ReportTemplate) %>
+<%
+		}
+		if (hasAttsSecurityCode)
+		{
+%>
+
+Do 'AttributesSecurityCode'
+<%
+		}
+	}
+	else
+	{
+		if (hasAttsSecurityCode)
+		{
+%>
+
+<%= mainIndentation %>Do 'AttributesSecurityCode'
+<%
+		}
+%>
+
+<%= mainIndentation %>Do 'PrintMainTitle'
+<%
+	}
+	List<System.Collections.IEnumerable> filtersAddFixedFiltersLists = null;
+	if (printFilters)
+	{
+		filtersAddFixedFiltersLists = SelectionGeneralElement.GetFiltersAddFixedFiltersLists(gridObject, dynamicFilters);
+		if (filtersAddFixedFiltersLists.Count > 0 || hasDynamicFilters || gridObject.HasTitleFilter)
+		{
+%>
+
+<%= mainIndentation %>Do 'PrintFilters'
+<%
+		}
+		else
+		{
+			printFilters = false;
+		}
+	}
+	else if (hasDynamicFilters && !sendParametersBySession)
+	{
+%>
+
+<%= mainIndentation %>Do 'LoadDynamicFilters'
+<%
+	}
+	else if (!sendParametersBySession)
+	{
+		if (gridObject.HasTitleFilter)
+		{
+			foreach (IWorkWithPlusInstanceElement item in iGrid.Items)
+			{
+				if (item is IGridAttributesItem && ((IGridAttributesItem)item).IsIncludeTitleFilterTrue()
+					&& TitleFilterProcedureHelper.ConsiderSelFilterCondition(((IGridAttributesItem)item))
+					&& ((IGridAttributesItem)item).AllowMultipleSelection)
+				{
+					string name = ((IGridAttributesItem)item).Name.TrimStart('&');
+%>
+<%= mainIndentation %>&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson)
+<%
+				}
+			}
+		}
+		if (gridObject.HasFilterMultiple)
+		{
+			foreach (FilterAttributeMultipleGeneralElement filterVar in WorkWithPlusInstance.AllMultipleFilters(gridObject.Table, null))
+			{
+%>
+	&<%= filterVar.Name %>Values.From<%= template.SerializationFormat %>(&<%= filterVar.Name %>Values<%= template.SerializationFormat %>)
+<%
+			}
+		}
+	}
+	if (splitTitles)
+	{
+%>
+
+<%= mainIndentation %>Do 'PrintColumnTitles'
+<%
+	}
+%>
+
+<%= mainIndentation %>Do 'PrintData'
+
+<%= mainIndentation %>Do 'PrintFooter'
+<%
+	if (addSecurityEndIf)
+	{
+%>
+
+EndIf
+
+<%
+	}
+	if (!hasReportTemplate)
+	{
+%>
+
+Sub 'PrintMainTitle'
+
+<%
+		if (!splitTitles)
+		{
+			if (hasAttsSecurityCode)
+			{
+				foreach (IAttributesItem item in attAndVarsWithSec)
+				{
+%>
+
+	If &IsAuthorized<%= item.Name.TrimStart('&') %>
+<%
+					bool hasRuntimeTitle = hasRuntimeColumnTitle && proc.Variables.GetVariable(item.ControlName.TrimStart('&') + "ColumnTitle") != null;
+					if (hasRuntimeTitle)
+					{
+%>
+	//&<%= item.ControlName.TrimStart('&') %>ColumnTitle must be set manually at the beginning of this event
+<%
+					}
+%>
+		&<%= item.Name.TrimStart('&') %>Title = <%= hasRuntimeTitle ? "&" + item.ControlName.TrimStart('&') + "ColumnTitle" : WorkWithStringValues.StringWithQuotes(item.Description) %>
+	EndIf
+<%
+				}
+			}
+			if (hasRuntimeColumnTitle)
+			{
+				foreach (IAttributesItem item in allGridAttsAndVars)
+				{
+					if (item.ShowInExportReport() && (!hasAttsSecurityCode || !attAndVarsWithSec.Contains(item)))
+					{
+						if (proc.Variables.GetVariable(item.ControlName.TrimStart('&') + "ColumnTitle") != null)
+						{
+%>
+
+	//&<%= item.ControlName.TrimStart('&') %>ColumnTitle must be set manually at the beginning of this event
+	&<%= item.Name.TrimStart('&') %>Title = &<%= item.ControlName.TrimStart('&') %>ColumnTitle
+<%
+						}
+					}
+				}
+			}
+		}
+%>
+	<%= SettingsExportReportActionElement.GetPrintBlockName(printBlockMainTitle, proc, settings.HasRTL, 1) %>
+
+EndSub
+
+<%
+	}
+	if (printFilters)
+	{
+%>
+
+Sub 'PrintFilters'
+<%
+		foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFiltersLists)
+		{
+			foreach (IFilter filter in filtersList)
+			{
+				bool isFixedFilter = !(filter is IRegularFilter);
+				if (filter is FilterAttributeMultipleGeneralElement && !sendParametersBySession)
+				{
+%>
+	&<%= filter.Name %>Values.FromJson(&<%= filter.Name %>ValuesJson)
+<%
+					if (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null)
+					{
+%>
+	&<%= filter.Name %>Descriptions.FromJson(&<%= filter.Name %>DescriptionsJson)
+<%
+					}
+				}
+%>
+	If not <%= filter.VariableName %><%= filter is FilterAttributeMultipleGeneralElement || filter.IsDVCombo_Multiple() ? ".Count = 0" : ".IsEmpty()" %>
+<%
+				Artech.Genexus.Common.ITypedObject typeInfo = null;
+				bool hasRangeOrFixedValueOperator = false;
+				if ((isFixedFilter || ((IRegularFilter)filter).ShowDescription) && filter.HasOperators())
+				{
+					if (((FilterAttributeGeneralElement)filter).HasRangeOperator())
+					{
+						hasRangeOrFixedValueOperator = true;
+%>
+		OR not <%= filter.RangeVariableName %>.IsEmpty()
+<%
+					}
+					if (((FilterAttributeGeneralElement)filter).HasFixedValueOperator())
+					{
+						hasRangeOrFixedValueOperator = true;
+%>
+		&FixedValueOperatorDsc = <%= WorkWithStringValues.StringWithQuotes(filter.Description) %>
+<%
+					}
+%>
+		Do Case
+<%
+					int operIndex = 0;
+					foreach (FilterAttributeOperatorElement oper in filter.GetOperators())
+					{
+%>
+			Case <%= filter.GetOperatorVariableName() %> = <%= operIndex %>
+<%
+						if (oper.IsCustomTypeSimple() || oper.IsCustomTypeRange())
+						{
+							string descriptionCaption = filter.Description;
+							if (settings.HasMultilanguage)
+							{
+								descriptionCaption = "format('%1 (%2)', " + WorkWithStringValues.StringWithQuotes(descriptionCaption) + ", " + WorkWithStringValues.StringWithQuotes(oper.Caption) + ")";
+							}
+							else
+							{
+								descriptionCaption = WorkWithStringValues.StringWithQuotes(descriptionCaption + " (" + oper.Caption + ")");
+							}
+%>
+				&Filter<%= filter.Name %>Description = <%= descriptionCaption %>
+<%
+							if (hasRangeOrFixedValueOperator)
+							{
+								if (filter.IsDataTypeBasedOn())
+								{
+									typeInfo = (Artech.Genexus.Common.ITypedObject)filter.Domain;
+									typeInfo = typeInfo ??(Artech.Genexus.Common.ITypedObject)Artech.Genexus.Common.Objects.Attribute.Get(settings.Model, filter.Name);
+								}
+								string attFilterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, filter as IItemWithControlInfo, filter.Name, true, true, settings);
+								if (attFilterName == "&Filter" + filter.Name.TrimStart('&') + "ValueDescription")
+								{
+%>
+<%= Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, filter, attFilterName, filter.Name, true, settings), 4) %>
+<%
+								}
+%>
+				<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFilter" + filter.Name, (Procedure)Object, settings.HasRTL, 4) %>
+<%
+								if (oper.IsCustomTypeRange())
+								{
+									if (settings.HasMultilanguage)
+									{
+										descriptionCaption = "format('%1 (%2) %3', " + WorkWithStringValues.StringWithQuotes(filter.Description) + ", " + WorkWithStringValues.StringWithQuotes(oper.Caption) + ", " + WorkWithStringValues.StringWithQuotes(oper.MiddleText) + ")";
+									}
+									else
+									{
+										descriptionCaption = WorkWithStringValues.StringWithQuotes(filter.Description + " (" + oper.Caption + ") " + oper.MiddleText);
+									}
+%>
+				&FixedValueOperatorDsc = <%= descriptionCaption %>
+				&FixedValueOperatorValue = trim(<%= filter.RangeVariableName %>.ToFormattedString())
+				<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFixedValueOperator", (Procedure)Object, settings.HasRTL, 4) %>
+<%
+								}
+							}
+						}
+						else
+						{
+%>
+				&FixedValueOperatorValue = <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>
+				<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFixedValueOperator", (Procedure)Object, settings.HasRTL, 4) %>
+<%
+						}
+						operIndex++;
+					}
+%>
+		EndCase
+<%
+				}
+				if (!hasRangeOrFixedValueOperator)
+				{
+				if (filter is FilterAttributeMultipleGeneralElement)
+				{
+					string forVarName = filter.Name;
+					FilterAttributeMultipleGeneralElement filterPrompt = (FilterAttributeMultipleGeneralElement)filter;
+					if (filterPrompt.DescriptionsAttribute != null)
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)filterPrompt.DescriptionsAttribute;
+						forVarName += "Description";
+					}
+					else if (filterPrompt.HasFixedDescriptionsToLoad() && filterPrompt.IsDataListFixedValues() && filterPrompt.DataListFixedValuesNotBasedOnEnumerated())
+					{
+						forVarName += "Description";
+%>
+		Do 'Load<%= filterPrompt.Name %>DescriptionsFromValues'
+<%
+					}
+					else
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)filterPrompt.ValuesAttribute;
+						forVarName += "Value";
+					}
+%>
+		&i = 1
+		For &<%= forVarName %> in &<%= forVarName %>s
+			If &i = 1
+				&Filter<%= filter.Name %>Dsc = ''
+			Else
+				&Filter<%= filter.Name %>Dsc += ', '
+			EndIf
+<%
+					if (filterPrompt.HasFixedDescriptionsToLoad() && filterPrompt.IsDataListFixedValues() && filterPrompt.DataListFixedValuesNotBasedOnEnumerated())
+					{
+%>
+			&Filter<%= filter.Name %>Dsc += &<%= forVarName %>
+<%
+					}
+					else
+					{
+%>
+<%= WorkWithStringValues.CleanTabbedSpaces(Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, filter, "&Filter" + filter.Name + "Dsc", forVarName, true, settings), 3), 3) %>
+<%
+					}
+%>
+			&i += 1
+		EndFor
+<%
+				}
+				else
+				{
+					if (filter.IsDataTypeBasedOn())
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)filter.Domain;
+						typeInfo = typeInfo ??(Artech.Genexus.Common.ITypedObject)Artech.Genexus.Common.Objects.Attribute.Get(settings.Model, filter.Name);
+					}
+					string attFilterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, filter as IItemWithControlInfo, filter.Name, true, true, settings);
+					if (isFixedFilter && !filter.IsDVCombo())
+					{
+						//space for compatibility with older versions (to avoid succeeded when upgrading version)
+%>
+<%
+					}
+					if (attFilterName == "&Filter" + filter.Name.TrimStart('&') + "ValueDescription")
+					{
+%>
+<%= WorkWithStringValues.CleanTabbedSpaces(Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, filter, attFilterName, filter.Name, true, settings), 2), 2) %>
+
+<%
+					}
+				}	
+%>
+		<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFilter" + filter.Name, proc, settings.HasRTL, 2) %>
+<%
+				}
+%>
+	EndIf
+<%
+				if (filter.HasRange())
+				{
+%>
+	If not <%= filter.RangeVariableName %>.IsEmpty()
+<%
+					if (settings.HasMultilanguage && (isFixedFilter || ((IRegularFilter)filter).ShowDescription))
+					{
+%>
+		<%= filter.RangeVariableName %>_Description = <%= SettingsExportActionElement.GetRangeFilterMiddleDescription(settings, filter, true, true) %>
+<%
+					}
+%>
+		<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFilter" + filter.Name + "_To", proc, settings.HasRTL, 2) %>
+	EndIf
+<%
+				}
+			}
+		}
+		if (hasConditionalFormattingFilters)
+		{
+%>
+	If not &GridConditionalFormattingFilter.IsEmpty()
+		&FixedValueOperatorDsc = <%= WorkWithStringValues.StringWithQuotes(settings.Labels.ExportCFFDescription) %>
+		Do Case
+<%
+			int condIndex = 1;
+			foreach (DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ICondFormattingItem item in ((GridGeneralElement)iGrid).ConditionalFormatting.CondFormattingItems)
+			{
+				if (!string.IsNullOrEmpty(item.FilterCaption))
+				{
+%>
+			Case &GridConditionalFormattingFilter = <%= condIndex %>
+				&FixedValueOperatorValue = <%= WorkWithStringValues.StringWithQuotes(item.FilterCaption) %>
+<%
+				}
+				condIndex++;
+			}
+%>
+		EndCase
+		<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFixedValueOperator", (Procedure)Object, settings.HasRTL, 2) %>
+	EndIf
+<%
+		}
+	}
+	else if (hasDynamicFilters)
+	{
+%>
+
+Sub 'LoadDynamicFilters'
+<%
+	}
+	if (hasDynamicFilters)
+	{
+		if (!sendParametersBySession)
+		{
+%>
+	&GridState.DynamicFilters.From<%= template.SerializationFormat %>(&GridStateXML)
+<%
+		}
+%>
+<%@ CallSubTemplate DynamicFiltersLoadState Instance='wwInstance' Settings='settings' DynamicFilters='dynamicFilters' ActualFilter='1' SourceType='2' ExcelWriteFilter='printFilters' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	}
+	if (printFilters || hasDynamicFilters)
+	{
+		if (gridObject.HasTitleFilter)
+		{
+			if (printFilters)
+			{
+				foreach (IWorkWithPlusInstanceElement item in iGrid.Items)
+				{
+					if (item is IGridAttributesItem && ((IGridAttributesItem)item).IsIncludeTitleFilterTrue())
+					{
+						IGridAttributesItem gridItem = (IGridAttributesItem)item;
+						string name = gridItem.ControlName.TrimStart('&');
+						bool hasSelectedFilter = TitleFilterProcedureHelper.ConsiderSelFilterCondition(gridItem);
+						if (hasSelectedFilter)
+						{
+							if (gridItem.AllowMultipleSelection)
+							{
+%>
+	&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson)
+<%
+							}
+%>
+	If not &TF<%= name %>_Sel<%= gridItem.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()" %>
+<%
+							Artech.Genexus.Common.ITypedObject typeInfo = gridItem.TypeInfo;
+							string attFilterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, gridItem, "TF" + name + "_Sel", true, true, settings);
+							if (gridItem.AllowMultipleSelection)
+							{
+%>
+		&i = 1
+		For &TF<%= name %>_Sel in &TF<%= name %>_Sels
+			If &i = 1
+				&TF<%= name %>_SelDscs = ''
+			Else
+				&TF<%= name %>_SelDscs += ', '
+			EndIf
+<%
+								if (TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(gridItem))
+								{
+									//TODO:&TF<= name >_SelDsc = &TF<= name >_SelDscs.Item(&i)
+								}
+							}
+							if (attFilterName == "&FilterTF" + name + "_SelValueDescription")
+							{
+%>
+<%= WorkWithStringValues.CleanTabbedSpaces(Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, gridItem, attFilterName, "TF" + name + "_Sel", true, settings), 2 + (gridItem.AllowMultipleSelection ? 1 : 0)), 2 + (gridItem.AllowMultipleSelection ? 1 : 0)) %>
+
+<%
+								if (gridItem.AllowMultipleSelection)
+								{
+%>
+			&TF<%= name %>_SelDscs += &FilterTF<%= name %>_SelValueDescription
+<%
+								}
+							}
+							else if (gridItem.AllowMultipleSelection)
+							{
+%>
+			&TF<%= name %>_SelDscs += &TF<%= name %>_Sel.ToString().Trim()
+<%
+							}
+							if (gridItem.AllowMultipleSelection)
+							{
+%>
+			&i += 1
+		EndFor
+<%
+							}
+%>
+		<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockTF" + name + "_Sel", proc, settings.HasRTL, 2) %>
+<%
+						}
+						bool considerFilterCondition = TitleFilterProcedureHelper.ConsiderFilterCondition(gridItem);
+						if (considerFilterCondition || gridItem.PredefinedOperators != null)
+						{
+							if (hasSelectedFilter)
+							{
+%>
+	Else
+<%
+							}
+							string emptyCondition = "&TF" + name + ".IsEmpty()";
+							string indentStr = (hasSelectedFilter ? "	" : "");
+							int indentN = (hasSelectedFilter ? 1 : 0);
+							if (considerFilterCondition && gridItem.IsSearchBoxRange() || gridItem.PredefinedOperators != null)
+							{
+								emptyCondition = "(" + emptyCondition;
+								if (considerFilterCondition && gridItem.IsSearchBoxRange())
+								{
+									emptyCondition += " AND &TF" + name + "_To.IsEmpty()";
+								}
+								if (gridItem.PredefinedOperators != null)
+								{
+									emptyCondition += " AND &TF" + name + "Operator.IsEmpty()";
+								}
+								emptyCondition += ")";
+							}
+%>
+<%= indentStr %>	If not <%= emptyCondition %>
+<%
+							if (gridItem.PredefinedOperators != null)
+							{
+%>
+<%= indentStr %>		&FixedValueOperatorDsc = <%= WorkWithStringValues.StringWithQuotes(gridItem.Description) %>
+<%= indentStr %>		Do Case
+<%
+								if (considerFilterCondition)
+								{
+%>
+<%= indentStr %>			Case &TF<%= name %>Operator = 0
+<%
+								}
+								indentStr += "\t\t";
+								indentN += 2;
+							}
+							if (considerFilterCondition)
+							{
+								Artech.Genexus.Common.ITypedObject typeInfo = gridItem.TypeInfo;
+								string attFilterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, gridItem, "TF" + name, true, true, settings);
+								if (attFilterName == "&FilterTF" + name + "ValueDescription")
+								{
+%>
+<%= WorkWithStringValues.CleanTabbedSpaces(Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, gridItem, attFilterName, "TF" + name, true, settings), 2 + indentN), 2 + indentN) %>
+
+<%
+								}
+%>
+<%= indentStr %>		<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockTF" + name, proc, settings.HasRTL, 2 + indentStr.Length) %>
+<%
+								if (gridItem.IsSearchBoxRange())
+								{
+									if (settings.HasMultilanguage)
+									{
+%>
+<%= indentStr %>		&TF<%= name %>_To_Description = format('%1 (%2)', <%= WorkWithStringValues.StringWithQuotes(gridItem.Description) %>, <%= WorkWithStringValues.StringWithQuotes(settings.Labels.TSRangeFilterTo) %>)
+<%
+									}
+%>
+<%= indentStr %>		<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockTF" + name + "_To", proc, settings.HasRTL, 2 + indentStr.Length) %>
+<%
+								}
+							}
+							if (gridItem.PredefinedOperators != null)
+							{
+								indentStr = indentStr.Substring(2);
+								int operIndex = 1;
+								foreach (FilterAttributeOperatorElement oper in gridItem.PredefinedOperators)
+								{
+%>
+<%= indentStr %>			Case &TF<%= name %>Operator = <%= operIndex %>
+<%= indentStr %>				&FixedValueOperatorValue = <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>
+<%= indentStr %>				<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFixedValueOperator", (Procedure)Object, settings.HasRTL, 4 + indentStr.Length) %>
+<%
+								operIndex++;
+								}
+%>
+<%= indentStr %>		EndCase
+<%
+							}
+%>
+<%= indentStr %>	EndIf
+<%
+						}
+						if (hasSelectedFilter)
+						{
+%>
+	EndIf
+<%
+						}
+					}
+				}
+			}
+			else
+			{
+				if (!sendParametersBySession)
+				{
+					foreach (IWorkWithPlusInstanceElement item in iGrid.Items)
+					{
+						if (item is IGridAttributesItem && ((IGridAttributesItem)item).IsIncludeTitleFilterTrue()
+							&& TitleFilterProcedureHelper.ConsiderSelFilterCondition(((IGridAttributesItem)item))
+							&& ((IGridAttributesItem)item).AllowMultipleSelection)
+						{
+							string name = ((IGridAttributesItem)item).Name.TrimStart('&');
+%>
+	&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson)
+<%
+						}
+					}
+				}
+			}
+		}
+		if (!printFilters && gridObject.HasFilterMultiple && !sendParametersBySession)
+		{
+			foreach (FilterAttributeMultipleGeneralElement filterVar in WorkWithPlusInstance.AllMultipleFilters(gridObject.Table, null))
+			{
+				if (!filterVar.IsDynamicFilter())
+				{
+%>
+	&<%= filterVar.Name %>Values.FromJson(&<%= filterVar.Name %>ValuesJson)
+<%
+				}
+			}
+		}
+%>
+
+EndSub
+
+<%
+	}
+	if (printFilters && gridObject.HasFilterMultiple)
+	{
+		foreach (FilterAttributeMultipleGeneralElement filterVar in WorkWithPlusInstance.AllMultipleFilters(dynamicFilters, filtersAddFixedFiltersLists, null))
+		{
+			if (filterVar.HasFixedDescriptionsToLoad() && filterVar.IsDataListFixedValues() && filterVar.DataListFixedValuesNotBasedOnEnumerated())
+			{
+%>
+<%= Indentation.Indent(filterVar.GetSubLoadFixedDescriptionsFromValues(WorkWithPlusObject.EXPORTREPORTSELECTION), 1) %>
+<%
+			}
+		}
+	}
+	if (splitTitles)
+	{
+%>
+
+Sub 'PrintColumnTitles'
+
+<%
+		if (SettingsExportReportActionElement.HasPrintBlock("printBlockBeforeGrid", ReportTemplate))
+		{
+%>
+	<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockBeforeGrid", proc, settings.HasRTL, 1) %>
+<%
+		}
+		if (hasAttsSecurityCode)
+		{
+			foreach (IAttributesItem item in attAndVarsWithSec)
+			{
+%>
+
+	If &IsAuthorized<%= item.Name.TrimStart('&') %>
+<%
+				bool hasRuntimeTitle = hasRuntimeColumnTitle && proc.Variables.GetVariable(item.ControlName.TrimStart('&') + "ColumnTitle") != null;
+				if (hasRuntimeTitle)
+				{
+%>
+	//&<%= item.ControlName.TrimStart('&') %>ColumnTitle must be set manually at the beginning of this event
+<%
+				}
+%>
+		&<%= item.Name.TrimStart('&') %>Title = <%= hasRuntimeTitle ? "&" + item.ControlName.TrimStart('&') + "ColumnTitle" : WorkWithStringValues.StringWithQuotes(item.Description) %>
+	EndIf
+<%
+			}
+		}
+		if (hasRuntimeColumnTitle)
+		{
+			foreach (IAttributesItem item in allGridAttsAndVars)
+			{
+				if (item.ShowInExportReport() && (!hasAttsSecurityCode || !attAndVarsWithSec.Contains(item)))
+				{
+					if (proc.Variables.GetVariable(item.ControlName.TrimStart('&') + "ColumnTitle") != null)
+					{
+%>
+
+	//&<%= item.ControlName.TrimStart('&') %>ColumnTitle must be set manually at the beginning of this event
+	&<%= item.Name.TrimStart('&') %>Title = &<%= item.ControlName.TrimStart('&') %>ColumnTitle
+<%
+					}
+				}
+			}
+		}
+%>
+	<%= SettingsExportReportActionElement.GetPrintBlockName(hasReportTemplateInstance ? "printBlockLines_titles" : "printBlockTitles", proc, settings.HasRTL, 1) %>
+
+EndSub
+
+<%
+	}
+%>
+
+Sub 'PrintData'
+
+<%
+	if (wwInstance.HasTransaction())
+	{
+		if (hierarchySettings != null)
+		{
+%>
+	&<%= hierarchySettings.PkAttributeName %>Collection.FromJson(&<%= hierarchySettings.PkAttributeName %>CollectionJson)
+<%
+		}
+%>
+	For each<%= gridObject.GetForEachLevelName(false, true) %>
+<%
+		if (gridObject.Orders.Orders.Count > 0)
+		{
+%>
+<%= Indentation.Indent(gridObject.Orders.ForEachOrder, 2) %>
+<%
+		}
+%>
+<%@ CallSubTemplate SubGridEventsForEachConditions Settings='settings' GridObject='gridObject' AddDefinedByAtts='false' GenerateDataSelector='generateDataSelector' HierarchySettings='hierarchySettings' Grid='iGrid' DynamicFilters='dynamicFilters' Template='template' Parameters='gridObject.GetParameters()' CustomConditions='exportSettings.GetCustomConditionsFromObject(gridObject)' WWInstance='wwInstance' %>
+<%
+	}
+	else
+	{
+		if (!string.IsNullOrEmpty(iGrid.GetSDTCollection()))
+		{
+%>
+	//<%= iGrid.GetSDTCollection() %> must be loaded manually before this code
+
+	For <%= iGrid.GetSDTCollection().Contains(".") ? iGrid.GetSDTCollection().Substring(0, iGrid.GetSDTCollection().IndexOf(".")) : iGrid.GetSDTCollection() %>Item in <%= iGrid.GetSDTCollection() %>
+<%
+		}
+		else
+		{
+%>
+		//this code should be inside the For Each used to load the data
+<%
+			if (hasDynamicFilters || (dynamicFilters != null && dynamicFilters.FixedFilters != null && dynamicFilters.FixedFilters.Items.Count > 0) || gridObject.HasTitleFilter
+				|| DVelop.Patterns.WorkWithPlus.Helpers.DataSelectorHelper.GetSDTBasedGridObjectExampleConditions(gridObject, settings) != "")
+			{
+%>
+
+		//sample conditions available in the Events of <%= gridObject.ObjectName %> object
+
+<%
+			}
+		}
+	}
+
+	foreach (IAttributesItem item in allGridAttsAndVars)
+	{
+		if (item.ShowInExportReport())
+		{
+			string attName = SettingsExportReportActionElement.GetAttributeName(item.TypeInfo, item, item.Name, item is AttributeElement, false, settings);
+			bool attHasSecurity = hasAttsSecurityCode && (hasAttsSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue());
+			string secIndent = "";
+			int secIndentN = 0;
+			if (attHasSecurity)
+			{
+				secIndent = "\t";
+				secIndentN = 1;
+%>
+		If &IsAuthorized<%= item.Name.TrimStart('&') %>
+<%
+			}
+			if (item is VariableElement)
+			{
+%>
+		<%= secIndent %><%= ((VariableElement)item).GetLoadCode() %>
+<%
+			}
+
+			if (attName == "&" + item.Name.TrimStart('&') + "Description")
+			{
+%>
+<%= WorkWithStringValues.CleanTabbedSpaces(Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(item.TypeInfo, item, attName, item.Name, false, settings), 2 + secIndentN), 2 + secIndentN) %>
+<%
+			}
+			else if (attHasSecurity && !attName.StartsWith("&"))
+			{
+				Artech.Genexus.Common.eDBType attType = item.eDBType;
+				if (attType == Artech.Genexus.Common.eDBType.NUMERIC || attType == Artech.Genexus.Common.eDBType.INT || attType == Artech.Genexus.Common.eDBType.DATE || attType == Artech.Genexus.Common.eDBType.DATETIME)
+				{
+%>
+			&<%= attName %>Data = trim(<%= attName %>.ToFormattedString())
+<%
+				}
+				else
+				{
+%>
+			&<%= attName %>Data = <%= attName %>
+<%
+				}
+			}
+			else
+			{
+				if (item is GridVariableElement && (((GridVariableElement)item).Domain is SDT || ((GridVariableElement)item).Domain is Transaction))
+				{
+					string gridSdtColl = iGrid.GetSDTCollection().Contains(".") ? iGrid.GetSDTCollection().Substring(0, iGrid.GetSDTCollection().IndexOf(".")) : iGrid.GetSDTCollection();
+					if (attName == "&" + ((GridVariableElement)item).Name + "Item_" + ((GridVariableElement)item).SdtItem.Replace("item(0).", "").Replace(".", "_") + "Description"
+						|| attName == "&" + ((GridVariableElement)item).Name + "_" + ((GridVariableElement)item).SdtItem.Replace(".", "_") + "Description")
+					{
+%>
+<%= WorkWithStringValues.CleanTabbedSpaces(Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(item.TypeInfo, item, attName, item.Name, false, settings), 2 + secIndentN), 2 + secIndentN) %>
+<%
+					}
+					else if (gridSdtColl.ToLower() == item.Name.ToLower())
+					{
+%>
+<%= secIndent %>		<%= attName %> = <%= gridSdtColl %>Item.<%=  ((GridVariableElement)item).SdtItem.Contains("item(0).") ? ((GridVariableElement)item).SdtItem.Substring(((GridVariableElement)item).SdtItem.IndexOf("item(0).") + "item(0).".Length) : ((GridVariableElement)item).SdtItem %>
+<%
+					}
+					else
+					{
+%>
+<%= secIndent %>		<%= attName %> = <%= item.Name %>.<%= ((GridVariableElement)item).SdtItem.Replace("item(0).", "") %>
+<%
+					}
+				}
+			}
+			if (attHasSecurity)
+			{
+%>
+		EndIf
+<%
+			}	
+		}
+	}
+%>
+
+		Do 'BeforePrintLine'
+<%
+	string indent = "";
+	if (showConditionToPrintPrintblock)
+	{
+		indent = "\t";
+%>
+		If &<%= ConditionalPrintblockVariableName %>
+<%
+	}
+
+	string condFormattingCode = null;
+	if (hasReportTemplateInstance && exportSettings.IncludeCondFormatting)
+	{
+		condFormattingCode = SettingsExportReportActionElement.GetRowConditionalFormattingCode(proc, iGrid, settings);
+	}
+	if (!string.IsNullOrEmpty(condFormattingCode))
+	{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(condFormattingCode, 2 + indent.Length) %>
+<%
+	}
+	else if (hasReportTemplateInstance && exportSettings.ReportTemplateHasLineEven)
+	{
+%>
+		<%= indent %>If &IsLineEven
+		<%= indent %>	<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockLines_data_Even", proc, settings.HasRTL, 3 + indent.Length) %>
+		<%= indent %>Else
+		<%= indent %>	<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockLines_data", proc, settings.HasRTL, 3 + indent.Length) %>
+		<%= indent %>EndIf
+		<%= indent %>&IsLineEven = not &IsLineEven
+<%
+	}
+	else
+	{
+%>
+		<%= indent %><%= SettingsExportReportActionElement.GetPrintBlockName(hasReportTemplateInstance ? "printBlockLines_data" : "printBlockLines", proc, settings.HasRTL, 2 + indent.Length) %>
+<%
+	}
+	if (showConditionToPrintPrintblock)
+	{
+%>
+		EndIf
+<%
+	}
+	
+	if (exportTotalizers)
+	{
+		foreach (var attWithTotalizer in totAtts)
+		{
+			if (attWithTotalizer.GetTotalizer() != "Sum")
+			{
+%>
+		&GridCount += 1
+<%
+				break;
+			}
+		}
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(TotalizersHelper.GetTotalizersInForEachCode(totAtts, "&GridCount = 1", null, false), 2) %>
+<%
+	}
+%>
+		Do 'AfterPrintLine'
+<%
+	if (wwInstance.HasTransaction() || !string.IsNullOrEmpty(iGrid.GetSDTCollection()))
+	{
+%>
+	EndFor
+<%
+	}
+	if (exportTotalizers)
+	{
+%>
+
+	Do 'PrintTotalizers'
+<%
+	}
+	if (hasReportTemplateInstance && exportSettings.ReportTemplateGridHasBorder)
+	{
+%>
+	<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockLines_footer", proc, settings.HasRTL, 1) %>
+<%
+	}
+%>
+
+EndSub
+<%
+	
+	if (exportTotalizers)
+	{
+%>
+
+Sub 'PrintTotalizers'
+<%
+		foreach (var item in totAtts)
+		{
+			string attName = SettingsExportReportActionElement.GetAttributeName(item.TypeInfo, item, item.Name, item is AttributeElement, false, settings);
+			bool attHasSecurity = hasAttsSecurityCode && (hasAttsSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue());
+			string secIndent = "";
+			if (attHasSecurity)
+			{
+				secIndent = "\t";
+%>
+	If &IsAuthorized<%= item.Name.TrimStart('&') %>
+<%
+			}
+			string totCaption = TotalizersHelper.GetOperationCaption(settings, item.GetTotalizer());
+			if (totCaption != "")
+			{
+				totCaption = WorkWithStringValues.StringWithQuotes(totCaption) + " + ";
+			}
+			if (item.GetTotalizer() == "Count")
+			{
+%>
+	<%= secIndent %><%= TotalizersHelper.GetTotalizedVarcharVariableName(item, "Grid") %> = <%= totCaption %>trim(&GridCount.ToFormattedString())
+<%
+			}
+			else
+			{
+				string totVarName = TotalizersHelper.GetTotalizedVariableName(item, null);
+				if (item.GetTotalizer() == "Average")
+				{
+%>
+	<%= secIndent %>If &GridCount > 0
+	<%= secIndent %>	<%= totVarName %> = <%= totVarName %>/&GridCount
+	<%= secIndent %>EndIf
+<%
+				}
+%>
+	<%= secIndent %><%= TotalizersHelper.GetTotalizedVarcharVariableName(item, "Grid") %> = <%= totCaption %>trim(<%= totVarName %>.ToFormattedString())
+<%
+			}
+			if (attHasSecurity)
+			{
+%>
+	EndIf
+<%
+			}
+		}
+%>
+	<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockLines_Totalizers", proc, settings.HasRTL, 1) %>
+
+EndSub
+<%
+	}
+
+	if (sendParametersBySession)
+	{
+%>
+Sub 'LoadGridState'
+
+	// Load grid state from session.
+<%
+		string sessionKey = settings.Objects.IGridObjectName(gridObject, true) + Constants.SessionKeys.GridState;
+		if (!settings.Grid.IsSaveGridStateCustom())
+		{
+%>	
+	&GridState.From<%= template.SerializationFormat %>(&Session.Get(!"<%= sessionKey %>"))
+<%
+		}
+		else
+		{
+		
+%>	
+	If &Session.Get(!"<%= sessionKey %>") = !""
+		&GridState.From<%= template.SerializationFormat %>(LoadGridState.Udp(!"<%= sessionKey %>"))
+	Else
+		&GridState.From<%= template.SerializationFormat %>(&Session.Get(!"<%= sessionKey %>"))
+	Endif	
+<%		
+		}
+		if (gridObject.Orders.NeedsChoice) 
+		{
+%>
+
+	<%= OrdersElement.OrderVariableName %> = &GridState.OrderedBy
+<%
+		}
+		if (gridObject.Orders.HasTitleOrdering)
+		{
+			if (gridObject.Orders.NeedsChoice || !gridObject.Orders.FirstOptionSwapped)
+			{
+%>
+	<%= OrdersElement.OrderDscVariableName %> = &GridState.OrderedDsc
+<%
+			}
+			else
+			{
+%>
+	<%= OrdersElement.OrderDscVariableName %> = &GridState.OrderedBy.IsEmpty() OR &GridState.OrderedDsc
+<%
+			}
+		}
+		if (!printFilters)
+		{
+			filtersAddFixedFiltersLists = SelectionGeneralElement.GetFiltersAddFixedFiltersLists(gridObject, dynamicFilters);
+		}
+		int totalAmountOfRegularFilters = (filtersAddFixedFiltersLists != null) ? filtersAddFixedFiltersLists.Count : 0;
+		totalAmountOfRegularFilters += (hasConditionalFormattingFilters ? 1 : 0);
+		List<IAttributesItem> titlesWithFilters = new List<IAttributesItem>();
+		if (gridObject.HasTitleFilter)
+		{
+			
+			foreach (IWorkWithPlusInstanceElement item in iGrid.Items)
+			{
+				if (item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue())
+				{
+					titlesWithFilters.Add((IFilterableByTitle)item);
+					totalAmountOfRegularFilters ++;
+					if (TitleFilterProcedureHelper.ConsiderFilterCondition((IFilterableByTitle)item) && TitleFilterProcedureHelper.ConsiderSelFilterCondition((IFilterableByTitle)item))
+					{
+						totalAmountOfRegularFilters++;
+					}
+				}
+			}
+		}
+		if (totalAmountOfRegularFilters > 0 || (sendParametersBySession && gridObject.GetParameters() != null && gridObject.GetParameters().Count > 0))
+		{
+%>
+
+<%@ CallSubTemplate RegularFiltersLoadState GridObject='gridObject' Instance='wwInstance' TotalAmountOfRegularFilters='totalAmountOfRegularFilters' FiltersAddFixedFilters='filtersAddFixedFiltersLists' TitlesWithFilters='titlesWithFilters' HasConditionalFormattingFilters='hasConditionalFormattingFilters' IsWebPanelLoad='false' SourceType='2' PrintFilters='printFilters' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+
+		}
+		if (hasDynamicFilters && exportSettings.IsShowFiltersFalse())
+		{
+%>
+	Do 'LoadDynamicFilters'
+<%
+		}
+%>
+EndSub
+<%
+	}
+%>
+
+Sub 'BeforePrintLine'
+EndSub
+
+Sub 'AfterPrintLine'
+EndSub
+
+Sub 'PrintFooter'
+<%
+	if (hasReportTemplateInstance && SettingsExportReportActionElement.HasPrintBlock("printBlockAfterGrid", ReportTemplate))
+	{
+%>
+	<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockAfterGrid", proc, settings.HasRTL, 1) %>
+<%
+	}
+%>
+EndSub
+
+<%
+	if (hasAttsSecurityCode)
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+<%
+		string checkByFunctionKeyName = settings.Security.AttributesSecurityCheckByFunctionKeyName();
+		foreach(IAttributesItem item in attAndVarsWithSec)
+		{
+			string secVarName = "&IsAuthorized" + item.Name.TrimStart('&');
+			if (hasAttsSecurity && item.HasShowSecurityCheck_RealValue())
+			{
+%>
+	<%= secVarName %> = <%= checkByFunctionKeyName %>!'<%= ((IElementWithSecurity)item).ShowSecFuntionKey %>')
+<%
+			}
+			if (item.HasVisibleCondition_RealValue())
+			{
+%>
+	<%= secVarName %> = <%= hasAttsSecurity && item.HasShowSecurityCheck_RealValue() ? secVarName + " AND " : "" %>(<%= item.GetVisibleCondition() %>)
+<%
+			}
+		}
+%>
+EndSub
+
+<%
+	}
+%>

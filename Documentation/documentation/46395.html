@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>SD Facebook Button control (GeneXus 16)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/servlet/wiki?46395,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">SD Facebook Button control (GeneXus 16)</h1>
+<!--SD Facebook Button control (GeneXus 16)--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The SD Facebook Button control gives the developer public information about the end user in this social network and helps to log in to / out of Facebook in an easy way, interacting with its native app or requesting through the browser.</p>
+
+<p>In order to use this feature, the developer must configure the <a href="19399.html">Facebook App Id property</a>.</p>
+
+<h2><a id="Adding+the+button" class="HashLink" href="#Adding+the+button">Adding the button</a></h2>
+
+<p>This control must consolidate the user state information. The steps to incorporate the button are described below:</p>
+
+<ol>
+	<li>Define an attribute or variable based on Character or VarChar data type to catch the JSON string with the user data retrieved from Facebook.</li>
+	<li>Drag this attribute or variable from the toolbox to a Panel or Work With for Smart Devices</li>
+	<li>Set the <a href="9550.html">Control Type</a> property with &quot;SD Facebook Button&quot;</li>
+</ol>
+
+<p>Once finished, two new properties will be available:</p>
+
+<ul>
+	<li><strong>Read Permissions</strong><br />
+	A set of permissions for retrieved user data separated by commas.<br />
+	By default, GeneXus asks for public profile information (i.e. <em>public_profile</em>, <em>email</em>, <em>user_friends</em>).<br />
+	For advanced developers, a complete list of values can be found in <a href='https://developers.facebook.com/docs/facebook-login/permissions/v2.2?locale=es_LA'>Facebook login permissons</a>.</li>
+	<li><strong>Publish Allowed</strong><br />
+	A boolean value to indicate if the app requires publishing permissions.<br />
+	By default it's set to False.</li>
+</ul>
+
+<h2><a id="Facilities" class="HashLink" href="#Facilities">Facilities</a></h2>
+
+<p>Once the developer sets the button appropriately, new facilities are available to manipulate the user data retrieved from Facebook.</p>
+
+<h3><a id="Structured+Data+Types" class="HashLink" href="#Structured+Data+Types">Structured Data Types</a></h3>
+
+<p style="margin-left: 40.0px;"><strong>SocialUserData</strong></p>
+
+<p style="margin-left: 40.0px;">It encapsulates the user data retrieved from Facebook. It is enabled once the SD Facebook Button control is detected.</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+SocialUserData
+{
+    Id: Character(20)
+    Name: Character(20)
+    FirstName: Character(20)
+    MiddleName: Character(20)
+    LastName: Character(20)
+    ProfileName: Character(20)
+    ProfileImage: Image 
+    Gender: Character(100)
+    Birthday: Character(20)
+    Country: VarChar(40)
+    City: VarChar(40)
+    Email: Email
+    LocationLatitude: Character(20)
+    LocationLongitude: Character(20)
+}
+</pre>
+
+<p style="margin-left: 40.0px;"><strong>Note</strong>: If SocialUserData does not have this structure, please download and import <a href="https://wiki.genexus.com/commwiki/servlet/wiki?36490,," target="_blank">this patch</a> in your knowledge base.</p>
+
+<h3><a id="Events" class="HashLink" href="#Events">Events</a></h3>
+
+<p>A set of events is available to catch the relevant information for the developer.<br />
+All of the events accept input parameters.</p>
+
+<p style="margin-left: 40.0px;"><strong>OnUserInfoUpdated</strong></p>
+
+<p style="margin-left: 40.0px;">This is the first event called after the end user starts a new Facebook session (async process). Once it's finished and the connection has been established, the user information is updated and available to the developer.<br />
+The typical usage of this method is to load the user data in a variable based on SocialUserData SDT using <a href="37809.html">FromJson Method</a>.</p>
+
+<p style="margin-left: 40.0px;"><strong>OnUserLoggedIn</strong></p>
+
+<p style="margin-left: 40.0px;">This is an informative event that the developer can use to update some indication of the state of the current Facebook session.<br />
+In this event, the user information is not updated yet. Try to avoid it to deserialize the user information because you can have outdated information.</p>
+
+<p style="margin-left: 40.0px;"><strong>OnUserLoggetOut</strong></p>
+
+<p style="margin-left: 40.0px;">This is an informative event that indicates when the user logged out of the Facebook session.</p>
+
+<p style="margin-left: 40.0px;"><strong>OnError</strong></p>
+
+<p style="margin-left: 40.0px;">This event retrieves the Facebook default error when something goes wrong during the authentication process.<br />
+This event is appropriate if you want to show a custom error when something goes wrong.</p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>First, define a Character based variable called <em>JsonUserData</em> and drag it into the abstract layout of a Panel for Smart Devices.</p>
+
+<p><img src="./images/31855.png" id="31855" class="WikiImage"/></p>
+
+<p>Then, set its Control Type property with &quot;SD Facebook Button&quot; value and note the new two properties displayed.<br />
+Also, the variable in the layout changes its appearance (is not shown as a text field).</p>
+
+<p><img src="./images/31856.png" id="31856" class="WikiImage"/></p>
+
+<p>After that, define a new variable based on UserSocialData SDT (in this case is called <em>SocialData</em>). Then proceed to write an event to load it and say hello to our user.</p>
+
+<p><img src="./images/31857.png" id="31857" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &amp;JsonUserData.OnUserInfoUpdated
+    Composite
+        &amp;SocialData.FromJson(&amp;JsonUserData)
+        msg(Format(&quot;Hello %1!&quot;,&amp;SocialData.name))
+    EndComposite
+Endevent
+</pre>
+
+<p>Finally, the result in runtime is shown below.</p>
+
+<p><strong>Android device</strong><br />
+<img src="./images/31858.png" id="31858" class="WikiImage"/></p>
+
+<p><strong>iOS device</strong><br />
+<img src="./images/31861.png" id="31861" class="WikiImage"/></p>
+
+<h2><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h2>
+
+<ul>
+	<li><strong>Fields renamed as of <a href="https://wiki.genexus.com/commwiki/servlet/wiki?33278,," target="_blank">GeneXus 15 Upgrade 3</a> </strong><br />
+	As of <a href="https://wiki.genexus.com/commwiki/servlet/wiki?33278,," target="_blank">GeneXus 15 Upgrade 3</a>, those fields associated with the SocialUserData SDT has been renamed.<br />
+	Those developers who manage previous versions must retrieve the user profile picture by populating the imageUrl field (actual ProfilePicture) as follows:</li>
+</ul>
+
+<pre class="Code" style="margin-left: 40.0px;">
+&amp;UserData.imageUrl = Format(!&quot;http://graph.facebook.com/%1/picture?<strong>type</strong>=normal&amp;<strong>height</strong>=300&amp;<strong>width</strong>=300&quot;, &amp;UserData.id.Trim())</pre>
+
+<p style="margin-left: 40.0px;width: 1000.0px;">Also, the developer can use this formula to get the image in different sizes through three possible values:<br />
+- <strong>type</strong>: Pre-specified sizes (square,small,normal,large)<br />
+- <strong>height</strong>: Image height in pixels.<br />
+- <strong>width</strong>: Image width in pixels.<br />
+When <em>height</em> and <em>width</em> are used together the retrieved image will be scaled to approximate it as close as possible.</p>
+
+<ul>
+	<li style="width: 1000.0px;">Until <a href="https://wiki.genexus.com/commwiki/servlet/wiki?35908,," target="_blank">GeneXus 15 Upgrade 6</a> FromJson method for SDT is not available on client-side, being necessary to call an online Procedure object for processing it on server-side.<br />
+	This action can be done as follows:
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SocialUserData = FromJsonProc(&amp;JsonUserData)
+</pre>
+	Where <em>FromJsonProc </em>procedure executes FromJson method on server-side.
+
+	<p style="margin-left: 40.0px;"><strong>Rules</strong><br />
+	parm(in:&amp;JsonUserData, out:&amp;SocialData);<br />
+	<strong>Source</strong><br />
+	&amp;SocialData.FromJson(&amp;JsonUserData)</p>
+	</li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 1000.0px;">
+	<tbody>
+		<tr>
+			<td style="width: 120.0px;"><strong>Objects</strong></td>
+			<td><a href="24829.html">Panel for Smart Devices</a>, <a href="15974.html">Work With for Smart Devices</a></td>
+		</tr>
+		<tr>
+			<td><strong>Data type</strong></td>
+			<td>Character, VarChar</td>
+		</tr>
+		<tr>
+			<td><strong>SD Generators</strong></td>
+			<td>iOS, Android</td>
+		</tr>
+		<tr>
+			<td><strong>Languages</strong></td>
+			<td>.NET, Java</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This API is available as from <a href="https://wiki.genexus.com/commwiki/servlet/wiki?28265,," target="_blank">GeneXus 15</a></p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />   <br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/31/20 09:32 PM</em></font></td></TR></table></font>

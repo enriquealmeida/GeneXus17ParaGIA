@@ -1,0 +1,35 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template for Leaf Levels" %>
+<%@ Property Name="TransactionLevel" Type="TransactionLevel" %>
+<%@ Property Name="Counters" Type="Dictionary<string,int>"%>
+
+<%
+	string levelFullName = TransactionLevel.FullType.Replace(".", "_");
+	IDictionary<TransactionAttribute, Artech.Genexus.Common.Objects.Attribute> descAttNames;
+	IList<int> toExclude = DefaultFormHelper.CalculateExcluded(TransactionLevel, out descAttNames);
+%>
+
+<%= WebForm.BeginGrid("Grid" + levelFullName, null, null, null, null, Properties.HTMLSFL.BackColorStyle_Enum.Header, null, null) %>
+
+<%
+	foreach (TransactionAttribute trnAttribute in TransactionLevel.Attributes)
+	{
+		if (!toExclude.Contains(trnAttribute.Attribute.Id) && !DefaultFormHelper.IsHiddenAttribute(trnAttribute))
+		{
+			string colTitleProperty = "ColumnTitle";
+			Artech.Genexus.Common.Objects.Attribute attName;
+			if (!descAttNames.TryGetValue(trnAttribute, out attName))
+			{
+				attName = trnAttribute.Attribute;
+				if (trnAttribute.IsLocal)
+					colTitleProperty = "ContextualTitle";
+			}
+
+			string colTitleExpr = String.Format("={0}.{1}", attName.Name, colTitleProperty);
+
+%>
+	<%= WebForm.GridAttribute(trnAttribute.Name, null, colTitleExpr) %>
+<%
+		}
+	}
+%>
+<%= WebForm.EndGrid() %>

@@ -1,0 +1,86 @@
+<Project DefaultTargets="RunAllTests" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <KBPath></KBPath>
+    <!-- specify the path of your Knowledge Base/-->
+    
+    <KBVersion></KBVersion>
+    <!-- specify the version of your Knowledge Base/-->
+    
+    <TestResultFile/>
+    <JUnitTestFilePath></JUnitTestFilePath>
+    <!-- specify the path of your JUnitFile. /-->
+    
+    <TestType></TestType>
+    <DetailedResults>true</DetailedResults>
+    <!-- level of detail for the execution results -->
+    
+    <EnvironmentName>.Net Environment</EnvironmentName>
+    <!--specify the environment of your Knowledge Base/-->
+    
+    <ExecutionDataFilePath></ExecutionDataFilePath>
+    <!-- json file containing execution data to run tests /-->
+
+	<ContinueOnFailedBuild>False</ContinueOnFailedBuild>
+    <AllowFailedTests>False</AllowFailedTests>
+    <Browser></Browser>
+    <BaseURL></BaseURL>
+    <FileUploadBasePath></FileUploadBasePath>
+    <ScreenshotMode></ScreenshotMode>
+    <HtmlMode></HtmlMode>
+    <LogLevel></LogLevel>
+  </PropertyGroup>
+
+  <Import Project=".\GeneXus.Tasks.targets" />
+  <!-- full path to the GeneXus.Tasks.targets file -->
+  <Import Project=".\Genexus.Server.Tasks.targets" />
+  <!-- full path to the Genexus.Server.Tasks.targets file -->
+  <Import Project=".\GXtest.targets" />
+  <!-- full path to the GXtest.targets file -->
+
+  <Target Name="RunTests">
+    <OpenKnowledgeBase Directory="$(KBPath)"/>
+    <SetActiveEnvironment EnvironmentName="$(EnvironmentName)"/>
+    <ItemGroup>
+      <UnitTests Include="$(UnitTests)"/>
+      <WebTests Include="$(WebTests)"/>
+      <Suites Include="$(Suites)"/>
+    </ItemGroup>
+    <RunTests Type="$(TestType)" TestObjects="$(TestObjects);$(UnitTests);$(WebTests);$(Suites)"
+              Browser="$(Browser)" BaseURL="$(BaseURL)" FileUploadBasePath="$(FileUploadBasePath)" 
+              ScreenshotMode="$(ScreenshotMode)" HtmlMode="$(HtmlMode)" Arguments="$(Arguments)" LogLevel="$(LogLevel)"
+              DetailedResults="$(DetailedResults)" FullPageScreenshot="$(FullPageScreenshot)"
+              ServerUserName="$(GXServerUser)" ServerPassword="$(GXServerPass)"
+			  ContinueOnFailedBuild="$(ContinueOnFailedBuild)" AllowFailedTests="$(AllowFailedTests)" 
+			  ResultsFile="$(ResultsFile)" VerifyStopsExecution="$(VerifyStopsExecution)">
+      <Output TaskParameter="ExecutedCount" PropertyName="ExecutedCount"/>
+      <Output TaskParameter="SuccessCount" PropertyName="SuccessCount"/>
+      <Output TaskParameter="ErrorCount" PropertyName="ErrorCount"/>
+      <Output TaskParameter="WarningCount" PropertyName="WarningCount"/>
+      <Output TaskParameter="SkippedCount" PropertyName="SkippedCount"/>
+      <Output TaskParameter="ResultsFile" PropertyName="ResultsFile"/>
+      <!-- Type can be 'UI' to run only UI tests, 'Unit' to run only unit tests or 'All' to run both.  -->
+    </RunTests>
+    <JUnitExportTests SourceResultsFile="$(ResultsFile)" JUnitTestFilePath="$(JUnitTestFilePath)" >
+      <Output TaskParameter="JUnitTestFilePath" PropertyName="JUnitTestFilePathOutput" />
+    </JUnitExportTests>
+    <ExportResultsToAllure TargetDir="$(AllureResultsPath)" Properties="KB=$(KBPath);Environment=$(EnvironmentName);$(TestingEnvironment)">
+      <Output TaskParameter="OutputFiles" PropertyName="OutputFiles" />      
+    </ExportResultsToAllure>
+    <CloseKnowledgeBase/>
+  </Target>
+
+  <Target Name="RecordMockingDataForTest">
+    <OpenKnowledgeBase Directory="$(KBPath)"/>
+    <SetActiveEnvironment EnvironmentName="$(EnvironmentName)"/>
+    <BuildAll CompileMains="true" />
+    <RecordMockingData TestName="$(TestName)" ServerUserName="$(GXServerUser)" ServerPassword="$(GXServerPass)">
+      <Output TaskParameter="MockDataFilePath" PropertyName="MockPath" />
+    </RecordMockingData>
+    <CloseKnowledgeBase/>
+  </Target>
+
+  <Target Name="RunIOSUITests">
+    <RunIOSUITests ObjectName="$(ObjectName)" DeviceName="$(DeviceName)" DeviceOS="$(DeviceOS)" />
+  </Target>
+
+</Project>

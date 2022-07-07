@@ -1,0 +1,88 @@
+delimiters "$", "$"
+
+g_assign_html_property_or_default(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName, delim, defaultValue) ::= <%
+$assign_html_property_or_default(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName, delim, defaultValue)$
+%>
+
+g_assign_html_property(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName) ::= <%
+$assign_html_property(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName)$
+%>
+
+g_assign_html_property_boolean_not(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName) ::= <%
+$if(propertyUIName)$
+    $property_html_name(propertyHtmlName)$="$uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$ | not"
+$endif$
+%>
+
+g_assign_html_property_boolean_not_cond(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName, defaultValue, conditionTemplate) ::= <%
+$if(propertyUIName)$
+    $property_html_name(propertyHtmlName)$="($conditionTemplate$ && $uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$) | not"
+$else$
+    $property_html_name(propertyHtmlName)$="$conditionTemplate$ | default:$defaultValue$ | not"
+$endif$
+%>
+
+g_visible_property(control, defaultValue) ::= <%
+$visible_property(control, defaultValue)$
+%>
+
+g_enabled_property(control, defaultValue) ::= <%
+  $enabled_property(control, defaultValue)$
+%>
+
+g_caption_property(control, defaultValue) ::= <%
+$caption_property(control, defaultValue)$
+%>
+
+g_class_property(control, defaultValue, attributeType="angular") ::= <%
+  $class_property(control, defaultValue, attributeType)$
+%>
+
+g_assign_class_property_or_default(propertyHtmlName, control, uiModelProperty, defaultValue) ::=
+<%
+$assign_class_property_or_default(propertyHtmlName, control, uiModelProperty, defaultValue)$
+%>
+
+g_system_class_property(control) ::= <%
+$if (control.SystemClassProperty)$
+  class="$control.SystemClassProperty$"
+$endif$
+%>
+
+g_activepage_property(control, defaultValue) ::= <%
+    $g_assign_html_property_or_default({activePage}, control.UIModelInfo.UIElementContextExpression, control.UIElementControlName, control.UIModelInfo.ActivePageProperty, { }, defaultValue)$
+%>
+
+g_custom_numeric_property(control, htmlPtyName, metadataPtyName, modelPtyName) ::= <%
+    $g_assign_html_property_or_default(htmlPtyName, control.UIModelInfo.UIElementContextExpression, control.UIElementControlName, modelPtyName, { }, control.CustomProperties.({@$metadataPtyName$}))$
+%>
+
+g_custom_string_property(control, htmlPtyName, metadataPtyName, modelPtyName) ::= <%
+    $g_assign_html_property_or_default(htmlPtyName, control.UIModelInfo.UIElementContextExpression, control.UIElementControlName, modelPtyName, {'}, control.CustomProperties.({@$metadataPtyName$}))$
+%>
+
+g_componentobject_property(control, defaultValue) ::= <%
+$if (defaultValue)$
+$if (control.UIModelInfo.ObjectProperty)$
+  [componentUri] = "$control.UIModelInfo.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.UIModelInfo.ObjectProperty$ | default:'$defaultValue$'"
+$else$
+  componentUri = "$defaultValue$"
+$endif$
+$else$
+$if (control.UIModelInfo.ObjectProperty)$
+  [componentUri] = "$control.UIModelInfo.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.UIModelInfo.ObjectProperty$"
+$endif$
+$endif$
+%>
+
+g_form_caption_property(control) ::= <%
+$if (control.UIModelInfo.CaptionProperty)$
+gx-form-properties [formCaption]="$control.UIModelInfo.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.UIModelInfo.CaptionProperty$"
+$endif$
+%>
+
+g_multiline_property(control) ::= <%
+$if (control.Multiline)$
+  multiline
+$endif$
+%>

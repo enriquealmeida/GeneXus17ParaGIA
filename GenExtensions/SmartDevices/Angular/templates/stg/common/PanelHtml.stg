@@ -1,0 +1,717 @@
+delimiters "$", "$"
+import "PanelHtml_Events.stg"
+import "PanelHtml_Properties.stg"
+import "PanelHtml_Cell_Properties.stg"
+import "PanelHtml_Grid.stg"
+import "PanelHtml_Data.stg"
+import "PanelHtml_ActionBar.stg"
+import "PanelHtml_Action.stg"
+import "Expressions.stg"
+import "TestSupport.stg"
+
+cellTypeToTemplatelMap ::= [
+  "image"         : "g_cell_image",
+  "data"          : "g_cell_data",
+  "textblock"     : "g_cell_textblock",
+  "grid"          : "g_cell_grid",
+  "table"         : "g_cell_table",
+  "allcontent"    : "g_cell_allcontent",
+  "onecontent"    : "g_cell_onecontent",
+  "tab"           : "g_cell_tab",
+  "component"     : "g_cell_component",
+  "contentplaceholder" : "g_cell_contentplaceholder",
+  "action"        : "g_cell_action",
+  "usercontrol"   : "g_cell_usercontrol",
+  "group"         : "g_cell_group"
+]
+
+tableTypeToTemplateMap ::= [
+  "Tabular"   : "g_tabular_table",
+  "Flex"      : "g_flex_table",
+  "Absolute"  : "g_canvas",
+  default     : "g_not_implemented"
+]
+
+usercontrolToTemplateMap ::= [
+  "SDQueryViewer" : "g_usercontrol_queryviewer",
+  default         : "g_usercontrol"
+]
+
+allContentMap ::= [
+  "Tab":	"g_tab_sections",
+  "Inline":	"g_inline_sections",
+  "Link":	"g_link_sections",
+  default:	"g_panel_sections"
+]
+
+mapHAlign ::= [
+	"Left" : "left",
+	"Right":"right",
+	"Center": "center",
+	default: false
+]
+
+mapVAlign ::= [
+	"Top" : "top",
+	"Middle":"middle",
+	"Bottom": "bottom",
+	default: false
+]
+
+propertyMap ::= [
+  "Visible" : "visible",
+  "Enabled" : "enabled",
+  "Class"   : "class",
+  "Caption" : "caption",
+  "ActivePage" : "activePage",
+  default: key
+]
+
+textblockToTemplatelMap ::= [
+  "HTML"         : "g_textblock_html",
+  default        : "g_textblock_default"
+]
+
+tabDistributionTemplatelMap ::= [
+  "Show More Button"    : "g_tab_distribution_fixedsize",
+  default               : "g_tab_distribution_default"
+]
+
+g_page(page, gx, gx_generation_mode)::=<<
+  $g_layout_body(page)$
+>>
+
+g_head(page)::=<<
+<head>
+  <meta charset="utf-8"/>
+  <title>$g_translate(page.Caption)$</title>
+</head>
+>>
+
+g_bodyHeader(page)::=<<$bodyHeader(page)$>>
+
+g_cssfile(css)::=<<
+$g_cssRef("pages",css)$
+>>
+
+g_themefile(css)::=<<
+$g_cssRef("layout",css)$
+>>
+
+g_cssRef(dir,css)::=<<
+$cssRef(dir, css)$
+>>
+
+g_cssfile_media(media)::=<%
+$if(media)$
+media="$media.Bounds:{bound | $if (media.Not)$not $endif$screen and $if (bound.HasMin)$(min-width:$bound.Min$px)$endif$$if (bound.HasMax)$$if (bound.HasMin)$ and $endif$(max-width:$bound.Max$px)$endif$};separator=", "$
+"
+$endif$
+%>
+
+g_layout_body(page)::= <<
+$page:g_bodyHeader()$
+$page.MasterPanelInfo:g_start_masterpanel()$
+$g_layout_body_main(page)$
+$page.MasterPanelInfo:g_end_masterpanel()$
+>>
+
+g_layout_body_main(page) ::= <<
+$layout_body_main(page)$
+>>
+
+layoutHeaderMap ::= [
+  "":		"g_empty_header",
+  default:	"g_layout_header"
+]
+
+g_layout(layout, page) ::= <<
+$layout(layout, page)$
+>>
+
+g_showlayout(show) ::= <%$if(show.ExprType)$*ngIf="$show:g_expression()$"$endif$%>
+
+g_layout_condition(layoutId) ::= <%$layout_condition(layoutId)$%>
+
+g_layout_header(caption, layout) ::= <<
+<span slot="header" $g_layout_condition(layout.LayoutId)$>$g_translate(caption)$</span>
+>>
+
+g_empty_header(caption, layout) ::= <<>>
+
+g_cell_textblock(cell) ::= <%
+  $(textblockToTemplatelMap.(cell.Textblock.Format))(cell.Textblock)$
+%>
+
+g_textblock_default(data) ::= <<
+<gx-textblock 
+  $control_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  $g_visible_property(data, data.Visible)$
+  $g_enabled_property(data, data.Enabled)$
+  $g_touch_event_binding(data)$
+  $g_invisible_mode_attr(data)$
+  $g_line_clamp_attribute(data)$
+>$g_caption_property(data, data.Caption)$</gx-textblock>
+>>
+
+g_line_clamp_attribute(control) ::= <%$if (control.LineClamp)$line-clamp$endif$%>
+
+
+g_textblock_html(data) ::= <<
+$textblock_html(data)$
+>>
+
+g_cell_table(cell) ::= <%
+  $g_table(cell.Table, false)$
+%>
+
+g_table(table, extraData) ::= <<
+$if (table)$
+  $(tableTypeToTemplateMap.(table.TableType))(table, extraData)$
+$endif$
+>>
+
+g_tabular_table(table, extraData) ::= <<
+<gx-table
+  $control_id(table.ControlName)$
+  $g_test_data(table.ControlName)$
+  $g_class_property(table, table.Class, "control")$
+  $g_system_class_property(table)$
+  $g_visible_property(table, table.Visible)$
+  areas-template="$table.AreasTemplate$"
+  columns-template="$table.ColumnsTemplate$"
+  rows-template="$table.RowsTemplate$"
+  $html_att_style(table.StyleAttribute)$
+  $g_touch_event_binding(table)$
+  $g_invisible_mode_attr(table)$
+  $g_background_image(table)$
+$if(extraData)$
+  $extraData$
+$endif$
+>
+  $g_tabular_table_content(table)$
+</gx-table>
+>>
+
+g_tabular_table_content(table) ::= <<
+$if (table.RenderOnSightOptimization)$
+<ng-container *visibleWith="$table.ControlName$">
+  $table.Row: {row | $g_tabular_row(row, i0, table.ControlName)$};separator="\r\n"$
+</ng-container>
+$else$
+$table.Row: {row | $g_tabular_row(row, i0, table.ControlName)$};separator="\r\n"$
+$endif$
+>>
+
+g_tabular_row(row, index, table_ControlName) ::= <<
+$row.Cell: {cell | $g_tabular_cell(cell, index, i0, table_ControlName)$};separator="\r\n"$
+>>
+
+g_tabular_cell(cell, rowIndex, cellIndex, table_ControlName) ::= <<
+$if(cell.CellType)$
+<gx-table-cell 
+  $area_cell(cell, rowIndex, cellIndex)$
+  $g_test_data({$table_ControlName$_$rowIndex$$cellIndex$})$
+  $g_auto_grow_attribute(cell)$
+  $g_table_cell_alignment(cell)$
+  $html_att_style(cell.StyleAttribute)$
+  $html_table_cell_height(cell)$
+  $cell_grid_parent(cell)$
+>
+  $(cellTypeToTemplatelMap.(cell.CellType))(cell)$
+</gx-table-cell>
+$endif$
+>>
+
+g_auto_grow_attribute(cell) ::= << overflow-mode="$if (cell.AutoGrow)$clip$else$$cell.AutoGrowMode$$endif$" $if (cell.AutoGrow)$ auto-grow $endif$>>
+
+
+g_table_cell_alignment(cell) ::= <%
+  $if(mapHAlign.(cell.HAlign))$
+    align="$(mapHAlign.(cell.HAlign))$" 
+  $endif$ 
+  $if(mapVAlign.(cell.VAlign))$
+    valign="$(mapVAlign.(cell.VAlign))$"
+  $endif$ 
+%>
+
+g_flex_table(table, extraData) ::= <<
+<div
+  $control_id(table.ControlName)$
+  $g_test_data(table.ControlName)$
+  class="$table.Class$"
+  $html_att_style(table.StyleAttribute)$
+  $g_background_image(table)$
+$if(extraData)$
+  $extraData$
+$endif$
+>
+  $table.Row: {row | $g_flex_row(row, i0, table.ControlName)$};separator="\r\n"$
+</div>
+>>
+
+g_flex_row(row, index, table_ControlName) ::= <<
+$row.Cell: {cell | $g_flex_cell(cell, index, i0, table_ControlName)$};separator="\r\n"$
+>>
+
+g_flex_cell(cell, rowIndex, cellIndex, table_ControlName) ::= <<
+$if(cell.CellType)$
+<div class="flex-cell"
+  $g_test_data({$table_ControlName$_$rowIndex$$cellIndex$})$
+  $html_att_style(cell.StyleAttribute)$
+  $g_cell_properties(cell)$
+>
+  $(cellTypeToTemplatelMap.(cell.CellType))(cell)$
+</div>
+$endif$
+>>
+
+g_cell_component(cell)::=<<
+<gx-table
+  $g_class_property(cell.Component, cell.Component.Class, "control")$
+  $g_visible_property(cell.Component, cell.Component.Visible)$
+  columns-template="var(--gx-table-components-column)"
+  rows-template="var(--gx-table-components-row)"
+  $g_invisible_mode_attr(cell.Component)$
+>
+  <gx-table-cell>
+    <gx-component-host 
+      id="$cell.Component.ControlName$"
+      [parentOutlet]="outlet"
+      $g_componentobject_property(cell.Component, cell.Component.ComponentUri)$
+    >
+    </gx-component-host>
+  </gx-table-cell>
+</gx-table>
+>>
+
+g_cell_contentplaceholder(cell)::=<<
+<gx-table
+  columns-template="var(--gx-table-components-column)"
+  rows-template="var(--gx-table-components-row)"
+>
+    <ng-content></ng-content>
+</gx-table>
+>>
+
+g_canvas(table, extraData)::=<<
+<gx-canvas
+  $control_id(table.ControlName)$
+  $g_test_data(table.ControlName)$
+  $g_class_property(table, table.Class, "control")$
+  $g_visible_property(table, table.Visible)$
+  $g_touch_event_binding(table)$
+  class="$table.Class$"
+  $html_att_style(table.StyleAttribute)$
+  $html_custom_atts(table.CustomAttributes)$
+$if(extraData)$
+  $extraData$
+$endif$
+  $g_invisible_mode_attr(table)$
+  $g_background_image(table)$
+  [attr.layout-is-ready]="layoutIsReady"
+>
+  $table.Row: {row | $g_canvas_row(row, i0, table.ControlName)$};separator="\r\n"$
+</gx-canvas>
+>>
+
+g_canvas_row(row, index, table_ControlName) ::= <<
+$row.Cell: {cell | $g_canvas_cell(cell, index, i0, table_ControlName)$};separator="\r\n"$
+>>
+
+g_canvas_cell(cell, rowIndex, cellIndex, table_ControlName) ::= <<
+$if(cell.CellType)$
+<gx-canvas-cell 
+  $g_test_data({$table_ControlName$_$rowIndex$$cellIndex$})$
+  $g_table_cell_alignment(cell)$
+  $html_att_style(cell.StyleAttribute)$
+  $html_custom_atts(cell.CustomAttributes)$
+>
+  $(cellTypeToTemplatelMap.(cell.CellType))(cell)$
+</gx-canvas-cell>
+$endif$
+>>
+
+g_promptCall(data)::=<<
+$if (data.IsPrompt)$
+<button class="promptCall prompt-$data.Mode$" data-gx-action="$data.PromptCall$" />
+$endif$
+>>
+
+g_cell_image(cell) ::= <%
+  $g_image(cell.Image)$
+%>
+
+g_image(data) ::= <<
+$image(data)$
+>>
+
+g_expression_or_null(binding) ::= <%
+$if(binding)$
+$if(binding.ExprType)$
+$binding:g_expression()$
+$else$
+null
+$endif$
+$else$
+null
+$endif$
+%>
+
+g_cell_allcontent(cell) ::= <<
+$(allContentMap.(cell.AllContent.Display))(cell.AllContent)$
+>>
+
+g_tab_sections(content)::=<<
+<div class="gx-sections-container">
+  <gx-tab>
+    $first(page.Sections.Section):g_tab_sections_item(true);separator="\r\n"$
+    $rest(page.Sections.Section):g_tab_sections_item();separator="\r\n"$
+  </gx-tab>
+</div>
+>>
+
+g_tab_sections_item(section, selected=false)::=<<
+<gx-tab-caption
+  slot="caption"
+  $if(selected)$selected="true"$endif$
+>
+  $g_translate(section.Caption)$
+</gx-tab-caption>
+<gx-tab-page slot="page">
+  $section:g_one_section()$
+</gx-tab-page>
+>>
+
+g_inline_sections(content)::=<<
+<div class="gx-sections-container">
+  $page.Sections.Section:g_one_section()$
+</div>
+>>
+
+g_one_section(section) ::= <<
+<$section.FullName$
+  $section.Parameters.Parameter:g_section_parameter();separator="\r\n"$
+  sectionType='inline'>
+</$section.FullName$>
+>>
+
+
+g_link_sections(content)::=<<
+<div class="gx-sections-container">
+  $page.Sections.Section:g_one_link_to_section();separator="\r\n"$
+</div>
+>>
+
+g_one_link_to_section( section)::=<%
+<gx-button
+  g_button_click_event_binding(data, {navigateTo$section.FullName$()})
+  data-has-action="">
+  $g_translate(section.Caption)$
+</gx-button>
+%>
+
+
+g_panel_sections(content)::=<<
+<div class="gx-sections-container">
+  $page.Sections.Section:{ section | $g_panel_sections_page(section)$ };separator="\r\n"$
+</div>
+>>
+
+g_panel_sections_page(section) ::= <<
+<$section.FullName$ class="section"
+  $section.Parameters.Parameter:g_section_parameter();separator="\r\n"$
+  sectionType='inline'
+>
+</$section.FullName$>
+>>
+
+g_section_parameter(p) ::= <<
+[$gx.ToLower.(p.Name)$]="$p.expression:g_expression()$"
+>>
+
+g_cell_onecontent(content) ::= <<
+<$content.OneContent.FullName$ 
+  #$content.OneContent.ControlName$
+  $content.OneContent.Parameters.Parameter:g_section_parameter();separator="\r\n"$ 
+  sectionType='inline'>
+</$content.OneContent.FullName$>
+>>
+
+g_cell_tab(cell) ::= <<
+<gx-tab
+  $g_html_id(cell.Tab.ControlName)$
+  $g_test_data({$cell.Tab.ControlName$})$
+  $g_class_property(cell.Tab, cell.Tab.Class, "control")$
+  $g_visible_property(cell.Tab, cell.Tab.Visible)$
+  $g_enabled_property(cell.Tab, cell.Tab.Enabled)$
+  $g_activepage_property(cell.Tab, {'1'})$
+  $cell.Tab.UIActionsInfo.ActivePageChangedAction:g_event_binding( {tabChange},  cell.Tab )$
+  $html_att_style(cell.StyleAttribute)$
+  $g_invisible_mode_attr(cell.Tab)$
+  $g_tab_distribution(cell)$
+>
+    $first(cell.Tab.Item):{ tabPage | $g_tabPage(tabPage, cell.Tab, true)$}$
+    $rest(cell.Tab.Item):{ tabPage | $g_tabPage(tabPage, cell.Tab, false)$}$
+</gx-tab>
+>>
+
+g_tab_distribution(cell) ::= <%
+$(tabDistributionTemplatelMap.(cell.Tab.TabsBehavior))(cell)$
+%>
+
+g_tab_distribution_fixedsize(cell) ::= <<
+tabs-distribution="fixed-size"
+>>
+
+g_tab_distribution_default(cell) ::= <% %>
+
+g_tabPage(tabPage, tab, selected) ::= <<
+<gx-tab-caption 
+  $g_test_data({$tabPage.ControlName$-caption})$
+  $g_class_property(tabPage, tabPage.Class, "control")$
+  $g_assign_class_property_or_default("selectedCssClass", tabPage, tabPage.UIModelInfo.SelectedClassProperty, tabPage.SelClass)$
+  $g_assign_class_property_or_default("tabCssClass", tab, tab.UIModelInfo.ClassProperty, tab.Class)$
+  $g_visible_property(tabPage, tabPage.Visible)$
+  $g_enabled_property(tabPage, tabPage.Enabled)$
+  (tabSelect) = "$tabPage.UIModelInfo.UIElementContextExpression:g_expression()$.$tabPage.UIElementControlName$.parent.select($tabPage.order$+1)"
+  $g_action_image_position(tabPage)$
+  slot="caption"
+  $if (selected)$
+  [selected]="$tabPage.UIModelInfo.UIElementContextExpression:g_expression()$.$tabPage.UIElementControlName$.selected | default:true"
+  $else$
+  [selected]="$tabPage.UIModelInfo.UIElementContextExpression:g_expression()$.$tabPage.UIElementControlName$.selected"
+  $endif$
+>
+  $if (tabPage.Image)$
+  <img 
+    src="{{getImageSource('$tabPage.Image$')}}" slot="main-image"
+  />
+  $endif$
+  $if (tabPage.UnselectedImage)$
+  <img 
+    src="{{getImageSource('$tabPage.UnselectedImage$')}}" slot="disabled-image" 
+  />
+  $endif$
+  $if (tabPage.Caption)$
+  $g_caption_property(tabPage, tabPage.Caption)$
+  $endif$
+</gx-tab-caption>
+
+<gx-tab-page slot="page" $g_test_data({$tabPage.ItemControlName$-page})$ >
+  <ng-container *ngIf="$tabPage.UIModelInfo.UIElementContextExpression:g_expression()$.$tabPage.UIElementControlName$.active">
+    $g_table(tabPage.Table, false)$
+  </ng-container>
+</gx-tab-page>
+
+>>
+
+g_cell_action(cell)::= <%
+  $g_button(cell.Action)$
+%>
+
+g_cell_usercontrol(cell) ::= <%
+$(usercontrolToTemplateMap.(cell.uc.ControlType))(cell.uc, false)$
+%>
+
+g_usercontrol_queryviewer(uc, dataBinding) ::=
+<<
+<gx-query-viewer
+  $g_visible_property(uc, uc.Visible)$
+  base-url="$uc.RenderPropertiesValue.Serviceurl$"
+  env="$uc.RenderPropertiesValue.Gentype$"
+  theme="$uc.RenderPropertiesValue.Theme$"
+  $g_assign_html_property_or_default("dataVersionId", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "dataversionid", "", "0")$
+  $g_assign_html_property_or_default("object", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "objectcall", "'", uc.RenderPropertiesValue.Object)$
+  $g_assign_html_property_or_default("objectName", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "objectname", "'", uc.RenderPropertiesValue.Objectname)$
+  $g_assign_html_property_or_default("type", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "type", "'", uc.RenderPropertiesValue.Type)$
+  $g_assign_html_property_or_default("chartType", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "charttype", "'", uc.RenderPropertiesValue.Charttype)$
+  $g_assign_html_property_or_default("paging", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "paging", "", uc.RenderPropertiesValue.Paging)$
+  $g_assign_html_property_or_default("pageSize", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "pagesize", "", uc.RenderPropertiesValue.Pagesize)$
+  $g_assign_html_property_or_default("showDataLabelsIn", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "showdatalabelsin", "'", uc.RenderPropertiesValue.Showdatalabelsin)$
+  $g_assign_html_property_or_default("plotSeries", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "plotseries", "'", uc.RenderPropertiesValue.Plotseries)$
+  $g_assign_html_property_or_default("xAxisLabels", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "xaxislabels", "'", uc.RenderPropertiesValue.Xaxislabels)$
+  $g_assign_html_property_or_default("xAxisIntersectionAtZero", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "xaxisintersectionatzero", "", uc.RenderPropertiesValue.Xaxisintersectionatzero)$
+  $g_assign_html_property_or_default("showValues", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "showvalues", "", uc.RenderPropertiesValue.Showvalues)$
+  $g_assign_html_property_or_default("xAxisTitle", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "xaxistitle", "'", uc.RenderPropertiesValue.Xaxistitle)$
+  $g_assign_html_property_or_default("yAxisTitle", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "yaxistitle", "'", uc.RenderPropertiesValue.Yaxistitle)$
+  $g_assign_html_property_or_default("showDataAs", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "showdataas", "'", uc.RenderPropertiesValue.Showdataas)$
+  $g_assign_html_property_or_default("includeTrend", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "includetrend", "", uc.RenderPropertiesValue.Includetrend)$
+  $g_assign_html_property_or_default("trendPeriod", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "trendperiod", "'", uc.RenderPropertiesValue.Trendperiod)$
+  $g_assign_html_property_or_default("rememberLayout", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "rememberlayout", "", uc.RenderPropertiesValue.Rememberlayout)$
+  $g_assign_html_property_or_default("orientation", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "orientation", "'", uc.RenderPropertiesValue.Orientation)$
+  $g_assign_html_property_or_default("includeSparkline", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "includesparkline", "", uc.RenderPropertiesValue.Includesparkline)$
+  $g_assign_html_property_or_default("includeMaxMin", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "includemaxandmin", "", uc.RenderPropertiesValue.Includemaxandmin)$
+  $g_assign_html_property_or_default("isExternalQuery", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "isexternalquery", "", uc.RenderPropertiesValue.Isexternalquery)$
+  $g_assign_html_property_or_default("allowElementsOrderChange", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "allowchangeaxesorder", "", uc.RenderPropertiesValue.Allowchangeaxesorder)$
+  $g_assign_html_property_or_default("autoResize", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "autoresize", "", uc.RenderPropertiesValue.Autoresize)$
+  $g_assign_html_property_or_default("autoResizeType", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "autoresizetype", "'", uc.RenderPropertiesValue.Autoresizetype)$
+  $g_assign_html_property_or_default("fontFamily", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "fontfamily", "'", uc.RenderPropertiesValue.Fontfamily)$
+  $g_assign_html_property_or_default("fontSize", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "fontsize", "", uc.RenderPropertiesValue.Fontsize)$
+  $g_assign_html_property_or_default("fontColor", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "fontcolor", "'", uc.RenderPropertiesValue.Fontcolor)$
+  $g_assign_html_property_or_default("autoRefreshGroup", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "autorefreshgroup", "'", uc.RenderPropertiesValue.Autorefreshgroup)$
+  $g_assign_html_property_or_default("disableColumnSort", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "disablecolumnsort", "", uc.RenderPropertiesValue.Disablecolumnsort)$
+  $g_assign_html_property_or_default("allowSelection", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "allowselection", "", uc.RenderPropertiesValue.Allowselection)$
+  $g_assign_html_property_or_default("exportToXML", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "exporttoxml", "", uc.RenderPropertiesValue.Exporttoxml)$
+  $g_assign_html_property_or_default("exportToHTML", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "exporttohtml", "", uc.RenderPropertiesValue.Exporttohtml)$
+  $g_assign_html_property_or_default("exportToXLS", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "exporttoxls", "", uc.RenderPropertiesValue.Exporttoxls)$
+  $g_assign_html_property_or_default("exportToXLSX", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "exporttoxlsx", "", uc.RenderPropertiesValue.Exporttoxlsx)$
+  $g_assign_html_property_or_default("exportToPDF", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "exporttopdf", "", uc.RenderPropertiesValue.Exporttopdf)$
+  $g_assign_html_property_or_default("queryTitle", uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, "title", "'", uc.RenderPropertiesValue.Title)$
+>
+  <gx-query-viewer-parameter
+    *ngFor="let parameter of this.$uc.RenderPropertiesValue.Parameters$; trackBy:trackQueryViewerParameterItemByName;"
+    [Name]="parameter.Name"
+    [Value]="parameter.Value"
+  >
+  </gx-query-viewer-parameter>
+  <gx-query-viewer-element
+    *ngFor="let element of this.$uc.RenderPropertiesValue.Axes$;"
+    [name]="element.Name"
+    [elementTitle]="element.Title"
+    [visible]="element.Visible"
+    [type]="element.Type"
+    [axis]="element.Axis"
+    [aggregation]="element.Aggregation"
+    [dataField]="element.DataField"
+    [filterType]="element.Filter.Type"
+    [filterValues]="element.Filter.Values"
+    [expandCollapseType]="element.ExpandCollapse.Type"
+    [expandCollapseValues]="element.ExpandCollapse.Values"
+    [axisOrderType]="element.AxisOrder.Type"
+    [axisOrderValues]="element.AxisOrder.Values"
+    [groupingGroupByYear]="element.Grouping.GroupByYear"
+    [groupingYearTitle]="element.Grouping.YearTitle"
+    [groupingGroupBySemester]="element.Grouping.GroupBySemester"
+    [groupingSemesterTitle]="element.Grouping.SemesterTitle"
+    [groupingGroupByQuarter]="element.Grouping.GroupByQuarter"
+    [groupingQuarterTitle]="element.Grouping.QuarterTitle"
+    [groupingGroupByMonth]="element.Grouping.GroupByMonth"
+    [groupingMonthTitle]="element.Grouping.MonthTitle"
+    [groupingGroupByDayOfWeek]="element.Grouping.GroupByDayOfWeek"
+    [groupingDayOfWeekTitle]="element.Grouping.DayOfWeekTitle"
+    [groupingHideValue]="element.Grouping.HideValue"
+    [raiseItemClick]="element.Actions.RaiseItemClick"
+  >
+    <gx-query-viewer-element-format
+      [picture]=element.Format.Picture
+      [subtotals]=element.Format.Subtotals
+      [canDragToPages]=element.Format.CanDragToPages
+      [formatStyle]=element.Format.Style
+      [targetValue]=element.Format.TargetValue
+      [maximumValue]=element.Format.MaximumValue
+    >
+      <gx-query-viewer-format-style
+        *ngFor="let valueStyle of element.Format.ValuesStyles;"
+        type="Values"
+        [value]=valueStyle.Value
+        [styleOrClass]=valueStyle.StyleOrClass
+        [applyToRowOrColumn]=valueStyle.ApplyToRowOrColumn
+      >
+      </gx-query-viewer-format-style>
+      <gx-query-viewer-format-style
+        *ngFor="let conditionalStyle of element.Format.ConditionalStyles;"
+        type="Conditional"
+        [operator]=conditionalStyle.Operator
+        [value1]=conditionalStyle.Value1
+        [value2]=conditionalStyle.Value2
+        [styleOrClass]=conditionalStyle.StyleOrClass
+      >
+      </gx-query-viewer-format-style>
+    </gx-query-viewer-element-format>
+  </gx-query-viewer-element>
+</gx-query-viewer>
+>>
+
+g_usercontrol(uc, dataBinding) ::= <<
+<$uc.Selector$
+  #$uc.ControlName$
+  $g_visible_property(uc, uc.Visible)$
+  $uc.RenderProperties: {property | $g_usercontrol_properties(uc, property)$};separator="\n"$
+  $uc.RenderEvents: {event | $g_usercontrol_events(uc, event)$};separator="\n"$
+$if (dataBinding)$
+  [(databindingvalue)]="$dataBinding:g_expression()$"
+$endif$
+>
+</$uc.Selector$>
+>>
+
+g_usercontrol_properties(uc, property) ::=<%
+$g_assign_html_property_or_default(property, uc.UIModelInfo.UIElementContextExpression, uc.UIElementControlName, propertyMap.(property), { }, uc.RenderPropertiesValue.(property))$
+%>
+
+g_usercontrol_events(uc, event) ::=<%
+($event.ComponentEventName$)="callAction(this.$event.HandlerName$, \$event)"
+%>
+
+g_cell_group(cell) ::= <%
+$g_group(cell.Group)$
+%>
+
+g_group(grp) ::= <<
+<gx-group
+  caption="$grp.Caption$"
+  #$grp.ControlName$
+  $g_class_property(grp, grp.Class, "control")$
+  $g_visible_property(grp, grp.Visible)$
+  $g_invisible_mode_attr(grp)$
+>
+$g_table(grp.Table, false)$
+</gx-group>
+>>
+
+att_gx_viewtype(viewType)::= <<
+data-gx-viewtype="$viewType$"
+>>
+
+html_class(class)::= <<
+class="$class$"
+>>
+
+grid_binding(binding)::= <<
+, binding:'$binding$'
+>>
+
+data_source(data)::= <%
+$if (data.CustomProperties)$
+$data.CustomProperties.ControlValues: control_values()$$data.CustomProperties.service: service_url()$$data.CustomProperties.serviceInputs: service_inputs()$
+$endif$
+%>
+
+control_values(values)::= <<
+, controlValues: '$values$'
+>>
+
+service_url(url)::=<<
+, serviceUrl: '$url$'
+>>
+
+service_inputs(params)::=<<
+, params: '$params$'
+>>
+
+data_enabled(data)::=<<
+$if(data.Readonly)$disabled$endif$
+>>
+
+g_not_implemented(control, extraData) ::= <<
+<gx-message>Not yet implemented</gx-message>
+>>
+
+g_invisible_mode_attr(control) ::= <<$html_att_value("invisible-mode", control.InvisibleMode)$>>
+
+g_background_image(control) ::= <<$html_css_image_value("[style.background-image]", control.Background)$>>
+
+g_start_masterpanel(master_panel_info) ::= <<
+<$master_panel_info.MasterPanelFullName$>
+>>
+
+g_end_masterpanel(master_panel_info) ::= <<
+</$master_panel_info.MasterPanelFullName$>
+>>
+
+html_custom_atts(custom_atts) ::=  <%
+  $custom_atts.keys: {k|$k$="$custom_atts.(k)$"};separator="\r\n"$
+%>

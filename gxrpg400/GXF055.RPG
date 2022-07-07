@@ -1,0 +1,58 @@
+ *****************************************************
+ * TIME-STAMP TO D-NUMBER (DAYS.FRACT)
+ * PARAMETERS: (I) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *             (O) $GXSCD N(17,9)
+ *****************************************************
+C           GXTTND    BEGSR
+ * TIME-STAMP TO NUMBER
+C                     EXSR GXTTON
+C           $GXSEC    DIV  86400     $GXSCD 179
+C                     ENDSR
+ *****************************************************
+ * D-NUMBER TO TIME-STAMP
+ * PARAMETERS: (I) $GXSCD N(17,9)
+ *             (O) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *****************************************************
+C           GXNDTT    BEGSR
+ * TIME-STAMP TO NUMBER
+C           $GXSCD    MULT 86400     $GXSEC    H
+C                     EXSR GXNTOT
+C                     ENDSR
+ *****************************************************
+ * TIME-STAMP TO NUMBER (SECONDS)
+ * PARAMETERS: (I) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *             (O) $GXSEC N(13,0)
+ *****************************************************
+C           GXTTON    BEGSR
+ * TIME-STAMP TO DATE-TIME
+C                     EXSR GXTSDT
+ * DATE-TIME TO NUMBER
+C                     MOVE $DTFN     $GXDTE
+ * DATE TO NUMBER
+C                     EXSR GXDTON
+C           $GXJUL    MULT 86400     $GXSEC 130
+C           $DTHN     MULT 3600      $F5501  70
+C           $GXSEC    ADD  $F5501    $GXSEC
+C           $DTNN     MULT 60        $F5501
+C           $GXSEC    ADD  $F5501    $GXSEC
+C           $GXSEC    ADD  $DTSN     $GXSEC
+C                     ENDSR
+ *****************************************************
+ * NUMBER (SECONDS) TO TIME-STAMP
+ * PARAMETERS: (I) $GXSEC N(13,0)
+ *             (O) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *****************************************************
+C           GXNTOT    BEGSR
+ * NUMBER TO DATE-TIME
+C           $GXSEC    DIV  86400     $GXJUL
+C                     MVR            $F5501
+ * NUMBER TO DATE
+C                     EXSR GXNTOD
+C                     MOVE $GXDTE    $DTFN
+C           $F5501    DIV  3600      $DTHN
+C                     MVR            $F5501
+C           $F5501    DIV  60        $DTNN
+C                     MVR            $DTSN
+ * DATE-TIME TO TIME-STAMP
+C                     EXSR GXDTTS
+C                     ENDSR

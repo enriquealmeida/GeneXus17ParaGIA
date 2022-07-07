@@ -1,0 +1,577 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Assembly Name="Artech.Architecture.Language" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="ReportTemplate" Type="Artech.Genexus.Common.Objects.Procedure" %>
+<%@ Property Name="InitialRptId" Type="System.Int32" %>
+<%@ Property Name="IsRTL" Type="System.Boolean" %>
+<%@ SubTemplate Name="ExportReportLayout" File="ExportReportLayout.dkt" MergeProperties="True"%>
+
+<%	
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	Artech.Architecture.Common.Objects.KBModel model = wwInstance.Model;
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+
+	bool hasAttsSecurity = settings.Security.HasAttributesSecurity();
+	IStandardActionReportElement actionElement = (IStandardActionReportElement)gridObject.GetStandardAction(StandardAction.ExportReport);
+	
+	//this is called when the object is deleted
+	if(actionElement == null)
+	{
+%>
+<Part type="<%= PartType.Layout %>">
+</Part>
+<%
+		return;
+	}
+
+	SettingsExportReportActionElement settingsExportReport = settings.StandardActions.ExportReport;
+
+	bool hasReportTemplateInstance = (settingsExportReport.ReportTemplatePI != null);
+	PrintBlockElement filtersPrintBlock = settingsExportReport.GetReportTemplateFiltersPrintBlock();
+
+	int paperWidth, paperHeight, realPaperWidth;
+	string paperSize = actionElement.IsPaperSizeDefault() ? settingsExportReport.PaperSize : actionElement.PaperSize;
+	string paperOrientation = actionElement.IsPaperOrientationDefault() ? settingsExportReport.PaperOrientation : actionElement.PaperOrientation;
+	string size = LayoutHelper.GetPaperSize(paperSize, paperOrientation, out paperWidth, out paperHeight);
+
+	realPaperWidth = paperWidth;
+	paperWidth -= (hasReportTemplateInstance ? settingsExportReport.ReportTemplatePI.PRRoot.RightMargin : 60);
+
+	PBTextBlockElement filtersTemplateLabel = (filtersPrintBlock != null ? (PBTextBlockElement)filtersPrintBlock.Table.ItemsAndDescriptions[0] : null);
+	PBVariableElement filtersTemplateVariable = (filtersPrintBlock != null ? (PBVariableElement)filtersPrintBlock.Table.Items[0] : null);
+
+	int widthToInvert = IsRTL ? paperWidth : -1;
+
+	int titleFontSize = 18;
+	int rptId = (!settings.HasRTL || !IsRTL ? 1 : InitialRptId), mainTitleY = 5;
+	int attsY = 2;
+	int separation = 5, margin = 5;
+	int titlesY = mainTitleY + titleFontSize * 2 + 15;
+
+	string printBlockNameSuffix = (settings.HasRTL && IsRTL ? "_RTL" : "");
+
+	bool hasReportTemplate = ReportTemplate != null;
+	bool printFilters = settings.StandardActions.ExportReport.IsShowFiltersOnlyModified();
+	bool splitTitles = hasReportTemplate || printFilters;
+	int defAttHeight = LayoutHelper.GetDefaultAttributeFontHeight(model);
+
+	int attCount = 0, largeAttCount = 0;
+	List<IAttributesItem> attAndVars = new List<IAttributesItem>();
+	IGrid grid = gridObject.GetGrid();
+	bool exportTotalizers = settingsExportReport.IncludeTotalizers;
+	bool exportTotalizersItem = !exportTotalizers;
+	foreach (IAttributesItem item in grid.GetAllAttributesAndVariablesOfThisGrid(true, true))
+	{
+		if (item.ShowInExportReport())
+		{
+			attAndVars.Add(item);
+			attCount++;
+			if (item.TypeIsLarge())
+			{
+				largeAttCount++;
+			}
+			exportTotalizersItem = exportTotalizersItem || item.HasTotalizer();
+		}
+	}
+	exportTotalizers = exportTotalizers && exportTotalizersItem;
+	if (attCount == 0)
+	{
+		DVelop.Patterns.WorkWithPlus.Helpers.LogHelper.WriteErrorLog("At least one attribute must be included in the Export Report to generate this object");
+		throw new Exception("At least one attribute must be included in the Export Report to generate this object");
+	}
+	int lineHeight;
+	if (actionElement.IsLineHeightDefault())
+	{
+		lineHeight = settingsExportReport.GetLineHeight(attAndVars);
+	}
+	else
+	{
+		lineHeight = Int32.Parse(actionElement.LineHeight.Replace(" rows", "").Replace(" row", ""));
+	}
+	int attWidth = (paperWidth - margin * 2 - (attCount - 1) * separation)/(attCount + largeAttCount);
+	int largeAttWidth = attWidth;
+	bool printBlockStarted = false;
+	if(attWidth < 50)
+	{
+		attWidth = (paperWidth - margin * 2 - (attCount - 1) * separation) / attCount;
+		largeAttWidth = 0;
+	}
+
+	if (!settings.HasRTL || !IsRTL)
+	{
+%>
+<Part type="<%= PartType.Layout %>">
+	<Layout>
+		<Bands>
+<%
+	}
+	if (!hasReportTemplate)
+	{
+		printBlockStarted = true;
+%>
+			<%= LayoutHelper.PrintBlockStart() %>
+				<%= LayoutHelper.Label(model, rptId++, LayoutHelper.GetTitle(actionElement.Title, settingsExportReport.Title, gridObject), 5, mainTitleY, paperWidth - 10, null, null, "TopCenter", settingsExportReport.TitleFontSize, null, widthToInvert) %>
+<%
+		if (splitTitles)
+		{
+			printBlockStarted = false;
+%>
+			<%= LayoutHelper.PrintBlockEnd("printBlockMainTitle" + printBlockNameSuffix, rptId++, titlesY) %>
+<%
+			titlesY = 15;
+		}
+	}
+	else
+	{
+		titlesY = 15;
+	}
+	int attIndex = 0, largeAttIndex = 0;
+	int textBlockHeight = LayoutHelper.GetDefaultTextBlockFontHeight(model);
+	if (!hasReportTemplateInstance)
+	{
+		if (!printBlockStarted)
+		{
+%>
+			<%= LayoutHelper.PrintBlockStart() %>
+<%
+		}
+		foreach (IAttributesItem item in attAndVars)
+		{
+%>
+				<%= LayoutHelper.Line(rptId++, item.TypeIsLarge() ? attWidth + largeAttWidth : attWidth, margin + attIndex * attWidth + largeAttIndex * largeAttWidth + attIndex * separation, titlesY + textBlockHeight, widthToInvert) %>
+<%
+			attIndex++;
+			if(item.TypeIsLarge())
+			{
+				largeAttIndex++;
+			}
+		}
+		attIndex = 0;
+		largeAttIndex = 0;
+		foreach (IAttributesItem item in attAndVars)
+		{
+			int x = margin + attIndex * attWidth + largeAttIndex * largeAttWidth + attIndex * separation;
+			int width = item.TypeIsLarge() ? attWidth + largeAttWidth : attWidth;
+			string alignment = SettingsExportReportActionElement.AlignRight(item) ? "TopRight" : null;
+			if (hasAttsSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue())
+			{
+				rptId++;
+%>
+				<%= LayoutHelper.Attribute(model, rptId, "&" + item.Name.TrimStart('&') + "Title", x, titlesY, width, null, null, null, alignment, "gxReportAttributeTitle" + rptId, null, widthToInvert) %>
+<%
+			}
+			else
+			{
+%>
+				<%= LayoutHelper.Label(rptId++, item.Description, x, titlesY, width, alignment, widthToInvert) %>
+<%
+			}
+			attIndex++;
+			if(item.TypeIsLarge())
+			{
+				largeAttIndex++;
+			}
+		}
+%>
+			<%= LayoutHelper.PrintBlockEnd("printBlockTitles" + printBlockNameSuffix, rptId++, titlesY + textBlockHeight + 5) %>
+<%
+	}
+	if (printFilters)
+	{
+		List<IRegularFilter> allFilters = gridObject.GetFilters();
+		DynamicFilterAttributesElement dynamicFilters = gridObject.Table.GetDynamicFilters();
+		Artech.Common.Collections.IBaseCollection<IWorkWithPlusInstanceElement> allFixedFilters = (dynamicFilters != null && dynamicFilters.FixedFilters != null && dynamicFilters.FixedFilters.Items.Count > 0) ? dynamicFilters.FixedFilters.Items : null;		
+		int filtersMaxDscWidth = LayoutHelper.GetFiltersDescriptionMaxWidth(dynamicFilters, allFilters, grid, gridObject.HasTitleFilter, settings) + 5;
+		bool addfixedFilterPrint = (grid is GridGeneralElement && ((GridGeneralElement)grid).ConditionalFormatting != null && ((GridGeneralElement)grid).ConditionalFormatting.HasFilter);
+		int filterSpacing = (filtersPrintBlock != null ? filtersPrintBlock.Table.CellSpacing * 2 : 2);
+		int filterStartPositionInitial = (hasReportTemplateInstance ? settingsExportReport.ReportTemplatePI.PRRoot.LeftMargin : 0) + (filtersPrintBlock != null ? filtersPrintBlock.Table.MarginLeft + filtersTemplateLabel.MarginLeft : margin);
+		int filterInitialY = (filtersPrintBlock != null ? filtersPrintBlock.Table.MarginTop + filtersTemplateVariable.MarginTop : attsY);
+		int filterBottomMargin = (filtersPrintBlock != null ? filtersPrintBlock.Table.MarginBottom + filtersTemplateVariable.MarginBottom : 3);
+		int filterRightMargin = (filtersPrintBlock != null ? filtersPrintBlock.Table.MarginRight + filtersTemplateVariable.MarginRight : margin);
+		int? filterHeight = null;
+		if (filtersPrintBlock != null)
+		{
+			filterHeight = System.Math.Max(filtersTemplateLabel.GetItemHeight(), filtersTemplateVariable.GetItemHeight()) - filtersTemplateVariable.MarginTop - filtersTemplateVariable.MarginBottom;
+		}
+		int filterDefHeight = (filtersPrintBlock != null ? filterHeight.Value : defAttHeight);
+
+		string filterPrintBlockStart = LayoutHelper.PrintBlockStart();
+		if (filtersPrintBlock != null && (filtersPrintBlock.Table.Borders != Artech.Genexus.Common.Parts.Layout.ApplyBorders.None && filtersPrintBlock.Table.BorderWidth > 0 || filtersPrintBlock.Table.BackColor != System.Drawing.Color.Empty))
+		{
+			int rectX = settingsExportReport.ReportTemplatePI.PRRoot.LeftMargin + filtersPrintBlock.Table.MarginLeft;
+			int rectY = filtersPrintBlock.Table.MarginTop;
+			int rectWidth = paperWidth - (filtersPrintBlock.Table.MarginRight + rectX);
+			int rectHeight = filtersTemplateVariable.MarginTop + filterDefHeight + filtersTemplateVariable.MarginBottom;
+			if (filtersPrintBlock.Table.HasBorder_Top())
+			{
+				filterInitialY += filtersPrintBlock.Table.BorderWidth;
+				rectHeight += filtersPrintBlock.Table.BorderWidth;
+			}
+			if (filtersPrintBlock.Table.HasBorder_Bottom())
+			{
+				filterBottomMargin += filtersPrintBlock.Table.BorderWidth;
+				rectHeight += filtersPrintBlock.Table.BorderWidth;
+			}
+			if (filtersPrintBlock.Table.HasBorder_Left())
+			{
+				filterStartPositionInitial += filtersPrintBlock.Table.BorderWidth;
+			}
+			if (filtersPrintBlock.Table.HasBorder_Right())
+			{
+				filterRightMargin += filtersPrintBlock.Table.BorderWidth;
+			}
+			filterPrintBlockStart += LayoutHelper.Rectangle(model, rptId++, rectX, rectY, rectWidth, rectHeight, filtersPrintBlock.Table.Borders, filtersPrintBlock.Table.BorderWidth, filtersPrintBlock.Table.BorderColor, filtersPrintBlock.Table.BackColor);
+		}
+		
+		foreach (System.Collections.IEnumerable filtersList in SelectionGeneralElement.GetFiltersAddFixedFiltersLists(allFilters, dynamicFilters))
+		{
+			foreach (IFilter filter in filtersList)
+			{
+%>
+			<%= filterPrintBlockStart %>
+<%
+				int filterStartPosition = filterStartPositionInitial;
+				bool isFixedFilter = !(filter is IRegularFilter);
+
+				if (isFixedFilter || ((IRegularFilter)filter).ShowDescription || (filter is FilterAttributeFullTextElement && ((FilterAttributeFullTextElement)filter).Description != ""))
+				{
+					if (filter.HasOperators())
+					{
+						addfixedFilterPrint = addfixedFilterPrint || filter.HasFixedValueOperator() || filter.HasRangeOperatorNotFixed(null);
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&Filter" + filter.Name + "Description", filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, null, true, null, "gxReportAttribute" + rptId, filtersTemplateLabel, widthToInvert) %>
+<%
+					}
+					else
+					{
+%>
+				<%= LayoutHelper.Label(model, rptId++, filter.Description, filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, true, null, null, filtersTemplateLabel, widthToInvert) %>
+<%
+					}
+					filterStartPosition += filtersMaxDscWidth + filterSpacing;
+				}
+				if (filter is FilterAttributeMultipleGeneralElement || filter.IsDVCombo() && (((IItemWithControlInfo)filter).ControlAllowMultipleSelection && ((IItemWithControlInfo)filter).ControlInputDS != AttributeElement.ControlInputDSValue.FixedValues || LoadDVComboProcedureHelper.HasDescription((IItemWithControlInfo)filter)))
+				{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filter is FilterAttributeMultipleGeneralElement ? "&Filter" + filter.Name + "Dsc" : ("&" + filter.Name + "Description"), filterStartPosition, filterInitialY, paperWidth - (margin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+				}
+				else
+				{
+					Artech.Genexus.Common.ITypedObject typeInfo = null;
+					if (filter.IsDataTypeBasedOn())
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)filter.Domain;
+						if (typeInfo == null)
+						{
+							typeInfo = (Artech.Genexus.Common.ITypedObject)Artech.Genexus.Common.Objects.Attribute.Get(settings.Model, filter.Name);
+						}
+					}
+					string filterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, filter as IItemWithControlInfo, filter.Name, true, true, settings);
+					if (filterName == "&Filter" + filter.Name.TrimStart('&') + "ValueDescription")
+					{
+						if (isFixedFilter)
+						{
+							filterName = "&Filter" + filter.Name + "ValueDescription";
+						}
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filterName, filterStartPosition, filterInitialY, paperWidth - (margin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+					}
+					else
+					{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filter.VariableName, filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+					}
+				}
+				if (filter.HasFixedValueOperator())
+				{
+					addfixedFilterPrint = true;
+				}
+%>
+			<%= LayoutHelper.PrintBlockEnd("printBlockFilter" + filter.Name + printBlockNameSuffix, rptId++, filterInitialY + filterDefHeight + filterBottomMargin) %>
+<%
+				if (filter.HasRange())
+				{
+%>
+			<%= filterPrintBlockStart %>
+<%
+					filterStartPosition = filterStartPositionInitial;
+					if (isFixedFilter || ((IRegularFilter)filter).ShowDescription)
+					{
+						if (settings.HasMultilanguage)
+						{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filter.RangeVariableName + "_Description", filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, null, true, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateLabel, widthToInvert) %>
+<%
+						}
+						else
+						{
+%>
+				<%= LayoutHelper.Label(model, rptId++, SettingsExportActionElement.GetRangeFilterMiddleDescription(settings, filter, true, false), filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, true, null, null, filtersTemplateLabel, widthToInvert) %>
+<%
+						}
+						filterStartPosition += filtersMaxDscWidth + filterSpacing;
+					}
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filter.RangeVariableName, filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+			<%= LayoutHelper.PrintBlockEnd("printBlockFilter" + filter.Name + "_To" + printBlockNameSuffix, rptId++, filterInitialY + filterDefHeight + filterBottomMargin) %>
+<%
+				}
+			}
+		}
+		if (dynamicFilters != null)
+		{
+            foreach (IFilter filter in dynamicFilters.Items)
+            {
+%>
+			<%= filterPrintBlockStart %>
+<%
+				int filterStartPosition = filterStartPositionInitial;
+				if (filter.HasOperators() || filter.HasRange())
+				{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&Filter" + filter.Name + "Description", filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, null, true, null, "gxReportAttribute" + rptId, filtersTemplateLabel, widthToInvert) %>
+<%
+				}
+				else
+				{
+%>
+				<%= LayoutHelper.Label(model, rptId++, filter.Description, filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, true, null, null, filtersTemplateLabel, widthToInvert) %>
+<%
+				}
+				filterStartPosition += filtersMaxDscWidth + filterSpacing;
+				if (filter is FilterAttributeMultipleGeneralElement || filter.IsDVCombo() && (((IItemWithControlInfo)filter).ControlAllowMultipleSelection && ((IItemWithControlInfo)filter).ControlInputDS != AttributeElement.ControlInputDSValue.FixedValues || LoadDVComboProcedureHelper.HasDescription((IItemWithControlInfo)filter)))
+				{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filter is FilterAttributeMultipleGeneralElement ? "&Filter" + filter.Name + "Dsc" : ("&" + filter.Name + "Description"), filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+				}
+				else
+				{
+					Artech.Genexus.Common.ITypedObject typeInfo = null;
+					if (filter.IsDataTypeBasedOn())
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)filter.Domain;
+						if (typeInfo == null)
+						{
+							typeInfo = (Artech.Genexus.Common.ITypedObject)Artech.Genexus.Common.Objects.Attribute.Get(settings.Model, filter.Name);
+						}
+					}
+					string filterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, filter as IItemWithControlInfo, filter.Name, true, true, settings);
+					if (filterName == "&Filter" + filter.Name.TrimStart('&') + "ValueDescription")
+					{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filterName, filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+					}
+					else
+					{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filter.VariableName, filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+					}
+				}
+				if (filter.HasFixedValueOperator())
+				{
+					addfixedFilterPrint = true;
+				}
+%>
+			<%= LayoutHelper.PrintBlockEnd("printBlockFilter" + filter.Name + printBlockNameSuffix, rptId++, filterInitialY + filterDefHeight + filterBottomMargin) %>
+<%
+            }
+		}
+		if (gridObject.HasTitleFilter)
+		{
+			foreach (IWorkWithPlusInstanceElement item in grid.Items)
+			{
+				if (item is IGridAttributesItem && ((IGridAttributesItem)item).IsIncludeTitleFilterTrue())
+				{
+					IGridAttributesItem gridItem = (IGridAttributesItem)item;
+
+					int filterStartPosition = filterStartPositionInitial;
+					string name = gridItem.ControlName.TrimStart('&');
+					if (TitleFilterProcedureHelper.ConsiderFilterCondition(gridItem))
+					{
+%>
+			<%= filterPrintBlockStart %>
+				<%= LayoutHelper.Label(model, rptId++, gridItem.Description, filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, true, null, null, filtersTemplateLabel, widthToInvert) %>
+<%
+						filterStartPosition += filtersMaxDscWidth + filterSpacing;
+						string filterName = SettingsExportReportActionElement.GetAttributeName(gridItem.TypeInfo, gridItem, "TF" + name, true, true, settings);
+						if (filterName == "&FilterTF" + name + "ValueDescription")
+						{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filterName, filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+						}
+						else
+						{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&TF" + name, filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+						}
+%>
+			<%= LayoutHelper.PrintBlockEnd("printBlockTF" + name + printBlockNameSuffix, rptId++, filterInitialY + filterDefHeight + filterBottomMargin) %>
+<%
+						if (gridItem.IsSearchBoxRange())
+						{
+%>
+			<%= filterPrintBlockStart %>
+<%
+							filterStartPosition = filterStartPositionInitial;
+							if (settings.HasMultilanguage)
+							{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&TF" + name + "_To_Description", filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, null, true, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateLabel, widthToInvert) %>
+<%
+							}
+							else
+							{
+%>
+				<%= LayoutHelper.Label(model, rptId++, gridItem.Description + " (" + settings.Labels.TSRangeFilterTo + ")", filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, true, null, null, filtersTemplateLabel, widthToInvert) %>
+<%
+							}
+							filterStartPosition += filtersMaxDscWidth + filterSpacing;
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&TF" + name + "_To", filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+			<%= LayoutHelper.PrintBlockEnd("printBlockTF" + name + "_To" + printBlockNameSuffix, rptId++, filterInitialY + filterDefHeight + filterBottomMargin) %>
+<%
+						}
+					}
+					if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(gridItem))
+					{
+						filterStartPosition = filterStartPositionInitial;
+%>
+			<%= filterPrintBlockStart %>
+				<%= LayoutHelper.Label(model, rptId++, gridItem.Description, filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, true, null, null, filtersTemplateLabel, widthToInvert) %>
+<%
+						filterStartPosition += filtersMaxDscWidth + filterSpacing;
+						if (gridItem.AllowMultipleSelection)
+						{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&TF" + name + "_SelDscs", filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+						}
+						else
+						{
+							string filterName = SettingsExportReportActionElement.GetAttributeName(gridItem.TypeInfo, gridItem, "TF" + name + "_Sel", true, true, settings);
+							if (filterName == "&FilterTF" + name + "_SelValueDescription" || filterName == "&TF" + name + "_SelDsc")
+							{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, filterName, filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+							}
+							else
+							{
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&TF" + name + "_Sel", filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+<%
+							}
+						}
+%>
+			<%= LayoutHelper.PrintBlockEnd("printBlockTF" + name + "_Sel" + printBlockNameSuffix, rptId++, filterInitialY + filterDefHeight + filterBottomMargin) %>
+<%
+					}
+					if (gridItem.PredefinedOperators != null)
+					{
+						addfixedFilterPrint = true;
+					}
+				}
+			}
+		}
+		if (addfixedFilterPrint)
+		{
+			int filterStartPosition = filterStartPositionInitial;
+%>
+			<%= filterPrintBlockStart %>
+				<%= LayoutHelper.Attribute(model, rptId++, "&FixedValueOperatorDsc", filterStartPosition, filterInitialY, filtersMaxDscWidth, filterHeight, null, true, null, "gxReportAttribute" + rptId, filtersTemplateLabel, widthToInvert) %>
+<%
+			filterStartPosition += filtersMaxDscWidth + filterSpacing;
+%>
+				<%= LayoutHelper.Attribute(model, rptId++, "&FixedValueOperatorValue", filterStartPosition, filterInitialY, paperWidth - (filterRightMargin + filterStartPosition), filterHeight, true, null, "TopLeft", "gxReportAttribute" + rptId, filtersTemplateVariable, widthToInvert) %>
+			<%= LayoutHelper.PrintBlockEnd("printBlockFixedValueOperator" + printBlockNameSuffix, rptId++, filterInitialY + filterDefHeight + filterBottomMargin) %>
+<%
+		}
+	}
+	if (!hasReportTemplateInstance)
+	{
+%>
+			<%= LayoutHelper.PrintBlockStart() %>
+<%
+		attIndex = 0;
+		largeAttIndex = 0;
+		foreach (IAttributesItem item in attAndVars)
+		{
+			rptId++;
+			string attName = SettingsExportReportActionElement.GetAttributeName(item.TypeInfo, item, item.Name, item is AttributeElement, false, settings);
+			string alignment = null;
+			int? height = null;
+			if (lineHeight > 1 && SettingsExportReportActionElement.GetLineHeight(item) > 1)
+			{
+				height = defAttHeight * lineHeight;
+				alignment = "TopJustify";
+			}
+			if (!attName.StartsWith("&") && (hasAttsSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue()))
+			{
+				attName = "&" + attName + "Data";
+			}
+%>
+				<%= LayoutHelper.Attribute(model, rptId, attName, margin + attIndex * attWidth + largeAttIndex * largeAttWidth + attIndex * separation, attsY, item.TypeIsLarge() ? attWidth + largeAttWidth : attWidth, height, null, null, alignment, "gxReportAttribute" + rptId, null, widthToInvert) %>
+<%
+			attIndex++;
+			if (item.TypeIsLarge())
+			{
+				largeAttIndex++;
+			}
+		}
+%>
+			<%= LayoutHelper.PrintBlockEnd("printBlockLines" + printBlockNameSuffix, rptId++, attsY + defAttHeight * lineHeight + 3) %>
+<%
+	}
+	if (!settings.HasRTL || IsRTL)
+	{
+%>
+		</Bands>
+		<Properties>
+			<Property><Name>RPT_PAPER_SIZE</Name><Value><%= size %></Value></Property>
+<%
+		if (size.ToLower() != "custom")
+		{
+%>
+			<Property><Name>RPT_PAPER_ORIENTATION</Name><Value><%= paperOrientation %></Value></Property>
+<%
+		}
+		else
+		{
+%>
+			<Property><Name>RPT_PAPER_WIDTH</Name><Value><%=  realPaperWidth %></Value></Property>
+			<Property><Name>RPT_PAPER_HEIGHT</Name><Value><%= paperHeight %></Value></Property>
+<%
+		}
+%>
+		</Properties>
+	</Layout>
+	<Properties>
+		<Property><Name>IsDefault</Name><Value>False</Value></Property>
+	</Properties>
+</Part>
+<%
+	}
+	else
+	{
+%>
+<%@ CallSubTemplate ExportReportLayout InitialRptId='rptId' IsRTL='true' %>
+<%
+	}
+%>

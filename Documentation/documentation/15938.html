@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Implementing Authentication and Logout Using the GAM API</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15938,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Implementing Authentication and Logout Using the GAM API</h1>
+<!--Implementing Authentication and Logout Using the GAM API--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	The GAM_Examples folder contains a large number of GeneXus objects. They are part of the GAM that is automatically installed in the KB when the property Enable Integrated Security is set to True.</p>
+<p>
+	Some of them, such as GAMExampleLogin and GAMExampleHome, are used in the first sequence of screens for the session. They are both regular Web Panels with the right programming for the security system to perform its function.</p>
+<p>
+	Even so, the developer will be allowed to make as many changes as needed; therefore, backing up the objects to be changed is recommended. A good practice could be to create a new folder, for instance “New Security System”, and copy the GeneXus objects from the GAM_Examples folder to this new folder and make the changes there. Actually, the objects saved in the GAM_Examples folder are precisely examples that show how to program the GAM and how to handle its API.</p>
+<h3>
+	Examples</h3>
+<p>
+	The examples below show how to use the GAM API based on the feature programmed in a couple of sample Web Panels.</p>
+<h5>
+	Implementing Authentication</h5>
+<p>
+	The authentication mechanism consists of using a Web Panel and some of the objects published as external objects in the GAM_Library folder. The Web Panel where the login mechanism is implemented through the GAM is GAMExampleLogin.</p>
+<p>
+	<img src="./images/15872.JPG" id="15872" class="WikiImage"/></p>
+<p>
+	Basically, it has three variables which, in turn, are based on their corresponding domains included in GeneXus by default: &amp;UserName, &amp;UserPassword and &amp;UserRememberMe. The label “Forgot your password” is just a text block with the SmallLink class that has been assigned the 'ForgotPassword' user event.</p>
+<p>
+	Lastly, the Login button is assigned to the Enter event.<br />
+	Let’s see an example of the mechanism used by the GAM to implement these features through its API. Below is the event code:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Enter
+        &amp;AdditionalParameter.RememberUserType = &amp;UserRememberMe
+        &amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors)
+        If not &amp;LoginOK
+           If &amp;Errors.Count &gt; 0 and
+            (&amp;Errors.Item(1).Code =
+                    GAMErrorMessages.UserPasswordExpired or
+             &amp;Errors.Item(1).Code = 
+                    GAMErrorMessages.UserPasswordMustBeChanged)
+               GAMExampleChangePassword(&amp;UserAutType, &amp;UserName, &amp;UserRememberMe )
+           Else
+               Do 'DisplayMessages'
+           EndIf
+        Endif
+EndEvent</pre>
+<p>
+	Now look at the first equation, which uses the RememberUserType property of the &amp;AdditionalParameter variable that is based on the external object GAMLoginAdditionalParameters. Look at the following images:</p>
+<p>
+	<img src="./images/15873.JPG" id="15873" class="WikiImage"/></p>
+<p>
+	The Folder View shows the external object and its contents are displayed to the right. There, the property RememberUserType based on Numeric(2) is defined. The image at the front shows the AdditionalParameter variable of the Web Panel and its type, which in turn is assigned to the external object itself (actually, to any of its properties and methods).</p>
+<p>
+	Now, in the image below we can see the relationship existing between the &amp;UserRememberMe variable and the &amp;AdditionalParameter variable:</p>
+<p>
+	<img src="./images/15939.JPG" id="15939" class="WikiImage"/></p>
+<p>
+	Thus, the declaration:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AdditionalParameter.RememberUserType = &amp;UserRememberMe</pre>
+<p>
+	...assigns the value of the &amp;UserRememberMe variable to the &amp;AdditionalParameter variable through its RememberUserType property (this can be done since &amp;AdditionalParameter is based on the external object. Therefore, it inherits all its properties and methods).</p>
+<p>
+	Likewise, in the following declaration:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors)</pre>
+<p>
+	...the &amp;LoginOK variable will receive the resulting value from the call to the Login method of the GAMRepository external object; in the DB_GAM, it will check whether the username and password are correct, which will return True or False.</p>
+<p>
+	<img src="./images/15875.JPG" id="15875" class="WikiImage"/></p>
+<p>
+	In the previous image, we can see part of the structure of the GAMRepository external object. Note that the Login method lists the four parameters sent in the declaration using variables.<br />
+	Next, the following code of the event checks the variable status and solves it accordingly. Note that other methods and properties of the GAM API continue to be used.</p>
+<h4>
+	Solving the Logout</h4>
+<p>
+	The Logout can be easily implemented. In the image below, a button labeled Logout has been added to the front-end menu of an application.</p>
+<p>
+	<img src="./images/15876.JPG" id="15876" class="WikiImage"/></p>
+<p>
+	In its event, the following has been programmed:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Logout'
+    GAMRepository.Logout(&amp;Errors)
+    GAMExampleLogin()       
+EndEvent</pre>
+<p>
+	The first instruction loads the user data in the GAM_DB repository. If errors occur, they are received in the SDT &amp;Errors. The second instruction transfers the flow to the GAMExampleLogin Web Panel. That’s all.</p>
+<p>
+	Examine the contents of all the events in the Web Panel’s Events tab, always using the same criteria described in the above examples.</p>
+<p>
+	</p>
+<p>
+	</p>
+<br />   <br />    <br /> <br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

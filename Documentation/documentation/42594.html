@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Validation Procedure property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42594,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Validation Procedure property</h1>
+<!--Validation Procedure property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td>Procedure object used to validate the User Input.  <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Objects:</strong> <a href="37113.html">Conversational Flows Instance</a><br /></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>The Validation Procedure is available for any <a href="38959.html">Chatbot User Input</a> and is triggered as soon the user enters data for that user input.</p>
+
+<p>It is useful to validate the user's entry and give him feedback about that entry.</p>
+
+<p>Basically, every time that the validation procedure is executed, it returns a Boolean variable and a text message.</p>
+
+<p>The Validation Procedure has two possible signatures<sup>(1)</sup>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+1. parm(in:&amp;UserInput,out:&amp;Error,out:&amp;CustomResponse);
+2. parm(in:&amp;UserInput,inout:&amp;Context,out:&amp;Error,out:&amp;CustomResponse);</pre>
+
+<p>where</p>
+
+<ul>
+	<li>&amp;UserInput is the <a href="38959.html">Chatbot User Input</a> (the parameter must be of the same data type of the User Input).</li>
+	<li>&amp;Error is Boolean</li>
+	<li>&amp;CustomResponse is a string parameter that contains the message to be displayed when the user fails to enter correct data.</li>
+	<li>&amp;Context is a variable based on the Context SDT generated for the chatbot's instance (you have to <a href="40241.html">generate the chatbot</a> to have the Context SDT). For example, if the instance is &quot;Ctizen&quot; the SDT context is under the module CitizenChatbot. The Context contains all the <a href="39351.html">Chatbot Context</a>.</li>
+</ul>
+
+<p>The message (&amp;CustomResponse) is displayed to the user, regardless of the value of the Boolean output (whether there is an error in the validation or not).</p>
+
+<p>So, the validation procedure can be used for two purposes:</p>
+
+<p>1. When there is an error in the validation, warn the user and give him a hint to enter a valid value.</p>
+
+<p>That is, ask the user to retry if the entered value is not valid (for the model). For instance, you can ask the user to enter the country where a discount is going to be available. Although the user enters a valid country, it may not be the country where that discount applies. There, the chatbot can ask the user to enter the information again (giving a hint of the valid countries for the discount).</p>
+
+<p>2. When the validation is right, to go on with another user input, you can change the message for the user (asking him for the next user input), depending on the logic of the procedure. For example, if the user is buying a car, and he enters the card make he is interested in, the validation procedure can change the message of the following user input and give the user a hint of the years of the models available.</p>
+
+<p>One possible flow of the conversation:</p>
+
+<p>Bot: I have the following models available: Onix, Corolla<br />
+User: I want the Onix<br />
+Bot: Ok, I have it available in the years 2018 and 2019.</p>
+
+<p>Another possible conversation:</p>
+
+<p>Bot: I have the following models available: Onix, Corolla<br />
+User: I want the Corolla<br />
+Bot: Ok, I have it available in 2018, 2019, and 2020 model years.</p>
+
+<p>Therefore, what is configured in the <a href="40217.html">Ask Messages property</a> of the following user input is replaced by the message returned by the validation procedure.</p>
+
+<p><strong>Note</strong></p>
+
+<p>The user input may have other validations (such as <a href="39295.html">match With Entity property</a>), or even the data type - which is always checked for the user input (e.g. if it's a date, the AI Provider sends an error if the user enters data which isn't in a valid date format).<br />
+Those validations are combined with the Validation Procedure:</p>
+
+<ul>
+	<li>The data is requested.</li>
+	<li>The AI Provider validates if it matches the entity (<a href="39295.html">match With Entity property</a> and/or the data type).</li>
+	<li>If it doesn't match, it asks the user to enter it again (here the <a href="40216.html">Try Limit property</a> is used to determine the number of times the user is asked to retry).</li>
+	<li>If it matches, the data is assigned to the parameter.</li>
+	<li>The Validation Procedure is run.</li>
+	<li>If it is not valid (the validation procedure returns &amp;Error = TRUE), it goes back (implicitly clears the parameter in the context) and the user is asked to enter it again.</li>
+	<li>The data is requested again.</li>
+</ul>
+
+<h4><a id="Temporary+Limitation" class="HashLink" href="#Temporary+Limitation">Temporary Limitation</a></h4>
+
+<p>The <a href="40216.html">Try Limit property</a> does not apply to the validation procedure yet. There isn't an automatic mechanism to count the failed attempts. You can have an internal counter for the maximum number of attempts, which can be implemented using the <a href="https://wiki.genexus.com/commwiki/wiki?41364,," target="_blank">Context API</a>.</p>
+
+<p>(1) The parameter names can be anything, except for data types, which have to be the expected ones. Otherwise, you'll get an error like the following:</p>
+
+<p>error: Unexpected Data Type. The Data Type of the x parameter must be the same as the User Input Data Type NUMERIC.</p></p>
+ <h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p> <p>Consider the <a href="https://wiki.genexus.com/commwiki/wiki?40937,," target="_blank">Citizen Service Chatbot sample</a> where several complaints can be sent to citizen services in relation to sanitation, traffic, etc.</p>
+
+<p>In this sample, there is a <a href="38531.html">Flow</a> called &quot;StatusClaim&quot; where the user can enter his Identification and the Complaint ID (a number he was given when he made the complaint). Given that information, the chatbot answers the status of the complaint (it can be pending to be solved, or solved).</p>
+
+<p>Then the following Flow is defined, where the ComplaintId user input has the Validation Procedure property set to &quot;ValidateComplaint,&quot; which is a procedure of the KB.</p>
+
+<p> </p>
+
+<p><img src="./images/42692.png" id="42692" class="WikiImage"/></p>
+
+<p> </p>
+
+<p>The &quot;ValidateComplaint&quot; procedure is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;ComplaintId,out:&amp;Error,out:&amp;ResponseforFailure);</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Chatbot.Context.GetUserContextValue(!&quot;CitizenAdv&quot;,GetUserId(),!&quot;UserIdentification&quot;,&amp;ParameterValue)
+for each Complaint
+    where ComplaintId = &amp;ComplaintId
+    where UserIdentification.Trim().ToLower() = &amp;ParameterValue.Trim().ToLower()
+    
+    &amp;Error              = FALSE
+    exit
+when none
+    &amp;Error              = TRUE
+    &amp;ResponseforFailure = format(!&quot;%1 isn't a valid complaint Id. Try again please.&quot;,&amp;ComplaintId.ToString())
+endfor
+</pre>
+
+<p>Note that the <a href="https://wiki.genexus.com/commwiki/wiki?41364,," target="_blank">Chatbots Context API</a> is used to get the UserIdentification (which is in the <a href="39351.html">Chatbot Context</a>) as another parameter to find out if the complaint ID provided is valid (if it belongs to the user).</p>
+
+<p>Another possibility for this example, would have been to receive the Context as parameter (&amp;Context is based con CitizenAdvChatbot.Context SDT).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;ComplaintId,inout:&amp;Context,out:&amp;Error,out:&amp;ResponseforFailure);
+
+&amp;UserIdentification = &amp;Context.Context.UserIdentification
+
+for each Complaint
+  where ComplaintId = &amp;ComplaintId
+  where UserIdentification.Trim().ToLower() = &amp;UserIdentification 
+
+  &amp;Error = FALSE
+  exit
+when none
+  &amp;Error = TRUE
+  &amp;ResponseforFailure = format(!&quot;%1 isn't a valid complaint Id. Try again please.&quot;,&amp;ComplaintId.ToString())
+endfor</pre></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="42971.html">HowTo: Send and receive a message from the Provider</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:37 PM</em></font></td></TR></table></font>

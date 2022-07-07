@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Authorization Scenarios</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17583,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Authorization Scenarios</h1>
+<!--GAM - Authorization Scenarios--><div class="TableWikiBody" id="tblwikibody"><p>In the first stage you can solve it automatically:</p>
+
+<ul>
+	<li>Permission to execution</li>
+	<li>Permission on modes of Transactions</li>
+</ul>
+
+<h3><a id="Web+Applications" class="HashLink" href="#Web+Applications">Web Applications</a></h3>
+
+<h4><a id="Scenario+1%3A+Access+to+a+Web+object+%28wiki%3F6916%2CCategory%253AWeb%2BPanel%2Bobject+Web+Panel+and+Web+Components+with+wiki%3F7868%2CURL%2Baccess%2Bproperty+URL+access+property+%3D+Yes%29" class="HashLink" href="#Scenario+1%3A+Access+to+a+Web+object+%28wiki%3F6916%2CCategory%253AWeb%2BPanel%2Bobject+Web+Panel+and+Web+Components+with+wiki%3F7868%2CURL%2Baccess%2Bproperty+URL+access+property+%3D+Yes%29">Scenario 1: Access to a Web object (<a href="6916.html">Web Panel</a> and Web Components with <a href="7868.html">URL access property</a> = Yes)</a></h4>
+
+<p>Validates if the user has permission to execute the object. He should not see any data of the form if he has no rights to execute the object (in case of web objects event Start is not executed actually).<br />
+<br />
+In this case <a href="14960.html">GAM</a> checks that the user has &lt;prefix&gt;_Execute permission, where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the object.</p>
+
+<p>In case a permission error is detected, an automatic redirect will be done to the <a href="https://wiki.genexus.com/commwiki/wiki?17551,," target="_blank">Not Authorized Object for Web Object</a> in case of web applications.</p>
+
+<p>See the following: <a href="17585.html">HowTo: GAM Automatic Check of Access Permissions for Web Objects</a>.</p>
+
+<h4><a id="Scenario+2%3A+Access+to+a+Main+Proc+with+call+protocol+HTTP+%28example+PDF+reports+which+display+on+the+browser%29" class="HashLink" href="#Scenario+2%3A+Access+to+a+Main+Proc+with+call+protocol+HTTP+%28example+PDF+reports+which+display+on+the+browser%29">Scenario 2: Access to a Main Proc with call protocol HTTP (example PDF reports which display on the browser)</a></h4>
+
+<p>Validates if the user has permission to execute this object.<br />
+In this case, GAM checks that the user has &lt;prefix&gt;_Execute permission, where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the object.</p>
+
+<p>In case of an error, permission is detected, 401 HTTP error (thrown by application server) will be displayed (it should be captured by the programmer).</p>
+
+<p>In case of a PDF report, <a href="https://wiki.genexus.com/commwiki/wiki?17551,," target="_blank">Not Authorized Object for Web Object</a> is considered.</p>
+
+<h4><a id="Scenario+3%3A+Access+to+a+web+Transaction+with+or+without+mode" class="HashLink" href="#Scenario+3%3A+Access+to+a+web+Transaction+with+or+without+mode">Scenario 3: Access to a web Transaction with or without mode</a></h4>
+
+<p>First validates if the user has permission to execute this object. In this case, GAM checks that the user has &lt;prefix&gt;_Execute permission (where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the Transaction).</p>
+
+<p>The &lt;prefix&gt;_Execute permission enables the user to display the data of the trn (display mode).</p>
+
+<p>If the user executes an action over the trn (Confirm or Delete) another permission will be required :</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;prefix&gt;_Insert
+&lt;prefix&gt;_Update
+&lt;prefix&gt;_Delete</pre>
+
+<p>In fact there is a permission which &quot;groups&quot; the other permissions (see <a href="17664.html">Full Control Permissions</a>):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;prefix&gt;.FullControl
+
+    &lt;prefix&gt;_Execute
+    &lt;prefix&gt;_Insert
+    &lt;prefix&gt;_Update
+    &lt;prefix&gt;_Delete</pre>
+
+<p>In case of an error, a standard error message of GeneXus will be displayed if the Transaction does not receive KEY and mode as parameters (in case it receives that information, a permission error redirects to <a href="https://wiki.genexus.com/commwiki/wiki?17551,," target="_blank">Not Authorized Object for Web Object</a>).</p>
+
+<p>See: <a href="18046.html">How to implement permissions on modes of a web Transation</a></p>
+
+<h4><a id="Scenario+4%3A+Restricted+access+to+a+group+of+WEB+pages" class="HashLink" href="#Scenario+4%3A+Restricted+access+to+a+group+of+WEB+pages">Scenario 4: Restricted access to a group of WEB pages</a></h4>
+
+<p>See <a href="18510.html">GAM: How to give restricted access to a group of web objects</a></p>
+
+<h3><a id="SD+Applications" class="HashLink" href="#SD+Applications">SD Applications</a></h3>
+
+<h4><a id="Scenario+5%3A+Permissions+to+view+a+list%2C+grid%2C+or+detail+of+a+wiki%3F15974%2CCategory%253AWork%2BWith%2Bfor%2BSmart%2BDevices%2Bobject+Work+With+for+Smart+Devices+object+and+execute+a+wiki%3F24829%2CCategory%253APanel%2Bobject+Panel+object+%28SD+Applications%29." class="HashLink" href="#Scenario+5%3A+Permissions+to+view+a+list%2C+grid%2C+or+detail+of+a+wiki%3F15974%2CCategory%253AWork%2BWith%2Bfor%2BSmart%2BDevices%2Bobject+Work+With+for+Smart+Devices+object+and+execute+a+wiki%3F24829%2CCategory%253APanel%2Bobject+Panel+object+%28SD+Applications%29.">Scenario 5: Permissions to view a list, grid, or detail of a <a href="15974.html">Work With for Smart Devices object</a> and execute a <a href="24829.html">Panel object</a> (SD Applications).</a></h4>
+
+<p>Validates if the user has rights to execute the object, very similar to scenario #1.</p>
+
+<p>It validates permissions for displaying the list and viewing the detail (view mode) of a WWSD panel.</p>
+
+<p>In case of SD panels, GAM checks if the user has the permission to execute it.</p>
+
+<p>In this case, GAM checks that the user has &lt;prefix&gt;_Execute permission, where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the object.</p>
+
+<p>In case a permission error is detected, the error is displayed on the screen or redirected to the object specified in <a href="https://wiki.genexus.com/commwiki/wiki?20018,," target="_blank">Not Authorized Object for SD property</a>.</p>
+
+<p>See <a href="18064.html">HowTo: Manage Execute Permissions on WWSD LIST and SD Panels</a></p>
+
+<p>Note:</p>
+
+<p>1. In case of WWSD and SD panels, the business logic of these objects is solved using <a href="14573.html">REST Web Services</a>. When you generate a WWSD or SD panel object, Data Providers exposed as REST web services are generated.</p>
+
+<p>These REST web services became private when you declare security over the corresponding objects (WWSD and SD panels).</p>
+
+<p>From the perspective of the GeneXus user, he doesn´t need to worry about that, because it´s transparent to the developer.</p>
+
+<p>2. Note that the actions in WWSD Panels (insert, update, delete) are related directly to the Business Component associated with the WWSD and not the WWSD itself. That means that, if you apply <a href="https://wiki.genexus.com/commwiki/wiki?9413,," target="_blank">Work With Pattern for Smart Devices</a> to a Transaction (&quot;Product&quot;), the &quot;Product&quot; Transaction is automatically saved as Business Component exposed as REST web service. In order to control permissions over the actions insert, update, delete, you need to declare permissions over the Business Component itself (see scenario #5).</p>
+
+<h3><a id="Scenario+6%3A+Access+to+actions+of+a+WWSD+object+%28insert%2C+update%2C+delete%29" class="HashLink" href="#Scenario+6%3A+Access+to+actions+of+a+WWSD+object+%28insert%2C+update%2C+delete%29">Scenario 6: Access to actions of a WWSD object (insert, update, delete)</a></h3>
+
+<p>If you apply <a href="https://wiki.genexus.com/commwiki/wiki?9413,," target="_blank">Work With Pattern for Smart Devices</a> to a Transaction (ie. &quot;Product&quot;), the &quot;Product&quot; Transaction is automatically saved as Business Component exposed as <a href="14573.html">REST Web Services</a>.</p>
+
+<p>In order to control permissions over the actions insert, update, delete, you need to declare permissions over the Business Component itself.</p>
+
+<p>The idea is to validate if the user has rights to execute this object depending on the method with which the call is issued.<br />
+<br />
+GET method requires &lt;prefix&gt;_Services_Execute permission (where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the Business Component), and this is the minimum permission required.</p>
+
+<p>The rest of the permissions are:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;prefix&gt;_Services_Insert
+&lt;prefix&gt;_Services_Update
+&lt;prefix&gt;_Services_Delete</pre>
+
+<p>Finally, there is a permission which &quot;groups&quot; the other permissions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;prefix&gt;_Services.FullControl
+
+    &lt;prefix&gt;_Services_Execute
+    &lt;prefix&gt;_Services_Insert
+    &lt;prefix&gt;_Services_Update
+    &lt;prefix&gt;_Services_Delete</pre>
+
+<p>The check of permissions is done through Oauth in this case. In case of a permission error, 401 HTTP error is received, which is captured by the SD application and an error is shown on the screen.</p>
+
+<p>See: <a href="17925.html">HowTo: Permissions in SD Applications</a></p>
+
+<p>Note: The services of a Transaction (Business Component) is independent of the WWSD itself. You can give permissions over the WWSD and not over the BC, and viceversa.<br />
+The services are independent, and as they are REST services, they can be called from any other application, as any REST web service (see scenario #7).</p>
+
+<h4><a id="Scenario+7%3A+Access+to+user+actions+of+a+SD+object" class="HashLink" href="#Scenario+7%3A+Access+to+user+actions+of+a+SD+object">Scenario 7: Access to user actions of a SD object</a></h4>
+
+<p>See <a href="18173.html">Permissions over a user action in SDpanels</a></p>
+
+<h3><a id="REST+web+services" class="HashLink" href="#REST+web+services">REST web services</a></h3>
+
+<h4><a id="Scenario+8%3A+Access+to+a+Business+Component+exposed+as+REst+web+service" class="HashLink" href="#Scenario+8%3A+Access+to+a+Business+Component+exposed+as+REst+web+service">Scenario 8: Access to a Business Component exposed as REst web service</a></h4>
+
+<p>This kind of Rest services can be called using GET (read), POST (update), PUT (create), DELETE (delete) HTTP methods. See <a href="14573.html">REST Web Services</a> for more details.</p>
+
+<p>These methods are directly related to execute, update, insert, delete modes over the Business Component.</p>
+
+<p>The idea is to validate if the user has rights to execute the BC exposed as REST web service, depending on the method with which the call is issued.</p>
+
+<p>GET method requires &lt;prefix&gt;_Services_Execute permission (where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the Business Component), and this is the minimum permission required.</p>
+
+<p>The rest of the permissions are:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;prefix&gt;_Services_Insert
+&lt;prefix&gt;_Services_Update
+&lt;prefix&gt;_Services_Delete</pre>
+
+<p>Finally, there is a permission which &quot;groups&quot; the other permissions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;prefix&gt;_Services.FullControl
+
+    &lt;prefix&gt;_Services_Execute
+    &lt;prefix&gt;_Services_Insert
+    &lt;prefix&gt;_Services_Update
+    &lt;prefix&gt;_Services_Delete</pre>
+
+<p>The check of permissions is done through OAuth in this case. In case of a permission error, 401 HTTP error is received.</p>
+
+<h4><a id="Scenario+9%3A+Access+to+a+Data+Provider+exposed+as+REst+web+service" class="HashLink" href="#Scenario+9%3A+Access+to+a+Data+Provider+exposed+as+REst+web+service">Scenario 9: Access to a Data Provider exposed as REst web service</a></h4>
+
+<p>These kinds of Rest services are only read services (always accessed via GET HTTP method). In this case, GAM checks that the user has &lt;prefix&gt;_Services_Execute permission (where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the Data Provider). The check of permissions is done through OAuth in this case (the same mechanism used for SD applications security checks).</p>
+
+<p>In case of a permission error, 401 HTTP error is received.</p>
+
+<h4><a id="Scenario+10%3A+Access+to+a+procedure+exposed+as+REST+service" class="HashLink" href="#Scenario+10%3A+Access+to+a+procedure+exposed+as+REST+service">Scenario 10: Access to a procedure exposed as REST service</a></h4>
+
+<p>These kinds of services are only read services (always accessed via POST HTTP method).<br />
+In this case, GAM checks that the user has &lt;prefix&gt;_Services_Execute permission (where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the procedure).<br />
+The check of permissions is done through OAuth in this case (the same mechanism used for SD applications security checks).</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="17916.html">GAM - Automatic Permissions generated by GeneXus</a><br />
+<a href="15912.html">GAM - Permissions</a><br />
+<a href="17664.html">GAM - Full Control Permissions and inheritance</a><br />
+<a href="17569.html">GAM - Roles</a><br />
+<a href="15910.html">GAM - Applications</a><br />
+<a href="15937.html">GAM - Authentication Scenarios</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="15937.html">GAM - Authentication Scenarios</a></TD><TD><a href="17916.html">GAM - Automatic Permissions generated by GeneXus</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="18510.html">HowTo: Give Restricted Access to a Group of Web Objects</a></TD><TD><a href="18046.html">HowTo: Implementing Permissions on Modes of a Web Transaction</a></TD><TD><a href="18064.html">HowTo: Manage Execute Permissions on WWSD LIST and SD Panels</a></TD></TR><TR><TD><a href="17925.html">HowTo: Permissions in SD Applications</a></TD><TD><a href="17935.html">HowTo: Permissions in SD Applications, CRUD Restricted</a></TD><TD><a href="17943.html">HowTo: Permissions in SD Applications, WW and CRUD Restricted</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR><TD><a href="29723.html">Permissions Created by the User</a></TD><TD><a href="18173.html">Permissions Over a User Action in SD Objects</a></TD><TD><a href="18512.html">Require Access Permissions Application Property</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/22 06:58 PM</em></font></td></TR></table></font>

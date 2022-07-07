@@ -1,0 +1,50 @@
+delimiters "$", "$"
+
+actionSD_template ::= [
+  "Return" : "g_call_sd_statement_return_object_with_context",
+  "Cancel" : "g_call_sd_statement_with_context",
+  "GoHome" : "g_call_sd_statement_with_context",
+  "ReturnTo" : "g_call_sd_statement_return_with_context",
+  "CancelTo" : "g_call_sd_statement_return_with_context",
+  default: "g_call_sd_statement_default"
+]
+
+actionSD_map ::= [
+  "Return" : "this.return",
+  "Cancel" : "this.cancel",
+  "GoHome" : "this.goHome",
+  "ReturnTo" : "this.returnTo",
+  "CancelTo" : "this.cancelTo",
+  "Save" : "this._save",
+  "Login" : "this.gam.login",
+  "LoginExternal" : "this.gam.loginExternal",
+  "Logout" : "this.gam.logout",
+  "Refresh" : "this.Refresh",
+  "SetTheme" : "this.app.setTheme",
+  "SetLanguage" : "this.app.setLanguage",
+  default: key
+]
+
+g_call_sd_statement( stmt) ::= <%
+$(actionSD_template.(stmt.ExoMethod))(stmt)$
+%>
+
+g_call_sd_statement_default( stmt) ::= <%
+$actionSD_map.(stmt.ExoMethod)$($stmt:g_call_parameters()$)
+%>
+
+g_call_sd_statement_return(stmt) ::= <%
+$actionSD_map.(stmt.ExoMethod)$($stmt:g_call_parameters_as_object()$)
+%>
+
+g_call_sd_statement_with_context(stmt) ::= <%
+$actionSD_map.(stmt.ExoMethod)$(__aSt)
+%>
+
+g_call_sd_statement_return_object_with_context(stmt) ::= <%
+$actionSD_map.(stmt.ExoMethod)$($stmt:g_call_parameters_as_object()$, __aSt)
+%>
+
+g_call_sd_statement_return_with_context(stmt) ::= <%
+$actionSD_map.(stmt.ExoMethod)$($stmt:g_call_parameters()$, __aSt)
+%>

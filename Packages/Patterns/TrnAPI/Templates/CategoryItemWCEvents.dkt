@@ -1,0 +1,60 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Selected Objects SDT" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Concepto.Patterns.TrnAPI" %>
+<%@ Import Namespace="Concepto.Patterns.TrnAPI" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%
+	TrnAPIInstance trnAPIInstance = new TrnAPIInstance(Instance);
+	
+%>
+<Part type="<%= PartType.Events %>">
+<Source><![CDATA[Event Start
+	&<%= trnAPIInstance.AttributesName.CategoryId %>.Visible = 0
+EndEvent  // Start
+
+Event AddItem.Click
+	If not &<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>.IsEmpty()
+		Add<%= trnAPIInstance.ParentObject.Name %>.Call(&<%= trnAPIInstance.AttributesName.CategoryId %>, &<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>)
+		&AssItemId.Additem(&<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>, <%= trnAPIInstance.ParentObject.Structure.Root.DescriptionAttribute.Name%>)
+		&<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>.Removeitem(&<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>)
+	EndIf
+Endevent
+
+Event DelItem.Click
+	If not &AssItemId.IsEmpty()
+		Delete<%= trnAPIInstance.ParentObject.Name %>.Call(&<%= trnAPIInstance.AttributesName.CategoryId %>, &AssItemId)
+		&AssItemId.RemoveItem(&AssItemId)
+		&<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>.AddItem(&AssItemId, <%= trnAPIInstance.ParentObject.Structure.Root.DescriptionAttribute.Name%>)
+	EndIf
+EndEvent
+
+Event Refresh
+	&<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>.Clear()
+	for each order <%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>
+		for each order <%= trnAPIInstance.AttributesName.CategoryId %>, <%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>
+		where <%= trnAPIInstance.AttributesName.CategoryId %> = &<%= trnAPIInstance.AttributesName.CategoryId %>
+			//nothing        
+		when none
+			&<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>.Additem(<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>, <%= trnAPIInstance.ParentObject.Structure.Root.DescriptionAttribute.Name%>)
+		 endfor
+	endfor
+	
+	&AssItemId.Clear()
+	for each order <%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>
+		for each order <%= trnAPIInstance.AttributesName.CategoryId %>, <%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>
+			where <%= trnAPIInstance.AttributesName.CategoryId %> = &<%= trnAPIInstance.AttributesName.CategoryId %>
+			&AssItemId.Additem(<%= trnAPIInstance.ParentObject.Structure.Root.PrimaryKey[0].Name %>, <%= trnAPIInstance.ParentObject.Structure.Root.DescriptionAttribute.Name %>)
+		when none
+			//nothing        
+		endfor
+	endfor
+
+	&<%= trnAPIInstance.AttributesName.CategoryId %>.Visible = 0
+EndEvent  // Refresh
+
+
+]]></Source>
+</Part>

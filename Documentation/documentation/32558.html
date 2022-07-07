@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>BlurredImage: sample User Control for iOS</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?32558,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">BlurredImage: sample User Control for iOS</h1>
+<!--BlurredImage: sample User Control for iOS--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>This document shows with an example, how to create a (very simple) User Control for iOS.</p>
+
+<p>This is not a complete guide on how to create a User Control. It is intended only as an example, to make it easier to get started.</p>
+
+<h2><a id="Creating+the+control+definition" class="HashLink" href="#Creating+the+control+definition">Creating the control definition</a></h2>
+
+<p>To create the User Control definition, it is highly recommended to use the <a href="https://wiki.genexus.com/commwiki/wiki?32550,," target="_blank">User Control Generator</a>.</p>
+
+<p>After you install the tool, you can go to <a href="https://wiki.genexus.com/commwiki/wiki?32559,," target="_blank">Atom</a> and create the project through <em>Packages &gt; GeneXus &gt; Create User Control</em>.<br />
+For this sample, you must ensure that <em>Type</em> has value &quot;Attribute &amp; Variable&quot; and <em>Supported Platforms</em> with &quot;SmartDevices&quot; (as shown below).</p>
+
+<p><img src="./images/32958.png" id="32958" class="WikiImage"/></p>
+
+<p>There is not much to do after that because the control is pretty simple.<br />
+In the <em>BlurredImage.control</em> file, the only thing you need to do is replace the empty tags for <span style="font-family: &quot;courier new&quot;;">iOS_SupportFiles</span>, <span style="font-family: &quot;courier new&quot;;">iOS_ReferencedFiles</span> and <span style="font-family: courier new;">iOS_ClassName</span> with the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;iOS_SupportFiles&gt;
+       &lt;File&gt;iphoneos\BlurredImage.framework.gxzip&lt;/File&gt;
+       &lt;File&gt;iphonesimulator\BlurredImage.framework.gxzip&lt;/File&gt;
+&lt;/iOS_SupportFiles&gt;
+&lt;iOS_ReferencedFiles&gt;
+        &lt;File embed=&quot;true&quot;&gt;./UserControls/$(PLATFORM_NAME)/BlurredImage.framework&lt;/File&gt;
+&lt;/iOS_ReferencedFiles&gt;
+&lt;iOS_ClassName&gt;GXUCBlurredImage&lt;/iOS_ClassName&gt;
+</pre>
+
+<p>Then, in the properties file (<em>BlurredImageProperties.xml</em>), you need to tell the control that it is available for Image attributes, by setting the <span style="font-family: courier new;">FlagDataTypeFilter</span> to <span style="font-family: courier new;">image</span>.</p>
+
+<h2><a id="User+control+implementation" class="HashLink" href="#User+control+implementation">User control implementation</a></h2>
+
+<p>To implement the User Control, you'll have to use the <a href="32508.html">Framework template</a>.</p>
+
+<p>When you reach the section <strong><em>Implement your User Control or External Object</em></strong>, you'll have to provide the actual implementation.</p>
+
+<p>To do that:</p>
+
+<p>1. Create a new Swift file named GXUCBlurredImage.</p>
+
+<p>2. Copy and paste the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+import Foundation
+import GXCoreUI
+
+@objc(GXUCBlurredImage)
+public class GXUCBlurredImage: GXControlImage {
+    public override func newEditorViewWithFrame(frame: CGRect) -&gt; UIView {
+        let editorView = super.newEditorViewWithFrame(frame)
+        
+        // the call to super.newEditorViewWithFrame(frame) creates the imageView
+        if let imageView = self.imageView {
+            let blurEffect = UIBlurEffect(style: .Dark)
+            let blurEffectView = UIVisualEffectView(effect: blurEffect)
+            blurEffectView.frame = editorView.bounds
+            blurEffectView.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
+            blurEffectView.userInteractionEnabled = false
+            
+            imageView.addSubview(blurEffectView)
+            imageView.sendSubviewToBack(blurEffectView)
+        }
+        return editorView
+    }
+}</pre>
+
+<p>The code is pretty simple. A few things to note:</p>
+
+<ul>
+	<li>We are subclassing <span style="font-family: courier new;">GXControlImage</span>, which in turn is a subclass of <span style="font-family: courier new;">GXControlEditableWithLabelSingleEditorViewBase</span>, which should be the base class of every Attribute User Control.</li>
+	<li>We are overriding the implementation of the method <span style="font-family: courier new;">newEditorViewWithFrame(frame:)</span>, calling the <span style="font-family: courier new;">super</span> version and returning it's result, but first we add the blur effect to the image view.</li>
+	<li>The <span style="font-family: courier new;">@objc()</span> declaration is required, otherwise the implementation won't be found by the Flexible Client.</li>
+</ul>
+
+<p>3. Continue with the <a href="32508.html">Framework template for iOS User Controls or External Objects</a> document to build the framework.</p>
+
+<h2><a id="Deployment" class="HashLink" href="#Deployment">Deployment</a></h2>
+
+<p>If you followed the steps in the <a href="32508.html">Framework template for iOS User Controls or External Objects</a> document, then you are all set.</p>
+
+<p>Make sure you copied the .framewors to your User Control folder, build in debug or release mode in Atom, and test the User Control in GeneXus as you would normally do with any other User Control.</p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18330.html">Creating User Controls for iOS</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

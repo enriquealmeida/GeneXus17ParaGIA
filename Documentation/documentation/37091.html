@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Logically Deleted Attribute property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37091,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Logically Deleted Attribute property</h1>
+<!--Logically Deleted Attribute property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td>Indicates the boolean attribute that contains the information about the deletion of the record.
+If the value of this attribute is True, the record is considered as deleted.  <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>Deletion of rows from a database table usually is differentiated into two alternatives:</p>
+
+<ul>
+	<li><strong>Physical delete</strong><br />
+	A row is permanently deleted from the database (a.k.a. <em>Hard delete</em>). In GeneXus, this is made by combining <a href="24744.html">For Each command</a> and <a href="6828.html">Delete command</a>, or by using <a href="23238.html">Business Component Delete method</a>.<br />
+	 </li>
+	<li><strong>Logical delete</strong><br />
+	In contrast to physical delete, the row will never be dropped from the database (a.k.a. <em>Soft delete</em>). Instead, the developer includes a special boolean attribute on the concerned table (e.g. IsDeleted) and marks a row as deleted (true) or not (false) -- it can be seen as an update. </li>
+</ul>
+
+<p>When using synchronization by timestamp for interchanging data between server and device, a physical deletion on the server-side is counterproductive because such deleted rows will never be dropped from the device's offline database in subsequent synchronizations. For clarifying this concept, refer to Sample section.</p></p>
+ <h3><a id="Run-time%2FDesign-time" class="HashLink" href="#Run-time%2FDesign-time">Run-time/Design-time</a></h3>
+
+<p> This property applies only at design-time.</p>
+ <h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p> <p>Suppose we have a Chat transaction object defined as follows.</p>
+
+<p><img src="./images/37099.png" id="37099" class="WikiImage"/></p>
+
+<p>As you have noticed, we have set the following properties (both are required for using synchronization by timestamp).</p>
+
+<ul>
+	<li><a href="37091.html">Logically Deleted Attribute property</a> = ChatIsDeleted</li>
+	<li><a href="37092.html">Last Modified Date Time Attribute property</a> = ChatTimestamp</li>
+</ul>
+
+<p>Suppose there are two friends communicating with our chat system and they already have the following rows synchronized on their devices.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend1 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend2 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:01 AM</em>  </td>
+			<td style="border-right: solid 1.0px black;"> False </td>
+			<td> Happy birthday!</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend2</em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend1</em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:02 AM</em></td>
+			<td style="border-right: solid 1.0px black;"> False</td>
+			<td> Thks =) See you tomorrow?</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend1</em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend2</em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/13/17 03:57:03 AM</em></td>
+			<td style="border-right: solid 1.0px black;"> False</td>
+			<td> Hey dude! U still in the dance club? Can't find u. Call me.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+Some minutes later, <em>friend1 </em>finally founds <em>friend2</em> and decides to delete the last message sent. Typically the developer would create a Procedure object with the following code.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;From,in:&amp;To,in:&amp;DateTime);</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Chat
+Where ChatUsernameFrom = &amp;From      // instanciated with 'friend1'
+      and ChatUsernameTo = &amp;To      // instanciated with 'friend2'
+      and ChatTimestamp = &amp;DateTime // instanciated with 10/13/17 03:57:03 AM
+   delete
+EndFor
+</pre>
+
+<p>Note that the deletion is made physically. Then, due synchronization by timestamp mechanism, the <em>friend2</em> device in a subsequent synchronization will remain the original set of rows (without deleting the third one), but the server and <em>friend1 </em>remain only the first two. The reason behind this behavior is that the server does not know which data has every device, it only sends data by considering <a href="37092.html">Last Modified attribute</a>. This problem is the <strong>full responsibility of the developer</strong> who should fix it by the developer by replacing the deletion code in the Procedure as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Chat
+Where ChatUsernameFrom = &amp;From      // instanciated with 'friend1
+      and ChatUsernameTo = &amp;To      // instanciated with 'friend2'
+      and ChatTimestamp = &amp;DateTime // instanciated with 10/13/17 03:57:03 AM
+  ChatIsDeleted = True   // Logical delete
+  ChatTimestamp = Now()  // Table update due deletion (value 10/13/17 04:15:17 AM)
+EndFor</pre>
+
+<p>In such case, there is no physical deletion in the server-side, i.e. the database state will be:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend1 </em></td>
+			<td style="border-right: solid 1.0px black;"><em>friend2 </em></td>
+			<td style="border-right: solid 1.0px black;"><em>10/12/17 12:00:01 AM</em>  </td>
+			<td style="border-right: solid 1.0px black;">False </td>
+			<td>Happy birthday!</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend2</em></td>
+			<td style="border-right: solid 1.0px black;"><em>friend1</em></td>
+			<td style="border-right: solid 1.0px black;"><em>10/12/17 12:00:02 AM</em></td>
+			<td style="border-right: solid 1.0px black;">False</td>
+			<td>Thks =) See you tomorrow?</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><span style="color: rgb(128,128,128);"><em>friend1</em></span></td>
+			<td style="border-right: solid 1.0px black;"><span style="color: rgb(128,128,128);"><em>friend2</em></span></td>
+			<td style="border-right: solid 1.0px black;"><strong><span style="color: rgb(128,128,128);"><em>10/13/17 04:15:17 AM</em></span></strong></td>
+			<td style="border-right: solid 1.0px black;"><strong><span style="color: rgb(128,128,128);">True</span></strong></td>
+			<td><span style="color: rgb(128,128,128);">Hey dude! U still in the dance club? I can't find u. Call me.</span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+Consequently, due to timestamp algorithm, both offline databases (for <em>friend1</em> and <em>friend2</em>) won't have the deleted message after a new synchronization.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend1 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend2 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:01 AM</em>  </td>
+			<td style="border-right: solid 1.0px black;"> False </td>
+			<td> Happy birthday!</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend2</em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend1</em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:02 AM</em></td>
+			<td style="border-right: solid 1.0px black;"> False</td>
+			<td> Thks =) See you tomorrow?</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p> </p></p>
+ <h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This property is available since  <a href="https://wiki.genexus.com/commwiki/wiki?36778,," target="_blank">GeneXus 15 Upgrade 8</a>.</p>
+ <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Objects:</strong> Transaction<br /><strong>Platforms:</strong> Smart Devices(Android, IOS)<br /></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="23541.html">Data Receive Granularity property</a></TD><TD><a href="37092.html">Last Modified Date Time Attribute property</a></TD></TR><TR><TD><a href="37091.html">Logically Deleted Attribute property</a></TD><TD><a href="37109.html">Offline Native Mobile synchronization granularity alternatives</a></TD><TD><a href="23672.html">KB:Sales</a></TD></TR><TR><TD><a href="6774.html">Specification Codes from spc0150 onwards</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 02:13 PM</em></font></td></TR></table></font>

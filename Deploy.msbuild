@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="CreateDeploy" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup>
+		<GX_PROGRAM_DIR Condition=" '$(GX_PROGRAM_DIR)' == '' ">$(MSBuildProjectDirectory)</GX_PROGRAM_DIR>
+	</PropertyGroup>
+
+	<Import Project="$(GX_PROGRAM_DIR)\Imports.targets" Condition = "$(TargetId) != 'STATICFRONTEND'"/>
+	<Import Project="$(GX_PROGRAM_DIR)\FrontendImports.targets" Condition = "$(TargetId) == 'STATICFRONTEND'"/>
+	
+	<PropertyGroup>
+		<!--Input Parameters-->
+		
+		<!-- Working KB Properties -->
+		<KBPath></KBPath>
+		<ConfigGX>$(KBPath)\config.gx</ConfigGX>
+		<KBVersion></KBVersion>
+		<KBEnvironment></KBEnvironment>
+
+		<!-- Deploy Project Properties -->
+		<ProjectName></ProjectName>
+		<DeployPath></DeployPath>
+		<ObjectNames></ObjectNames>
+		<ProjectFile></ProjectFile>
+
+	</PropertyGroup>
+
+	<Target Name="SelectVersion" Condition="'$(KBVersion)'!=''" >
+		<SetActiveVersion VersionName="$(KBVersion)"  />
+	</Target>
+
+	<Target Name="SelectEnvironment" Condition="'$(KBEnvironment)'!=''">
+		<SetActiveEnvironment EnvironmentName="$(KBEnvironment)" />
+	</Target>
+
+	<Target Name="OpenKB">
+		<Error Condition="'$(KBPath)'==''" Text="KBPath cannot be null" />
+		<Message Text="OpenKnowledgeBase Directory=$(KBPath)" />
+		<OpenKnowledgeBase Directory="$(KBPath)"/>
+	</Target>
+
+	<Target Name="Open" DependsOnTargets="OpenKB;SelectVersion;SelectEnvironment"/>
+
+	<Target Name="CreateDeploy" DependsOnTargets="Open;GetResourcePrefix" Returns="$(ProjectFile)" >
+
+		<PropertyGroup Condition="$(KBPath.EndsWith('\'))">
+			<KBPath>$(KBPath.Substring(0, $([MSBuild]::Subtract($(KBPath.Length), 1))))</KBPath>
+		</PropertyGroup>
+
+		<PropertyGroup Condition="'$(KBVersion)' == ''">
+			<KBVersion>$(KBPath.Substring($([MSBuild]::Add($(KBPath.LastIndexOf('\')), 1))))</KBVersion>
+		</PropertyGroup>
+
+		<Message Text="KBPath is $(KBPath)"/>
+		<Message Text="KBVersion is $(KBVersion)"/>
+
+		<ItemGroup>
+			<DeployProperty Include="ApplicationServerMSBuild" Condition="'$(EXTRA_MSBUILD)' != ''">
+				<PropertyValue>$(EXTRA_MSBUILD)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="UseAppServerDataSource" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(USE_APPSERVER_DATASOURCE)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="ApplicationKey" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(APPLICATION_KEY)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="SiteKey" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(SITE_KEY)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="TargetJRE" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(TARGET_JRE)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="DeployTargetTask">
+				<PropertyValue>$(DEPLOY_TARGETS)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="PackageFormat" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(PACKAGE_FORMAT)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="TimeStamp">
+				<PropertyValue>$(TimeStamp)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="DeploymentUnit">
+				<PropertyValue>$(DeploymentUnit)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="DeployTarget">
+				<PropertyValue>$(TargetId)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="ApplicationServer" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(ApplicationServer)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="AppName" Condition="'$(AppName)' != ''">
+				<PropertyValue>$(AppName)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="AppName" Condition="'$(AppName)' == ''">
+				<PropertyValue>$(ProjectName)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="KBPath">
+				<PropertyValue>$(KBPath)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="RestSpecFolder">
+				<PropertyValue>$(KBPath)\GXRESTSPC\$(KBVersion)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="ResourcesPrefix">
+				<PropertyValue>$(ImagePrefix)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="IncludeGAMBackend" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(INCLUDE_GAM)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="IncludeGXflowBackOffice" Condition="'$(INCLUDE_GXFLOW_BACKOFFICE)' == 'false' and $(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(INCLUDE_GXFLOW_BACKOFFICE)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="EnableKBN" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(ENABLE_KBN)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="AppUpdate" Condition = "$(TargetId) != 'STATICFRONTEND'">
+				<PropertyValue>$(APP_UPDATE)</PropertyValue>
+			</DeployProperty>
+			<DeployProperty Include="OutputPath" Condition="'$(OutputPath)' != ''">
+				<PropertyValue>$(OutputPath)</PropertyValue>
+			</DeployProperty>
+		</ItemGroup>
+
+		<CreateDeployProject ProjectName="$(ProjectName)" ObjectNames="$(ObjectNames)" AdditionalProperies="@(DeployProperty)" SelectedObjectsOnly="$(SelectedObjectsOnly)" CallTreeLogFile="$(CallTreeLogFile)" Condition = "$(TargetId) != 'STATICFRONTEND'">
+			<Output TaskParameter="ProjectFile" PropertyName="ProjectFile"/>
+		</CreateDeployProject>
+
+		<Message Text="Deploy Project created at '$(ProjectFile)'" Condition="'$(ProjectFile)' != '' AND Exists('$(ProjectFile)') AND $(TargetId) != 'STATICFRONTEND'"/>
+		
+		<CreateDeployFrontendProject FrontendProjectName="$(ProjectName)" FrontendObjectNames="$(ObjectNames)" AdditionalProperies="@(DeployProperty)" Condition = "$(TargetId) == 'STATICFRONTEND'">
+			<Output TaskParameter="FrontendProjectFile" PropertyName="ProjectFile"/>
+		</CreateDeployFrontendProject>
+
+		<Message Text="Frontend Deploy Project created at '$(ProjectFile)'" Condition="'$(ProjectFile)' != '' AND Exists('$(ProjectFile)') AND $(TargetId) == 'STATICFRONTEND'" Importance ="high"/>
+		
+
+	</Target>
+
+	<Target Name="ReadConfigGXFile" Condition="Exists('$(ConfigGX)') AND $(TargetId) != 'STATICFRONTEND'">
+		<ReadLinesFromFile File="$(ConfigGX)">
+			<Output TaskParameter="Lines" ItemName="LinesFromConfig"/>
+		</ReadLinesFromFile>
+	</Target>
+
+	<Target Name="ProcessConfigGXLines" Inputs="@(LinesFromConfig)" 
+        Outputs="%(Identity)" Condition="Exists('$(ConfigGX)') AND $(TargetId) != 'STATICFRONTEND'" DependsOnTargets="ReadConfigGXFile">
+
+		<PropertyGroup>
+			<ConfigGXFileLine>%(LinesFromConfig.Identity)</ConfigGXFileLine>
+			<ImagePrefixLine Condition='$(ConfigGXFileLine.Contains("imagesprefix="))'>$(ConfigGXFileLine)</ImagePrefixLine>
+		</PropertyGroup>
+	</Target>
+	
+	<Target Name="GetResourcePrefix" Condition="Exists('$(ConfigGX)')" DependsOnTargets="ReadConfigGXFile;ProcessConfigGXLines">
+		<PropertyGroup>
+			<ImagePrefix Condition="'$(ImagePrefixLine)' != ''">$(ImagePrefixLine.Split('=')[1])</ImagePrefix>
+		</PropertyGroup>
+		<Message Text="Image Prefix to be used for Resources: $(ImagePrefix)" Importance="high"/>
+	</Target>
+
+	<Target Name="ExportReorganization" DependsOnTargets="SetupReorg;PrepareReorgFiles" Condition = "$(TargetId) != 'STATICFRONTEND'">
+		<Copy SourceFiles="@(ReorgFile)" DestinationFiles="$(TempDir)\$(RootModuleRelativePath)\%(Filename)%(Extension)" SkipUnchangedFiles="true"/>
+		<Copy SourceFiles="$(RootModulePath)\reorg.cfg" DestinationFolder="$(ReorgDestination)" SkipUnchangedFiles="true" Condition="Exists('$(RootModulePath)\reorg.cfg') AND '$(IncludeCFG)' != 'true' AND '$(Generator)' == 'Java'"/>
+		<Copy SourceFiles="@(ReorgDriver)" DestinationFolder="$(ReorgDestination)" SkipUnchangedFiles="true" Condition="'$(Generator)' == 'Java'"/>
+		<Copy SourceFiles="@(ReorgDriver)" DestinationFolder="$(TempDir)" SkipUnchangedFiles="true" Condition="'$(Generator)' == 'C#' OR $(Generator.StartsWith('.NET'))"/>
+	</Target>
+
+	<Target Name="SetupReorg" Condition = "$(TargetId) != 'STATICFRONTEND'">
+
+		<PropertyGroup>
+			<ReorgTimestamp>$([System.DateTime]::Now.ToString("yyyyMMddHHmmss"))</ReorgTimestamp>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<FileName Condition="'$(FileName)' == ''">Reorganization_$(ReorgTimestamp).jar</FileName>
+			<ReorgDestination Condition="'$(ReorgDestination)' == ''">$(SourcePath)\Reorgs\Reorganization_$(ReorgTimestamp)</ReorgDestination>
+			<TempDir Condition="'$(TempDir)' == ''">$(ReorgDestination)\..\temp</TempDir>
+		</PropertyGroup>
+	</Target>
+
+</Project>

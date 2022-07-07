@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>AudioRecorder external object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?34096,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">AudioRecorder external object</h1>
+<!--AudioRecorder external object--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The AudioRecoder external object is a simple API that helps you record and save audio as a file.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><img src="./images/39639.png" id="39639" class="WikiImage"/></td>
+			<td style="vertical-align: top;"><img src="./images/39640.png" id="39640" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Properties" class="HashLink" href="#Properties">Properties</a></h2>
+
+<h3><a id="IsRecording+property" class="HashLink" href="#IsRecording+property">IsRecording property</a></h3>
+
+<p>Indicates whether the device is currently recording (True) or not (False).</p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods">Methods</a></h2>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  This API defines two methods to be called in batch mode (no UI is presented to the user).</div>
+</p>
+
+<h3><a id="Start+method" class="HashLink" href="#Start+method">Start method</a></h3>
+
+<p>Starts an audio recording session and returns whether the operation was successful or not (e.g. if there is another recording in progress, it will return False). The audio recorded will be saved to a local file. The recorded file path is returned by the Stop method (see bellow), and it can be assigned to an <a href="16529.html">Audio-based</a> attribute or variable.</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>Return value</strong></td>
+			<td style="vertical-align: top;"><a href="4374.html">Boolean</a></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Parameters</strong></td>
+			<td style="vertical-align: top;">None</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Stop+method" class="HashLink" href="#Stop+method">Stop method</a></h3>
+
+<p>Stops the current audio recording session and returns the file path where the audio file was saved. Multiple calls to this method do not have any effect.</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>Return value</strong></td>
+			<td style="vertical-align: top;"><a href="15668.html">URL</a></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Parameters</strong></td>
+			<td style="vertical-align: top;">None</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Events" class="HashLink" href="#Events">Events</a></h2>
+
+<p>It does not have any.</p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  This sample does not include details on how to handle the UI customization aspects.</div>
+</p>
+
+<p>Suppose a simple scenario of a community chat. Nowadays, every messaging system has two main components:</p>
+
+<ol>
+	<li>Every message is shown from the bottom of the screen to the top. This can be achieved by using the <a href="32660.html">Inverse Loading property</a> at the grid level.</li>
+	<li>There is a text-field where the end users can write their text messages and then send them by tapping a button on the screen. This can be achieved by including a variable based on the <a href="6777.html">Character data type</a> and a <a href="6011.html">Button control</a> with the following behavior:</li>
+</ol>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event 'SendTextMessage'
+  Composite
+    SendTextMessage(&amp;Text,&amp;Username)
+    Refresh
+  EndComposite
+EndEvent
+</pre>
+
+<p>Basically, the SendTextMessage procedure receives the message to send (&amp;Text variable, it must be <em>inout</em>) and the username (&amp;Username variable), performs the necessary checks and then sends the message and cleans the &amp;Text variable.</p>
+
+<p>Now suppose we want to incorporate a third component: the ability to send audio messages.</p>
+
+<p>There are two things we need to do to implement this feature.</p>
+
+<ul>
+	<li><strong>Record the audio message</strong><br />
+	It can be done by including a button that starts the recording process and notifies the user in case the recording session could not be started.</li>
+</ul>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event 'StartRecording'
+   Composite
+     &amp;HasSuccess = AudioRecorder.Start()
+     If not &amp;HasSuccess
+       msg(&quot;For some reason we couldn't start recording&quot;)
+     EndIf
+   EndComposite
+EndEvent
+</pre>
+
+<p>This button should be hidden once the operation is completed successfully, and another button should be displayed to stop the current recording process (as it is described in the following point).</p>
+
+<ul>
+	<li><strong>Send the audio message recorded</strong><br />
+	Once the end user stops recording, the current audio message will be sent.</li>
+</ul>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event 'StopRecording'
+   Composite
+     &amp;IsRecording = AudioRecorder.IsRecording
+     If &amp;IsRecording
+       &amp;FilePath = AudioRecorder.Stop()
+       &amp;Audio.AudioURI = &amp;FilePath
+       SendAudioMessage(&amp;Audio,&amp;Username)
+       Refresh
+     EndIf
+   EndComposite
+EndEvent</pre>
+
+<p>The SendAudioMessage procedure is analogous to the SendTextMessage procedure. Remember that this button was shown once the end user taps on the 'StartRecording' button. For that reason, it is not possible that the 'StopRecording' event has been called without having started a recording previously. Nevertheless, in this case, we prefer to include a validation step to avoid the problem of sending an empty audio message (because the Stop method does not have effect when there is not an audio recording). Also, to be consistent, the developer must hide this button if the operation was successful and must display the button that allows the end user to start a new recording.</p>
+
+<p>After applying these concepts and by adding a friendly custom UI, a developer can achieve the following results.</p>
+
+<p><img src="./images/34275.png" id="34275" class="WikiImage"/></p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>The audio file will be saved as MPEG-4 format with AAC encoder. This format is compatible with all the supported platforms.</li>
+	<li>If the application is closed while there is an active audio recording session, then the recording is stopped and the audio file is discarded.</li>
+	<li>The recorded audio can be played using the methods of the <a href="30041.html">Audio external object</a>.</li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Platforms</strong></td>
+			<td>SmartDevices(iOS, Android)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This external object is available as from <a href="https://wiki.genexus.com/commwiki/wiki?33798,," target="_blank">GeneXus 15 Upgrade 4</a>.</p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="35408.html">Background Modes property</a></TD><TD><a href="31268.html">GeneXus Core module</a></TD></TR><TR><TD><a href="32755.html">Purpose Strings properties group</a></TD><TD><a href="15288.html">Category:Smart Devices API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

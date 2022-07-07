@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Emulating SSO without using GAM remote authentication</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?38116,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Emulating SSO without using GAM remote authentication</h1>
+<!--HowTo: Emulating SSO without using GAM remote authentication--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Single Sign On (SSO) is implemented in GAM using <a href="25355.html">GAM Remote Authentication Type</a> (where an Identity provider is defined). In some cases, it's necessary to emulate an SSO using GAM without GAM remote authentication type.</p>
+
+<p>In the scenario presented in this document, there are <strong>many</strong> applications (which can also be used by different branches of the same company), installed on different web apps. Since it’s the same company, users may be centralized and defined only once, in one place. Also, it’s expected that users can log in only once for all the applications, without having to log in for each of them if they run in the same browser. For this requirement, an SSO is needed.</p>
+
+<p>Another premise is that the same user might have different <a href="17569.html">GAM Roles</a> in each application. Remember that the relation Users-Roles in GAM is included in a <a href="17568.html">GAM Repository</a>. Anytime you need to model different roles for the user (it can be by branch, or by application), one solution is to have a different repository (by branch, or by application). So, in the solution introduced in this document, we’re going to have multiple repositories to group <strong>different</strong> roles for the same user depending on the application.</p>
+
+<p>Summing up, the scenario consists of the following:</p>
+
+<ol>
+	<li>Several applications (in different web apps) using SSO.</li>
+	<li>Centralized users, with different roles depending on the application</li>
+</ol>
+
+<p>Note that this scenario can be accomplished using <a href="25385.html">Single Sign On in applications using GAM</a>. But, looking for an alternative where GAM remote authentication type is not used, we will continue with this solution.</p>
+
+<p>This document is organized as follows:</p>
+
+<div style="background-color: rgb(241,241,241);padding: 0.01em 16.0px;margin: 20.0px 0;padding-top: 20.0px;border-left: 4.0px solid rgb(76,175,80);"><ul><li><a class="HashLink" href="#Rationale">Rationale</a></li><li><a class="HashLink" href="#Implementation+of+the+solution">Implementation of the solution</a></li><ul><li><a class="HashLink" href="#Configuration">Configuration</a></li><li><a class="HashLink" href="#Coding">Coding</a></li><ul><li><a class="HashLink" href="#Client+KB">Client KB</a></li><li><a class="HashLink" href="#Master+Repository">Master Repository</a></li></ul></li><li><a class="HashLink" href="#Availability">Availability</a></li><li><a class="HashLink" href="#Considerations">Considerations</a></li><li><a class="HashLink" href="#Troubleshooting+the+solution">Troubleshooting the solution</a></li><ul><li><a class="HashLink" href="#Possible+errors">Possible errors</a></li></ul></ul></ul></ul></div>
+
+<h2><a id="Rationale" class="HashLink" href="#Rationale">Rationale</a></h2>
+
+<p>The solution now consists of the following:</p>
+
+<ol>
+	<li>Only one GAM database with n repositories, all with the same <a href="https://wiki.genexus.com/commwiki/wiki?18678,," target="_blank">Repository Namespace</a>. In this example, the namespace is &quot;MyCompany&quot;.<br />
+	 </li>
+	<li>One repository must be defined as the “master” repository. This will be emulating the SSO, as the <a href="15910.html">GAM Applications</a> will be checked against that repository. The GAMSession will be generated in the webapp running against the master repository; besides, it will be generated on the client (because the web apps are different and they can be in different hosts as well). It works similarly to an Identity Provider.<br />
+	<br />
+	The Master repository has more than one purpose:</li>
+</ol>
+
+<ul style="margin-left: 40.0px;">
+	<li>Work as “identity provider,” where all the connections to the other repositories are centralized and validated.</li>
+	<li>The GAM backend running there is used for creating and managing all the new repositories.</li>
+	<li>Since the web application has all the GAM connections in the connection.gam file, the admin user can connect to any of them, and enable other users in the repositories where they should be enabled.</li>
+	<li>As part of the solution, you may add a “landing page” in this application, where end users can select from a list of Applications or branches they are enabled to access.</li>
+</ul>
+
+<p>       3. The login is executed in one place, in the web app running the application connected to the master repository.</p>
+
+<p>       4. Users must be enabled in all the repositories (the users' namespace should be the same as that of the repositories).</p>
+
+<p>Note: In a real Identity Provider using GAM remote, the Oauth 2.0 protocol is used. In this case, we are not strictly following Oauth 2.0.<br />
+<br />
+Nevertheless, the following is agreed between the parties (client and master):</p>
+
+<ul>
+	<li>Application credentials (Client Id and Client Secret)</li>
+	<li>Callback URL</li>
+</ul>
+
+<p>Besides, a state is passed in the dialog to make sure that the response comes from where the client made the request.</p>
+
+<p>So, how does the solution work?</p>
+
+<ul>
+	<li>The user executes an application</li>
+	<li>The client application checks the session and will redirect to the master repository &quot;MyCompany&quot; to do the validation.</li>
+	<li>The master repository will use any mechanism to validate users (GAM authentication or any external procedure).</li>
+	<li>When the session is obtained, the master repository will redirect to the calling application.</li>
+</ul>
+
+<h2><a id="Implementation+of+the+solution" class="HashLink" href="#Implementation+of+the+solution">Implementation of the solution</a></h2>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h3>
+
+<p>This solution's configuration can be summarized as follows:</p>
+
+<ol>
+	<li>Start creating the master application KB. Connect to the GAM-Manager repository and create all the repositories needed (one for each application). To create a new repository see <a href="18642.html">HowTo: Creating New Repositories</a>.<br />
+	Do not forget to add an entry in the connection.gam file for each of those repositories. Note that all the repositories must have the same <a href="https://wiki.genexus.com/commwiki/wiki?18678,," target="_blank">Repository Namespace</a>.<br />
+	<br />
+	So, in the Master repository you should:</li>
+</ol>
+
+<ul>
+	<li style="margin-left: 40.0px;">Create a connection to the GAM manager repository.</li>
+	<li style="margin-left: 40.0px;">Connected to GAM Manager, create all the repositories you need.</li>
+	<li style="margin-left: 40.0px;">Create a GAM connection for each repository and update the connection.gam file.</li>
+</ul>
+
+<p style="margin-left: 40.0px;"><img alt="enlightened" height="23" src="https://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />Note that when a user is created in a repository, he or she is automatically enabled in it. In addition, the user can also be enabled in other repositories, as long as the namespace is the same as that of the repository. See <a href="21042.html">Users enabled or disabled in the GAM Repository</a>. If the same admin user is assigned as administrator of all the repositories, he will be automatically enabled as the admin of all of them.</p>
+
+<p>      2. Configure each application KB using the associated Repository GUID; that is to say, the <a href="15802.html">Repository ID Environment property</a>, <a href="https://wiki.genexus.com/commwiki/wiki?15215,," target="_blank">Administrator User Name property</a>, <a href="https://wiki.genexus.com/commwiki/wiki?15216,," target="_blank">Administrator User Password property</a>. Also, configure the <a href="15217.html">Connection User Name property</a> and the <a href="15218.html">Connection User Password property</a>. This information was provided when you created the repositories.<br />
+<br />
+<img src="./images/38137.png" id="38137" class="WikiImage"/></p>
+
+<p>    3. Considering that you have one KB for each application, configure all of them to point to the same GAM database.<br />
+<br />
+<img src="./images/38138.png" id="38138" class="WikiImage"/><br />
+<br />
+<img src="./images/38139.png" id="38139" class="WikiImage"/></p>
+
+<p>   4. Configure the connection.gam file for all the client applications, containing the following <a href="16150.html">GAM Repository Connections</a>:</p>
+
+<ol style="list-style-type: lower-alpha;">
+	<li>To the local repository</li>
+	<li>To the master repository</li>
+</ol>
+
+<p>   5. In the master repository, configure a <a href="15910.html">GAM Application</a> for each application. Use a Client Id, and Client Secret generated randomly.<br />
+<br />
+<img src="./images/38134.png" id="38134" class="WikiImage"/></p>
+
+<p>   6. You also have to configure the CallbackURL in each application; the callbackURL is the URL to redirect to after login.</p>
+
+<p>Because there is no field defined for that purpose, we use the <a href="19634.html">GAM OAV</a> to extend the Application's definition and to add an extra field. In this case, there will be an HTTP procedure that deals with the request from the side of the client application, called GenerateSessionFromIp.</p>
+
+<p><img src="./images/38155.png" id="38155" class="WikiImage"/></p>
+
+<p>  7. In the master repository, you have to create all the applications of the KBs. Otherwise, since you're going to connect to the master repository from these applications, you'll get this error:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Application GUID unidentified. Please contact the application administrator. (GAM174).</pre>
+
+<h3><a id="Coding" class="HashLink" href="#Coding">Coding</a></h3>
+
+<p>Let's see the code on both sides (master repository application and client applications).</p>
+
+<h4><a id="Client+KB" class="HashLink" href="#Client+KB">Client KB</a></h4>
+
+<p>There is an object (called &quot;SSOLogin&quot; in this example) whose only purpose is to get the Application credentials and redirect to the master's login.<br />
+Configure the version property <em>GAM example login for web</em> = &quot;SSOLogin&quot;</p>
+
+<p>So, the SSOLogin object start event is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+   <span style="color: rgb(0,128,0);">/* First step: Get some system parameters */</span>
+   /*Get the connection name of the master repository*/
+   &amp;ServerConnectionName = GetSysParameters.Udp(IdentityProviderParameters.ServerConnectionName)
+   /* Get the master webapp URL */
+   &amp;ServerURL = GetSysParameters.Udp(IdentityProviderParameters.ServerURL)
+   /* Get the last object who tried to execute and failed because of the session not being valid*/
+
+    &amp;RedirIP_SDT.AccessURL = GAMRepository.GetLastErrorsURL()
+
+    /* Generate a random GUID for the session state */
+    &amp;GUID = GUID.NewGuid()
+    &amp;RedirIP_SDT.State = &amp;GUID.ToString().Trim() 
+
+    &amp;WebSession.Set(IdentityProviderParameters.SessionData,  &amp;RedirIP_SDT.ToJson())
+
+    /* Establish a GAM Connection to the master repository */
+    &amp;isOK = GAM.SetConnection(&amp;ServerConnectionName, &amp;Errors)
+    If not &amp;isOK
+        Do 'DisplayMessages'
+    else
+       do &quot;GetApplicationParameters&quot;
+       // Redirect to the IP
+        if not &amp;ClientID.IsEmpty() and not &amp;ClientSecret.IsEmpty() and not &amp;CallbackURL.IsEmpty()
+            &amp;URL = format(!&quot;%1?%2,%3,%4,%5&quot;,
+            &amp;ServerURL.Trim(),
+            &amp;RedirIP_SDT.State.Trim(),
+            &amp;ClientID.Trim(),
+            &amp;ClientSecret.Trim(),
+            &amp;CallbackURL.Trim())
+            Link(&amp;URL)
+        endif
+    EndIf
+EndEvent
+
+Sub &quot;GetApplicationParameters&quot;
+    /* Get the Application GUID from the system parameters */
+    &amp;AppGUID = GetSysParameters.Udp(IdentityProviderParameters.AppGUID)
+    &amp;GAMApplication = GAMApplication.GetByGUID(&amp;AppGUID.Trim(), &amp;GAMErrors)
+    If &amp;GAMErrors.Count &gt; 0
+        Do 'DisplayMessages'
+    else
+        &amp;ClientID       = &amp;GAMApplication.ClientId
+        &amp;ClientSecret   = &amp;GAMApplication.ClientSecret
+        /* Get the CallbackURL of the GAM Application configured in the master repository */
+        GetApplicationCallBackURL(&amp;id,&amp;CallbackURL,&amp;isOK)    
+    EndIf
+EndSub</pre>
+
+<p>Note in the code above that the information of the GAMApplication is taken from the master repository (where the connection was set).</p>
+
+<p class="Code">The connection name of the master repository can be found in the connection.gam file:</p>
+
+<p><img src="./images/38117.png" id="38117" class="WikiImage"/></p>
+
+<p>The system parameters are the following (IPAppGUID - the GUID of the Application registered in the master repository, IPURL - serverURL, IPServerConnectionName):</p>
+
+<p><img src="./images/38154.png" id="38154" class="WikiImage"/></p>
+
+<p>GenerateSessionFromIP is a procedure running on the client; it’s the callback procedure. This procedure validates the incoming request, generates a connection to the master repository and, if the GAMSession is valid there, it generates another GAMSession in the local repository. Then, it redirects to the object that had thrown the authentication exception.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;isOk = GAM.SetConnection(&amp;ServerConnectionName, &amp;Errors)
+&amp;isSessionOK = GAMRepository.ValidAccessToken(&amp;token, &amp;GAMSession, &amp;GAMErrors)
+If &amp;isSessionOK  AND  not &amp;GAMSession.IsAnonymous
+
+/*Get the local connection name from the system parameters */
+&amp;ClientAppName = GetSysParameters.Udp(IdentityProviderParameters.ClientConnectionName)
+
+/*Set the local connection*/
+&amp;isOk = GAM.SetConnection(&amp;ClientAppName, &amp;Errors)
+// Redirect to the correct object
+</pre>
+
+<p>where:</p>
+
+<ul>
+	<li><em>IdentityProviderParameters.ClientConnectionName</em> references the client side connection name.</li>
+</ul>
+
+<h4><a id="Master+Repository" class="HashLink" href="#Master+Repository">Master Repository</a></h4>
+
+<p>In this KB, it is the login object. Basically, in the start event, this object sets a connection to the master repository, validates the request parameters and loads the callbackURL.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+&amp;isOK = GAM.SetConnection(!&quot;MasterRepository&quot;, &amp;Errors)
+If not &amp;State.IsEmpty() AND not &amp;ClientID.IsEmpty() AND not &amp;ClientSecret.IsEmpty() AND not &amp;CallbackURL.IsEmpty()
+        // Basic parameters validation
+GetApplicationbyClientId(&amp;ClientID,&amp;ClientSecret,&amp;GAMGUID,&amp;GAMAppCallbackURL)
+&amp;GAMApplication = GAMApplication.GetByGUID(&amp;GAMGUID, &amp;GAMErrors)
+If &amp;GAMApplication.ClientId = &amp;ClientID AND &amp;GAMApplication.ClientSecret = &amp;ClientSecret and &amp;CallbackURL = &amp;GAMAppCallbackURL
+      &amp;AppOK = True
+      // Save data
+      &amp;ClientData_SDT.CallbackURL = &amp;CallbackURL
+      &amp;ClientData_SDT.State       =  &amp;State
+      &amp;WebSession.Set(!&quot;ClientData&quot;,  &amp;ClientData_SDT.ToJson())
+ Else
+         &amp;AppOK = False
+ Endif
+EndEvent    </pre>
+
+<p>In the refresh event, if the GAMSession is valid, it redirects to the object.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Refresh
+    &amp;Errors = GAMRepository.GetLastErrors()
+    If &amp;Errors.Count &gt; 0
+       // Show an error
+    else
+        If &amp;AppOK
+            &amp;SessionValid = GAMSession.IsValid(&amp;GAMSession, &amp;Errors)
+            If &amp;SessionValid  AND  not &amp;GAMSession.IsAnonymous
+                &amp;WebSession.Set(!&quot;ClientData&quot;,  &amp;ClientData_SDT.ToJson())
+                //Redirect to the client
+                &amp;link = format(!&quot;%1?%2,%3&quot;, &amp;ClientData_SDT.CallbackURL, &amp;ClientData_SDT.State, &amp;GAMSession.Token)   
+                Link(&amp;link)
+            else
+             //
+            EndIf
+        else
+         //
+        EndIf
+    EndIf
+EndEvent</pre>
+
+<p>Of course, there is also a login event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Enter
+    &amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors )
+    If &amp;LoginOK
+        msg(format(!&quot;Login succedded. %1&quot;, now()))
+        refresh
+    else
+        msg(format(!&quot;Login result: %1&quot;, &amp;LoginOK))    
+        Do 'DisplayMessages'
+    EndIf
+EndEvent
+</pre>
+
+<p>Download MasterKb from <a href="https://wiki.genexus.com/commwiki/wiki?38158,," target="_blank">here</a> and client KB from <a href="https://wiki.genexus.com/commwiki/wiki?38159,," target="_blank">here</a>.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?37491,," target="_blank">GeneXus 15 Upgrade 9</a>.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>When using the <a href="18608.html">GAM Deploy Tool</a> utility to migrate data between repositories, make sure to export and import the administrators roles as this information is important when changing repositories.</p>
+
+<h3><a id="Troubleshooting+the+solution" class="HashLink" href="#Troubleshooting+the+solution">Troubleshooting the solution</a></h3>
+
+<p><img alt="enlightened" height="23" src="https://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />If you find any errors, read <a href="25395.html">HowTo: Generate GAM trace</a>.<br />
+      Also, in the case of .NET, activating the <a href="20541.html">ASP Net trace</a> is very useful.</p>
+
+<h4><a id="Possible+errors" class="HashLink" href="#Possible+errors">Possible errors</a></h4>
+
+<h5><a id="1.+GAM+connection+is+not+specified" class="HashLink" href="#1.+GAM+connection+is+not+specified">1. GAM connection is not specified</a></h5>
+
+<p>The complete error is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+The connection to GAM is not specified. Please contact the application administrator. (GAM1)</pre>
+
+<p>If you look at the trace, you can find the debug messages added in your code, and the trace debugging messages of GAM:</p>
+
+<p><img src="./images/38164.png" id="38164" class="WikiImage"/></p>
+
+<p>If you're getting this error, check that the connection you're trying to establish was correctly defined in the repository, and there's an entry in the connection.gam file for it.</p>
+
+<h5><a id="2.+Application+GUID+unidentified" class="HashLink" href="#2.+Application+GUID+unidentified">2. Application GUID unidentified</a></h5>
+
+<p>This error occurs because the application specified in the application.gam file does not exist in the repository you're connecting to. The error detail is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Application GUID RepId:2 - AppGUID:789c15aa-b18b-4a3e-9e21-7a8e5cd2aba5 unidentified. Please contact the application administrator. (GAM174)</pre>
+
+<p>If you're getting this error while connected to the master repository, check that all the applications are defined in the repository.</p>
+
+<p>If you want to execute the gamexamplelogin as usual (to connect to the local repository without going through the master repository), check that the gamexamplelogin performs a setconnection over the first connection in the connection.gam file. If this connection is the master's, the local application may not exist there.</p>
+
+<p>The gamexamplelogin object shows the repository you're trying to connect to.</p>
+
+<p><img src="./images/38142.png" id="38142" class="WikiImage"/></p>
+
+<h5><a id="3.+GAM+Error+Not+found" class="HashLink" href="#3.+GAM+Error+Not+found">3. GAM Error Not found</a></h5>
+
+<p>The error detail is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAM Error Not found. (GAM200)</pre>
+
+<p>This error can be thrown if you're executing the following line with an invalid Application GUID:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMApplication = GAMApplication.GetByGUID(&amp;AppGUID, &amp;GAMErrors)</pre>
+
+<h5><a id="4.+Application+loops+or+details+too+many+redirects" class="HashLink" href="#4.+Application+loops+or+details+too+many+redirects">4. Application loops or details too many redirects</a></h5>
+
+<p>If the application loops (you can see in the trace that the login is successfully done on the master repository but not on the client's):</p>
+
+<p><img src="./images/38156.png" id="38156" class="WikiImage"/></p>
+
+<p>Check if you haven't misconfigured the connection.gam on the client. You may look at the trace and find the following:</p>
+
+<p><img src="./images/38157.png" id="38157" class="WikiImage"/></p>
+
+<h5><a id="5.+Application+GUID+RepId+-+AppGUID+unidentified" class="HashLink" href="#5.+Application+GUID+RepId+-+AppGUID+unidentified">5. Application GUID RepId - AppGUID unidentified</a></h5>
+
+<p>When changing a repository the following error appears:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Application GUID RepId:X - AppGUID:Y unidentified. Please contact the application administrator. (GAM174)
+</pre>
+
+<p>Make sure the main repository and the associated client repository have an appGUID with the same value as this is a requirement. One option is to duplicate the application and assign the correct AppGUID to the client one.</p>
+
+<h5><a id="6.+User+not+found" class="HashLink" href="#6.+User+not+found">6. User not found</a></h5>
+
+<p>When login in the following error appears:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+User not found. (GAM7)
+</pre>
+
+<p>Make sure the user is created on the local repository and core; you need to enable the user in both repositories too.</p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

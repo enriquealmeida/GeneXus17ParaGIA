@@ -1,0 +1,52 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="ExportImages">
+
+  <PropertyGroup>
+    <GX_PROGRAM_DIR Condition=" '$(GX_PROGRAM_DIR)' == '' ">$(MSBuildProjectDirectory)</GX_PROGRAM_DIR>
+  </PropertyGroup>
+  <Import Project="$(GX_PROGRAM_DIR)\genexus.tasks.targets"/>
+	
+  <PropertyGroup>
+    <!--Input Parameters-->
+
+    <!-- Working KB Properties -->
+    <KBPath></KBPath>
+    <KBVersion></KBVersion>
+    <KBEnvironment></KBEnvironment>
+    <!-- Images Inspector Properties-->
+		<ImagesDirectoryPath></ImagesDirectoryPath>
+		<XmlDirectoryPath></XmlDirectoryPath>
+
+
+	</PropertyGroup>
+
+
+
+
+	<Target Name="Open" DependsOnTargets="OpenKB;SelectVersion;SelectEnvironment"/>
+
+	<Target Name="OpenKB">
+		<Error Condition="'$(KBPath)'==''" Text="KB cannot be null" />
+		<Message Text="OpenKnowledgeBase Directory=$(KBPath)" />
+		<OpenKnowledgeBase Directory="$(KBPath)"/>
+	</Target>
+
+  <Target Name="SelectVersion" Condition="'$(KBVersion)'!=''" >
+    <SetActiveVersion VersionName="$(KBVersion)"  />
+  </Target>
+
+  <Target Name="SelectEnvironment" Condition="'$(KBEnvironment)'!=''">
+    <SetActiveEnvironment EnvironmentName="$(KBEnvironment)" />
+  </Target>
+
+	<Target Name="CreateXML" DependsOnTargets="Open">
+	</Target>
+	
+  <Target Name="ImportImages" DependsOnTargets="Open">
+		<Message Text="Importing Images" Importance="high"/>
+		<CreateExportForImages Folder="$(ImagesDirectoryPath)" OutputFile="$(XmlDirectoryPath)\ImportedImages.xml" />
+		<Import file="$(XmlDirectoryPath)\ImportedImages.xml"/>
+		<CloseKnowledgeBase Directory="$(KBPath)"/>
+		<Delete Files="$(XmlDirectoryPath)\ImportedImages.xml" TreatErrorsAsWarnings="True"/>
+  </Target>
+
+</Project>

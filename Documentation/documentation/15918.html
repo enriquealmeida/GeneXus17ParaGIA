@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Develop Secure REST Web Services in GeneXus</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15918,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Develop Secure REST Web Services in GeneXus</h1>
+<!--HowTo: Develop Secure REST Web Services in GeneXus--><div class="TableWikiBody" id="tblwikibody"><p><a href="14573.html">REST Web Services</a> security is based on <a href='http://oauth.net/'>Oauth</a>.</p>
+
+<p>Several applications usually expose data update services and data recovery services through <a href='http://es.wikipedia.org/wiki/Representational_State_Transfer'>REST</a>, so security is very important where privacy of data is a concern.</p>
+
+<p>In GeneXus, the solution to this problem is to use <a href="19888.html">GAM</a> (which hides to the final user the complexity of OAuth technology).</p>
+
+<p>The <a href="16535.html">GAM API</a> provides a way to restrict access to users to <a href="14573.html">REST Web Services</a> defined in the application.</p>
+
+<p>The following is a guide that explains the steps to follow to incorporate security to your REST web services, and the way to consume these web services from a GeneXus application also. The way to consume web services from a non-GeneXus application should follow the same main idea.</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  As since GeneXus 16 upgrade 7, if the consumer application uses GAM, you can implement this solution based on <a href="44833.html">Remote Rest Authentication type (Oauth 2.0)</a>.</div>
+</p>
+
+<p>In this document, we explain the case in which the token is obtained manually using HTTP, since the consumer application hasn't got GAM, or is of a version lower than GeneXus 16 u7 (GAM Remote Rest is not supported)</p>
+
+<p><ul><li><a class="HashLink" href="#I.+From+the+perspective+of+the+%22REST+web+services%22+Knowledge+Base">I. From the perspective of the "REST web services" Knowledge Base</a></li><li><a class="HashLink" href="#II.+From+the+perspective+of+the+client+application%2C+consumer+of+%22REST+web+services%22+Knowledge+Base">II. From the perspective of the client application, consumer of "REST web services" Knowledge Base</a></li><li><a class="HashLink" href="#Calling+a+Rest+service+which+runs+under+a+multitenant+architecture">Calling a Rest service which runs under a multitenant architecture</a></li><li><a class="HashLink" href="#See+Also">See Also</a></li></ul></ul></p>
+
+<h3><a id="I.+From+the+perspective+of+the+%22REST+web+services%22+Knowledge+Base" class="HashLink" href="#I.+From+the+perspective+of+the+%22REST+web+services%22+Knowledge+Base">I. From the perspective of the "REST web services" Knowledge Base</a></h3>
+
+<p>1. Create the <a href="14573.html">REST Web Services</a> of your application. The REST web services can be Business Components, Data providers, or procedures, and can expose POST, PUT, DELETE, GET methods.</p>
+
+<p>2. Check the security property in the Knowledge Base (<a href="14706.html">Enable Integrated Security Property</a>). Afterward, GAM objects will be incorporated into the KB, and a reorganization will be done to create GAM repository, and initialization of this repository will also be done. For more details see <a href="15769.html">GeneXus Administration of GAM Repository</a>.</p>
+
+<p>3. Create an <a href="15910.html">application</a> using GAM API (or just using the <a href="15935.html">GAM Backend</a>), in order to identify the "REST web services application" within the GAM repository.</p>
+
+<p>4. Create a user which will have access rights to your application. If you want to restrict access to some users, you need to configure <a href="15912.html">GAM Permissions</a>.</p>
+
+<p>Note that the GAM Examples include a web application (Backend) which facilitates the administration of <a href="15910.html">Applications</a>, <a href="17569.html">GAM Roles</a>, Users, and <a href="15912.html">Permissions</a>.<br />
+<br />
+5. In order to enable access to the REST services, you need to provide the Client_Id, user, and password to the consumer.<br />
+<br />
+Take a look at "GAMExampleApplicationEntry" object (which belongs to the GAM Examples), to see how to use the GAM API to get the Client_Id.<br />
+In particular, if you run GAMExampleWWApplications, when you edit the Application properties of any Application of the Repository, you can see the Client_Id of the Application.</p>
+
+<p><img src="./images/32325.png" id="32325" class="WikiImage"/></p>
+
+<h3><a id="II.+From+the+perspective+of+the+client+application%2C+consumer+of+%22REST+web+services%22+Knowledge+Base" class="HashLink" href="#II.+From+the+perspective+of+the+client+application%2C+consumer+of+%22REST+web+services%22+Knowledge+Base">II. From the perspective of the client application, consumer of "REST web services" Knowledge Base</a></h3>
+
+<p>In Oauth there exists the concept of Client (application), User (userId, userPwd), and permissions (Scope= Read, Write,FullControl..).</p>
+
+<p>A GeneXus application which is configured to use GAM; generates a Client Id for each <a href="15910.html">Application</a>.</p>
+
+<p>To consume a secure GX REST web service you should:</p>
+
+<p>1. Be provided with the Client_Id of the <a href="15910.html">Application</a>, user, and password with access rights to this application.<br />
+<br />
+2. Before trying to POST to the web service, you need first to get an <a href="45320.html">access_token</a>. To get this access_token, you have to POST the Client_Id and user credentials or to use the GAMRepository.GetOauthAccessToken() method. The detailed steps are as follows:</p>
+
+<p>a. First, get the <a href="45320.html">access_token</a>.</p>
+
+<ul>
+	<li><strong>POST</strong> to this URL</li>
+</ul>
+
+<p style="margin-left: 40.0px;">HTTP://&lt;SERVER&gt;/&lt;APPDIR&gt;/oauth/access<span style="line-height: 1.6em;">_token</span><br />
+with this body:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+client_id=&lt;client_id&gt;&amp;grant_type=password&amp;scope=FullControl&amp;username=&lt;user_name&gt;&amp;password=&lt;user_pwd&gt;</pre>
+
+<p style="margin-left: 40.0px;">Example body:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+client_id=f719771ad52a42919a221bc796d0d6b0&amp;granttype=password&amp;scope=FullControl&amp;username=admin&amp;password=admin123
+</pre>
+
+<p style="margin-left: 40.0px;">In the HTTPResponse, there'll be a JSON response with the access_token, as this example shows:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+{
+  "access token" : <strong>"c9919e10e118"</strong>   &lt;&lt; Access token which will have to be used in all subsequent calls
+  "scope" : "FullControl"
+}
+</pre>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  As since GeneXus 16 upgrade 8, the GAMRepository.GetOauthAccessToken() is available.</div>
+</p>
+
+<ul>
+	<li class="Code">Use the method GetOauthAccessToken</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAMRepository.GetOauthAccessToken(&amp;UserName, &amp;Password, &amp;GAMLoginAdditionalParameters, &amp;GAMOauthAdditionalParameters, &amp;GAMSession, &amp;GAMErrors)</pre>
+
+<p class="Code">Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMOauthAdditionalParameters.ClientId = "f719771ad52a42919a221bc796d0d6b0"
+&amp;GAMOauthAdditionalParameters.ClientSecret = &amp;ClientSecret
+&amp;GAMLoginAdditionalParameters.AuthenticationTypeName = !"local"
+&amp;AccessTokenSDT = GAMRepository.GetOauthAccessToken(!"admin", !"admin123",&amp;GAMLoginAdditionalParameters,&amp;GAMOauthAdditionalParameters,&amp;GAMSession,&amp;GAMErrors)</pre>
+
+<p>b. Then all the calls to the REST web services should include this header (following the same example):<br />
+ <br />
+<strong>Authorization: OAuth c9919e10e118</strong></p>
+
+<p>The following is a complete sample code that shows how to GET de products list ("DPProduct" is a Data Provider exposed as REST web service), which is a secure web service (GAM is enabled in the KB).<br />
+The Client Id is taken from the application defined automatically in GAM Backend.</p>
+
+<p>We use HTTPClient data type to consume the REST web service. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+//First get the access_token through an HTTP POST
+
+&amp;addstring ='client_id=be47d883307446b4b93fea47f9264f88&amp;grant_type=password&amp;scope=FullControl&amp;username=test&amp;password=test'
+
+&amp;httpclient.Host= &amp;server
+&amp;httpclient.Port = &amp;port
+
+&amp;httpclient.BaseUrl = &amp;urlbase + '/oauth/'  
+&amp;httpclient.AddHeader("Content-Type", "application/x-www-form-urlencoded")
+&amp;httpclient.AddString(&amp;addstring)
+&amp;httpclient.Execute('POST','access_token')
+
+&amp;httpstatus = &amp;httpclient.StatusCode
+msg('Http status: ' + &amp;httpstatus,status)
+&amp;result = &amp;httpclient.ToString()
+
+&amp;AccessTokenSDT.FromJson(&amp;result) // Load the AccessToken in a SDT which has this structure (*)
+
+//call DPProduct web service
+
+&amp;httpclient.BaseUrl = &amp;urlbase + '/rest/'
+&amp;httpclient.AddHeader("Content-Type", "application/json")
+&amp;httpclient.AddHeader('Authorization','OAuth ' + &amp;AccessTokenSDT.access_token)
+&amp;httpclient.AddHeader("GENEXUS-AGENT","SmartDevice Application")
+&amp;httpclient.Execute('GET','DPProduct')</pre>
+
+<p>Another example, using the GAMRepository.GetOauthAccessToken() method</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+//First get the access_token 
+&amp;httpclient.Host= &amp;server
+&amp;httpclient.Port = &amp;port
+
+&amp;GAMOauthAdditionalParameters.ClientId = "f719771ad52a42919a221bc796d0d6b0"
+&amp;GAMOauthAdditionalParameters.ClientSecret = &amp;ClientSecret
+&amp;GAMLoginAdditionalParameters.AuthenticationTypeName = !"local"
+&amp;AccessTokenSDT = GAMRepository.GetOauthAccessToken(!"admin", !"admin123",&amp;GAMLoginAdditionalParameters,&amp;GAMOauthAdditionalParameters,&amp;GAMSession,&amp;GAMErrors)
+
+//call DPProduct web service
+&amp;httpclient.BaseUrl = &amp;urlbase + '/rest/'
+&amp;httpclient.AddHeader("Content-Type", "application/json")
+&amp;httpclient.AddHeader('Authorization','OAuth ' + &amp;AccessTokenSDT.access_token)
+&amp;httpclient.AddHeader("GENEXUS-AGENT","SmartDevice Application")
+&amp;httpclient.Execute('GET','DPProduct')</pre>
+
+<ul>
+</ul>
+
+<p><strong>Note:</strong></p>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?42755,," target="_blank">GeneXus 16 upgrade 4</a> you can also get the user information when calling a secure Rest service. For more information on this topic, see <a href='https://www.genexus.com/developers/websac?en,,,45678'>SAC 45678</a>.</p>
+
+<h3><a id="Calling+a+Rest+service+which+runs+under+a+multitenant+architecture" class="HashLink" href="#Calling+a+Rest+service+which+runs+under+a+multitenant+architecture">Calling a Rest service which runs under a multitenant architecture</a></h3>
+
+<p>In the case that the service runs on a server which serves multiple tenants (the GAM has n repositories, each for a different tenant), you have to add some additional information to the body of the HTTP Post in order to establish which repository GAM should connect to. In this case, the connection.gam on the server has one <a href="16150.html">Repository connections</a> for each Repository.</p>
+
+<p>This is done using the additional_parametes of the body, which is a JSON including the AuthenticationTypeName and the Repository (the GUID of the Repository you're going to connect to).</p>
+
+<p>Example of an HTTP post to access_token service including the additional_parameters mentioned:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+POST /Customer1.NetEnvironment/oauth/access_token HTTP/1.1
+GeneXus-Agent: SmartDevice Application
+Content-Length: 248
+Content-Type: application/x-www-form-urlencoded
+Host: 10.0.2.2:88
+
+client_id=ad80c07c0a1046029c0655cdd9d99493&amp;grant_type=password&amp;scope=FullControl&amp;username=adminfull&amp;password=adminfull<strong>&amp;additional_parameters={"AuthenticationTypeName":"local","Repository":"1e89a9ca-bc52-482b-a344-c4cda4a9cc8f"}</strong></pre>
+
+<div style="background-color: rgb(221,255,221);border-left: 6.0px solid rgb(76,175,80);">
+<p><strong>Notes:</strong> </p>
+
+<p>The Genexus-Agent:"SmartDevice Application" header is mandatory since Xev2u4.</p>
+
+<p>The grant_type in the json body sent to the "access_token" service maps to the <a href="16508.html">Authentication Types for GAM</a>, so "password" means Local Authentication, and the other possible values are Facebook, Twitter, Google, externalwebservice, custom, and device (for <a href="https://wiki.genexus.com/commwiki/wiki?19912,," target="_blank">Auto Registration</a>).</p>
+
+<p>In case that you get "Error39: application not found", consider adding the following header: Content-Type: application/x-www-form-urlencoded <br />
+ </p>
+</div>
+
+<p><img src="./images/15920.png" id="15920" class="WikiImage"/></p>
+
+<p>Note that the user information can be obtained after the successful authentication, using the GAMUser static methods.</p>
+
+<p>It's recommended to use HTTPS so the communication channel between client and server is secure.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="16052.html">Secure Native Mobile applications architecture</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?29439,," target="_blank">Troubleshooting secure rest services</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="15937.html">GAM - Authentication Scenarios</a></TD><TD><a href="44833.html">GAM - Remote Rest Authentication type (Oauth 2.0)</a></TD></TR><TR><TD><a href="28213.html">Toc:Rest web services in GeneXus</a></TD></TR><TR><TD><a href="16052.html">Secure Native Mobile applications architecture</a></TD><TD><a href="50055.html">Secure REST API using GAM</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 04:57 PM</em></font></td></TR></table></font>

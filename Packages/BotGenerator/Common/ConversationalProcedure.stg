@@ -1,0 +1,50 @@
+group CommonChatbots;
+delimiters "$", "$"
+
+init(procedure, variables, kbObject, action, outSlots, isCollection, directOut, hasImage, parent, responses, imageVariable)::=<<
+$if(variables)$
+	$procedureContent()$
+$else$
+$procedureContent()$
+$endif$
+>>
+
+procedureContent()::=<<
+$callKBObject(procedure, variables, kbObject, action, outSlots, isCollection, directOut, hasImage, imageVariable)$
+$if(directOut)$$outSlots:{slot|$setOutParmsInContext(slot)$};separator="\n"$$endif$
+$if(variables)$&ContextOut.Context.$action$_OK = ""$else$$endif$
+>>
+
+callKBObject(procedure, variables, kbObject, action, outSlots, isCollection, directOut, hasImage, imageVariable)::=<<
+$if(directOut)$
+	$if(isCollection)$
+&$kbObject$ = $procedure.Name$($variables:{variable|$callingParameters(variable)$};separator=", "$)		
+for &$kbObject$Line in &$kbObject$
+	&speechOut+= &$kbObject$Line+" " 
+endfor
+	$else$
+		$if(kbObject)$
+$procedure.Name$.Call($variables:{variable|$callingParameters(variable)$};separator=", "$$if(variables)$,$endif$ &$kbObject$)
+&speechOut = &$kbObject$.ToString()
+		$else$
+$procedure.Name$.Call($variables:{variable|$callingParameters(variable)$};separator=", "$$if(outSlots)$$if(variables)$,$endif$ $outSlots:{variable|$callingOuts(variable)$};separator=", "$$endif$)
+&speechOut += &ContextIn.Context.GXOutput
+		$endif$
+	$endif$
+$else$
+	$if(isCollection)$
+&$kbObject$ = $procedure.Name$($variables:{variable|$callingParameters(variable)$};separator=", "$)
+&speechOut += &ContextIn.Context.GXOutput
+for &$kbObject$Line in &$kbObject$	
+	$outSlots:{parameter|$parametersReplaceCol(kbObject, parameter)$};separator="\n"$ 
+endfor
+	$else$
+&$kbObject$ = $procedure.Name$($variables:{variable|$callingParameters(variable)$};separator=", "$)
+&speechOut += &ContextIn.Context.GXOutput
+	$endif$
+$endif$
+$if(hasImage)$
+&ContextOut.Context.GXResponseImage = &$imageVariable$
+&ContextOut.Context.GXSetImageResponse = true
+$endif$
+>>

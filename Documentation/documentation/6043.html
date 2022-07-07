@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Example: Data Provider Break</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6043,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Example: Data Provider Break</h1>
+<!--Example: Data Provider Break--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Some <a href="5309.html">Data Provider</a> <strong>groups</strong> involve an access to the Database in order to retrieve information, and this may generate several entries in the output. GeneXus infers this in a similar way as it does in a For Each.</p>
+
+<p>Let's see an example of the well-known Break . Suppose that we need to report the customers by country in our system. Suppose our Country and Customer transactions have the following structures:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<u>Country</u>                     <u>Customer
+</u>
+CountryId*                  CustomerId*
+CountryName                 CustomerName
+                            CountryId
+                            CountryName
+                            CustomerAddress
+                            ...</pre>
+
+<p>Regardless of the output, and assuming that it is not structured, the source of the procedure used to retrieve all customers grouped by country will be the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each order CountryName
+         defined by CustomerName
+    Id = CountryId
+    Name = CountryName
+    for each
+        CustomerId = CustomerId
+        CustomerName = CustomerName
+    endfor
+endfor</pre>
+
+<p>In other words, it is a Break.</p>
+
+<p>But what if the output is a structured one? We will need an SDT as the output, and its structure will look as follows:</p>
+
+<p><img src="./images/6045.jpg" id="6045" class="WikiImage"/></p>
+
+<p>In order to insert the information inside the SDT, we will need to change the source of the previous procedure, by declaring a &amp;countries variable of the 'Countries' SDT, a &amp;country variable of the 'Countries.Country' SDT and a &amp;customer variable of the 'Countries.Country.Customer' SDT:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each order CountryName
+         defined by CustomerName
+    &amp;country.Id = CountryId
+    &amp;country.Name = CountryName
+    for each
+        &amp;customer.Id = CustomerId
+        &amp;customer.CustomerName = CustomerName
+        &amp;country.Customers.Add( &amp;customer )
+        &amp;customer = new Countries.Country.Customer()
+    endfor
+    &amp;countries.Add( &amp;country )
+    &amp;country = new Countries.Country()
+endfor</pre>
+
+<p>But what if we instead declare the following source of a Data Provider?</p>
+
+<p><img src="./images/6046.jpg" id="6046" class="WikiImage"/></p>
+
+<p>Or if we omit the innermost group (the result is exactly the same):</p>
+
+<p><img src="./images/6047.jpg" id="6047" class="WikiImage"/></p>
+
+<p>Much easier!</p>
+
+<p>Note how the 'Country' group is just like a For Each whose base table is CUSTOMER (because of the 'Defined by'), and how the 'Customers' group is just like a for each over the CUSTOMER base table, thus implementing a Break! The navigation report will show exactly the same as in the Procedure code! Also, note how the CustomerName Element is not assigned because the attribute name is exactly the same (to refresh that idea read: <a href="5309.html">Data Providers Language Description: Elements</a>).</p>
+
+<p> </p>
+
+<p> <br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5270.html">Category:Data Provider object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

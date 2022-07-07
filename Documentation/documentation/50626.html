@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to configure Session State In ASP.NET Core</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50626,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to configure Session State In ASP.NET Core</h1>
+<!--How to configure Session State In ASP.NET Core--><div class="TableWikiBody" id="tblwikibody"><p>In this article, you can find the steps to configure a Session State in ASP.NET Core.</p>
+
+<p>Sessions in ASP.NET Core are of two types: </p>
+
+<p>1) InProc (or In-memory)</p>
+
+<p>If your session is in-memory and your application is hosted on Web-Farm environment, you need to use sticky sessions to tie each session to a specific server.</p>
+
+<p>2) OutProc (distributed session)</p>
+
+<p>OutProc session does not require sticky sessions, and they are the most preferred way to use session in your application.</p>
+
+<p>Below you will find the necessary steps to configure OutProc sessions.</p>
+
+<h3><a id="How+to+configure+OutProc+-+SQL+Server+Session+state+in+ASP.NET+Core" class="HashLink" href="#How+to+configure+OutProc+-+SQL+Server+Session+state+in+ASP.NET+Core">How to configure OutProc - SQL Server Session state in ASP.NET Core</a></h3>
+
+<p>In SQL Server Session state, the previous version of ASP.NET requires a number of tables and stored Procedures to manage session storage in SQL server. ASP.NET Core requires only one table. This can be generated with &quot;Microsoft.Extensions.Caching.SqlConfig.Tools&quot; tool:</p>
+
+<p>1. Install the tool with:</p>
+
+<pre>
+dotnet tool install --global dotnet-sql-cache
+</pre>
+
+<p>2. Generate the required table:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+dotnet sql-cache create &lt;connection string&gt;  &lt;schema&gt;  &lt;table name&gt; </pre>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+dotnet sql-cache create &quot;Data Source=.\sqlexpress2019,1433;Initial Catalog=MyDatabase;User=test;Password=test;&quot; dbo NetCoreSQLCache
+
+dotnet sql-cache create &quot;Data Source=.\sqlexpress2019;Initial Catalog=MyDatabase;Integrated Security=True;&quot; dbo NetCoreSQLCache</pre>
+
+<p class="Code">3. Configure connection string in Cloudservices.<strong>dev</strong>.config (in web directory, this file is not overwritten by GeneXus on build as the CloudServices.config is) adding the following section:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &lt;Services&gt;
+  ...
+  &lt;Service&gt;
+    &lt;Name&gt;DATABASE&lt;/Name&gt;
+    &lt;Type&gt;Session&lt;/Type&gt;
+    &lt;ClassName&gt;&lt;/ClassName&gt;
+    &lt;Properties&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;SESSION_PROVIDER_ADDRESS&lt;/Name&gt;
+        &lt;Value&gt;Data Source=.\sqlexpress2019,1433;Initial Catalog=test;User=test&lt;/Value&gt;
+      &lt;/Property&gt;
+      &lt;Property&gt;
+         &lt;Name&gt;SESSION_PROVIDER_SESSION_TIMEOUT&lt;/Name&gt;
+         &lt;Value&gt;3&lt;/Value&gt;
+     &lt;/Property&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;SESSION_PROVIDER_PASSWORD&lt;/Name&gt;
+        &lt;Value&gt;L3KpX01Y+7yriRShRiH2vS==&lt;/Value&gt;
+      &lt;/Property&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;SESSION_PROVIDER_SCHEMA&lt;/Name&gt;
+        &lt;Value&gt;dbo&lt;/Value&gt;
+      &lt;/Property&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;SESSION_PROVIDER_TABLE_NAME&lt;/Name&gt;
+        &lt;Value&gt;NetCoreSQLCache&lt;/Value&gt; 
+      &lt;/Property&gt;
+    &lt;/Properties&gt;
+  &lt;/Service&gt;
+&lt;/Services&gt;</pre>
+
+<p> </p>
+
+<p>The password value must be encrypted in the same way Database password is encrypted in appsettings.json. Also, you can use <a href="https://wiki.genexus.com/commwiki/wiki?45615,," target="_blank">GxEncryptCMD</a>.</p>
+
+<h3><a id="Configure+OutProc+-+Redis+Session+state+in+ASP.NET+Core" class="HashLink" href="#Configure+OutProc+-+Redis+Session+state+in+ASP.NET+Core">Configure OutProc - Redis Session state in ASP.NET Core</a></h3>
+
+<p><a href='https://redis.io/docs/'>Redis</a> <a href='https://redis.io/'>documentation</a> is an open-source and in-memory data store that is used as a distributed cache. You can install it locally and configure it. Also, you can configure an Azure Redis Cache.</p>
+
+<p>One way to have Redis on Windows is by installing <a href='https://github.com/microsoftarchive/redis/releases/tag/win-3.2.100'>Redis Server</a> from https://github.com/microsoftarchive/redis/releases:</p>
+
+<p>1. Once Redis Server is installed, start Redis Server:</p>
+
+<p>redis-server.exe</p>
+
+<p>2. To use Redis as session state in ASP.NET Core, you need to add the following section to Cloudservices.<strong>dev</strong>.config (in web directory, this file is not overwritten by GeneXus on build as the CloudServices.config is):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Services&gt; 
+  &lt;Service&gt;
+    &lt;Name&gt;REDIS&lt;/Name&gt;
+    &lt;Type&gt;Session&lt;/Type&gt;
+    &lt;ClassName&gt;&lt;/ClassName&gt;
+    &lt;Properties&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;SESSION_PROVIDER_ADDRESS&lt;/Name&gt;
+        &lt;Value&gt;<b>localhost:6379</b>&lt;/Value&gt;
+      &lt;/Property&gt;
+    &lt;/Properties&gt;
+ &lt;/Service&gt; 
+&lt;/Services&gt;</pre>
+
+<p>If it is a password configured for Redis at the redis.conf, add it as a property and with the value encrypted in the same way as the Database password is encrypted in appsettings.json. Also, you can use <a href="https://wiki.genexus.com/commwiki/wiki?45615,," target="_blank">GxEncryptCMD</a>.</p>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Services&gt; 
+...
+  &lt;Service&gt;
+    &lt;Name&gt;REDIS&lt;/Name&gt;
+    &lt;Type&gt;Session&lt;/Type&gt;
+    &lt;ClassName&gt;&lt;/ClassName&gt;
+    &lt;Properties&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;SESSION_PROVIDER_ADDRESS&lt;/Name&gt;
+        &lt;Value&gt;<b>localhost:6379</b>&lt;/Value&gt;
+      &lt;/Property&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;SESSION_PROVIDER_PASSWORD&lt;/Name&gt;
+        &lt;Value&gt;L3KpX01Y+7yriRShRiH2vS==&lt;/Value&gt;
+      &lt;/Property&gt;
+    &lt;/Properties&gt;
+ &lt;/Service&gt; 
+&lt;/Services&gt;</pre>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="50588.html">.NET Generator Troubleshooting</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38604.html">Toc:GeneXus .NET Generator</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/19/22 02:34 PM</em></font></td></TR></table></font>

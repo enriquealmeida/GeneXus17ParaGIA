@@ -1,0 +1,36 @@
+ALTER TABLE gam.[Session] ALTER COLUMN [SesOauthScope]  nvarchar(2048) NULL
+ALTER TABLE gam.[Session] ALTER COLUMN [SesLastURL]  nvarchar(2048) NOT NULL
+ALTER TABLE gam.[Session] ALTER COLUMN [SesURL]  nvarchar(2048) NOT NULL
+
+ALTER TABLE gam.[SessionHistory] ALTER COLUMN [SesHisOauthScope]  nvarchar(2048) NULL
+ALTER TABLE gam.[SessionHistory] ALTER COLUMN [SesHisLastURL]  nvarchar(2048) NOT NULL
+ALTER TABLE gam.[SessionHistory] ALTER COLUMN [SesHisURL]  nvarchar(2048) NOT NULL
+
+DROP TABLE gam.[Auditory]
+CREATE TABLE gam.[Auditory] ([RepId] int NOT NULL , [AudId] int NOT NULL , [AudSesRepId] int NOT NULL , [AudSesToken] nchar(120) NOT NULL , [AudDate] datetime NOT NULL , [AudActId] decimal( 12) NOT NULL , [AudPgmName] nchar(254) NOT NULL , [AudActKey1] decimal( 12) NULL , [AudActKey2] decimal( 12) NULL , [AudActKey3] decimal( 12) NULL , [AudActKey4] decimal( 12) NULL , [AudActPreDet] nvarchar(2048) NULL , [AudActCurDet] nvarchar(2048) NULL , [AudActionKeyGUID1] nchar(40) NULL , [AudActionKeyGUID2] nchar(40) NULL , [AudActionKeyChar1] nchar(254) NULL , PRIMARY KEY([RepId], [AudId]))
+CREATE NONCLUSTERED INDEX [IAUDITORY1] ON gam.[Auditory] ([AudActId] )
+
+ALTER TABLE gam.[Application] ALTER COLUMN [AppCliLocalLoginURL]  nvarchar(2048) NULL
+ALTER TABLE gam.[Application] ALTER COLUMN [AppCliSiteDomain]  nvarchar(2048) NULL
+ALTER TABLE gam.[Application] ALTER COLUMN [AppCliSiteURL]  nvarchar(2048) NULL
+ALTER TABLE gam.[Application] ALTER COLUMN [AppCliImageURL]  nvarchar(2048) NULL
+
+ALTER TABLE gam.[User] ALTER COLUMN [UserURLImage]  nvarchar(2048) NULL
+ALTER TABLE gam.[User] ALTER COLUMN [UserURLProf]  nvarchar(2048) NULL
+ALTER TABLE gam.[User] ADD [UserPwdEncryption]  nchar(3) NULL, [UserPhoto_GXI]  varchar(2048) NULL
+
+DROP INDEX [UUSERLOGIN] ON gam.[User]
+DROP INDEX [IUSERCOUNTRY] ON gam.[User]
+DROP INDEX [UUSEREMAIL] ON gam.[User]
+DROP INDEX [UUSEREXTID] ON gam.[User]
+
+CREATE NONCLUSTERED INDEX [UUSERLOGIN] ON gam.[User] ([UserNameSpace] ,[UserAutTypeName] ,[UserName] ,[UserIsDlt] )
+CREATE NONCLUSTERED INDEX [IUSERCOUNTRY] ON gam.[User] ([CountryId] )
+CREATE NONCLUSTERED INDEX [UUSEREMAIL] ON gam.[User] ([UserNameSpace] ,[UserAutTypeName] ,[UserEMail] ,[UserIsDlt] )
+CREATE NONCLUSTERED INDEX [UUSEREXTID] ON gam.[User] ([UserNameSpace] ,[UserAutTypeName] ,[UserExtId] ,[UserIsDlt] )
+
+ALTER TABLE gam.[AppAuthReq] ALTER COLUMN [AppAuthReqRedirURL]  nvarchar(2048) NOT NULL
+
+CREATE TABLE gam.[RepositoryEvents] ([RepId]  int NOT NULL , [RepEveEntity]  nchar(60) NOT NULL , [RepEveAction]  nchar(20) NOT NULL , [RepEveClassName]  nchar(60) NOT NULL , [RepEveFileName]  nchar(254) NOT NULL , [RepEveMethodName]  nchar(60) NOT NULL , PRIMARY KEY([RepId], [RepEveEntity], [RepEveAction], [RepEveClassName]))
+
+CREATE NONCLUSTERED INDEX [UAPPMENUOPTION] ON gam.[AppMenuOption] ([RepId] ,[AppId] ,[AppMnuId] ,[AppMnuOptOrder] )

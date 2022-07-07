@@ -1,0 +1,2317 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="IsExcel" Type="System.Boolean" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersLoadState" File="DynamicFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="RegularFiltersLoadState" File="RegularFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubGridEventsForEachConditions" File="GridEventsForEachConditions.dkt" MergeProperties="True"%>
+
+// Exports the contents of a grid (using the selected order and filters) to <%= IsExcel ? "an Excel" : "a CSV" %> file.
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+	bool isCSV = !IsExcel;
+	bool isExcel = IsExcel;
+
+	HierarchySettingsElement hierarchySettings = (gridObject is SelectionElement ? ((SelectionElement)gridObject).HierarchySettings : null);
+
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	SettingsTemplateElement template = wwInstance.GetAppropiateTemplate();
+	SettingsExportActionElement exportSettings = settings.StandardActions.Export;
+	SettingsExportCSVActionElement exportCSVSettings = settings.StandardActions.ExportCSV;
+	bool generateDataSelector = DataSelectorHelper.GenerateDataSelector(gridObject, settings);
+	bool checkEmpty;
+	int colIndex;
+	IGrid grid = gridObject.GetGrid();
+	bool hasConditionalFormattingFilters = grid is GridGeneralElement && ((GridGeneralElement)grid).ConditionalFormatting != null && ((GridGeneralElement)grid).ConditionalFormatting.HasFilter;
+	List<IAttributesItem> allGridAttsAndVars = grid.GetAllAttributesAndVariablesOfThisGrid(true, true);
+	bool editColumns_IsSerializationColumnName = settings.IsOptimizationNumber(9);
+	bool exportOnlyVisibleColumns = isExcel ? exportSettings.ExportOnlyVisibleColumns : exportCSVSettings.ExportOnlyVisibleColumns;
+	bool exportOnlyVisibleColumns_hasItemVisibleShowCSVFalse = false;
+	bool exportVisibleColumns_ColumnsSelector = exportOnlyVisibleColumns && grid.HasColumnsSelectorWithRG();
+	bool exportVisibleColumns_ColumnsSelectorWithRG_Ordered = exportVisibleColumns_ColumnsSelector && settings.ColumnsSelectorOrdered;
+	bool exportTotalizers = isExcel && exportSettings.IncludeTotalizers && grid.HasTotalizers();
+	string columnSelectorSessionKey = gridObject.ObjectName + "ColumnsSelector";
+	string columnsSelectorMultiLanguageSupport = "";
+	bool isCSVNameCustom = (isCSV && exportCSVSettings.FileName != "'<OBJ_NAME>'");
+	if (exportVisibleColumns_ColumnsSelector || (exportVisibleColumns_ColumnsSelector && settings.HasMultilanguageRuntime) || isCSV)
+	{
+		columnsSelectorMultiLanguageSupport = "!";
+	}
+	string ConditionalRecordVariableName = "ConditionalRecordVariable";
+	Procedure proc = (Procedure)Object;
+    Variable varConditionToPrintBlock = proc.Variables.GetVariable(ConditionalRecordVariableName);
+	bool showConditionToPrintRecord = (varConditionToPrintBlock != null);
+	
+	bool sendParametersBySession = settings.Grid.IsSendGridStateToProceduresBySession();
+	bool isOptimizationNumber7 = settings.IsOptimizationNumber(7);
+	bool allowColumnsReorder = exportVisibleColumns_ColumnsSelectorWithRG_Ordered && (isExcel && exportSettings.IsOrderUsersOrder() || isCSV && exportCSVSettings.IsOrderUsersOrder());
+
+
+	IStandardActionElement actionElement = gridObject.GetStandardAction(isExcel ? StandardAction.Export : StandardAction.ExportCSV);
+	if (actionElement == null)
+	{
+		//this is called when the object is deleted
+		return;
+	}
+	IStandardActionReportElement actionReportElement = (IStandardActionReportElement)actionElement;
+	DynamicFilterAttributesElement dynamicFilters = gridObject.Table.GetDynamicFilters();
+	bool hasDynamicFilters = (dynamicFilters != null && dynamicFilters.Items.Count > 0);
+	
+	bool addSecurityEndIf = false;
+	string mainIndentation = "";
+	bool isTypeAdvanced = wwInstance.Settings.Security.IsTypeAdvanced();
+	if (isTypeAdvanced || isCSV && wwInstance.Settings.Security.IsTypeGAM() && !Object.GetPropertyValue<bool>(Properties.PRC.MainProgram))
+	{
+		string secFuntionKey = actionElement.SecFuntionKey;
+		if (isTypeAdvanced && (secFuntionKey == null || secFuntionKey.Trim() == "") && !string.IsNullOrEmpty(actionElement.GetOriginalSecFuntionKey()))
+		{
+			secFuntionKey = gridObject.GetSecurityFunctionKey();
+		}
+		if (secFuntionKey != null && secFuntionKey.Trim() != "")
+		{
+			addSecurityEndIf = true;
+			mainIndentation = "	";
+			if (isTypeAdvanced)
+			{
+%>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' SecurityFunction='secFuntionKey' IndentLevelChar='"\t"' %>
+
+<%
+			}
+			else
+			{
+				List<string> functionList = SettingsSecurityAdvancedElement.GetFunctionsList(secFuntionKey);
+				if (functionList.Count > 0)
+				{
+					if (functionList.Count > 1)
+					{
+%>
+&SecurityFunctionalityKeys = new()
+<%
+						foreach(string function in functionList)
+						{
+%>
+&SecurityFunctionalityKeys.Add(!'<%= function.Trim() %>')
+<%
+						}
+%>
+&IsAuthorized = <%= settings.Security.SecurityGAM.CheckByFunctionKeysName %>.Udp(&SecurityFunctionalityKeys)
+<%
+					}
+					else
+					{
+%>
+&IsAuthorized = <%= settings.Security.SecurityGAM.CheckByFunctionKeyName %>.Udp(!'<%= functionList[0] %>') 
+<%
+					}
+				}
+			}
+%>
+If &IsAuthorized
+
+<%
+		}
+	}
+	bool hasAttSecurity = settings.Security.HasAttributesSecurity();
+	List<IAttributesItem> attAndVars = new List<IAttributesItem>();
+	List<IAttributesItem> attAndVarsWithSec = new List<IAttributesItem>();
+	bool visibleItemsDifferFromExported = false, hasExportedItemsNotVisible = false;
+	foreach (IAttributesItem item in allGridAttsAndVars)
+	{
+		if (isExcel && item.ShowInExport() || isCSV && item.ShowInExportCSV())
+		{
+			if (hasAttSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue())
+			{
+				attAndVarsWithSec.Add(item);
+			}
+			visibleItemsDifferFromExported = visibleItemsDifferFromExported || !item.Visible;
+			if (isExcel || !allowColumnsReorder || item.Visible)
+			{
+				attAndVars.Add(item);
+			}
+			else
+			{
+				hasExportedItemsNotVisible = true;
+			}
+		}
+		else
+		{
+			if (item.Visible)
+			{
+				if (isCSV && !item.ShowInExportCSV())
+				{
+					exportOnlyVisibleColumns_hasItemVisibleShowCSVFalse = true;
+				}
+				visibleItemsDifferFromExported = true;
+				if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+				{
+					//needed to get the correct column index
+					attAndVars.Add(item);
+				}
+			}
+		}
+	}
+	if (isCSV && allowColumnsReorder && hasExportedItemsNotVisible)
+	{
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+			if (!item.Visible && item.ShowInExportCSV())
+			{
+				attAndVars.Add(item);
+			}
+		}
+	}
+	if (exportTotalizers)
+	{
+		exportTotalizers = false;
+		foreach (IAttributesItem item in attAndVars)
+		{
+			if (item.HasTotalizer())
+			{
+				exportTotalizers = true;
+				break;
+			}
+		}
+	}
+	if (attAndVars.Count == 0)
+	{
+		DVelop.Patterns.WorkWithPlus.Helpers.LogHelper.WriteErrorLog("At least one attribute must be included in the Export to generate this object");
+		throw new Exception("At least one attribute must be included in the Export to generate this object");
+	}
+    bool addAttSecurityCode = attAndVarsWithSec.Count > 0;
+	bool defineAttSecurityCodeSub = addAttSecurityCode && (!exportVisibleColumns_ColumnsSelectorWithRG_Ordered || allowColumnsReorder || isCSV);
+	hasAttSecurity = hasAttSecurity && addAttSecurityCode;
+
+	string pathRoot = String.Empty;
+	string baseLocation = isExcel ? exportSettings.BaseLocation : exportCSVSettings.BaseLocation;
+	if (!String.IsNullOrEmpty(baseLocation))
+		pathRoot = String.Format("!\"{0}\" + ", baseLocation);
+	
+	string startRow = (exportSettings.StartRow != String.Empty ? exportSettings.StartRow : "1");
+	string startColumn = (exportSettings.StartColumn != String.Empty ? exportSettings.StartColumn : "1");
+	
+%>
+<%= mainIndentation %><%@ CallSubTemplate SubLoadContext Settings='settings' %>
+
+<%
+	if (isCSVNameCustom)
+	{
+%>
+<%= mainIndentation %>&CustomFileName = <%= exportCSVSettings.FileName.Replace("<OBJ_NAME>", Object.Name).Replace("<TRN_NAME>", wwInstance.HasTransaction() ? gridObject.Transaction.Name : wwInstance.ParentObject.Name) %>
+
+<%
+	}
+%>
+<%= mainIndentation %>Do 'OpenDocument'
+
+<%
+	if (isExcel)
+	{
+%>
+<%= mainIndentation %>&CellRow = <%= startRow %>
+<%= mainIndentation %>&FirstColumn = <%= startColumn %>
+<%
+	}
+	if (sendParametersBySession)
+	{
+		if (isExcel) //Extra Space just for Excel
+		{
+%>
+
+<%
+		}
+%>
+Do 'LoadGridState'
+<%
+	}
+	string title = isExcel ? exportSettings.GetTitle(gridObject, actionReportElement.Title) : "";
+	if (title != String.Empty)
+	{
+%>
+
+<%= mainIndentation %>Do 'WriteMainTitle'
+<%
+	}
+	bool printFilters = false;
+	List<IRegularFilter> allFilters = null;
+	Artech.Common.Collections.IBaseCollection<IWorkWithPlusInstanceElement> allFixedFilters = null;
+	if (isExcel && !exportSettings.IsShowFiltersFalse())
+	{
+		allFilters = gridObject.GetFilters();
+		allFixedFilters = (dynamicFilters != null && dynamicFilters.FixedFilters != null && dynamicFilters.FixedFilters.Items.Count > 0) ? dynamicFilters.FixedFilters.Items : null;
+		if (allFilters.Count > 0 || hasDynamicFilters || allFixedFilters !=  null || gridObject.HasTitleFilter || hasConditionalFormattingFilters)
+		{
+			printFilters = true;
+%>
+
+<%= mainIndentation %>Do 'WriteFilters'
+<%
+		}
+	}
+	else
+	{
+		if (gridObject.HasTitleFilter && !sendParametersBySession)
+		{
+			bool firstAllow = true;
+			foreach (IWorkWithPlusInstanceElement item in grid.Items)
+			{
+				if (item is IGridAttributesItem && ((IGridAttributesItem)item).IsIncludeTitleFilterTrue()
+					&& TitleFilterProcedureHelper.ConsiderSelFilterCondition((IGridAttributesItem)item)
+					&& ((IGridAttributesItem)item).AllowMultipleSelection)
+				{
+					if (firstAllow)
+					{
+						firstAllow = false;
+%>
+
+<%
+					}
+					string name = ((IGridAttributesItem)item).Name.TrimStart('&');
+%>
+<%= mainIndentation %>&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson)
+<%
+				}
+			}
+		}
+		if (isExcel && gridObject.HasFilterMultiple && !sendParametersBySession)
+		{
+%>
+
+<%
+			foreach (System.Collections.IEnumerable filtersList in SelectionGeneralElement.GetFiltersAddFixedFiltersLists(gridObject, dynamicFilters))
+			{
+				foreach (IFilter filter in filtersList)
+				{
+					if (filter is FilterAttributeMultipleGeneralElement
+						&& ((FilterAttributeMultipleGeneralElement)filter).ValuesAttribute.GetPropertyValue<bool>(Artech.Genexus.Common.Properties.ATT.BasedOnEnumerated))
+					{
+%>
+<%= mainIndentation %>&<%= filter.Name %>Values.FromJson(&<%= filter.Name %>ValuesAux.ToJson())
+<%
+					}
+				}
+			}
+		}
+		if (hasDynamicFilters && !sendParametersBySession)
+		{
+%>
+
+<%= mainIndentation %>Do 'LoadDynamicFilters'
+<%
+		}
+		else if (isCSV && gridObject.HasFilterMultiple && !sendParametersBySession)
+		{
+			foreach (FilterAttributeMultipleGeneralElement filterVar in WorkWithPlusInstance.AllMultipleFilters(gridObject.Table, null))
+			{
+%>
+<%= mainIndentation %>&<%= filterVar.Name %>Values.FromJson(&<%= filterVar.Name %>ValuesJson)
+<%
+			}
+		}
+	}
+	
+	if (defineAttSecurityCodeSub)
+	{
+%>
+
+<%= mainIndentation %>Do 'AttributesSecurityCode'
+<%
+	}
+	if (!isCSV || exportCSVSettings.IncludeColumnTitles)
+	{
+%>
+
+<%= mainIndentation %>Do 'WriteColumnTitles'
+<%
+	}
+%>
+
+<%= mainIndentation %>Do 'WriteData'
+
+<%= mainIndentation %>Do 'CloseDocument'
+
+<%
+	if (addSecurityEndIf)
+	{
+%>
+
+EndIf
+
+<%
+	}
+%>
+Sub 'OpenDocument'
+
+	&Random = Random() * 10000
+	&Filename = <%= pathRoot %><%= isCSVNameCustom ? "&CustomFileName + !\"" : ("!\"" + Object.Name) %>-" + &Random.ToString().Trim() + !".<%= isExcel ? exportSettings.ExcelFileExtension : "csv" %>"
+
+<%
+	if (isExcel)
+	{
+		if (exportSettings.Template != String.Empty)
+		{
+%>
+	&ExcelDocument.Template = '<%= exportSettings.Template %>'
+<%
+		}
+%>
+	&ExcelDocument.Open(&Filename)
+	Do 'CheckStatus'
+<%
+	}
+	else
+	{
+		string encoding = exportCSVSettings.Encoding;
+%>
+	&TextFile.Source = &Filename
+	&TextFile.Create()
+	Do 'CheckStatus'
+	&TextFile.OpenWrite(<%= encoding != "" ? "!'" + encoding + "'" : "" %>)
+	Do 'CheckStatus'
+<%
+	}
+	if (isExcel && exportSettings.Template == String.Empty)
+	{
+%>
+	&ExcelDocument.Clear()
+<%
+	}
+%>
+
+EndSub
+
+<%
+	if (title != "")
+	{
+%>
+Sub 'WriteMainTitle'
+
+&ExcelDocument.Cells(&CellRow, &FirstColumn).Bold = True
+&ExcelDocument.Cells(&CellRow, &FirstColumn).Color = <%= exportSettings.TitleColor %>
+&ExcelDocument.Cells(&CellRow, &FirstColumn).Text = <%= WorkWithStringValues.StringWithQuotes(title) %>
+&CellRow += 2
+
+EndSub
+<%
+	}
+
+	int column = 0;
+	List<System.Collections.IEnumerable> filtersAddFixedFiltersLists = null;
+	if (printFilters)
+	{
+		filtersAddFixedFiltersLists = SelectionGeneralElement.GetFiltersAddFixedFiltersLists(allFilters, dynamicFilters);
+%>
+Sub 'WriteFilters'
+<%
+		bool showOnlyModified = exportSettings.IsShowFiltersOnlyModified();	
+		if (gridObject.HasFilterMultiple && !sendParametersBySession)
+		{
+			foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFiltersLists)
+			{
+				foreach (IFilter filter in filtersList)
+				{
+					if (filter is FilterAttributeMultipleGeneralElement
+						&& ((FilterAttributeMultipleGeneralElement)filter).ValuesAttribute.GetPropertyValue<bool>(Artech.Genexus.Common.Properties.ATT.BasedOnEnumerated))
+					{
+%>
+	&<%= filter.Name %>Values.FromJson(&<%= filter.Name %>ValuesAux.ToJson())
+<%
+					}
+				}
+			}
+		}
+		bool addRowBool = false;
+		foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFiltersLists)
+		{
+			bool closeIf = false;
+			int i = 0;
+			foreach (IFilter filter_i in filtersList)
+			{
+				bool printInSameLine = false;
+				bool isFixedFilter = !(filter_i is IRegularFilter);
+				if (!isFixedFilter)
+				{
+					printInSameLine = SettingsExportActionElement.PrintFilterInSameLine(allFilters, i);
+				}
+				if (!printInSameLine)
+				{
+					if (showOnlyModified)
+					{
+						if (closeIf)
+						{
+%>
+	EndIf
+
+<%
+						}
+						else
+						{
+							closeIf = true;
+						}
+						string emptyCondition = filter_i.VariableName + (filter_i is FilterAttributeMultipleGeneralElement || filter_i.IsDVCombo_Multiple() ? ".Count = 0" : ".IsEmpty()");
+						if (filter_i.HasOperators() && filter_i.HasRangeOperatorNotFixed(null) || filter_i.HasRange())
+						{
+							emptyCondition += " AND " + filter_i.RangeVariableName + ".IsEmpty()";						
+						}
+						if (!isFixedFilter)
+						{
+							for (int j = i + 1; j < allFilters.Count; j++)
+							{
+								if (SettingsExportActionElement.PrintFilterInSameLine(allFilters, j))
+								{
+									emptyCondition += " AND " + allFilters[j].VariableName + ".IsEmpty()";
+									if (allFilters[j].HasRange() || allFilters[j].HasRangeOperator())
+									{
+										emptyCondition += " AND " + allFilters[j].RangeVariableName + ".IsEmpty()";						
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+%>
+	If not (<%= emptyCondition %>)
+<%
+					}
+					addRowBool = true;
+					if (!isOptimizationNumber7)
+					{
+%>
+		&CellRow += 1
+<%
+					}
+					column = 0;
+				}
+				bool printFilterValue = true;
+				bool usePrintFilterValueVar = false;
+				bool usePrintFilterRangeValueVar = false;
+				if (isFixedFilter || ((IRegularFilter)filter_i).ShowDescription || (filter_i is FilterAttributeFullTextElement && ((FilterAttributeFullTextElement)filter_i).Description != ""))
+				{
+					if (isOptimizationNumber7)
+					{
+%>
+		WWP_ExportWriteFilter(&ExcelDocument, <%= addRowBool ? "true" : "false" %>, &CellRow, &FirstColumn<%= column > 0 ? " + " + column : "" %>, <%= filter_i.HasOperators() ? "''" : WorkWithStringValues.StringWithQuotes(filter_i.Description) %>)
+<%
+						addRowBool = false;
+					}
+					else
+					{
+%>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Bold = True
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Color = <%= exportSettings.FiltersColor %>
+<%
+					}
+					if (filter_i.HasOperators())
+					{
+						if (((FilterAttributeGeneralElement)filter_i).HasOperatorWithoutFixedValue())
+						{
+							if (((FilterAttributeGeneralElement)filter_i).HasFixedValueOperator())
+							{
+								usePrintFilterValueVar = true;
+%>
+		&PrintFilterValue = False
+<%
+							}
+							if (((FilterAttributeGeneralElement)filter_i).HasSimpleOperator() && ((FilterAttributeGeneralElement)filter_i).HasRangeOperatorNotFixed(null))
+							{
+								usePrintFilterRangeValueVar = true;
+%>
+		&PrintFilterRangeValue = False
+<%
+							}
+						}
+						else
+						{
+							printFilterValue = false;
+						}
+%>
+		Do Case
+<%
+						int operIndex = 0;
+						foreach (FilterAttributeOperatorElement oper in filter_i.GetOperators())
+						{
+							string descriptionCaption = filter_i.Description;
+							if (oper.IsCustomTypeSimple() || oper.IsCustomTypeRange())
+							{
+								if (settings.HasMultilanguage)
+								{
+									descriptionCaption = "format('%1 (%2)', " + WorkWithStringValues.StringWithQuotes(descriptionCaption) + ", " + WorkWithStringValues.StringWithQuotes(oper.Caption) + ")";
+								}
+								else
+								{
+									descriptionCaption = WorkWithStringValues.StringWithQuotes(descriptionCaption + " (" + oper.Caption + ")");
+								}
+							}
+							else
+							{
+								descriptionCaption = WorkWithStringValues.StringWithQuotes(descriptionCaption);
+							}
+%>
+			Case <%= filter_i.GetOperatorVariableName() %> = <%= operIndex %>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Text = <%= descriptionCaption %>
+<%
+							if (oper.IsCustomTypeSimple() || oper.IsCustomTypeRange())
+							{
+								if (usePrintFilterValueVar)
+								{
+%>
+				&PrintFilterValue = True
+<%
+								}
+								if (oper.IsCustomTypeRange())
+								{
+									if (isOptimizationNumber7)
+									{
+%>
+				WWP_ExportWriteFilter(&ExcelDocument, false, &CellRow, &FirstColumn + <%= column + 2 %>, <%= WorkWithStringValues.StringWithQuotes(oper.MiddleText != "" ? oper.MiddleText : " - ") %>)
+<%
+									}
+									else
+									{
+%>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column + 2 %>).Bold = True
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column + 2 %>).Color = <%= exportSettings.FiltersColor %>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column + 2 %>).Text = <%= WorkWithStringValues.StringWithQuotes(oper.MiddleText != "" ? oper.MiddleText : " - ") %>
+<%
+									}
+									if (usePrintFilterRangeValueVar)
+									{
+%>
+				&PrintFilterRangeValue = True
+<%
+									}
+								}
+							}
+							else
+							{
+								if (!isOptimizationNumber7)
+								{
+%>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column + 1 %>).Italic = True
+<%
+								}
+%>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column + 1 %>).Text = <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>
+<%
+							}
+							operIndex++;
+						}
+%>
+		EndCase
+<%
+					}
+					else if (!isOptimizationNumber7)
+					{
+%>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Text = <%= WorkWithStringValues.StringWithQuotes(filter_i.Description) %>
+<%
+					}
+					column++;
+				}
+
+				if (printFilterValue)
+				{
+				Artech.Genexus.Common.ITypedObject typeInfo = null;
+				if (filter_i.IsDataTypeBasedOn())
+				{
+					typeInfo = (Artech.Genexus.Common.ITypedObject)filter_i.Domain;
+					if (typeInfo == null)
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)Artech.Genexus.Common.Objects.Attribute.Get(settings.Model, filter_i.Name);
+					}
+				}
+				if (usePrintFilterValueVar)
+				{
+%>
+		If &PrintFilterValue
+<%
+				}
+				if (!isOptimizationNumber7)
+				{
+%>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Italic = True
+<%
+				}
+				int indentation = 2;
+				checkEmpty = wwInstance.AddEmptyCheck();
+				Artech.Genexus.Common.eDBType eDBType = filter_i.eDBType;
+				if (checkEmpty && (eDBType == eDBType.DATE || eDBType == eDBType.DATETIME))
+				{
+					indentation = 3;
+%>
+		If Not <%= filter_i.VariableName %>.IsEmpty()
+<%
+				}
+				else
+				{
+					checkEmpty = false;
+				}
+				if (filter_i is FilterAttributeMultipleGeneralElement)
+				{
+					if (((FilterAttributeMultipleGeneralElement)filter_i).DescriptionsAttribute != null)
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)((FilterAttributeMultipleGeneralElement)filter_i).DescriptionsAttribute;
+					}
+					else
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)((FilterAttributeMultipleGeneralElement)filter_i).ValuesAttribute;
+					}
+					string forVarName = "&" + filter_i.Name + (((FilterAttributeMultipleGeneralElement)filter_i).DescriptionsAttribute != null ? "Description" : "Value");
+					if (((FilterAttributeMultipleGeneralElement)filter_i).HasFixedDescriptionsToLoad() && ((FilterAttributeMultipleGeneralElement)filter_i).IsDataListFixedValues() && ((FilterAttributeMultipleGeneralElement)filter_i).DataListFixedValuesNotBasedOnEnumerated())
+					{
+						forVarName = "&" + filter_i.Name + "Description";
+%>
+		Do 'Load<%= filter_i.Name %>DescriptionsFromValues'
+<%
+					}
+%>
+		&i = 1
+		For <%= forVarName %> in <%= forVarName %>s
+			If &i = 1
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text = ''
+			Else
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text += ', '
+			EndIf
+<%
+					if (((FilterAttributeMultipleGeneralElement)filter_i).HasFixedDescriptionsToLoad() && ((FilterAttributeMultipleGeneralElement)filter_i).IsDataListFixedValues() && ((FilterAttributeMultipleGeneralElement)filter_i).DataListFixedValuesNotBasedOnEnumerated())
+					{
+%>
+			&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text += <%= forVarName %>
+<%
+					}
+					else
+					{
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, filter_i, forVarName, column.ToString(), false, settings), indentation + 1) %>
+<%
+					}
+%>
+			&i += 1
+		EndFor
+<%
+				}
+				else
+				{
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, filter_i, filter_i.VariableName, column.ToString(), filter_i.AllValue, settings), indentation) %>
+<%
+				}
+				if (checkEmpty)
+				{
+%>
+		EndIf
+<%
+				}
+				column++;
+				if (filter_i.HasRange() || filter_i.HasRangeOperatorNotFixed(null))
+				{
+					if (filter_i.HasRange())
+					{
+					if (isOptimizationNumber7)
+					{
+%>
+		WWP_ExportWriteFilter(&ExcelDocument, false, &CellRow, &FirstColumn<%= column > 0 ? " + " + column : "" %>, <%= SettingsExportActionElement.GetRangeFilterMiddleDescription(settings, filter_i, false, true) %>)
+<%
+						addRowBool = false;
+					}
+					else
+					{
+%>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Bold = True
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Color = <%= exportSettings.FiltersColor %>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Text = <%= SettingsExportActionElement.GetRangeFilterMiddleDescription(settings, filter_i, false, true) %>
+<%
+					}
+					}
+					else if (usePrintFilterValueVar || usePrintFilterRangeValueVar)
+					{
+%>
+		If &PrintFilter<%= usePrintFilterRangeValueVar ? "Range" : "" %>Value
+<%
+					}
+					column++;
+%>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Italic = True
+<%
+					if (checkEmpty)
+					{
+%>
+		If Not <%= filter_i.RangeVariableName %>.IsEmpty()
+<%						
+					}
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, filter_i, filter_i.RangeVariableName, column.ToString(), filter_i.AllValue, settings), indentation) %>
+<%	
+					if (checkEmpty)
+					{
+%>
+		EndIf
+<%
+					}
+					if (usePrintFilterValueVar || usePrintFilterRangeValueVar)
+					{
+%>
+		EndIf
+<%
+					}
+					column++;
+				}
+				if (usePrintFilterValueVar)
+				{
+%>
+		EndIf
+<%
+				}
+				}//cierre de if (printFilterValue)
+				i++;
+			}
+			if (showOnlyModified)
+			{
+%>
+	EndIf
+<%
+			}
+		}
+		if (hasDynamicFilters)
+		{
+			if (!sendParametersBySession)
+			{
+%>
+
+	&GridState.DynamicFilters.From<%= template.SerializationFormat %>(&GridStateXML)
+<%
+			}
+%>
+<%@ CallSubTemplate DynamicFiltersLoadState Instance='wwInstance' Settings='settings' DynamicFilters='dynamicFilters' ActualFilter='1' SourceType='1' ExcelWriteFilter='true' ExcelFilterColor='exportSettings.FiltersColor' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+		}
+		if (gridObject.HasTitleFilter)
+		{
+			foreach (IWorkWithPlusInstanceElement item in grid.Items)
+			{
+				if (item is IGridAttributesItem && ((IGridAttributesItem)item).IsIncludeTitleFilterTrue())
+				{
+					IGridAttributesItem gridItem = (IGridAttributesItem)item;
+					string name = gridItem.ControlName.TrimStart('&');
+					bool hasSelectedFilter = TitleFilterProcedureHelper.ConsiderSelFilterCondition(gridItem);
+					if (hasSelectedFilter)
+					{
+						if (gridItem.AllowMultipleSelection && !sendParametersBySession)
+						{
+%>
+	&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson)
+<%
+						}
+%>
+	If not (&TF<%= name %>_Sel<%= gridItem.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()" %>)
+<%
+						if (isOptimizationNumber7)
+						{
+%>
+		WWP_ExportWriteFilter(&ExcelDocument, true, &CellRow, &FirstColumn, <%= WorkWithStringValues.StringWithQuotes(gridItem.Description) %>)
+<%
+						}
+						else
+						{
+%>
+		&CellRow += 1
+		&ExcelDocument.Cells(&CellRow, &FirstColumn).Bold = True
+		&ExcelDocument.Cells(&CellRow, &FirstColumn).Color = <%= exportSettings.FiltersColor %>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn).Text = <%= WorkWithStringValues.StringWithQuotes(gridItem.Description) %>
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Italic = True
+<%
+						}
+						if (gridItem.AllowMultipleSelection)
+						{
+%>
+		&i = 1
+		For &TF<%= name %>_Sel in &TF<%= name %>_Sels
+			If &i = 1
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text = ''
+			Else
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text += ', '
+			EndIf
+<%
+							if (TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(gridItem))
+							{
+								//not implemented (IsDynamicWithDifferentValueAndDescription and AllowMultipleSelection) - se muestran los ids
+%>
+			&TF<%= name %>_SelDsc = <%= TableAttributeElement.GetIAttributeItemStringValue("&TF" + name + "_Sel", gridItem.eDBType, false) %>
+<%
+							}
+						}
+						Artech.Genexus.Common.ITypedObject typeInfo = gridItem.TypeInfo;
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, gridItem, "&TF" + name + "_Sel", "1", true, settings), 2 + (gridItem.AllowMultipleSelection ? 1 : 0)) %>
+<%
+						if (gridItem.AllowMultipleSelection)
+						{
+%>
+			&i += 1
+		EndFor
+<%
+						}
+					}
+					bool considerFilterCondition = TitleFilterProcedureHelper.ConsiderFilterCondition(gridItem);
+					if (considerFilterCondition || gridItem.PredefinedOperators != null)
+					{
+						if (hasSelectedFilter)
+						{
+%>
+	Else
+<%
+						}
+						string emptyCondition = "&TF" + name + ".IsEmpty()";
+						string indentStr = (hasSelectedFilter ? "	" : "");
+						if (considerFilterCondition && gridItem.IsSearchBoxRange())
+						{
+							emptyCondition += " AND &TF" + name + "_To.IsEmpty()";						
+						}
+						if (gridItem.PredefinedOperators != null)
+						{
+							emptyCondition += " AND &TF" + name + "Operator.IsEmpty()";	
+						}
+%>
+<%= indentStr %>	If not (<%= emptyCondition %>)
+<%
+						if (isOptimizationNumber7)
+						{
+%>
+<%= indentStr %>		WWP_ExportWriteFilter(&ExcelDocument, true, &CellRow, &FirstColumn, <%= WorkWithStringValues.StringWithQuotes(gridItem.Description) %>)
+<%
+						}
+						else
+						{
+%>
+<%= indentStr %>		&CellRow += 1
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn).Bold = True
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn).Color = <%= exportSettings.FiltersColor %>
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn).Text = <%= WorkWithStringValues.StringWithQuotes(gridItem.Description) %>
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Italic = True
+<%
+						}
+						int indentation = 2;
+						if (gridItem.PredefinedOperators != null)
+						{
+%>
+<%= indentStr %>		Do Case
+<%
+							if (considerFilterCondition)
+							{
+%>
+<%= indentStr %>			Case &TF<%= name %>Operator = 0
+<%
+							}
+							indentation += 2;
+							indentStr += "\t\t";
+						}
+						if (considerFilterCondition)
+						{
+							Artech.Genexus.Common.ITypedObject typeInfo = gridItem.TypeInfo;
+							checkEmpty = wwInstance.AddEmptyCheck() && gridItem.IsSearchBoxRange();
+							Artech.Genexus.Common.eDBType eDBType = gridItem.eDBType;
+							if (checkEmpty && (eDBType == eDBType.DATE || eDBType == eDBType.DATETIME))
+							{
+								indentation++;
+%>
+<%= indentStr %>		If not &TF<%= name %>.IsEmpty()
+<%						
+							}
+							else
+							{
+								checkEmpty = false;
+							}
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, gridItem, "&TF" + name, "1", true, settings), indentation + (hasSelectedFilter ? 1 : 0)) %>
+<%	
+							if (checkEmpty)
+							{
+%>
+<%= indentStr %>		EndIf
+<%
+							}
+							if (gridItem.IsSearchBoxRange())
+							{
+								if (isOptimizationNumber7)
+								{
+%>
+<%= indentStr %>		WWP_ExportWriteFilter(&ExcelDocument, false, &CellRow, &FirstColumn + 2, <%= WorkWithStringValues.StringWithQuotes(settings.Labels.TSRangeFilterTo) %>)
+<%
+								}
+								else
+								{
+%>
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Bold = True
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Color = <%= exportSettings.FiltersColor %>
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Text = <%= WorkWithStringValues.StringWithQuotes(settings.Labels.TSRangeFilterTo) %>
+<%= indentStr %>		&ExcelDocument.Cells(&CellRow, &FirstColumn + 3).Italic = True
+<%
+								}
+								if (checkEmpty)
+								{
+%>
+<%= indentStr %>		If not &TF<%= name %>_To.IsEmpty()
+<%						
+								}
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, gridItem, "&TF" + name + "_To", "3", true, settings), indentation + (hasSelectedFilter ? 1 : 0)) %>
+<%	
+								if (checkEmpty)
+								{
+%>
+<%= indentStr %>		EndIf
+<%
+								}
+							}
+						}
+						if (gridItem.PredefinedOperators != null)
+						{
+							indentStr = indentStr.Substring(2);
+							int operIndex = 1;
+							foreach (FilterAttributeOperatorElement oper in gridItem.PredefinedOperators)
+							{
+%>
+<%= indentStr %>			Case &TF<%= name %>Operator = <%= operIndex %>
+<%= indentStr %>				&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text = <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>
+<%
+								operIndex++;
+							}
+%>
+<%= indentStr %>		EndCase
+<%
+						}
+%>
+<%= indentStr %>	EndIf
+<%
+					}
+					if (hasSelectedFilter)
+					{
+%>
+	EndIf
+<%
+					}
+				}
+			}
+		}
+		if (hasConditionalFormattingFilters)
+		{
+%>
+	If not &GridConditionalFormattingFilter.IsEmpty()
+		WWP_ExportWriteFilter(&ExcelDocument, true, &CellRow, &FirstColumn, <%= WorkWithStringValues.StringWithQuotes(settings.Labels.ExportCFFDescription) %>)
+		Do Case
+<%
+			int condIndex = 1;
+			foreach (DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ICondFormattingItem item in ((GridGeneralElement)grid).ConditionalFormatting.CondFormattingItems)
+			{
+				if (!string.IsNullOrEmpty(item.FilterCaption))
+				{
+%>
+			Case &GridConditionalFormattingFilter = <%= condIndex %>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text = <%= WorkWithStringValues.StringWithQuotes(item.FilterCaption) %>
+<%
+				}
+				condIndex++;
+			}
+%>
+		EndCase
+	EndIf
+<%
+		}
+%>
+	&CellRow += 2
+
+EndSub
+
+<%
+	}
+	else if (hasDynamicFilters)
+	{
+%>
+Sub 'LoadDynamicFilters'
+
+<%
+		if (!sendParametersBySession)
+		{
+%>
+	&GridState.DynamicFilters.From<%= template.SerializationFormat %>(&GridStateXML)
+<%
+		}
+%>
+<%@ CallSubTemplate DynamicFiltersLoadState Instance='wwInstance' Settings='settings' DynamicFilters='dynamicFilters' ActualFilter='1' SourceType='1' ExcelWriteFilter='false' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+<%
+		if (isCSV && gridObject.HasFilterMultiple)
+		{
+			foreach (FilterAttributeMultipleGeneralElement filterVar in WorkWithPlusInstance.AllMultipleFilters(gridObject.Table, null))
+			{
+				if (!filterVar.IsDynamicFilter())
+				{
+%>
+	&<%= filterVar.Name %>Values.FromJson(&<%= filterVar.Name %>ValuesJson)
+<%
+				}
+			}
+		}
+%>
+EndSub
+<%
+	}
+	if (printFilters && gridObject.HasFilterMultiple)
+	{
+		foreach (FilterAttributeMultipleGeneralElement filterVar in WorkWithPlusInstance.AllMultipleFilters(dynamicFilters, filtersAddFixedFiltersLists, null))
+		{
+			if (filterVar.HasFixedDescriptionsToLoad() && filterVar.IsDataListFixedValues() && filterVar.DataListFixedValuesNotBasedOnEnumerated())
+			{
+%>
+<%= Indentation.Indent(filterVar.GetSubLoadFixedDescriptionsFromValues(WorkWithPlusObject.EXPORTSELECTION), 1) %>
+<%
+			}
+		}
+	}
+	
+	string colSumStr = "";
+	string colSec = "";
+	bool isFirstPrinted = true;
+	List<int> invisibleItemsExported_Ids = null;
+	if (!isCSV || exportCSVSettings.IncludeColumnTitles)
+	{	
+%>
+
+Sub 'WriteColumnTitles'
+
+<%
+	if (isExcel)
+	{
+		if (addAttSecurityCode && !exportVisibleColumns_ColumnsSelector)
+		{
+%>
+	&ColumnsWithSec = 0
+<%
+		}
+	}
+	else
+	{
+%>
+	&TextFileLine = ''
+<%
+	}
+	if (exportVisibleColumns_ColumnsSelector)
+	{
+		if (isExcel)
+		{
+%>
+	&VisibleColumnCount = 0
+<%
+		}
+%>
+	If &Session.Get(!'<%= columnSelectorSessionKey %>') <> ''
+		&ColumnsSelectorXML = &Session.Get(!'<%= columnSelectorSessionKey %>')
+		&ColumnsSelector.From<%= template.SerializationFormat %>(&ColumnsSelectorXML)
+<%
+		if (!settings.Grid.SaveGridColumnsState)
+		{
+%>
+		&Session.Remove(!'<%= columnSelectorSessionKey %>')	
+<%
+		}
+%>				
+	Else
+		Do 'InitializeColumnsSelector'
+	EndIf
+
+<%
+		if (!exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+		{
+%>
+	For &VisibleColumn in &ColumnsSelector.VisibleColumns
+<%
+			if (isCSV && !hasAttSecurity && !exportOnlyVisibleColumns_hasItemVisibleShowCSVFalse)
+			{
+%>				
+		If Not &TextFileLine.IsEmpty()
+			&TextFileLine += !'<%= exportCSVSettings.Delimiter %>'
+		EndIf
+<%
+			}
+%>
+		Do Case
+<%
+		}
+	}
+	if (allowColumnsReorder || isExcel && exportVisibleColumns_ColumnsSelector && exportVisibleColumns_ColumnsSelectorWithRG_Ordered && isOptimizationNumber7)
+	{
+		if (visibleItemsDifferFromExported || allowColumnsReorder && attAndVarsWithSec.Count > 0)
+		{
+			invisibleItemsExported_Ids = new List<int>();
+			colIndex = 0;
+			foreach (IAttributesItem item in attAndVars)
+			{
+				bool exportedItem = (isExcel && item.ShowInExport() || isCSV && item.ShowInExportCSV());
+				if (item.Visible)
+				{
+					colIndex++;
+					if (!exportedItem)
+					{
+%>
+	&ColumnsSelector.Columns.Item(<%= colIndex.ToString() %>).IsVisible = False
+<%
+					}
+					else if (hasAttSecurity && attAndVarsWithSec.Contains(item))
+					{
+%>
+	&ColumnsSelector.Columns.Item(<%= colIndex.ToString() %>).IsVisible = (&IsAuthorized<%= item.Name.TrimStart('&') %> AND &ColumnsSelector.Columns.Item(<%= colIndex.ToString() %>).IsVisible)
+<%
+					}
+				}
+				else
+				{
+					if (exportedItem)
+					{
+%>
+	&ColumnsSelector_Column = new()
+	&ColumnsSelector_Column.IsVisible = <%= hasAttSecurity && attAndVarsWithSec.Contains(item) ? "&IsAuthorized" + item.Name.TrimStart('&') : "True" %>
+<%
+						if (allowColumnsReorder)
+						{
+%>
+	&ColumnsSelector_Column.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.ControlName) %>
+	&ColumnsSelector_Column.DisplayName = <%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+	&ColumnsSelector_Column.Order = &ColumnsSelector.Columns.Count + 1
+	&ColumnsSelector.Columns.Add(&ColumnsSelector_Column)
+<%
+						}
+						else
+						{
+							colIndex++;
+%>
+	&ColumnsSelector_Column.ColumnName = <%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+	&ColumnsSelector.Columns.Add(&ColumnsSelector_Column, <%= colIndex.ToString() %>)
+<%
+							invisibleItemsExported_Ids.Insert(0, colIndex);
+						}
+					}
+				}
+			}
+		}
+		if (allowColumnsReorder)
+		{
+%>
+	&ColumnsSelector.Columns.Sort(!'Order')
+<%
+		}
+%>
+	For &ColumnsSelector_Column in &ColumnsSelector.Columns
+		If &ColumnsSelector_Column.IsVisible = True
+<%
+		if (isExcel)
+		{
+%>
+			&ExcelDocument.Cells(&CellRow, &FirstColumn + &VisibleColumnCount).Text = GetMessageText(iif(&ColumnsSelector_Column.DisplayName.IsEmpty(), &ColumnsSelector_Column.ColumnName, &ColumnsSelector_Column.DisplayName))
+			&ExcelDocument.Cells(&CellRow, &FirstColumn + &VisibleColumnCount).Bold = True
+			&ExcelDocument.Cells(&CellRow, &FirstColumn + &VisibleColumnCount).Color = <%= exportSettings.ColumnTitlesColor %>
+			&VisibleColumnCount += 1
+<%
+		}
+		else
+		{
+			string itemDescription;
+			if (exportCSVSettings.WrapValuesWithDoubleQuotes)
+			{
+				itemDescription = "!'\"' + &ColumnsSelector_Column.DisplayName.Replace(!'\"', !'\"\"') + !'\"'";
+			}
+			else
+			{
+				itemDescription = "&ColumnsSelector_Column.DisplayName.Replace(!'" + exportCSVSettings.Delimiter + "', !'" + (exportCSVSettings.Delimiter == "," ? ";" : ",") + "')";
+			}
+%>
+			&TextFileLine += !'<%= exportCSVSettings.Delimiter %>' + <%= itemDescription %>
+<%
+		}
+%>
+		EndIf
+	EndFor
+<%
+		if (visibleItemsDifferFromExported && !allowColumnsReorder)
+		{
+			foreach(int colIndex2 in invisibleItemsExported_Ids)
+			{
+%>
+	&ColumnsSelector.Columns.Remove(<%= colIndex2.ToString() %>)
+<%
+			}
+		}
+		if (isCSV)
+		{
+%>
+	If &TextFileLine.Length() > 0
+		&TextFile.WriteLine(&TextFileLine.Substring(2))
+	EndIf
+<%
+		}
+	}
+	else
+	{
+	column = 0;
+	colIndex = 0;
+	foreach (IAttributesItem item in attAndVars)
+	{
+		if (item.Visible)
+		{
+			colIndex++;
+		}
+		if (!(isExcel && item.ShowInExport() || isCSV && item.ShowInExportCSV()))
+		{
+			continue;
+		}
+
+		string indent = "";
+		string secIndent = "";
+		bool AddAttSecurityCodeToAttribute = false;
+		if (exportVisibleColumns_ColumnsSelector)
+		{
+			if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+			{
+				if (item.Visible && isExcel)
+				{
+					indent += "\t";
+					secIndent = "\t";
+					colSumStr = "&VisibleColumnCount";
+%>
+	If &ColumnsSelector.Columns.Item(<%= colIndex.ToString() %>).IsVisible = True
+<%
+				}
+			}
+			else
+			{
+				indent += "\t\t\t";
+				secIndent = "\t\t\t";
+				colSumStr = "&VisibleColumnCount";
+%>
+			Case &VisibleColumn.ColumnName = <%= columnsSelectorMultiLanguageSupport%><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>				
+<%
+			}
+		}
+		else
+		{
+			colSumStr = column.ToString() + colSec;
+		}
+		if (hasAttSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue())
+		{
+			indent += "\t";
+			secIndent += "\t";
+			AddAttSecurityCodeToAttribute = true;
+%>
+<%= secIndent %>If &IsAuthorized<%= item.Name.TrimStart('&') %>
+<%
+		}
+		if (isExcel)
+		{
+			if (!exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+			{
+%>
+	<%= indent %>&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= colSumStr %>).Bold = True
+	<%= indent %>&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= colSumStr %>).Color = <%= exportSettings.ColumnTitlesColor %>
+<%
+			}
+%>
+	<%= indent %>&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= colSumStr %>).Text = <%= WorkWithStringValues.StringWithQuotes(item.Description) %>
+<%
+			if (!exportVisibleColumns_ColumnsSelector && AddAttSecurityCodeToAttribute)
+			{
+				if (colSec == "")
+				{
+					colSec = " + &ColumnsWithSec";
+				}
+%>
+		&ColumnsWithSec += 1
+<%
+			}
+			if (exportVisibleColumns_ColumnsSelector)
+			{
+%>
+	<%= indent %>&VisibleColumnCount += 1
+<%
+			}
+		}
+		else
+		{
+			if (column > 0 && !exportVisibleColumns_ColumnsSelector)
+			{
+%>
+	<%= indent %>&TextFileLine += !'<%= exportCSVSettings.Delimiter %>'
+<%
+			}
+			else if (exportVisibleColumns_ColumnsSelector && !exportVisibleColumns_ColumnsSelectorWithRG_Ordered && (hasAttSecurity || exportOnlyVisibleColumns_hasItemVisibleShowCSVFalse)
+					|| !exportVisibleColumns_ColumnsSelector && !isFirstPrinted)
+			{
+%>
+	<%= indent %>If Not &TextFileLine.IsEmpty()
+	<%= indent %>	&TextFileLine += !'<%= exportCSVSettings.Delimiter %>'
+	<%= indent %>EndIf
+<%
+			}
+			string itemDescription = item.Description;
+			if (exportCSVSettings.WrapValuesWithDoubleQuotes)
+			{
+				itemDescription = "!'\"' + " + WorkWithStringValues.StringWithQuotesWithoutReplace(itemDescription.Replace("\"", "\"\"")) + " + !'\"'";
+			}
+			else
+			{
+				itemDescription =  WorkWithStringValues.StringWithQuotes(item.Description.Replace(exportCSVSettings.Delimiter, exportCSVSettings.Delimiter == "," ? ";" : ","));
+			}
+			if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+			{
+				if (item.Visible)
+				{
+%>
+	<%= indent %>&TextFileLine += iif(&ColumnsSelector.Columns.Item(<%= colIndex.ToString() %>).IsVisible = True, !'<%= exportCSVSettings.Delimiter %>' + <%= itemDescription %>, '')
+<%
+				}
+				else
+				{
+%>
+	<%= indent %>&TextFileLine += !'<%= exportCSVSettings.Delimiter %>' + <%= itemDescription %>
+<%
+					if (allowColumnsReorder)
+					{
+%>
+	&ColumnsSelector_Column = new()
+	&ColumnsSelector_Column.IsVisible = <%= hasAttSecurity && attAndVarsWithSec.Contains(item) ? "&IsAuthorized" + item.Name.TrimStart('&') : "True" %>
+	&ColumnsSelector_Column.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.ControlName) %>
+	&ColumnsSelector_Column.DisplayName = <%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+	&ColumnsSelector_Column.Order = &ColumnsSelector.Columns.Count + 1
+	&ColumnsSelector.Columns.Add(&ColumnsSelector_Column)
+<%
+					}
+				}
+			}
+			else
+			{
+%>
+	<%= indent %>&TextFileLine += <%= itemDescription %>
+<%
+			}
+		}
+		if (!exportVisibleColumns_ColumnsSelector && !AddAttSecurityCodeToAttribute) //Update column only if it does not have security nor ExportVisibleColumns
+		{
+			column++;
+		}
+%>
+<%		
+		if (AddAttSecurityCodeToAttribute)
+		{
+%>
+<%= secIndent %>EndIf
+<%
+		}
+		if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered && item.Visible && isExcel)
+		{
+%>
+	EndIf
+<%
+		}
+		isFirstPrinted = false;
+	}
+	if (exportVisibleColumns_ColumnsSelector)
+	{
+		if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+		{
+			if (isExcel)
+			{
+%>
+	For &i = 1 To &VisibleColumnCount
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + &i - 1).Bold = True
+		&ExcelDocument.Cells(&CellRow, &FirstColumn + &i - 1).Color = <%= exportSettings.ColumnTitlesColor %>
+	EndFor
+<%
+			}
+		}
+		else
+		{
+%>
+		EndCase
+	EndFor
+<%
+		}
+	}
+	if (isCSV)
+	{
+		if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+		{
+%>
+	If &TextFileLine.Length() > 0
+		&TextFile.WriteLine(&TextFileLine.Substring(2))
+	EndIf
+<%
+		}
+		else
+		{
+%>
+	&TextFile.WriteLine(&TextFileLine)
+<%
+		}
+	}
+	}
+%>
+
+EndSub
+
+<%
+	}
+%>
+
+Sub 'WriteData'
+
+<%
+	if (exportTotalizers)
+	{
+%>
+	&FirstDataCellRow = &CellRow + 1
+<%
+	}
+	if (wwInstance.HasTransaction())
+	{
+%>
+	For each<%= gridObject.GetForEachLevelName(false, true) %>
+<%
+		List<string> customConditions = isCSV ? SelectionGeneralElement.GetCustomConditionsFromObject(gridObject) : exportSettings.GetCustomConditionsFromObject(gridObject);
+
+		if (gridObject.Orders.Orders.Count > 0)
+		{
+%>
+<%= Indentation.Indent(gridObject.Orders.ForEachOrder, 2) %>
+<%
+		}
+%>
+<%@ CallSubTemplate SubGridEventsForEachConditions Settings='settings' GridObject='gridObject' AddDefinedByAtts='false' GenerateDataSelector='generateDataSelector' HierarchySettings='hierarchySettings' Grid='grid' DynamicFilters='dynamicFilters' Template='template' Parameters='gridObject.GetParameters()' CustomConditions='customConditions' WWInstance='wwInstance' %>
+<%
+	}
+	else
+	{
+		if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+		{
+%>
+	//<%= grid.GetSDTCollection() %> must be loaded manually before this code
+
+	For <%= grid.GetSDTCollection().Contains(".") ? grid.GetSDTCollection().Substring(0, grid.GetSDTCollection().IndexOf(".")) : grid.GetSDTCollection() %>Item in <%= grid.GetSDTCollection() %>
+<%
+		}
+		else
+		{
+%>
+		//this code should be inside the For Each used to load the data
+<%
+			if (hasDynamicFilters || allFixedFilters !=  null || gridObject.HasTitleFilter
+				|| DVelop.Patterns.WorkWithPlus.Helpers.DataSelectorHelper.GetSDTBasedGridObjectExampleConditions(gridObject, settings) != "")
+			{
+%>
+
+		//sample conditions available in the Events of <%= gridObject.ObjectName %> object
+
+<%
+			}
+		}
+	}
+
+	if (isExcel)
+	{
+		if (!showConditionToPrintRecord)
+		{
+%>
+
+		// Write cell values
+		&CellRow += 1
+<%
+		}
+	}
+	else
+	{
+%>
+
+		&TextFileLine = ''
+<%
+	}
+%>
+		
+		Do 'BeforeWriteLine'
+<%
+	string indentCond = "";
+	if (showConditionToPrintRecord)
+	{
+		indentCond = "\t";
+%>
+		If &<%= ConditionalRecordVariableName %>
+
+			// Write cell values
+<%
+		if (isExcel)
+		{
+%>
+			&CellRow += 1
+<%
+		}
+	}
+	if (isExcel && addAttSecurityCode && !exportVisibleColumns_ColumnsSelector)
+	{
+%>
+		<%= indentCond %>&ColumnsWithSec = 0
+<%
+	}
+	if (exportVisibleColumns_ColumnsSelector)
+	{
+		if (!(isCSV && (exportVisibleColumns_ColumnsSelectorWithRG_Ordered || settings.IsOptimizationNumber(5))))
+		{
+%>
+		<%= indentCond %>&VisibleColumnCount = 0
+<%
+		}
+		if (allowColumnsReorder || !exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+		{
+			if (allowColumnsReorder)
+			{
+%>
+		<%= indentCond %>For &ColumnsSelector_Column in &ColumnsSelector.Columns
+		<%= indentCond %>	If &ColumnsSelector_Column.IsVisible = True
+<%
+				indentCond += "\t";
+			}
+			else
+			{
+%>
+		<%= indentCond %>For &VisibleColumn in &ColumnsSelector.VisibleColumns		
+<%
+			}
+			if (isCSV && !hasAttSecurity)
+			{
+%>
+			<%= indentCond %>If Not &TextFileLine.IsEmpty()
+			<%= indentCond %>	&TextFileLine += !'<%= exportCSVSettings.Delimiter %>'
+			<%= indentCond %>EndIf
+<%
+			}
+%>
+			<%= indentCond %>Do Case
+<%
+		}
+	}
+	column = 0;
+	colSumStr = "";
+	colSec = "";
+	isFirstPrinted = true;
+	colIndex = 0;
+	foreach (IAttributesItem item in attAndVars)
+	{
+		if (item.Visible)
+		{
+			colIndex++;
+		}
+		if (!(isExcel && item.ShowInExport() || isCSV && item.ShowInExportCSV()))
+		{
+			continue;
+		}
+
+		string indent = "";
+		string secIndent = "";
+		bool AddAttSecurityCodeToAttribute = false;
+		if (exportVisibleColumns_ColumnsSelector)
+		{
+			colSumStr = "&VisibleColumnCount";
+			if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered && !allowColumnsReorder)
+			{
+				if (item.Visible)
+				{
+					indent += "\t";
+					secIndent = "\t";
+%>
+		If &ColumnsSelector.Columns.Item(<%= colIndex.ToString() %>).IsVisible = True
+<%
+				}
+			}
+			else
+			{
+				indent += "\t\t\t";
+				secIndent += "\t\t\t";
+%>
+				<%= indentCond %>Case &<%= allowColumnsReorder ? "ColumnsSelector_" : "Visible" %>Column.ColumnName = <%= columnsSelectorMultiLanguageSupport%><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(allowColumnsReorder ? item.ControlName : item.Description) %>
+<%
+			}
+		}
+		else
+		{
+			colSumStr = column.ToString() + colSec;
+		}
+
+		if (!allowColumnsReorder
+			&& !exportVisibleColumns_ColumnsSelectorWithRG_Ordered
+			&& (hasAttSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue()))
+		{
+			indent += "\t";
+			secIndent += "\t";
+			AddAttSecurityCodeToAttribute = true;
+%>
+	<%= indentCond %><%= secIndent %>If &IsAuthorized<%= item.Name.TrimStart('&') %>
+<%
+		}
+		if (item is VariableElement)
+		{
+%>
+		<%= indentCond %><%= indent %><%= ((VariableElement)item).GetLoadCode() %>
+<%
+		}
+		int valueIndentation = 2;
+		checkEmpty = wwInstance.AddEmptyCheck();
+		Artech.Genexus.Common.eDBType item_eDBType = item.eDBType;
+		if (checkEmpty && (item_eDBType == eDBType.DATE || item_eDBType == eDBType.DATETIME))
+		{
+			valueIndentation = 3;
+%>
+		<%= indentCond %><%= indent %>If Not <%= WorkWithStringValues.StringWithoutQuotes(item.Name) %>.IsEmpty()
+<%						
+		}
+		else
+		{
+			checkEmpty = false;
+		}
+		if (isExcel)
+		{
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(item.TypeInfo, item, item.Name, colSumStr, false, settings), valueIndentation + indentCond.Length + indent.Length) %>
+<%
+		}
+		else
+		{
+			if (!allowColumnsReorder)
+			{
+				if (column > 0 && !exportVisibleColumns_ColumnsSelector
+					|| exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+				{
+%>
+<%= indentCond %><%= indent %>		&TextFileLine += !'<%= exportCSVSettings.Delimiter %>'
+<%
+				}
+				else if (exportVisibleColumns_ColumnsSelector && hasAttSecurity
+						|| !exportVisibleColumns_ColumnsSelector && !isFirstPrinted)
+				{
+%>
+<%= indentCond %><%= indent %>		If Not &TextFileLine.IsEmpty()
+<%= indentCond %><%= indent %>			&TextFileLine += !'<%= exportCSVSettings.Delimiter %>'
+<%= indentCond %><%= indent %>		EndIf
+<%
+				}
+			}
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintCSVFieldExpression(item.TypeInfo, item, item.Name, settings), valueIndentation + indentCond.Length + indent.Length) %>
+<%
+		}
+		if (checkEmpty)
+		{
+%>
+		<%= indentCond %><%= indent %>EndIf
+<%
+		}
+		if (isExcel)
+		{
+			if (exportSettings.IncludeCondFormatting)
+			{
+				string conditionalFormattingCode = SettingsExportActionElement.GetCellConditionalFormattingCode(item, colSumStr, settings);
+				if (!String.IsNullOrEmpty(conditionalFormattingCode))
+				{
+%>
+<%= Indentation.Indent(conditionalFormattingCode, 2 + indentCond.Length + indent.Length) %>
+<%
+				}
+			}
+			if (!exportVisibleColumns_ColumnsSelector && AddAttSecurityCodeToAttribute)
+			{
+				if (colSec == "")
+				{
+					colSec = " + &ColumnsWithSec";
+				}
+%>
+			&ColumnsWithSec += 1
+<%
+			}
+			if (exportVisibleColumns_ColumnsSelector && !allowColumnsReorder)
+			{
+%>
+<%= Indentation.Indent("&VisibleColumnCount += 1", valueIndentation + indentCond.Length + indent.Length) %>
+<%
+			}
+		}
+		if (AddAttSecurityCodeToAttribute)
+		{
+%>
+	<%= indentCond %><%= secIndent %>EndIf
+<%
+		}
+		if ((exportVisibleColumns_ColumnsSelectorWithRG_Ordered && !allowColumnsReorder) && item.Visible)
+		{
+%>
+		<%= indentCond %>EndIf
+<%
+		}
+		if (!exportVisibleColumns_ColumnsSelector && !AddAttSecurityCodeToAttribute) //Update column only if it does not have security nor ExportVisibleColumns
+		{
+			column++;
+		}
+		isFirstPrinted = false;
+	}
+	if (exportVisibleColumns_ColumnsSelector && (!exportVisibleColumns_ColumnsSelectorWithRG_Ordered || allowColumnsReorder))
+	{
+%>
+			<%= indentCond %>EndCase
+<%
+		if (allowColumnsReorder)
+		{
+			indentCond = indentCond.Substring(1);
+%>
+			<%= indentCond %>	&VisibleColumnCount += 1
+			<%= indentCond %>EndIf
+<%
+		}
+%>
+		<%= indentCond %>EndFor		
+<%
+	}
+	
+	if (isExcel && exportSettings.IncludeCondFormatting)
+	{
+		string conditionalFormattingCode = SettingsExportActionElement.GetRowConditionalFormattingCode(grid, colSumStr, settings);
+		if (!String.IsNullOrEmpty(conditionalFormattingCode))
+		{
+%>
+<%= Indentation.Indent(conditionalFormattingCode, 2 + (showConditionToPrintRecord ? 1 : 0)) %>
+<%
+		}
+	}
+	if (showConditionToPrintRecord)
+	{
+%>
+		EndIf
+<%
+	}
+%>
+		
+		Do 'AfterWriteLine'
+<%
+	if (isCSV)
+	{
+		if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered && !allowColumnsReorder)
+		{
+%>
+		<%= indentCond %>If &TextFileLine.Length() > 0
+			<%= indentCond %>&TextFile.WriteLine(&TextFileLine.Substring(2))
+		<%= indentCond %>EndIf
+<%
+		}
+		else
+		{
+%>
+		&TextFile.WriteLine(&TextFileLine)
+<%
+		}
+	}
+%>
+
+<%
+	if (wwInstance.HasTransaction() || !string.IsNullOrEmpty(grid.GetSDTCollection()))
+	{
+%>
+	Endfor
+<%
+	}
+	if (exportTotalizers)
+	{
+%>
+	Do 'WriteTotalizers'
+<%
+	}
+%>
+
+EndSub
+
+<%
+	if (exportTotalizers)
+	{
+%>
+Sub 'WriteTotalizers'
+
+<%
+		if (invisibleItemsExported_Ids != null)
+		{
+			foreach(int colIndex2 in invisibleItemsExported_Ids)
+			{
+%>
+	&ColumnsSelector_Column = new()
+	&ColumnsSelector_Column.IsVisible = True
+	&ColumnsSelector.Columns.Add(&ColumnsSelector_Column, <%= colIndex2.ToString() %>)
+<%
+			}
+		}
+		string indent = "";
+		if (exportVisibleColumns_ColumnsSelector)
+		{
+			indent = "\t\t\t\t";
+			colSumStr = "&VisibleColumnCount";
+%>
+	&VisibleColumnCount = 0
+	For &ColumnsSelector_Column in &ColumnsSelector.Columns
+		If &ColumnsSelector_Column.IsVisible = True
+			Do Case
+<%
+		}
+		else
+		{
+			column = 0;
+			colSumStr = "";
+			colSec = "";
+			isFirstPrinted = true;
+			colIndex = 0;
+		}
+		foreach (IAttributesItem item in attAndVars)
+		{
+			bool AddAttSecurityCodeToAttribute = false;
+			if (item.Visible)
+			{
+				colIndex++;
+			}
+			if (!(isExcel && item.ShowInExport() || isCSV && item.ShowInExportCSV()))
+			{
+				continue;
+			}
+			if (!exportVisibleColumns_ColumnsSelector)
+			{
+				colSumStr = column.ToString() + colSec;
+				if (hasAttSecurity && item.HasShowSecurityCheck_RealValue() || item.HasVisibleCondition_RealValue())
+				{
+					indent = "\t";
+					AddAttSecurityCodeToAttribute = true;
+%>
+	If &IsAuthorized<%= item.Name.TrimStart('&') %>
+		&ColumnsWithSec += 1
+<%
+					if (colSec == "")
+					{
+						colSec = " + &ColumnsWithSec";
+					}
+				}
+				else
+				{
+					indent = "";
+				}
+			}
+			if (item.HasTotalizer())
+			{
+				if (exportVisibleColumns_ColumnsSelector)
+				{
+%>
+				Case &ColumnsSelector_Column.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.ControlName) %>
+<%
+				}
+				if (item.GetTotalizer() != "Count" || item.eDBType == eDBType.NUMERIC)
+				{
+%>
+	<%= indent %>&ExcelDocument.Cells(&CellRow + 1, &FirstColumn + <%= colSumStr %>).Text = format(!"=<%= item.GetTotalizer().ToUpper().Replace("IMUM", "").Replace("COUNT", "COUNTA") %>(%1%2:%1%3)", CHR(ASC(!'A') + &VisibleColumnCount<%= startColumn != "1" ? " + &FirstColumn - 1" : "" %>), &FirstDataCellRow.ToString().Trim(), &CellRow.ToString().Trim())
+<%
+				}
+				else
+				{
+%>
+	<%= indent %>&ExcelDocument.Cells(&CellRow + 1, &FirstColumn + <%= colSumStr %>).Number = &CellRow + 1 - &FirstDataCellRow
+<%
+				}
+			}
+			if (!exportVisibleColumns_ColumnsSelector)
+			{
+				if (AddAttSecurityCodeToAttribute)
+				{
+%>
+	EndIf
+<%
+				}
+				if (!exportVisibleColumns_ColumnsSelector && !AddAttSecurityCodeToAttribute) //Update column only if it does not have security nor ExportVisibleColumns
+				{
+					column++;
+				}
+			}
+		}
+		if (exportVisibleColumns_ColumnsSelector)
+		{
+%>
+			EndCase
+			&VisibleColumnCount += 1
+		EndIf
+	EndFor
+<%
+		}
+		if (exportSettings.TotalizersFormat != "")
+		{
+			foreach (string strFormat in exportSettings.TotalizersFormat.Split(';'))
+			{
+				var formatStrSplitted = strFormat.Split('=');
+				string propName = formatStrSplitted[0];
+				string propVal = formatStrSplitted.Length > 1 ? formatStrSplitted[1] : "True";
+%>
+	&ExcelDocument.Cells(&CellRow + 1, &FirstColumn, 1, <%= colSumStr %>).<%= propName %> = <%= propVal %>
+<%
+			}
+		}
+%>
+
+EndSub
+
+<%
+	}
+
+	if (defineAttSecurityCodeSub)
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+<%
+		string checkByFunctionKeyName = settings.Security.AttributesSecurityCheckByFunctionKeyName();
+		foreach(IAttributesItem item in attAndVarsWithSec)
+		{
+			string secVarName = "&IsAuthorized" + item.Name.TrimStart('&');
+			string cond = "";
+			if (hasAttSecurity && item.HasShowSecurityCheck_RealValue())
+			{
+				cond = checkByFunctionKeyName + "!'" + ((IElementWithSecurity)item).ShowSecFuntionKey + "')";
+				if (item.HasVisibleCondition_RealValue())
+				{
+					cond += " AND ";
+				}
+			}
+			if (item.HasVisibleCondition_RealValue())
+			{
+				cond += "(" + item.GetVisibleCondition() + ")";
+			}
+
+%>
+	<%= secVarName %> = <%= cond %>
+<%
+		}
+%>
+EndSub
+
+<%
+	}
+%>
+
+Sub 'CloseDocument'
+
+<%
+	if (isExcel)
+	{
+%>
+	&ExcelDocument.Save()
+	Do 'CheckStatus'
+	&ExcelDocument.Close()
+<%
+		if (exportSettings.IsStorageProviderExternal())
+		{
+%>
+	WWP_StorageProvider_GetFilePath(&Filename)
+<%
+		}
+	}
+	else
+	{
+%>
+	&TextFile.Close()
+	Do 'CheckStatus'
+	If &TextFile.ErrCode = 0
+		&HttpResponse.AddHeader(!'Content-Type', !'text/csv')
+		&HttpResponse.AddHeader(!'Content-Disposition', !'attachment;filename=<%= isCSVNameCustom ? "' + &CustomFileName + !'" : Object.Name %>.csv')
+		&HttpResponse.AddFile(&TextFile.GetAbsoluteName())
+	EndIf
+<%
+	}
+%>
+
+EndSub
+
+Sub 'CheckStatus'
+	If (&<%= isExcel ? "ExcelDocument" : "TextFile" %>.ErrCode <> 0)
+		&Filename = ""
+		&ErrorMessage = &<%= isExcel ? "ExcelDocument" : "TextFile" %>.ErrDescription
+<%
+	if (isExcel)
+	{
+%>
+		&ExcelDocument.Close()
+<%
+	}
+	else
+	{
+%>
+		&TextFile.Close()
+		&HttpResponse.AddString(&ErrorMessage)
+<%
+	}
+%>
+		Return
+	EndIf
+EndSub
+<%
+	if (exportVisibleColumns_ColumnsSelector)
+	{
+%>
+Sub 'InitializeColumnsSelector'
+	&ColumnsSelector = new WWPColumnsSelector()
+<%
+		bool checkColSelAttsSecurity = ((GridElement)grid).ColumnSelector_AddShowAttSecurityCode();
+		if (exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+		{
+			foreach (IGridAttributesItem item in allGridAttsAndVars)
+			{
+				if (item.Visible)
+				{
+					string indent = "";
+					string secCond = "";
+					bool attHasSecurity = false;
+					bool attHasAdvSecurity = hasAttSecurity && item is IElementWithSecurity && ((IElementWithSecurity)item).HasShowSecurityCheck_RealValue();
+					bool attHasCondition = item is IConditionalVisibility && ((IConditionalVisibility)item).HasVisibleCondition_RealValue();
+					if (attHasAdvSecurity || attHasCondition)
+					{
+						indent = "\t";
+						attHasSecurity = true;
+					
+						if (attHasAdvSecurity)
+						{
+							secCond += settings.Security.AttributesSecurityCheckByFunctionKeyName() + "!'" + ((IElementWithSecurity)item).ShowSecFuntionKey + "')";
+							if (attHasCondition)
+							{
+								secCond += " AND ";
+							}
+						}
+						if (attHasCondition)
+						{
+							secCond += "(" + ((IConditionalVisibility)item).GetVisibleCondition() + ")";
+						}
+					}
+					if (attHasSecurity)
+					{
+%>
+	If <%= secCond %>
+<%
+					}
+%>
+	<%= indent %>WWP_ColumnsSelector_Add(&ColumnsSelector<%= editColumns_IsSerializationColumnName ? ", !" + WorkWithStringValues.StringWithQuotes(item.ControlName) + ", " + (item.TitleCategory.Trim() != "" ? "!" + WorkWithStringValues.StringWithQuotes(item.TitleCategory.Trim()) : "''") : "" %>, <%= columnsSelectorMultiLanguageSupport%><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>, <%= item.VisibleByDefault.ToString() %><%= editColumns_IsSerializationColumnName ? ", ''" : "" %>)
+<%
+					if (attHasSecurity)
+					{
+%>
+	Else
+		WWP_ColumnsSelector_Add(&ColumnsSelector<%= editColumns_IsSerializationColumnName ? ", '', ''" : "" %>, '', False<%= editColumns_IsSerializationColumnName ? ", ''" : "" %>)
+	EndIf
+<%
+					}
+				}
+			}
+%>
+		
+	&UserCustomValue = LoadColumnsSelectorState.Udp(!'<%= columnSelectorSessionKey %>')
+	If not(&UserCustomValue.IsEmpty())
+		&ColumnsSelectorAux.FromXml(&UserCustomValue)
+		WWP_ColumnSelector_UpdateColumns(&ColumnsSelectorAux, &ColumnsSelector)
+	EndIf
+<%
+		}
+		else
+		{
+%>
+	&UserCustomValue = LoadColumnsSelectorState.Udp(!'<%= columnSelectorSessionKey %>')
+	If not(&UserCustomValue.IsEmpty())
+		&ColumnsSelector.From<%= template.SerializationFormat %>(&UserCustomValue)
+		Do 'UpdateColumns_ColumnsSelector'
+	Else
+<%
+		foreach (IGridAttributesItem item in allGridAttsAndVars)
+		{
+			if (item.Visible && (item.ShowInExport() || item.ShowInExportCSV()))
+			{
+				string indent = "";
+				if (item.VisibleByDefault)
+				{
+%>
+
+		<%= indent %>&VisibleColumn = new WWPColumnsSelector.VisibleColumn()
+		<%= indent %>&VisibleColumn.ColumnName = <%= columnsSelectorMultiLanguageSupport%><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		<%= indent %>&ColumnsSelector.VisibleColumns.Add(&VisibleColumn)
+<%
+				}
+			}
+		}
+%>		
+	EndIf
+<%
+		}
+%>
+EndSub
+
+<%
+		if (!exportVisibleColumns_ColumnsSelectorWithRG_Ordered)
+		{
+%>
+Sub 'UpdateColumns_ColumnsSelector'
+	//Update columns that changed its description or were deleted or hidden from the grid
+	&ColumnsSelectorXML = &ColumnsSelector.VisibleColumns.ToXml()
+	&ColumnsSelectorXML2 = &ColumnsSelector.InvisibleColumns.ToXml()
+	&ColumnsSelector = new()
+<%
+		bool isAddColumnsColumnsSelectorNo = settings.Grid.IsAddColumnsColumnsSelectorNo();
+		bool isAddColumnsColumnsSelectorYesAllVisibles = settings.Grid.IsAddColumnsColumnsSelectorYesAllVisibles();
+		bool isAddColumnsColumnsSelectorYesAllInvisibles = settings.Grid.IsAddColumnsColumnsSelectorYesAllInvisibles();
+		bool isAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault = settings.Grid.IsAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault();
+		foreach (IGridAttributesItem item in allGridAttsAndVars)
+		{
+			if (item.Visible && (item.ShowInExport() || item.ShowInExportCSV()))
+			{
+%>
+<%
+				if (isAddColumnsColumnsSelectorNo
+					|| isAddColumnsColumnsSelectorYesAllInvisibles
+					|| (isAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault && !item.VisibleByDefault))
+				{
+%>
+	If &ColumnsSelectorXML.IsMatch(!<%= WorkWithStringValues.StringWithQuotesFirstSingleColon("<ColumnName>" + item.Description + "</ColumnName") %>)
+		&VisibleColumn = new WWPColumnsSelector.VisibleColumn()
+		&VisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		&ColumnsSelector.VisibleColumns.Add(&VisibleColumn)
+	EndIf
+<%
+				}
+				else
+				{
+					if (!(isAddColumnsColumnsSelectorYesAllVisibles
+						|| (isAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault && item.VisibleByDefault)))
+					{
+						throw new Exception("WorkWithPlus programming error.");
+					}
+%>
+	If not(&ColumnsSelectorXML2.IsMatch(!<%= WorkWithStringValues.StringWithQuotesFirstSingleColon("<ColumnName>" + item.Description + "</ColumnName") %>))
+		&VisibleColumn = new WWPColumnsSelector.VisibleColumn()
+		&VisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		&ColumnsSelector.VisibleColumns.Add(&VisibleColumn)
+	EndIf
+<%
+				}
+			}
+		}
+%>
+EndSub
+<%
+		}
+	}
+
+	if (sendParametersBySession)
+	{
+%>
+Sub 'LoadGridState'
+
+	// Load grid state from session.
+<%
+		string sessionKey = settings.Objects.IGridObjectName(gridObject, true) + Constants.SessionKeys.GridState;
+		if (!settings.Grid.IsSaveGridStateCustom())
+		{
+%>	
+	&GridState.From<%= template.SerializationFormat %>(&Session.Get(!"<%= sessionKey %>"))
+<%
+		}
+		else
+		{
+		
+%>	
+	If &Session.Get(!"<%= sessionKey %>") = !""
+		&GridState.From<%= template.SerializationFormat %>(LoadGridState.Udp(!"<%= sessionKey %>"))
+	Else
+		&GridState.From<%= template.SerializationFormat %>(&Session.Get(!"<%= sessionKey %>"))
+	Endif	
+<%		
+		}
+
+		if (gridObject.Orders.NeedsChoice) 
+		{
+%>
+
+	<%= OrdersElement.OrderVariableName %> = &GridState.OrderedBy
+<%
+		}
+		if (gridObject.Orders.HasTitleOrdering)
+		{
+			if (gridObject.Orders.NeedsChoice || !gridObject.Orders.FirstOptionSwapped)
+			{
+%>
+	<%= OrdersElement.OrderDscVariableName %> = &GridState.OrderedDsc
+<%
+			}
+			else
+			{
+%>
+	<%= OrdersElement.OrderDscVariableName %> = &GridState.OrderedBy.IsEmpty() OR &GridState.OrderedDsc
+<%
+			}
+		}
+		if (!isExcel || exportSettings.IsShowFiltersFalse())
+		{
+			allFilters = gridObject.GetFilters();
+			allFixedFilters = (dynamicFilters != null && dynamicFilters.FixedFilters != null && dynamicFilters.FixedFilters.Items.Count > 0) ? dynamicFilters.FixedFilters.Items : null;
+		}
+		int totalAmountOfRegularFilters = (allFilters != null) ? allFilters.Count : 0;
+		totalAmountOfRegularFilters += (allFixedFilters != null) ? allFixedFilters.Count : 0;
+		totalAmountOfRegularFilters += (hasConditionalFormattingFilters ? 1 : 0);
+		List<IAttributesItem> titlesWithFilters = new List<IAttributesItem>();
+		if (gridObject.HasTitleFilter)
+		{
+			
+			foreach (IWorkWithPlusInstanceElement item in grid.Items)
+			{
+				if (item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue())
+				{
+					titlesWithFilters.Add((IFilterableByTitle)item);
+					totalAmountOfRegularFilters ++;
+					if (TitleFilterProcedureHelper.ConsiderFilterCondition((IFilterableByTitle)item) && TitleFilterProcedureHelper.ConsiderSelFilterCondition((IFilterableByTitle)item))
+					{
+						totalAmountOfRegularFilters++;
+					}
+				}
+			}
+		}
+		if (totalAmountOfRegularFilters > 0 || (sendParametersBySession && gridObject.GetParameters() != null && gridObject.GetParameters().Count > 0))
+		{
+			List<System.Collections.IEnumerable> filtersAddFixedFilters = SelectionGeneralElement.GetFiltersAddFixedFiltersLists(allFilters, dynamicFilters);
+%>
+
+<%@ CallSubTemplate RegularFiltersLoadState GridObject='gridObject' Instance='wwInstance' TotalAmountOfRegularFilters='totalAmountOfRegularFilters' FiltersAddFixedFilters='filtersAddFixedFilters' TitlesWithFilters='titlesWithFilters' HasConditionalFormattingFilters='hasConditionalFormattingFilters' IsWebPanelLoad='false' SourceType='IsExcel ? 1 : 3' PrintFilters='printFilters' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+
+		}
+		if (hasDynamicFilters && (isCSV || exportSettings.IsShowFiltersFalse()))
+		{
+%>
+	Do 'LoadDynamicFilters'
+<%
+		}
+%>
+EndSub
+<%
+	}
+%>
+Sub 'BeforeWriteLine'
+EndSub
+
+Sub 'AfterWriteLine'
+EndSub

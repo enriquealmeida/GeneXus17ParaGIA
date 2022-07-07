@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Optimization to build the worklist</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47305,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Optimization to build the worklist</h1>
+<!--Optimization to build the worklist--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As from <a href="46852.html">GeneXus 17 upgrade 1</a>, in-memory data structures are used to calculate the users' worklist. </p>
+
+<p>The data structures are populated with information related to the Organizational Model, in which the following relationships are stored:<br />
+<br />
+●    User - Role (Cacheable)<br />
+●    Activity - Role (Cacheable)<br />
+●    User - Definition of Organizational Unit - Organizational Unit (Cacheable)<br />
+●    User - Definition of Organizational Unit - Organizational Unit - Role (Cacheable)<br />
+●    Process Instance - Definition of Organizational Unit - Organizational Unit (NOT Cacheable)</p>
+
+<p>The end-user (administrator) can choose to have the structures cached to improve performance by reducing access to the database. If the cache is not enabled (default value), the structures are always loaded from the database (*) before each operation that requires making changes to the worklist. </p>
+
+<p>If caching is enabled, there will inevitably be a period of time when the effects of changes in users' roles or organizational units will not be reflected in the inbox. <br />
+For example, if a user is assigned a role, new tasks that have the role x will not appear in the user's inbox until the cache is refreshed. <br />
+Note that when the cache is refreshed, the tasks that are created from that moment on will begin to be displayed, but those that were created before will remain invisible to the user. </p>
+
+<p>Tasks created before the modifications will not be affected. This is because the user's worklist is always reconstructed with fresh data.</p>
+
+<p>(*) If the GeneXus resultset cache was enabled, eventually the loading could be done without accessing the database. See <a href="47305.html">Optimization to build the worklist</a>.</p>
+
+<h3><a id="How+is+the+cache+enabled%3F+" class="HashLink" href="#How+is+the+cache+enabled%3F+">How is the cache enabled? </a></h3>
+
+<p>It is enabled by configuring the property &quot;Enable Organizational Model Cache&quot; to Yes, from the following option of the GXflow back-office menu:</p>
+
+<p><img src="./images/47310.png" id="47310" class="WikiImage"/></p>
+
+<p><img src="./images/47313.png" id="47313" class="WikiImage"/></p>
+
+<p>Clicking on Save will display the property &quot;Organizational Model Cache Timeout (seconds),” which allows configuring how often the cache is refreshed.</p>
+
+<p><img src="./images/47315.png" id="47315" class="WikiImage"/></p>
+
+<h3><br />
+Considerations</h3>
+
+<p>The cache mechanism used is inprocess (not distributed). Therefore, if there is a server farm, the cached information will always be somewhat different from each other at some point.<br />
+When a user's worklist is reconstructed, either implicitly (because their roles or organizational units were modified and the configuration that forces the worklist to be reconstructed in this situation is enabled), or explicitly (by using the API User.RebuildWorklist() or through the apwfrebuildwoklist command), this is always done with fresh data regardless of whether the cache is enabled or not.</p>
+
+<h3><a id="Compatibility+with+the+GeneXus+Cache" class="HashLink" href="#Compatibility+with+the+GeneXus+Cache">Compatibility with the GeneXus Cache</a></h3>
+
+<p>The GXflow structure cache mechanism is independent of the GeneXus resultset cache mechanism. When the latter is enabled, the loading of the GXflow organizational structures is made over the GeneXus cache (if the statements are in memory); otherwise, they are loaded from the database. <br />
+Keep in mind that when you use the GeneXus resultset cache and changes are made to a user's roles or organizational units, it is invalidated. Therefore, in this case, the cache always has fresh data. In other words, if both caches are enabled, there is no timeout accumulation effect.</p>
+
+<p> </p>
+
+<p></p>
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD><TD><a href="29277.html">GXflow Performance Tips</a></TD><TD><a href="47305.html">Optimization to build the worklist</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/20/20 06:02 PM</em></font></td></TR></table></font>

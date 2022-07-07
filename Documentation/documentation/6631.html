@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Expression data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6631,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Expression data type</h1>
+<!--Expression data type--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The <em>Expression data type</em> allows you to express an arbitrary formula as a string, and instantly evaluate it.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>The <em>Expression data type</em> is used when you need to evaluate an expression in run-time.<br />
+<br />
+Suppose you have a formula whose definition you know will probably change in the future. If you use a standard approach, generally the formula will be encapsulated as a <a href="6440.html">global formula</a> in the Knowledge Base, and GeneXus will expand its definition wherever the attribute is used.<br />
+<br />
+But, what happens if you need to change the definition? You will need to change the formula definition and recompile all the programs that use it, generating a new version of your program. Does it sound like a good idea to recompile all your code just for one little formula change?<br />
+<br />
+For those cases, where some formulas will probably change or they must be specified at installation time, you can use the <em>Expression data type</em>; it allows runtime formula evaluations and modifications without needing to change a single line of code.<br />
+<br />
+The trick is to handle math formulas as data (program metadata) instead of program instructions. The evaluator takes formulas as strings, assigns the desired parameter values and computes the results to be used by your application.</p>
+
+<h4><a id="Simple+usage" class="HashLink" href="#Simple+usage">Simple usage</a></h4>
+
+<p>Suppose you have the following formula: &quot;<em>a</em>*<em>b</em>+<em>c</em>&quot;. To evaluate it using the <em>Expression data type</em> you will need to:</p>
+
+<ol>
+	<li>Define an <em>Expression Data Type</em> variable in your program, for example <em>&amp;expressionDataTypeVariable</em>.</li>
+	<li>Assign the formula &quot;<em>a</em>*<em>b</em>+<em>c</em>&quot; to the <em>Expression</em> property of the data type.</li>
+	<li>Set a valid value for each variable used in the expression, in this case you must set the <em>a</em>, <em>b</em> and <em>c</em> values with the <em>Set</em> method of the <em>Variables</em> property. Here you must set all parameters as strings (check the code below).</li>
+	<li>Call the <em>Evaluate</em> method to execute the expression which will be returned in the <em>&amp;Result</em> variable.</li>
+	<li>Check the <em>ErrCode</em> property. It there is no error the <em>&amp;Result</em> variable will have the evaluation of the associated formula.</li>
+</ol>
+
+<p>The snippet of the code is the following:</p>
+
+<p></p>
+
+<pre class="Code">
+// Define the expression
+&amp;expressionString = &quot;a*b+c&quot;
+// Assign the expression to the data type
+&amp;expressionDataTypeVariable.Expression = &amp;expressionString
+// Assign variables, in this case 3 variables must be set
+&amp;expressionDataTypeVariable.Variables.Set( &quot;a&quot;, &amp;integer1.ToString() )  // used the &amp;integer1 value
+&amp;expressionDataTypeVariable.Variables.Set( &quot;b&quot;, &amp;integer2.ToString() )
+&amp;expressionDataTypeVariable.Variables.Set( &quot;c&quot;, &amp;integer3.ToString() )
+// Everything is set, Evaluating Expression
+&amp;Result = &amp;expressionDataTypeVariable.Evaluate()
+If &amp;expressionDataTypeVariable.ErrCode = 0
+	// The evaluation executed with no errors
+	// Do something with the &amp;Result variable
+else
+	&amp;errorString = &amp;expressionDataTypeVariable.ErrCode.ToString()
+	&amp;msg = &quot;Error:&quot; + &amp;errorString.Trim() + &quot;:&quot; + &amp;expressionDataTypeVariable.ErrDescription
+	msg( &amp;msg ) // send error message executing an expression.
+EndIf		
+</pre>
+
+<p><br />
+Many common mathematical functions and constants are built-in and ready to use. In addition, you can extend this mechanism by writing with your own user-defined functions using GeneXus Procedures to be executed in runtime and returning a numeric value.</p>
+
+<p>Download a calculator example from <a href='http://www.gxopen.com/gxopen/servlet/projectinformation?759'>here</a>.</p>
+
+<h3><a id="Available+operators+and+functions" class="HashLink" href="#Available+operators+and+functions"><strong>Available operators and functions</strong></a></h3>
+
+<h4><a id="Constants" class="HashLink" href="#Constants">Constants</a></h4>
+
+<ul>
+	<li>pi</li>
+</ul>
+
+<h4><a id="Arithmetic+Operators" class="HashLink" href="#Arithmetic+Operators">Arithmetic Operators</a></h4>
+
+<ul>
+	<li>+, -, *, /</li>
+</ul>
+
+<h4><a id="Conditional+operators" class="HashLink" href="#Conditional+operators">Conditional operators</a></h4>
+
+<ul>
+	<li>&gt;, &lt;, &gt;=, &lt;=, &lt;&gt;, and, or</li>
+</ul>
+
+<h4><a id="Standard+functions" class="HashLink" href="#Standard+functions">Standard functions</a></h4>
+
+<ul>
+	<li>abs(n)</li>
+	<li>int(n)</li>
+	<li>frac(n)</li>
+	<li>sin(n)</li>
+	<li>asin(n)</li>
+	<li>cos(n)</li>
+	<li>acos(n)</li>
+	<li>tan(n)</li>
+	<li>atan(n)</li>
+	<li>floor(n)</li>
+	<li>round(n)</li>
+	<li>ln(n) or log(n)</li>
+	<li>exp(n)</li>
+	<li>sqrt(n)</li>
+	<li>pow(m, n)</li>
+	<li>max(m,n)</li>
+	<li>min(m,n)</li>
+	<li>iif( condition, m, n)</li>
+</ul>
+
+<p>         Make sure to add extra parentheses when using logical operators (AND, OR), otherwise a wrong result will be evaluated.</p>
+
+<p>         For example:      iif ( ( a &gt;= 0 ) AND ( b &gt; a ), a, b )</p>
+
+<h4><a id="External+Functions" class="HashLink" href="#External+Functions">External Functions</a></h4>
+
+<ul>
+	<li>Any GeneXus Procedure using character and numeric parameters returning a numeric value defined as N(10,2).</li>
+</ul>
+
+<h3><a id="Properties" class="HashLink" href="#Properties"><strong>Properties</strong></a></h3>
+
+<ul>
+	<li>ErrCode</li>
+	<li>ErrDescription</li>
+	<li>Expression</li>
+	<li>Variables</li>
+</ul>
+
+<h3><a id="Methods" class="HashLink" href="#Methods"><strong>Methods</strong></a></h3>
+
+<ul>
+	<li>Evaluate</li>
+</ul>
+
+<h3><a id="ErrCode" class="HashLink" href="#ErrCode">ErrCode</a></h3>
+
+<p>Returns a Numeric value with the error code associated to the evaluation.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax"><strong>Syntax</strong></a></h4>
+
+<p></p>
+
+<pre class="Code">
+<strong>&amp;</strong><em>ExpressionVariable</em><strong>.ErrCode</strong></pre>
+
+<p><strong></strong></p>
+
+<p><strong>Type returned</strong><br />
+Numeric</p>
+
+<p>Possible error codes are:</p>
+
+<ul>
+	<li><em>1</em>: Unknown error (UNKNOWN_ERROR).</li>
+	<li>2: There is an error in the evaluate parameters (PARAMETER_ERROR).</li>
+	<li><em>3</em>: Expression to be evaluated is not well formed (EXPRESSION_ERROR).</li>
+	<li><em>4</em>: Error occurred during execution (EVALUATION_ERROR).</li>
+	<li><em>5</em>: Error executing an external function (EXTERNAL_FUNCTION_ERROR).</li>
+</ul>
+
+<h3><a id="ErrDescription" class="HashLink" href="#ErrDescription">ErrDescription</a></h3>
+
+<p>In case of an error, it returns the associated description of the latest operation. Note that the error description will change depending on the platform.<br />
+The only exception is when a division by zero occurs during evaluation. In that case ErrCode 4 will be returned with ErrDescription &quot;Division by zero&quot;.</p>
+
+<p><strong>Syntax</strong></p>
+
+<p></p>
+
+<pre class="Code">
+<strong>&amp;</strong><em><em>ExpressionVariable</em></em><em><strong>.ErrDescription</strong></em></pre>
+
+<p><strong></strong></p>
+
+<p><strong>Type Returned</strong>:<br />
+Character</p>
+
+<h3><a id="Expression" class="HashLink" href="#Expression">Expression</a></h3>
+
+<p>Expression to be evaluated. A <em>Character</em> or <em>Varcharacter</em> expression with the expression. Valid expressions are:</p>
+
+<p></p>
+
+<pre class="Code">
+&amp;expressionDataTypeVariable.Expression = &quot;a*(b+c)/100&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;rnd( a + b + c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;cos(90)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;tan( b + a * b + c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;floor( a * b + c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;exp(0)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;abs( a * b + c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;iif( a &lt; b , a , c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;myProcedure01( a , b)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;ln(exp(0))&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;50*cos(g)*sin(f)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;myProcedure02( &quot;'+'&quot; , b , c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;sqrt( a * b + c )&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;floor( a * b + c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;10*log( a * b + c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;abs(-(a * b + c ))&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;frac( a * b + c)&quot;
+&amp;expressionDataTypeVariable.Expression = &quot;2*pi&quot;
+</pre>
+
+<p></p>
+
+<p><strong>Syntax</strong></p>
+
+<p></p>
+
+<pre class="Code">
+<em><strong>&amp;</strong>ExpressionVariable</em>.<strong>Expression</strong></pre>
+
+<p></p>
+
+<h3><a id="Variables" class="HashLink" href="#Variables">Variables</a></h3>
+
+<p>Variable list to be assinged and its associated value.</p>
+
+<p>All variables must be set to strings, in case of strings they must be enclosed with the caracter '. Check the following samples:</p>
+
+<p></p>
+
+<pre class="Code">
+&amp;expressionDataTypeVariable.Variables.Set( &quot;a&quot;, &amp;int1.ToString() ) // Numeric to string
+&amp;expressionDataTypeVariable.Variables.Set( &quot;b&quot;, &amp;int2.ToString() ) 
+&amp;expressionDataTypeVariable.Variables.Set( &quot;c&quot;, &amp;int3.ToString() )
+&amp;expressionDataTypeVariable.Variables.Set( &quot;operator01&quot;, &quot;'+'&quot; ) // note that strings must be enclosed with '
+&amp;expressionDataTypeVariable.Variables.Set( &quot;operator02&quot;, &quot;'*'&quot; )</pre>
+
+<p></p>
+
+<p><strong>Syntax</strong></p>
+
+<p></p>
+
+<pre class="Code">
+<strong>&amp;</strong><em>ExpressionVariable</em><strong>.Variables</strong></pre>
+
+<p></p>
+
+<h3><a id="Evaluate" class="HashLink" href="#Evaluate"><strong>Evaluate</strong></a></h3>
+
+<p>Evaluates the expression and returns the associated result.</p>
+
+<p><strong>Syntax</strong></p>
+
+<p></p>
+
+<pre class="Code">
+<strong>&amp;</strong><em>ExpressionVariable</em><strong>.Evaluate()</strong></pre>
+
+<p></p>
+
+<p><strong><strong>Type Returned</strong>:</strong></p>
+
+<p><strong>Numeric(10,2)-</strong></p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations"><strong>Considerations</strong></a></h3>
+
+<p>When comparing strings, the following operators are supported: &quot;=&quot;, &quot;!=&quot; and &quot;+&quot; to concatenate; the following operators are not supported: &quot;&lt;&quot; , &quot;&gt;&quot; , &quot;&lt;=&quot; , &quot;&gt;= &quot;.</p>
+
+<p>Error Code 5 - &quot;Execute Method not found&quot;, <strong>the return variable must be numeric with 10 wide and 2 decimal</strong>.</p>
+
+<h4><a id=".Net+Specific" class="HashLink" href="#.Net+Specific">.Net Specific</a></h4>
+
+<ul>
+	<li>All internal processing to evaluate a formula is done with the C# decimal datatype.</li>
+	<li>The GeneXus Procedures to be executed must be in the same assembly as the caller program, so you need to make sure the procedure is compiled and included in the assembly using the expression data type. An option to explicitly add it to the call tree is:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+If (1=2)
+  MyProcedure1.call()
+EndIf</pre>
+
+<h4><a id="Java+Specific" class="HashLink" href="#Java+Specific">Java Specific</a></h4>
+
+<ul>
+	<li>All internal processing to evaluate a formula is done with the Java double datatype.</li>
+</ul>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p></p>
+
+<pre class="Code">
+&amp;int1 = 100  //N(6.0)
+&amp;int2 = 200  //N(6.0)
+&amp;int3 = 300  //N(6.0)
+&amp;operator01 = &quot;'+'&quot; // Character
+&amp;operator02 = &quot;'-'&quot; // Character
+
+&amp;operand01 = &quot;a1&quot;
+&amp;operand02 = &quot;b1&quot;
+&amp;operand03 = &quot;c1&quot;
+
+&amp;expressionDataTypeVariable.Variables.Set( &quot;a&quot;, &amp;int1.ToString() )
+&amp;expressionDataTypeVariable.Variables.Set( &quot;b&quot;, &amp;int2.ToString() )
+&amp;expressionDataTypeVariable.Variables.Set( &quot;c&quot;, &amp;int3.ToString() )
+&amp;expressionDataTypeVariable.Variables.Set(&quot;var&quot;, 'TEST')
+&amp;expressionDataTypeVariable.Variables.Set( &quot;operator01&quot;, &amp;operator01 ) // using a variable with a string value, check the &amp;operator0* variables
+&amp;expressionDataTypeVariable.Variables.Set( &quot;operator02&quot;, &amp;operator02 )
+&amp;expressionDataTypeVariable.Variables.Set( &quot;operator03&quot;, &quot;'/'&quot; ) // using a string
+&amp;expressionDataTypeVariable.Variables.Set( &quot;operator04&quot;, &quot;'*'&quot; )
+&amp;expressionDataTypeVariable.Variables.Set( &amp;operand01, &amp;int1.ToString() )
+&amp;expressionDataTypeVariable.Variables.Set( &amp;operand02, &amp;int2.ToString() )
+&amp;expressionDataTypeVariable.Variables.Set( &amp;operand03, &amp;int3.ToString() )
+
+&amp;expressionDataTypeVariable.Expression = &quot;a*(b+c)/100&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;rnd( a + b + c)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;cos(a)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;tan( b + a * b + c)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;floor( a * b + c)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;exp(0)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;abs( a * b + c)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;iif( a &lt; b , a , c)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;ln(exp(10))&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;50*cos(a)*sin(b)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;iif(var='TEST',a+b,a*b)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;iif(var&lt;&gt;'TEST',a+b,a*b)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;abs(a) + int(a) + frac(a)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;sin(1) + asin(1)+cos(1)+acos(1) + tan(1)+atan(1)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;round(1)+ln(1)+log(1)+exp(1)+sqrt(1)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;pow(2,3)+max(a,b)+min(a,b)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;a and b &quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;iif(operator01='+',a+b,0)&quot; // using a string '+'
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;iif(operator02='*',a*b,0)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;myProcedure03( operator02 , b , c)&quot; // using a GeneXus procedure with string and numeric variables
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;myProcedure03( '/', b , c)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;a1+b1+c1&quot;
+do 'Evaluate'
+
+Msg('---Errors ---',status)
+//Errors--
+&amp;expressionDataTypeVariable.Expression = &quot;cos(j)*sin(r)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;myProcedure01( a , b)&quot;
+do 'Evaluate'
+&amp;expressionDataTypeVariable.Expression = &quot;a / 0 &quot; // Check the error code property
+do 'Evaluate'
+
+
+Sub 'Evaluate'
+   &amp;Result = &amp;expressionDataTypeVariable.Evaluate()
+   If &amp;expressionDataTypeVariable.ErrCode = 0
+      // The evaluation executed with no errors
+      Msg('Result: '+&amp;expressionDataTypeVariable.Expression+ '=' + str(&amp;Result) , status)
+    else
+      &amp;errorString = &amp;expressionDataTypeVariable.ErrCode.ToString()
+      &amp;msg = &quot;Error:&quot; + &amp;errorString + &quot;:&quot; + &amp;expressionDataTypeVariable.ErrDescription
+      msg( &amp;msg,status ) // send error message executing an expression.
+    EndIf        
+endsub</pre>
+
+<p></p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="6293.html">Procedure object</a>, <a href="1908.html">Transaction object</a>, <a href="6916.html">Web Panel object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Languages</strong></td>
+			<td>NET, Ruby, Java</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6779.html">Data types list</a></TD><TD><a href="6810.html">Set Method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

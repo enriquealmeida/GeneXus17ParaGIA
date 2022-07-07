@@ -1,0 +1,23 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Association WP Conditions" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="GridConditions" File="GridConditions.dkt" MergeProperties="True"%>
+
+<%
+	AssociationElement association = wwInstance.GetElement<AssociationElement>(Element);
+	if (!association.Info.SameSourceAndTargetTable)
+	{
+		int index = 0;
+		foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+		{
+%>
+<%= association.Info.BaseTableKeyAttributes[index] %> = &<%= relationKeyBaseAttribute %>;
+<%
+			index++;
+		}
+	}
+%>

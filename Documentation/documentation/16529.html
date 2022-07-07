@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Audio data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16529,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Audio data type</h1>
+<!--Audio data type--><div class="TableWikiBody" id="tblwikibody"><p>Stores or references any type of audio files (mp3, wav, etc.). An Audio-based attribute or variable can be loaded from both the FromURL method (specifying an URL, local or remote, where the audio file is stored) and setting its AudioURI property. If the value sent to FromURL is a remote URL, the audio will be downloaded and saved in the DB upon making an Insert. If what is needed is just a reference to the Audio stored in a local or remote location, the AudioURI property has to be assigned. These audios can be stored in any of the databases supported by GeneXus without having to specify its file name or extension. Therefore, any audio file can be reproduced by dragging any variable or attribute defined with the Audio data type to the form. </p>
+
+<h2><a id="Properties" class="HashLink" href="#Properties">Properties</a></h2>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>AudioName  </strong></td>
+			<td>Gets the Audio name.<br />
+			 </td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>AudioType</strong></td>
+			<td>Gets the Audio Type. The AudioType is the extension of the audio file (e.g. mp3, wav, etc.).<br />
+			 </td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>AudioURI</strong></td>
+			<td>Sets or gets the Audio URL. This URL can be:<br />
+			- A relative path, which will be resolved with the current host.<br />
+			- An absolute path to an external audio on the web.<br />
+			- A local path by using <em>file://</em> protocol.<br />
+			When you <em>set</em> the AudioURI property, the internal Blob with the audio will be set to empty.<br />
+			For example,
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Example
+&amp;MyAudio.FromUrl(MyAudioAttributeWillBeErasedInNextLine)
+&amp;MyAudio.AudioURI = &quot;http://www.myaudiofiles/audio.mp3&quot; // audio.mp3 will be MyAudio </pre>
+			On the other hand, when you want to <em>get</em> the value of this property, GeneXus always returns the absolute URL specified.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods">Methods</a></h2>
+
+<h3><a id="FromURL" class="HashLink" href="#FromURL">FromURL</a></h3>
+
+<p>Loads the current audio instance (blob) with the URI indicated in the parameter. After calling this method, the AudioURI property has the absolute URL specified.</p>
+
+<p><strong>Return value</strong>: None<br />
+<strong>Parameters</strong>: AudioSource : URL</p>
+
+<p>For example,</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;audio.FromURL('http://www.myband.com/song.mp3')
+msg(&amp;audio.AudioURI) // it will print 'http://www.myband.com/song.mp3' text</pre>
+
+<p><strong>Note</strong>: For Audio-based attributes, the audio media content will be downloaded from the URL specified and will be automatically stored in the database.</p>
+
+<h3><a id="SetEmpty" class="HashLink" href="#SetEmpty">SetEmpty</a></h3>
+
+<p>Sets the current audio-based attribute/variable to an empty value (without audio content or reference to any audio source).</p>
+
+<p><strong>Return value</strong>: None<br />
+<strong>Parameters</strong>: None</p>
+
+<h3><a id="IsEmpty" class="HashLink" href="#IsEmpty">IsEmpty</a></h3>
+
+<p>Returns True if the current audio-based attribute/variable has not a reference to a stored audio.</p>
+
+<p><strong>Return value</strong>: Boolean<br />
+<strong>Parameters</strong>: None</p>
+
+<h2><a id="Examples" class="HashLink" href="#Examples">Examples</a></h2>
+
+<h3><a id="1.+Structuring" class="HashLink" href="#1.+Structuring">1. Structuring</a></h3>
+
+<p>A company wants to save songs of its bands albums; to do so, you only have to write the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SongId     Numeric(4.0)
+SongName   Character
+SongAudio  Audio
+</pre>
+
+<p>In the SongAudio field, any type of audio can be stored (mp3, wav, etc).</p>
+
+<h3><a id="2.+Inserting+an+audio+into+the+DB+from+an+existing+URL" class="HashLink" href="#2.+Inserting+an+audio+into+the+DB+from+an+existing+URL">2. Inserting an audio into the DB from an existing URL</a></h3>
+
+<p>Suppose you have an audio file in your file system or in a web URL and you want to store it in your database. Your audio file is file:///c:/myfolder/song.mp3 (the URL must be accessible from your server if it is a local URL).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Song.SongId = 1
+&amp;Song.SongAudio.FromURL('file:///c:/myfolder/song.mp3')
+&amp;Song.Save()</pre>
+
+<h3><a id="3.+Inserting+a+reference+into+the+DB+from+an+external+audio" class="HashLink" href="#3.+Inserting+a+reference+into+the+DB+from+an+external+audio">3. Inserting a reference into the DB from an external audio</a></h3>
+
+<p>You want to reference an external audio, for example:  http://myband/myalbum/mysong.mp3</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Song.SongId = 1
+&amp;Song.SongAudio.AudioURI = 'http://myband/myalbum/mysong.mp3'
+&amp;Song.Save()
+</pre>
+
+<p> </p>
+
+<h2><a id="FAQ" class="HashLink" href="#FAQ">FAQ</a></h2>
+
+<h3><a id="How+to+convert+from+Blob+to+Audio+in+your+DB%3F" class="HashLink" href="#How+to+convert+from+Blob+to+Audio+in+your+DB%3F">How to convert from Blob to Audio in your DB?</a></h3>
+
+<p>Most likely, you have many Blob attributes in your DB to store audio and you want to start using the new data type. The only thing you have to do is change the type from Blob to Audio in your attribute definition and GeneXus will perform a reorganization, taking into account the FileType, FileTypeAttribute and FileNameAttribute properties.</p>
+
+<h3><a id="How+to+convert+from+Blob+to+Audio+and+vice+versa+programmatically%3F" class="HashLink" href="#How+to+convert+from+Blob+to+Audio+and+vice+versa+programmatically%3F">How to convert from Blob to Audio and vice versa programmatically?</a></h3>
+
+<p>You can directly assign a Blob to an Audio and vice versa. Remember that the conversion from Blob to Audio will work depending on the kind of mime type of your Blob and the FileType, FileTypeAttribute and FileNameAttribute properties. In some cases, it may happen that the Audio is not reproduced in the user interface.</p>
+
+<h3><a id="How+to+convert+from+Char+VarChar+to+Audio+in+my+DB%3F" class="HashLink" href="#How+to+convert+from+Char+VarChar+to+Audio+in+my+DB%3F">How to convert from Char|VarChar to Audio in my DB?</a></h3>
+
+<p>In some cases, we could have a Character attribute in our DB with URL. What would happen if you wanted to start using the new Audio Data Type without losing your existing data? GeneXus supports the reorganization from Char|VarChar to Audio and vice versa.</p>
+
+<h3><a id="Upon+selecting+the+%22Record+an+Audio%22+option+of+the+Audio+data+type%2C+the+message+%22No+apps+can+perform+this+actions%22+appears.+%28Android%29" class="HashLink" href="#Upon+selecting+the+%22Record+an+Audio%22+option+of+the+Audio+data+type%2C+the+message+%22No+apps+can+perform+this+actions%22+appears.+%28Android%29">Upon selecting the &quot;Record an Audio&quot; option of the Audio data type, the message &quot;No apps can perform this actions&quot; appears. (Android)</a></h3>
+
+<p>The Audio data type has an &quot;intent&quot; to call any app with record audio capability installed on the device. The error is triggered when no apps of this type were found. In order to not depend on this third-party app, you can use the Audio EXO.</p>
+
+<p> </p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="width: 250.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td>Attributes, Variables</td>
+		</tr>
+		<tr>
+			<td><strong>Generators</strong></td>
+			<td>.NET, .NET Core, Java</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li><a href="36060.html">Supported audio formats for Smart Devices</a></li>
+	<li><a href="16498.html">Audio streaming in Smart Devices</a></li>
+	<li><a href="30041.html">Audio external object</a></li>
+</ul>
+
+<p><br />
+<br />
+<br />
+</p>
+
+<p></p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="30041.html">Audio external object</a></TD><TD><a href="16498.html">Audio streaming in Smart Devices</a></TD></TR><TR><TD><a href="34096.html">AudioRecorder external object</a></TD><TD><a href="6704.html">Blob data type</a></TD><TD><a href="40420.html">BlobFile data type</a></TD><TD><a href="20117.html">Customization of Multimedia Fields</a></TD></TR><TR><TD><a href="40654.html">Data Type Filter property</a></TD><TD><a href="7232.html">Data Type property</a></TD><TD><a href="6779.html">Data types list</a></TD><TD><a href="31120.html">External Storage for Multimedia</a></TD></TR><TR><TD><a href="9644.html">FromURL method</a></TD><TD><a href="20114.html">HowTo: Using Audio in Smart Devices</a></TD><TD><a href="45291.html">Load balancing considerations</a></TD><TD><a href="32755.html">Purpose Strings properties group</a></TD></TR><TR><TD><a href="40169.html">SpeechToText procedure</a></TD><TD><a href="36060.html">Supported audio formats for Smart Devices</a></TD><TD><a href="40170.html">TextToSpeech procedure</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/07/22 08:56 PM</em></font></td></TR></table></font>

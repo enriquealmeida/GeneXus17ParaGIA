@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using Geolocation Proximity Alerts</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25194,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using Geolocation Proximity Alerts</h1>
+<!--HowTo: Using Geolocation Proximity Alerts--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In order to create an application which alerts the user when he moves within or beyond a set distance from a geolocation, we have the following methods.</p>
+
+<h3><a id="Set+a+new+Alert" class="HashLink" href="#Set+a+new+Alert">Set a new Alert</a></h3>
+
+<p>To create a new alert, we need to create it on the device. To do this we must follow two steps:</p>
+
+<p style="margin-left: 40.0px;">1) Create an <a href="https://wiki.genexus.com/commwiki/wiki?20623,," target="_blank">action</a> (user-defined event executed on the client-side) in the <a href="17817.html">Smart Devices Main object</a>.<br />
+This event will be triggered when the alert is fired. For example:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event 'ProxAlertNotification'
+    // event code
+EndEvent
+</pre>
+
+<p style="margin-left: 40.0px;">2) Use the <span style="line-height: 1.6em;"><a href="25166.html">SetProximityAlerts method</a></span><span style="line-height: 1.6em;">, setting the following data:</span></p>
+
+<ul style="margin-left: 40.0px;">
+	<li><span style="line-height: 1.6em;">Name</span></li>
+	<li><span style="line-height: 1.6em;">Description</span></li>
+	<li><span style="line-height: 1.6em;">Geolocation</span></li>
+	<li><span style="line-height: 1.6em;">Radius</span></li>
+	<li><span style="line-height: 1.6em;">Expiration Time</span></li>
+	<li><span style="line-height: 1.6em;">Action Name</span></li>
+</ul>
+
+<p>The information must be loaded in a <a href="25185.html">GeolocationProximityAlert SDT</a> -&amp;alert- and added into a collection of the same type -&amp;alerts- for the method to can receive it.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;alert.ActionName = 'ProxAlertNotification' 
+&amp;alert.Name = 'Test' 
+&amp;alert.ExpirationTime = #2015-12-31# 
+&amp;alert.GeoLocation = '-35,-56' 
+&amp;alert.Radius = 1000 
+&amp;alerts.Add(&amp;alert) 
+
+&amp;boolean = Geolocation.SetProximityAlerts(&amp;alerts)</pre>
+
+<p>This will fire an alert which is going to execute the event 'ProxAlertNotification' when the user moves within or beyond 1000mts from the geolocation '-35,-56'.</p>
+
+<h3><a id="Get+the+information+of+the+current+alert" class="HashLink" href="#Get+the+information+of+the+current+alert">Get the information of the current alert</a></h3>
+
+<p>Execute an event when the alert is fired is optional. But if we do it, we may need to know which alert executed the event to do something with that information.<br />
+This method must be used in the event executed by the alert to <span style="line-height: 1.6em;"><a href="25189.html"></span><span style="line-height: 1.6em;">get the information of it</a>.</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;alert = &amp;Geolocation.GetCurrentProximityAlert()</pre>
+
+<h3><a id="Get+the+list+of+active+alerts+in+the+device" class="HashLink" href="#Get+the+list+of+active+alerts+in+the+device">Get the list of active alerts in the device</a></h3>
+
+<p>To get the list of active alerts in the device we should use the <span style="line-height: 1.6em;"><a href="25188.html">method GetProximityAlerts</a>.</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;alerts = Geolocation.GetProximityAlerts()</pre>
+
+<h3><a id="Clear+the+Proximity+Alerts+set+on+the+device" class="HashLink" href="#Clear+the+Proximity+Alerts+set+on+the+device">Clear the Proximity Alerts set on the device</a></h3>
+
+<p>In order to delete all the alerts set on a device we need to execute the <a href="https://wiki.genexus.com/commwiki/wiki?25190,," target="_blank">ClearProximityAlerts method</a> as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Geolocation.ClearProximityAlerts()</pre>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<ul>
+	<li>In order to use this feature on iOS devices, the developer must set the <a href="32755.html"><em>Location Always usage description</em></a>.</li>
+	<li>In order to use this feature on Android devices, the developer must enable <em>Use Proximity Alert property </em>at <a href="17817.html">Native Mobile Main object properties</a>. The purpose of this property is for indicating that the alerts must be recovered after a device reboot.</li>
+</ul>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<p>You can download the sample <a href="https://wiki.genexus.com/commwiki/wiki?36985,," target="_blank">here</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="31274.html">Geolocation external object</a><br />
+<a href="25166.html">SetProximityAlerts method</a><br />
+<a href="25189.html">GetCurrentProximityAlert method</a><br />
+<a href="25188.html">GetProximityAlerts method</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?25190,," target="_blank">ClearProximityAlerts method</a><br />
+<a href="25185.html">GeolocationProximityAlert Data Type</a></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31274.html">Geolocation external object</a></TD></TR><TR><TD><a href="25185.html">GeolocationProximityAlert Data Type</a></TD><TD><a href="25189.html">GetCurrentProximityAlert method</a></TD><TD><a href="25188.html">GetProximityAlerts method</a></TD></TR><TR><TD><a href="27084.html">Location Always Usage Description property</a></TD><TD><a href="44309.html">Maps External Object</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR><TD><a href="17817.html">Native Mobile Main object properties</a></TD><TD><a href="25166.html">SetProximityAlerts method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

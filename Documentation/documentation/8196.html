@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Load command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8196,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Load command</h1>
+<!--Load command--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Forces the loading of a new line into the <a href="24817.html">Grid control</a>.<br />
+<br />
+It can be used within the <a href="8188.html">Load event</a> or within a <a href="8044.html">User defined event</a> in <a href="6916.html">Web Panel object</a>s or <a href="24829.html">Panel object</a>s that contain only one grid. Also, in <a href="15974.html">Work With for Smart Devices object</a>s.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p class="Code">Load</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>The Load command can be used in the following scenarios:</p>
+
+<ul>
+	<li><a href="6916.html">Web Panel object</a>s without a <a href="6347.html">Base Table</a> and with <a href="6347.html">Base Table</a></li>
+	<li><a href="24829.html">Panel object</a>s without a <a href="6347.html">Base Table</a> and with <a href="6347.html">Base Table</a></li>
+	<li><a href="15974.html">Work With for Smart Devices object</a>s</li>
+</ul>
+
+<p>Below are examples of use.</p>
+
+<h3><a id="Example+1%3A+Web+Panel+without+a+base+table" class="HashLink" href="#Example+1%3A+Web+Panel+without+a+base+table">Example 1: Web Panel without a base table</a></h3>
+
+<p>Consider the following two <a href="1908.html">Transactions</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Invoice
+{
+     InvoiceId*
+     InvoiceDate
+}</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Receipt
+{
+     ReceiptId*
+     ReceiptDate
+}</pre>
+
+<p>Suppose you want to define a <a href="6916.html">Web Panel object</a> with one grid that shows all the invoices data and all the receipts data, like the following image, shows:</p>
+
+<p><img src="./images/39678.png" id="39678" class="WikiImage"/></p>
+
+<p>To solve this need, one option can be to define a Web Panel without a <a href="6347.html">Base Table</a>. It must contain a grid that only includes variables. You must make sure that there are no attributes mentioned in the Web Form, Events (except those included inside <a href="24744.html">For Each command</a>s), Conditions nor Order, so that the Web Panel has not a base table. Of course, you neither can set the grid <a href="36811.html">Base Trn property</a>.</p>
+
+<p>Suppose the variables you include in the grid are: &amp;Id, &amp;Date, and &amp;Type. Thus, the Web Panel does not have a Base Table because no attributes are present in any part where GeneXus verifies to determine a Base Table. This means that the Web Panel hasn't got automatic navigation either an automatic grid loading and you have to define the grid loading explicitly.</p>
+
+<p>For every Web Panel without a base table (or Panel without a base table), the Load Event will be triggered only once. Inside this event, you have to define explicitly the desired navigation and grid loading. The following code solves the described need:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Load
+    For each Invoice
+           &amp;Id = InvoiceId
+           &amp;Date = InvoiceDate
+           &amp;Type = &quot;INVOICE&quot;
+           Load // Load command
+    EndFor
+    For each Receipt
+           &amp;Id = ReceiptId
+           &amp;Date = ReceiptDate
+           &amp;Type = &quot;RECEIPT&quot;
+           Load // Load command
+    EndFor
+EndEvent //Load</pre>
+
+<p>Note that two consecutive For each commands were defined inside the Load Event. The first For each command scans and loads the invoices data in the grid and the second For each command scans and loads the receipts data in the grid, too. As the code shows, inside each <a href="24744.html">For Each command</a>, the variables are being assigned explicitly with the instantiated attribute values (or fixed values, calculations, etc.). Once the desired values are assigned to the variables when you want to proceed to load a line in the grid with those values, you have to include a Load command. The Load command loads effectively a line in the grid, so if you forget to include it in the correct place in the code, in spite of having assigned values to the grid variables, the lines will not be loaded.</p>
+
+<h3><a id="Example+2%3A+Web+Panel+with+a+base+table" class="HashLink" href="#Example+2%3A+Web+Panel+with+a+base+table">Example 2: Web Panel with a base table</a></h3>
+
+<p>Now consider only the Invoice <a href="1908.html">Transaction</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Invoice
+{
+     InvoiceId*
+     InvoiceDate
+     InvoiceAmount     
+}</pre>
+
+<p>If you define a Web Panel that contains one grid that includes the InvoiceId, InvoiceDate, and InvoiceAmount attributes, GeneXus determines that the Web Panel has a Base Table and it is Invoice. This means that the Web Panel has an automatic navigation (there is an implicit For each command that scans all the stored invoices) and the grid is automatically loaded with the navigated invoices data.</p>
+
+<p>That is, by just defining a Web Panel with the following form (and nothing else in any other part of the object):</p>
+
+<p><img src="./images/39704.png" id="39704" class="WikiImage"/></p>
+
+<p>you will see the following result in runtime:</p>
+
+<p><img src="./images/39706.png" id="39706" class="WikiImage"/></p>
+
+<p>For every Web Panel with a base table (or Panel with base table), the Load Event will be triggered as many times as records are scanned (three times in the previous example), just before loading each record data in a new grid line.</p>
+
+<p>Probably you do not need to define any code inside the Load event (as in the previous example), but if you need to execute, validate or perform something before loading each line, the appropriate section to define that code is inside the Load event.</p>
+
+<p>Suppose that you want to show for each line a text with the following criteria:</p>
+
+<ul>
+	<li>If the invoice amount &lt; 800, the text to be shown is &quot;Receives a gif voucher&quot;</li>
+	<li>If the invoice amount &gt;= 800, the text to be shown is &quot;Receives a discount voucher for the next invoice&quot;</li>
+</ul>
+
+<p>In order to solve the described requirement, first, include a variable named &amp;Text (based on a character data type) inside the grid. Then, as the Load Event is executed immediately prior to the addition of each line to the grid, the necessary code to evaluate the InvoiceAmount value and assign the text to the &amp;Text variable is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Load
+  If InvoiceAmount &lt; 800
+     &amp;Text = &quot;Receives a gif voucher&quot;
+  else
+     &amp;Text = &quot;Receives a discount voucher for the next invoice&quot;
+  endif
+Endevent</pre>
+
+<p>Important: Note that there isn't a Load command inside the Load Event code. You do not have to include it because as already explained the Web Panel has a Base Table (Invoice). So, the query to the Invoice physical table is automatic as well as the loading of the lines in the grid (and just before the loading of each line, the Load Event is executed; thus, the &amp;Text variable will have the corresponding text just before each line is automatically loaded and the desired text will be displayed).</p>
+
+<h4><a id="In+which+cases+is+it+necessary+to+use+the+Load+command%3F" class="HashLink" href="#In+which+cases+is+it+necessary+to+use+the+Load+command%3F">In which cases is it necessary to use the Load command?</a></h4>
+
+<p>Only if you need to evaluate before loading each line if you want to load it or not.</p>
+
+<p>For example, if for each navigated invoice you have to validate several things with a procedure and after that, depending on the procedure returned value, you have to evaluate if proceed to load the line into the grid or not, you can define the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Load
+  &amp;Ok = SeveralValidations(InvoiceId)  //&amp;Ok: Boolean variable
+  If &amp;Ok
+     Load  
+  endif       
+Endevent</pre>
+
+<p>In conclusion, before loading each line you are evaluating a condition. If it is true you are loading the line. On the other hand, the load will not be performed.</p>
+
+<h4><a id="Important" class="HashLink" href="#Important"><strong>Important</strong></a></h4>
+
+<p>The Load command is the only one allowed for this purpose for mobile applications. The <a href="8814.html">Grid Load method</a> is not available in that case.</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table>
+	<tbody>
+		<tr>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Objects</strong></td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><a href="6916.html">Web Panel object</a>, <a href="15974.html">Work With for Smart Devices object</a>, <a href="24829.html">Panel object</a></td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;"><strong>Platforms</strong></td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">Web(.NET, Java), Smart Devices(Android, iOS)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="8188.html">Load event</a><br />
+<a href="8814.html">Grid Load method</a></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8814.html">Grid Load method</a></TD><TD><a href="22555.html">Load Command and Load Method in User Events</a></TD></TR><TR><TD><a href="8188.html">Load event</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/05/20 12:39 AM</em></font></td></TR></table></font>

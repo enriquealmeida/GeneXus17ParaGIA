@@ -1,0 +1,28 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure Rules" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<Part type="<%= PartType.Rules %>">
+<%
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+	
+	string gridParameters;
+	if (gridObject.Actions.Export != null)
+		gridParameters = gridObject.Actions.Export.Parameters.Concatenate("in:", true);
+	else
+		gridParameters = gridObject.Parameters.Concatenate("in:", true);
+	
+	string exportParameters = (gridParameters != String.Empty ? gridParameters + ", " : String.Empty);
+	exportParameters += "out:&Filename, out:&ErrorMessage";
+%>
+	<Source><![CDATA[
+parm(<%= exportParameters %>);
+]]>
+	</Source>
+</Part>

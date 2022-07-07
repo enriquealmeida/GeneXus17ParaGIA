@@ -1,0 +1,21 @@
+delimiters "$", "$"
+
+call_navigate_statement(stmt) ::= <%
+$if (stmt.MustWaitForResult)$
+this.navigateForResult(['$stmt.TargetRoute$' $g_route_parameters(stmt)$], __aSt);
+$else$
+this.navigate(['$stmt.TargetRoute$' $g_route_parameters(stmt)$], __aSt);
+$endif$
+%>
+
+call_navigate_bc_statement(stmt) ::= <%
+this.navigateForResultWithExtras(['$stmt.TargetRoute$' $g_route_parameters(stmt)$], { bc: this.$stmt.BcVariable$.data}, __aSt);
+%>
+
+route_parameters(stmt)::= <%
+$if (stmt.Parameters)$
+$if (stmt.Parameters.Parameter)$
+, { $stmt.Parameters.Parameter:g_querystring_parameter();separator=","$ }
+$endif$
+$endif$
+%>

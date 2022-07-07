@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>One clause in Data Provider Group statement</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25411,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">One clause in Data Provider Group statement</h1>
+<!--One clause in Data Provider Group statement--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Enables returning only the first record from a navigation of many.</p>
+
+<h2><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h2>
+
+<p><em>&lt;One&gt;</em>::= <strong>[One]</strong></p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Suppose the SDT used as Output of the data provider is not a collection because you need only the first Customer of all possible. If the data provider is written as follows, the result was the last Customer (because the data provider will read all the table and would modify the SDT to return with each Customer).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+OneCustomer
+{
+   CustomerId
+   CustomerName
+}
+</pre>
+
+<p><strong>Data</strong></p>
+
+<table style="border: none;border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>CustomerId</strong></td>
+			<td style="vertical-align: top;"><strong>CustomerName</strong></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;">1</td>
+			<td style="vertical-align: top;">Customer one</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;">2</td>
+			<td style="vertical-align: top;">Customer two</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;">3</td>
+			<td style="vertical-align: top;">Customer three</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p>The result would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;OneCustomer&gt;
+   &lt;CustomerId&gt;3&lt;/CustomerId&gt;
+   &lt;CustomerName&gt;Customer three&lt;/CustomerName&gt;
+&lt;/OneCustomer&gt;
+</pre>
+
+<p>The generated select is as follows, which does not have good performance, because to obtain only one record it reads all the table.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT [CustomerName], [CustomerId] FROM [Customer] WITH (NOLOCK) ORDER BY [CustomerId]
+</pre>
+
+<p>In order to improve this case the clause [one] was implemented, if you now write:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+OneCustomer [one]
+{
+   CustomerId
+   CustomerName
+}</pre>
+
+<p>The result would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;OneCustomer&gt;
+   &lt;CustomerId&gt;1&lt;/CustomerId&gt;
+   &lt;CustomerName&gt;Customer one&lt;/CustomerName&gt;
+&lt;/OneCustomer&gt;
+</pre>
+
+<p>The performance is improved because the generated select in that case is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT TOP 1 [CustomerName], [CustomerId] FROM [Customer] WITH (NOLOCK) ORDER BY [CustomerId]
+</pre>
+
+<p>Note that in the data provider navigation:</p>
+
+<p><img src="./images/15173.PNG" id="15173" class="WikiImage"/></p>
+
+<p> </p>
+
+<h4><a id="" class="HashLink" href="#"><span style="line-height: 1.6em;"></span></a></h4>
+
+<p><br />
+<br />
+</p>
+
+<p><br />
+</p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25082.html">Data provider Group statement</a></TD><TD><a href="5309.html">Toc:Data Provider language</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/10/21 03:15 PM</em></font></td></TR></table></font>

@@ -1,0 +1,446 @@
+group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities, procedures, apis, sdts, formatinfo)::=<<
+$header(hostinfo, entities, procedures, apis, sdts, formatinfo)$
+>>
+
+header(hostinfo, entities, procedures, apis, sdts, formatinfo)::=<<
+$if(formatinfo.IsOAS3)$openapi: 3.0.0$else$swagger: '2.0'$endif$
+info:
+  title: "$hostinfo.Title$"
+  version: "$hostinfo.Version$"
+$if(formatinfo.IsOAS3)$
+servers:
+  - url: $hostinfo.Scheme$://$hostinfo.Host$/$hostinfo.BasePath$/$hostinfo.SubPath$
+$else$
+host: $hostinfo.Host$
+schemes:
+  - $hostinfo.Scheme$
+basePath: /$hostinfo.BasePath$/$hostinfo.SubPath$
+produces:
+  - application/json
+$endif$
+paths:
+  $entities:{item| $path(item,formatinfo)$};separator=""$
+  $procedures:{item| $procedure_path(item, formatinfo)$};separator=""$
+  $apis:{item| $api_path(item, formatinfo)$};separator=""$
+$if(formatinfo.IsOAS3)$
+components:
+  schemas:
+    $entities:{item| $definition(item, formatinfo)$}$
+    $procedures:{item| $proc_output_definition(item,formatinfo)$}$
+    $procedures:{item| $proc_input_definition(item,formatinfo)$}$
+    $apis:{item| $api_inout_definition(item, formatinfo)$}$  
+    $sdts:{item| $definition(item, formatinfo)$}$
+$else$
+definitions:
+  $entities:{item| $definition(item, formatinfo)$}$
+  $procedures:{item| $proc_output_definition(item,formatinfo)$}$
+  $procedures:{item| $proc_input_definition(item,formatinfo)$}$
+  $apis:{item| $api_inout_definition(item, formatinfo)$}$  
+  $sdts:{item| $definition(item, formatinfo)$}$
+$endif$
+$root_custom_vendor_extensions(formatinfo)$
+>>
+
+api_inout_definition(api, formatinfo)::=<<
+$api.EntryPointMethods:{mth|$api_output_definition(mth,formatinfo)$};separator="\n"$
+$api.EntryPointMethods:{mth|$api_input_definition(mth,formatinfo)$};separator="\n"$
+>>
+
+api_path(api, formatinfo)::=<<
+$gxupload(api)$
+$api.EntryPointMethods:{mth|$api_method_test(api, mth, formatinfo)$};separator="\n"$
+>>
+
+api_method_test(api, mth, formatinfo)::=<<
+$if(mth.ymlSkipPath)$$else$$if(mth.ymlPath)$/$mth.ymlId$:$endif$$endif$
+  $if(mth.isGet)$get:$api_method(api, mth, formatinfo)$$endif$
+  $if(mth.isPost)$post:$api_method(api, mth, formatinfo)$$endif$
+  $if(mth.isPut)$put:$api_method(api, mth, formatinfo)$$endif$
+  $if(mth.isDelete)$delete:$api_method(api, mth, formatinfo)$$endif$
+>>
+
+api_method(api, mth,formatinfo)::=<<
+  $tags(api)$  
+  operationId: "$if (api.IsSvc)$$else$$api.FullName$.$endif$$mth.FullName$"
+  summary: "$mth.Description$"
+  $api_get_parameter(mth, formatinfo)$  
+  $procedure_responses(mth, formatinfo)$
+>>
+
+api_get_parameter(mth, formatinfo)::=<%
+$if(mth.isGet)$
+$dataprovider_parameters(mth,formatinfo)$
+$else$
+$if(formatinfo.IsOAS3)$
+$procedure_parameters_v3(mth)$
+$else$
+$procedure_parameters_v2(mth, formatinfo)$
+$endif$
+$endif$
+%>
+
+procedure_path(procedure, formatinfo)::=<<
+$gxupload(procedure)$
+/$procedure.UriName$:
+  $procedure_post(procedure,formatinfo)$
+    $procedure_responses(procedure, formatinfo)$
+>>
+
+procedure_post(procedure, formatinfo)::=<<
+$if (procedure.IsDP)$
+get:
+  $tags(procedure)$
+  operationId: "$procedure.FullName$"
+  summary: "$procedure.Description$"
+  $dataprovider_parameters(procedure,formatinfo)$
+$else$
+post:
+  $tags(procedure)$
+  operationId: "$procedure.FullName$"
+  summary: "$procedure.Description$"
+  $if(formatinfo.IsOAS3)$$procedure_parameters_v3(procedure)$$else$$procedure_parameters_v2(procedure, formatinfo)$$endif$
+$endif$
+>>
+
+procedure_parameters_v2(procedure, formatinfo)::=<<
+$if(procedure.InParameters)$
+parameters:
+$a_path_parameters(procedure, formatinfo)$
+  - name: "$procedure.Name$Input"
+    in: "body"
+    required: false
+    $ContentType(false,procedure.FullName,"Input")$
+$endif$
+>>
+
+procedure_parameters_v3(procedure)::=<<
+$if(procedure.InParameters)$
+requestBody:
+  required: false
+  $ContentType(true,procedure.FullName,"Input")$
+$endif$
+>>
+
+a_path_parameters(procedure, formatinfo)::=<<$procedure.InParameters:{item| $a_path_parameter(item, formatinfo)$};separator="\n"$>>
+
+a_path_parameter(item, formatinfo)::=<<$if (item.IsPathParameter)$$parameter(true, item, formatinfo)$$endif$>>
+
+dataprovider_parameters(procedure,formatinfo)::=<<
+$if(procedure.InParameters)$
+parameters:
+$procedure.InParameters:{item| $dataprovider_query_parameter(item,formatinfo)$};separator="\n"$
+$endif$
+>>
+
+path(entity, formatinfo)::=<<
+$gxupload(entity)$
+$if(entity.SDT.DefaultKeyAttribute)$
+/$entity.UriName$/{$entity.SDT.DefaultKeyAttribute.Name$}:
+  $get_default(entity,formatinfo)$
+    $bc_responses(entity,formatinfo)$
+$endif$
+/$entity.UriName$/$entity.SDT.KeyAttributes:{item| {$item.Name$\}};separator=","$:
+  $get(entity,formatinfo)$
+    $bc_responses(entity,formatinfo)$
+  $post(entity,formatinfo)$
+    $bc_responses_insert(entity,formatinfo)$
+  $put(entity,formatinfo)$
+    $bc_responses_update(entity,formatinfo)$
+  $delete(entity,formatinfo)$
+    $bc_responses_delete(entity,formatinfo)$
+>>
+
+gxupload(entity)::=<<
+$if(entity.HasUploadEntryPoint)$
+/$entity.UriName$/gxobject:
+  $post_gxupload(entity)$
+$endif$
+>>
+
+post_gxupload(entity)::=<<
+post:
+  $tags(entity)$
+  operationId: "$operationid("Upload", entity)$"
+  summary: "$description("Upload a binary for", entity)$"
+  responses:
+    200:
+      description: "Successful operation"
+    400:
+      description: "Bad request"
+    500:
+      description: "Internal Server Error"
+>>
+
+get_default(entity,formatinfo)::=<<
+get:
+  $tags(entity)$
+  operationId: "$operationid("GetDefault", entity)$"
+  summary: "$description("Gets defaults for", entity)$"
+  $parameters_default(entity,formatinfo)$
+>>
+get(entity,formatinfo)::=<<
+get:
+  $tags(entity)$
+  operationId: "$operationid("Get", entity)$"
+  summary: "$description("Gets", entity)$"
+  $parameters(entity,formatinfo)$
+>>
+post(entity,formatinfo)::=<<
+post:
+  $tags(entity)$
+  operationId: "$operationid("Insert", entity)$"
+  summary: "$description("Inserts", entity)$"
+  $parameters(entity,formatinfo)$
+  $if(formatinfo.IsOAS3)$
+  $body_parameters_insert_v3(entity)$$else$
+  $body_parameters_insert_v2(entity)$$endif$
+>>
+delete(entity,formatinfo)::=<<
+delete:
+  $tags(entity)$
+  operationId: "$operationid("Delete", entity)$"
+  summary: "$description("Deletes", entity)$"
+  $parameters(entity,formatinfo)$
+>>
+put(entity,formatinfo)::=<<
+put:
+  $tags(entity)$
+  operationId: "$operationid("Update", entity)$"
+  summary: "$description("Updates", entity)$"
+  $parameters(entity,formatinfo)$
+  $if(formatinfo.IsOAS3)$$body_parameters_update_v3(entity)$$else$$body_parameters_update_v2(entity)$$endif$
+>>
+
+bc_responses_insert(entity,formatinfo)::=<<
+$bc_responses(entity,formatinfo)$
+  201:
+    description: "Created"
+    $ContentType(formatinfo.IsOAS3,entity.FullName,"")$
+>>
+
+bc_responses_delete(entity,formatinfo)::=<<
+$bc_responses(entity,formatinfo)$
+  204:
+    description: "Successful operation"
+    $ContentType(formatinfo.IsOAS3,entity.FullName,"")$
+>>
+
+bc_responses_update(entity,formatinfo)::=<<
+$bc_responses(entity,formatinfo)$
+  409:
+    description: "$entity.FullName$ was changed"
+>>
+
+bc_responses(entity,formatinfo)::=<<
+responses:
+  200:
+    description: "Successful operation"
+    $ContentType(formatinfo.IsOAS3,entity.FullName,"")$
+  404:
+    description: "Data with the specified key could not be found"
+    $ContentType(formatinfo.IsOAS3,"GxJsonError","")$
+  400:
+    description: "Bad request"
+    $ContentType(formatinfo.IsOAS3,"GxJsonError","")$
+  500:
+    description: "Internal server error"
+    $ContentType(formatinfo.IsOAS3,"GxJsonError","")$
+>>
+
+ContentType(isV3,elem,extra)::=<%
+$if(isV3)$
+$content_type_json(elem, extra)$
+$else$
+$content_type_ref(elem, extra)$
+$endif$
+%>
+
+content_type_ref(elem, extra)::=<<
+schema:
+  \$ref: "#/definitions/$elem$$extra$">>
+
+content_type_json(elem, extra)::=<<
+content:
+  application/json:
+    schema:
+      \$ref: "#/components/schemas/$elem$$extra$">>
+
+procedure_responses(procedure, formatinfo)::=<<
+responses:
+  200:
+    description: "Successful operation"
+    $procedure_reponse_outparameters(procedure, formatinfo)$
+  404:
+    description: "Not found"
+>>
+
+procedure_reponse_outparameters(procedure, formatinfo)::=<%
+$if(procedure.IsDP)$
+    $procedure.OutParameters:{item| $dataprovider_out_parameter(item, formatinfo)$}$
+$else$
+    $if(procedure.OutParameters)$
+    $ContentType(formatinfo.IsOAS3,procedure.FullName,"Output")$
+	$endif$
+$endif$
+%>
+
+parameters(entity,formatinfo)::=<<
+$if(entity.SDT.KeyAttributes)$
+parameters:
+$entity.SDT.KeyAttributes:{item| $parameter(false, item,formatinfo)$};separator="\n"$$endif$
+>>
+
+parameters_default(entity,formatinfo)::=<<
+parameters:
+$parameter(false, entity.SDT.DefaultKeyAttribute,formatinfo)$
+>>
+
+body_parameters_insert_v2(entity)::=<<
+  - name: "$entity.Name$"
+    in: "body"
+    description: "SDT of $entity.UriName$"
+    required: false
+    $ContentType(false,entity.FullName,"")$
+ >>
+
+body_parameters_insert_v3(entity)::=<<
+requestBody:
+  description: "SDT of $entity.UriName$"
+  required: false
+  $ContentType(true,entity.FullName,"")$
+>>
+
+body_parameters_update_v2(entity)::=<<
+  - name: "$entity.Name$"
+    in: "body"
+    description: "SDT of $entity.Name$"
+    required: true
+    $ContentType(false,entity.FullName,"")$
+ >>
+body_parameters_update_v3(entity)::=<<
+requestBody:
+  description: "SDT of $entity.Name$"
+  required: true
+  $ContentType(true,entity.FullName,"")$
+>>
+ 
+parameter(apipath, parameter,formatinfo)::=<<
+  - name: $if(apipath)$"$parameter.PathName$"$else$"$parameter.Name$"$endif$
+    in: "path"
+$if(parameter.Description)$
+    description: "$parameter.Description$"
+	$endif$
+    required: true
+    $if(formatinfo.IsOAS3)$schema:$endif$
+$if(formatinfo.IsOAS3)$      $else$    $endif$type: "$parameter.SwaggerType$"
+$if(formatinfo.IsOAS3)$      $else$    $endif$$if(parameter.SwaggerFormat)$format: "$parameter.SwaggerFormat$"$endif$
+>>
+
+dataprovider_out_parameter(parameter, formatinfo)::=<<
+$if(formatinfo.IsOAS3)$
+content:
+  application/json:
+    schema:
+    $dataprovider_out_parameter_inner(parameter, formatinfo)$
+$else$
+schema:
+$dataprovider_out_parameter_inner(parameter, formatinfo)$$endif$
+>>
+
+dataprovider_out_parameter_inner(parameter, formatinfo)::=<%
+$if(parameter.SDTType)$
+$service_out_parameter(parameter, formatinfo)$
+$else$
+$service_out_basic_parameter(parameter, formatinfo)$
+$endif$
+%>
+
+service_out_basic_parameter(parameter, formatinfo)::=<<
+  type: "$parameter.SwaggerType$"
+$if(parameter.SwaggerFormat)  $format: "$parameter.SwaggerFormat$"$endif$
+>>
+ 
+service_out_parameter(parameter, formatinfo)::=<%
+$if(parameter.IsCollection)$
+$service_out_array(parameter, formatinfo)$  
+$else$
+$service_out_ref(parameter, formatinfo)$  
+$endif$
+%>
+
+service_out_ref(parameter, formatinfo)::=<<
+  \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$"
+>>
+
+service_out_array(parameter, formatinfo)::=<<
+  type: array
+  items:
+    $service_out_parameter_items(parameter,formatinfo)$
+>>
+
+service_out_parameter_items(parameter,formatinfo)::=<%
+   $if(parameter.CollectionItemName)$
+	$if (formatinfo.AlphaNumericEntityNames)$
+    \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$$parameter.CollectionItemName$"
+	$else$
+    \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$_$parameter.CollectionItemName$"
+	$endif$
+  $else$
+    \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$"
+  $endif$
+%>
+
+dataprovider_query_parameter(parameter,formatinfo)::=<<
+  - name: "$if(parameter.IsPathParameter)$$parameter.PathName$$else$$parameter.UrlName$$endif$"
+    in: $if(parameter.IsPathParameter)$"path"$else$"query"$endif$
+$if(parameter.Description)$
+    description: "$parameter.Description$"
+$endif$
+    required: $if(parameter.IsPathParameter)$true$else$false$endif$
+    $if(formatinfo.IsOAS3)$schema:$endif$
+$if(formatinfo.IsOAS3)$      $else$    $endif$type: "$parameter.SwaggerType$"
+$if(formatinfo.IsOAS3)$      $else$    $endif$$if(parameter.SwaggerFormat)$format: "$parameter.SwaggerFormat$"$endif$
+>>
+
+description(method, entity)::=<<
+	$method$ $entity.ObjectArticlePrefix$ $entity.Name$
+>>
+
+operationid(method, entity)::=<<
+	$method$$entity.FullName$
+>>
+
+tags(entityOrProcedure)::=<<
+$if(entityOrProcedure.IsBC && entityOrProcedure.Module)$
+tags:
+  - $entityOrProcedure.Name$
+  - $entityOrProcedure.Module$$elseif(entityOrProcedure.IsBC)$
+tags:
+  - $entityOrProcedure.Name$$elseif(entityOrProcedure.Module)$
+tags:
+  - $entityOrProcedure.Module$$else$
+tags:
+  - $entityOrProcedure.Name$$endif$>>
+
+root_custom_vendor_extensions(formatinfo)::=<<
+$if(formatinfo.IsApiGateway)$
+x-amazon-apigateway-minimum-compression-size: 10000
+x-amazon-apigateway-binary-media-types:
+- "image/png"
+- "image/jpeg"
+- "image/jpg"
+- "image/gif"
+- "image/webp"
+- "image/svg+xml"
+- "audio/wav"
+- "audio/webm"
+- "audio/mp3"
+- "audio/ogg"
+- "video/ogg"
+- "video/mp4"
+$endif$
+>>

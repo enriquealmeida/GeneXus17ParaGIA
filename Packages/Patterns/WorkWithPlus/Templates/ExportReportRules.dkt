@@ -1,0 +1,57 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure Rules" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="ReportTemplate" Type="Artech.Genexus.Common.Objects.Procedure" %>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+	
+	bool sendGridStateToProcsBySession = wwInstance.Settings.Grid.IsSendGridStateToProceduresBySession();
+	string gridParameters = String.Empty;
+	IStandardActionElement actionElement = (IStandardActionElement)gridObject.GetStandardAction(StandardAction.ExportReport);
+
+	HierarchySettingsElement hierarchySettings = (gridObject is SelectionElement ? ((SelectionElement)gridObject).HierarchySettings : null);
+
+	if (actionElement != null)
+		gridParameters = actionElement.GetParameters().Concatenate("in:", true);
+	
+	if (!sendGridStateToProcsBySession)
+	{
+		if (actionElement == null)
+			gridParameters = gridObject.GetParameters().Concatenate("in:", true);
+	
+		DynamicFilterAttributesElement dynamicFilters = gridObject.Table.GetDynamicFilters();
+		if (dynamicFilters != null && dynamicFilters.Items.Count > 0)
+		{
+			if (!string.IsNullOrEmpty(gridParameters))
+			{
+				gridParameters += ", ";
+			}
+			gridParameters += "in:&GridStateXML";
+		}
+	}
+	if (hierarchySettings != null)
+	{
+		if (!string.IsNullOrEmpty(gridParameters))
+		{
+			gridParameters += ", ";
+		}
+		gridParameters += "in:&" + hierarchySettings.PkAttributeName + "CollectionJson";
+	}
+	
+	if (!String.IsNullOrEmpty(gridParameters) || !sendGridStateToProcsBySession)
+	{
+%>
+parm(<%= gridParameters %>);
+
+<%
+	}
+%>
+Output_file("<%= Object.Name %>","PDF");

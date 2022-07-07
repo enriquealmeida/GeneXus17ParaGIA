@@ -1,0 +1,74 @@
+﻿group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities, dps, apis, sdts, gx)::=<<
+$header(hostinfo, entities, dps, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities, sdps, apis,  sdts, gx)::=<<
+
+using System;
+using System.Linq;
+using System.Web.Http;
+using System.Net.Http;
+using System.Net.Http.Formatting;
+using $hostinfo.netnamespace$.Models;
+using System.Web.OData.Builder;
+using System.Web.OData.Extensions;
+using System.Web.OData.Formatter;
+
+namespace $hostinfo.netnamespace$
+{
+    public static class WebApiConfig
+    {
+        public static void Register(HttpConfiguration config)
+        {
+            // Web API configuration 
+
+            config.MapHttpAttributeRoutes();
+            config.Routes.MapHttpRoute(
+				name: "DefaultApi",
+                routeTemplate: "api/{controller}/{id}",
+                defaults: new { id = RouteParameter.Optional }
+            );
+
+            ODataModelBuilder builder = new ODataConventionModelBuilder();
+			
+			$entities:{item | $register_entities(item, gx)$};separator="\n"$
+			$dps:{item | $register_functions(item, gx)$};separator="\n"$
+            
+            config.MapODataServiceRoute(
+                routeName: "ODataRoute",
+                routePrefix: "odata",
+                model: builder.GetEdmModel());
+            config.Select().Expand().Filter().OrderBy().MaxTop(null).Count();
+            
+            var odataFormatters = ODataMediaTypeFormatters.Create();            
+		    config.Formatters.InsertRange(0, odataFormatters);
+
+			
+			//config.Formatters.Clear();
+			//config.Formatters.AddRange(odataFormatters);
+        }
+    }
+}
+>>
+
+register_entities(item, gx)::=<<
+builder.EntitySet<$item.Name$>("$item.Name$");
+>>
+
+register_functions(fun, gx)::=<<
+FunctionConfiguration fc$fun.Name$ = builder.Function("$fun.Name$");
+$declare_return(fun, fun.OutParameters)$
+$declare_pars(fun, fun.InParameters)$
+>>
+
+declare_return(fun, params)::=<<
+$params:{item|fc$fun.Name$.Returns$if (item.IsCollection)$Collection$endif$<$item.SDTType$>();};separator="\n"$
+>>
+
+declare_pars(fun, params)::=<<
+$params:{item|fc$fun.Name$.Parameter<$item.NETType$>("$item.Name$");}$;
+>>

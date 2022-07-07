@@ -1,0 +1,176 @@
+delimiters "$", "$"
+
+typeConversionTemplate ::= [
+  "string_number" : "convert_string_to_numeric",
+  "string_boolean" : "convert_string_to_boolean",
+  "number_string" : "convert_numeric_to_string",
+  "number_boolean" : "convert_numeric_to_boolean",
+  "boolean_number" : "convert_boolean_to_number",
+  "Date_string" : "convert_date_to_string",
+  "string_Date" : "convert_string_to_date",
+  "GUID_string" : "convert_guid_to_string",
+  "string_GUID" : "convert_string_to_guid",
+  "Geography_string" : "convert_geography_to_string",
+  "string_Geography" : "convert_string_to_geography",
+  "string_GxBinary" : "convert_string_to_binary",
+  "GxBinary_string" : "convert_binary_to_string",
+  "string_GxImage" : "convert_string_to_image",
+  "GxImage_string" : "convert_image_to_string",
+  default: "default_conversion"
+]
+
+typeDecoratorTemplate ::= [
+  "number" : "number_type_decorator",
+  "GUID" : "guid_type_decorator",
+  "GxBinary" : "binary_type_decorator",
+  "GxImage" : "image_type_decorator",
+  "Geography": "geography_type_decorator",
+  "Date" : "date_type_decorator",
+   default : "default_type_decorator" 
+]
+
+toSerializableTypeTemplate ::= [
+  "GUID" : "convert_guid_to_string",
+  "GxBinary" : "serialize_binary_to_string",
+  "GxImage" : "serialize_image_to_string",
+  "Geography": "convert_geography_to_string",
+   default : "convert_class_to_object" 
+]
+
+g_convert_to( fromGeneratorType, toGeneratorType, exp) ::=<%
+$({$typeConversionTemplate.({$fromGeneratorType:g_type_name()$_$toGeneratorType:g_type_name()$})$})(exp)$
+%>
+
+convert_string_to_numeric(exp) ::= <%
++$exp$
+%>
+
+convert_string_to_boolean(exp) ::= <%
+($exp$ == 'true')
+%>
+
+convert_numeric_to_string(exp) ::= <%
+'' + $exp$
+%>
+
+convert_number_to_boolean(exp) ::= <%
+($exp$ !== 0)
+%>
+
+convert_boolean_to_number(exp) ::= <%
++ $exp$
+%>
+
+convert_date_to_string(exp) ::= <%
+this.dateToISOString($exp$)
+%>
+
+convert_string_to_date(exp) ::= <%
+this.dateFromISOString($exp$)
+%>
+
+convert_string_to_guid(exp) ::= <%
+GUID.fromString($exp$ || '')
+%>
+
+convert_guid_to_string(exp) ::= <%
+$exp$.toString()
+%>
+
+convert_string_to_geography(exp) ::= <%
+Geography.fromString($exp$ || '')
+%>
+
+convert_geography_to_string(exp) ::= <%
+$exp$.toString()
+%>
+
+convert_string_to_image(exp) ::= <%
+GxImage.createImage("", $exp$)
+%>
+
+convert_image_to_string(exp) ::= <%
+this.app.imageToURL($exp$)
+%>
+
+serialize_image_to_string(exp) ::= <%
+this.app.serializeImage($exp$)
+%>
+
+convert_string_to_binary(exp) ::= <%
+GxBinary.createBinary($exp$)
+%>
+
+convert_binary_to_string(exp) ::= <%
+this.app.binaryToURL($exp$)
+%>
+
+serialize_binary_to_string(exp) ::= <%
+this.app.serializeBinary($exp$)
+%>
+
+default_conversion(exp) ::= <%
+$exp$
+%>
+
+g_declare_item_decorator_att(item) ::=<%
+    $g_type_decorator(item)$
+%>
+
+g_declare_item_decorator_var(item) ::=<%
+$if(item.isCollection)$
+$if(item.ItemGeneratorType)$
+    $collection_type_decorator(item)$ 
+$endif$
+$else$
+    $g_type_decorator(item)$
+$endif$
+%>
+
+collection_type_decorator(item) ::= <%
+  @Type(() => $g_type_name(item.ItemGeneratorType)$) 
+%>
+
+g_type_decorator(item) ::= <%
+$({$typeDecoratorTemplate.({$item.GeneratorType:g_type_name()$})$})(item)$
+%>
+
+number_type_decorator(item) ::= <%
+  @Type(() => Number) 
+%>
+
+guid_type_decorator(item) ::= <%
+  @Transform(value => value.toString(), { toPlainOnly: true }) 
+  @Transform(value => GUID.fromString(value), { toClassOnly: true }) 
+%>
+
+binary_type_decorator(item) ::= <%
+  @Transform(value => value.toString(), { toPlainOnly: true }) 
+  @Transform(value => GxBinary.createBinary(value), { toClassOnly: true }) 
+%>
+
+image_type_decorator(item) ::= <%
+  @Transform(value => value.toString(), { toPlainOnly: true }) 
+  @Transform(value => GxImage.createFromURL(value), { toClassOnly: true }) 
+%>
+
+geography_type_decorator(item) ::= <%
+  @Transform(value => value.toString(), { toPlainOnly: true }) 
+  @Transform(value => Geography.fromString(value), { toClassOnly: true }) 
+%>
+
+date_type_decorator(item) ::= <%
+  @Transform(value => TypeConversions.SerializeDatetimeToISOString(value), { toPlainOnly: true }) 
+  @Transform(value => TypeConversions.datetimeFromISOString(value), { toClassOnly: true })
+%>
+
+default_type_decorator(item) ::= <%
+%>
+
+g_convert_to_serializable_type( type, exp) ::= <%
+$({$toSerializableTypeTemplate.({$type:g_type_name()$})$})(exp)$
+%>
+
+convert_class_to_object( exp ) ::= <%
+TypeConversions.classToObject( $exp$ )
+%>

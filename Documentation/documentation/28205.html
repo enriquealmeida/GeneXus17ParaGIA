@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Updating entities using REST Protocol</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?28205,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Updating entities using REST Protocol</h1>
+<!--Updating entities using REST Protocol--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The aim is to expose a resource to be modified; for example to display the &quot;Purchase Order&quot; <a href="5846.html">Business Component</a> (henceforth the Orders entity) to insert and update data.</p>
+
+<p>The Orders entity encapsulates its business logic, which will be executed when accessing it as a REST service.</p>
+
+<p>This means that when the service is running, it will trigger the transaction business rules (formulas, business rules - without interface) and so on. </p>
+
+<p style="line-height: 20.8px;"><img src="./images/14541.png" id="14541" class="WikiImage"/></p>
+
+<p style="line-height: 20.8px;"><img src="./images/14542.png" id="14542" class="WikiImage"/></p>
+
+<p style="line-height: 20.8px;">The steps to create a REST service on top of the &quot;Orders&quot; transaction is the following.<br />
+Edit the Orders transaction and set the following properties:</p>
+
+<ul>
+	<li style="line-height: 20.8px;">Business Component = TRUE</li>
+	<li style="line-height: 20.8px;">Expose as Web Service = TRUE</li>
+	<li style="line-height: 20.8px;">Web Service Protocol = Rest Protocol</li>
+</ul>
+
+<h2 style="line-height: 20.8px;"><a id="How+to+consume+the+Rest+Service" class="HashLink" href="#How+to+consume+the+Rest+Service">How to consume the Rest Service</a></h2 style="line-height: 20.8px;">
+
+<p style="line-height: 20.8px;">To use the &quot;Orders&quot; Transaction as a REST service to insert data, you must invoke it using the HTTP POST method. To modify data, you must use HTTP PUT verb.</p>
+
+<p style="line-height: 20.8px;">In both cases, the body of the message should contain the same Business Component structure as it is returned when the GET method is executed.<br />
+<br />
+To delete an order use the HTTP DELETE verb.</p>
+
+<h3 style="line-height: 20.8px;"><a id="To+use+the+service+from+GeneXus+to+insert+purchase+orders%3A" class="HashLink" href="#To+use+the+service+from+GeneXus+to+insert+purchase+orders%3A">To use the service from GeneXus to insert purchase orders:</a></h3 style="line-height: 20.8px;">
+
+<ul>
+	<li style="line-height: 20.8px;">Define a variable based on the Orders transaction. </li>
+</ul>
+
+<p style="line-height: 20.8px;">OrderSDT is an SDT with the same structure as the Orders transaction.</p>
+
+<p style="line-height: 20.8px;"><img src="./images/14543.png" id="14543" class="WikiImage"/></p>
+
+<ul>
+	<li style="line-height: 20.8px;">The code to use looks as follows.</li>
+</ul>
+
+<p style="line-height: 20.8px;">Note that &amp;httpclient is a variable based on <a href="6932.html">HttpClient data type</a>. &amp;OrderSDT variable is used to load the information data that will be posted to the Rest service.</p>
+
+<p style="line-height: 20.8px;">Note also that in the case of a POST, the PK needs to be specified as a parameter in the query string.</p>
+
+<p style="line-height: 20.8px;">Use JSON format instead of XML format.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Host = &amp;server.Trim()
+&amp;httpclient.Port = &amp;port
+&amp;httpclient.BaseUrl = &amp;urlbase.Trim() //see HttpClient data type BASE URL property
+
+&amp;OrderSDT.CustomerId= &amp;CustomerId
+&amp;OrderSDT.OrderDate= today()
+&amp;OrderSDT.ProductId= &amp;ProductId
+&amp;OrderSDT.ProductPrice=&amp;ProductPrice
+&amp;OrderSDT.OrderProductQty = &amp;qty
+
+&amp;body=&amp;OrderSDT.ToJson()
+
+<strong>&amp;httpclient.AddHeader('content-type','application/json')</strong>
+&amp;httpclient.AddString(&amp;body)
+
+&amp;querystring='Orders' + &quot;/&quot; + &amp;OrderId.ToString()
+&amp;httpclient.Execute('POST',&amp;querystring)
+
+if &amp;httpclient.StatusCode=201
+msg(&quot;Data successfully added&quot;)
+else
+msg(&quot;There was an error sending the data..&quot;)
+endif</pre>
+
+<h3><a id="To+use+the+service+from+GeneXus+to+update+orders" class="HashLink" href="#To+use+the+service+from+GeneXus+to+update+orders">To use the service from GeneXus to update orders</a></h3>
+
+<p>You must mimic the pseudo-conversational dialog used by GeneXus when using the Transaction.</p>
+
+<p>Get the data using HTTP GET verb and keep the MD5 hash associated to the data. To update a record you need to use the HTTP PUT verb with the whole Business Component structure in the body including the Hash value. The hash value is used for concurrency control. The body of the message should contain the structure of the Business Component as it comes when it makes an HTTP GET.</p>
+
+<p><strong>Note</strong></p>
+
+<p>Use the GeneXus <a href="6932.html">HttpClient data type</a>.<br />
+Error handling is managed by querying the HTTP Status Code after the invocation.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="28214.html">Business Components as Rest web services in GeneXus</a><br />
+</p>
+   <br /> <br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

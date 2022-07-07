@@ -1,0 +1,384 @@
+<?xml version='1.0' encoding='iso-8859-1'?>
+<Content version='148254 $'>
+	<Object id='SDTLEVEL' inheritance='BASE '>
+		<Group>
+			<Name>Base properties</Name>
+			<Type>Main</Type>
+			<Children>
+				<Prop>
+					<Id>ObjName</Id>
+					<Name>Name</Name>
+					<Description>Name</Description>
+					<Alias>Name</Alias>
+					<Type>Text</Type>
+					<Metadata>
+						<Value name='AfterSetValueHandler'>Artech.Genexus.Common.Resolvers.ObjectNameAfterSetHandler, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='ShouldSerialize'>true</Value>
+						<Value name='FlagSpecificable'></Value>
+						<Value name='FlagSpecificationName'>ObjName</Value>
+						<Value name='FlagAssertSDTProperty'></Value>
+						<Value name='FlagDeklarit'></Value>
+					</Metadata>
+					<Options>
+						<Option type='Required'/>
+						<Option type="Don't serialize"/>
+					</Options>
+				</Prop>
+				<Prop>
+					<Id>ObjDesc</Id>
+					<Name>Description</Name>
+					<Description>Describe the content or purpose of the element</Description>
+					<Alias>Description</Alias>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='On Change'>
+							<Cond>onChange(ObjName)</Cond>
+							<Condition>
+								<Expression>
+									<Type>OnChange</Type>
+									<PropName>ObjName</PropName>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Metadata>
+						<Value name='customDefaultResolver'>Artech.Architecture.Common.Resolvers.ObjectDescriptionResolver, Artech.Architecture.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='ShouldSerialize'>true</Value>
+						<Value name='FlagSpecificable'></Value>
+						<Value name='FlagSpecificationName'>ObjDesc</Value>
+						<Value name='FlagAssertSDTProperty'></Value>
+						<Value name='FlagDeklarit'></Value>
+					</Metadata>
+					<Options>
+						<Option type="Don't serialize"/>
+						<Option type='Dyn Default'/>
+					</Options>
+				</Prop>
+			</Children>
+		</Group>
+		<Group>
+			<Name>SDTLEVEL</Name>
+			<Type>Main</Type>
+			<Children>
+				<Prop hidden='1'>
+					<Id>OBJ_TYPE</Id>
+					<Name>Object type</Name>
+					<Type>Combo</Type>
+					<Default>id_OTYPE_ATT</Default>
+					<Values>
+						<Value id='id_OTYPE_ATT' desc='Attribute'/>
+						<Value id='id_OTYPE_VAR' desc='Variable'/>
+						<Value id='id_OTYPE_DOM' desc='Domain'/>
+						<Value id='id_OTYPE_SDT' desc='SDTItem'/>
+					</Values>
+					<Metadata>
+						<Value name='FlagExport'>false</Value>
+					</Metadata>
+					<Options>
+						<Option type='Readonly'/>
+						<Option type='Not Show'/>
+						<Option type="Don't serialize"/>
+					</Options>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>AttCollection</Id>
+					<Name>Collection</Name>
+					<Description>Collection</Description>
+					<Type>Boolean</Type>
+					<Default>false</Default>
+					<Dependencies>
+						<Depend type='On Change'>
+							<Cond>onChange(AttDomain)</Cond>
+							<Condition>
+								<Expression>
+									<Type>OnChange</Type>
+									<PropName>AttDomain</PropName>
+								</Expression>
+							</Condition>
+						</Depend>
+						<Depend type='Readonly'>
+							<Cond>context(AttEditReadonly) == -1</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName source='context'>AttEditReadonly</PropName>
+									<Value>-1</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+						<Depend type='Readonly'>
+							<Cond>context(IsStandardVariable) == -1</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName source='context'>IsStandardVariable</PropName>
+									<Value>-1</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+						<Depend type='Not Show'>
+							<Cond>(value(OBJ_TYPE) == id_OTYPE_ATT) or (value(OBJ_TYPE) != id_OTYPE_SDT)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>OBJ_TYPE</PropName>
+											<Value>id_OTYPE_ATT</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>or</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>IsObject</Type>
+															<ObjectName>ATT</ObjectName>
+														</Expression>
+													</FirstPart>
+													<Operator>not</Operator>
+												</Expression>
+											</FirstPart>
+											<Operator>and</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>NotEqual</Operator>
+													<PropName>OBJ_TYPE</PropName>
+													<Value>id_OTYPE_SDT</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+						<Depend type='Invalid'>
+							<Value>-1</Value>
+							<Cond>value(OBJ_TYPE) == id_OTYPE_ATT</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>OBJ_TYPE</PropName>
+									<Value>id_OTYPE_ATT</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Metadata>
+						<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.AttCollectionDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='customValidResolver'>Artech.Genexus.Common.Resolvers.AttCollectionValidResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='customReadOnlyResolver'>Artech.Genexus.Common.Resolvers.AttCollectionReadonlyResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+					</Metadata>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>idCollectionItemName</Id>
+					<Name>Collection Item Name</Name>
+					<Description>Collection Item Name</Description>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Not Show'>
+							<Cond>value(AttCollection) == false</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>AttCollection</PropName>
+									<Value>false</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Metadata>
+						<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.SdtCollectionItemNameDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='FlagSpecificationName'>CollectionItemName</Value>
+						<Value name='FlagAssertSDTProperty'></Value>
+					</Metadata>
+				</Prop>
+				<Group>
+					<Id>SDTXmlLevelSection</Id>
+					<Name>XML Information</Name>
+					<Description>XML Information</Description>
+					<Type>Group</Type>
+					<Children>
+						<Prop>
+							<Id>idXmlName</Id>
+							<Name>XML Name</Name>
+							<Description>XML Name</Description>
+							<Type>Text</Type>
+							<Default></Default>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(idWRAPPEDCOLLECTION) == idXmlCollectionWrapped</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>idWRAPPEDCOLLECTION</PropName>
+											<Value>idXmlCollectionWrapped</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='FlagSpecificationName'>XmlName</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+							</Metadata>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>idXmlCollectionItemName</Id>
+							<Name>XML Collection Item Name</Name>
+							<Description>XML Collection Item Name</Description>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(AttCollection) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>AttCollection</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='FlagSpecificationName'>XmlCollectionItemName</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>idXmlNamespace</Id>
+							<Name>XML Namespace</Name>
+							<Description>XML Namespace</Description>
+							<Type>Text</Type>
+							<Default></Default>
+							<Metadata>
+								<Value name='FlagSpecificationName'>XmlNamespace</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+							</Metadata>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>idWRAPPEDCOLLECTION</Id>
+							<Name>Collection Serialization</Name>
+							<Description>Collection Serialization</Description>
+							<Type>Combo</Type>
+							<Default>idXmlCollectionWrapped</Default>
+							<Values>
+								<Value id='idXmlCollectionWrapped' desc='Wrapped'/>
+								<Value id='idXmlCollectionSequence' desc='Sequence'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(AttCollection) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>AttCollection</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='FlagSpecificationName'>CollectionSerialization</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>idXmlInclude</Id>
+							<Name>XML Null Serialization</Name>
+							<Description>XML Null Serialization</Description>
+							<Type>Combo</Type>
+							<Values>
+								<Value id='idXmlIncludeAlways' desc='Empty Tag'/>
+								<Value id='idXmlIncludeNotNull' desc='No Tag'/>
+								<Value id='idXmlIncludeAsNil' desc='Nil Tag'/>
+							</Values>
+							<Metadata>
+								<Value name='FlagSpecificationName'>XmlInclude</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.XmlNullSerializationDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+								<Value name='FlagBuildAction'>RebuildSdts</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>SDTJsonLevelSection</Id>
+					<Name>Json Information</Name>
+					<Description>Json Information</Description>
+					<Type>Group</Type>
+					<Children>
+						<Prop>
+							<Id>idJsonName</Id>
+							<Name>Json Name</Name>
+							<Description>Json Name</Description>
+							<Type>Text</Type>
+							<Default></Default>
+							<Metadata>
+								<Value name='FlagSpecificationName'>JsonName</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>idJsonInclude</Id>
+							<Name>Json Null Serialization</Name>
+							<Description>Select whether a null value should be serialized as empty or not at all.</Description>
+							<Type>Combo</Type>
+							<Values>
+								<Value id='idJsonEmpty' desc='Empty'/>
+								<Value id='idJsonNoProperty' desc='No Property'/>
+								<Value id='idJsonJsonNull' desc='JSON null'/>
+							</Values>
+							<Metadata>
+								<Value name='FlagSpecificationName'>JsonInclude</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.JsonNullSerializationDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+							</Metadata>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>idWRAPPEDJSONCOLLECTION</Id>
+							<Name>Json Collection Serialization</Name>
+							<Description>Specify the way collections are serialized</Description>
+							<Type>Combo</Type>
+							<Default>idXmlCollectionWrapped</Default>
+							<Values>
+								<Value id='idXmlCollectionWrapped' desc='Wrapped'/>
+								<Value id='idXmlCollectionSequence' desc='Sequence'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(AttCollection) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>AttCollection</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='FlagSpecificationName'>JsonCollectionSerialization</Value>
+								<Value name='FlagAssertSDTProperty'></Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+			</Children>
+		</Group>
+	</Object>
+</Content>

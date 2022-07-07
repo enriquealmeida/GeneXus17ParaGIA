@@ -1,0 +1,64 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Insert Success Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="wwObject" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="value" Type="System.String" %>
+<%@ Property Name="wwName" Type="System.String" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ SubTemplate Name="GoToObjectEvent" File="GoToObjectEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="GetValueAction" File="GetValueAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ClickEvent" File="ClickEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="InsertCommon" File="InsertCommon.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="FormulasValidation" File="FormulasValidation.dkt" MergeProperties="True"%>
+<%
+	string gridLevelName = string.Empty;
+	DVelop.Patterns.WorkWithPlus.Helpers.IStandardActionElement standardActionInsert = selection.Table.GetStandardActionGXTest(DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Insert);
+	string buttonInsert = "";
+	if (standardActionInsert is DVelop.Patterns.WorkWithPlus.ActionElement)
+	{
+		if (((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionInsert).IsControlTypeGeneralImage())
+			buttonInsert = DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Insert;
+		else
+			buttonInsert = ((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionInsert).ControlName();
+	}
+	else if (standardActionInsert is DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)
+	{
+		buttonInsert = ((DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)standardActionInsert).ControlName();
+	}
+%>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Name%>">
+	<!-- Insert Success Section -->
+<%@ CallSubTemplate GoToObjectEvent value='basicElements.ObjectName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+</Node>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Name%> to insert">
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='buttonInsert' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+</Node>
+<Node Object="<%=Object.Name%>" ObjectType="<%=Object.TypeDescriptor.Name%>" title="<%=Object.Description%> insert">
+<%@ CallSubTemplate InsertCommon Object='Object' model='model' Part='Part' myInstance='myInstance' gridLevelName='gridLevelName' basicElements='basicElements' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate FormulasValidation Object='Object' model='model' Part='Part' myInstance='myInstance' basicElements='basicElements' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+
+%>
+<%@ CallSubTemplate GetValueAction Object='Object' model='model' controlGXName='basicElements.DescriptionAttribute' variableName='basicElements.DescriptionAttribute' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%		
+	DVelop.Patterns.WorkWithPlus.Helpers.IStandardActionElement standardActionEnter = myInstance.Transaction.Table.GetStandardActionGXTest(DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Trn_Enter);
+	string buttonEnter = "";
+	if (standardActionEnter is DVelop.Patterns.WorkWithPlus.ActionElement)
+	{
+		if (((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionEnter).IsControlTypeGeneralImage())
+			buttonEnter = DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Trn_Enter;			
+		else
+			buttonEnter = ((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionEnter).ControlName();
+	}
+	else if (standardActionEnter is DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)
+	{
+		buttonEnter = ((DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)standardActionEnter).ControlName();
+	}
+
+%>
+<%@ CallSubTemplate ClickEvent Object='Object' model='model' ControlGXName='buttonEnter' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>

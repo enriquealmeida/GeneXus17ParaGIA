@@ -1,0 +1,36 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="WW Transaction Delete Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ SubTemplate Name="DeleteSuccess" File="DeleteSuccess.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="Header" File="Header.dkt"%>
+<%
+	string wwName = selection.ObjectName;
+	KBObject wwObject = WebFormHelper.GetWWObject(model,Object,wwName);	
+%>
+<%@ CallSubTemplate Header ItemName='"TestCase"' %>
+<GXTestCase>
+<%
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Delete))
+	{
+		bool hasUpdate = WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Update);
+%>
+<%@ CallSubTemplate DeleteSuccess Object='Object' wwObject='wwObject' model='model' HasUpdate='hasUpdate' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+	}
+	else
+	{
+%>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Description%>">
+	<DummyEvent Type="Event"/>
+</Node>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Description%>"/>
+<%
+	}
+%>
+</GXTestCase>

@@ -1,0 +1,182 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Procedure %>">
+	<Source><![CDATA[// Exports the contents of a grid (using the selected order and filters) to an Excel file.
+<%
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+
+	WorkWithSettings settings = wwInstance.Settings;
+	SettingsExportActionElement exportSettings = settings.StandardActions.Export;
+	
+	string pathRoot = String.Empty;
+	if (!String.IsNullOrEmpty(exportSettings.BaseLocation))
+		pathRoot = String.Format("!\"{0}\" + ", exportSettings.BaseLocation);
+	
+%>
+<%@ CallSubTemplate SubLoadContext Settings='settings' %>
+
+&Random = Random() * 10000
+&Filename = <%= pathRoot %>!"<%= Object.Name %>-" + &Random.ToString().Trim() + !".<%= exportSettings.FileExtension %>"
+
+<%
+	if (exportSettings.Template != String.Empty)
+	{
+%>
+&ExcelDocument.Template = '<%= exportSettings.Template %>'
+<%
+	}
+%>
+&ExcelDocument.Open(&Filename)
+Do 'CheckStatus'
+<%
+	if (exportSettings.Template == String.Empty)
+	{
+%>
+&ExcelDocument.Clear()
+<%
+	}
+	
+	string startRow = (exportSettings.StartRow != String.Empty ? exportSettings.StartRow : "1");
+	string startColumn = (exportSettings.StartColumn != String.Empty ? exportSettings.StartColumn : "1");
+	
+%>
+
+&CellRow = <%= startRow %>
+&FirstColumn = <%= startColumn %>
+
+// Write titles
+<%
+	int column = 0;
+	foreach (IAttributesItem item in gridObject.Attributes)
+	{
+		if (exportSettings.OnlyVisible && !item.Visible)
+			continue;
+%>
+&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Bold = True
+&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).Text = '<%= item.ResolvedDescription() %>'
+<%
+		column++;
+	}
+%>
+
+For each
+<%
+	if (gridObject.Parameters.Count > 0 || gridObject.Filter != null || gridObject.Orders.Count > 0)
+	{
+		if (gridObject.Orders.Count > 0)
+		{
+%>
+<%= Indentation.Indent(gridObject.Orders.ForEachOrder, 1) %>
+<%
+		}
+
+		if (gridObject.Parameters.Count > 0 || gridObject.Filter != null)
+		{
+			string parmCondition = gridObject.Parameters.WhereCondition();
+			if (parmCondition != String.Empty)
+			{
+%>
+	where <%= parmCondition %>
+<%
+			}
+			
+			if (gridObject.Filter != null)
+			{
+				foreach (ConditionElement condition in gridObject.Filter.Conditions)
+				{
+%>
+	where <%= condition.Value.TrimEnd(';') %>
+<%				
+				}
+			}
+		}
+%>
+
+<%
+	}
+	
+	foreach (VariableElement variable in gridObject.Attributes.Variables)
+	{
+		if (variable.LoadCode != String.Empty)
+		{
+%>
+	// Load variable '<%= variable.VariableName %>'
+<%= Indentation.Indent(variable.VariableLoadCode(), 1) %>
+
+<%
+		}
+	}
+%>
+	// Write cell values
+	&CellRow += 1
+<%
+	column = 0;
+	foreach (IAttributesItem item in gridObject.Attributes)
+	{
+		if (exportSettings.OnlyVisible && !item.Visible)
+			continue;
+	
+		string itemValueExpression = item.Name;
+		string cellType = "Text";
+
+		eDBType itemType = item.TypeInfo.Type;
+		if (item.IsEnum && exportSettings.EnumeratedDomains == SettingsExportActionElement.EnumeratedDomainsValue.Description)
+		{
+			cellType = "Text";
+			itemValueExpression += ".EnumerationDescription()";
+		}
+		else if (itemType == eDBType.CHARACTER || itemType == eDBType.VARCHAR || itemType == eDBType.LONGVARCHAR)
+		{
+			cellType = "Text";
+			if (itemType == eDBType.LONGVARCHAR)
+				itemValueExpression = String.Format("Substr({0}, 1, 1000)", itemValueExpression);
+		}
+		else if (itemType == eDBType.AUDIO)
+			itemValueExpression += ".AudioUri";
+		else if (itemType == eDBType.BITMAP)
+			itemValueExpression += ".ImageUri";
+		else if (itemType == eDBType.VIDEO)
+			itemValueExpression += ".VideoUri";
+		else if (itemType == eDBType.NUMERIC)
+			cellType = "Number";
+		else if (itemType == eDBType.DATE || itemType == eDBType.DATETIME)
+			cellType = "Date";
+		else
+			itemValueExpression += ".ToString()";
+%>
+	&ExcelDocument.Cells(&CellRow, &FirstColumn + <%= column %>).<%= cellType %> = <%= itemValueExpression %>
+<%
+		column++;
+	}
+%>
+Endfor
+
+&ExcelDocument.Save()
+Do 'CheckStatus'
+&ExcelDocument.Close()
+
+If &StorageProvider.GetPrivate(&Filename, &File, 1, &Messages)
+	&Filename = &File.GetURI()	
+Endif
+
+Sub 'CheckStatus'
+	If (&ExcelDocument.ErrCode <> 0)
+		&Filename = ""
+		&ErrorMessage = &ExcelDocument.ErrDescription
+		&ExcelDocument.Close()
+		Return
+	Endif
+Endsub
+]]>
+	</Source>
+</Part>

@@ -1,0 +1,25 @@
+
+delimiters "$", "$"
+
+generate()::=<<
+<?xml version="1.0" encoding="UTF-8"?>
+<endpoints xmlns="http://java.sun.com/xml/ns/jax-ws/ri/runtime" version="2.0">
+$SoapObject:{ s | $writeEndpoint(s)$};separator="\n"$
+</endpoints>
+>>
+
+writeEndpoint(s)::=<<
+	<endpoint name="$s.Description$" implementation="$JavaPackageName$.$itemName(s)$_services" url-pattern="/servlet/ws/$JavaPackageName$.$itemName(s)$_services"/>
+>>
+
+itemName(s)::=<%
+$if (s.HasStub)$
+$module(s)$a$gx.ToLower.(s.Identity)$
+$else$
+$module(s)$$gx.ToLower.(s.Identity)$_bc
+$endif$
+%>
+
+module(s)::=<<
+$if (s.Module)$$gx.ToLower.(s.Module)$$endif$
+>>

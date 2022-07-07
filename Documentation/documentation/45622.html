@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Temporal Data using Dynamic Transactions</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45622,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Temporal Data using Dynamic Transactions</h1>
+<!--Temporal Data using Dynamic Transactions--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The most common way to model a value that changes sporadically over time is to store it in the database just when the value changed. For example, to record the prices of products that change over time, it is reasonable to define a <a href="1908.html">Transaction object</a> that records, for each Product, when the Price changed and what the new Price is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ProductLog
+{
+   ProductId*
+   ProductLogDate*
+   ProductLogPrice
+   ProductLogName
+}
+</pre>
+
+<p>At the same time, the most common query is to find out, given a Product and a Date, what the Price of the Product was on that Date. The traditional way to model this scenario is to have a <a href="6293.html">Procedure object</a> that receives a Product and a Date as parameters and returns the corresponding Price:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Procedure GetProductPriceInDate
+   Rules
+      parm(in:&amp;ProductId, in:&amp;Date, out:&amp;ProductPrice);
+   Source
+      for each ProductLog order ProductId, (ProductLogPrice)
+         where ProductId      = &amp;ProductId
+         where ProductLogDate &lt;= &amp;Date
+         &amp;ProductPrice        = ProductLogPrice
+         exit
+      endfor
+</pre>
+
+<p>Although it is very simple, this solution has some drawbacks: </p>
+
+<ul>
+	<li>It properly solves the query that obtains the Price given a Product and a Date, but not the other common query: Given a Date, get the Prices of all Products on this Date.</li>
+	<li>What to do if there is no Price for the Product on this Date? (e.g. when the requested date is prior to the first date recorded for the product).
+	<ul>
+		<li>Normally for this case, you must define a special Price value (generally 0) to indicate there is no corresponding Price. This is not a good practice because, for example: how can you tell if a Product is free (Price = 0) or if it's not available?</li>
+	</ul>
+	</li>
+	<li>If, besides the Price, you need to retrieve more attributes (like the Name on a given Date) the procedure must return more than one attribute, with the drawback that it cannot be used in a Formula.</li>
+	<li>The Procedure must be called explicitly every time the Price is needed.</li>
+</ul>
+
+<p>Defining <a href="28062.html">Dynamic Transactions</a> makes it possible to have a model without these difficulties.</p>
+
+<p>Consider the same Transaction shown in the previous example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ProductLog
+Struct
+   {
+      ProductId*
+      ProductPriceDate*
+      ProductLogPrice
+      ProductLogName
+   }
+</pre>
+
+<p>And the following Dynamic Transaction:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product //Dynamic Transaction
+Struct
+  {
+     ProductId*
+     ProductQueryDate*
+     ProductPrice
+     ProductName
+  }
+Data
+   Data Provider property  = True
+   Used to property = Retrieve data
+   Data Provider
+      <strong>Parm(in:ProductQueryDate);</strong>
+      ProductPriceCollection
+        {
+            Product From ProductLog
+                <strong>where ProductLogDate = Max(ProductLogDate, ProductLogDate &lt;= ProductQueryDate)</strong>
+            {
+                ProductId
+                ProductQueryDate
+                ProductPrice = ProductLogPrice
+                ProductName = ProductLogName
+            }
+        }
+
+</pre>
+
+<p>Note that the Data Provider associated with the Dynamic Transaction retrieves the Price of the Product for any possible Date.</p>
+
+<p>Also, note that the Data Provider associated with the Dynamic Transaction has a parameter (ProductQueryDate) to indicate that this attribute must always have a value when the query is executed. Thus, the following query (given a Date, it prints the corresponding Price for each Product) is valid:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each Product
+   <strong>where ProductQueryDate = &amp;Today</strong>
+   Print ProductId, ProductPrice
+Endfor</pre>
+
+<p>But the following query (which &quot;tries&quot; to print all product prices in all possible dates) is not valid:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each Product
+   Print ProductId, ProductPrice
+Endfor</pre>
+
+<p>This is because GeneXus does not know how to obtain all possible dates (besides being an infinite number). In this case, GeneXus gives the following error at specification time:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error spc0214: Attribute(s) ProductQueryDate should be instantiated to navigate table Product in group starting at line 8.</pre>
+
+<p>The way to use the Dynamic Transaction is like any other Transaction. You just use its attributes and GeneXus solves the corresponding navigations. For example, consider the Sales Transaction that requires knowing the Price of the Product on the Sale Date:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sale     // to simplify just one Product per Sale is assumed
+Struct
+   {
+      SaleId* 
+      SaleDate
+      ProductId
+      ProductQueryDate
+      ProductPrice
+      ProductName
+   }
+Rules
+   ProductQueryDate = SaleDate;
+</pre>
+
+<p>GeneXus automatically controls temporal referential integrity. You will not be able to record a Sale if the Product does not have a Price in the SaleDate (in other words if there is no record in ProductLog).</p>
+
+<p><h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p> This feature  is available since  <a href="https://wiki.genexus.com/commwiki/wiki?45275,," target="_blank">GeneXus 16 upgrade 9</a>.</p>
+
+<p></p>
+</p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="28062.html">Toc:Dynamic Transactions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

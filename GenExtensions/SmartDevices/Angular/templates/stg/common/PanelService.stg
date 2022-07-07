@@ -1,0 +1,164 @@
+delimiters "$", "$"
+
+import "Types.stg"
+import "Expressions.stg"
+
+
+endpointServiceToTemplate ::= [
+  "call_service":  "g_action_service",
+  "upload_service":  "g_upload_service",
+  default: "g_no_action"
+]
+
+serverCallModeToTemplate ::= [
+  "dataprovider":  "g_action_service_dp",
+  default: "g_action_service_proc"
+]
+
+g_service(page, gx)::=<<
+$g_service_imports(page, gx)$
+
+
+$page.Imports:g_imports();separator="\r\n"$
+
+$g_service_class_attributes()$
+export class $page.FullName$Service extends PanelService {
+
+  $g_service_constructor(page.Data)$
+
+  // Data services
+  $page.Data:g_getDataMethod()$
+
+  // Other services
+  $page.EndpointServices:g_endpoint_services()$
+
+}
+
+// Data structures
+$page.Data:g_createDataStructure()$
+
+>>
+
+g_endpoint_services(svc) ::= <%
+    $(endpointServiceToTemplate.(svc.ServiceType))(svc)$
+%>
+
+g_action_service(svc) ::= <%
+  $(serverCallModeToTemplate.(svc.Call.CallMode))(svc.Call)$
+%>
+
+g_action_service_proc(stmt) ::=<<
+$action_service_proc(stmt)$
+
+>>
+
+g_action_service_dp(stmt) ::=<<
+async $gx.CallToObjectName.(stmt.TargetName)$($g_action_service_call_parameters(stmt.InputParameters)$) : Promise<any> {
+  $g_body_parameters(stmt.InputParameters)$
+  try {
+    const response = await EndpointConnector.getData(this.http, Settings.SERVICE_API_ENDPOINT + "$gx.CallToObjectName.(stmt.TargetRoute)$"$stmt:{dt|$g_get_input_parameters(dt,i0)$}$);
+    return response;
+  }
+  catch(error)
+  {
+    return this.handleError(error);
+  }
+}
+
+>>
+
+g_convert_from_server_spec(stmt) ::=<%
+$if (stmt.ConvertFromServer)$
+, { $stmt.ConvertFromServer:{c|'$c.Name$':{isCollection:$c.IsCollection$, type:$c.GeneratorType:g_type_name()$\}};separator=","$ }
+$endif$
+%>
+
+g_action_service_call_parameters(parameters) ::=<<
+$parameters.Parameter:{ parameter | $parameter.Name$?:any};separator=", "$
+>>
+
+g_body_parameters(parameters) ::=<<
+const body = {
+  $parameters.Parameter:g_body_parameter();separator=",\r\n"$
+};
+>>
+
+g_body_parameter( parameter) ::=<%
+$if (parameter.MustConvertToSerialize)$
+$parameter.Name$: $g_convert_to_serializable_type( parameter.GeneratorType, parameter.Name)$
+$else$
+$parameter.Name$: $parameter.Name$
+$endif$
+%>
+
+g_getDataMethod(data) ::=<<
+$if (!data.OnlyDefinition)$
+$if(data.CacheEnabled)$
+get$data.ProviderName$_Cacheable( $data:g_declare_parameters()$): Observable<$data.GeneratorType:g_type_name()$> {
+$g_get_data_content_observable_cacheable(data)$
+}
+get$data.ProviderName$( $data:g_declare_parameters()$): Observable<$data.GeneratorType:g_type_name()$> {
+$g_get_data_content_observable_non_cacheable(data)$
+}
+$else$
+async get$data.ProviderName$( $data:g_declare_parameters()$): Promise<$data.GeneratorType:g_type_name()$> {
+$g_get_data_content(data)$
+}
+$endif$
+$endif$
+
+>>
+
+g_dp_request_parameters(data, ix) ::=<%
++ "?gxid="+this.getGxid($ix$)
+$if(data.Parameters)$
+$data.Parameters.Parameter:{ p |+ "&$p.Name$="+$g_convert_to( p.GeneratorType, {VarChar}, p.Name)$}$
+
+$endif$
+%>
+
+g_get_input_parameters(data, ix) ::=<%
++ "?gxid="+this.getGxid($ix$)
+$if(data.Parameters)$
+$data.InputParameters.Parameter:{ p |+ "&$p.Name$="+$g_convert_to( p.GeneratorType, {VarChar}, p.Name)$}$
+
+$endif$
+%>
+
+g_createDataStructure(data) ::=<<
+$if (data.GenerateDataStructure)$
+export class $data:g_dataprovider_type_name()$ {
+  $data.Attribute:g_declare_item_att()$
+  $data.Variable:g_declare_item_var()$
+  $data.data:{lvl|$lvl.Level$ : GxCollectionData<$data:g_dataprovider_type_name()$_$lvl.Level$>;}$
+
+  constructor() {
+    $data.Attribute:g_init_item()$
+    $data.Variable:g_init_item()$
+  }
+}
+
+$data.data:g_createDataStructure_sublevel()$
+
+$endif$
+>>
+
+g_createDataStructure_sublevel(level) ::=<<
+export class $data:g_dataprovider_type_name()$_$level.Level$ {
+  $level.Attribute:g_declare_item()$
+}
+>>
+
+g_upload_service(svc) ::= <<
+$svc.ServiceName$ = async ( blob: File): Promise<string> => {
+  try {
+  return await EndpointConnector.uploadGXobject(this.http, '$svc.Object$', this._loginService, blob);
+  } catch (error) {
+    return this.handleError(error);
+  }
+};
+
+>>
+
+g_no_action(svc) ::= <% 
+%>

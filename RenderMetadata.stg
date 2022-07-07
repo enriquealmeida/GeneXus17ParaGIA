@@ -1,0 +1,89 @@
+group ControlRenderGenerator;
+
+delimiters "$", "$"
+
+g_metadata_render(component, gx) ::=<<
+{
+	"Name": "$component.Name$",
+	"Target": "$component.TargetLibrary$",
+	"IsControlType": $component.IncludeInControlInfo$,
+	"Template": "$gx.ToOneLine.(component.RawRender)$",
+	"Events": [
+		$component.Events:{event|"$event.Name$"};separator=",\n"$
+	],
+	"Properties": [
+		$component.Properties:{ prop | $g_property(prop, gx)$ };separator=",\n"$
+	],
+	"Methods": {
+		"Public": [
+			$component.Methods:{ method | $g_method(method, gx)$ };separator=",\n"$
+		],
+		"Private": [
+			$component.PrivateMethods:{ method | $g_method(method, gx)$ };separator=",\n"$
+		]
+	},
+	"Scripts": {
+		"AfterShow": [
+			$component.AfterShowScripts:{ script | $g_script(script, gx)$ };separator=",\n"$
+		],
+		"BeforeShow": [
+			$component.BeforeShowScripts:{ script | $g_script(script, gx)$ };separator=",\n"$
+		]
+	},
+	"Dependencies": [
+		$component.Dependencies:{ dependency | $g_dependency(dependency, gx)$ };separator=",\n"$
+	],
+	"Imports": [
+		$component.Imports:{ import | $g_import(import, gx)$ };separator=",\n"$
+	],
+	"Styles": [
+		$component.Styles:{ style | $g_style(style, gx)$ };separator=",\n"$
+	]
+}>>
+
+g_property(prop, gx) ::=<<
+{
+	"Id": "$prop.Id$",
+	"Name": "$prop.Name$",
+	"Type": "$if (prop.IsDataBinding)$$prop.Filter$$else$$prop.Type$$endif$",
+	"Default": "$prop.Default$"
+}>>
+
+g_script(script, gx) ::=<<
+{
+	"Name": "$script.Name$",
+	"Source": "$gx.ToOneLine.(script.Source)$",
+	"AngularLocation": "$script.AngularLocation$"
+}>>
+
+g_method(method, gx) ::=<<
+{
+	"Name": "$method.Name$",
+	"Source": "$gx.ToOneLine.(method.Source)$",
+	"Return": "$method.Return$",
+	"Parameters": [
+		$method.Parameters:{ parameter |  $g_parameter(parameter, gx)$ };separator=",\n"$
+	]
+}>>
+
+g_parameter(parameter, gx) ::=<<
+{
+	"Name": "$parameter.Name$",
+	"Type": "$parameter.Type$"
+}>>
+
+g_dependency(dependency, gx) ::=<<
+{
+	"Name": "$dependency.Name$",
+	"Version": "$dependency.Version$",
+	"AngularSchematics": $dependency.AngularSchematics$
+}>>
+
+g_import(import, gx) ::=<<
+{
+	"Source": "$gx.ToOneLine.(import.Source)$",
+	"AngularLocation": "$import.AngularLocation$",
+	"AngularModuleImports": "$import.AngularModuleImports$"
+}>>
+
+g_style(style, gx) ::=<<"$style$">>

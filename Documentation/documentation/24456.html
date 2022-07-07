@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Multiple Base Transactions in a For Each command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24456,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Multiple Base Transactions in a For Each command</h1>
+<!--Multiple Base Transactions in a For Each command--><div class="TableWikiBody" id="tblwikibody"><p>When you need to solve queries that imply navigation over different tables that are difficult to express using <strong>n</strong> <a href="24744.html">For Each commands</a>, as well as queries that cannot be solved in a single SQL sentence, it is possible to add more than one <a href="25418.html">Base Transaction in a For Each command</a>.</p>
+
+<div id="sintaxis">
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p style="margin-left: 40.0px;"><strong>for each</strong> <em>&lt;Trn<sub>1</sub>&gt;</em> {<strong>,</strong> <em>&lt;Trn<sub>i</sub>&gt;</em>}...</p>
+
+<p style="margin-left: 80.0px;"><em>&lt;mainCode&gt;</em></p>
+
+<p style="margin-left: 40.0px;"><strong>endfor</strong></p>
+</div>
+
+<p>where:</p>
+
+<p><em>&lt;Trni&gt;:</em> the name of a transaction or level (i.e. <em>&lt;TRNi&gt;<strong>.</strong>&lt;level_name&gt;</em>).</p>
+
+<p><em>&lt;mainCode&gt;</em>: the code to be executed for each record in the <a href='http://en.wikipedia.org/wiki/Join_(SQL)'>join</a> or <a href='http://www.sqlguides.com/sql_cross_join.php'>cartesian product</a> of the base TRN tables. If the tables (TRN1, TRN2, ..., TRNm) are directly related (or you define an explicit filter by equality between two different attributes), then a <a>join</a> is made among the tables associated with these transaction levels. Otherwise, a <a href='http://www.sqlguides.com/sql_cross_join.php'>cartesian product</a> is done, or if no relation can be found, then a specification error will occur (spc0027). <br />
+<br />
+Note: The type of join is determined depending on the nullability of the attributes of the relation. If any of them is nullable, the type of join is outer, otherwise, it's an inner join.</p>
+
+<h3><a id="Example+I." class="HashLink" href="#Example+I.">Example I.</a></h3>
+
+<p>Consider a multi-company system where we know the products sold by each Company and distributed by each Provider.</p>
+
+<p>The structures would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product
+{
+   ProductId*
+   ProductName
+}
+
+Company
+{
+   CompanyId*
+   CompanyName
+}
+
+Provider
+{
+   ProviderId*
+   ProviderName
+}
+
+ProdCompany
+{
+   CompanyId*
+   ProductId*
+}
+
+ProviderProduct
+{
+   ProviderId*
+   ProductId*
+}</pre>
+
+<p>In this scenario, suppose that you want to list all the products sold by a certain company and distributed by a certain provider. The query may not be solved using only one For Each command unless the base TRN clause in the For Each command admitted declaring more than one base transaction.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each ProdCompany, ProviderProduct
+   Where CompanyId  = 1
+   Where ProviderId = 2
+   Print ProductInfo  //printblock with ProductName attribute
+Endfor</pre>
+
+<p>E.g: If you are filtering by CompanyId = 1 and ProviderId=2, with the following data, P1 and P4 will be displayed:</p>
+
+<p><img src="./images/24665.jpg" id="24665" class="WikiImage"/></p>
+
+<p>Below you can see the navigation that corresponds to the previous code:</p>
+
+<p><img src="./images/24467.png" id="24467" class="WikiImage"/></p>
+
+<p>In this particular example, the SQL sentence (for SQL Server) is as shown below. Note that a join is made using the ProductId attribute:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT T1.[ProductId], T3.[ProviderId], T1.[CompanyId], T2.[ProductName] FROM (([ProdCompany] T1 WITH (NOLOCK) INNER JOIN [Product] T2 WITH (NOLOCK) ON T2.[ProductId] = T1.[ProductId]) INNER JOIN [ProviderProduct] T3 WITH (NOLOCK) ON T3.[ProductId] = T1.[ProductId]) WHERE (T1.[CompanyId] = 1) AND (T3.[ProviderId] = 2) ORDER BY T1.[CompanyId]</pre>
+
+<p>Note: Consider <a href="2015.html">Filters As Hint</a> as another way to solve the previous example.</p>
+
+<p>In the same scenario, now suppose that you want to list the combination of Companies and Providers which sell the same product. The code to solve this is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each ProdCompany, ProviderProduct
+   Print CompanyAndProviderNames //printblock with CompanyName, ProviderName attributes
+Endfor</pre>
+
+<p>And if you want to list the combination of Companies and Providers which sell a given product:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each ProdCompany, ProviderProduct
+   Where ProductId = &amp;ProductId
+   Print CompanyAndProviderNames //printblock with CompanyName, ProviderName attributes
+Endfor
+</pre>
+
+<h3><a id="Example+II." class="HashLink" href="#Example+II.">Example II.</a></h3>
+
+<p>Consider the following transaction structures:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Transaction1
+{
+  A*
+  B  
+  C  
+}
+
+Transaction2
+{
+  D*
+  E
+}</pre>
+
+<p>In that scenario, where there is no relationship between B and D (their names are different and they are not subtypes), if you define a For each like the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Transaction1 ,Transaction2
+  where B = D
+   print printblock1 //printblock with C and E attributes
+endfor</pre>
+
+<p>where Transaction1 and Transaction2 are declared as <strong>base transactions </strong>and an explicit filter by equality between B and D attributes is defined, then a <a>join</a> is made among the tables associated to Transaction1 and Transaction2.</p>
+
+<p>In this particular example, the SQL sentence (for SQL Server) is generated as shown below:</p>
+
+<pre>
+SELECT T2.<a href='D'>D</a>, T1.<a href='B'>B</a>, T1.<a href='C'>C</a>, T2.<a href='E'>E</a>, T1.<a href='A'>A</a> FROM <a href='Transaction1'>Transaction1</a> T1,  <a href='Transaction2'>Transaction2</a> T2 WHERE T1.<a href='B'>B</a> = T2.<a href='D'>D</a> ORDER BY T1.<a href='A'>A</a>.</pre>
+
+<p>Note that the previous examples could not be solved using a single For Each command unless you use a clause declaring multiple base TRNs.</p>
+
+<h3><br />
+Example III.</h3>
+
+<p>Listing a Cartesian product of tables is not desirable in general, but there are some circumstances where it's needed, and it's difficult to model using For Each commands in GeneXus.<br />
+By means of the base TRN clause of the For Each command, it can be done in a very intuitive manner.</p>
+
+<p>Consider the following Transactions structures:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+User
+{
+   UserId*
+   UserName
+   UserType
+}
+
+Program
+{
+   ProgramId*
+   ProgramName
+}</pre>
+
+<p>Suppose that you need to list the Cartesian product of the User and Program tables filtering by the administrator user (the administrator user has access to all the programs). Using multiple base TRN clauses in the For Each command the code would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each User, Program
+   Where UserType = 'Administrator'
+   Print UserAndProgramNames  //printblock with UserName, ProgramName attributes
+Endfor</pre>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="25418.html">Base Transaction clause</a></p>
+
+<p><br />
+<br />
+<br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25418.html">Base Transaction clause</a></TD><TD><a href="24765.html">Command to retrieve information from database</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 12/07/21 01:19 AM</em></font></td></TR></table></font>

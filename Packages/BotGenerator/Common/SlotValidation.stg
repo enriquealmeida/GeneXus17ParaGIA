@@ -1,0 +1,41 @@
+group CommonChatbots;
+delimiters "$", "$"
+
+ValidateSlots(slots)::=<<
+$if(slots)$
+//User Inputs validations:
+Do Case
+	$slots:{slot|$callSlotValidator(slot)$};separator="\r\n"$
+EndCase
+$endif$
+>>
+
+$callSlotValidator(slot)::=<<
+Case $if(slot.IsCollection)$&ContextOut.Context.$slot.SlotName$.Count > 0$else$not &ContextOut.Context.$slot.SlotName$.IsEmpty()$endif$ AND not &HasErrors AND &ContextOut.Context.GXValidatedUserInputs.IndexOf(!"$slot.SlotName$") = 0
+	$slot.ProcedureName$(&ContextOut.Context.$slot.SlotName$, $if(slot.HasContextReference)$&ContextOut, $endif$&HasErrors, &CustomMessage)
+	&ContextOut.Context.GXTryLimit = $slot.TryLimit$
+	if not &HasErrors
+		&ContextOut.Context.GXValidatedUserInputs.Add(!"$slot.SlotName$")
+		&ContextOut.Context.GXValidationAttempts = 0
+	else
+		&ContextOut.Context.GXValidationAttempts += 1
+	endif
+>>
+
+
+CleanValidationSlots(action)::=<<
+$if(action.SlotsValidation)$
+	$if(action.ActionName)$
+	$DoCleanValidationSlots(action.SlotsValidation)$
+	$else$
+$DoCleanValidationSlots(action.SlotsValidation)$
+	$endif$
+$endif$
+>>
+
+DoCleanValidationSlots(slots)::=<<
+if &ContextOut.Context.GXValidatedUserInputs.Count = $slots.Count$
+	&ContextOut.Context.GXValidatedUserInputs.Clear()
+	&ContextOut.Context.GXValidationAttempts = 0
+endif
+>>

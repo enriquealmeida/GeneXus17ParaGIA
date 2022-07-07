@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>URL Rewrite object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46523,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">URL Rewrite object</h1>
+<!--Category:URL Rewrite object--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The URL Rewrite object defines friendly URLs, intended to improve the usability and accessibility of a website. </p>
+
+<p>It lets you define URLs and the corresponding mapping to objects with their parameters.</p>
+
+<p>Defining friendly URLs lets you separate the interface from the implementation:</p>
+
+<ul>
+	<li>It helps you to make it SEO friendly</li>
+	<li>The defined URLs are independent of the object names and their modularization in the KB</li>
+	<li>The defined URLs are independent of the chosen generator, a feature that adds flexibility and reduces lock-in to a specific platform (.NET, .NET Core or Java).</li>
+</ul>
+
+<p>The object has several parts: </p>
+
+<ul>
+	<li>Rewrite Rules</li>
+	<li>Variables</li>
+	<li>Help</li>
+	<li>Documentation</li>
+</ul>
+
+<h3><a id="Rewrite+Rules" class="HashLink" href="#Rewrite+Rules">Rewrite Rules</a></h3>
+
+<p>This is the main part of a URL Rewrite Object, as it lets you define the mappings (also called rewrite rules).</p>
+
+<p>Each mapping consists of a part on the left where the URL (or part of it) is specified, and on the right side, the object and its parameters are referenced. Mappings are separated by a semicolon.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+home                                 =&gt; Home; 
+
+core/clients                        =&gt; Core.WWClient;
+core/clients/{&amp;ClientId}/{&amp;Mode}    =&gt; Core.Client(&amp;Mode,&amp;ClientId);
+core/clients/{&amp;ClientId}            =&gt; Core.ViewClient(&amp;ClientId);
+</pre>
+
+<p>The above mappings result in URLs like the following:</p>
+
+<ul>
+	<li>http://www.example.com/home</li>
+	<li>http://www.example.com/core/clients</li>
+	<li>http://www.example.com/core/clients/1/UPD</li>
+	<li>http://www.example.com/core/client/1</li>
+</ul>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<ul>
+	<li>You do not need to reference all the parameters</li>
+	<li>Creating a URL Rewrite object changes the behavior of the <a href="8444.html">Link Function</a>. Instead of returning document-relative URLs, it returns server-relative URLs when a URL Rewrite object exists. This can introduce breaking changes in your code; for example, if you concatenate the resulting string with another to create an absolute URL.</li>
+</ul>
+
+<h3><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h3>
+
+<p>To use this feature, some restrictions apply</p>
+
+<ul>
+	<li>Parameters can only be mapped on objects where the <a href="8068.html">Encrypt URL parameters property</a> is set to 'No' and if the <a href="46404.html">Parameters Style property</a> is set to 'Named'</li>
+	<li>The <a href="22449.html">Web User Experience property</a> must be set to 'Smooth' in objects affected by these rules.</li>
+</ul>
+
+<h2><a id="Samples" class="HashLink" href="#Samples">Samples</a></h2>
+
+<h4><a id="1%29+Partial+parameter+references" class="HashLink" href="#1%29+Partial+parameter+references">1) Partial parameter references</a></h4>
+
+<p>Missing parameters will be added to the query string:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+core/clients/{&amp;ClientId}    =&gt; Core.Client(&amp;Mode,&amp;ClientId);</pre>
+
+<p>This results in:</p>
+
+<ul>
+	<li>http://www.example.com/core/clients/1?Mode=UPD</li>
+</ul>
+
+<p>when the object is called as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Core.Client('UPD',1)
+</pre>
+
+<h4><a id="2%29+Object+mapping+without+parameter+mapping" class="HashLink" href="#2%29+Object+mapping+without+parameter+mapping">2) Object mapping without parameter mapping</a></h4>
+
+<p>You can write</p>
+
+<p>core/client =&gt; Core.Client;</p>
+
+<p>even if the object Core.Client has a</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;Mode,in:&amp;ClientId)</pre>
+
+<p>In this sample, when the parameter style is positional, the resulting URL would be as follows:</p>
+
+<ul>
+	<li>http://www.example.com/core/client?UPD,1</li>
+</ul>
+
+<p>when the object is called as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Core.Client('UPD',1)</pre>
+
+<h2><a id="Deployment" class="HashLink" href="#Deployment">Deployment</a></h2>
+
+<p>GeneXus automatically deploys all the rules defined in the URL Rewrite objects of the KB when deploying a <a href="38886.html">Deployment Unit object</a>. This implies that there must be no conflict among rules defined in different objects.</p>
+
+<h3><a id="Java-specific" class="HashLink" href="#Java-specific">Java-specific</a></h3>
+
+<p>When deploying to Tomcat 8 or higher, rewrite rules work automatically; however, when you deploy to another Servlet Server, you may need to make extra configurations. For that, take the rules from the urlrewrite.config file to configure the server.</p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<p><strong>Generators</strong>: .NET, .NET Core, Java</p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/19/20 01:15 PM</em></font></td></TR></table></font>

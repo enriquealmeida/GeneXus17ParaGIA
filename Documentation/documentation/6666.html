@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Full Text Search example 2</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6666,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Full Text Search example 2</h1>
+<!--Full Text Search example 2--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In this example we will introduce paging in the results of the query, and a way to show a preview of the search results highlighting the specific words in the search query.</p>
+
+<h3><a id="How+to+do+it..." class="HashLink" href="#How+to+do+it...">How to do it...</a></h3>
+
+<p>Consider a <a href="2416.html">BC</a> transaction named &quot;Customer&quot; in the <a href="1836.html">Knowledge Base</a>, which is searchable  (its <a href="9018.html">Searchable property</a> is set to TRUE).</p>
+
+<p>In addition, we have another type of information which will be searchable, as &quot;Accounting Entries&quot; are stored in the database or files.</p>
+
+<p>In order to program the &quot;search&quot; <a href="6916.html">Web Panel object</a>, define the following variables:</p>
+
+<ul>
+	<li>&amp;SearchResult is of SearchResult Datatype</li>
+	<li>&amp;SearchResultItem is of SearchResultItem DataType</li>
+	<li>&amp;Title, &amp;Type, &amp;Score, &amp;TimeStamp are character variables used to load the results of the search.</li>
+</ul>
+
+<p>The form at design time is as follows:</p>
+
+<p><img src="./images/6669.jpg" id="6669" class="WikiImage"/></p>
+
+<p>This is the code that implements the search:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub 'Paging' 
+    &amp;SearchResult =  TextSearch.Find(&amp;searchpattern,&amp;items,&amp;pageNumber)            
+    for &amp;SearchResultItem  in &amp;SearchResult.Items()
+        &amp;title = &amp;searchResultItem.Title
+        &amp;title.Link = &amp;searchResultItem.Viewer
+        &amp;type = &amp;searchResultItem.Type
+        &amp;score = &amp;SearchResultItem.Score
+        &amp;TimeStamp = &amp;SearchResultItem.TimeStamp
+        if &amp;type = 'Customer'
+           &amp;customer.Load(&amp;SearchResultItem)
+           &amp;preview = TextSearch.HTMLPreview(&amp;customer,&amp;searchpattern,'HTML','&lt;span STYLE=&quot;background: yellow&quot;&gt; ','&lt;/span&gt;',200,1)
+        endif
+        grid1.Load()
+    endfor 
+EndSub</pre>
+
+<p>Note that based on the &amp;Type (&amp;searchResultItem.Type) value, we call the TextSearch.HTMLPreview function.<br />
+<br />
+This is the runtime image of the sample:</p>
+
+<p><img src="./images/6667.jpg" id="6667" class="WikiImage"/></p>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>Take into account that the text which is built and indexed has the following format: Attribute&lt;1&gt; Title + &quot; &quot; + Attribute&lt;1&gt; Value + .... Attribute&lt;n&gt; Title + &quot; &quot;+ Attribute&lt;n&gt; Value.</p>
+
+<p>As a consequence, in our example &quot;Customer Name&quot; and &quot;Customer Address&quot; will be present in the index followed by the corresponding values, as they are the &quot;Titles&quot; of CustomerName, CustomerAddress attributes, etc.</p>
+
+<p><img src="./images/6672.jpg" id="6672" class="WikiImage"/></p>
+
+<p>In addition, at runtime the user will see the &quot;Contextual Title&quot; as labels of each attribute.</p>
+
+<p><img src="./images/6673.jpg" id="6673" class="WikiImage"/></p>
+
+<p>So, if the user wants to find customers named Sarah, the search query could be &quot;Customer name Sarah&quot;. That's because Customer is the name of the transaction, and &quot;Name&quot; is the contextual title the user is interested in searching for.</p>
+
+<p><img src="./images/6674.jpg" id="6674" class="WikiImage"/></p>
+
+<p>You can download the sample from <a href='http://www.gxopen.com/gxopen/servlet/projectversioninformation?707,3'>here</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="5278.html">Full-Text Search in Applications</a><br />
+<a href="6036.html">Full Text Search Examples - Indexing</a><br />
+<a href="5292.html">Full Text Search Data Types</a></p>
+
+<p><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6682.html">Full Text Search example 3</a></TD><TD><a href="6701.html">Full Text Search Examples</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

@@ -1,0 +1,162 @@
+group CommonChatbots;
+delimiters "$", "$"
+
+printResponses(responses)::=<<
+$if(responses.ConditionalResponses)$
+//Conditional Responses:
+Do Case
+	$responses.ConditionalResponses:{response|$printResponseCase(response)$};separator="\n"$
+	$if(responses.UnconditionalResponse)$
+	Otherwise
+		$printResponseWithSpeechOut(responses.UnconditionalResponse)$
+	$endif$
+EndCase
+$else$
+$printResponse(responses.UnconditionalResponse)$
+$endif$
+&ContextOut.Context.GXAction = ""
+>>
+
+printResponseCase(response)::=<<
+Case $response.GeneXusConditions$
+	$printResponseWithSpeechOut(response)$
+>>
+
+printResponseWithSpeechOut(response)::=<<
+&speechOut = "$response.GetResponseMessage$"
+$printResponse(response)$
+>>
+
+printResponse(response)::=<<
+$printIfIsRedirection(response)$$if(response.IsComponent)$
+	$if(response.GenerateLinkSD)$
+		$if(response.ComponentIsComposed)$&componentSD$else$&callPanelSD$endif$ = $response.SDReferencedName$.Link($variables:{variable|$callingParametersToString(variable)$};separator=","$)
+	$endif$
+	$if(response.GenerateLinkWeb)$
+		&componentWeb = $response.WebReferencedName$.Link($variables:{variable|$callingParametersWeb(variable)$};separator=","$)
+	$endif$
+$endif$
+>>
+
+printFlagIf(action, variables)::=<<
+$if(action.ActionName)$if &ContextIn.Context.$action.ActionName$_OK.ToUpper() = "TRUE" and not &HasErrors$endif$
+>>
+
+closeFlagIf(action, variables)::=<<
+$if(action.ActionName)$
+endif
+$endif$
+>>
+
+callingParametersWeb(parameter)::=<<
+&ContextIn.Context.$parameter.CastedSlot$
+>>
+
+parameters(parameter)::=<<
+&ContextIn.Context.$parameter.CastedSlot$
+&ContextOut.Context.GXSetImageResponse = true
+>>
+
+parameters(kbObject, parameter)::=<<
+&$kbObject$.$parameter$.ToString()
+>>
+
+parametersFromCollection(kbObject, parameter)::=<<
+&$kbObject$Line.$parameter$.ToString()
+>>
+
+callingParameters(parameter)::=<<
+&ContextIn.Context.$parameter.Name$
+>>
+
+callingParametersToString(parameter)::=<<
+&ContextIn.Context.$parameter.WCastedSlot$
+>>
+
+parametersKBObject(kbObject, parameter)::=<<
+&$kbObject$.$parameter$.ToString()
+>>
+
+callingOuts(parameter)::=<<
+&$parameter$
+>>
+
+callingOutsToString(parameter)::=<<
+&ContextIn.Context.$parameter$
+>>
+
+setOutParmsInContext(parameter)::=<<
+&ContextOut.Context.$parameter$ = &$parameter$
+>>
+
+parametersReplaceCol(kbObject, parameter)::=<<
+&speechOut = &speechOut.Replace(!"&$parameter$", Format(!"%1", &$kbObject$Line.$parameter$))
+>>
+
+parametersReplace(kbObject, parameter)::=<<
+&speechOut = &speechOut.Replace(!"&$parameter$", Format(!"%1", &$kbObject$.$parameter$))
+>>
+
+parametersReplaceWOKboObject(parameter)::=<<
+&speechOut = &speechOut.Replace(!"&$parameter$", Format(!"%1", &$parameter$))
+>>
+
+outputMessageReplace(parameter)::=<<
+&OutputMessage = &OutputMessage.Replace(!"&$parameter$", Format(!"%1", &$parameter$))
+>>
+
+pk(variable)::=<<
+	&ContextIn.Context.$variable.CastedPrimary$
+>>
+
+setDummyCalls(ws, module)::=<<
+$ws.Name$.Handler("", "", "", false)
+$if(!ws.IsNLP)$$ws.ChatbotDefinitionDP$(&ChatbotStruct)$endif$
+>>
+
+setDummyVariables(ws)::=<<
+$if(ws.IsNLP)$$else$
+	<Variable Name="ChatbotStruct">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>ChatbotStruct</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ChatbotStruct, Chatbot.Message</Value></Property></Properties>
+	</Variable>
+	$if(ws.HasConversationalObjects)$
+	<Variable Name="CustomContextProperties">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>CustomContextProperties</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:AnalyzeResponse.CustomContextItem, Chatbot.Message</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property></Properties>
+	</Variable>
+	$endif$
+	$if(ws.HasConditionalResponses)$
+	<Variable Name="ResponseMessage">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>ResponseMessage</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>256</Value></Property><Property><Name>AttMaxLen</Name><Value>256</Value></Property></Properties>
+	</Variable>
+	<Variable Name="ResponseType">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>ResponseType</Value></Property><Property><Name>idBasedOn</Name><Value>Domain:CommandBasedResponseType, Chatbot</Value></Property></Properties>
+	</Variable>
+	$endif$
+	$if( ws.HasRedirections)$
+	<Variable Name="UserInput">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>UserInput</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ChatbotStruct.FlowItem.UserInputItem, Chatbot.Message</Value></Property></Properties>
+	</Variable>
+	$endif$
+	$if(ws.HasConditionalResponses || ws.HasRedirections)$
+	<Variable Name="RedirectToFlow">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>RedirectToFlow</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>256</Value></Property><Property><Name>AttMaxLen</Name><Value>256</Value></Property></Properties>
+	</Variable>
+	$endif$
+	$if(ws.HasConversationalObjects || ws.HasConditionalResponses || ws.HasRedirections)$
+	<Variable Name="Flow">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>Flow</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ChatbotStruct.FlowItem, Chatbot.Message</Value></Property></Properties>
+	</Variable>
+	<Variable Name="AnalyzeResponse">
+		<Documentation />
+		<Properties><Property><Name>Name</Name><Value>AnalyzeResponse</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:AnalyzeResponse, Chatbot.Message</Value></Property></Properties>
+	</Variable>
+	$endif$
+$endif$	
+>>

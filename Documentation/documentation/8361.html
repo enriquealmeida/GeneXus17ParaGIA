@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>TtoC function</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8361,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">TtoC function</h1>
+<!--TtoC function--><div class="TableWikiBody" id="tblwikibody"><p>Returns a character type value representing the DateTime parameter, which format is specified by <i>DateDigits </i>and <i>HourDigits</i>.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><b>TtoC( </b><i>datetime-expression</i> [, <i>DateDigits </i>[, <i>HourDigits</i>]] <b>)</b></p>
+
+<p><b>Where:</b><br />
+The possible values for <i>DateDigits </i>and <i>HourDigits </i>are the same used for the DateTime data type definition.</p>
+
+<p><b>Type returned:</b><br />
+Character</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><strong>Objects:</strong><a href="6293.html">Procedure</a>, <a href="1908.html">Transaction</a>, <a href="6916.html">Web Panel</a></p>
+
+<h3><a id="Values" class="HashLink" href="#Values">Values</a></h3>
+
+<p>Possible values for <i>DateDigits </i>are:</p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr style="border-bottom: 1.0px solid black;">
+			<td><strong>DateDigits  </strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>0</strong></td>
+			<td>The date part is not included in the resulting string.</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>8</strong></td>
+			<td>The date part is included in the resulting string in 8 digits (99/99/99) following the date format rules.</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>10</strong></td>
+			<td>The date part is included in the resulting string in 10 digits (99/99/9999) following the date format rules.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr style="border-bottom: 1.0px solid black;">
+			<td><strong>HourDigits  </strong></td>
+			<td><strong> Description</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>0</strong></td>
+			<td>Only the date part is obtained</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>2</strong></td>
+			<td>Only the time part is displayed in 24-hour format</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>5</strong></td>
+			<td>Hour and minutes are included in the resulting string separated by the time separator symbol. The 24-hour format is used</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>8</strong></td>
+			<td>Hour, minutes and seconds are included in the resulting string with the hour/minute and minute/second separator. The 24-hour format is used</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><strong>12</strong></td>
+			<td>The complete time is included in the resulting string (including milliseconds) with the hour/minute, minute/second and second/millisecond separator. The 24-hour format is used</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><strong>Notes:</strong></p>
+
+<ul>
+	<li>In case <i>DateDigits </i>and/or <i>HourDigits</i> are omitted, their default values are the ones used for the DateTime parameter definition (first parameter).</li>
+	<li>In case the <i>m</i>/<i>n </i>combination is not valid, these values are assumed: <i>DateDigits </i>=10 and <i>HourDigits</i>=8.</li>
+	<li>The returned string format is the same one expected by <a href="7473.html">CtoT function</a>. That is, the date part depends on the <a href="7632.html">Date format in CTOD function property</a> and the time part is always in 24-hour format.</li>
+</ul>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p>If you need to obtain the date part of a DateTime expression you can simply assign it to a Date expression (Date = DateTime). For instance, if InvDate is a <a href="7373.html">Date-based</a> attribute and Timestamp is a <a href="7370.html">DateTime-based</a> attribute, you can do:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+InvDate = Timestamp</pre>
+
+<p class="Code">For example, you can get a DateTime from a previously stored record, convert it to string and show it on screen:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+new
+DT8 = ymdhmstot(82,03,24,13,25,10) //create a datetime 24/03/82 13:25:10
+endnew
+
+for each
+&amp;character = ttoc(DT8)
+msg(&amp;character) //will show the string 24/03/82 13:25:10
+endfor</pre>
+
+<p>Sample using <a href="39306.html">Milliseconds precision</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;DT = CtoT('09/09/1999 14:35:30.450')
+&amp;STR = TtoC(&amp;DT,10,8) //==&gt; 09/09/1999 02:35:30 PM
+&amp;STR = TtoC(&amp;DT,10,12) //==&gt; 09/09/1999 02:35:30.450 PM</pre>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="7473.html">CtoT function</a></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="7473.html">CtoT function</a></TD><TD><a href="7370.html">DateTime data type</a></TD></TR><TR><TD><a href="7475.html">DtoC function</a></TD><TD><a href="8504.html">Functions in Procedures</a></TD><TD><a href="8546.html">Functions in Transactions</a></TD></TR><TR><TD><a href="8566.html">Functions in Web Panels</a></TD><TD><a href="12530.html">Methods and Functions matching</a></TD><TD><a href="21990.html">TimeZone Support - DateTime handling</a></TD></TR><TR><TD><a href="7090.html">ToString method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/22 12:11 PM</em></font></td></TR></table></font>

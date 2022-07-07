@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pattern xmlns="http://schemas.genexus.com/Patterns/InstanceSpecification/v1.0" Name="Work With" Version="1.0" RootElement="instance" RootType="Instance">
+	<ElementTypes>
+		<ElementType Name="Instance" Caption="Work With Pattern Instance" Icon="">
+			<Attributes>
+				<Attribute Name="webFormDefaults" Type="enum{Responsive Web Design;Previous versions compatible}" Category="General" Description="Indicates if GeneXus must use a responsive web design to generate default forms or the 'old' way." Resolver="Artech.Patterns.WorkWith.Resolvers.WebFormDefaultResolvers"/>
+				<Attribute Name="updateTransaction" Type="enum{Do not update;Only rules and events;Apply WW Style;Create default}" Category="General" Description="Generate a default web form for all transactions used in this instance (to customize the generation, edit the corresponding template)." DefaultValue="Only rules and events" />
+				<Attribute Name="afterInsert" Type="enum{&lt;default&gt;;Return to Caller;Go to View;Go to Selection}" Category="Navigation" Description="Action performed after inserting a record.&#xD;&#xA;&lt;default&gt; uses configuration file value." DefaultValue="&lt;default&gt;" />
+				<Attribute Name="afterUpdate" Type="enum{&lt;default&gt;;Return to Caller;Go to View;Go to Selection}" Category="Navigation" Description="Action performed after updating a record.&#xD;&#xA;&lt;default&gt; uses configuration file value." DefaultValue="&lt;default&gt;" />
+				<Attribute Name="afterDelete" Type="enum{&lt;default&gt;;Return to Caller;Go to Selection}" Category="Navigation" Description="Action performed after deleting a record.&#xD;&#xA;&lt;default&gt; uses configuration file value." DefaultValue="&lt;default&gt;" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="transaction" ElementType="Transaction" Multiple="false" Optional="false" />
+				<ChildElement Name="level" ElementType="Level" Multiple="true" CanModifyCollection="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Action" Caption="Action ({0})" CaptionParameters="name" KeyAttribute="name" Icon="Event" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="name" Type="string" Description="Action Name" NotNull="true" />
+				<Attribute Name="caption" Type="string" Description="Caption (for the button, or for &quot;in grid&quot; actions that do not have an associated image )." />
+				<Attribute Name="gxobject" Type="reference(Program?)" Description="GeneXus object invoked for performing the Action. If not set, custom code must be specified." PrettyName="GXObject" />
+				<Attribute Name="inGrid" Type="bool" Category="Grid" Description="True = Action in the grid. False = Action outside the grid. Always false if &quot;MultiRowSelection&quot; is set." DefaultValue="false" />
+				<Attribute Name="multiRowSelection" Type="bool" Category="Grid"  Description="The action applies to multiple rows (a checkbox column will be added to grids)." DefaultValue="false" />
+				<Attribute Name="image" Type="reference(Image)" Category="Grid" Description="Image to appear in the grid." />
+				<Attribute Name="disabledImage" Type="reference(Image)" Category="Grid" Description="Image to appear in the grid when the action is not enabled (to make the button invisible, use a transparent image)." />
+				<Attribute Name="disabledClass" Type="theme-class(Attribute)" Category="Grid" Description="Class to be used in the grid when the action is not enabled." />
+				<Attribute Name="tooltip" Type="string" Category="Grid" Description="Tooltip to appear in the grid." />
+				<Attribute Name="condition" Type="code(Expressions)" Description="Condition to determine whether the action will be enabled. If the action is defined as &quot;InGrid&quot;, the check will be performed for each record. If empty, the action will be available." />
+				<Attribute Name="buttonClass" Type="theme-class" Description="Theme class for the button (if no class is specified, the one set in the configuration file will be used)." />
+				<Attribute Name="inGridClass" Type="theme-class" Category="Grid" Description="Theme class for the variable that represents the action in the grid (if no class is specified, the one set in the configuration file will be used)." />
+				<Attribute Name="themeColumnClass" Type="theme-class(GridColumn)" Category="Grid" Description="Theme class for the column." PrettyName="Column Class" />
+				<Attribute Name="callType" Type="enum{Call;Link;Auto}" DefaultValue="Auto" Category="Grid" Description="Call type for the object in grid actions. If &apos;Auto&apos;, &apos;Link&apos; will be used for all objects except non-main Procedures." />
+				<Attribute Name="customCode" Type="code(Events)" Category="Custom" Description="Code used to execute the action. Cannot be used in conjunction with &quot;Multirow&quot; actions." Serialization="CData" VisibleIf="self::*[@multiRowSelection!='True']" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="parameters" ElementType="Parameters" Multiple="false" Optional="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Actions" Caption="Actions" Icon="Event" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="action" ElementType="Action" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Attribute" Caption="{0}" CaptionParameters="attribute" KeyAttribute="attribute" Icon="ObjectAttribute" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes>
+				<Attribute Name="attribute" Type="reference(Attribute)" Description="Attribute." NotNull="true" />
+				<Attribute Name="description" Type="string" Description="Attribute description." />
+				<Attribute Name="autolink" Type="bool" Category="Link" Description="Automatically generate links to other pattern instances for description attributes and supertypes." DefaultValue="true" />
+				<Attribute Name="visible" Type="bool" Category="Form" Description="Attribute is visible (if false, in grids the column will be hidden, and in tabular tabs the attribute will be invisible)." DefaultValue="true" />
+				<Attribute Name="themeClass" Type="theme-class" Category="Form" Description="Theme class for the attribute." PrettyName="Class" />
+				<Attribute Name="themeColumnClass" Type="theme-class(GridColumn)" Category="Form" Description="Theme class for the column." PrettyName="Column Class" />
+				<Attribute Name="format" Type="enum{&lt;default&gt;;Text;HTML;Raw HTML;Text with meaningful spaces}" Category="Form" Description="HTML format for the attribute." DefaultValue="&lt;default&gt;" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="link" ElementType="Link" Multiple="false" Optional="true" />
+			</ChildrenElements>
+			<Initialization>
+				<InitializationFrom Type="Attribute" ReferenceProperty="attribute" PropertyValues="description=Description" />
+			</Initialization>
+		</ElementType>
+		<ElementType Name="Attributes" Caption="Attributes" ChildrenType="Mixed" Icon="StructureLevel" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="attribute" ElementType="Attribute" Multiple="true" />
+				<ChildElement Name="variable" ElementType="Variable" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Condition" Caption="{0}" CaptionParameters="value" KeyAttribute="value" Icon="Condition" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes>
+				<Attribute Name="value" Type="code(Conditions)" Description="Filter Condition." NotNull="true" />
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="Conditions" Caption="Conditions" Icon="Conditions" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="condition" ElementType="Condition" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="DescriptionAttribute" Caption="DescriptionAttribute ({0})" CaptionParameters="attribute" Icon="AttributeDescription" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes>
+				<Attribute Name="attribute" Type="reference(Attribute)" Description="Attribute that represents the transaction. (For example: CustomerName for Customer)." />
+				<Attribute Name="description" Type="string" Description="Attribute Description." />
+			</Attributes>
+			<ChildrenElements />
+			<Initialization>
+				<InitializationFrom Type="Attribute" ReferenceProperty="attribute" PropertyValues="description=Description" />
+			</Initialization>
+		</ElementType>
+		<ElementType Name="Filter" Caption="Filter" Icon="Pattern_Filter" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="attributes" ElementType="FilterAttributes" Multiple="false" Optional="false" />
+				<ChildElement Name="conditions" ElementType="Conditions" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="FilterAttribute" Caption="{0}" CaptionParameters="name" KeyAttribute="name" Icon="ObjectAttribute" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes>
+				<Attribute Name="name" Type="code(Expressions)" Description="Attribute or variable to be entered by the user and used in the conditions." NotNull="true" />
+				<Attribute Name="description" Type="string" Description="Description." />
+				<Attribute Name="domain" Type="reference(Domain)" Description="Domain of the variable. Use only with variables, not necessary with attributes." />
+				<Attribute Name="default" Type="string" Category="Values" Description="Default value. Must be an expression of the same type of the attribute/variable." />
+				<Attribute Name="allValue" Type="bool" Category="Values" Description="Add an 'all' option in ComboBox. (Use only when the attribute is a ComboBox)." DefaultValue="false" PrettyName="All" />
+				<Attribute Name="prompt" Type="reference(WebPanel)" Category="Values" Description="Prompt object used to get the possible values for this filter attribute." />
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="FilterAttributes" Caption="Attributes" Icon="StructureLevel" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="filterAttribute" Description="Filter Attribute/Variable" ElementType="FilterAttribute" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="FixedData" Caption="Fixed Data" Icon="TextBlock" IconResource="Artech.Patterns.WorkWith.Resources.Images,Artech.Patterns.WorkWith">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="attributes" ElementType="Attributes" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Level" Caption="Level ({0})" CaptionParameters="name" KeyAttribute="id" Icon="Pattern_Level" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="id" Type="string" NotNull="true" Visible="false" />
+				<Attribute Name="name" Type="string" Description="Level Name." NotNull="true" />
+				<Attribute Name="description" Type="string" Description="Level Description." />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="descriptionAttribute" ElementType="DescriptionAttribute" Multiple="false" Optional="true" />
+				<ChildElement Name="selection" ElementType="Selection" Multiple="false" Optional="true" />
+				<ChildElement Name="view" ElementType="View" Multiple="false" Optional="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Link" Caption="Link ({0})" CaptionParameters="webpanel" Icon="Hyperlink" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="webpanel" Type="string" Category="Link" Description="Web Panel to link." />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="parameters" ElementType="Parameters" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Modes" Caption="Ins: {0}, Upd: {1}, Del: {2}, Dis: {3}" CaptionParameters="Insert;Update;Delete;Display" Icon="Event" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="Insert" Type="enum{true;false;default}" Description="Insert Mode." DefaultValue="default" />
+				<Attribute Name="Update" Type="enum{true;false;default}" Description="Update Mode." DefaultValue="default" />
+				<Attribute Name="Delete" Type="enum{true;false;default}" Description="Delete Mode." DefaultValue="default" />
+				<Attribute Name="Display" Type="enum{true;false;default}" Description="Display Mode." DefaultValue="default" />
+				<Attribute Name="Export" Type="enum{true;false;default}" Description="Export mode." DefaultValue="default" />
+				<Attribute Name="InsertCondition" Type="code(Expressions)" Category="Security" Description="Condition evaluated to determine whether the user can insert records in the grid. If empty, the action will be available." />
+				<Attribute Name="UpdateCondition" Type="code(Expressions)" Category="Security" Description="Condition evaluated to determine whether the user can update a record of the grid (the check will be performed for each record). If empty, the action will be available." />
+				<Attribute Name="DeleteCondition" Type="code(Expressions)" Category="Security" Description="Condition evaluated to determine whether the user can delete a record of the grid (the check will be performed for each record). If empty, the action will be available." />
+				<Attribute Name="DisplayCondition" Type="code(Expressions)" Category="Security" Description="Condition evaluated to determine whether the user can display (invoke the View for) a record of the grid (the check will be performed for each record). If empty, the action will be available." />
+				<Attribute Name="ExportCondition" Type="code(Expressions)" Category="Security" Description="Condition evaluated to determine whether the user can export records in the grid and download them as an Excel spreadsheet. If empty, the action will be available." />
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="Order" Caption="Order ({0})" CaptionParameters="name" KeyAttribute="name" Icon="Pattern_Order" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="name" Type="string" Description="Name of the Order, for user selection." NotNull="true" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="attribute" ElementType="OrderAttribute" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Orders" Caption="Orders" Icon="Pattern_Orders" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="order" ElementType="Order" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="OrderAttribute" Caption="{0}" CaptionParameters="attribute" KeyAttribute="attribute" Icon="ObjectAttribute" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="attribute" Type="reference(Attribute)" Description="Attribute." NotNull="true" />
+				<Attribute Name="description" Type="string" Description="Description." />
+				<Attribute Name="ascending" Type="bool" Description="Ascending Order." DefaultValue="true" />
+			</Attributes>
+			<ChildrenElements />
+			<Initialization>
+				<InitializationFrom Type="Attribute" ReferenceProperty="attribute" PropertyValues="description=Description" />
+			</Initialization>
+		</ElementType>
+		<ElementType Name="Parameter" Caption="{0}" CaptionParameters="name" KeyAttribute="name" Icon="Pattern_Parameter" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="name" Type="code(Expressions)" Description="Parameter Name." NotNull="true" />
+				<Attribute Name="domain" Type="reference(Domain)" Description="Only needed for variables (defines their domain)." />
+				<Attribute Name="null" Type="bool" Description="If set to false, the parameter value cannot change in Insert. (For example, if inserting a City in a given Country, CountryId doesn't change when calling City transaction)." DefaultValue="true" PrettyName="NullValue" />
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="Parameters" Caption="Parameters" Icon="Pattern_Parameters" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="parameter" ElementType="Parameter" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Selection" Caption="Selection ({0})" CaptionParameters="description" Icon="ObjectWebpanel" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="caption" Type="string" Description="Literal to appear in the Form's caption (description is the default). If a literal, use quotes." />
+				<Attribute Name="description" Type="string" Description="Description." />
+				<Attribute Name="page" Type="enum{&lt;default&gt;;&lt;unlimited&gt;;&lt;custom&gt;;*}" Category="Paging" PrettyName="Rows per page" Description="Number of rows in the grid per page." DefaultValue="&lt;default&gt;" />
+				<Attribute Name="customRows" Type="string" Description="Custom number of rows in the grid per page" Category="Paging" VisibleIf="self::*[@page='&lt;custom&gt;']" />
+				<Attribute Name="PagingMode" Type="enum{&lt;default&gt;;One page at a time;Infinite scrolling}" Category="Paging" Description="Paging mode." DefaultValue="&lt;default&gt;" VisibleIf="self::*[@page != '&lt;unlimited&gt;']" />
+				<Attribute Name="showCurrentPage" Type="enum{&lt;default&gt;;true;false}" Category="Paging" Description="Shows current page number in grids." DefaultValue="&lt;default&gt;" VisibleIf="self::*[@page != '&lt;unlimited&gt;']"/>				
+				<Attribute Name="isMain" Type="bool" Description="Set &quot;Main Program&quot; flag in selection webpanel." DefaultValue="false" />
+				<Attribute Name="masterPage" Type="enum{&lt;default&gt;;&lt;none&gt;;*}" Description="Object name of the master page to be used in this selection webpanel. &#xD;&#xA;To use the one defined in the configuration file, set value to &quot;&lt;default&gt;&quot;. &#xD;&#xA;To disable the master page, use &quot;&lt;none&gt;&quot;." DefaultValue="&lt;default&gt;" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="modes" ElementType="Modes" Multiple="false" Optional="false" />
+				<ChildElement Name="attributes" ElementType="Attributes" Multiple="false" Optional="false" />
+				<ChildElement Name="parameters" ElementType="Parameters" Multiple="false" Optional="true" />
+				<ChildElement Name="orders" ElementType="Orders" Multiple="false" Optional="true" />
+				<ChildElement Name="filter" ElementType="Filter" Multiple="false" Optional="true" />
+				<ChildElement Name="actions" ElementType="Actions" Multiple="false" Optional="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Tab" Caption="Tab ({0})" CaptionParameters="name" KeyAttribute="code" Icon="ObjectWebpanel" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="name" Type="string" Description="Literal to appear inside the Tab." PrettyName="Caption" />
+				<Attribute Name="code" Type="string" Description="Internal name. Must be unique." NotNull="true" />
+				<Attribute Name="description" Type="string" Description="Tab description." />
+				<Attribute Name="type" Type="enum{Grid;Tabular;UserDefined}" Category="Component" Description="Type of component" DefaultValue="Grid" />
+				<Attribute Name="wcname" Type="string" Category="Component" Description="Component Name." PrettyName="ComponentName" NotNull="true" />
+				<Attribute Name="page" Type="enum{&lt;default&gt;;&lt;unlimited&gt;;*}" Category="Component" PrettyName="Rows per page" Description="Number of rows in the grid per page (only for Grid type)." DefaultValue="&lt;default&gt;" VisibleIf="self::*[@type='Grid']" />
+				<Attribute Name="condition" Type="string" Description="Condition to determine whether the Tab will be shown." />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="parameters" ElementType="Parameters" Multiple="false" Optional="true" />
+				<ChildElement Name="transaction" ElementType="Transaction" Multiple="false" Optional="true" />
+				<ChildElement Name="modes" ElementType="Modes" Multiple="false" Optional="true" />
+				<ChildElement Name="attributes" ElementType="Attributes" Multiple="false" Optional="true" />
+				<ChildElement Name="orders" ElementType="Orders" Multiple="false" Optional="true" />
+				<ChildElement Name="filter" ElementType="Filter" Multiple="false" Optional="true" />
+				<ChildElement Name="actions" ElementType="Actions" Multiple="false" Optional="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Tabs" Caption="Tabs" Icon="Tab" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="tab" ElementType="Tab" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Transaction" Caption="Transaction ({0})" CaptionParameters="transaction" Icon="ObjectTransaction" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="transaction" Type="reference(Transaction)" Description="Transaction Name." NotNull="true" />
+        			<Attribute Name="GenerateNoPromptRule" Type="enum{&lt;default&gt;;true;false}" Description="Indicates if noprompt rule for primary key will be generated in this transaction" DefaultValue="&lt;default&gt;" />
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="View" Caption="View ({0})" CaptionParameters="description" Icon="ObjectWebpanel" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="caption" Type="code(Expressions)" Description="Caption to Appear in the Form. Must be a character expression. Usually it's the description attribute." />
+				<Attribute Name="description" Type="string" Description="Description." />
+				<Attribute Name="backToSelection" Type="bool" Description="Indicates whether the View page has a link back to the Selection page." DefaultValue="true" />
+				<Attribute Name="masterPage" Type="enum{&lt;default&gt;;&lt;none&gt;;*}" Description="Object name of the master page to be used in this view webpanel. &#xD;&#xA;To use the one defined in the configuration file, set value to &quot;&lt;default&gt;&quot;. &#xD;&#xA;To disable the master page, use &quot;&lt;none&gt;&quot;." DefaultValue="&lt;default&gt;" />
+				<Attribute Name="useAsSearchViewer" Type="bool" Description="Set the view object as the Search Viewer for the associated transaction." DefaultValue="true" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="parameters" ElementType="Parameters" Multiple="false" Optional="false" />
+				<ChildElement Name="fixedData" ElementType="FixedData" Multiple="false" Optional="true" />
+				<ChildElement Name="tabs" ElementType="Tabs" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Variable" Caption="{0}" CaptionParameters="name" KeyAttribute="name" Icon="Variable" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="name" Type="string" Description="Variable name." />
+				<Attribute Name="description" Type="string" Description="Variable description." />
+				<Attribute Name="domain" Type="reference(Domain)" Description="Domain on which the variable is based." NotNull="true" />
+				<Attribute Name="loadCode" Type="code(Events)" Description="Code used in the panel or grid Load event to assign the value to be displayed." Serialization="CData" />
+				<Attribute Name="visible" Type="bool" Category="Form" Description="Variable is visible (if false, in grids the column will be hidden, and in tabular tabs the variable will be invisible)." DefaultValue="true" />
+				<Attribute Name="themeClass" Type="theme-class" Category="Form" Description="Theme class for the variable." PrettyName="Class" />
+				<Attribute Name="themeColumnClass" Type="theme-class(GridColumn)" Category="Form" Description="Theme class for the column." PrettyName="Column Class" />
+				<Attribute Name="format" Type="enum{&lt;default&gt;;Text;HTML;Raw HTML;Text with meaningful spaces}" Category="Form" Description="HTML format for the variable." DefaultValue="&lt;default&gt;" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="link" ElementType="Link" Multiple="false" Optional="true" />
+			</ChildrenElements>
+		</ElementType>
+	</ElementTypes>
+</Pattern>

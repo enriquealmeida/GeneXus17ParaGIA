@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Base Transaction clause</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25418,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Base Transaction clause</h1>
+<!--Base Transaction clause--><div class="TableWikiBody" id="tblwikibody"><p>Indicates the <a href="1908.html">Transaction</a> name or Transaction.Level name to be used as the base table for certain navigation.</p>
+
+<p><span style="line-height: 1.6em;">In other words, declares your navigation intention. </span></p>
+
+<p><span style="line-height: 1.6em;">Although optional, its use is recommended to improve the expressive capacity of the command to which it is associated (</span><a href="24744.html">For Each command</a>, <a href="25082.html">Data Provider Group statement</a><span style="line-height: 1.6em;">). In addition, time for the specification is improved, because it isn't needed to do the calculation of the command/statement or control <a href="6347.html">Base Table</a>.</span></p>
+
+<p>It may be a list of Transaction levels. In that case, a kind of 'product' between the tables is done, solving queries that imply navigation over different tables that are difficult to express in another way, or that cannot be solved in a single SQL sentence.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax"><span style="line-height: 1.2em;">Syntax</span></a></h3>
+
+<p><em>&lt;BaseTrnList&gt;</em> ::=  <em>&lt;Trn<sub>1</sub>&gt;</em> {<strong>,</strong> <em>&lt;Trn<sub>i</sub>&gt;</em>}...</p>
+
+<p><strong>where</strong>:</p>
+
+<p><em>&lt;Trn<sub>i</sub>&gt;</em> is a Transaction Level name.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>If one <strong>Base Transaction</strong> is declared, the <strong>Table</strong> associated with this Transaction level is considered as the <a href="6347.html">Base Table</a> of the context that clause is linked (e.g. the <a href="24744.html">For Each command</a>), and all attributes belonging to that context (e.g. for each body, conditions, orders, etc.) must be in its <a href="6029.html">Extended Table</a>. Otherwise, the navigation report will throw a warning 'Attribute is not instantiated' for all attributes not belonging to the extended table.</p>
+
+<p>If more than one <strong>Base Transaction</strong> is declared and the Tables are directly related (or you define an explicit filter by equality between two different attributes), then a <a class="vt-p">join</a> is made among the tables associated with these Transaction levels. Otherwise, a <a href='http://www.sqlguides.com/sql_cross_join.php'>cartesian product</a> is done, or if no relation can be found, then a specification error will occur (spc0027).</p>
+
+<p>The attributes of the context this clause is linked to, have to be in the extended table of any of these tables.</p>
+
+<p>Thus, in the following example: <span style="line-height: 1.6em;"><img src="./images/24668.jpg" id="24668" class="WikiImage"/></span></p>
+
+<p>As long as there is a relationship between A and C (by means of B), the For Each command will consider:</p>
+
+<p style="margin-left: 30.0pt;">for each A record, all C related by means of the corresponding B (that is, a join will be made)</p>
+
+<p><strong>Notes</strong>:</p>
+
+<ul>
+	<li>It will be an <a class="vt-p">inner join</a> unless the corresponding foreign key is nullable. In such a case an <a class="vt-p">outer join</a> is selected. See <a href="19547.html">Join Type and Join Location Specification</a> for more information on joins.</li>
+	<li>In any other case (the Base Transactions are related but not directly through an N-1 relation with another table, or the Base Transactions are not related at all, and you have not defined an explicit filter by equality between attributes) for each record in TRN1 all records in TRN2 will be considered (Cartesian Product).</li>
+</ul>
+
+<p>To see further examples: <a href="24456.html">Multiple Base Transactions in a For Each command</a>.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples"><span style="line-height: 1.2em;">Examples</span></a></h3>
+
+<p>Considering the following Transactions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>User            </strong>//Transaction 1st. level name
+{
+   UserId*
+   UserName
+   UserType
+   <strong>Role        </strong>//Transaction 2nd. level name
+   {
+      RoleId*
+   }
+}
+
+<strong>Role            </strong>//Transaction 1st. level name
+{
+   RoleId*
+   RoleName
+}</pre>
+
+<h4><br />
+<strong>1) For each example</strong></h4>
+
+<p>If you want to display all the users by means of a <a href="6293.html">Procedure</a>, with a <a href="24744.html">For Each command</a> mentioning a <strong>Base Transaction</strong> the syntax is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each <strong>User</strong>
+   print userInfo  //printblock with UserId, UserName attributes
+Endfor</pre>
+
+<p>As the 'User' Transaction level is specified, thus, the <strong>For each base table</strong> will be associated with that level: USER. So, the attributes inside the body of the For each (as well as orders, conditions, etc.) must belong to the extended table of USER (and they do!). </p>
+
+<h4><a id="2%29+Data+provider+Group+example" class="HashLink" href="#2%29+Data+provider+Group+example"><strong>2) Data provider Group example</strong></a></h4>
+
+<p>An equivalent example would be writing the following Data Provider group definition:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+UserCollection <strong>from</strong> <strong>User</strong>
+{
+   UserItem
+   {
+        Id = UserId
+        Name = UserName
+   }
+}</pre>
+
+<p>Note that to indicate the Base Transaction in a Data Provider it is necessary to use the <strong>from clause</strong> into the <a href="25082.html">Data Provider Group statement</a>. </p>
+
+<p>The Data Provider will return a collection SDT as output, loaded through scanning the USER table.</p>
+
+<h4><a id="3%29+For+each+over+m-n+relation+example" class="HashLink" href="#3%29+For+each+over+m-n+relation+example"><strong>3) For each over m-n relation example</strong></a></h4>
+
+<p>Suppose you want to display, for each role, the related users. Then, the code you have to define is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each <strong>Role</strong>
+   print roleInfo            //printblock with RoleId, RoleName
+   for each <strong>User.Role</strong>
+      print userInfo         //printblock with UserId, UserName
+   endfor
+endfor</pre>
+
+<p>Note that the nested For each base table will be associated with the second level of the 'User' Transaction (User.Role). That's why the users displayed for each role are those that correspond to the role navigated (a join is made). </p>
+
+<h4><a id="4%29+Cartesian+product+with+multiple+Base+Transactions+example" class="HashLink" href="#4%29+Cartesian+product+with+multiple+Base+Transactions+example"><strong>4) Cartesian product with multiple Base Transactions example</strong></a></h4>
+
+<p>Considering a Program Transaction, which stores the information of each program of the system, and that is not related to Users and Roles Transactions at all, suppose you need to list the Cartesian Product of the User and Program tables filtering by the administrator user (due to the administrator has access to all programs). </p>
+
+<p>The code would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each <strong>User</strong>, <strong>Program</strong>
+    where UserType = 'Administrator'
+        print crossInfo     //printblock with UserName, ProgramName attributes
+endfor</pre>
+
+<p>Note there is no relationship between the USER table and the PROGRAM table through any table. Thus, for each user of the 'Administrator' type, all program names will be displayed next to the user name.</p>
+
+<h4><a id="5%29+Join+with+multiple+Base+Transactions+example" class="HashLink" href="#5%29+Join+with+multiple+Base+Transactions+example"><strong>5) Join with multiple Base Transactions example</strong></a></h4>
+
+<p><br />
+<strong>5.1)</strong> Consider a multi-company system where you know the Products sold by each Company and distributed by each Provider. The Transaction structures would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Product</strong>
+{
+   ProductId*
+   ProductName
+}
+
+<strong>Company</strong>
+{
+   CompanyId*
+   CompanyName
+   <strong>Product</strong>
+   {
+      ProductId*
+      ProductName
+   }
+}
+
+<strong>Provider</strong>
+{
+   ProviderId*
+   ProviderName
+   <strong>Product</strong>
+   {
+      ProductId
+      ProductName
+   }
+}</pre>
+
+<p>In that scenario, suppose you need to list the combination of Companies and Providers which sell the same given Product:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(&amp;ProductId);
+
+For each <strong>Company.Product</strong>, <strong>Provider.Product</strong>
+   where ProductId = &amp;ProductId
+         print crossInfo    //printblock with CompanyName, ProviderName attributes
+endfor</pre>
+
+<p>Note the tables COMPANYPRODUCT and PROVIDERPRODUCT are directly related by means of PRODUCT table. Thus, for each record in Company.Product with ProductId = &amp;ProductId, all the related records on PROVIDERPRODUCT will be considered (all records matching: PROVIDERPRODUCT. ProductId = COMPANYPRODUCT.ProductId). </p>
+
+<p><br />
+<strong>5.2) </strong>Consider the following Transaction structures:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Transaction1
+{
+  A*
+  B  
+  C  
+}
+
+Transaction2
+{
+  D*
+  E
+}</pre>
+
+<p>In that scenario, where there is no relationship between B and D (their names are different and they are not subtypes), if you define a For each like the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Transaction1 ,Transaction2
+  where B = D
+        print printblock1 //printblock with C and E attributes
+endfor</pre>
+
+<p>where Transaction1 and Transaction2 are declared as <strong>Base Transactions </strong>and an explicit filter by equality between B and D attributes is defined, then a <a class="vt-p">join</a> is made among the tables associated with Transaction1 and Transaction2.</p>
+
+<p>In this particular example, the SQL sentence (for SQL Server) is generated as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT T2.[D], T1.[B], T1.[C], T2.[E], T1.[A] FROM [Transaction1] T1,  [Transaction2] T2 WHERE T1.[B] = T2.[D] ORDER BY T1.[A].</pre>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<div style="overflow-x:auto"><table cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Commands</strong> </td>
+			<td><a href="24744.html">For Each command</a>, <a href="25082.html">Data Provider Group statement</a></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="36811.html">Base Trn property for Grids</a></p>
+
+<p><span style="line-height: 1.6em;"></span><br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="36811.html">Base Trn property</a></TD></TR><TR><TD><a href="41179.html">Collection property</a></TD><TD><a href="25082.html">Data Provider Group statement</a></TD><TD><a href="28062.html">Toc:Dynamic Transactions</a></TD><TD><a href="36273.html">Dynamic Transactions Samples</a></TD></TR><TR><TD><a href="28656.html">Dynamic Transactions that update data</a></TD><TD><a href="24744.html">For Each command</a></TD><TD><a href="24456.html">Multiple Base Transactions in a For Each command</a></TD></TR><TR><TD><a href="38589.html">SRC Messages</a></TD><TD><a href="24593.html">Unique clause in For Each command</a></TD><TD><a href="8578.html">Where clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 12/06/21 05:20 PM</em></font></td></TR></table></font>

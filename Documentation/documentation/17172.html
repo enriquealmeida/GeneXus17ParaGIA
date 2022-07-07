@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Loading Data Using SDT on Smart Devices Layouts</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17172,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Loading Data Using SDT on Smart Devices Layouts</h1>
+<!--HowTo: Loading Data Using SDT on Smart Devices Layouts--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Like in <a href="https://wiki.genexus.com/commwiki/wiki?2090,," target="_blank">SDT on Form</a>, when you develop for smart devices, you can show in a layout info loaded in a <a href="6286.html">Structured Data Type</a>. That's necessary in many cases.</p>
+
+<p>Sometimes the data or fields you want to show in a grid are not altogether in some related tables and there is no way to join and show them. In other cases data have to be collected from external services and in other ones you need to do some more complex navigation to get them as you want. In other words, it's not as simple as listing some fields with some order and filters.</p>
+
+<p>To show data, read-only, in grids in these cases, what you need to know is that it's all about basing the grid on a Collection (Structured Data Type) and loading it from some source (<a href="5270.html">Data Provider object</a>, <a href="6293.html">Procedure object</a> or <a href="https://wiki.genexus.com/commwiki/wiki?2894,," target="_blank">Web Services</a>).</p>
+
+<p>Note that this is independent of how (using what Control Info) the grid is shown and therefore the mechanism is the same to show a listing, map, graph, or whatever in these cases; and this is only valid for read-only scenarios (not for editing in grids).</p>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<p>Let's suppose we want to show columns BasicA and BasicB in a grid, A and B aren't in the database or have no relationship, etc.</p>
+
+<p>1) Define a Collection BasicListSDT with BasicA and BasicB as follows:</p>
+
+<p><img src="./images/17173.png" id="17173" class="WikiImage"/></p>
+
+<p>2) In the list or detail section where you want to place the grid, define a variable &amp;BasicListSDT based on BasicSDT data type.</p>
+
+<p>3) Drag and drop the variable from the Toolbox to the Layout. GeneXus will let you in that moment select the fields of the Collection you want to show in the grid and after that create a grid on the layout with the selected fields.</p>
+
+<p>4) Load it in the Refresh event.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Refresh
+    &amp;BasicListSDT = BasicListDP()
+EndEvent</pre>
+
+<p>BasicListDP is a <a href="5270.html">Data Provider object</a> that returns a variable based on BasicListSDT. It could also be a <a href="6293.html">Procedure object</a>, external Web Service, etc.</p>
+
+<h4><a id="Actions+over+grid+elements" class="HashLink" href="#Actions+over+grid+elements">Actions over grid elements</a></h4>
+
+<p>Case you need to execute an action when a line is selected, just define that event with the &quot;current&quot; value as parameter: &amp;BasicListDP.CurrentItem.&lt;element&gt;, for instance:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'DetailedView'
+   SDPanel.call(&amp;BasicListDP.CurrentItem.BasicA) 
+Endevent</pre>
+
+<p>Finally set that event as the Grid Default Action.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>If needed, you can add extra controls like Textblocks, Images, Variables, etc, to the grid created before. As of <a href="https://wiki.genexus.com/commwiki/wiki?20247,," target="_blank">GeneXus X Evolution 3</a> it is also possible to use the Load event for SDT based grids in order to manually load variables or change dynamically the properties of controls inside the grid. For instance:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Refresh
+   &amp;BasicListSDT = BasicListDP()
+EndEvent
+
+Event Load
+    If SatisfiesSomeCondition(&amp;BasicListSDT.CurrentItem.BasicA)
+        &amp;SomeVariable = GetSomeValue()
+        Image1.Visible = True
+    Else
+        Image1.Visible = False
+    EndIf
+EndEvent</pre>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>If you want to not show a collection and show some fields of an SDT, you can do it the same way as in the sample above. The only difference is that GeneXus in that case won't create a grid, but place the fields as separate controls with labels in the layout.</p>
+
+<p>Download an xpz of this sample here: <a href="https://wiki.genexus.com/commwiki/wiki?17174,," target="_blank">SDTinSD</a></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR></TR><TR><TD><a href="24829.html">Category:Panel object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/12/21 09:43 AM</em></font></td></TR></table></font>

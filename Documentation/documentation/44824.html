@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Howto: sending and receiving properties set at the login</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44824,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Howto: sending and receiving properties set at the login</h1>
+<!--Howto: sending and receiving properties set at the login--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>At user login, it is possible to add user-related properties such as the company branch where the user works.</p>
+
+<p>These properties, called &quot;initial properties&quot;, may be saved in the GAMSession to be retrieved and used later, regardless of the GAM Authentication Type used.</p>
+
+<p>For which cases is it recommended to use initial properties?</p>
+
+<ul>
+	<li>In <a href="20703.html">GAM Local Authentication Type</a>, <a href="44833.html">GAM Remote Rest Authentication type (Oauth 2.0)</a> or any other authentication type, it is possible to save user-related data at the user's login (for example, the company branch the user tries to access). Upon a successful login, the Repository_Login <a href="32698.html">event</a> is triggered, with the procedure subscribed to this event obtaining that information from the GAMSession, to verify the access for that company-branch. Otherwise, the login may be cancelled (see <a href="32698.html">GAM Events subscription</a> - Example III).<br />
+	In such case, apart from the benefits of cancelling the login, the information is persisted in the GAM database and cached. This is particularly useful for Smart Device apps.<br />
+	 </li>
+	<li>In the case of a login with an Identity Provider (<a href="25355.html">GAM Remote Authentication Type</a>), the initial properties may be sent from the local login to the Identity Provider (IDP), and viceversa (the properties may be set at the Identity Provider's and sent to the client as well).<br />
+	A case for using initial properties could be setting the language in which the user prefers the Identity Provider's login panel. When the user selects the language at the client's login, you can then use an initial property to save the language in the GAMSession. That information may be retrieved at the Identity Provider's, to show the panel in the language selected by the user.<br />
+	 </li>
+	<li>When <a href="25355.html">GAM Remote Authentication Type</a> is used at the client, and the Identity Provider uses any type of <a href="21755.html">GAM External Authentication Type</a> (<a href="21751.html">GAM Custom Authentication Type</a> or <a href="16512.html">GAM External Web Services Authentication Type</a>), you can set additional parameters for the authentication procedure (or web service) reading the initial properties set at the client login. The initial properties should then be retrieved at the IDP, and used to call the login. See <a href="21752.html">HowTo: Pass additional parameters to external authentication programs using GAM</a>.</li>
+</ul>
+
+<p>Note that the concept of initial properties is different from the <a href="19634.html">extended user attributes</a>.  Initial properties relate to a user in the login and they are saved in the GAMSession and cached.<br />
+It's also different from the SetApplication data and <a href="https://wiki.genexus.com/commwiki/wiki?21575,," target="_blank">GetApplicationData method of GAMSession object</a> (<sup>1</sup>).</p>
+
+<p class="Code">The initial properties may be retrieved from the GAM session using the method below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAMSession.InitialProperties
+</pre>
+
+<h3><a id="Example+%28Web%29" class="HashLink" href="#Example+%28Web%29">Example (Web)</a></h3>
+
+<p>Notice the GAMExamplelogin object (of the <a href="15935.html">GAM Web Backoffice</a>) where the login is executed (Enter event). <br />
+The initial properties are loaded into a variable of the GAMProperty data type and added to the properties collection of the GAMLoginAdditionalParameters -parameter of the login method.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ 
+&amp;CustomProperty = new()  //&amp;CustomProperty is GAMProperty data type
+&amp;CustomProperty.Id        = &quot;branch&quot;
+&amp;CustomProperty.Value    = &quot;120&quot;
+&amp;AdditionalParameter.Properties.Add(&amp;CustomProperty) //&amp;AdditionalParameter is GAMLoginAdditionalParameters data type
+//These properties are saved in the session when the user authenticates
+&amp;AdditionalParameter.AuthenticationTypeName = &amp;LogOnTo  //GAM Remote Rest
+&amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors )</pre>
+
+<p>The code above must be added in the event that corresponds to the login, which will depend on the Authentication Type used. For example, in the case of the GAM Remote Authentication type, it must be added in the 'SelectAuthenticationType' event of the GAMexamplelogin panel.</p>
+
+<h3><a id="Example+%28SD%29" class="HashLink" href="#Example+%28SD%29">Example (SD)</a></h3>
+
+<p>In this case, the properties are assigned to a collection of LoginExternalAdditionalParameters data type.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'LoginGAMLocal'
+Composite
+     &amp;LoginExternalAdditionalParameters = new()
+      &amp;LoginExternalAdditionalParameters.AuthenticationTypeName = !&quot;local&quot;
+      &amp;LoginExternalAdditionalParameters.Repository = !&quot;85a3006c-0606-41d2-980e-223f88463ec2&quot;
+      &amp;LoginExternalAdditionalParametersProperty = new()
+      &amp;LoginExternalAdditionalParametersProperty.Id = !&quot;branch&quot;
+      &amp;LoginExternalAdditionalParametersProperty.Value = !&quot;22-sd&quot;
+      &amp;LoginExternalAdditionalParameters.Properties.Add(&amp;LoginExternalAdditionalParametersProperty)
+      &amp;LoginExternalAdditionalParametersProperty = new()
+      &amp;LoginExternalAdditionalParametersProperty.Id = !&quot;job&quot;
+      &amp;LoginExternalAdditionalParametersProperty.Value = !&quot;12-sd&quot;
+      &amp;LoginExternalAdditionalParameters.Properties.Add(&amp;LoginExternalAdditionalParametersProperty)
+      GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.GAMLocal, &amp;User, &amp;Password, &amp;LoginExternalAdditionalParameters)
+      Return
+EndComposite
+Endevent
+</pre>
+
+<p class="Code">In all cases, initial properties may then be retrieved from the GAM session, using the following method:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAMSession.InitialProperties
+</pre>
+
+<h3><a id="Where+to+retrieve+the+information" class="HashLink" href="#Where+to+retrieve+the+information">Where to retrieve the information</a></h3>
+
+<p>Initial properties may be retrieved using the Repository_Login <a href="32698.html">subscription event</a>. In the case of GAM Remote Authentication and <a href="44833.html">GAM Remote Rest Authentication type (Oauth 2.0)</a>, it can be the Repository_Login event at the Identity Provider and at the client.<br />
+In all cases, the initial properties are obtained using the GAMSession.InitialProperties method.</p>
+
+<p>Note the following example code, which belongs to a procedure subscribed to the Repository_Login event.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:&amp;EventName, in:&amp;jsonIN, out:&amp;jsonOUT);
+
+do case
+    case &amp;EventName = GAMEvents.Repository_Login
+        &amp;GAMSession.FromJsonString(&amp;jsonIN)
+        for &amp;GAMProperty in &amp;GAMSession.InitialProperties
+              /////
+        endfor
+........................
+endcase
+</pre>
+
+<h3><a id="GAM+Configuration+in+the+case+of+GAM+Remote+Authentication+type" class="HashLink" href="#GAM+Configuration+in+the+case+of+GAM+Remote+Authentication+type">GAM Configuration in the case of GAM Remote Authentication type</a></h3>
+
+<p>In the case of <a href="25355.html">GAM Remote Authentication Type</a>, the properties may be retrieved in the GAMRemoteLogin object using the method below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAMRepository.GetGAMRemoteInitialProperties(&amp;IDP_State)</pre>
+
+<p>For example, this may be the code in the Enter Event of the GAMRemoteLogin object:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMProperties = GAMRepository.GetGAMRemoteInitialProperties(&amp;IDP_State)
+&amp;AdditionalParameter.Properties = &amp;GAMProperties
+//Here you can add new properties if you want:
+&amp;GAMProperty = new()
+&amp;GAMProperty.Id = &quot;section&quot;
+&amp;GAMProperty.Value = &quot;98&quot;
+&amp;AdditionalParameter.Properties.Add(&amp;GAMProperty)    
+&amp;AdditionalParameter.AuthenticationTypeName = &amp;LogOnTo
+&amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors )</pre>
+
+<p>Note, in the example above, that the initial properties set at the client login were retrieved, and more initial properties were added as well.</p>
+
+<p>1. At the client, you must configure that it will receive the initial properties from the server. Using the <a href="15935.html">GAM Web Backoffice</a> in the Authentication Type's entry panel (GAMWCAuthenticationTypeEntryGeneral), you must check the &quot;Add gam_session_initial_prop scope?&quot; option. See <a href="https://wiki.genexus.com/commwiki/wiki?37039,," target="_blank">Client Configuration for GAM Remote Authentication</a>.</p>
+
+<p>The corresponding code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AuthenticationTypeGAMRemote.GAMRemote.AddSessionInitialPropertiesScope = TRUE
+</pre>
+
+<p>2. In the Identity Provider's Application configuration, you must enable the Application for it to send the initial properties to clients. Using the <a href="15935.html">GAM Web Backoffice</a>, you must check the  &quot;Can get session initial properties?&quot; option in the Application. See <a href="https://wiki.genexus.com/commwiki/wiki?37038,," target="_blank">Identity Provider Configuration for GAM Remote Authentication</a>.</p>
+
+<p>The code is the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMApplication.ClientAllowGetSessionInitialProperties = TRUE
+</pre>
+
+<h3><a id="GAM+Configuration+in+the+case+of+GAM+Remote+Rest+Authentication+type" class="HashLink" href="#GAM+Configuration+in+the+case+of+GAM+Remote+Rest+Authentication+type">GAM Configuration in the case of GAM Remote Rest Authentication type</a></h3>
+
+<p>In the case of <a href="44833.html">GAM Remote Rest Authentication type (Oauth 2.0)</a>, the properties may be received at the server, but no more properties may be added there (as it happens with GAM Remote Authentication). <br />
+The following properties are for receiving, at the client, the same properties that were set at the client before the login (they are sent to the server and then sent to the client again, if the following properties are activated).</p>
+
+<p>1. At the client, you must configure that it will receive the initial properties from the server. Using the <a href="15935.html">GAM Web Backoffice</a>, you must check the &quot;Add gam_session_initial_prop scope?&quot; option. See <a href="44841.html">Client side configuration for GAM Remote Rest Authentication type</a>.</p>
+
+<p>The code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AuthenticationTypeGAMRemoteRest.GAMRemoteRest.AddSessionInitialPropertiesScope = TRUE
+</pre>
+
+<p>2. At the Identity Provider's Application configuration, you must enable the Application to send the initial properties to the clients. Using the <a href="15935.html">GAM Web Backoffice</a>, you must check the  &quot;Can get session initial properties?&quot; option. See <a href="44840.html">Server side configuration for GAM Remote Rest Authentication type</a>.</p>
+
+<p>The code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMApplication.ClientAllowGetSessionInitialPropertiesRest    = TRUE
+</pre>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>Using <a href="21751.html">GAM Custom Authentication Type</a> or <a href="16512.html">GAM External Web Services Authentication Type</a>, you can also consider the following solution: <a href="21752.html">HowTo: Pass additional parameters to external authentication programs using GAM</a>.</p>
+
+<p><sup>(1)</sup>There's a difference between the &quot;initial properties&quot; concept and SetApplication data and <a href="https://wiki.genexus.com/commwiki/wiki?21575,," target="_blank">GetApplicationData method of GAMSession object</a>. Both are used to save data associated with the user's session, but the initial properties may be recorded only at the time of login; and they may not be changed afterwards. These are also structure-predefined by ID-Token-Value (GAMProperty).<br />
+The ApplicationData may be recorded n times during a user's session. The developer defines an SDT for his needs and sends, to the SetApplicationData, an &amp;SDT.ToJSon() parameter, with a free style structure.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>As from <a href="https://wiki.genexus.com/commwiki/wiki?44454,," target="_blank">GeneXus 16 upgrade 7</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44841.html">Client side configuration for GAM Remote Rest Authentication type</a></TD></TR><TR><TD><a href="19269.html">GAM Login Method</a></TD><TD><a href="44840.html">Server side configuration for GAM Remote Rest Authentication type</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/06/20 09:09 PM</em></font></td></TR></table></font>

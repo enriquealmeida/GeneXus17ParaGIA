@@ -1,0 +1,55 @@
+delimiters "$", "$"
+
+htmlInputConvert ::= [
+  "time": "g_data_binding_conversion_to_time",
+  "date": "g_data_binding_conversion_to_date",
+  "datetime-local": "g_data_binding_conversion_to_datetime",
+  default: "g_data_binding_conversion_to_type"
+]
+
+htmlTypeConvert ::= [
+  "GUID": "g_data_binding_conversion_to_type_guid",
+  "Geography": "g_data_binding_conversion_to_type_geography",
+  default: "g_data_binding_conversion_to_type_default"
+]
+
+g_data_binding(data, customChangeAction) ::=<< 
+[ngModel]="$g_data_binding_conversion(data.InputType, data.BindingInfo.DataBinding.ExprDataType, {$data.BindingInfo.DataBinding:g_expression()$})$"
+$if(!data.IsReadonly)$
+(ngModelChange)="$data.BindingInfo.DataBinding:g_expression()$ = $g_convert_to( {VarChar}, data.BindingInfo.DataBinding.ExprDataType, {\$event})$; $customChangeAction$ $data.UIActionsInfo.ControlValueChangingAction:g_event_binding_call(data)$"
+$endif$
+ngDefaultControl
+[attr.readonly]="$data.IsReadonlyExpression:g_expression()$"
+>>
+
+g_data_binding_conversion(inputType, generatorType, dataValue)::= <%
+$(htmlInputConvert.(inputType))(generatorType, dataValue)$
+%>
+
+g_data_binding_conversion_to_time(generatorType, dataValue) ::= <%
+timeToISOString($dataValue$)
+%>
+
+g_data_binding_conversion_to_date(generatorType, dataValue) ::= <%
+$dataValue$ | dateToISOString
+%>
+
+g_data_binding_conversion_to_datetime(generatorType, dataValue) ::= <%
+$dataValue$ | datetimeToISOString
+%>
+
+g_data_binding_conversion_to_type(generatorType, dataValue) ::= <%
+$(htmlTypeConvert.({$generatorType:g_type_name()$}))(dataValue)$
+%>
+
+g_data_binding_conversion_to_type_guid(dataValue) ::= <%
+$dataValue$ | guidToString
+%>
+
+g_data_binding_conversion_to_type_geography(dataValue) ::= <%
+$dataValue$ | geographyToCoords
+%>
+
+g_data_binding_conversion_to_type_default(dataValue) ::= <%
+$dataValue$
+%>

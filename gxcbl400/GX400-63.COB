@@ -1,0 +1,10 @@
+IF GX-IO-OK
+   PERFORM #1
+   IF NO-ERRORS-FOUND
+      PERFORM #2
+         THRU #3
+      IF NO-ERRORS-FOUND
+         PERFORM #4
+      END-IF
+   END-IF
+END-IF

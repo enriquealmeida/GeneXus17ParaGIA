@@ -1,0 +1,36 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template" %>
+<%@ SubTemplate Name="WinFormInnerLevel" File="TrnWinFormLayout_InnerLevel.dkt"  MergeProperties="True"  %>
+<%@ SubTemplate Name="WinFormLayoutButton" File="TrnWinFormLayout_Button.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="WinFormLayoutButtonToolbar" File="TrnWinFormLayout_ButtonToolbar.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="WinFormLayoutToolbar" File="TrnWinFormLayout_Toolbar.dkt" MergeProperties="True" %>
+<%@ SubTemplate Name="WinFormLayoutFormButtons" File="TrnWinFormLayout_FormButtons.dkt" MergeProperties="True" %>
+<%@ Import Namespace="System.Drawing" %>
+<%@ Property Name="helper" Type="Artech.Genexus.Common.Helpers.TemplateHelper" %>
+<%@ Property Name="transaction" Type="Artech.Genexus.Common.Objects.Transaction" %>
+<%@ Property Name="GenerateToolbar" Type="System.Boolean" %>
+<%@ Property Name="GenerateDelete" Type="System.Boolean" %>
+<%@ Property Name="GenerateButtons" Type="System.Boolean" %>
+
+<%
+		if (GenerateToolbar) 
+		{
+%>
+<%@ CallSubTemplate WinFormLayoutToolbar %>
+<%		}	%>
+<%
+	Dictionary<string, int> Counters = new Dictionary<string, int>();
+	Counters.Add("TextBlockCounter", 1);
+	Counters.Add("TableCounter", 2);
+	Counters.Add("GridCounter", 1);
+%>
+<%@ CallSubTemplate WinFormInnerLevel TransactionLevel='transaction.Structure.Root' Counters='Counters' %>
+<%
+		if (GenerateButtons) 
+		{	%>	
+<%@ CallSubTemplate WinFormLayoutFormButtons %>
+<%		}
+
+	//End Form
+	helper.CurrentPoint.Y += helper.UISettings.FormInsets.Bottom;
+	helper.CurrentPoint.X = helper.MaxX + helper.UISettings.FormInsets.Right ;
+%>

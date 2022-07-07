@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<style type="text/css">
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+
+		.container {
+			height: 100%;
+			width: 100%;
+			display: flex;
+			flex-direction: row;
+			flex-wrap: nowrap;
+		}
+
+		.container-part {
+			width: 50%;
+			flex-grow: 1;
+			flex-shrink: 1;
+		}
+
+		.container-maxHeight {
+			height: 100%;
+		}
+
+		.container-divider {
+			flex-grow: 0;
+			flex-shrink: 0;
+			width: 10px;
+			max-width: 10px;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			user-select: none;
+			border: 1px solid darkGray;
+		}
+
+		.scrollable {
+			overflow: auto;
+		}
+
+		.preview-size-info {
+			background-color: dimgray;
+			color: white;
+			position: absolute;
+			opacity: 0.8;
+			top: 0px;
+			right: 0px;
+		}
+		div#preview {
+			all: initial;
+		}
+	</style>
+	<style>
+		/* Force minimap border left even */
+		.minimap {
+			border-left: 1px solid #eee;
+		}
+	</style>
+	<meta charset="utf-8" />
+</head>
+<body>
+	<div class="container">
+		<div id="monaco-container" class="container-part"></div>
+		<div id="divider" class="container-divider" draggable="true">
+			<b>.<br />.<br />.</b>
+		</div>
+		<div id="preview-container" class="container-part">
+			<div id="preview-info" class="preview-size-info"></div>
+			<div id="preview" class="container-maxHeight scrollable"></div>
+		</div>
+	</div>
+	<script src="vs/loader.js"></script>
+	<script type="text/javascript">
+		require.config({ paths: { 'vs': 'vs' } });
+		// API
+		var GetText;
+		var AddText;
+		var InsertText;
+		var SetText;
+		var SetTheme;
+		var SetLanguage;
+		var SetScroll;
+		var ShowErr;
+		var Refresh;
+		var AddErrorLine;
+
+		// Enablers
+		var SwitchMinimap;
+		var SwitchReadonly;
+		var SwitchRenderWhitespace;
+		var SwitchLinks;
+		var SwitchLineHeight;
+		var SwitchFontSize;
+		var SwitchFolding;
+		var SwitchAutoIndent;
+		var SwitchFontFamily;
+		var SwitchFontLigatures;
+		var AddIntellisense;
+
+		// Variables
+		var ignoreChanges = false;
+		var editor;
+		var Links = [];
+
+		require(['vs/editor/editor.main'], function () {
+
+			/* Helper Funtions */
+
+			RefreshPreview = function () {
+				var editorContent = editor.getValue();
+				if (editorContent.length > 0) {
+					var renderedBody;
+					window.external.Render(editorContent).then(function (result) {
+						shadow.innerHTML = result;
+					});
+				} else {
+					shadow.innerHTML = "";
+				}
+			}
+
+
+			// Register a new language
+			monaco.languages.register({ id: 'elements' });
+
+			// Register a tokens provider for the language
+			monaco.languages.setMonarchTokensProvider('elements', {
+				tokenizer: {
+					root: [
+						[/default/, "function"],
+					]
+				}
+			});
+			// Define a new theme that contains only rules that match this language
+			monaco.editor.defineTheme('elementsTheme', {
+				base: 'vs',
+				inherit: false,
+				rules: [
+					{ token: 'function', foreground: '0000ff', fontStyle: 'bold' },
+				]
+			});
+			// Register a completion item provider for the new language
+			monaco.languages.registerCompletionItemProvider('elements', {
+				provideCompletionItems: () => {
+					var suggestions = [{
+						label: 'default',
+						kind: monaco.languages.CompletionItemKind.Text,
+						insertText: 'default(${1:controlType}, ${2:userControl});',
+						insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+					},
+						{
+							label: 'textblock',
+							insertText:'textblock',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+						{
+							label: 'button',
+							insertText: 'button',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+						{
+							label: 'table',
+							insertText: 'table',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+						{
+							label: 'grid',
+							insertText: 'grid',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+						{
+							label: 'radio',
+							insertText: 'radio',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+						{
+							label: 'combo',
+							insertText: 'combo',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+						{
+							label: 'tab',
+							insertText: 'tab',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+						{
+							label: 'image',
+							insertText: 'image',
+							kind: monaco.languages.CompletionItemKind.Text,
+						},
+					];
+					return { suggestions: suggestions };
+				}
+			});
+
+
+
+			editor = monaco.editor.create(document.getElementById("monaco-container"), {
+				automaticLayout: true,
+				contextmenu: false,
+				folding: true,
+				language: 'elements',
+				lineNumbers: true,
+				links: true,
+				minimap: {
+					enabled: true,
+					renderCharacters: false
+				},
+				mouseWheelZoom: true,
+				scrollBeyondLastColumn: false,
+				theme: 'elementsTheme',
+				value: '',
+				wordWrap: "on"
+			});
+
+			/* Preview init */
+
+			var shadow;
+
+			let previewRoot = document.getElementById("preview");
+			if (previewRoot) {
+				shadow = previewRoot.attachShadow({ mode: 'open' });
+			}
+			RefreshPreview();
+
+			editor.getModel().onDidChangeContent((e) => {
+				if (!ignoreChanges) {
+				RefreshPreview();
+	    			window.external.OnDocumentChanged();
+				}
+			});
+
+			/* Divider drag */
+
+			let divider = document.getElementById("divider");
+			let monacoContainer = document.getElementById("monaco-container");
+			let previewContainer = document.getElementById("preview-container");
+
+			divider.onmousedown = function (event) {
+				moveAt(event.clientX);
+
+				document.addEventListener('mousemove', onMouseMove);
+
+				document.onmouseup = function (event) {
+					event.preventDefault()
+					document.removeEventListener('mousemove', onMouseMove);
+					document.onmouseup = null;
+				};
+			}
+
+			divider.ondragstart = function () {
+				return false;
+			};
+
+			function moveAt(clientX) {
+				let windowWidth = divider.parentElement.offsetWidth;
+				let newWidthPercentage = (clientX / windowWidth) * 100;
+				monacoContainer.setAttribute("style", "width: " + newWidthPercentage.toString() + "%");
+				previewContainer.setAttribute("style", "width: " + (100 - newWidthPercentage).toString() + "%");
+			}
+
+			function onMouseMove(event) {
+				moveAt(event.clientX);
+			}
+
+			/* Show preview size info on resize */
+
+			let previewInfo = document.getElementById("preview-info");
+
+			const resizeObserver = new ResizeObserver(entries => {
+				for (let entry of entries) {
+					if (entry.target === previewContainer) {
+						showPreviewSizeIfNeeded();
+					}
+				}
+			});
+			resizeObserver.observe(previewContainer);
+
+			showPreviewSizeIfNeeded = function () {
+				let newSizeInfo = `${previewContainer.offsetWidth}x${previewContainer.offsetHeight}`;
+					previewInfo.innerHTML = newSizeInfo;
+			}
+
+			var selectedText = "";
+
+			editor.onDidChangeCursorSelection((e) => {
+				if (e) {
+					try {
+						//		selectedText = editor.getModel().getValueInRange(editor.getSelection()).toString();
+						//	window.external.SetSelection(selectedText);
+					}
+					catch
+					{
+					}
+				}
+				return "";
+			});
+
+			Selection = function () {
+				return selectedText;
+			}
+
+			SelectAll = function () {
+				const lineCount = editor.getModel().getLineCount();
+				const lastLineLength = editor.getModel().getLineMaxColumn(lineCount);
+				editor.setSelection(
+					{ startLineNumber: 0, endLineNumber: lineCount, startColumn: 0, endColumn: lastLineLength }
+				);
+			}
+
+			window.onresize = function () {
+					editor.layout();
+			};
+
+			GetText = function () {
+				return editor.getValue();
+			}
+
+
+			SetText = function (x) {
+				Links = [];
+				ignoreChanges = true;
+				editor.setValue(x);
+				ignoreChanges = false;
+				RefreshPreview();
+			}
+
+			Search = function (text) {
+				if (!text || text.length == 0)
+					editor.getAction('actions.find').run();
+				else {
+					const model = editor.getModel();
+					const matches = model.findMatches(text);
+					if (matches && matches.length > 0) {
+						const range = matches[0].range;
+
+						editor.setSelection(range);
+						editor.getAction('actions.find').run();
+					}
+				}
+			}
+
+
+			SelectedText = function () {
+				if (editor.getSelection())
+					return editor.getModel().getValueInRange(editor.getSelection());
+				return "";
+			}
+
+			SelectionLength = function () {
+				return SelectedText.length;
+			}
+
+			// This function create a link with the given text.
+			AddPosition = function (text, posId) {
+				const lineCount = editor.getModel().getLineCount();
+				const lastLineLength = editor.getModel().getLineMaxColumn(lineCount);
+
+				Links.push({
+					range: { startLineNumber: lineCount, startColumn: lastLineLength, endLineNumber: lineCount, endColumn: lastLineLength + text.length },
+					gxpos: posId
+				});
+				AddText(text);
+			}
+
+
+			InsertText = function (x, line) {
+				AddTextAtLine(x, line + 1, 0, false);
+				Links.forEach((l) => {
+					if (l.range.startLineNumber > line) {
+						l.range.startLineNumber = l.range.startLineNumber + 1;
+						l.range.endLineNumber = l.range.endLineNumber + 1;
+					}
+				});
+			}
+
+			AddTextAtLine = function (x, line, column, autoScroll) {
+				const lastLineLength = column;
+
+
+				const range = new monaco.Range(
+					line,
+					lastLineLength,
+					line,
+					lastLineLength
+				);
+
+				// hack, it seems there is no way to have Monaco readonly from user interface so put readonly and restore after edit.
+				SwitchReadonly(false);
+				editor.executeEdits('', [
+					{ range: range, text: x }
+				]);
+				SwitchReadonly(true);
+
+				if (autoScroll) {
+					editor.revealRangeInCenterIfOutsideViewport({
+						startLineNumber: line,
+						startColumn: 1,
+						endLineNumber: line,
+						endColumn: 1
+					});
+				}
+
+			}
+
+
+			AddText = function (x, autoScroll) {
+				const lineCount = editor.getModel().getLineCount();
+				AddTextAtLine(x, lineCount, editor.getModel().getLineMaxColumn(lineCount), autoScroll);
+				if (lineCount <= 1)
+					editor.setSelection(new monaco.Selection(1, 1, 1, 1));
+
+			}
+
+			SetLanguage = function (x) {
+				monaco.editor.setModelLanguage(editor.getModel(), x);
+			}
+
+			// This function can be usefule for GeneXus M
+			SetTheme = function (themeName) {
+				if (themeName == "Dark") {
+					monaco.editor.setTheme("vs-dark");
+				}
+				if (themeName == "Light") {
+					monaco.editor.setTheme("vs");
+				}
+				if (themeName == "Black") {
+					monaco.editor.setTheme("hc-black");
+				}
+			}
+
+			SwitchMinimap = function (flag) {
+				editor.updateOptions({
+					minimap: {
+						enabled: flag,
+					}
+				});
+			}
+
+			SwitchReadonly = function (flag) {
+				editor.updateOptions({
+					readOnly: flag,
+				});
+			}
+
+			SwitchRenderWhitespace = function (op) {
+				editor.updateOptions({
+					renderWhitespace: op,
+				});
+			}
+
+			SwitchLinks = function (flag) {
+				editor.updateOptions({
+					links: flag,
+				});
+			}
+
+			SwitchLineHeight = function (num) {
+				editor.updateOptions({
+					lineHeight: num,
+				});
+			}
+
+			SwitchFontSize = function (num) {
+				editor.updateOptions({
+					fontSize: num,
+				});
+			}
+
+			SwitchFolding = function (flag) {
+				editor.updateOptions({
+					folding: flag,
+				});
+			}
+
+			SwitchAutoIndent = function (flag) {
+				editor.updateOptions({
+					autoIndent: flag,
+				});
+			}
+
+			SwitchFontFamily = function (name) {
+				editor.updateOptions({
+					fontFamily: name,
+				});
+			}
+
+			SwitchFontLigatures = function (flag) {
+				editor.updateOptions({
+					fontLigatures: flag,
+				});
+			}
+
+			SetScroll = function (line) {
+				editor.revealLineInCenter({ lineNumber: line });
+			}
+
+			Refresh = function () {
+				var text = getText();
+				setText("");
+				editor.trigger('keyboard', 'type', { text: text });
+			}
+		});
+	</script>
+</body>
+</html>

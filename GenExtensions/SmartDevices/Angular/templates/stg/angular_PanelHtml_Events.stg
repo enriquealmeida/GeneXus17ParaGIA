@@ -1,0 +1,14 @@
+delimiters "$", "$"
+
+event_binding( modelEvent, controlEvent, data) ::= <<
+($controlEvent$) = "$g_event_uiaction(modelEvent, data)$"
+>>
+
+event_uiaction( modelEvent, data ) ::= <%
+  $if(data.UIActionsInfo.UIElementActionExpression)$
+  $reverse(data.CurrentContextInfo.actionContext):g_event_set_action_context()$
+  $if(data.UIActionsInfo.UIElementActionExpression.ExprType)$
+  $data.UIActionsInfo.UIElementActionExpression:g_expression()$.on$modelEvent$(\$event);
+  $endif$
+  $endif$
+%>

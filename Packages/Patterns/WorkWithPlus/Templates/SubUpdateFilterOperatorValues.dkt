@@ -1,0 +1,101 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Append transaction redirection" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+<%@ Property Name="FilterVarGen" Type="DVelop.Patterns.WorkWithPlus.FilterAttributeGeneralElement" %>
+<%@ Property Name="FilterActualIndex" Type="System.String" %>
+<%
+	bool hasSimpleOperatorNotFixed = FilterVarGen.HasSimpleOperator();
+	bool hasRangeOperatorPickerDates = FilterVarGen.HasRangeOperatorPickerSeparateDates();
+	bool hasRangeOperatorPickerRange = !hasRangeOperatorPickerDates && FilterVarGen.HasRangeOperatorPickerRange();
+	bool hasFixedValueOperator = FilterVarGen.HasFixedValueOperator();
+%>
+
+Sub 'Update<%= FilterVarGen.Name + FilterActualIndex %>OperatorValues'
+
+<%
+	string varCellName = hasRangeOperatorPickerDates || FilterActualIndex == "" ? FilterVarGen.Name + "_Cell" + FilterActualIndex : "Filter_" + FilterVarGen.Name + FilterActualIndex + "_Cell";
+	if (((hasSimpleOperatorNotFixed || hasRangeOperatorPickerDates) && hasFixedValueOperator) 
+		|| (hasSimpleOperatorNotFixed && (hasRangeOperatorPickerDates || hasRangeOperatorPickerRange)))
+	{
+		if (hasFixedValueOperator || hasRangeOperatorPickerRange)
+		{
+%>
+	<%= varCellName %>.Class = !'Invisible'
+<%
+		}
+		if (hasRangeOperatorPickerDates)
+		{
+%>
+	<%= FilterVarGen.Name %>_To_Cell<%= FilterActualIndex %>.Class = !'Invisible'
+<%
+			foreach (int operIndex2 in FilterVarGen.GetRangeOperatorMiddleTextIndexes())
+			{
+%>
+	<%= FilterVarGen.Name %>_RangeMiddleText_<%= operIndex2.ToString() + FilterActualIndex %>.Class = !'Invisible'
+<%
+			}
+		}
+	}
+	if (hasRangeOperatorPickerRange && (hasFixedValueOperator || hasSimpleOperatorNotFixed || hasRangeOperatorPickerDates))
+	{
+%>
+	<%= FilterVarGen.Name %>_Range_Cell<%= FilterActualIndex %>.Class = !'Invisible'
+<%
+	}
+%>
+	Do Case
+<%
+	int operIndex = 0;
+	foreach (FilterAttributeOperatorElement oper in FilterVarGen.GetOperators())
+	{
+%>
+		Case <%= FilterVarGen.GetOperatorVariableName().Replace("<OPER_INDEX>", FilterActualIndex) %> = <%= operIndex.ToString() %>
+<%
+		if (oper.IsCustomTypeSimple() || oper.IsCustomTypeRange() && oper.IsPickerSeparateDates())
+		{
+			if (hasFixedValueOperator)
+			{
+%>
+			<%= varCellName %>.Class = !''
+<%
+			}
+			if (oper.IsCustomTypeRange())
+			{
+%>
+			<%= FilterVarGen.Name %>_To_Cell<%= FilterActualIndex %>.Class = !''
+<%
+				if (oper.MiddleText != "")
+				{
+%>
+			<%= FilterVarGen.Name %>_RangeMiddleText_<%= FilterVarGen.GetRangeOperatorMiddleTextIndex(oper).ToString() + FilterActualIndex %>.Class = !''
+<%
+				}
+			}
+		}
+		else if (oper.IsCustomTypeRange() && oper.IsPickerRange())
+		{
+%>
+			<%= FilterVarGen.Name %>_Range_Cell<%= FilterActualIndex %>.Class = !''
+<%
+		}
+		else
+		{
+%>
+			<%= FilterVarGen.VariableName + FilterActualIndex %> = <%= oper.FixedValue %>
+<%
+			if (oper.IsCustomTypeFixedRange())
+			{
+%>
+			<%= FilterVarGen.RangeVariableName + FilterActualIndex %> = <%= oper.FixedValueTo %>
+<%
+			}
+		}
+		operIndex++;
+	}
+%>
+	EndCase
+
+EndSub

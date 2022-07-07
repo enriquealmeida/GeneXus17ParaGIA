@@ -1,0 +1,73 @@
+delimiters "$", "$"
+
+property_html_name(propertyHtmlName) ::=<<
+[$propertyHtmlName$]
+>>
+
+caption_property(control, defaultValue) ::= <%
+$if (control.UIModelInfo.CaptionProperty)$
+  {{$control.UIModelInfo.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.UIModelInfo.CaptionProperty$ | default:translate('$defaultValue$')}}
+$else$
+  {{'$defaultValue$' | translate}}
+$endif$
+%>
+
+visible_property(control, defaultValue) ::= <%
+$if (control.UIModelInfo.VisibleProperty)$
+  $g_assign_html_property_boolean_not({hidden}, control.UIModelInfo.UIElementContextExpression, control.UIElementControlName, control.UIModelInfo.VisibleProperty)$
+$else$
+$if (!defaultValue)$
+  hidden = true  
+$endif$
+$endif$
+%>
+
+enabled_property(control, defaultValue) ::= <%
+$if(control.UIActionsInfo.DisabledOnLoad)$
+   $g_assign_html_property_boolean_not_cond({disabled}, control.UIModelInfo.UIElementContextExpression, control.UIElementControlName, control.UIModelInfo.EnabledProperty, defaultValue, {_actionsEnabled})$
+$elseif(control.UIModelInfo.EnabledProperty)$
+    $g_assign_html_property_boolean_not({disabled}, control.UIModelInfo.UIElementContextExpression, control.UIElementControlName, control.UIModelInfo.EnabledProperty)$
+$elseif(!defaultValue)$
+  disabled
+$endif$
+%>
+
+class_property(control, defaultValue, attributeType) ::=
+<%
+$assign_class_property_or_default(class_property_type.(attributeType), control, control.UIModelInfo.ClassProperty, defaultValue)$
+%>
+
+class_property_type ::=
+[
+  "html":"class",
+  "angular":"ngClass",
+  "control":"cssClass",
+  default: {$class_property_type.angular$}
+]
+
+assign_class_property_or_default(propertyHtmlName, control, uiModelProperty, defaultValue) ::=
+<%
+$if(uiModelProperty)$
+$property_html_name(propertyHtmlName)$="$control.UIModelInfo.UIElementContextExpression:g_expression()$.$control.UIElementControlName$?.$uiModelProperty$ | default:'$defaultValue$' | classSplit"
+$else$
+$if(defaultValue)$
+$property_html_name(propertyHtmlName)$="'$defaultValue$' | classSplit"
+$endif$
+$endif$
+%>
+
+assign_html_property_or_default(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName, delim, defaultValue) ::= <%
+$if(propertyUIName)$
+    $property_html_name(propertyHtmlName)$="$uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$ | default:$delim$$defaultValue$$delim$"
+$else$
+    $if(defaultValue)$
+    $propertyHtmlName$=$delim$$defaultValue$$delim$
+    $endif$
+$endif$
+%>
+
+assign_html_property(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName) ::= <%
+$if(propertyUIName)$
+    $property_html_name(propertyHtmlName)$="$uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$"
+$endif$
+%>

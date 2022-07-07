@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Get GAM Repository connection information and create a connection file</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19231,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Get GAM Repository connection information and create a connection file</h1>
+<!--HowTo: Get GAM Repository connection information and create a connection file--><div class="TableWikiBody" id="tblwikibody"><div style="background-color: rgb(255,235,205);border-left: 6.0px solid rgb(245,166,35);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Deprecated</strong>: Since <a href="https://wiki.genexus.com/commwiki/wiki?48247,," target="_blank">GeneXus 17 upgrade 5</a>.</div>
+
+<p>This document explains how to programmatically <span style="line-height: 20.800001px;">get </span>the <a href="14960.html">GAM</a> Repository Connection information in XML format, using the GAM API. The resulting XML is suitable for copy &amp; paste in a <a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,4,61,O,E,0,,30451'>connection.gam</a> file, so it includes all the information needed to connect to a GAM Repository. </p>
+
+<p>This is useful when the <a href="18617.html">GAM Manager Repository</a> <span style="color: rgb(51,51,51);font-family: sans-serif , Arial , Verdana , &quot;Trebuchet MS&quot;;font-size: 13.0px;line-height: 20.800001px;background-color: rgb(255,255,255);">administrator </span>creates a new <a href="17568.html">GAM Repository</a> and later needs to create a connection.gam file, to give it to the administrator of the new Repository so as to connect to it. See <a href="18642.html">HowTo: Creating New Repositories</a> for more information about this scenario.</p>
+
+<p>So, given a Repository GUID and a GAM Repository Connection name, the GAM API provides a method that allows getting the XML needed to include in connection.gam file so as to connect to this Repository using the connection name provided.</p>
+
+<h3><a id="Sample+of+use" class="HashLink" href="#Sample+of+use">Sample of use</a></h3>
+
+<p>The method used for this purpose is GetConnectionsFile (a method of GAM external object).</p>
+
+<p>It receives as a parameter a collection of GAMRepositoryConnectionFileFilter (an SDT that has the Repository GUID and the Repository Connection name). So, this method can receive many Repositories as filter and return an XML file with the connection information of all of them.</p>
+
+<p>It also receives as a parameter the user name and user password of <a href="18617.html">GAM Manager Repository</a> user.</p>
+
+<p>See the example below:</p>
+
+<p>Define a variable named &amp;GAMRepositoryConnectionFileFilter based on GAMRepositoryConnectionFileFilter data type, and a variable &amp;GAMRepositoryConnectionFileFilters which is a collection of GAMRepositoryConnectionFileFilter data type. These data types are part of GAM library.</p>
+
+<p>Code the following in order to get the connection.gam information into a string variable (&amp;TextXML):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMRepositoryConnectionFileFilter.GUID = &amp;GUID  // &amp;GUID of the Repository
+&amp;GAMRepositoryConnectionFileFilter.Name = &amp;ConnectionName // &amp;ConnectionName of the Repository Connection
+&amp;GAMRepositoryConnectionFileFilters.Add(&amp;GAMRepositoryConnectionFileFilter)
+GAM.GetConnectionsFile(&amp;gamadminuser,&amp;gamadminpwd,&amp;GAMRepositoryConnectionFileFilters,&amp;TextXML,&amp;Errors) //set the information of the connection into &amp;TextXML variable
+
+//process the errors
+for &amp;Error in &amp;Errors
+    msg(&amp;Error..Message + !&quot;(GAM&quot; + &amp;Error.Code.ToString().Trim() + !&quot;)&quot;)
+endfor</pre>
+
+<p>A connection file with the information obtained above is created as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;XmlWriter.open(&quot;connection.gam&quot;)
+&amp;XmlWriter.WriteRawText(&amp;TextXML)
+&amp;XmlWriter.close()</pre>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>In order to get the information from the <a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,4,61,O,E,0,,30451'>connection.gam</a> file directly you need to use the GAM GetConnections method.</p>
+
+<p><br />
+</p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="48446.html">GAM Repository Connections (GeneXus 17 upgrade 4 and prior)</a></TD><TD><a href="18642.html">HowTo: Creating New Repositories</a></TD></TR><TR><TD><a href="48590.html">HowTo: Get and Set GAM Repository Connections (GeneXus 17 upgrade 4 and prior)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/14/21 11:11 AM</em></font></td></TR></table></font>

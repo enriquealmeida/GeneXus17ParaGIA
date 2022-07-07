@@ -1,0 +1,86 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="VerifyControlTextTable Valudation Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="ControlGXName" Type="System.String" %>
+<%@ Property Name="value1" Type="System.String" %>
+<%@ Property Name="value2" Type="System.String" %>
+<%@ Property Name="variable1" Type="System.String" %>
+<%@ Property Name="variable2" Type="System.String" %>
+<%@ Property Name="dataPoolName1" Type="System.String" %>
+<%@ Property Name="dataPoolName2" Type="System.String" %>
+<%@ Property Name="dataPoolColumnName1" Type="System.String" %>
+<%@ Property Name="dataPoolColumnName2" Type="System.String" %>
+<%@ Property Name="gridName" Type="System.String" %>
+<%@ Property Name="byRow" Type="System.Boolean" %> 
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="AttType" Type="Artech.Genexus.Common.eDBType" %>
+<%@ SubTemplate Name="ObjectGXTag" File="ObjectGXTag.dkt" MergeProperties="True"%>
+<%
+	string compare = TransactionHelper.GetComparatorValue(AttType);
+%>
+<VerifyControlTextTable Type="Validation">
+	<Boolean Value="false" />
+	<ControlGX Name="<%=gridName%>">
+<%@ CallSubTemplate ObjectGXTag Object='Object' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+	</ControlGX>
+<%
+	string tagName = TransactionHelper.GetSelectionValue(byRow);
+%>
+	<<%=tagName%> ComparatorType="ComparatorStr" Comparator="equal">
+<%
+	if (!byRow)
+	{
+%>
+		<ControlGX Name="<%=ControlGXName%>">
+<%@ CallSubTemplate ObjectGXTag Object='Object' model='model' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+		</ControlGX>
+<%
+	}
+	if (value1 != string.Empty)
+	{	// Apply Value Tag
+%>
+		<Value Value="<%=value1%>" />
+<%
+	}
+	else if (variable1 != string.Empty)
+	{	// Apply Variable Tag
+%>
+		<Variable VariableName="<%=variable1%>" />
+<%	}
+	else
+	{	// Apply DataPool Tag
+%>
+		<DataPool DataPoolName="<%=dataPoolName1%>" DataPoolColumnName="<%=dataPoolColumnName1%>" />
+<%
+	}
+%>
+	</<%=tagName%>>
+	<SelectionByControl ComparatorType="<%=compare%>" Comparator="equal">
+		<ControlGX Name="<%=ControlGXName%>">
+<%@ CallSubTemplate ObjectGXTag Object='Object' model='model' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+		</ControlGX>
+<%
+	if (value2 != string.Empty)
+	{	// Apply Value Tag
+%>
+		<Value Value="<%=value2%>" />
+<%
+	}
+	else if (variable2 != string.Empty)
+	{	// Apply Variable Tag
+%>
+		<Variable VariableName="<%=variable2%>" />
+<%	}
+	else
+	{	// Apply DataPool Tag
+%>
+		<DataPool DataPoolName="<%=dataPoolName2%>" DataPoolColumnName="<%=dataPoolColumnName2%>" />
+<%
+	}
+%>
+	</SelectionByControl>
+	<Boolean Value="false" />
+	<Value Value="" />
+</VerifyControlTextTable>

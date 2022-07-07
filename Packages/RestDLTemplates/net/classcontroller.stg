@@ -1,0 +1,299 @@
+group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities, dps, apis, sdts, gx)::=<<
+$header(hostinfo, entities,  dps, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities, dps, apis, sdts, gx)::=<<
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Web.Http;
+using System.Web.OData;
+using $hostinfo.netnamespace$;
+using $hostinfo.netnamespace$.Models;
+using System.Web.OData.Query;
+using System.Web.OData.Routing;
+using System.Threading.Tasks;
+using GeneXus.OData;
+using GeneXus.Utils;
+using GeneXus.Application;
+using GeneXus.Http;
+using GeneXus.Data.NTier;
+$entities:{item|$if (item.HasModule)$using $hostinfo.netnamespace$.$gx.ToLower.(item.Module)$;$"\n"$$endif$};separator=""$
+$dps:{item|$if (item.HasModule)$using $hostinfo.netnamespace$.$gx.ToLower.(item.Module)$;$"\n"$$endif$};separator=""$
+$sdts:{item|$if (item.HasModule)$using $hostinfo.netnamespace$.$gx.ToLower.(item.Module)$;$"\n"$$endif$};separator=""$
+
+namespace $hostinfo.netnamespace$.Controllers
+{
+	$entities:{item|$entity_instance(item, gx)$};separator="\n"$
+	$dps:{item|$dp_instance(item, gx)$};separator="\n"$
+	$sdts:{item|$sdt_instance(item,gx)$};separator="\n"$
+}
+>>
+
+assign_instance(item, level, gx)::=<<
+$level.Attributes:{att| $assign_property(item, att, gx)$};separator="\n"$
+>>
+
+assign_property(item, att, gx)::=<<
+entity$item.Name$.$att.Name$ = $if (att.IsDateTimeType)$new DateTimeOffset(GeneXus.Utils.DateTimeUtil.toUniversalTime($endif$ $gx.ToLower.(item.Name)$Item.gxTpr_$gx.ToProper.(att.Name)$$if (att.IsDateTimeType)$), TimeSpan.Zero)$endif$;
+>>
+
+assign_sdt(item, level, gx)::=<<
+$level.Attributes:{att| $assign_attribute(item, att, gx)$};separator="\n"$
+>>
+
+assign_attribute(item, att, gx)::=<<
+sdt_item.gxTpr_$gx.ToProper.(att.Name)$ = $if (att.IsDateTimeType)$GeneXus.Utils.DateTimeUtil.fromUniversalTime($endif$$gx.ToLower.(item.Name)$Entity.$att.Name$$if (att.IsDateTimeType)$.UtcDateTime)$endif$;
+>>
+
+
+start_entity_bc(item, sdt, gx)::=<<
+public class $item.Name$Controller : GXODataController<Sdt$item.Name$, $item.Name$, $gx.ToLower.(item.Name)$_bc>
+{
+	public override $item.Name$ entityInstance(Sdt$item.Name$ $gx.ToLower.(item.Name)$Item) {
+		$item.Name$ entity$item.Name$ = new $item.Name$();		
+		$assign_instance(item, sdt, gx)$
+		$sdt.SubLevels:{sublevel| entity$item.Name$.$gx.ToProper.(sublevel.Name)$ = new List<$gx.ToProper.(item.Name)$$gx.ToProper.(sublevel.Name)$>(); $loop_assign(item, sublevel, gx)$ };separator="\n"$
+
+		return entity$item.Name$;
+	}   
+
+	public List<$item.Name$> entityInstance(GXBaseCollection<Sdt$item.Name$> $gx.ToLower.(item.Name)$Item_List) {
+		List<$item.Name$> entity$item.Name$Collection = new List<$item.Name$>();
+		foreach(Sdt$item.Name$  $gx.ToLower.(item.Name)$Item in $gx.ToLower.(item.Name)$Item_List) {
+			$item.Name$ entity$item.Name$ = new $item.Name$();
+			$assign_instance(item, item.SDT, gx)$
+			entity$item.Name$Collection.Add(entity$item.Name$);
+		}
+		return entity$sdt.Name$Collection;
+	} 
+
+
+	public override Sdt$item.Name$ entityRead(Sdt$item.Name$ sdt_item, $item.Name$ $gx.ToLower.(item.Name)$Entity)
+	{
+		$assign_sdt(item, sdt, gx)$
+		return sdt_item;
+	}
+>>
+
+loop_assign(item, sublevel, gx)::=<<
+
+foreach ( Sdt$item.Name$_$gx.ToProper.(sublevel.Name)$ $gx.ToLower.(sublevel.Name)$Item in $gx.ToLower.(item.Name)$Item.gxTpr_$gx.ToProper.(sublevel.Name)$) {
+	$gx.ToProper.(item.Name)$$gx.ToProper.(sublevel.Name)$ entity$sublevel.Name$ = new  $gx.ToProper.(item.Name)$$gx.ToProper.(sublevel.Name)$();
+	$assign_instance(sublevel, sublevel, gx)$	
+	entity$item.Name$.$gx.ToProper.(sublevel.Name)$.Add( entity$sublevel.Name$ );	
+}
+>>
+
+start_entity_sdt(item, sdt, gx)::=<<
+public class $item.Name$Controller : ODataController
+{
+	$if (sdt.IsCollection)$
+	public static List<$sdt.Name$> entityInstance(GXBaseCollection<Sdt$sdt.Name$_$sdt.CollectionItemName$> $gx.ToLower.(sdt.Name)$Item_List) {
+		List<$sdt.Name$> entity$sdt.Name$Collection = new List<$sdt.Name$>();
+		foreach(Sdt$sdt.Name$_$sdt.CollectionItemName$  $gx.ToLower.(sdt.Name)$Item in $gx.ToLower.(sdt.Name)$Item_List) {
+			$sdt.Name$ entity$sdt.Name$ = new $sdt.Name$();
+			$assign_instance(item, sdt, gx)$
+			entity$sdt.Name$Collection.Add(entity$sdt.Name$);
+		}
+		return entity$sdt.Name$Collection;
+	}   
+	$else$
+	public static List<$sdt.Name$> entityInstance(GXBaseCollection<Sdt$sdt.Name$> $gx.ToLower.(sdt.Name)$Item_List) {
+		List<$sdt.Name$> entity$sdt.Name$Collection = new List<$sdt.Name$>();
+		foreach(Sdt$sdt.Name$  $gx.ToLower.(sdt.Name)$Item in $gx.ToLower.(sdt.Name)$Item_List) {
+			$sdt.Name$ entity$sdt.Name$Item = entityInstance($gx.ToLower.(sdt.Name)$Item);		
+			entity$sdt.Name$Collection.Add(entity$sdt.Name$Item);
+		}
+		return entity$sdt.Name$Collection;
+	}
+
+	public static $sdt.Name$ entityInstance(Sdt$sdt.Name$ $gx.ToLower.(sdt.Name)$Item) {
+		$sdt.Name$ entity$sdt.Name$ = new $sdt.Name$();
+		$assign_instance(item, sdt, gx)$			
+		return entity$sdt.Name$;		
+	}   
+	$endif$
+}
+>>
+
+
+
+sdt_instance(item, gx)::=<<
+$start_entity_sdt(item, item.SDT, gx)$
+>>
+
+dp_instance(item, gx)::=<<
+public class $item.Name$Controller :  ODataController {
+
+	protected IGxContext oDataContext;
+
+	protected $item.Name$Controller() {            
+		oDataContext = new GxContext();
+		DataStoreUtil.LoadDataStores(oDataContext);
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		oDataContext.CloseConnections();
+		base.Dispose(disposing);
+	}
+
+	[HttpGet]
+	[ODataRoute("$item.Name$($item.InParameters:{paritem|$gen_par(paritem,gx)$};separator=","$)")]
+	public IHttpActionResult $item.Name$($item.InParameters:{paritem|[FromODataUri] $paritem.NETType$ $gx.ToLower.(paritem.Name)$};separator=","$)
+	{
+		$first(item.OutParameters):{outpar|$if (outpar.IsCollection)$GXBaseCollection<Sdt$outpar.SDTType$$if (outpar.HasCollectionItemName)$_$endif$$outpar.CollectionItemName$>$else$Sdt$outpar.SDTType$$endif$ funcresult = $sdt_execute(item)$};separator=","$		
+		$first(item.OutParameters):{outpar|$if (outpar.IsCollection)$List<$outpar.SDTType$> retval = $entitycall(outpar)$$else$$outpar.SDTType$ retval = $entitycall(outpar)$$endif$};separator=","$;
+		return Ok(retval);					
+	}
+}
+>>
+
+entitycall(outpar)::=<<$if(outpar.IsBCSDT)$new $endif$$outpar.SDTType$Controller$if(outpar.IsBCSDT)$()$endif$.entityInstance(funcresult)>>
+
+sdt_execute(item)::=<<
+new $gx.ToLower.(item.Name)$().executeUdp($item.InParameters:{paritem|$gx.ToLower.(paritem.Name)$};separator=","$);
+>>
+
+gen_par(paritem,gx)::=<<
+$paritem.Name$={$gx.ToLower.(paritem.Name)$}
+>>
+
+entity_instance(item, gx)::=<<
+$start_entity_bc(item, item.SDT, gx)$
+	public Sdt$item.Name$ loadItem( $item.SDT.KeyAttributes:{keyitem| $keyitem.NETType$ $gx.ToLower.(keyitem.Name)$ };separator=","$ )
+	{
+		Sdt$item.Name$ sdt_item = new Sdt$item.Name$(oDataContext);
+		Sdt$item.Name$_RESTInterface sdt_item_interface = new Sdt$item.Name$_RESTInterface(sdt_item);
+		sdt_item.Load( $item.SDT.KeyAttributes:{keyitem| $gx.ToLower.(keyitem.Name)$ };separator=","$);
+		return sdt_item;
+	}
+
+	[EnableQuery]
+	public IQueryable<$item.Name$> Get(ODataQueryOptions opts)
+	{		
+		return getList(opts);
+	}
+    
+	$get_singleresult(item, item.SDT, gx)$
+
+
+	public IHttpActionResult patchItem(Sdt$item.Name$ sdt_item, Delta<$item.Name$> $gx.ToLower.(item.Name)$_delta)
+	{
+		if (sdt_item.Success())
+		{
+			$item.Name$ item = entityInstance(sdt_item);
+			$gx.ToLower.(item.Name)$_delta.Patch(item);
+			return saveItem(sdt_item, item);
+		}
+		else
+		{
+			return NotFound();
+		}
+	}
+
+	public async Task<IHttpActionResult> Post($item.Name$ item)
+	{
+		if (!ModelState.IsValid)
+		{
+			return BadRequest(ModelState);
+		}
+		return insertItem(item);            
+	}
+
+	$patch_singleresult(item, item.SDT, gx)$
+
+	$put_singleresult(item, item.SDT, gx)$
+
+	$delete_singleresult(item, item.SDT, gx)$
+
+	private bool ConsolsExists(int key)
+	{
+		return true;
+	}
+}
+>>
+
+get_singleresult(item, level, gx)::=<<
+[ReplaceNullContentWithNotFoundAttribute]
+[ODataRoute("$item.Name$({$level.KeyAttributes:{keyitem| $gx.ToLower.(keyitem.Name)$};separator=","$})")]
+public SingleResult<$item.Name$> Get([FromODataUri] $level.KeyAttributes:{keyitem| $keyitem.NETType$ $gx.ToLower.(keyitem.Name)$ };separator=","$)	
+{	
+	Sdt$item.Name$ sdt_item = loadItem($level.KeyAttributes:{keyitem|$gx.ToLower.(keyitem.Name)$ };separator=","$);
+	if (sdt_item.Success())
+	{
+		$item.Name$ item = entityInstance(sdt_item);
+		IQueryable<$item.Name$> result = (new List<$item.Name$>() { item }).AsQueryable();
+		return SingleResult.Create(result);
+	}
+	else
+	{
+		return SingleResult.Create((new List<$item.Name$>() {}).AsQueryable());
+	}
+}      
+>>
+
+patch_singleresult(item, level, gx)::=<<
+[ODataRoute("$item.Name$({$level.KeyAttributes:{keyitem| $gx.ToLower.(keyitem.Name)$};separator=","$})")]
+public async Task<IHttpActionResult> Patch([FromODataUri] $level.KeyAttributes:{keyitem| $keyitem.NETType$ $gx.ToLower.(keyitem.Name)$ };separator=","$, Delta<$item.Name$> $gx.ToLower.(item.Name)$_delta, ODataQueryOptions<$item.Name$> options)
+{
+	if (!ModelState.IsValid)
+	{
+		return BadRequest(ModelState);
+	}
+	Sdt$item.Name$ sdt_item = loadItem($level.KeyAttributes:{keyitem|$gx.ToLower.(keyitem.Name)$ };separator=","$);
+	$check_ismatch(item)$
+	return patchItem(sdt_item, $gx.ToLower.(item.Name)$_delta);           
+}
+>>
+
+put_singleresult(item, level, gx)::=<<
+[ODataRoute("$item.Name$({$level.KeyAttributes:{keyitem| $gx.ToLower.(keyitem.Name)$};separator=","$})")]
+public async Task<IHttpActionResult> Put([FromODataUri] $level.KeyAttributes:{keyitem| $keyitem.NETType$ $gx.ToLower.(keyitem.Name)$ };separator=","$, $item.Name$ update, ODataQueryOptions<$item.Name$> options)
+{
+	if (!ModelState.IsValid)
+	{
+		return BadRequest(ModelState);
+	}
+	$level.KeyAttributes:{keyitem| $check_keyvalue(item, keyitem)$ };separator="\n"$	
+	Sdt$item.Name$ sdt_item = loadItem($level.KeyAttributes:{keyitem| $gx.ToLower.(keyitem.Name)$ };separator=""$);          	
+	$check_ismatch(item)$
+	return putItem(sdt_item, update);            
+}
+>>
+
+check_ismatch(item)::=<<
+$item.Name$ item = entityInstance(sdt_item);
+IQueryable<$item.Name$> result = (new List<$item.Name$>() {item}).AsQueryable();
+try {	
+	 if (!(options.IfMatch != null && (options.IfMatch.ApplyTo(result) as IQueryable<$item.Name$>).Any()))
+		return StatusCode(HttpStatusCode.PreconditionFailed);
+}
+catch (Exception ex) {
+	return StatusCode(HttpStatusCode.PreconditionFailed);
+}
+>>
+
+check_keyvalue(item, keyitem)::=<<
+if ($gx.ToLower.(keyitem.Name)$ != update.$keyitem.Name$)
+{
+	return BadRequest();
+}
+>>
+
+delete_singleresult(item, level, gx)::=<<
+[ODataRoute("$item.Name$({$level.KeyAttributes:{keyitem| $gx.ToLower.(keyitem.Name)$};separator=","$})")]
+public async Task<IHttpActionResult> Delete([FromODataUri] $level.KeyAttributes:{keyitem| $keyitem.NETType$ $gx.ToLower.(keyitem.Name)$ };separator=","$, ODataQueryOptions<$item.Name$> options)
+{
+	Sdt$item.Name$ sdt_item = loadItem($level.KeyAttributes:{keyitem|$gx.ToLower.(keyitem.Name)$ };separator=","$);
+	$check_ismatch(item)$
+	return deleteItem(sdt_item);            
+}
+>>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GeneXus Administration of GAM Repository</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15769,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GeneXus Administration of GAM Repository</h1>
+<!--GeneXus Administration of GAM Repository--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h3><a id="Purpose" class="HashLink" href="#Purpose">Purpose</a></h3>
+
+<p>Many steps to get the <a href="17568.html">GAM Repository</a> ready to be used can be executed from GeneXus IDE. The behavior results from the fact that GeneXus checks in F5 (Build All) process if it's necessary to create GAM database tables, or just execute a reorganization in GAM database, or do nothing (because the GAM repository already exists and is up to date).</p>
+
+<p>In F5, a connection is stablished to the database specified in GAM data store (using the connection properties of this data store: database name, user id, user password), and checks the existency of some tables and GAM version.<br />
+If these tables don't exist, the GAM database tables are created with the <a href="15802.html">Repository ID</a> specified.</p>
+
+<p>If these tables already exist, the necessary reorg is executed, and afterwards and initialization is done, where <a href="15802.html">Repository ID</a>, <a href="https://wiki.genexus.com/commwiki/wiki?15215,," target="_blank">Administrator User Name Property</a>, <a href="https://wiki.genexus.com/commwiki/wiki?15216,," target="_blank">Administrator User Password Property</a>, <a href="15217.html">Connection User Name Property</a> and <a href="15218.html">Connection User Password Property</a> are checked.</p>
+
+<p>Besides, upgrading <a href="19888.html">GeneXus Access Manager</a> version, changing the GAM data store, or creating a new environment, are actions where some considerations should be taken into account.</p>
+
+<p>So, in this paper we sum up some of these situations and the considerations to be taken.</p>
+
+<h3><a id="Case+A.+Creating+the+GAM+repository" class="HashLink" href="#Case+A.+Creating+the+GAM+repository">Case A. Creating the GAM repository</a></h3>
+
+<p>See <a href="https://wiki.genexus.com/commwiki/wiki?19942,," target="_blank">Creating the GAM repository for the first time from GeneXus (X Evolution 3)</a></p>
+
+<h3><a id="Case+B.+Updating+GAM+%28installing+an+upgrade%29" class="HashLink" href="#Case+B.+Updating+GAM+%28installing+an+upgrade%29">Case B. Updating GAM (installing an upgrade)</a></h3>
+
+<p>Supposing you have a KB where <a href="14706.html">Enable Integrated Security Property</a> <strong>has already been activated, but a new GeneXus build is installed </strong>(where GAM has changes). Suppose the KB uses version X of GAM and a new build is applied where a new version of GAM is available, so the GAM objects and GAM repository need to be updated.</p>
+
+<p>This update is done automatically. After doing &quot;Build All&quot; to the KB the following happens:</p>
+
+<p>1. The <a href="16535.html">GAM API</a> is imported automatically.</p>
+
+<p>2. The necessary reorganization is executed in GAM repository.</p>
+
+<h3><a id="Case+C.+Changing+GAM+data+store+properties+or+generator" class="HashLink" href="#Case+C.+Changing+GAM+data+store+properties+or+generator">Case C. Changing GAM data store properties or generator</a></h3>
+
+<p>After changing the GAM data store properties, or the environment generator, you have to &quot;Rebuild All&quot;, and all the GAM execution files (connection.gam and application.gam) are moved to the model directory.<br />
+The database reorganization is done if needed.</p>
+
+<h3><a id="Case+D.+Creating+a+secondary+environment+in+a+KB+where+GAM+is+activated" class="HashLink" href="#Case+D.+Creating+a+secondary+environment+in+a+KB+where+GAM+is+activated">Case D. Creating a secondary environment in a KB where GAM is activated</a></h3>
+
+<p><strong>If a new environment is created in a KB where GAM is already activated </strong>(<a href="14706.html">Enable Integrated Security Property</a> = Yes).</p>
+
+<p>One possibility is that the new environment uses the same GAM. </p>
+
+<p>GeneXus detects when the database specified in &quot;Database name&quot; property  for the Reorg data store has already a GAM repository. In case it has, the <a href="https://wiki.genexus.com/commwiki/wiki?15215,," target="_blank">Administrator User Name Property</a>, <a href="https://wiki.genexus.com/commwiki/wiki?15216,," target="_blank">Administrator User Password Property</a>, <a href="15217.html">Connection User Name Property</a> and <a href="15218.html">Connection User Password Property</a> properties are not initialized, and the GeneXus user has to set those properties manually.</p>
+
+<p>In this case, <a href="15802.html">Repository Id</a> property remains the same as the previous environment.</p>
+
+<p>So, if in this new environment you specify the same database name as another existing environment of the KB, the connection properties have to be set manually.</p>
+
+<p>In case you specify a different GAM database, it's the same as explained in case A.</p>
+
+<h3><a id="Case+E.+Connecting+to+an+existing+external+GAM+repository" class="HashLink" href="#Case+E.+Connecting+to+an+existing+external+GAM+repository">Case E. Connecting to an existing external GAM repository</a></h3>
+
+<p>In case of connecting to a external GAM repository, the <a href="15802.html">Repository ID</a> property has to be set. In this case, when the &quot;Build All&quot; is done, GeneXus detects that this repository (with the connection properties associated to it) is a valid GAM repository so it's no need to create a new GAM database, neither try to make reorganizations to this database. This is the typical case of using GXserver, where many KBs will use the same GAM repository.</p>
+
+<p>See <a href="16151.html">HowTo: Using the same GAM Database by different applications</a></p>
+
+<h3><a id="Case+F.+Managing+more+than+one+GAM+Repository+in+GeneXus+in+prototyping+time" class="HashLink" href="#Case+F.+Managing+more+than+one+GAM+Repository+in+GeneXus+in+prototyping+time">Case F. Managing more than one GAM Repository in GeneXus in prototyping time</a></h3>
+
+<p>See <a href="https://wiki.genexus.com/commwiki/wiki?18685,," target="_blank">Managing GAM Repositories and GAM Applications in GX development time</a></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18617.html">GAM Manager Repository</a></TD></TR><TR><TD><a href="16150.html">GAM Repository Connections</a></TD><TD><a href="15918.html">HowTo: Develop Secure REST Web Services in GeneXus</a></TD></TR><TR><TD><a href="16151.html">HowTo: Using the same GAM Database by different applications</a></TD><TD><a href="15802.html">Repository ID Environment property</a></TD></TR><TR><TD><a href="18512.html">Require Access Permissions Application Property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

@@ -1,0 +1,707 @@
+<?xml version='1.0' encoding='iso-8859-1'?>
+<Content version='148254 $'>
+	<Object id='DS_SERVICE'>
+		<Group>
+			<Name>Datastores</Name>
+			<Type>Main</Type>
+			<Children>
+				<Prop hidden='1'>
+					<Id>HelpKeyword</Id>
+					<Name>HelpKeyword</Name>
+					<Type>Integer</Type>
+					<Dependencies>
+						<Depend type='Default'>
+							<Value>92</Value>
+						</Depend>
+					</Dependencies>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>REORG_GEN</Id>
+					<Name>Reorganization generator</Name>
+					<Description>Reorganization generator</Description>
+					<Type>Integer</Type>
+					<Default>8</Default>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>MAIN_DS</Id>
+					<Name>Main datastore</Name>
+					<Description>Main datastore</Description>
+					<Type>Boolean</Type>
+					<Default>true</Default>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Group>
+					<Id>AccessTechSettings</Id>
+					<Name>Access technology settings</Name>
+					<Description>Access technology settings</Description>
+					<Type>Group</Type>
+					<Children>
+						<Group>
+							<Id>CSINFORMATION</Id>
+							<Name>Connection information</Name>
+							<Description>Connection information</Description>
+							<Type>Group</Type>
+							<Dependencies>
+								<Depend type='Not Show'>
+									<Cond>context(ACCESS_TECHNO) == AS/400 Native</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName source='context'>ACCESS_TECHNO</PropName>
+											<Value>AS/400 Native</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Children>
+								<Prop hidden='1'>
+									<Id>CONNECT_METHOD</Id>
+									<Name>Connection method</Name>
+									<Description>Connection method</Description>
+									<Type>Combo</Type>
+									<Default>OPSYS</Default>
+									<Values>
+										<Value id='OPSYS' desc='Integrated to Operating System'/>
+										<Value id='DBMS' desc='Database Server'/>
+									</Values>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>context(ACCESS_TECHNO) != EMBEDDED_SQL</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>NotEqual</Operator>
+													<PropName source='context'>ACCESS_TECHNO</PropName>
+													<Value>EMBEDDED_SQL</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Prop>
+									<Id>CS_SERVER</Id>
+									<Name>Server name</Name>
+									<Description>Server name</Description>
+									<Type>Text</Type>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>((context(ACCESS_TECHNO) == EMBEDDED_SQL) and (false)) or ((context(ACCESS_TECHNO) == ODBC) and (context(CS_USETOCONNECT) != Driver))</Cond>
+											<Condition>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ACCESS_TECHNO</PropName>
+															<Value>ODBC</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>and</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>NotEqual</Operator>
+															<PropName source='context'>CS_USETOCONNECT</PropName>
+															<Value>Driver</Value>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Required'>
+											<Cond>((context(ACCESS_TECHNO) == JDBC) and ((context(JDBC_CUSTOM_URL) == 0) and (context(JDBC_DRIVER) != _COM.ibm.db2.jdbc.app.DB2Driver))) or ((context(ACCESS_TECHNO) == ADONET) or ((context(ACCESS_TECHNO) == Ruby) and (true)))</Cond>
+											<Condition>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ACCESS_TECHNO</PropName>
+																	<Value>JDBC</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>and</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>BooleanExpression</Type>
+																	<FirstPart>
+																		<Expression>
+																			<Type>Comparison</Type>
+																			<Operator>Equal</Operator>
+																			<PropName source='context'>JDBC_CUSTOM_URL</PropName>
+																			<Value>0</Value>
+																		</Expression>
+																	</FirstPart>
+																	<Operator>and</Operator>
+																	<SecondPart>
+																		<Expression>
+																			<Type>Comparison</Type>
+																			<Operator>NotEqual</Operator>
+																			<PropName source='context'>JDBC_DRIVER</PropName>
+																			<Value>_COM.ibm.db2.jdbc.app.DB2Driver</Value>
+																		</Expression>
+																	</SecondPart>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ACCESS_TECHNO</PropName>
+																	<Value>ADONET</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>BooleanExpression</Type>
+																	<FirstPart>
+																		<Expression>
+																			<Type>Comparison</Type>
+																			<Operator>Equal</Operator>
+																			<PropName source='context'>ACCESS_TECHNO</PropName>
+																			<Value>Ruby</Value>
+																		</Expression>
+																	</FirstPart>
+																	<Operator>and</Operator>
+																	<SecondPart>
+																		<Expression>
+																			<Type>BooleanExpression</Type>
+																			<FirstPart>
+																				<Expression>
+																					<Type>IsObject</Type>
+																					<ObjectName>DS_INFORMIX</ObjectName>
+																				</Expression>
+																			</FirstPart>
+																			<Operator>not</Operator>
+																		</Expression>
+																	</SecondPart>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+									<Metadata>
+										<Value name='FlagExport'>false</Value>
+										<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.DataStoreServerNameDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+										<Value name='AfterSetValueHandler'>Artech.Genexus.Common.Resolvers.Handlers.DeployToCloudSettingAfterSetHandler, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+										<Value name='customReadOnlyResolver'>Artech.Genexus.Common.Resolvers.Readonly.CheckIfTrialStandardReadonlyResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+									</Metadata>
+								</Prop>
+								<Prop>
+									<Id>USER_ID</Id>
+									<Name>User id</Name>
+									<Description>User id</Description>
+									<Type>Text</Type>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>(context(ACCESS_TECHNO) == EMBEDDED_SQL) and (value(CONNECT_METHOD) == OPSYS)</Cond>
+											<Condition>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ACCESS_TECHNO</PropName>
+															<Value>EMBEDDED_SQL</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>and</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>CONNECT_METHOD</PropName>
+															<Value>OPSYS</Value>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Not Show'>
+											<Cond>context(TRUSTED_CONNECTION) == Yes</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>TRUSTED_CONNECTION</PropName>
+													<Value>Yes</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Required'>
+											<Cond>(context(ACCESS_TECHNO) == JDBC) or (((context(TRUSTED_CONNECTION) != Yes) and (context(ACCESS_TECHNO) == ADONET)) or (context(ACCESS_TECHNO) == Ruby))</Cond>
+											<Condition>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ACCESS_TECHNO</PropName>
+															<Value>JDBC</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>BooleanExpression</Type>
+																	<FirstPart>
+																		<Expression>
+																			<Type>Comparison</Type>
+																			<Operator>NotEqual</Operator>
+																			<PropName source='context'>TRUSTED_CONNECTION</PropName>
+																			<Value>Yes</Value>
+																		</Expression>
+																	</FirstPart>
+																	<Operator>and</Operator>
+																	<SecondPart>
+																		<Expression>
+																			<Type>Comparison</Type>
+																			<Operator>Equal</Operator>
+																			<PropName source='context'>ACCESS_TECHNO</PropName>
+																			<Value>ADONET</Value>
+																		</Expression>
+																	</SecondPart>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ACCESS_TECHNO</PropName>
+																	<Value>Ruby</Value>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+									<Metadata>
+										<Value name='FlagShowInRequiredWizard'></Value>
+										<Value name='FlagExport'>false</Value>
+										<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.DataStoreUserIdDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+										<Value name='AfterSetValueHandler'>Artech.Genexus.Common.Resolvers.Handlers.DeployToCloudSettingAfterSetHandler, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+										<Value name='customReadOnlyResolver'>Artech.Genexus.Common.Resolvers.Readonly.CheckIfTrialStandardReadonlyResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+									</Metadata>
+								</Prop>
+								<Prop>
+									<Id>USER_PASSWORD</Id>
+									<Name>User password</Name>
+									<Description>User password</Description>
+									<Type>Text</Type>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>(context(ACCESS_TECHNO) == EMBEDDED_SQL) and (value(CONNECT_METHOD) == OPSYS)</Cond>
+											<Condition>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ACCESS_TECHNO</PropName>
+															<Value>EMBEDDED_SQL</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>and</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>CONNECT_METHOD</PropName>
+															<Value>OPSYS</Value>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Not Show'>
+											<Cond>context(TRUSTED_CONNECTION) == Yes</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>TRUSTED_CONNECTION</PropName>
+													<Value>Yes</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Required'>
+											<Cond>(context(ACCESS_TECHNO) == JDBC) or ((context(TRUSTED_CONNECTION) != Yes) and ((context(ACCESS_TECHNO) == ADONET) or (context(ACCESS_TECHNO) == Ruby)))</Cond>
+											<Condition>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ACCESS_TECHNO</PropName>
+															<Value>JDBC</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>NotEqual</Operator>
+																	<PropName source='context'>TRUSTED_CONNECTION</PropName>
+																	<Value>Yes</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>and</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>BooleanExpression</Type>
+																	<FirstPart>
+																		<Expression>
+																			<Type>Comparison</Type>
+																			<Operator>Equal</Operator>
+																			<PropName source='context'>ACCESS_TECHNO</PropName>
+																			<Value>ADONET</Value>
+																		</Expression>
+																	</FirstPart>
+																	<Operator>or</Operator>
+																	<SecondPart>
+																		<Expression>
+																			<Type>Comparison</Type>
+																			<Operator>Equal</Operator>
+																			<PropName source='context'>ACCESS_TECHNO</PropName>
+																			<Value>Ruby</Value>
+																		</Expression>
+																	</SecondPart>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+									<Metadata>
+										<Value name='FlagShowInRequiredWizard'></Value>
+										<Value name='FlagExport'>false</Value>
+										<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.DataStoreUserPasswordDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+										<Value name='AfterSetValueHandler'>Artech.Genexus.Common.Resolvers.Handlers.DeployToCloudSettingAfterSetHandler, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+										<Value name='customReadOnlyResolver'>Artech.Genexus.Common.Resolvers.Readonly.CheckIfTrialStandardReadonlyResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+									</Metadata>
+									<Options>
+										<Option type='Password'/>
+									</Options>
+								</Prop>
+								<Prop>
+									<Id>DS_PROVIDER</Id>
+									<Name>Datastore Provider</Name>
+									<Description>Indicates the kind of datastore</Description>
+									<Type>Text</Type>
+								</Prop>
+								<Prop>
+									<Id>DS_DBMS_ADDINFO</Id>
+									<Name>Additional connection string attributes</Name>
+									<Description>Additional connection string attributes</Description>
+									<Type>Text</Type>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>(context(ACCESS_TECHNO) == JDBC) or (context(ACCESS_TECHNO) == EMBEDDED_SQL)</Cond>
+											<Condition>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ACCESS_TECHNO</PropName>
+															<Value>JDBC</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ACCESS_TECHNO</PropName>
+															<Value>EMBEDDED_SQL</Value>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+									<Metadata>
+										<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.DataStoreConnStringAttsDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+									</Metadata>
+								</Prop>
+							</Children>
+						</Group>
+						<Group hidden='1'>
+							<Id>POOL</Id>
+							<Name>Server connection pooling</Name>
+							<Description>Server connection pooling</Description>
+							<Type>Group</Type>
+							<Dependencies>
+								<Depend type='Not Show'/>
+								<Depend type='Not Show'>
+									<Cond>context(ACCESS_TECHNO) != JDBC</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>NotEqual</Operator>
+											<PropName source='context'>ACCESS_TECHNO</PropName>
+											<Value>JDBC</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Children>
+								<Prop hidden='1'>
+									<Id>PoolRWEnabled</Id>
+									<Name>Enable connection pooling</Name>
+									<Description>Enable connection pooling</Description>
+									<Type>Boolean</Type>
+									<Default>true</Default>
+								</Prop>
+								<Prop hidden='1'>
+									<Id>UnlimitedRWPool</Id>
+									<Name>Unlimited size</Name>
+									<Description>Unlimited size</Description>
+									<Type>Boolean</Type>
+									<Default>true</Default>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(PoolRWEnabled) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>PoolRWEnabled</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Prop hidden='1'>
+									<Id>POOLSIZE_RW</Id>
+									<Name>Size</Name>
+									<Description>Size</Description>
+									<Type>Integer</Type>
+									<Default>10</Default>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(PoolRWEnabled) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>PoolRWEnabled</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Not Show'>
+											<Cond>value(UnlimitedRWPool) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>UnlimitedRWPool</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Invalid'>
+											<Value>0</Value>
+											<Cond>value(UnlimitedRWPool) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>UnlimitedRWPool</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Prop hidden='1'>
+									<Id>POOL_STARTUP</Id>
+									<Name>Create all pool connections at startup</Name>
+									<Description>Create all pool connections at startup</Description>
+									<Type>Combo</Type>
+									<Default>No</Default>
+									<Values>
+										<Value id='No' desc='No'/>
+										<Value id='Yes' desc='Yes'/>
+									</Values>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(PoolRWEnabled) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>PoolRWEnabled</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Not Show'>
+											<Cond>value(UnlimitedRWPool) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>UnlimitedRWPool</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Prop hidden='1'>
+									<Id>RecycleRW</Id>
+									<Name>Recycle pool connections</Name>
+									<Description>Recycle pool connections</Description>
+									<Type>Boolean</Type>
+									<Default>true</Default>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(PoolRWEnabled) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>PoolRWEnabled</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Prop hidden='1'>
+									<Id>RecycleRWType</Id>
+									<Name>Recycle type</Name>
+									<Description>Recycle type</Description>
+									<Type>Combo</Type>
+									<Default>1</Default>
+									<Values>
+										<Value id='1' desc='By creation time'/>
+										<Value id='2' desc='By idle time'/>
+									</Values>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(PoolRWEnabled) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>PoolRWEnabled</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Not Show'>
+											<Cond>value(RecycleRW) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>RecycleRW</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Prop hidden='1'>
+									<Id>RecycleRWMin</Id>
+									<Name>Recycle time (minutes)</Name>
+									<Description>Recycle time (minutes)</Description>
+									<Type>Integer</Type>
+									<Default>30</Default>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(PoolRWEnabled) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>PoolRWEnabled</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Not Show'>
+											<Cond>value(RecycleRW) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>RecycleRW</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Invalid'>
+											<Value>0</Value>
+											<Cond>value(UnlimitedRWPool) == false</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>UnlimitedRWPool</PropName>
+													<Value>false</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+							</Children>
+						</Group>
+					</Children>
+				</Group>
+				<Prop hidden='1'>
+					<Id>DS_LAST_CHANGE</Id>
+					<Name>Timestamp last change</Name>
+					<Type>Text</Type>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+			</Children>
+		</Group>
+	</Object>
+</Content>

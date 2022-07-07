@@ -1,0 +1,28 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Formulas Validation" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ SubTemplate Name="GetValueAction" File="GetValueAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPCompareValidation" File="DPCompareValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="PressKeyAction" File="PressKeyAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextValidation" File="VerifyControlTextValidation.dkt" MergeProperties="True"%>
+<%
+	// Generate a Tab to make sure all formulas are triggered
+	GenericElement ge = null;
+%>
+<%@ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+    foreach (System.Collections.Generic.KeyValuePair<string, string> entry in basicElements.FormulaList)
+    {
+		string n = entry.Key;
+		ge = basicElements.ResolveBind(entry.Key);
+%>
+<%@ CallSubTemplate VerifyControlTextValidation Object='Object' model='model' ControlGXName='entry.Key' variable='""' value='""' dataPoolName='entry.Value' dataPoolColumnName='entry.Key' AttType='ge.AtributeType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+    }
+    basicElements.FormulaList = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // Reset list
+%>

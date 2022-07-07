@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Configuration for secure deployment using GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47243,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Configuration for secure deployment using GAM</h1>
+<!--Configuration for secure deployment using GAM--><div class="TableWikiBody" id="tblwikibody"><p>The following are recommendations to implement at the server level configuration in order to deploy in the most secure way your applications. Is important to review the article <a href="47237.html">Hardening of GeneXus Systems and Deployments with GAM</a>.</p>
+
+<h3><a id="Secure+channel" class="HashLink" href="#Secure+channel">Secure channel</a></h3>
+
+<p>Regarding the use of a secure channel for communication between client and server, there are several elements to be taken into account by the infrastructure administrator, and that depends on the technologies used. Therefore, the following recommendations are general and some external references are provided as a guide on how to implement them. By complementing GAM, good practices can prevent problems such as the theft of misconfigured cookies or even credentials.</p>
+
+<h4><a id="HTTPS+compliance" class="HashLink" href="#HTTPS+compliance">HTTPS compliance</a></h4>
+
+<p>Avoid using unencrypted HTTP. From GeneXus, the Protocol specification property can be configured at the generation environment level. If the value Do not specify is assigned, either HTTP or HTTPS will be used depending on the configuration of the server on which the application is hosted, which makes it easier in test environments. The problem with this approach is that the production server is assumed to be correctly configured. Then we have the Secure (HTTPS:) value, which forces you to interact via HTTPS and have all the environments where the application is hosted correctly configured.</p>
+
+<p>A restrictive policy not to use HTTP can be configured on each web server, with complementary measures such as enabling HTTP Strict Transport Security (HSTS) which is also useful for the next consideration regarding the use of HTTPS.</p>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://support.microsoft.com/en-us/help/324069/how-to-set-up-an-https-service-in-iis</li>
+	<li>https://docs.microsoft.com/en-us/iis/configuration/system.applicationhost/sites/site/hsts</li>
+	<li>https://docs.microsoft.com/en-us/iis/get-started/whats-new-in-iis-10-version-1709/iis-10-version-1709-hsts</li>
+	<li>https://httpd.apache.org/docs/2.4/ssl/ssl_howto.html</li>
+	<li>https://tomcat.apache.org/tomcat-9.0-doc/ssl-howto.html</li>
+</ul>
+
+<p>Avoid a return to HTTP and insecure protocols</p>
+
+<p>In some cases, the server configuration may intentionally or accidentally be switched from HTTPS to HTTP for certain URLs. With the “URL rewrite” functionality on the servers, it is possible to create redirects to the same resource you are trying to access but forcing the use of HTTPS instead of HTTP.</p>
+
+<p>On the other hand, in encryption protocols, we usually find TLS (Transport Layer Security) or its predecessor SSL (Secure Sockets Layer) configured in its different versions. Today, supporting only TLS 1.2 and 1.3 in applications is recommended. Servers running on Windows (Internet Information Services) are configured at the operating system level, which can be done manually or with tools such as IIS Crypto. On servers like Apache, the change occurs at the service level by editing configuration files, for example, adding the following to the corresponding file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SSLProtocol         all -SSLv3 -TLSv1 -TLSv1.1</pre>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://howtohelpdesk.com/how-to-redirect-http-to-https-in-iis/</li>
+	<li>https://www.tecmint.com/redirect-http-to-https-on-apache/</li>
+	<li>https://www.journaldev.com/160/steps-to-configure-ssl-on-tomcat-and-setup-auto-redirect-from-http-to-https#tomcat-redirect-http-to-https</li>
+	<li>https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Protection_Cheat_Sheet.html</li>
+	<li>https://httpd.apache.org/docs/trunk/ssl/ssl_howto.html#ciphersuites</li>
+	<li>https://docs.microsoft.com/en-us/mem/configmgr/core/plan-design/security/enable-tls-1-2-client</li>
+	<li>https://www.sslshopper.com/article-how-to-disable-ssl-2.0-in-iis-7.html</li>
+	<li>https://www.nartac.com/Products/IISCrypto/Download</li>
+	<li>https://tomcat.apache.org/tomcat-9.0-doc/ssl-howto.html</li>
+</ul>
+
+<h4><a id="Use+of+strong+encryption" class="HashLink" href="#Use+of+strong+encryption">Use of strong encryption</a></h4>
+
+<p>In addition to selecting the right protocols, it is necessary to carefully select encryption suites. It is a combination of authentication, encryption, and integrity control algorithms supported by the protocols. There are various configurations, so you can follow different recommendations from recognized industry and security entities such as OWASP, or those recommended by application server vendors; for example, in the Apache documentation.</p>
+
+<p>On Windows (Internet Information Services), the configuration is done at the operating system level, and it can be done manually or with tools such as IIS Crypto. On servers like Apache, the change occurs at the service level by editing configuration files, for example, adding the following to the corresponding file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SSLCipherSuite      ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256
+
+</pre>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Protection_Cheat_Sheet.html</li>
+	<li>https://cheatsheetseries.owasp.org/cheatsheets/TLS_Cipher_String_Cheat_Sheet.html#recommendations-for-a-cipher-string</li>
+	<li>https://www.nartac.com/Products/IISCrypto/Download</li>
+	<li>https://docs.microsoft.com/en-us/windows/win32/secauthn/cipher-suites-in-schannel</li>
+	<li>https://httpd.apache.org/docs/trunk/ssl/ssl_howto.html#ciphersuites</li>
+	<li>https://tomcat.apache.org/tomcat-9.0-doc/ssl-howto.html</li>
+	<li>https://www.acunetix.com/blog/articles/tls-ssl-cipher-hardening/</li>
+</ul>
+
+<p> </p>
+
+<h3><a id="Generic+error+pages" class="HashLink" href="#Generic+error+pages">Generic error pages</a></h3>
+
+<p>It is the developers' and administrators' responsibility to generate generic error pages (404, 403, 500, etc.) and configure them on the server, respectively, so as not to reveal information due to access control failures, internal GAM or GeneXus errors, etc. This is a frequently suggested practice because it doesn't indicate if a resource is inaccessible due to lack of permissions or because it doesn't exist. Also, if an internal error occurs, neither the trace of the error nor the technology are recorded. All these elements would provide information to a potential attacker.</p>
+
+<p>If you are using <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a> or higher you can configure the <a href="45949.html">Http Error Handlers property</a> to associate different static HTML pages to specific error codes.</p>
+
+<p>For prior versions you still can do such configurations; notice that every web server implementation has its own way of configuring when to return error pages. In IIS (Internet Information Services) it is possible to apply configurations from its administration graphic interface, although, in general, if you edit the web.config file directly it is usually more versatile and easier to find information about it. For other implementations like Apache, it is edited in a configuration file and it can be simpler to find functional examples since lines like the following are usually enough to return a specific page:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ErrorDocument 404 /errors/not_found.html</pre>
+
+<p>The version of the server to be configured must be taken into account, as there can be major differences in the configuration file between versions. For example, Apache Tomcat allows configuring the same handling of 404 as shown below in tomcat/conf/web.xml:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;error-page&gt;
+  &lt;error-code&gt;404&lt;/error-code&gt;
+  &lt;location&gt;/errors/not_found.html&lt;/location&gt;
+&lt;/error-page&gt;</pre>
+
+<p>However, in Tomcat 9, particular cases such as incorrectly formatted URLs are not covered in the previous configuration. To this end, “Valves” are introduced, which are rules that intervene when processing an HTTP request. In particular, an “Error Report Valve” should be applied here, which allows you to customize the handling of an error:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Valve className="org.apache.catalina.valves.ErrorReportValve"
+        errorCode.400="webapps/ROOT/errors/not_found.html"
+        errorCode.0="webapps/ROOT/errors/errorOthers.html"
+        showReport="false"
+        showServerInfo="false" /&gt;</pre>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://www.bruceclay.com/blog/microsoft-iis-custom-404-error-page-configuration/</li>
+	<li>https://www.troyhunt.com/solving-tyranny-of-http-403-responses/</li>
+	<li>https://www.digitalocean.com/community/tutorials/how-to-configure-apache-to-use-custom-error-pages-on-ubuntu-14-04</li>
+	<li>https://httpd.apache.org/docs/2.4/custom-error.html</li>
+	<li>https://tomcat.apache.org/tomcat-9.0-doc/config/valve.html#Error_Report_Valve</li>
+</ul>
+
+<p> </p>
+
+<h3><a id="Do+not+activate+GAM+Trace+in+production" class="HashLink" href="#Do+not+activate+GAM+Trace+in+production">Do not activate GAM Trace in production</a></h3>
+
+<p>The GAM registry should be used for testing purposes in non-productive environments. Activating it from the GAM web back-office interface or an API leaves log files that should not be edited later. This information should not be included in production logs because they potentially record information from GAM users and tokens. Therefore, the Enable tracing repository property must be set to 0 - Off.</p>
+
+<p>For more details, read this article:</p>
+
+<ul>
+	<li>https://wiki.genexus.com/commwiki/servlet/wiki?25395,HowTo%3A+Generate+GAM+trace<br />
+	 </li>
+</ul>
+
+<h3><a id="Configuration+of+HTTP+headers" class="HashLink" href="#Configuration+of+HTTP+headers">Configuration of HTTP headers</a></h3>
+
+<p>Seeking a balance between usability and security, developers implement functionalities through HTTP headers that can make applications more versatile or secure. But for this you have to consider how these headers are implemented and if they follow the corresponding best practices.</p>
+
+<p>GeneXus doesn’t provide default settings for many recommended headers because the appropriate values depend largely on each application. Here is a brief description of the most important headers and a reference to the OWASP Secure Headers Project, which seeks to create awareness of the existence and use of meaningful headers.</p>
+
+<h4><a id="HTTP+Strict+Transport+Security+%28HSTS%29" class="HashLink" href="#HTTP+Strict+Transport+Security+%28HSTS%29">HTTP Strict Transport Security (HSTS)</a></h4>
+
+<p>HTTP Strict Transport Security (HSTS) is a web security policy that helps protect websites against protocol degradation and cookie hijacking attacks. It allows web servers to declare that browsers interact with them only through HTTPS. A server implements an HSTS policy through the Strict-Transport-Security header over an HTTPS connection (an HSTS header over HTTP is ignored). A complete example would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Strict-Transport-Security: max-age=31536000 ; includeSubDomains</pre>
+
+<p>Here, max-age indicates the duration of the policy in seconds and the includeSubDomains attribute (optional) specifies that the rule also applies to all subdomains.</p>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://developer.mozilla.org/en-US/docs/Web/Security/HTTP_strict_transport_security</li>
+	<li>https://owasp.org/www-project-secure-headers/</li>
+</ul>
+
+<h4><a id="X-Frame-Options" class="HashLink" href="#X-Frame-Options">X-Frame-Options</a></h4>
+
+<p>The X-Frame-Options header improves the protection of web applications against clickjacking attacks. It is used to indicate to the browser if the content can be displayed in frames. The frame-ancestors directive of the CSP policy (see Content-Security-Policy header), if present, obscures the X-Frame-Options header definition.</p>
+
+<p>GeneXus depends on frames in elements such as prompts, among others, so in general it is not a good idea to use the Deny value in this header. The best option is to use the sameorigin value (the frame does not load if the origin is not the same as the page that contains it) or allow-from: DOMAIN, where DOMAIN is the allowed domain name for the page containing the frame. A complete example would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+X-Frame-Options: sameorigin</pre>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://owasp.org/www-community/attacks/Clickjacking</li>
+	<li>https://developer.mozilla.org/en-US/docs/Web/HTTP/X-Frame-Options</li>
+	<li>https://owasp.org/www-project-secure-headers/</li>
+</ul>
+
+<h4><a id="X-Content-Type-Options" class="HashLink" href="#X-Content-Type-Options">X-Content-Type-Options</a></h4>
+
+<p>Including this header prevents the browser from inspecting the content of the server response, considering only the value of the Content-Type header. For example, avoid treating text/plain as text/css. The value must be nosniff, as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+X-Content-Type-Options: nosniff</pre>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85)?redirectedfrom=MSDN</li>
+	<li>https://docs.microsoft.com/en-us/archive/blogs/ie/ie8-security-part-vi-beta-2-update</li>
+	<li>https://owasp.org/www-project-secure-headers/</li>
+</ul>
+
+<h4><br />
+Content Security Policy</h4>
+
+<p>The Content Security Policy (CSP) requires careful tuning and precise definition. If enabled, CSP has a significant impact on how the browser renders the application; for example, “inline” JavaScript is disabled by default and must be explicitly allowed in the policy. CSP prevents a wide range of attacks, including cross-site scripting and other types of injections. An example of a secure policy is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Content-Security-Policy: script-src 'strict-dynamic' 'unsafe-inline'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script';
+
+</pre>
+
+<p>To understand the values and what is defined by each rule, see the listed documentation. This header is one that requires further testing to ensure that the loading of resources in the browser is not excessively restricted, which makes the application dysfunctional. There are websites to validate policies or verify the one that was implemented if the application is publicly available on the Internet.</p>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://owasp.org/www-community/attacks/Content_Security_Policy</li>
+	<li>https://csp-evaluator.withgoogle.com/</li>
+	<li>https://csper.io/evaluator</li>
+	<li>https://owasp.org/www-project-secure-headers/</li>
+</ul>
+
+<h4><br />
+Referrer-Policy</h4>
+
+<p>The proper value of the Referrer-Policy header depends on the use of the Referer header in the application, since it determines what information is included in this header. There are very strict values such as no-referrer that do not include the Referer, but also more permissive values such as same-origin that send information in it for requests originating from the same application; however, requests originating from other sites will not have Referer information. A sample header would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Referrer-Policy: no-referrer</pre>
+
+<p>Reading the listed documentation is recommended to understand the possible values and how they affect the Referer header in different scenarios.</p>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://web.dev/referrer-best-practices/</li>
+	<li>https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy</li>
+	<li>https://owasp.org/www-project-secure-headers/</li>
+</ul>
+
+<h4><a id="Configuration+on+the+server" class="HashLink" href="#Configuration+on+the+server">Configuration on the server</a></h4>
+
+<p>In each Web server implementation, HTTP headers are added in a different way. In IIS, within the application (it can be at the level of all hosted applications) there is an element called “HTTP Response Headers” where you can manually configure headers with their fixed values.</p>
+
+<p><img src="./images/47244.png" id="47244" class="WikiImage"/></p>
+
+<p>In Apache, headers can be easily added using the mod_headers module with a line like the one below (there are more complex methods to define headers that can be seen in the documentation):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Header set X-Content-Type-Options "nosniff"
+</pre>
+
+<p>In Apache Tomcat, there are “filters” that automatically include headers depending on the configuration applied. For example, the filter blockContentTypeSniffingEnabled will add the header X-Content-Type-Options with the nosniff value. Those headers that are not included can be added manually in the configuration file within the filters:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &lt;init-param&gt;
+        &lt;param-name&gt;Custom-Header&lt;/param-name&gt;
+        &lt;param-value&gt;custom value&lt;/param-value&gt;
+  &lt;/init-param&gt;</pre>
+
+<p>For more details, read:</p>
+
+<ul>
+	<li>https://docs.microsoft.com/en-us/troubleshoot/iis/add-http-response-header-web-site</li>
+	<li>https://httpd.apache.org/docs/current/mod/mod_headers.html</li>
+	<li>https://tomcat.apache.org/tomcat-9.0-doc/config/filter.html</li>
+</ul>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/07/22 02:30 PM</em></font></td></TR></table></font>

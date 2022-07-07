@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>.NET Generator Troubleshooting</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50588,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">.NET Generator Troubleshooting</h1>
+<!--.NET Generator Troubleshooting--><div class="TableWikiBody" id="tblwikibody"><p>In this article, you can find the most common errors related to the use of the <a href="38604.html">.NET Generator</a> and solutions to fix them quickly.</p>
+
+<h3><a id="SQL+LocalDB+connection+failures" class="HashLink" href="#SQL+LocalDB+connection+failures">SQL LocalDB connection failures</a></h3>
+
+<p>SQL LocalDB works over Windows ARM, so you can create your <a href="1836.html">Knowledge Base</a> by using SQL LocalDB.</p>
+
+<p>When trying to use the public instance MSSQLLocalDB for the generated .NET application hosted at IIS, the following error can appear:</p>
+
+<p><em>DBMS Error Code:-1983577832.A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 50 - Local Database Runtime error occurred. Cannot create an automatic instance. See the Windows Application event log for error details.</em></p>
+
+<p>This error occurs when a Database is created using the Windows identity user at runtime. The web app connects to the Database with the IIS user (since <a href="9418.html">Use trusted connection property</a> =True at Datastore) which does not have access to the database unless the instance is a <a href='https://docs.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb?view=sql-server-ver15#shared-instances-of-localdb'>shared instance</a>, which is not the case of MSSQLLocalDB.</p>
+
+<p>The error does not happen if the web server = Kestrel since that process executes by default with the same user logged in.</p>
+
+<p>A shared instance can be created with the following commands:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SqlLocalDB.exe create LocalTestInstance
+SqlLocalDB.exe share &quot;LocalTestInstance&quot;  &quot;LocalSharedInstance&quot;
+</pre>
+
+<p>Then set the DataStore properties:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Server Name</strong> = (localdb)\.\LocalSharedInstance
+//Note that \.\ (backslash + dot + backslash) is needed for a shared instance.
+<strong>Database name </strong>= &lt;any name&gt;
+</pre>
+
+<p> </p>
+
+<p>When using a <a href='https://issuemode.com/issues/dotnet/SqlClient/24916175'>LocalDB installed on Windows 11 ARM in a Parallels VM</a> on a MacBook the following error can appear:</p>
+
+<p><em>Internal error: Function call failed (A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 56 - Unable to load the SQLUserInterface.dll from the location specified in the registry. Verify that the Local Database Runtime feature of SQL Server Express is properly installed. ))</em></p>
+
+<p>When that error occurs, try to connect (using Named Pipes) to the instance pipe name. Use the following command to get the instance pipe name:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+C:\Dev&gt;sqllocaldb info mssqllocaldb
+Name:               MSSQLLocalDB
+Version:            13.1.4001.0
+Shared name:
+Auto-create:        Yes
+State:              Running
+Last start time:    5/27/2022 3:20:50 PM
+Instance pipe name: <strong>np:\\.\pipe\LOCALDB#AC106136\tsql\query</strong>
+
+</pre>
+
+<p>and then change the Data Store's Server name:</p>
+
+<p><img src="./images/50943.png" id="50943" class="WikiImage"/></p>
+
+<p> </p>
+
+<h3><a id="Warning+when+running+a+Web+application+in+.NET" class="HashLink" href="#Warning+when+running+a+Web+application+in+.NET">Warning when running a Web application in .NET</a></h3>
+
+<p>The following <strong>warning </strong>can be printed at Kestrel or Docker container when running a web application in .NET:</p>
+
+<p>Warning in Docker container console:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{&quot;EventId&quot;:7,&quot;LogLevel&quot;:&quot;Warning&quot;,&quot;Category&quot;:&quot;Microsoft.AspNetCore.Session.SessionMiddleware&quot;,&quot;Message&quot;:&quot;Error unprotecting the session cookie.&quot;,&quot;Exception&quot;:&quot;System.Security.Cryptography.CryptographicException: The key {a047273b-f0b0-4f7b-a97c-c1da083a1b05} was not found in the key ring. For more information go to http://aka.ms/dataprotectionwarning at Microsoft.AspNetCore.DataProtection.KeyManagement.KeyRingBasedDataProtector.UnprotectCore(Byte[] protectedData, Boolean allowOperationsOnRevokedKeys, UnprotectStatus\u0026 status) at Microsoft.AspNetCore.DataProtection.KeyManagement.KeyRingBasedDataProtector.Unprotect(Byte[] protectedData) at Microsoft.AspNetCore.Session.CookieProtection.Unprotect(IDataProtector protector, String protectedText, ILogger logger)&quot;,&quot;State&quot;:{&quot;Message&quot;:&quot;Error unprotecting the session cookie.&quot;,&quot;{OriginalFormat}&quot;:&quot;Error unprotecting the session cookie.&quot;}}</pre>
+
+<p>Warning in Kestrel console:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+warn: Microsoft.AspNetCore.Session.SessionMiddleware
+Error unprotecting the session cookie.
+System.Security.Cryptography.CryptographicException: The key {...} was not found in the key ring. For more information go to http://aka.ms/dataprotectionwarning</pre>
+
+<p> </p>
+
+<h4><a id="Steps+to+reproduce+on+Docker%3A" class="HashLink" href="#Steps+to+reproduce+on+Docker%3A">Steps to reproduce on Docker:</a></h4>
+
+<ol>
+	<li>Start a container instance</li>
+	<li>Run the web application</li>
+	<li>Stop the container and start again</li>
+	<li>Refresh the browser and the error is displayed in the container.</li>
+</ol>
+
+<p> </p>
+
+<h4><a id="Steps+to+reproduce+on+Windows+when+running+Kestrel+Web+Server%3A" class="HashLink" href="#Steps+to+reproduce+on+Windows+when+running+Kestrel+Web+Server%3A">Steps to reproduce on Windows when running Kestrel Web Server:</a></h4>
+
+<ol>
+	<li>Run the web application (F5 in GeneXus)</li>
+	<li>Stop and close the Kestrel window</li>
+	<li>Remove *.xml from %USERPROFILE%\AppData\Local\ASP.NET\DataProtection-Keys</li>
+	<li>Run again from GeneXus</li>
+	<li>Refresh browser; the error is displayed on the Kestrel output.</li>
+</ol>
+
+<p>The error happens because the session cookies are encrypted with a key that changes when running a different container instance or Kestrel process; ASP.NET Core generates different keys to encrypt data in these cases. So when the web page containing a stale cookie (generated with a previous container instance) is refreshed, that cookie cannot be decrypted at the server-side with the new key. The error is printed, and a new one is generated.</p>
+
+<h4><a id="How+to+avoid+the+error" class="HashLink" href="#How+to+avoid+the+error">How to avoid the error</a></h4>
+
+<ol>
+	<li>Store the session in a distributed storage</li>
+	<li>Delete all existing cookies in the browser for this website before refreshing to access the new container instance or Kestrel process.</li>
+</ol>
+
+<p>More about it at: https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-6.0#persisting-keys-when-hosting-in-a-docker-container.</p>
+
+<p> </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38604.html">Toc:GeneXus .NET Generator</a></TD><TD><a href="50626.html">How to configure Session State In ASP.NET Core</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/27/22 06:33 PM</em></font></td></TR></table></font>

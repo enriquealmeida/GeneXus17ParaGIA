@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Managing Roles through external authentication programs</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16929,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Managing Roles through external authentication programs</h1>
+<!--Managing Roles through external authentication programs--><div class="TableWikiBody" id="tblwikibody"><p>In order to solve the integration of applications regarding to security issues, use <a href="21755.html">External Authentication Type</a>.</p>
+
+<p>Let's see here an example where <a href="19888.html">GeneXus Access Manager</a> manages Authentication and Authorization issues using data received from the external authentication program.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>From now on suppose application "A" has to integrate to application "B".</p>
+
+<ul>
+	<li>Application "A" has <a href="19888.html">GeneXus Access Manager</a> integrated security incorporated.</li>
+	<li>Application B exposes a program which solves authentication and authorization (basically authenticates a user and returns his roles).</li>
+</ul>
+
+<p>We are assuming here that the external authentication program of application B complies to <a href="16512.html">External Web Services Authentication Type</a> or <a href="21751.html">Custom Authentication Type</a>.</p>
+
+<p>The roles returned by the web service or external program of application B need to have a corresponding role in <a href="19888.html">GeneXus Access Manager</a> database of application A, so as GAM can manage Authorization.</p>
+
+<p>So all the roles returned by the external authentication program need to have been previously defined in <a href="19888.html">GeneXus Access Manager</a> and mapped to the external roles.</p>
+
+<p>The way to map <a href="17569.html">roles</a> to the roles of application B is through the ExternalId property of GAMRole object (located in GAMLibrary).</p>
+
+<h3><a id="Let%27s+see+step+by+step%3A" class="HashLink" href="#Let%27s+see+step+by+step%3A">Let's see step by step:</a></h3>
+
+<p>1. The population of roles in GAM is done using the <a href="15935.html">GAM Backoffice</a> or programmatically using the <a href="16535.html">GAM API</a>.</p>
+
+<p>The ExternalId property of the role can be set using GAM Web Backoffice (see Figure 1.), which has to be assigned to the role Identification in the application "B" database. This is the way to map application "B" roles to application "A" GAM roles in GAM repository.</p>
+
+<p><img src="./images/16930.png" id="16930" class="WikiImage"/></p>
+
+<h5><a id="Figure+1." class="HashLink" href="#Figure+1.">Figure 1.</a></h5>
+
+<p>2. Return roles in the external authentication program.</p>
+
+<p>This depends on the external program version which can be <a href="21548.html">External Authentication: version 1.0</a>, or <a href="https://wiki.genexus.com/commwiki/wiki?21555,," target="_blank">External Authentication: version 2.0</a>.</p>
+
+<p>Suppose you are implementing External Authentication: version 1.0, so you have implemented a web service for authentication purposes, which complies with the 1.0 specification.</p>
+
+<p>The code of the web service is such that, after the user has been validated you load in a SDT variable (&amp;GAMWSLoginOutUserRole, based on GAMWSLoginOutUserSDT.RoleItem) the roles of the user who has been authenticated.</p>
+
+<p>The value assigned to the <em>RoleCode</em> property of this variable has to be the same as the one specified in the ExternalId property for the role defined in GAM (see Figure 1).</p>
+
+<p>Afterwards you assign it to the collection of roles of &amp;GAMWSLoginOut variable which is the out parameter of the web service.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMWSLoginOutUserRole = New() //&amp;GAMWSLoginOutUserRole is GAMWSLoginOutUserSDT.RoleItem data type.
+&amp;GAMWSLoginOutUserRole.RoleCode = "role_1"
+&amp;GAMWSLoginOut.User.Roles.Add(&amp;GAMWSLoginOutUserRol) //&amp;GAMWSLoginOut is GAMWSLoginOutSDT data type.
+&amp;GAMWSLoginOutUserRole = New()
+&amp;GAMWSLoginOutUserRole.RoleCode = "role_2" //assign RoleCode property with the ExternalId given to the role in GAM
+&amp;GAMWSLoginOut.User.Roles.Add(&amp;GAMWSLoginOutUserRol)</pre>
+
+<p>So, after a user has logged in, GAM gets his roles from the webservice Response or the external authentication program output, and maps these roles to <a href="17569.html">GAM Roles</a> using ExternalId property.</p>
+
+<p>3. In application A configure <a href="21755.html">External Authentication Type</a>, using GAM Web Backoffice or the <a href="16535.html">GAM API</a>.</p>
+
+<p>Take into account that when defining the external Authentication Type you need to specify the value "Function = Authentication and Roles", as shown in Figure 2.</p>
+
+<p><img src="./images/16931.png" id="16931" class="WikiImage"/></p>
+
+<h5><a id="Figure+2." class="HashLink" href="#Figure+2."><span style="font-size: smaller;">Figure 2.</span></a></h5>
+
+<p>After the login has taken place, you can obtain the roles of the logged in user by coding the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;session = GAMSession.get(&amp;errors) // &amp;session is GAMSession DataType, &amp;errors is collection of GAMError
+&amp;user = GAMUser.get() // &amp;user is GAMUser DataType.
+&amp;roles =  &amp;Session.getroles(&amp;errors) // &amp;roles is collection of GAMRole
+for &amp;role in &amp;roles
+  //process Roles
+endfor
+for &amp;error in &amp;errors
+ //process Errors
+endfor</pre>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<ol>
+	<li>Each time the user logs in, the roles loaded in the out parameter of the external authentication program (&amp;GAMWSLoginOut.User.Roles in the example above) are assigned to the user, and the relation to roles that he had been assigned previously is deleted.</li>
+	<li>The first role of the list of roles is taken as the main role for the user. See <a href="21643.html">GAM: Main Role of a user</a> concept.</li>
+</ol>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="21751.html">GAM - Custom Authentication Type</a></TD><TD><a href="21755.html">GAM - External Authentication Type</a></TD></TR><TR><TD><a href="16512.html">GAM - External Web Services Authentication Type</a></TD><TD><a href="29474.html">HowTo: LDAP Authentication using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 04:02 PM</em></font></td></TR></table></font>

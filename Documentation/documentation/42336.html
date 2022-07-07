@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Default KB language and Database Collation</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42336,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Default KB language and Database Collation</h1>
+<!--Default KB language and Database Collation--><div class="TableWikiBody" id="tblwikibody"><p>GeneXus Knowledge Bases can have many languages but only one will be the default. It is specified in the Knowledge Base <a href="7671.html">Kb Language property</a>.</p>
+
+<p>Every text inserted in the Knowledge Base objects (objects descriptions, attributes descriptions, string inserted in events and rules codes, etc.) will be considered to be in this language. If the <a href="7671.html">Kb Language</a> value is <em>Spanish</em> and you have this line TextBlock.Caption = "日本語" (Japanese language) in an object events code, the "日本語" literal will be taken as a Spanish literal.</p>
+
+<p>GeneXus Knowledge Bases are stored in a SQL Server database and saves the default language literals in this database tables, so we need to consider setting the appropriate collation in the KB database in order to support the default language characters.</p>
+
+<p>The collation to a new Knowledge Base database can be set when <a href="9596.html">creating it</a>. This is very important because the database collation cannot be changed after the database is created.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p>Some known collations are:</p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>English (US)</td>
+			<td>SQL_Latin1_General_CP1_CI_AS</td>
+		</tr>
+		<tr>
+			<td>Japanese</td>
+			<td>Japanese_CI_AS</td>
+		</tr>
+		<tr>
+			<td>Chinese (PRC)</td>
+			<td>Chinese_PRC_CI_AS</td>
+		</tr>
+		<tr>
+			<td>Arabic</td>
+			<td>Arabic_CI_AS</td>
+		</tr>
+		<tr>
+			<td>Spanish</td>
+			<td>Modern_Spanish_CI_AS</td>
+		</tr>
+		<tr>
+			<td>
+			<p>English (non US)<br />
+			Portuguese<br />
+			Italian</p>
+			</td>
+			<td>Latin1_General_CI_AS</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  Always use CI (Case Insensitive) and AS (Accent Sensitive) when selecting your Collation..</div>
+</p>
+
+<p>For more detail check <a href='https://docs.microsoft.com/es-es/previous-versions/sql/sql-server-2008-r2/ms143508(v=sql.105)'>SQL Server Collation Settings</a>.</p>
+
+<h2><a id="Application+Database" class="HashLink" href="#Application+Database">Application Database</a></h2>
+
+<p>The same issue happens if you use SQLServer for prototyping your application, make sure to use the correct collation configuration. You can manually create the database with the desired collation as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CREATE DATABASE [DatabaseName]
+COLLATE &lt;InsertCorrectCollationHere&gt;
+GO
+</pre>
+
+<p>Then, use <a href="7877.html">Create Database</a> command to create the tables.</p>
+
+<h2><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h2>
+
+<h3><a id="Question+Marks+%3F%3F%3F%3F%3F%3F%3F+or+funny+characters+is+displayed+on+the+generated+application" class="HashLink" href="#Question+Marks+%3F%3F%3F%3F%3F%3F%3F+or+funny+characters+is+displayed+on+the+generated+application">Question Marks ??????? or funny characters is displayed on the generated application</a></h3>
+
+<p>An application is executed and question marks are displayed instead of the correct characters. It could be on the application labels or database values.</p>
+
+<p><img src="./images/42337.png" id="42337" class="WikiImage"/></p>
+
+<p>This is a hint there is a problem with the KB Database collation or the Application database collation or UTF encoding. Review the case based on this article; once the correct collation is configured characters are correctly seen:</p>
+
+<p><img src="./images/42338.png" id="42338" class="WikiImage"/></p>
+
+<h3><a id="Invalid+collation+%27Latin1_General_100_CI_AS_SC_UTF8%27" class="HashLink" href="#Invalid+collation+%27Latin1_General_100_CI_AS_SC_UTF8%27">Invalid collation 'Latin1_General_100_CI_AS_SC_UTF8'</a></h3>
+
+<p>The following error appears when creating a KB from gxserver.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error: Invalid collation 'Latin1_General_100_CI_AS_SC_UTF8'.
+Failed: Create Knowledge Base</pre>
+
+<p>The default database collation is <em>Latin1_General_100_CI_AS_SC_UTF8</em> when using SQLServer 2019/LocalDB 15 or higher since <a href="49616.html">GeneXus 17 Upgrade 8</a>. You need to install an equivalent version locally to download the KB (<a href='https://www.genexus.com/developers/websac?en,,,50653'>SAC#50653</a>).</p>
+
+<h2><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h2>
+
+<p><a href='https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2008-r2/ms187582(v=sql.105)'>Working with Collations</a><br />
+<a href='https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2008-r2/ms143726(v=sql.105)'>Collation and International Terminology</a><br />
+<a href='https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2008-r2/ms190245(v=sql.105)'>International Considerations for Databases and Database Engine Applications</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="42319.html">RTL checklist</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/21/22 02:01 PM</em></font></td></TR></table></font>

@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Notification Provider API</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33687,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Notification Provider API</h1>
+<!--Notification Provider API--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This API is part of <a href="31268.html">GeneXus built-in modules</a> and provides a set of facilities for a GeneXus's developer to send push notifications through some <a href="33670.html">external notification provider</a>. It allows registered devices management and sending mechanisms for a single device or a group of them.</p>
+
+<p><img src="./images/36353.png" id="36353" class="WikiImage"/></p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="6293.html">Procedure object</a>, <a href="6916.html">Web Panel object</a>, <a href="25475.html">Work With for Web</a></td>
+		</tr>
+		<tr>
+			<td><strong>Platforms </strong></td>
+			<td>Web(.NET, Java)</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This API is available as of <a href="https://wiki.genexus.com/commwiki/wiki?33278,," target="_blank">GeneXus 15 Upgrade 3</a></p>
+
+<p><sup>(1) </sup>Available as of <a href="https://wiki.genexus.com/commwiki/wiki?37491,," target="_blank">GeneXus 15 Upgrade 9</a><br />
+<sup>(2)</sup> Available as of <a href="https://wiki.genexus.com/commwiki/wiki?38845,," target="_blank">GeneXus 15 Upgrade 11</a><br />
+<sup>(3)</sup> Available as of <a href="https://wiki.genexus.com/commwiki/wiki?45624,," target="_blank">GeneXus 16 upgrade 10</a></p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>Consider that the smart device application's main object is called &quot;MySDApp&quot; and it has the following event defined:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'NotificationAction'
+     msg(&amp;msg,status) 
+EndEvent
+
+</pre>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Note</strong>: The '<em>status</em>' flag on msg function allows the developer to write messages and then inspect them in the <a href="37846.html">application log</a> when <a href="33333.html">Default Log Level property</a> has <em>Debug</em> value.</div>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>: The event defined in the main app (e.g. 'NotificationAction') cannot contain any command, function or control that includes UI (such as msg, confirm, etc). Remember that this kind of notifications can arrive with the device locked, with the app running in <em>background mode</em>, or even when the app <em>not running</em>. However, the developer can trigger UI actions if the app is running in <em>foreground</em><em> mode, </em>but first, the developer must check such state by using the <a href="23734.html">Interop.ApplicationState property</a>.</div>
+</p>
+
+<p>Then, from the web-backend, we can write a source code as follows:</p>
+
+<p><em>Variables</em>:</p>
+
+<p style="margin-left: 40.0px;">&amp;TheNotification : <em>Notification, GeneXus.Common.Notifications</em><br />
+&amp;TheNotificationDelivery: <em>Delivery, GeneXus.Common.Notifications</em><br />
+&amp;TheNotificationConfiguration : <em>Configuration, GeneXus.Common.Notifications</em></p>
+
+<p><em>Source</em>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;TheNotification.Title.DefaultText = &quot;GeneXus&quot;
+&amp;TheNotification.Text.DefaultText  = &quot;Notification Provider API&quot;
+&amp;TheNotification.Actions.DefaultAction.Event.Name = &quot;NotificationAction&quot; // Declared in the SD Main object
+&amp;TheNotification.Actions.DefaultAction.Event.Parameters.FromJson('[{&quot;Name&quot;:&quot;msg&quot;,&quot;Value&quot;:&quot;Hello dear user!&quot;}]')
+&amp;TheNotification.Appearance.Icon.Small = !&quot;GX15IconKB&quot;
+
+&amp;TheNotificationDelivery.Expiration = 3000 
+&amp;TheNotificationDelivery.Priority   = PushNotificationPriority.Normal
+
+&amp;TheNotificationConfiguration.ApplicationId = !&quot;MySDApp&quot;
+   
+GeneXus.Common.Notifications.SendNotification(
+     &amp;TheNotificationConfiguration,
+     DeviceToken, // Target device token
+     &amp;TheNotification, 
+     &amp;TheNotificationDelivery, 
+     &amp;OutMessages,
+     &amp;IsSuccessful
+)
+
+</pre>
+
+<p>The, when the above code is executed, the device will receive a notification like this:</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="text-align: center;border-bottom: 1.0px solid black;"><strong>Android</strong></td>
+			<td style="text-align: center;border-bottom: 1.0px solid black;"><strong>iOS</strong></td>
+		</tr>
+		<tr>
+			<td><img src="./images/33695.png" id="33695" class="WikiImage"/></td>
+			<td><img src="./images/33696.png" id="33696" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<p>and if the end user taps on it, the msg command will be print in the console a message saying &quot;Hello dear user!&quot;.</p>
+
+<h4><a id="Notifications+to+devices+with+certain+tags" class="HashLink" href="#Notifications+to+devices+with+certain+tags">Notifications to devices with certain tags</a></h4>
+
+<p>If you want to send the previous notification to devices that have certain tags already defined, you can use the <em>SendNotificationTargets</em> procedure with the <em>Target</em> parameter. </p>
+
+<p>Suppose you have added the tag 'User Type' with the value 'Student' throughout the <em>AddDeviceTargetFilter</em> procedure, for those devices that correspond to student users.</p>
+
+<p>Now, to send a notification to those devices, use this code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;TargetFilter = new()
+&amp;TargetFilter.Name = !'User Type'
+&amp;TargetFilter.Value = !'Student'
+&amp;Target.TargetType = TargetType.Targets
+&amp;Target.Targets.Add(&amp;TargetFilter)
+SendNotificationTargets(&amp;NotificationConfiguration, &amp;Target, &amp;Notification, &amp;NotificationDelivery, &amp;Messages, &amp;Success)
+</pre>
+
+<p> </p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>The iOS platform always uses the image set in <a href="31379.html">Apple Application Icon property</a> as the notification icon, unlike Android that uses those set in <a href="31379.html">Android Notification Icon property</a> and can use a different image for the notification message by the Appearance.Icon field on the Notification SDT.</li>
+	<li>In iOS, if the developer wants to download content when the app is in background mode (e.g. a video attached to the notification), it is necessary to include the 'remote-notification' value to the <a href="35408.html">Background Modes property</a>.</li>
+	<li>As of <a href="https://wiki.genexus.com/commwiki/wiki?38023,," target="_blank">Genexus 15 Upgrade 10</a>, when the developer uses any of the Send methods with OneSignal provider, the Messages parameter will return one item with the response payload in a JSON string in its &quot;description&quot; field. Such JSON includes the notification Id and the quantity recipients.<br />
+	For example,<br />
+	<span style="font-family: courier new;">{&quot;id&quot;:&quot;5263x49t-ss31-436r-942k-638h111d9g2a&quot;,&quot;recipients&quot;:1}</span></li>
+</ul>
+
+<h2><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h2>
+
+<ul>
+	<li>If the developer removes a device from the provider's console (e.g. OneSignal), the device is still associated with the identifier provided by the provider. In such case, uninstall the application from the device and reinstall it in order to generate a new identifier in the provider platform.</li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?33798,," target="_blank">GeneXus 15 Upgrade 4</a> fixes an issue when using more than two filter targets in the Target SDT.<br />
+	For more information, refer to <a href='https://www.genexus.com/es/developers/websac?data=41070;;'>SAC#41070</a></li>
+</ul>
+
+<h3><a id="Push+Provider+was+not+specified.+Please+set+a+Push+Provider" class="HashLink" href="#Push+Provider+was+not+specified.+Please+set+a+Push+Provider">Push Provider was not specified. Please set a Push Provider</a></h3>
+
+<p>When sending a notification the following error occurs:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Unknown error processing: Push Provider was not specified. Please set a Push Provider</pre>
+
+<p>Make sure the webapp folder includes the CloudServices.config file (specifically \WEB-INF\CloudServices.config) with valid a notification configuration. If you are executing it batch, the file should be located on the same folder where the process is executed</p>
+
+<h2><a id="FAQ" class="HashLink" href="#FAQ">FAQ</a></h2>
+
+<ul>
+	<li>When I build my project that uses One signal, GeneXus gives me the following error.
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ld: framework not found Pods_OneSignalNotificationServiceExtension
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+</pre>
+	<strong>Cause</strong>: As of <a href="https://wiki.genexus.com/commwiki/wiki?35908,," target="_blank">GeneXus 15 Upgrade 6</a>, the generated iOS project is based on <a href="36340.html">extension libraries</a>.<br />
+	<strong>Solution</strong>: Open the <em>*.xcworkspace </em>file (instead of <em>*.xcodeproj</em>) on the Mac computer.</li>
+</ul>
+
+<h2><a id="Domains" class="HashLink" href="#Domains">Domains</a></h2>
+
+<h4><a id="NotificationBadgeType+%282%29" class="HashLink" href="#NotificationBadgeType+%282%29"><strong>NotificationBadgeType </strong><sup>(2)</sup></a></h4>
+
+<p>Possible behaviors of Appearance.Badge field of Notification SDT.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>       </td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Value</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>None</em></td>
+			<td>Leaves the badge count unaffected on the application icon.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>SetTo</em></td>
+			<td>Sets the badge count on the application icon to the number specified on &quot;Badge&quot; field.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Increase </em></td>
+			<td>Adds the &quot;Badge&quot; field number to the badge count on the application icon (a negative number will decrease it). </td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><a id="FilterRelationType" class="HashLink" href="#FilterRelationType"><strong>FilterRelationType</strong></a></h4>
+
+<p>Possibles relational operators between keys and values.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>       </td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Value</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Exists</em></td>
+			<td>It is true when there exists a key defined.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>NotExists  </em></td>
+			<td>It is true when a defined key does not exist.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Equal</em></td>
+			<td>It is true when the key and value are equals.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>NotEqual</em></td>
+			<td>It is true when the key and value are not equals.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Greater</em></td>
+			<td>It is true when the key is greater than value.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Less</em></td>
+			<td>It is true when the key is less than value.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>FilterOperation</strong></h4>
+
+<p>Possible binary logical operations.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>       </td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Value</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>OR</em></td>
+			<td>At least one condition must be satisfied.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>AND</em></td>
+			<td>Both conditions must be satisfied.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>TargetType</strong></h4>
+
+<p>Target alternatives for sending notifications</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>       </td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Value</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Everybody  </em></td>
+			<td>Every registered device receives the notification.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Devices</em></td>
+			<td>A subset of registered devices receives the notification.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td>Groups</td>
+			<td>Those registered devices which belong to any declared group receives the notification.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td>Targets</td>
+			<td>Those registered devices which satisfied a target condition receives the notification.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>PushNotificationPriority</strong></h4>
+
+<p>The priority of the notification.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>       </td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Value</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>Normal  </em></td>
+			<td>Do not wake up the device if it is in doze mode.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><em>High</em></td>
+			<td>Wake up the device if it is in doze mode.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h2><a id="Structured+data+types" class="HashLink" href="#Structured+data+types">Structured data types</a></h2>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration"><strong>Configuration</strong></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td colspan="3" style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Field</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Domain</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">ApplicationId</td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">[OPTIONAL] Smart device main object name</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">Properties <sup>(1)</sup></td>
+			<td style="vertical-align: top;">&lt;collection&gt;</td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">Item</td>
+			<td style="vertical-align: top;">ConfigurationProperty</td>
+			<td style="vertical-align: top;">Set a contextual property of  <a href="33670.html">Notifications Provider property</a> dinamically.</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">Debug</td>
+			<td style="vertical-align: top;"> </td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="2" style="vertical-align: top;">Debug</td>
+			<td style="vertical-align: top;">Boolean</td>
+			<td style="vertical-align: top;">Enables a debug mode for inspecting messages through a proxy server.<br />
+			Default: False</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="2" style="vertical-align: top;">Proxy</td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">Host</td>
+			<td style="vertical-align: top;">Character(20)</td>
+			<td style="vertical-align: top;">Server name or IP for the proxy.</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">Port</td>
+			<td style="vertical-align: top;">Numeric(6.0)</td>
+			<td style="vertical-align: top;">Server port number.</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">Advanced</td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">BackCompatibility </td>
+			<td style="vertical-align: top;">Boolean</td>
+			<td style="vertical-align: top;">Enables compatibility mode for Android/iOS older versions.<br />
+			Default: False</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="ConfigurationProperty%281%29" class="HashLink" href="#ConfigurationProperty%281%29"><strong>ConfigurationProperty</strong><sup>(1)</sup></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td colspan="3" style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Field</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Domain</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">PropertyName </td>
+			<td style="vertical-align: top;">Character(100) </td>
+			<td style="vertical-align: top;">The property name. <br />
+			For example,<br />
+			- <a href="37492.html">OneSignal - App ID property</a> must be &quot;APP_ID&quot;<br />
+			- <a href="37493.html">OneSignal - REST API Key property</a> must be &quot;REST_API_KEY&quot;</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">PropertyValue</td>
+			<td style="vertical-align: top;">&lt;collection&gt;</td>
+			<td style="vertical-align: top;">The property value associated with that property name.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Delivery" class="HashLink" href="#Delivery"><strong>Delivery</strong></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td colspan="3" style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Field</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Domain</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">Priority</td>
+			<td style="vertical-align: top;">PushNotificationPriority </td>
+			<td style="vertical-align: top;">(Android-only)<br />
+			Indicates the priority of the notification. <br />
+			Default: High</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;">Expiration</td>
+			<td style="vertical-align: top;">Numeric(18.0)</td>
+			<td style="vertical-align: top;">Time in seconds that the notification provider tries to send the message.<br />
+			Default: 0 (no expiration)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Event" class="HashLink" href="#Event"><strong>Event</strong></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td colspan="3" style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Field</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Domain</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;"><em>Name</em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Name of the event defined in the smart device main object which receives the notification.</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;"><em>Parameter</em></td>
+			<td style="vertical-align: top;">&lt;<em>Collection</em>&gt;</td>
+			<td style="vertical-align: top;">[OPTIONAL] Set of parameter sent with the notification.</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Name </em></td>
+			<td style="vertical-align: top;">Character(100) </td>
+			<td style="vertical-align: top;">Name of a variable in the smart device main object that will be used as a parameter of the notification.</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Value</em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Value for the parameter sent to the event on the client-side.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="LocalizedText" class="HashLink" href="#LocalizedText"><strong>LocalizedText</strong></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td colspan="3" style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Field</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Domain</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;"><em>DefaultText</em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Text used when there is any localized item.</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="vertical-align: top;"><em>Text</em></td>
+			<td style="vertical-align: top;">&lt;<em>Collection</em>&gt;</td>
+			<td style="vertical-align: top;">[OPTIONAL] Set of text by languages (localized).</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Language </em></td>
+			<td style="vertical-align: top;">Character(100) </td>
+			<td style="vertical-align: top;">Language name for which the text is written. (Supported Languages Names: Spanish, English, Portuguese, Chinese, Japanese, Arabic)</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Text    </em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Text written in the language defined above.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Notification" class="HashLink" href="#Notification"><strong>Notification</strong></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td colspan="4" style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Field</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Domain</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Id</em></td>
+			<td style="vertical-align: top;">Character(20)</td>
+			<td style="vertical-align: top;">[OPTIONAL] Assigns an identification to the sent notification and allows to rewrite it if it necessary by sending it again with the same Id.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Title</em></td>
+			<td style="vertical-align: top;">LocalizedText</td>
+			<td style="vertical-align: top;">The title content of the notification.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Text</em></td>
+			<td style="vertical-align: top;">LocalizedText</td>
+			<td style="vertical-align: top;">The text content (below the title) of the notification.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Appearance</em></td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;">[OPTIONAL] UI customization.</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="3" style="vertical-align: top;"><em>Badge</em></td>
+			<td style="vertical-align: top;">Character(4) </td>
+			<td style="vertical-align: top;">(iOS-only)<br />
+			A numeric character to set a badge in the application icon</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="3" style="vertical-align: top;"><em>BadgeType </em><sup>(2)</sup></td>
+			<td style="vertical-align: top;">NotificationBadgeType </td>
+			<td style="vertical-align: top;">Behavior of &quot;Badge&quot; field. It can be &quot;None&quot;, &quot;Set to&quot; or &quot;Increase&quot; (in this case, negative values will decreaste badge number).</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="3" style="vertical-align: top;"><em>Icon</em></td>
+			<td style="vertical-align: top;"> </td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Large</em></td>
+			<td style="vertical-align: top;">Url</td>
+			<td style="vertical-align: top;">(Android-only)<br />
+			Url for an image resource that will be used. </td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Small</em></td>
+			<td style="vertical-align: top;">Character(100) </td>
+			<td style="vertical-align: top;">(Android-only)<br />
+			Name of an Image object embedded in the KB used for a small icon in the notification.<br />
+			Some restrictions apply, see <em>Notification Icon</em> section on <a href="31379.html">Images for Smart Devices applications</a><br />
+			The <a href='http://romannurik.github.io/AndroidAssetStudio/icons-notification.html#source.type=image&amp;source.space.trim=1&amp;source.space.pad=0&amp;name=ic_stat_icono_96'>Android Asset Studio tool</a> by romannuric may be useful.</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="3" style="vertical-align: top;"><em>Sound</em></td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Sound </em></td>
+			<td style="vertical-align: top;">Boolean</td>
+			<td style="vertical-align: top;">Enables the sound when the notification arrives at the end-user.<br />
+			Default: True</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>CustomSound </em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Name of a project embedded custom sound.<br />
+			This option is for advanced users, if it's empty, the app will use the default platform sound.</td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="3" style="vertical-align: top;width: 10.0px;">Channel</td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">The Android Oreo Notification Category to send the notification under.  </td>
+		</tr>
+		<tr>
+			<td style="width: 10.0px;vertical-align: top;"> </td>
+			<td colspan="3" rowspan="1" style="vertical-align: top;width: 10.0px;">Picture</td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">(Android-only)<br />
+			Picture to display in the expanded view. Can be a drawable resource name or a URL.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Actions</em></td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>DefaultAction</em></td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;">Default action that will be executed on Notification Tapping.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;"><em>Event</em></td>
+			<td style="vertical-align: top;">Event</td>
+			<td style="vertical-align: top;">Settings for the default action that will be executed when the end user taps on the notification.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>CustomUIActions</em></td>
+			<td style="vertical-align: top;">&lt;<em>Collection</em>&gt;</td>
+			<td style="vertical-align: top;">Typically when a user receives a notification, there is only a single action available - tapping on the notification. CustomUIActions allow more than one action to be taken on a notification, allowing for greater interactivity within notifications. <a href='https://documentation.onesignal.com/docs/action-buttons'>See example here</a></td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;"><em>Event</em></td>
+			<td style="vertical-align: top;">Event</td>
+			<td style="vertical-align: top;">Configuration for the secondary action.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;"><em>Id</em></td>
+			<td style="vertical-align: top;">Character(20)</td>
+			<td style="vertical-align: top;">An Id for the custom secondary action.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;"><em>Text</em></td>
+			<td style="vertical-align: top;">LocalizedText</td>
+			<td style="vertical-align: top;">Text shown with the option.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;"><em>Icon</em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Name of an Image object in the KB.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Advanced</em></td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;">Attachment</td>
+			<td style="vertical-align: top;">&lt;<em>Collection</em>&gt;</td>
+			<td style="vertical-align: top;">(iOS-only) [OPTIONAL] Set of rich content (like media, e.g. videos in mp4 format). Must be a public URL resource. </td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">Type</td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Any identifier for the resource (e.g. myvideo.mp4).</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">URL</td>
+			<td style="vertical-align: top;">Url</td>
+			<td style="vertical-align: top;">The link to the media resource.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;">Group</td>
+			<td style="vertical-align: top;"><em>Substructure</em></td>
+			<td style="vertical-align: top;">(Android-only) [OPTIONAL]. For stacking Push Notification.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">GroupId</td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">An identifier for stacking notifications in the same box.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;width: 10.0px;"> </td>
+			<td style="vertical-align: top;">GroupMessage </td>
+			<td style="vertical-align: top;">LocalizedText</td>
+			<td style="vertical-align: top;">Text to be shown when more than one message in the same group arrives to the smart device.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" rowspan="1" style="vertical-align: top;width: 10.0px;">Template</td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Use a template you setup on One Signal dashboard. You can override the template values by sending other parameters with the request.<br />
+			This option is useful to personalize many aspects of the notification message, like the icon, sound, color, priority, category, etc. directly from the dashboard.<br />
+			The template is the UUID found in the URL when viewing a template on One Signal dashboard. Example: be4a8044-bbd6-11e4-a581-000c2940e62c</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Target" class="HashLink" href="#Target"><strong>Target</strong></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td colspan="4" style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Field</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Domain</strong></td>
+			<td style="border-bottom: 1.0px solid black;vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>TargetType</em></td>
+			<td style="vertical-align: top;">TargetType</td>
+			<td style="vertical-align: top;">Indicates which are the target devices determining which of the following collections will be used.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Device</em></td>
+			<td style="vertical-align: top;">&lt;<em>Collection</em>&gt;</td>
+			<td style="vertical-align: top;">[OPTIONAL] Applies when TargetType is Devices</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>DeviceToken </em></td>
+			<td style="vertical-align: top;">Character(500) </td>
+			<td style="vertical-align: top;">The DeviceToken of the target device in the set.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Group</em></td>
+			<td style="vertical-align: top;">&lt;<em>Collection</em>&gt;</td>
+			<td style="vertical-align: top;">[OPTIONAL] Applies when TargetType is Groups and the collection is understood as a disjunction of groups (joined with ORs)</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Name</em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Name of the group previously added with AddDeviceGroup procedure.</td>
+		</tr>
+		<tr>
+			<td colspan="4" style="vertical-align: top;"><em>Filter</em></td>
+			<td style="vertical-align: top;">&lt;<em>Collection</em>&gt;</td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Name</em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Name of a filter key previously added with AddDeviceTargetFilter procedure.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Value</em></td>
+			<td style="vertical-align: top;">Character(100)</td>
+			<td style="vertical-align: top;">Value associated with the filter key.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Relation</em></td>
+			<td style="vertical-align: top;">FilterRelationType </td>
+			<td style="vertical-align: top;">Relation that associates the Name or Name and Value fields.<br />
+			Default: Exists.</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="vertical-align: top;width: 10.0px;"> </td>
+			<td colspan="2" style="vertical-align: top;"><em>Operator</em></td>
+			<td style="vertical-align: top;">FilterOperation</td>
+			<td style="vertical-align: top;">Relation of the current item condition with the next one (the last item ignores this field).<br />
+			Default: AND</td>
+		</tr>
+	</tbody>
+</table>
+
+<p class="Code"> </p>
+
+<h2><a id="Procedures" class="HashLink" href="#Procedures">Procedures</a></h2>
+
+<h4><a id="AddDeviceGroups" class="HashLink" href="#AddDeviceGroups"><strong>AddDeviceGroups</strong></a></h4>
+
+<p>Associates a set of groups or categories that a device belongs.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td><em>Configuration</em>:SDT(Configuration), <em>DeviceToken</em>:Character(500), <em>Groups</em>:Collection(Character(20))</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages), <em>Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>RemoveDeviceGroups</strong></h4>
+
+<p>Disassociates a set of groups or categories from a device.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td><em>Configuration</em>:SDT(Configuration), <em>DeviceToken</em>:Character(500), <em>Groups</em>:Collection(Character(20))</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages), <em>Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>AddDeviceTargetFilter</strong></h4>
+
+<p>Associates a filter name/value to a device.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td>Configuration:SDT(Configuration), <em>DeviceToken</em>:Character(500), <em>FilterName</em>:Character(20), <em>FilterValue</em>:Character(20)</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages), <em>Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>RemoveDeviceTagetFilter</strong></h4>
+
+<p>Disassociates a filter name/value of a device.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td><em>Configuration</em>:SDT(Configuration), <em>DeviceToken</em>:Character(500), <em>FilterName</em>:Character(20),<em> FilterValue</em>:Character(20)</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages), <em>Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>SendEvent</strong></h4>
+
+<p>Executes an event on a specific device with delivery preferences.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td><em>Configuration</em>:SDT(Configuration), <em>DeviceToken</em>:Character(500), <em>NotificationEvent</em>:Event, <em>Delivery</em>:Delivery</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages),<em> Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>SendEventTargets</strong></h4>
+
+<p>Executes an event on a set of target devices with delivery preferences.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td><em>Configuration</em>:SDT(Configuration), <em>Target</em>:Target, <em>Event</em>:Event, <em>Delivery</em>:Delivery</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages),<em> Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>SendNotification</strong></h4>
+
+<p>Sends a push notification to a specific device with delivery preferences.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td><em>Configuration</em>:SDT(Configuration), <em>DeviceToken</em>:Character(500), <em>NotificationMessage</em>:Notification, <em>Delivery</em>:Delivery</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages),<em> Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>SendNotificationTargets</strong></h4>
+
+<p>Sends a push notification to a set of target devices with delivery preferences.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>    </td>
+			<td><strong>Parameters  </strong></td>
+			<td><em>Configuration</em>:SDT(Configuration), <em>Target</em>:Target, <i>NotificationMessage</i>:Notification, <em>Delivery</em>:Delivery</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages),<em> Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><br />
+<strong>SetDeviceTargetMultipleFilters <sup>(3)</sup></strong></h4>
+
+<p>Associates a list of filters (name/value collection) to a device.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td> </td>
+			<td><strong>Parameters</strong></td>
+			<td>Configuration:SDT(Configuration), <em>DeviceToken</em>:Character(500), <em>FilterTags</em>:Properties</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>Returns</strong></td>
+			<td><em>Messages</em>:SDT(Messages),<em> Success</em>:Boolean</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>This method is only valid for the OneSignal <a href="33670.html">Notifications Provider</a>. </p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="35408.html">Background Modes property</a></TD></TR><TR><TD><a href="31268.html">GeneXus Core module</a></TD><TD><a href="18147.html">HowTo: Configuring Push Notifications in Android Applications</a></TD><TD><a href="17451.html">HowTo: Configuring Push Notifications in iOS Applications</a></TD><TD><a href="30621.html">HowTo: Push Notifications using external provider</a></TD></TR><TR><TD><a href="18149.html">HowTo: Using Devices Registration Service for Push Notifications</a></TD></TR><TR><TD><a href="40335.html">Messages structured data type</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD><TD><a href="39559.html">NotificationParameters external object</a></TD><TD><a href="33670.html">Notifications Provider property</a></TD></TR><TR><TD><a href="37492.html">OneSignal - App ID property</a></TD><TD><a href="37493.html">OneSignal - REST API Key property</a></TD></TR><TR><TD><a href="41042.html">Process procedure</a></TD><TD><a href="39316.html">Remote Notifications External Object</a></TD><TD><a href="39412.html">RemoteNotificationResult external object</a></TD><TD><a href="39399.html">RemoteNotifications external object</a></TD></TR><TR><TD><a href="15288.html">Category:Smart Devices API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/14/21 01:22 PM</em></font></td></TR></table></font>

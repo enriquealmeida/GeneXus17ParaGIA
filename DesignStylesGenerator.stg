@@ -1,0 +1,159 @@
+group DesignTokensGroups;
+
+delimiters "$", "$"
+
+zeroOrEmptyAsFalse ::= [
+  "": [],
+  "0": [],
+  default: key
+]
+
+generate_styles(imports, importTokens, classes, mediaQueryTokens, font_faces, name, fixedContent, userControlGeneratedContent, contentModeClasses, effects) ::=<<
+$if(imports)$
+$else$
+@import "AnyStyles.ImagesTokens.css";
+$endif$
+$imports: {imp | $generate_import(imp)$};separator="\r\n"$
+$if(importTokens)$
+@import "$name$_Tokens.css";
+$endif$
+
+/* [gx-css-import ignore - start] */
+$fixedContent$ 
+$userControlGeneratedContent$
+/* [gx-css-import ignore - end] */
+$contentModeClasses:{ contentModeClass | $generate_content_mode(contentModeClass)$};separator="\r\n"$
+$classes.keys: {c | $generate_media(c)$};separator="\r\n"$
+
+$effects.keys: {c | $generate_media_effect(c)$};separator="\r\n"$
+
+$mediaQueryTokens:{ mediaQuery | $generate_token_media(mediaQuery)$};separator="\r\n"$
+
+$font_faces: {ff | $generate_fontFace(ff)$};separator="\r\n"$
+>>
+
+generate_import(imp) ::=<<
+@import "$imp.Name$";
+>>
+
+generate_media(c) ::=<<
+$if(zeroOrEmptyAsFalse.(c))$
+@media $c$
+{
+	$classes.(c):{ p | $generate_clase(p)$};separator="\r\n"$
+}
+$else$
+$classes.(c):{ p | $generate_clase(p)$};separator="\r\n"$
+$endif$
+>>
+
+generate_token_media(media_query) ::=<<
+/*Related token: $media_query.relatedToken$*/
+@media $media_query.query$
+{
+	$media_query.props:{ p | $generate_clase(p)$};separator="\r\n"$
+}
+>>
+
+generate_clase(c) ::=<<
+$c.Name$ 
+{
+$c.Properties:{ prop | $if(prop.CssFullValue)$$generate_full_value_property(prop)$$elseif(prop.TokenValue)$$generate_token_property(prop)$$elseif(prop.FileValue)$$generate_file_property(prop)$$else$$generate_property(prop)$$endif$};separator="\r\n"$
+}
+>>
+
+generate_fontFace(ff) ::=<<
+@font-face
+{
+$ff.Properties:{ prop | $if(prop.TokenValue)$$generate_token_property(prop)$$elseif(prop.FileValue)$$generate_file_property(prop)$$else$$generate_property(prop)$$endif$};separator="\r\n"$
+}
+>>
+
+generate_token_property(prop) ::=<<
+	$prop.Name$ : var(--$prop.TokenValue.Identifier$_$prop.TokenValue.Name$) $if(prop.IsImportant)$!important$endif$;
+>>
+
+generate_file_property(prop) ::=<<
+	$prop.Name$ : url("$prop.FileValue$");
+>>
+
+generate_property(prop) ::=<<
+	$prop.Name$ : $prop.Value$;
+>>
+
+generate_full_value_property(prop) ::=<<
+	$prop.Name$ : $prop.CssFullValue$;
+>>
+
+generate_content_mode(contentModeClass) ::=<<
+$contentModeClass.ParentName$[data-gx-image] 
+{
+	width: 100% !important;
+	height: 100% !important;
+	padding-left: 100% !important;
+	box-sizing: border-box !important;
+	display: block !important;
+	background-position: 0;   
+	$contentModeClass.BackgroundRepeat$
+	$contentModeClass.BackgroundSize$
+	--gx-image-scaling: on;
+}
+>>
+
+generate_media_effect(m) ::=<<
+$if(zeroOrEmptyAsFalse.(m))$
+@media $m$
+{
+	$effects.(m):{ e | $generate_effect(e)$};separator="\r\n"$
+}
+$else$
+$effects.(m):{ e | $generate_effect(e)$};separator="\r\n"$
+$endif$
+>>
+
+generate_effect(e) ::=<<
+div.gx-content-placeholder>div.gx-ct-body$e.ParentClassName$-fx,
+div.gxwebcomponent>div.gxwebcomponent-body$e.ParentClassName$-fx,
+body$e.ParentClassName$-fx {
+	transition-property: transform, opacity;
+	transition-timing-function: cubic-bezier(0,1,1,.69);
+	transition-duration:.5s;
+	-moz-transition-property: transform, opacity;
+	-moz-transition-timing-function: cubic-bezier(0,1,1,.69);
+	-moz-transition-duration:.5s;
+	-ms-transition-property: transform, opacity;
+	-ms-transition-timing-function: cubic-bezier(0,1,1,.69);
+	-ms-transition-duration:.5s;
+	-o-transition-property: transform, opacity;
+	-o-transition-timing-function: cubic-bezier(0,1,1,.69);
+	-o-transition-duration:.5s;
+	-webkit-transition-property: transform, opacity;
+	-webkit-transition-timing-function: cubic-bezier(0,1,1,.69);
+	-webkit-transition-duration:.5s;
+}
+$generate_effect_duration(e.ParentClassName, e.EnterDuration, "enter")$
+$generate_effect_duration(e.ParentClassName, e.CloseDuration, "leave")$
+$generate_effect_props(e.ParentClassName, e.EnterOpacity, e.EnterTransform, "entering")$
+$generate_effect_props(e.ParentClassName, e.CloseOpacity, e.CloseTransform, "leaving")$
+>>
+
+generate_effect_duration(className, duration, mode) ::=<<
+div.gx-content-placeholder>div.gx-ct-body$className$-fx.$mode$-fx-duration,
+div.gxwebcomponent>div.gxwebcomponent-body$className$-fx.$mode$-fx-duration,
+body$className$-fx.$mode$-fx-duration 
+{
+	transition-duration: $duration$;
+	-moz-transition-duration: $duration$;
+	-ms-transition-duration: $duration$;
+	-o-transition-duration: $duration$;
+	-webkit-transition-duration: $duration$;
+}
+>>
+
+generate_effect_props(className, opacity, transform, mode) ::=<<
+$className$-fx.$mode$ {
+	position: absolute;
+	opacity: $opacity$;
+	$transform$
+}
+>>

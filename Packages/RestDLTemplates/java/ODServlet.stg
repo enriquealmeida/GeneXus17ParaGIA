@@ -1,0 +1,81 @@
+﻿group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities, dpfunctions, apis, sdts, gx)::=<<
+$header(hostinfo, entities, dpfunctions, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities, dpfunctions, apis, sdts, gx)::=<<
+
+package $hostinfo.package$; 
+
+import $hostinfo.package$.*;
+
+import java.sql.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.logging.Handler;
+
+import com.genexus.webpanels.*;
+import com.genexus.internet.*;
+import com.genexus.*;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.olingo.server.api.OData;
+import org.apache.olingo.server.api.ODataHttpHandler;
+import org.apache.olingo.server.api.ServiceMetadata;
+import org.apache.olingo.commons.api.edmx.EdmxReference;
+
+
+@javax.servlet.annotation.WebServlet(value ="/servlet/odata/*")
+public final class GxODataServlet extends GXWebObjectStub
+{
+
+	protected void doExecute( com.genexus.internet.HttpContext context ) throws Exception
+	{
+		try{
+			GxODataLayer dataLayer = new GxODataLayer(context);
+			OData odata = OData.newInstance();
+			ServiceMetadata edm = odata.createServiceMetadata(new  GxEdmProvider(), new ArrayList<EdmxReference>());
+			ODataHttpHandler handler = odata.createHandler(edm);
+	
+			handler.register(new GxEntityCP(dataLayer));
+			handler.register(new GxEntityProcessor(dataLayer));
+			handler.register(new GxPrimitiveProcessor(dataLayer));
+			handler.process(context.getRequest(),context.getResponse());	
+		}
+		catch (RuntimeException e) {			
+			throw new ServletException();			
+		}
+	}
+
+	protected void init( com.genexus.internet.HttpContext context )
+	{
+	}
+
+	public String getServletInfo( )
+	{
+		return "GXOData";
+	}
+
+	protected boolean IntegratedSecurityEnabled( )
+	{
+		return false;
+	}
+
+	protected int IntegratedSecurityLevel( )
+	{
+		return 0;
+	}
+
+	protected String IntegratedSecurityPermissionPrefix( )
+	{
+		return "";
+	}
+}
+>>

@@ -1,0 +1,61 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tab Ab Form" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Include Name="SearchButton.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Import Namespace="Artech.Patterns.WorkWithDevices.Copy" %>
+<%@ SubTemplate Name="GridAbstractFormFlat" File="GridAbstractForm_FlatTemplate.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="GridAbstractFormCarmine" File="GridAbstractForm_CarmineTemplate.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="GridAbstractFormFiori" File="GridAbstractForm_FioriTemplate.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="GridAbstractFormUnanimo" File="GridAbstractForm_UnanimoTemplate.dkt"  MergeProperties="True" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Patterns.WorkWith.WorkWithInstance" %>
+<%@ Property Name="GridObject" Type="Artech.Patterns.WorkWith.IGridObject" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="IsTabTemplate" Type="System.Boolean" %>
+
+<%	
+		Transaction transaction = Instance.Transaction.Transaction;
+		if (transaction == null)
+			throw new ArgumentNullException("Object");
+		var template = Artech.Patterns.WorkWith.Helpers.TemplateManagment.CalculateTemplate(transaction);
+		switch (template)
+		{
+			case DefaultFormHelper.FormTemplate.Fiori:
+			{
+				%>
+				<%@ CallSubTemplate GridAbstractFormFiori Template='template'%>
+				<%
+				break;
+			}
+			case DefaultFormHelper.FormTemplate.Carmine:
+			{
+				%>
+				<%@ CallSubTemplate GridAbstractFormCarmine Template='template'%>
+				<%
+				break;
+			}
+			case DefaultFormHelper.FormTemplate.Flat:
+			{			
+				%>
+				<%@ CallSubTemplate GridAbstractFormFlat Template='template'%>	
+				<%	
+				break;
+			}
+			case DefaultFormHelper.FormTemplate.Unanimo:
+			{
+				%>
+				<%@ CallSubTemplate GridAbstractFormUnanimo Template='template'%>	
+				<%	
+				break;
+			}
+			default:
+				throw new InvalidOperationException(string.Format("Missing sub-template for {0}", template));
+			
+		}
+%>

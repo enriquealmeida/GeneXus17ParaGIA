@@ -1,0 +1,54 @@
+
+delimiters "$", "$"
+
+render()::=<<
+version: '3'
+services:
+  web:
+    $webSource()$
+    container_name: $containerName$_web
+    $labels()$
+    $webports()$
+    $webenvironment()$
+    $webvolumes()$
+    $entrypoint()$
+    links:
+     - db
+  db:
+    $dbSource()$
+    container_name: $containerName$_db
+    $dbports()$
+    $dbenvironment()$
+    $dbvolumes()$
+>>
+
+labels()::=<<
+labels:
+ org.label-schema.gx-environment-host: $hostDir$
+>>
+
+webSource()::=<%
+$if (hasDockerfileWeb)$
+	$dockerfile("web")$
+$else$
+	$image(webSource)$
+$endif$
+%>
+
+dbSource()::=<%
+$if (hasDockerfileDB)$
+	$dockerfile("db")$
+$else$
+	$image(dbSource)$
+$endif$
+%>
+
+image(imageName)::=<<
+image: $imageName$
+>>
+
+dockerfile(ext)::=<<
+build:
+  context: .
+  dockerfile: Dockerfile.$ext$
+>>

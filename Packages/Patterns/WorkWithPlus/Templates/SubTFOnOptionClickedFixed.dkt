@@ -1,0 +1,86 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="SubTFOnOptionClicked" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Architecture.Common.Objects" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="IsDDOMultiple" Type="System.Boolean" %>
+<%@ Property Name="name" Type="System.String" %>
+<%@ Property Name="ddoName" Type="System.String" %>
+<%@ Property Name="gridItem" Type="DVelop.Patterns.WorkWithPlus.IFilterableByTitle" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%
+						int operIndex = 1;
+						foreach (FilterAttributeOperatorElement oper in gridItem.PredefinedOperators)
+						{
+							if (IsDDOMultiple)
+							{
+%>
+		Case DDO_Grid.SelectedColumnFixedFilter = !'<%= oper.PredefinedOperator %>'
+<%
+							}
+							else
+							{
+%>
+		Case DDO_<%= ddoName %>.ActiveEventKey = !'<#FixedFilter:<%= oper.PredefinedOperator %>#>'
+<%
+							}
+%>
+			&TF<%= name %>Operator = <%= operIndex %>
+<%
+							bool isPredefinedFilter = (oper.Type == FilterAttributeOperatorElement.TypeValue.PredefinedOperator);
+							if (isPredefinedFilter)
+							{
+%>
+			&TF<%= name %> = <%= oper.FixedValue %>
+<%
+							}
+							else
+							{
+%>
+			&TF<%= name %>.SetEmpty()
+<%
+							}
+							if (isPredefinedFilter && oper.IsCustomTypeFixedRange())
+							{
+%>
+			&TF<%= name %>_To = <%= oper.FixedValueTo %>
+<%
+							}
+							else if (TitleFilterProcedureHelper.ConsiderFilterCondition(gridItem) && gridItem.IsSearchBoxRange())
+							{
+%>
+			&TF<%= name %>_To.SetEmpty()
+<%
+							}
+							if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(gridItem))
+							{
+								if (gridItem.AllowMultipleSelection)
+								{
+%>
+			&TF<%= name %>_Sels = new()
+<%
+								}
+								else
+								{
+%>
+			&TF<%= name %>_Sel.SetEmpty()
+<%
+								}
+								if (!IsDDOMultiple)
+								{
+%>
+			DDO_<%= ddoName %>.SelectedValue_set = ''
+<%
+								}
+							}
+							operIndex++;
+							if (!IsDDOMultiple)
+							{
+%>
+			Grid.FirstPage()
+<%
+							}
+						}
+%>

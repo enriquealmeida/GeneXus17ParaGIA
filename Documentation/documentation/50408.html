@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Google OAuth 2.0 process for emails: Generation and data collection by the Administrator</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50408,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Google OAuth 2.0 process for emails: Generation and data collection by the Administrator</h1>
+<!--Google OAuth 2.0 process for emails: Generation and data collection by the Administrator--><div class="TableWikiBody" id="tblwikibody"><p>In this article, you will find the necessary steps to provide data to connect to the mailbox through <a href='https://developers.google.com/identity/protocols/oauth2'>Google OAuth 2.0</a>.</p>
+
+<p id="tw-target-text">Example: Application administrators have to provide the necessary data to programmers so that they can connect to their mailboxes.</p>
+
+<h2><a id="Steps" class="HashLink" href="#Steps">Steps</a></h2>
+
+<p>Follow these steps to provide data to connect to a mailbox with Google OAuth 2.0:</p>
+
+<p>1. Enter this link: <a href='https://console.developers.google.com/apis/credentials'>https://console.developers.google.com/apis/credentials</a>.</p>
+
+<p>2. Create a <strong>New Project:</strong></p>
+
+<p><img src="./images/50421.jpg" id="50421" class="WikiImage"/></p>
+
+<p>Name it and click on "Create".</p>
+
+<p>Once you have created the New Project, select it in order to work with it.</p>
+
+<p>3. Go to the <strong>OAuth</strong> <strong>Consent screen</strong> option in the left menu and <a href='https://support.google.com/cloud/answer/10311615#user-type&amp;zippy=%2Cexternal%2Cinternal%2Ctesting%2Cin-production'>Configure a OAuth consent</a>.</p>
+
+<p>To do so, follow the next steps:</p>
+
+<ul>
+	<li>Select the <strong>User Type</strong> as <strong>External </strong>and click on the <strong>Create</strong> button.</li>
+	<li>Fill in the sections as applicable to your application and click on the <strong>Save and continue</strong> button.</li>
+	<li>Click again on the <strong>OAuth</strong> <strong>Consent screen</strong> option and check that your application is in Publishing status = Testing (if you set the Publishing status = Production, a verification of the app will take place. For more information, check this link: <a href='https://support.google.com/cloud/answer/10311615#user-type&amp;zippy=%2Cexternal%2Cinternal%2Ctesting%2Cin-production'>Testing in production</a>): </li>
+</ul>
+
+<p style="text-align: center;"><img src="./images/50422.jpg" id="50422" class="WikiImage"/></p>
+
+<p>4. Go to the <strong>Credentials </strong>option in the left menu and click on the <strong>+ Create Credentials</strong>. Then select <strong>OAuth client ID</strong>.</p>
+
+<p>5. Select the application type necessary for your project. Since, in this example, the focus is on the process for emails, it is common to use "<strong>Application type = Web application</strong>" or "<strong>Application type = Desktop app</strong>." Then click on the <strong>Create</strong> button.</p>
+
+<p>6. Now the OAuth client has been created:</p>
+
+<p style="text-align: center;"><img src="./images/50423.jpg" id="50423" class="WikiImage"/></p>
+
+<p id="tw-target-text">Save the ClientId and ClientSecret that will be used later.</p>
+
+<p>7. Go to the <strong>Library</strong> option in the Google Cloud Platform and search for the <strong>Gmail API </strong>(use the search engine to help you out) and enable it.</p>
+
+<p id="tw-target-text">8. Go back to the <strong>OAuth consent screen</strong> option, where you will have to enter the scope of the Gmail API app that you just activated in the previous step. For this, click on the <strong>Edit App</strong> button to enter the form.</p>
+
+<p>9. In the<strong> Scopes </strong>section, add the necessary scope to be able to use the email services with Google. To do so, press the <strong>Add or remove scopes</strong> button as shown in the image:</p>
+
+<p style="text-align: center;"><img src="./images/50425.jpg" id="50425" class="WikiImage"/></p>
+
+<p>10. Select "https://mail.google.com/" and click on the <strong>Update</strong> button.</p>
+
+<p>11. For this step, you don't need to stay on the Google Cloud Console. It is necessary to make a GET request to a URL. For simplicity, it is recommended to do it from the browser.</p>
+
+<p>The URL is constructed as follows:</p>
+
+<ul>
+	<li><em>https://accounts.google.com/o/oauth2/auth?client_id=<strong>{CLIENT_ID}</strong>&amp;redirect_uri=<strong>{REDIRECT_URI}</strong>&amp;scope=<strong>{SCOPE}</strong>&amp;response_type=code</em></li>
+</ul>
+
+<p>Where:</p>
+
+<ul>
+	<li><strong>{SCOPE}: </strong>refers to the level of access required. As in this case, you want authorization to send emails, you will have to enter the following value: "https://mail.google.com/".</li>
+	<li><strong>{REDIRECT_URI}: </strong>refers to the page where you want to redirect after authorizing the application.</li>
+	<li><strong>{CLIENT_ID} </strong>refers to the ClientId that was obtained in step 6.</li>
+</ul>
+
+<p><strong>Notes:</strong></p>
+
+<ul>
+	<li>If your application has not been verified yet, you may get an "Error 403: access_denied. In that case, first, add test users to your Application as explained in <a href='https://stackoverflow.com/questions/65184355/error-403-access-denied-from-google-authentication-web-api-despite-google-acc/65186291#65186291'>https://stackoverflow.com/questions/65184355/error-403-access-denied-from-google-authentication-web-api-despite-google-acc/65186291#65186291</a>.</li>
+	<li>If you selected <strong>Application type = Desktop app</strong> in the step 5, it is recommended to place the following as Redirect URI: "<strong>urn:ietf:wg:oauth:2.0:oob</strong>", which redirects to the same browser.</li>
+	<li>If you selected <strong>Application type = Web</strong> in step 5, it is necessary to place a different Redirect URI. In this example, if you select a Web application, it is recommended to add <strong>http://localhost:1 </strong>as a Redirect URI. </li>
+	<li>If you selected <strong>Application type = Web,</strong> it is necessary to Add the URI in the <strong>Credentials</strong> option (it needs to have a URL format), specifically clicking in the Edit button of the <strong>OAuth 2.0 Client IDs</strong> section:</li>
+</ul>
+
+<p style="text-align: center;"><img src="./images/50678.jpg" id="50678" class="WikiImage"/></p>
+
+<h3><a id="Example+of+a+Desktop+Application+type+URL" class="HashLink" href="#Example+of+a+Desktop+Application+type+URL">Example of a Desktop Application type URL</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>https://accounts.google.com/o/oauth2/auth?client_id=xxx.apps.googleusercontent.com&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob&amp;scope=https://mail.google.com/</em><em>&amp;response_type=code</em></pre>
+
+<p id="tw-target-text">After having made the request in the previous step, an Authorization Code will be obtained as shown in the image below. This code is necessary for the following steps.</p>
+
+<p style="text-align: center;"><img src="./images/50426.jpg" id="50426" class="WikiImage"/></p>
+
+<p id="tw-target-text">Next, it is necessary to make a POST request, where the Authorization Code obtained in the previous step is used.</p>
+
+<p>As shown in the image in Curl format below, you have to make a request to the <strong>https://accounts.google.com/o/oauth2/token</strong> URL. Also, you need to pass, using x-www-form-urlencoded format (which must be specified as the value for the Content-Type header), the keys with their corresponding values:</p>
+
+<ul>
+	<li>client_id --&gt; Client ID <strong>obtained in step 6.</strong></li>
+	<li>client_secret --&gt; Client <strong>Secret obtained in step 6.</strong></li>
+	<li>code --&gt; Authorization Code <strong>obtained in step 11.</strong></li>
+	<li>grant_type --&gt; <strong><em>"authorization_code"</em></strong></li>
+	<li>redirect_uri --&gt; <strong><em>"urn:ietf:wg:oauth:2.0:oob" </em></strong></li>
+</ul>
+
+<p><strong><span style="font-size: smaller;">curl -X POST https://accounts.google.com/o/oauth2/token -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=xxx&amp;client_secret=xxx&amp;code=xxx&amp;grant_type=authorization_code&amp;redirect_uri=xxx"</span></strong></p>
+
+<p><strong>Note:</strong> Take into account that the previous POST request must be written as shown on a single line.</p>
+
+<p id="tw-target-text">The response obtained after executing the previous request is as follows:</p>
+
+<p style="text-align: center;"><img src="./images/50428.jpg" id="50428" class="WikiImage"/></p>
+
+<p id="tw-target-text">As you can see in this last answer, the refresh token is already obtained (in addition, the first active access token is also obtained, which can already be used by the programmer).</p>
+
+<p>The next step would be to pass the Client ID, Client Secret, and Refresh Token to the programmer.</p>
+
+<p>He/she will be in charge of calculating the access tokens when they expire, using the three recently mentioned metadata.</p>
+
+<h3><a id="Example+of+a+Web+Application+type+URL" class="HashLink" href="#Example+of+a+Web+Application+type+URL">Example of a Web Application type URL</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>https://accounts.google.com/o/oauth2/auth?client_id=xxx-xxx.apps.googleusercontent.com&amp;redirect_uri=http://localhost:1&amp;scope=https://mail.google.com/&amp;response_type=code</em>&amp;access_type=offline</pre>
+
+<p>If you request the Authorization Code of a Web Application, you have to copy the code from the browser as shown in this image:</p>
+
+<p style="text-align: center;"><img src="./images/50668.jpg" id="50668" class="WikiImage"/></p>
+
+<p id="tw-target-text">Next, it is necessary to make a POST request, where the Authorization Code obtained in the previous step is used.</p>
+
+<p>As shown in the image in Curl format below, you have to make a request to the <strong>https://accounts.google.com/o/oauth2/token</strong> URL. Also, you need to pass, using x-www-form-urlencoded format (which must be specified as the value for the Content-Type header), the keys with their corresponding values:</p>
+
+<ul>
+	<li>client_id --&gt; Client ID <strong>obtained in step 6.</strong></li>
+	<li>client_secret --&gt; Client <strong>Secret obtained in step 6.</strong></li>
+	<li>code --&gt; Authorization Code <strong>obtained in step 11.</strong></li>
+	<li>grant_type --&gt; <strong><em>"authorization_code"</em></strong></li>
+	<li>redirect_uri --&gt; <strong><em>"</em>http://localhost:1<em>" </em></strong></li>
+</ul>
+
+<p><strong><span style="font-size: smaller;">curl -X POST https://accounts.google.com/o/oauth2/token -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=xxx&amp;client_secret=xxx&amp;code=xxx&amp;grant_type=authorization_code&amp;redirect_uri=xxx"</span></strong></p>
+
+<p id="tw-target-text">The response obtained after executing the previous request is as follows:</p>
+
+<p style="text-align: center;"><img src="./images/50428.jpg" id="50428" class="WikiImage"/></p>
+
+<p id="tw-target-text">As you can see in this last answer, the refresh token is already obtained (in addition, the first active access token is also obtained, which can already be used by the programmer).</p>
+
+<p>The next step would be to pass the Client ID, Client Secret, and Refresh Token to the programmer.</p>
+
+<p>He/she will be in charge of calculating the access tokens when they expire, using the three recently mentioned metadata.</p>
+
+<h3><a id="See+also+" class="HashLink" href="#See+also+">See also </a></h3>
+
+<p><a href="50227.html">Special considerations for SMTPSession or Pop3Session with Google Accounts</a><br />
+<a href="50396.html">Microsoft Exchange OAuth 2.0 for Mails</a><br />
+<a href="50438.html">OAuth Module</a></p>
+
+<p>  </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="50396.html">Microsoft Exchange OAuth 2.0 for emails: Generation and data collection from the Administrator</a></TD><TD><a href="50438.html">OAuth Module</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 05:55 PM</em></font></td></TR></table></font>

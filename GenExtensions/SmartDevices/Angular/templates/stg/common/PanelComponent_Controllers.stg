@@ -1,0 +1,151 @@
+delimiters "$", "$"
+import "PanelComponent_GridSelect.stg"
+
+controllerLoadTemplate ::= [
+  "data": "g_nothing",
+  "sdt": "g_controller_grid_load_sdt",
+  "level": "g_nothing",
+  default: "g_nothing"
+]
+
+controllerRefreshTemplate ::= [
+  "data": "g_controller_grid_refresh_data",
+  "sdt": "g_controller_grid_refresh_sdt",
+  "level": "g_controller_grid_refresh_level",
+  default: "g_nothing"
+]
+
+controllerMethodsTemplate ::= [
+  "Dynamic Combo Box" : "g_controller_dyncombo_methods",
+  "SDWheel-Attributes" : "g_nothing",
+  "SDWheel-DataProvider" : "g_nothing",
+  "HideCode" : "g_controller_hidecode_methods",
+  "SuggestIncremental" : "g_controller_suggest_methods",
+  "SuggestOnRequest" : "g_controller_suggest_methods"
+]
+
+g_component_init_controller(controller)::= <<
+$controller.GridControllerExpression:g_expression()$.initState();
+
+>>
+
+g_component_controllers_methods(page) ::= <<
+$component_controllers_methods(page)$
+>>
+
+g_controller_data_methods(controller) ::= <%
+  $(controllerMethodsTemplate.(controller.ControlType))(controller)$
+%>
+
+g_controller_dyncombo_methods(controller) ::= <%
+  $g_controller_dyncomboafter_method(controller)$
+%>
+
+g_controller_dyncomboafter_method(controller) ::= <<
+async update_$controller.ControlName$() {
+  $controller.OptionsExpression:g_expression()$ = await this.panelService.get$controller.OptionsDataProvider$( $controller.ConditionsParameters:g_call_parameters_collection()$);
+  this.cdr.markForCheck();
+  if ($controller.OptionsExpression:g_expression()$.length > 0) {
+    $controller.OutputExpression:g_expression()$ = $g_convert_to( {VarChar}, controller.OutputExpression.ExprDataType, {$controller.OptionsExpression:g_expression()$[0][0]})$;
+  }
+}
+>>
+
+g_controller_hidecode_methods(controller) ::= <%
+  $g_controller_hidecodeupdate_method(controller)$
+%>
+
+g_controller_suggest_methods(controller) ::= <%
+  $g_controller_hidecodeupdate_method(controller)$
+  $g_controller_suggestoptions_method(controller)$
+%>
+
+g_controller_suggestoptions_method(controller) ::= <<
+async suggest_$controller.ControlName$() {
+  $controller.OptionsExpression:g_expression()$ = await this.panelService.get$controller.OptionsDataProvider$( $controller.ConditionsParameters:g_call_parameters_collection()$);
+}
+
+>>
+
+g_controller_hidecodeupdate_method(controller) ::= <<
+async update_$controller.ControlName$() {
+  let result = await this.panelService.get$controller.ValueDataProvider$( $controller.ConditionsParameters:g_call_parameters_collection()$);
+  $controller.OutputExpression:g_expression()$ = $g_convert_to( {VarChar}, controller.OutputExpression.ExprDataType, {this.validateHidecode(result)})$;
+  this.cdr.markForCheck();
+}
+
+>>
+
+g_controller_grid_load( controller) ::= <%
+$if(controller.IsRoot)$
+  $(controllerLoadTemplate.(controller.Type))(controller)$
+$endif$
+%>
+
+g_controller_grid_load_sdt(controller) ::= <<
+this.$controller.ControlName$Refresh();
+>>
+
+g_component_initcontrollers_method(page) ::= <<
+$if(page.GridControllers || page.ContainedLayoutComponents)$
+initControllers() {
+  $first(page.ContainedLayoutComponents):{c|this.componentsController.setState($g_expression_or_null(c.ComponentContextExpression)$);}$
+  $page.GridControllers:g_component_controller_setstate()$
+}
+$endif$
+>>
+
+g_component_controller_setstate(controller) ::= <<
+$if(controller.IsRoot)$
+$controller.GridControllerExpression:g_expression()$.setState($controller.EntityCollectionExpression:g_expression()$, $controller.UIEntityCollectionExpression:g_expression()$ );
+$endif$
+>>
+
+g_controller_grid_methods(controller) ::= <%
+  $g_controller_grid_setcontext_method(controller)$
+  $g_controller_grid_action_method(controller)$
+  $g_controller_grid_refresh_method(controller)$
+%>
+
+g_controller_grid_setcontext_method(controller) ::= <%
+$controller_grid_setcontext_method(controller)$
+%>
+
+g_controller_grid_refresh_method(controller) ::= <%
+  $(controllerRefreshTemplate.(controller.Type))(controller)$
+%>
+
+g_controller_grid_refresh_data(controller) ::= <<
+$controller_grid_refresh_data(controller)$
+>>
+
+g_controller_grid_refresh_sdt(controller) ::= <<
+$controller.ControlName$Refresh() {
+  $if(controller.DynpropsExpression)$
+  $controller.GridControllerExpression:g_expression()$.loadFromSDT($controller.EntityCollectionExpression:g_expression()$, $controller.UIEntityCollectionExpression:g_expression()$, $controller.DynpropsExpression:g_expression()$);
+  $controller.DynpropsExpression:g_expression()$ = "[]";
+  $else$
+  $controller.GridControllerExpression:g_expression()$.loadFromSDT($controller.EntityCollectionExpression:g_expression()$, $controller.UIEntityCollectionExpression:g_expression()$, null);
+  $endif$
+  this.$controller.ControlName$SetContext(0);
+  $controller.GridControllerExpression:g_expression()$.refreshUI();
+  this.cdr.markForCheck();
+}
+
+>>
+
+g_controller_grid_refresh_level(controller) ::= <<
+$controller.ControlName$Refresh() {
+}
+
+>>
+
+g_layoutcomponent_refresh_method(component) ::= <<
+$layoutcomponent_refresh_method(component)$
+>>
+
+g_layoutcomponent_refresh(component) ::= <%
+  this.componentsController.refresh( '$component.ControlName$', $g_expression_or_null(component.ComponentContextExpression)$);
+%>
+
+g_nothing(x) ::= <%%>

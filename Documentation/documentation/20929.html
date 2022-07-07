@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Update a repository from a GAM deploy tool package</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20929,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Update a repository from a GAM deploy tool package</h1>
+<!--HowTo: Update a repository from a GAM deploy tool package--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The purpose of this document is to explain how to import data in an existing repository, using the <a href="16535.html">GAM API</a>. The method which is going to be used is UpdateRepository, which is one of the methods of GAMRepository Object.</p>
+
+<h3><a id="UpdateRepository+method+of+GAMRepository+Object" class="HashLink" href="#UpdateRepository+method+of+GAMRepository+Object">UpdateRepository  method of GAMRepository Object</a></h3>
+
+<p>Here we show the steps to be followed:</p>
+
+<ul>
+	<li>Create a pack (Export) with the <a href="18608.html">GAM Deploy Tool</a>, containing all the information necessary for updating an existing repository (roles, applications). </li>
+</ul>
+
+<ul>
+	<li>Decompress the pack generated (.gpkg file) with any tool (for example: winzip). You need to decompress the Data directory only, which has all the information regarding the pack (.json files). This directory must be set in the &amp;GAMUpdateRepositoryConfiguration.PackageDirectoryPath (see example below).<br />
+	 </li>
+	<li>Update the <a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,4,61,O,E,0,,30451;S;0;A;0;0;CONNECTION.GAM;;;;;;;;;;;;;;;;A;%20%20/%20%20/%20%20;;0;9;;0;;99;;0;1;%200;N;N;S;B;P'>connection.gam</a> file.<br />
+	There are two possible ways to update a repository using the UpdateRepository method of GAMRepository object; one of them is by connecting to the <a href="18617.html">GAM Manager Repository</a>.<br />
+	The other is to connect to the repository which is going to be updated. Both ways are valid.<br />
+	So, update the connection.gam file to include the <a href="16150.html">GAM Repository Connections</a> to the <a href="18617.html">GAM Manager Repository</a> or the Repository you want to update. You can see how to do it in the following link: <a href="18610.html">GAM Deploy Tool : Creating connection.gam file</a>.</li>
+</ul>
+
+<p>The code to update a GAM repository has to include the following:</p>
+
+<ul>
+	<li>Connection to the <a href="18617.html">GAM Manager Repository</a> or the Repository you are going to update.<br />
+	 </li>
+	<li>Set the values to a variable based on GAMUpdateRepositoryConfiguration object, where you can specify:</li>
+</ul>
+
+<ol style="">
+	<li>PackageDirectoryPath : Path where the Data directory of the package was decompressed and can be found.</li>
+	<li>ImportAllRoles (Boolean): True if you want to import all <a href="17569.html">GAM Roles</a> of the package.</li>
+	<li>ImportAllApplications (Boolean):  True if you want to import all <a href="15910.html">GAM Applications</a> of the package.</li>
+	<li>ApplicationsToImport : Based on a collection of GAMUpdateRepositoryConfigurationApplicationsToImportSDT, where you can specify the GUID of the Application you want to import.</li>
+</ol>
+
+<p>Take into account that the import criteria is the same as the one explained in <a href="18872.html">GAM Deploy Tool: Export Data</a>.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>I. In this case we connect to the Repository where we want to perform the update. First update connection.gam with a connection to this Repository, in the example its name is &quot;TestGAMdeployTool2&quot;.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;isOK = GAM.SetConnection('TestGAMdeployTool2', &amp;Errors)//&amp;Errors is collection of GAMError
+if not &amp;isOK
+  do &quot;process errors&quot;
+else
+ 
+//Perform a Full Import
+&amp;GAMRepository.Load(&amp;Id)
+&amp;GAMUpdateRepositoryConfiguration.ImportAllApplications = True
+&amp;GAMUpdateRepositoryConfiguration.ImportAllRoles = True
+&amp;GAMUpdateRepositoryConfiguration.PackageDirectoryPath = &amp;PackageDirectoryPath
+&amp;isOK = &amp;GAMRepository.UpdateFromPackage(&amp;GAMUpdateRepositoryConfiguration, &amp;Errors)
+
+if &amp;isOK
+  &amp;GAMRepository.Save()
+  //continue the execution
+else
+  do &quot;Process errors&quot;
+endif
+endif
+
+sub &quot;Process errors&quot;
+  For &amp;GAMError in &amp;Errors
+   msg(&quot;   &quot; + &amp;GAMError.Message + &quot;(GAM:&quot; + &amp;GAMError.Code + &quot;)&quot;)
+  EndFor
+endsub</pre>
+
+<p>II. In this case we connect to the GAM Manager Repository in order to update any other Repository. First update connection.gam with a connection to GAM Manager Repository.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;isOK = GAM.SetConnection('GAM-Manager', &amp;Errors)
+if not &amp;isOK
+  do &quot;process errors&quot;
+else
+
+// Perform a Full Import
+&amp;GAMRepository.Load(&amp;Id)
+&amp;GAMUpdateRepositoryConfiguration.FullImport = True
+&amp;GAMUpdateRepositoryConfiguration.ImportAllApplications = True
+&amp;GAMUpdateRepositoryConfiguration.ImportAllRoles = True
+&amp;GAMUpdateRepositoryConfiguration.PackageDirectoryPath = &amp;PackageDirectoryPath
+&amp;isOK = &amp;GAMRepository.UpdateFromPackage(&amp;GAMUpdateRepositoryConfiguration, &amp;Errors)
+
+if &amp;isOK
+   &amp;GAMRepository.Save()
+   //Continue the execution
+else
+  do &quot;Process errors&quot;
+endif
+
+endif</pre>
+
+<p>The GAMUpdateRepositoryConfiguration object has the FullImport property. For the time being a FullImport means importing roles and applications (permissions) only.</p>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>The method should be executed after the user logs in as an administrator user of GAM-Manager Repository.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="20328.html">HowTo: Creating New Repositories from a GAM deploy tool package</a></p>
+
+<p></p>
+
+<p> </p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+
+<p> </p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="20328.html">HowTo: Creating New Repositories from a GAM deploy tool package</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

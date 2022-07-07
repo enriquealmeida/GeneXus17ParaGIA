@@ -1,0 +1,251 @@
+group RestCSharpWeb;
+
+delimiters "$", "$"
+
+defaultValues ::= [
+	"string":	"string.Empty",
+	"bool":		"false",
+	"guid":		"Guid.Empty",
+	"int":		"0",
+	"decimal":	"0",
+	"smallint":	"0",
+	"byte":		"0",
+	"bigint":	"0",
+	"datetime":	"DateTime.MinValue",
+	default:	"null"
+]
+
+rest_interface(level,dataTypes)::=<<
+$if(level.IsWrappedJsonLevel)$$else$[GxUnWrappedJson()]$endif$
+$if (level.HasJsonName)$[GxJsonName("$level.JsonName$")]$endif$
+[DataContract(Name=@"$level.ExposedName$", Namespace="$level.ExposedNamespace$")]
+public class $class_name(level)$_RESTInterface : GxGenericCollectionItem<$class_name(level)$>, System.Web.SessionState.IRequiresSessionState
+{
+	$rest_constructors(level)$
+
+	#region Rest Properties
+	$rest_properties(level,dataTypes)$
+	#endregion
+
+	public $class_name(level)$ sdt
+	{
+		get { 
+			return ($class_name(level)$)Sdt;
+		}
+		set { 
+			Sdt = value;
+		}
+	}
+
+	[OnDeserializing]
+	void checkSdt( StreamingContext ctx )
+	{
+		if ( sdt == null )
+		{
+			sdt = new $class_name(level)$() ;
+		}
+	}
+}
+>>
+
+rest_constructors(level)::=<<
+public $class_name(level)$_RESTInterface( ) : base()
+{	
+}
+
+public $class_name(level)$_RESTInterface( $class_name(level)$ psdt ) : base(psdt)
+{	
+}
+>>
+
+rest_properties(level, dataTypes)::=<<
+
+$level.OrderedMapping:{item|
+$if(!item.IsEO)$
+$if (item.IsLevel)$
+$rest_lvl_property(level, item, dataTypes)$
+$else$
+$rest_item_property(level, item, dataTypes)$
+$endif$
+$endif$
+}$
+>>
+
+
+rest_item_property(level, item, dataTypes)::=<<
+$data_member_header(item)$
+$if(item.IncludeGXI || item.IsBlob)$[GxUpload()]$endif$
+public $rest_datatype_item(item, dataTypes)$ gxTpr_$item.NormalizedName$
+{
+	get { 
+		$check_nulltag(level,item,dataTypes)$
+	}
+	set { 
+		$rest_set_item(level,item,dataTypes)$;
+	}
+}
+
+>>
+
+check_nulltag(level, item, dataTypes)::=<<
+$if(item.IsJsonNoPropertyWhenNull || item.IsJsonNullValueWhenNull)$
+if (sdt.ShouldSerialize$public_property(item)$$if(item.IsCollection)$_$item_collection(item)$$endif$_Json())
+	return $rest_get_item(level,item,dataTypes)$;
+else
+	return null;
+$else$
+return $rest_get_item(level,item,dataTypes)$;
+$endif$
+>>
+
+rest_datatype_item(item, dataTypes)::=<%
+$if (item.IsCollection)$ 
+	$if (item.CustomType)$
+		GxGenericCollection<$if (item.RestType)$$dataTypes.(item.RestType)$$else$$item.CustomType$$endif$_RESTInterface>
+	$else$
+		GxSimpleCollection<$dataTypes.(item.RestType)$>
+	$endif$
+$elseif (item.IsRestString)$ 
+	$dataTypes.(item.RestType)$
+$elseif (item.CustomType)$
+	$item.CustomType$_RESTInterface
+$elseif (item.IsNullable)$ 
+	Nullable<$dataTypes.(item.RestType)$>
+$else$
+	$dataTypes.(item.RestType)$
+$endif$
+%>
+
+rest_set_item(level,item,dataTypes)::=<%
+$if (item.IsCollection)$
+	$if (item.CustomType)$
+value.LoadCollection(sdt.gxTpr_$item.NormalizedName$)
+	$else$
+		$if (item.IsGeospatial)$
+sdt.gxTpr_$item.NormalizedName$.FromJSonString(value.ToJSonString())
+		$else$
+			$if (item.NeedsJsonCastToString)$
+sdt.gxTpr_$item.NormalizedName$.FromStringCollection(value)
+			$else$
+sdt.gxTpr_$item.NormalizedName$ = value 
+			$endif$
+		$endif$
+	$endif$
+$elseif (item.IsChar)$ 
+sdt.gxTpr_$item.NormalizedName$ = value
+$elseif (item.IsDate || item.IsDateTime)$
+sdt.gxTpr_$item.NormalizedName$ = DateTimeUtil.$set_converter(item)$(value)
+$elseif (item.IsNullable)$
+sdt.gxTpr_$item.NormalizedName$ = ($dataTypes.(item.RestType)$) (value.HasValue ? value.Value : $defaultValues.(item.RestType)$)
+$elseif (item.JsonNumberTooBig)$
+sdt.gxTpr_$item.NormalizedName$ = $if (item.NeedsDecimalCast)$($dataTypes.(item.Type)$)$endif$ NumberUtil.Val( value, ".")
+$elseif (item.CustomType)$
+sdt.gxTpr_$item.NormalizedName$ = value.sdt
+$elseif (item.IsGeospatial)$
+sdt.gxTpr_$item.NormalizedName$ = new Geospatial(value)
+$else$
+sdt.gxTpr_$item.NormalizedName$ = $if (item.IsNullable)$value.HasValue ? value.Value : $defaultValues.(item.RestType)$$else$value$endif$
+$endif$
+%>
+
+set_converter(item)::=<<
+$if (item.IsDate)$CToD2$else$CToT2$endif$
+>>
+
+rest_get_item(level,item,dataTypes)::=<%
+$if (item.IsCollection)$
+	$if (item.CustomType)$
+new GxGenericCollection<$if (item.RestType)$$dataTypes.(item.RestType)$$else$$item.CustomType$$endif$_RESTInterface>(sdt.gxTpr_$item.NormalizedName$)
+	$else$
+		$if (item.NeedsJsonCastToString)$
+sdt.gxTpr_$item.NormalizedName$.ToStringCollection(10, 0)
+		$else$
+sdt.gxTpr_$item.NormalizedName$
+		$endif$
+	$endif$
+$elseif (item.JsonNumberTooBig)$
+StringUtil.LTrim( StringUtil.Str( $if (item.NeedsDecimalCast)$(decimal)$endif$ sdt.gxTpr_$item.NormalizedName$, $item.Length$, $item.Decimals$))
+$elseif (item.IsNullable)$
+sdt.gxTpr_$item.NormalizedName$
+$elseif (item.IsDate || item.IsDateTime)$
+DateTimeUtil.$get_converter(item)$( sdt.gxTpr_$item.NormalizedName$)
+$elseif (item.IncludeGXI)$
+(!String.IsNullOrEmpty(StringUtil.RTrim( sdt.gxTpr_$item.NormalizedName$)) ? PathUtil.RelativePath( sdt.gxTpr_$item.NormalizedName$) : StringUtil.RTrim( sdt.gxTpr_$item.NormalizedName$_gxi))
+$elseif (item.IsBlob)$
+PathUtil.RelativePath( sdt.gxTpr_$item.NormalizedName$)
+$elseif (item.CustomType)$
+new $item.CustomType$_RESTInterface(sdt.gxTpr_$item.NormalizedName$)
+$elseif (item.IsCharacter)$
+StringUtil.RTrim( sdt.gxTpr_$item.NormalizedName$)
+$elseif (item.IsGeospatial)$
+sdt.gxTpr_$item.NormalizedName$.ToString()
+$else$
+sdt.gxTpr_$item.NormalizedName$
+$endif$
+%>
+
+get_converter(item)::=<<
+$if (item.IsDate)$DToC2$else$$if (item.IsDateTimeMS)$TToC3$else$TToC2$endif$$endif$
+>>
+
+rest_lvl_property(level, lvl, dataTypes)::=<<
+$data_member_header(lvl)$
+$if (lvl.IsCollection)$
+public GxGenericCollection<$class_name(level)$_$lvl.NameOrCollectionItem$_RESTInterface> gxTpr_$lvl.NormalizedName$
+{
+	get {
+		$check_coll_level_Nulltag(level,lvl,dataTypes)$
+	}
+	set {
+		value.LoadCollection(sdt.gxTpr_$lvl.NormalizedName$);
+	}
+}
+$else$
+public $level_rest_interface(level,lvl)$ gxTpr_$lvl.NormalizedName$
+{
+	get {
+		$check_level_Nulltag(level,lvl)$
+	}
+
+	set {
+		sdt.gxTpr_$lvl.NormalizedName$ = value.sdt;
+	}
+
+}
+$endif$
+>>
+
+check_level_Nulltag(level,lvl)::=<<
+$if(item.IsJsonNoPropertyWhenNull || item.IsJsonNullValueWhenNull)$
+if (sdt.ShouldSerialize$public_property(item)$$if(item.IsCollection)$_$item_collection(item)$$endif$_Json())
+	return new $level_rest_interface(level,lvl)$(sdt.gxTpr_$lvl.NormalizedName$);
+else
+	return null;
+$else$
+return new $level_rest_interface(level,lvl)$(sdt.gxTpr_$lvl.NormalizedName$);
+$endif$
+>>
+
+level_rest_interface(level,lvl)::=<<
+$class_name(level)$_$lvl.Name$_RESTInterface
+>>
+
+check_coll_level_Nulltag(level,item,dataTypes)::=<<
+$if(item.IsJsonNoPropertyWhenNull || item.IsJsonNullValueWhenNull)$
+if (sdt.ShouldSerialize$public_property(item)$$if(item.IsCollection)$_$item_collection(item)$$endif$_Json())
+	return new $generic_collection(level,item)$;
+else
+	return null;
+$else$
+return new $generic_collection(level,item)$;
+$endif$
+>>
+
+generic_collection(level,item)::=<<
+GxGenericCollection<$class_name(level)$_$item.NameOrCollectionItem$_RESTInterface>(sdt.gxTpr_$item.NormalizedName$)
+>>
+
+data_member_header(item)::=<<
+[DataMember(Name="$item.JsonName$", Order=$item.Index$$if(item.IsJsonNoPropertyWhenNull )$, EmitDefaultValue=false$endif$)]
+>>
+

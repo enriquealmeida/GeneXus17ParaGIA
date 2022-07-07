@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Update rule</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?21430,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Update rule</h1>
+<!--Update rule--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Edits/updates attributes that are not stored in any of the base tables of a <a href="1908.html">Transaction object</a>.</p>
+
+<p>Given a Transaction level, the only attributes that can be edited are the ones stored in the <a href="6347.html">Base Table</a> of the level. For example, in an Invoice Transaction, you can have the CustomerName in the form, but it isn't editable; the only Customer attribute that can be edited in the Invoice form is CustomerId because it is stored in the Invoice table.</p>
+
+<p>The Update() rule is introduced in case you need to edit CustomerName anyway in the Invoice form. </p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><strong>Update(</strong>att1, ..., <em>attn</em><strong>)</strong>;</p>
+
+<p>where:<br />
+<em>att1</em>, ..., <em>attn</em>: attributes belonging to the <a href="6029.html">Extended Table</a>.</p>
+
+<p>This rule is unconditional. Therefore, to conditionally allow editing of a particular attribute you should combine it with the <a href="6856.html">NoAccept rule</a>.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>This example explains the canonical use of the Update rule. Suppose you have a Customer Transaction, and inside it, an attribute called CustomerAddressLastShipment. And you have an Invoice Transaction too, as shown below.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Invoice
+{
+    InvoiceNumber*
+    InvoiceDate
+    CustomerId
+    CustomerName
+    CustomerRUT
+    CustomerAddressLastShipment
+    InvoiceLastNumber
+    }
+         ProductId*
+         ProductDescription
+         ProductPrice
+         InvoiceLineQtty
+         InvoiceLineTotal
+    }
+}</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+    CustomerId*
+    CustomerName
+    CustomerRUT
+    CustomerAddress
+    CustomerAddressLastShipment
+    CustomerMail
+    CustomerBalance
+    CustomerPhone
+}</pre>
+
+<p>The CustomerAddressLastShipment attribute is inferred from the Customer table and it is displayed on the screen in a read-only mode. However, the shipping address could change; in this case, the rule can solve it.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Update(CustomerAddressLastShipment);</pre>
+
+<p>The operator may change the address, and this new information will be stored in the Customer table.</p>
+
+<p><img src="./images/21437.png" id="21437" class="WikiImage"/></p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<ul>
+	<li>Transactions may have either one or more Update rules. There is no preferred method for writing them.</li>
+</ul>
+
+<ul>
+	<li>No errors or warnings are raised for this rule (i.e. reference to attributes that can already be accepted).</li>
+</ul>
+
+<ul>
+	<li>Some considerations about the rule's behavior in Update mode:</li>
+</ul>
+
+<p style="margin-left: 40.0px;">If the foreign key determining the inferred attribute can be changed (i.e. it does not belong to the primary key of the base table) and it is changed in different transactions (work units), the value of the inferred attribute for the &quot;original&quot; foreign key value is not restored. An example may clarify the concept:</p>
+
+<p style="margin-left: 40.0px;">Suppose you have two Transactions: Customer and Invoice, which are related. CustomerCod is a Foreign Key (FK) in the Invoice and it has this rule:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Update(CustomerName);</pre>
+
+<p style="margin-left: 40.0px;">It has an Invoice #1 with CustomerCod = 1 whose CustomerName = &quot;Customer_x&quot;. The CustomerName value is changed (in fact, CustomerName is updated in the Customer's table) in Invoice #1 to &quot;Customer_new&quot; and the Invoice is confirmed.</p>
+
+<p>After that (in a new <a href="2424.html">LUW</a>) the CustomerCod for invoice #1 is changed to another value, for example, CustomerCod = 2. This change doesn't mean the Customer #1 Name is restored to its original value.</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 200.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="1908.html">Transaction object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Interfaces</strong></td>
+			<td>Web, Win</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+<br />
+<br />
+</p>
+
+<p><br />
+</p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/04/21 03:14 PM</em></font></td></TR></table></font>

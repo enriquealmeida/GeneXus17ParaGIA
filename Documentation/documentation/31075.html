@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to execute GeneXus events from JS code using External Objects</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31075,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to execute GeneXus events from JS code using External Objects</h1>
+<!--How to execute GeneXus events from JS code using External Objects--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The following example shows how to execute GeneXus events from Javascript code using <a href="6148.html">External Objects</a>.</p>
+
+<p>In particular, in this example, we interact with the browser and trigger a GeneXus event in response to a Javascript event (<a href='https://developer.mozilla.org/en-US/docs/Web/Events/scroll'>the scroll event</a>). The scroll event is fired when the document view has been scrolled. In GeneXus, we define an event handler for window scrolling.</p>
+
+<p>For example, if our web pages have a fixed header (with absolute position), we can make the header shrink when the pixels scrolled in the current document (vertically) reach a certain value. On the other hand, the header can expand again when the window is scrolled by the user and the pixels do not reach that value.</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><img src="./images/31088.gif" id="31088" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="What+is+the+purpose+of+this+example%3F" class="HashLink" href="#What+is+the+purpose+of+this+example%3F">What is the purpose of this example?</a></h3>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />Learn about <a href="31064.html">External Objects for Javascript</a></p>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />See how to trigger GeneXus Events from external Javascript resources</p>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" /> See how to handle Javascript events from GeneXus Code</p>
+
+<p> </p>
+
+<p>First, we define the Javascript (changeonscroll.js) as follows:</p>
+
+<p><img src="./images/31089.png" id="31089" class="WikiImage"/></p>
+
+<table border="1" cellpadding="1" cellspacing="1" height="214" width="1265">
+	<tbody>
+		<tr>
+			<td style="background-color: rgb(255,255,204);">
+			<p><strong>Note :</strong></p>
+
+			<ol>
+				<li>The shrinkOnHeight property determines the pixels that the window should scroll until an event is fired.</li>
+				<li>The function is triggered when the document is ready, and an event listener is added using the JQuery &quot;on&quot; method. The main idea is to attach an event handler to the scroll event.</li>
+				<li>Inside that function (the event handler), we notify the GeneXus event using the gx.fx.obs.notify expression. The only way to notify a GeneXus event from the javascript is by using the gx.fx.obs.notify method (which is defined in the standard GeneXus js library - gxgral.js).</li>
+			</ol>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<ol>
+</ol>
+
+<h3><a id="External+object+definition" class="HashLink" href="#External+object+definition">External object definition</a></h3>
+
+<p>The External object has the Javascript External Name property set to Changeonscroll.</p>
+
+<ul>
+	<li>If you define a variable based on ChangeOnScroll EO in any object, a constructor of Changeonscroll needs to be defined in the JS code.</li>
+	<li><em>Events</em> in GeneXus are always static, so you have to set the IsStatic property to TRUE.</li>
+</ul>
+
+<p><img src="./images/31090.png" id="31090" class="WikiImage"/></p>
+
+<p>Remember that events are always static, so the property &quot;shrinkOnHeight&quot; is defined as static as well, and the Javascript External Name property is set to shrinkOnHeight because that's the name of the property in the JS source.</p>
+
+<p><img src="./images/31093.png" id="31093" class="WikiImage"/></p>
+
+<p>The <em>Javascript External Name</em> property of the event is the name used in the Javascript definition to map to the GeneXus event.</p>
+
+<p><img src="./images/31092.png" id="31092" class="WikiImage"/></p>
+
+<p>It can be useful to namespace your events so you don't unintentionally disconnect events that you didn't or couldn't know about.</p>
+
+<h3><a id="Using+the+EO+from+GX+code" class="HashLink" href="#Using+the+EO+from+GX+code">Using the EO from GX code</a></h3>
+
+<p>First, add the reference to the JS in the HTTP headers of the page. Use <a href="https://wiki.genexus.com/commwiki/wiki?37851,," target="_blank">Javascript Referenced files property</a>.</p>
+
+<p>Otherwise, do the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    Form.HeaderRawHTML += '&lt;script type=&quot;text/javascript&quot; src=&quot;Changeonscroll.js&quot;&gt;&lt;/script&gt;'
+Endevent</pre>
+
+<p>Note: Another way is to do</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+       Form.JScriptSrc.Add(&quot;Changeonscroll.js&quot;)
+Endevent</pre>
+
+<p>Since shrinkOnHeight is a static property, we don't need to define a variable based on the External object, and the assignment to it is static:</p>
+
+<p><img src="./images/31094.png" id="31094" class="WikiImage"/></p>
+
+<p> </p>
+
+<p>So, the start event is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    Form.HeaderRawHTML += '&lt;script type=&quot;text/javascript&quot; src=&quot;Changeonscroll.js&quot;&gt;&lt;/script&gt;'
+    changeonscroll.shrinkOnHeight = 20
+Endevent</pre>
+
+<p>The events in GeneXus will be the following:</p>
+
+<p><img src="./images/31095.png" id="31095" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event changeonscroll.scrolltoShrink
+//here code the handler for the event
+    content.Class = ThemeClass:TableContainer
+Endevent
+
+Event changeonscroll.scrolltoExpand
+//here code the handler for the event
+   content.Class = ThemeClass:TableContainer1
+Endevent</pre>
+
+<p>Download from <a href="https://wiki.genexus.com/commwiki/wiki?31097,," target="_blank">Change on scroll sample</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="31066.html">How to implement a dictionary data type using JS and server side code</a></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31064.html">External Objects for Javascript</a></TD><TD><a href="31086.html">How to interact with the Window Object's Methods</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

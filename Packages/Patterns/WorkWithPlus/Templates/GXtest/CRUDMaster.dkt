@@ -1,0 +1,74 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Create Read Update Master Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ SubTemplate Name="Header" File="Header.dkt"%>
+<%@ SubTemplate Name="IncludedTestCase" File="IncludedTestCase.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPNextAction" File="DPNextAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DummyEvent" File="DummyEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPResetAction" File="DPResetAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ResetLevels" File="ResetLevels.dkt" MergeProperties="True"%>
+<%
+	string oName = selection.ObjectName;
+	string dataPoolName = myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolMasterName;
+	string nameDefault = string.Empty;
+	basicElements.GetLevelNames(myInstance,basicElements);
+%>
+<%@ CallSubTemplate Header ItemName='"TestCase"' %>
+<GXTestCase>
+	<Node Object="<%=Object.Name%>" ObjectType="<%=Object.TypeDescriptor.Name%>" title="<%=Object.Description%>">
+<%@ CallSubTemplate DummyEvent IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate DPResetAction dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='GXTestConstants.DataPoolRowNumber' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>   
+<%
+	foreach (string levelName in basicElements.LevelNames)
+    {	// Agregado para que GXtest incluya los DP de los niveles inferiores de la TRN en el import
+%>    
+<%@ CallSubTemplate DPResetAction dataPoolName='levelName' dataPoolColumnName='GXTestConstants.DataPoolRowNumber' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>   
+<%
+    }
+%>
+<%@ CallSubTemplate DPNextAction dataPoolName='dataPoolName' dataPoolColumnName='myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolInsertTimes' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+	</Node>
+<%
+	if (myInstance.GXTest.StartupTestCase != "<default>" && myInstance.GXTest.StartupTestCase != string.Empty)
+	{
+%>
+<%@ CallSubTemplate IncludedTestCase repetionNumber='"1"' testCaseName='myInstance.GXTest.StartupTestCase' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+	}
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Insert))
+	{
+		nameDefault = FileHelper.GetTestCaseName(oName,GXTestConstants.WWInsertAction);
+%>
+<%@ CallSubTemplate IncludedTestCase repetionNumber='""' dataPoolName='dataPoolName' dataPoolColumn='myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolInsertTimes' testCaseName='nameDefault' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+	<Node Object="<%=basicElements.ObjectName%>" ObjectType="<%=basicElements.ObjectType%>" title="<%=Object.Description%>">
+<%@ CallSubTemplate DummyEvent IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate DPResetAction dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='GXTestConstants.DataPoolRowCount' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+	</Node>
+<%
+	}
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Update))
+	{
+		nameDefault = FileHelper.GetTestCaseName(oName,GXTestConstants.WWUpdateAction);
+%>
+<%@ CallSubTemplate IncludedTestCase repetionNumber='""' dataPoolName='dataPoolName' dataPoolColumn='myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolUpdateTimes' testCaseName='nameDefault' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+	<Node Object="<%=basicElements.ObjectName%>" ObjectType="<%=basicElements.ObjectType%>" title="<%=Object.Description%>">
+<%@ CallSubTemplate DummyEvent IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate DPResetAction dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='GXTestConstants.DataPoolRowCount' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+	</Node>
+<%
+	}
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Delete))
+	{
+		nameDefault = FileHelper.GetTestCaseName(oName,GXTestConstants.WWDeleteAction);
+%>
+<%@ CallSubTemplate IncludedTestCase repetionNumber='""' dataPoolName='dataPoolName' dataPoolColumn='myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolDeleteTimes' testCaseName='nameDefault' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+	}
+%>
+</GXTestCase>

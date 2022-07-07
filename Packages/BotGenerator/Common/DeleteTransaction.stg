@@ -1,0 +1,24 @@
+delimiters "$", "$"
+
+init(transaction, action, primaryKeys, responses, variables, action, trnCheck)::=<<
+$if(variables)$
+	$deleteContent()$
+$else$
+$deleteContent()$
+$endif$
+>>
+
+deleteContent()::=<<
+&$transaction$.Load($primaryKeys:{variable|$pk(variable)$};separator=","$)
+&$transaction$.Delete()
+If &$transaction$.success()
+	commit
+	&speechOut = !"$transaction$ deleted"
+else
+	&ContextOut.FromJson(&ContextPrevMsg.ToJson())
+	&Messages = &$transaction$.GetMessages()
+	for &Message in &Messages
+		&speechOut+= &Message.Description
+	endfor
+endif
+>>

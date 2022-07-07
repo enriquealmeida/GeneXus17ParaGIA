@@ -1,0 +1,89 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Variables" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Include Name="PromptConstants.cs" %>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+<%@ SubTemplate Name="PromptVariable" File="PromptVariableBasedOn.dkt" %>
+<%
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>
+      <Part type="<%= PartType.Variables.ToString() %>">
+<%
+	}
+	else
+	{
+%>
+      <Variables>
+<%
+	}
+
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) == ObjClass.WebPanel)
+	{
+%>
+		<Variable Name="LinkSelection">
+          <Properties><Property><Name>Name</Name><Value>LinkSelection</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>Bitmap</Value></Property></Properties>
+        </Variable>
+<%
+	}
+
+	// Variables for conditions...
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) == ObjClass.WebPanel || ObjClass.FromShortObjClass(Definition.Info.Class) == ObjClass.WorkPanel)
+	{
+		foreach (PromptAttribute fixedAtt in Definition.Fixed)
+		{
+			if (fixedAtt.FixType == "c")
+			{
+				Artech.Genexus.Common.Objects.Attribute att = GetAttribute(fixedAtt.AttriId);
+%>			
+        <%@ CallSubTemplate PromptVariable VariableName='GetConditionVarName(att.Name)' BasedOnAttribute='att' %>
+<%
+			}
+		}
+	}
+	
+	// Variables for parameters...
+	foreach (PromptRulesParm parmAtt in Definition.Rules.Parms)
+	{
+		if (parmAtt.ParType.ToLower() == "extra")
+			continue; // Ignore these for now.
+
+		Artech.Genexus.Common.Objects.Attribute att = GetAttribute(parmAtt.AttriId);
+%>
+        <%@ CallSubTemplate PromptVariable VariableName='GetParameterVarName(att.Name)' BasedOnAttribute='att' %>
+<%
+	}
+
+	// Helper variables
+	if (Model.GetDesignModel().GetPropertyValue<int>(Properties.MODEL.WebFormDefaults) == Properties.MODEL.WebFormDefaults_Values.ResponsiveWebDesign)
+	{
+%>
+	<%= Variables.Basic(PromptConstants.AdvancedLabelTemplateVariable, null, eDBType.CHARACTER) %>
+<%
+	}
+	
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>
+      </Part>
+<%
+	}
+	else
+	{
+%>
+      </Variables>
+<%
+	}
+%>

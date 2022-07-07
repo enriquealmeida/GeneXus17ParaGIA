@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Nested For Each commands to implement a Control Break</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?30878,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Nested For Each commands to implement a Control Break</h1>
+<!--Nested For Each commands to implement a Control Break--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Many times you may need to process for every record in a table, their related records in another one, <strong>but only for the records of the first table that have related records in the second table</strong>. To achieve this, it is necessary to scan and process data stored in the second table, grouped by certain criteria. This is known as a control break.</p>
+
+<p>Look at the following <a href="1908.html">transaction</a> structures:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Country
+{
+   CountryId*
+   CountryName
+}
+Customer
+{
+   CustomerId*
+   CustomerName
+   CustomerEmail
+   CountryId
+   CountryName
+}</pre>
+
+<p>Suppose you are asked to list all customers grouped by country, but only the countries that have customers associated with them should be included in the list.</p>
+
+<p>It is clear that to solve this, you cannot obtain the countries from the COUNTRY table, because many countries are entered there, regardless of whether they have customers or not. On the other hand, you will have to go over the CUSTOMER table, and for each customer to extract the corresponding country. By doing this, you will only obtain countries that belong to a customer. But apart from preventing the appearance of countries with no customers, you need <strong>to group</strong> the customers that belong to the same country and proceed to print each country name followed by its related customer's data.</p>
+
+<p>Defining a control break is quite simple and maybe performed following “the recipe&quot; below:</p>
+
+<p>1. <a href="https://wiki.genexus.com/commwiki/wiki?30865,," target="_blank">Nested For each commands</a> are needed.</p>
+
+<p>2. They must have the same <a href="6347.html">base table</a>.<br />
+2.1. How many For Each commands? A number exceeding the number of breaks by one.</p>
+
+<p>3. You must establish, in the <a href="6075.html">order clause</a> of each external <a href="24744.html">For Each command</a>, the attribute or the set of attributes by which you want to “break”.</p>
+
+<p>The following Procedure source shows the code that defines the control break asked in the above requirement:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Customer order CountryName
+    print country {CountryName}
+    For each Customer
+        print customer {CustomerName, CustomerEmail}
+    Endfor
+Endfor</pre>
+
+<p>From the previous code, GeneXus will assume that the base table it must navigate is CUSTOMER and that it must take the first record in the CUSTOMER table and retain the country name in memory (because it is CountryName, the attribute mentioned next to the order clause). Then, it will have to print the country name (first sentence written within the main For Each), and “as long as the country name remains unchanged, it will have to execute the nested For Each and sequentially process all records with that country name&quot;. In the case of a record with a different country name, it will have to execute the external For each again and proceed as explained.</p>
+
+<p>It is important to understand that, even when there are two nested For Each commands, there is no double access to the table. You can imagine that a pointer is running along with the table in a sequential manner. Since the table is accessed as ordered by the grouping criterion desired, you can think its records are processed sequentially showing each country name once, followed by the customer data for that country.</p>
+
+<p>So, upon a code that fulfills with the control break &quot;recipe&quot;, GeneXus will determine:</p>
+
+<p>1. To scan a base table (CUSTOMER in this case), ordered by the attribute(s) specified in the order clause of the external For Each (CountryName in this case, which belongs to the CUSTOMER <a href="6029.html">extended table</a>).</p>
+
+<p>2. For the record pointed at, to execute sentences defined before the nested For Each (in this case, the value of the CountryName attribute is retrieved and printed).</p>
+
+<p>3. While the attribute value(s) mentioned in the order clause (CountryName in this case) remains unchanged:<br />
+3.1. To execute the sentences defined inside the nested For each (in this case CustomerName and CustomerEmail values of the record pointed at are printed on the same line).<br />
+3.2. To read the following record.</p>
+
+<p>4. To return to Step 2 (this point is reached either because we arrived at the table´s end, or because the CountryName value has been changed).</p>
+
+<p>The following image shows customers data linked with its countries, in order to show which records are processed by the main For Each and which are processed by the nested For Each:</p>
+
+<p><img src="./images/30957.png" id="30957" class="WikiImage"/></p>
+
+<p>At runtime, the list looks as follows:</p>
+
+<p><img src="./images/30972.png" id="30972" class="WikiImage"/></p>
+
+<p>There are more countries stored in the COUNTRY table that not appear on the list because they have no related customers.</p>
+
+<p>If you want besides to group by CountryName, then, to print all the customers of each country sorted by CustomerName, you only have to add the desired order clause to the nested For Each (in this case: order CustomerName) as shown:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Customer order CountryName
+    print country {CountryName}
+    For each Customer order CustomerName
+        print customer {CustomerName, CustomerEmail}
+    Endfor
+ Endfor</pre>
+
+<p>GeneXus will choose to scan the CUSTOMER table ordered by an index made up by the concatenation of the orders of each For Each command with order clause (in the above example: CountryName, CustomerName). Thus, the records will be scanned ordered by the compound index, the break will be performed by CountryName (the attribute specified in the order clause of the external For Each) and for each country, its related customers will be shown ordered by CustomerName (because the records are accessed sequentially sorted by CountryName, CustomerName).</p>
+
+<h3><a id="Another+example%3A+Double+control+break" class="HashLink" href="#Another+example%3A+Double+control+break">Another example: Double control break</a></h3>
+
+<p>Now consider the following transaction structures (they are almost the same as above, except that the Continent transaction is new, and each country belongs to one continent):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Continent
+{
+    ContinentId*
+    ContinentName
+}
+Country
+{
+    CountryId*
+    CountryName
+    ContinentId
+    ContinentName
+}
+Customer
+{
+    CustomerId*
+    CustomerName
+    CustomerEmail
+    CountryId
+    CountryName
+}</pre>
+
+<p>Suppose a listing is required to show the set of customers grouped by continent, and by country, as shown. The list must only include the continents and countries for which customers have been registered.</p>
+
+<p><img src="./images/30979.png" id="30979" class="WikiImage"/></p>
+
+<p>Since now you have to group by continent, and within this group by country, you need three nested For Each commands on the same base table (CUSTOMER table must be the base table because the list must only include the continents and countries that have customers associated with them). Keep in mind that the order clauses are fundamental to establish the break criteria. Since in this case, you need to group by ContinentName and then –for all the customers with this continent- to group by CountryName, the first For Each must be ordered by ContinentName and the immediately nested For Each by CountryName:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Customer order ContinentName
+    print continent  {ContinentName}
+    For each Customer order CountryName
+        print country  {CountryName}
+        For each Customer
+            print customer {CustomerName, CustomerEmail}
+        Endfor
+    Endfor
+Endfor</pre>
+
+<p>From the previous code, GeneXus will choose to scan the CUSTOMER table ordered by an index made up by the concatenation of the orders of each For Each command with order clause (ContinentName, CountryName). Then, it will take the first record in the CUSTOMER table and retain the continent name in memory (because it is ContinentName the first break criterion). Then, it will print the continent name (first sentence written within the main For Each). After that, “as long as the continent name remains unchanged, it will execute the nested For Each and sequentially process all records with that continent name&quot;. So, it will retain the country name in memory (because it is CountryName the second break criterion). Next, it will print the country name (first sentence written within the second For Each). After that, <strong>“as long as the continent name remains unchanged and the country name remains unchanged too</strong>&quot;, it will execute the last nested For Each and it will sequentially process all records <strong>with that continent name and that country name</strong>&quot;. In the case of a record with a different country name, it will execute the immediately above external For each and all the sentences within it, including the last nested For each. In the case of a record with a different continent name, it will execute the main For each and proceed as explained until the table´s end is reached.</p>
+
+<h2><a id="Videos" class="HashLink" href="#Videos">Videos</a></h2>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus/genexus-16-course-analyst/more-on-nested-for-eachs-cases-and-navigation-v16?p=5408'>More on nested For eachs. Cases and navigation</a></p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

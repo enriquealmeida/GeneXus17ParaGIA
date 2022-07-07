@@ -1,0 +1,118 @@
+apply from: rootProject.file('project-params.gradle')
+apply from: rootProject.file('functions.gradle')
+apply from: rootProject.file('tasks.gradle')
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+def isReleaseVersion = !project.version.endsWith("-SNAPSHOT")
+def orgName = "GeneXus S.A."
+def orgUrl = "https://genexus.com"
+def orgDomain = "@genexus.com"
+
+afterEvaluate {
+	publishing {
+		repositories {
+			maven {
+				name "Internal"
+				url = repoUrl()
+				if (!url.scheme.equalsIgnoreCase("file")) {
+					allowInsecureProtocol true
+					credentials {
+						username repoUsername()
+						password repoPassword()
+					}
+				}
+			}
+
+			maven {
+				name = "GitHubPackages"
+				url = "https://maven.pkg.github.com/genexuslabs/AndroidFlexibleClient"
+				credentials {
+					username = System.getenv("USERNAME")
+					password = System.getenv("PASSWORD")
+				}
+			}
+
+			maven {
+				name = "OSSRH"
+				if (!isReleaseVersion) {
+					url "https://s01.oss.sonatype.org/content/repositories/snapshots"
+				} else {
+					url "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
+				}
+				credentials {
+					username = System.getenv("USERNAME")
+					password = System.getenv("PASSWORD")
+				}
+			}
+		}
+
+		publications {
+			debug(MavenPublication) {
+				from components.debug
+			}
+
+			release(MavenPublication) {
+				from components.release
+			}
+
+			signedReleaseWithSourcesAndDocs(MavenPublication) {
+				from components.release
+				artifact(androidSourcesJar)
+				artifact(androidJavadocsJar)
+
+				signing {
+					required { hasProperty("release") && gradle.taskGraph.hasTask("publishReleasePublicationToOSSRHRepository") }
+					def signingKey = System.getenv("GPG_KEY")
+					def signingPassword = System.getenv("GPG_PASSPHRASE")
+					useInMemoryPgpKeys(signingKey, signingPassword)
+					sign publishing.publications.release
+				}
+
+				pom {
+					name = "${project.group}:${artifactId}"
+					description = "GeneXus Android FlexibleClient component"
+					url = "https://github.com/genexuslabs/AndroidFlexibleClient"
+					properties = [
+						vcs_hash: gitSha()
+					]
+					organization {
+						name = orgName
+						url = orgUrl
+					}
+					licenses {
+					    license {
+							name = "Custom"
+							url = "https://genexus.com/CUSTOM-LICENSE.txt"
+						}
+					}
+					developers {
+						developer {
+							name = "Fernando Panizza"
+							email = "fpanizza${orgDomain}"
+							organization = orgName
+							organizationUrl = orgUrl
+						}
+						developer {
+							name = "Cristian Inthamoussu"
+							email = "cristian${orgDomain}"
+							organization = orgName
+							organizationUrl = orgUrl
+						}
+						developer {
+							name = "Juan Pablo González"
+							email = "jpgonzalez${orgDomain}"
+							organization = orgName
+							organizationUrl = orgUrl
+						}
+					}
+					scm {
+						connection = "scm:git:git://github.com/genexuslabs/AndroidFlexibleClient.git"
+						developerConnection = "scm:git:git@github.com:genexuslabs/AndroidFlexibleClient.git"
+						url = "https://github.com/genexuslabs/AndroidFlexibleClient"
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,49 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="View Abstract Form" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Assembly Name="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Import Namespace="Artech.Patterns.WorkWithDevices.Copy" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="ViewAbstractFormFlat" File="ViewAbstractForm_FlatTemplate.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="ViewAbstractFormFiori" File="ViewAbstractForm_FioriTemplate.dkt"  MergeProperties="True"  %>
+<%@ SubTemplate Name="ViewAbstractFormCarmine" File="ViewAbstractForm_CarmineTemplate.dkt"  MergeProperties="True"  %>
+
+<%		EntityProviderInstance epInstance = EntityProviderInstance.Load(Instance);
+		Transaction transaction = epInstance.Transaction.Transaction;
+		if (transaction == null)
+			throw new ArgumentNullException("Object");
+		var layout = Concepto.Patterns.EntityProvider.Helpers.TemplateManagment.CalculateTemplate(transaction);
+		switch (layout)
+		{
+			case DefaultFormHelper.FormTemplate.Fiori:
+			{
+				%>
+				<%@ CallSubTemplate ViewAbstractFormFiori transaction="transaction"%>
+				<%
+				break;
+			}
+			case DefaultFormHelper.FormTemplate.Carmine:
+			case DefaultFormHelper.FormTemplate.Unanimo:
+			{
+				%>
+				<%@ CallSubTemplate ViewAbstractFormCarmine transaction="transaction"%>
+				<%
+				break;
+			}		
+			case DefaultFormHelper.FormTemplate.Flat:
+			{			
+				%>
+				<%@ CallSubTemplate ViewAbstractFormFlat transaction="transaction"%>	
+				<%	
+				break;
+			}
+			default:
+				throw new System.InvalidOperationException(string.Format("Missing sub-template for {0}", layout));
+		}
+%>

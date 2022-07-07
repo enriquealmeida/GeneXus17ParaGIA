@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Custom Authentication Type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?21751,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Custom Authentication Type</h1>
+<!--GAM - Custom Authentication Type--><div class="TableWikiBody" id="tblwikibody"><p>Using a SOAP web service as an external identity provider is not useful when you need to store and persist data in a web session related to the login and read this data when desired from any other object of the application.</p>
+
+<p>Suppose a .dll file which has been implemented for authentication purposes, and it has one method for authenticating the user and another one for viewing his account balance. The login method saves a web session, which needs to be read when the &quot;ViewUserBalanceAccount&quot; is executed. As web sessions do not persist if saved in web services, a web service is not useful for this scenario.</p>
+
+<p>In this scenario, instead of using <a href="16512.html">GAM - External Web Services Authentication Type</a> you may use GAM Custom Authentication Type, where the external program is not a SOAP service, but a program of the same platform as the application which uses <a href="19888.html">GeneXus Access Manager</a> (it can be a .dll, .rb, or .class developed using Genexus or not).</p>
+
+<div style="background-color: rgb(221,255,221);border-left: 6.0px solid rgb(76,175,80);">
+<p> <br />
+ Using GAM Custom Authentication Type there are two possible versions of the external program supported, depending on the json format of the input   and output  parameters of the program, which are the following:</p>
+
+<ul>
+	<li><a href="21548.html">GAM External Authentication: version 1.0</a>  </li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?21555,," target="_blank">GAM External Authentication: version 2.0</a><br />
+	 </li>
+</ul>
+</div>
+
+<p>In those links you can download the XPZ containing the data types needed.</p>
+
+<h3><a id="How+to+authenticate+using+GAM+Custom+Authentication+Type" class="HashLink" href="#How+to+authenticate+using+GAM+Custom+Authentication+Type">How to authenticate using GAM Custom Authentication Type</a></h3>
+
+<h4><a id="1.+The+external+authentication+program+%28.rb%2C+.class.%2C+.dll%29+needs+to+meet+some+requirements." class="HashLink" href="#1.+The+external+authentication+program+%28.rb%2C+.class.%2C+.dll%29+needs+to+meet+some+requirements.">1. The external authentication program (.rb, .class., .dll) needs to meet some requirements.</a></h4>
+
+<ul>
+	<li>in parameter: string.<br />
+	It has to be a string in json format, which structure has to be the same as the GAMWSLoginInSDT structured data type.</li>
+	<li>out parameter: string.<br />
+	It has to be a string in json format, which structure has to be the same as the GAMWSLoginOUTSDT structured data type, or void.</li>
+</ul>
+
+<p>For information about the data types see <a href="21548.html">GAM External Authentication: version 1.0</a> or <a href="https://wiki.genexus.com/commwiki/wiki?21555,," target="_blank">GAM External Authentication: version 2.0</a>.</p>
+
+<h4><a id="Example+of+external+authentication+program+version+1.0" class="HashLink" href="#Example+of+external+authentication+program+version+1.0">Example of external authentication program version 1.0</a></h4>
+
+<p>Rules:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:&amp;StrInput, out:&amp;StrOutput); //&amp;StrInput and &amp;StrOutput are varchar(256)</pre>
+
+<p>Source code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Key = '03E1E1AAA5BCA19FBA8C42058B4ABF28'
+&amp;GAMWSLoginIn.FromJson(&amp;StrInput) // &amp;GAMWSLoginIn is &amp;GAMWSLoginInSDT data type
+//Decrypt parameters
+&amp;UserLogin      = Decrypt64( &amp;GAMWSLoginIn.GAMUsrLogin, &amp;Key )
+&amp;UserPassword   = Decrypt64( &amp;GAMWSLoginIn.GAMUsrPwd, &amp;Key )
+&amp;GAMWSLoginOut             = New GAMWSLoginOutSDT() //&amp;GAMWSLoginOut is &amp;GAMWSLoginOutSDT data type
+&amp;GAMWSLoginOut.WSVersion   = GAMAutExtWebServiceVersions.GAM10
+&amp;GAMWSLoginOut.User        = New GAMWSLoginOutUserSDT()
+Do 'ValidUser'
+&amp;StrOutput = &amp;GAMWSLoginOut.ToJson()
+
+Sub 'ValidUser'
+    If &amp;UserLogin = !&quot;user&quot;
+       If &amp;UserPassword = !&quot;password&quot;
+          &amp;GAMWSLoginOut.WSStatus = 1
+          &amp;GAMWSLoginOut.User.Code         = !&quot;code&quot;
+          &amp;GAMWSLoginOut.User.FirstName    = !&quot;FirstName&quot;
+          &amp;GAMWSLoginOut.User.LastName     = !&quot;LastName&quot;
+          &amp;GAMWSLoginOut.User.EMail        = !&quot;name2@domain.com&quot;    
+          Do 'GetRoles' //optional
+       Else
+          &amp;GAMWSLoginOut.WSStatus = 3
+       EndIf
+    Else
+       &amp;GAMWSLoginOut.WSStatus = 2
+    EndIf
+EndSub
+
+Sub 'GetRoles' 
+    &amp;GAMWSLoginOutUserRol = New()
+    &amp;GAMWSLoginOutUserRol.RoleCode = &quot;role_1&quot;
+    &amp;GAMWSLoginOut.User.Roles.Add(&amp;GAMWSLoginOutUserRol) 
+    &amp;GAMWSLoginOutUserRol = New()
+    &amp;GAMWSLoginOutUserRol.RoleCode = &quot;role_2&quot;
+    &amp;GAMWSLoginOut.User.Roles.Add(&amp;GAMWSLoginOutUserRol
+EndSub</pre>
+
+<h4><a id="2.+Define+a+new+%28wiki%3F16508%2CGAM%2BAuthentication%2BTypes+Authentication+Type%29+using+wiki%3F15935%2CCategory%253AGAM%2B-%2BWeb%2BBackoffice+GAM+-+Web+Backoffice." class="HashLink" href="#2.+Define+a+new+%28wiki%3F16508%2CGAM%2BAuthentication%2BTypes+Authentication+Type%29+using+wiki%3F15935%2CCategory%253AGAM%2B-%2BWeb%2BBackoffice+GAM+-+Web+Backoffice.">2. Define a new (<a href="16508.html">Authentication Type</a>) using <a href="15935.html">GAM - Web Backoffice</a>.</a></h4>
+
+<p>It has to be &quot;Custom Authentication&quot; Type.</p>
+
+<h5><img src="./images/21760.png" id="21760" class="WikiImage"/><br />
+Java Sample<br />
+<br />
+<img src="./images/23703.png" id="23703" class="WikiImage"/><br />
+.Net sample</h5>
+
+<h5><a id="Figure+1." class="HashLink" href="#Figure+1.">Figure 1.</a></h5>
+
+<p>As seen in figure 1, you have to specify some data of the authentication external program.</p>
+
+<p>Function: You have to specify if the external program will be used for authentication and authorization purposes also. In case of specifying &quot;Authentication and Roles&quot;, see <a href="16929.html">Managing Roles through external authentication programs</a>.</p>
+
+<p>Json Version: Specify the external program version (1.0 or 2.0).</p>
+
+<p>Private Encryption Key: The &quot;Encryption Key&quot; is useful in case of Genexus external authentication programs because the Encrypt64 function is used to encrypt the user name and password when passed to the program. Here you have to configure the Encryption key used in the external program for decrypting the user and password received.</p>
+
+<p>File Name: Specify the name of the file which corresponds to the external program (dll/jar/class/rb). It's optional for java.</p>
+
+<p>Package: Here specify the same value of <a href="https://wiki.genexus.com/commwiki/wiki?9111,," target="_blank">Java Package Name Property</a> in case of Java models, the value of <a href="8947.html">.Net Application namespace property</a> in case of NET models and the Code Namespace in case of Ruby. This property is optional and depends on the external program, if it has a package or not.</p>
+
+<p>Class Name: This field is required. Here specify the name of the class of the external program.</p>
+
+<p>See the sample object GAMExampleEntryAuthenticationType which is part of the <a href="15935.html">GAM - Web Backoffice</a> in order to get an example code for adding and updating any Authentication Type.</p>
+
+<h4><a id="3.+Program+%22Custom+Authentication%22+login+in+the+smart+devices+application" class="HashLink" href="#3.+Program+%22Custom+Authentication%22+login+in+the+smart+devices+application">3. Program &quot;Custom Authentication&quot; login in the smart devices application</a></h4>
+
+<p>The LoginExternal method of <a href="https://wiki.genexus.com/commwiki/wiki?22264,," target="_blank">SDActions external object</a> is used. In this case the first parameter sent to the method must be &quot;Custom&quot;.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ExternalLogin'
+    Composite
+        GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.Custom, &amp;User, &amp;Password)
+        Return
+    EndComposite
+EndEvent</pre>
+
+<h4><a id="4.+Program+%22Custom+Authentication%22+login+in+the+web+application" class="HashLink" href="#4.+Program+%22Custom+Authentication%22+login+in+the+web+application">4. Program &quot;Custom Authentication&quot; login in the web application</a></h4>
+
+<p>The following code is an example for executing the custom external login in web applications. In case of web panels the Login method of GAMRepository object is used. You need to define a variable of GAMLoginAdditionalParameters in order to specify the AuthenticationType which is going to be used.</p>
+
+<p>See the GAMExampleLogin web panel (which is part of the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>), where this coded is used as an example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AdditionalParameter.AuthenticationTypeName = &amp;LogOnTo //&amp;LogOnTo is a combo box where the user selects the authentication type he wants to use. 
+                                                       // This is the name of the Authentication Type. Using the example shown in figure 1 it would be &quot;custom1.0testjava&quot;.
+&amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors )//&amp;Errors is collection of GAMError</pre>
+
+<h4><a id="Note%3A" class="HashLink" href="#Note%3A">Note:</a></h4>
+
+<p>1. In case that the external program was developed using Genexus, it will have a method named &quot;execute&quot;.<br />
+If the program was developed using other tool than Genexus it may have any method used for authentication. In this case you have to declare the name of the method using the following line of code, when you define the Custom Authentication type:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AuthenticationTypeCustom.Custom.Method = &quot;myauthenticationmethod&quot; //&amp;AuthenticationTypeCustom is GAMAuthenticationTypeCustom data type.</pre>
+
+<p>See the sample object GAMExampleEntryAuthenticationType (which is part of the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>) for the complete example code.</p>
+
+<p>2. Only one &quot;Custom&quot; Authentication Type can be defined for each GAM Repository.</p>
+
+<p>       </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="19909.html">Auto-register anonymous user - How it works</a></TD><TD><a href="21755.html">GAM - External Authentication Type</a></TD><TD><a href="16512.html">GAM - External Web Services Authentication Type</a></TD></TR><TR><TD><a href="24241.html">GAM - Impersonation</a></TD><TD><a href="48254.html">GAM - Two Factor Authentication</a></TD><TD><a href="16508.html">GAM Authentication Types</a></TD></TR><TR><TD><a href="21548.html">GAM External Authentication: version 1.0</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="21752.html">HowTo: Pass additional parameters to external authentication programs using GAM</a></TD><TD><a href="44824.html">Howto: sending and receiving properties set at the login</a></TD></TR><TR><TD><a href="16929.html">Managing Roles through external authentication programs</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/31/22 02:43 PM</em></font></td></TR></table></font>

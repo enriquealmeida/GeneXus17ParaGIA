@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Integrated Security Level property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15214,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Integrated Security Level property</h1>
+<!--Integrated Security Level property--><div class="TableWikiBody" id="tblwikibody"> Establishes whether the object will have security enforced.  <h3><a id="Values" class="HashLink" href="#Values">Values</a></h3>
+
+<p> <div style="overflow-x:auto"><table style="border-style: none;border-collapse: collapse;"><tbody><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Authorization                                               </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">Security will be enforced. Object security checks will be done automatically at startup (in case of web objects, before the Start Event). Authentication and Authorization will be automatically checked. Permissions will be generated in the GAM Database.</td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Authentication                                              </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">Security will be enforced. Object security checks will be done automatically at startup, and only Authentication will be checked. In case of web objects, the check is also done in every AJAX call which is executed. This is the default value at Version level.</td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>None                                                        </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">Security will not be enforced.</td></tr></tbody></table></div></p>
+ <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Generators:</strong> <a href="14453.html">Android</a>, <a href="14917.html">Apple</a>, .NET, <a href="38604.html">.NET Core</a>, <a href="12258.html">Java</a><br /><strong>Level:</strong> Version<br /></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>The default value is &quot;Use Environment property value.&quot;</p>
+
+<p>The property at Version level (Default Integrated Security Level Property) allows establishing the default value for all the objects of the KB.</p>
+
+<p>At the object level, the property applies to:</p>
+
+<ul>
+	<li>Main procedures or non-main procedures with Expose as Web Service property = TRUE (Rest).</li>
+	<li>Data Providers.</li>
+	<li>SD objects.</li>
+	<li>Web objects (Web panels, Web components, Web transactions)</li>
+</ul>
+
+<p>If the property Integrated Security Level is set to &quot;Authentication,&quot; the generated code will automatically make the security checks at startup.</p>
+
+<p>If an object is configured with &quot;None,&quot; it means that it's a public object of the application. If the property is set to Authentication, it means that only an authenticated user can access it. If the user is not authenticated, a <a href="https://wiki.genexus.com/commwiki/wiki?15590,," target="_blank">Login Object for Web property</a> or <a href="https://wiki.genexus.com/commwiki/wiki?16589,," target="_blank">Login Object for SD property</a> will be displayed (depending on the application), in order to allow the user to authenticate and access the application.</p>
+
+<p><strong>Notes</strong><br />
+1) In SD applications, take into account that you will generally need to configure the same security level for all objects that are descendants of the entry point of the application which requires Authentication.</p>
+
+<p>Suppose you have an application with two modules; both are items of the main <a href="https://wiki.genexus.com/commwiki/wiki?46149,," target="_blank">Menu for Smart Devices object</a> of the application, but only one of them is going to be secure (that is to say, only one will need Authentication). In general, you will set the same security level for all WWSD objects which are descendants of this object in the call tree, because it's the only way to force security to the REST Web Services related to these objects. Besides, when a session expires, you will probably need users to be asked to log in again, regardless of the point of the application where they are navigating (if they are inside the module which requires Authentication). As a result, the only way to achieve this is that all descendants of the entry point WWSD of the secure module have the same security level.</p>
+
+<p>For objects which have None, security is not enforced, so REST Web Services will be publicly exposed.</p>
+
+<p>If the property Integrated Security Level is set to &quot;Authorization,&quot; users must be logged in, and they need to have rights to access the object they are trying to execute. This security check is automatic.</p>
+
+<p>The application security will be checked automatically by means of <a href="24746.html">GeneXus Access Manager (GAM)</a>.</p>
+
+<p>2) In a <a href="https://wiki.genexus.com/commwiki/wiki?46149,," target="_blank">Menu for Smart Devices object</a> (and SD objects for which there isn't a data provider automatically generated to implement their business logic -because they do not execute anything on the server), permissions are not verified, and that's why the only available values for Integrated Security Level Property are &quot;None,&quot; and &quot;Authentication&quot; in this case.</p>
+
+<p>If you configure &quot;Authentication&quot; in this property, the behavior is not the same as the behavior for SD Panels or WWSD panels: when trying to execute the <a href="https://wiki.genexus.com/commwiki/wiki?46149,," target="_blank">Menu for Smart Devices object</a> for the first time, the Login Object for SD will execute. But in the next executions, session validity is not checked for Menus, so the login object will be displayed again only when the user tries to execute another private object which is called from the Menu.</p>
+
+<p>3) Objects called by <a href="46151.html">API object</a> do not check security, since the calls to those objects are internal.</p></p>
+ <h3><a id="Run-time%2FDesign-time" class="HashLink" href="#Run-time%2FDesign-time">Run-time/Design-time</a></h3>
+
+<p> This property applies only at design-time.</p>
+ <h3><a id="wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes" class="HashLink" href="#wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes"><a href="17719.html">How to apply changes</a></a></h3>
+
+<p> <div class="TableWikiBody" id="tblwikibody"><p>To apply the corresponding changes when the property value is configured, execute a <a href="5691.html">Rebuild All</a>.</p></div></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="16414.html">Anonymous Sessions in GAM - Web Applications</a></TD></TR><TR><TD><a href="46151.html">Category:API object</a></TD><TD><a href="19909.html">Auto-register anonymous user - How it works</a></TD><TD><a href="19835.html">Auto-Registration in SD: What to do when a certain action requires the user to log in</a></TD></TR><TR><TD><a href="17916.html">Automatic Permissions generated by GeneXus</a></TD><TD><a href="43467.html">Biometrics Reuse Duration property</a></TD><TD><a href="29701.html">Creating the GAM repository for the first time from GeneXus</a></TD></TR><TR><TD><a href="43466.html">Enable Biometrics property</a></TD><TD><a href="14706.html">Enable Integrated Security property</a></TD><TD><a href="25811.html">Form Definitions</a></TD></TR><TR><TD><a href="15937.html">GAM Authentication Scenarios</a></TD><TD><a href="21548.html">GAM External Authentication: version 1.0</a></TD></TR><TR><TD><a href="19946.html">GAM Getting Started</a></TD><TD><a href="15912.html">GAM Permissions</a></TD><TD><a href="25355.html">GAM Remote Authentication Type</a></TD></TR><TR><TD><a href="15923.html">GAM use Example: Private web application</a></TD><TD><a href="15772.html">GAM Use Example: Public Application With Some Private Components</a></TD></TR><TR><TD><a href="47241.html">Good practices for secure development</a></TD></TR><TR><TD><a href="43206.html">HowTo: Configure GAM to use Security Token Service</a></TD><TD><a href="15387.html">HowTo: Filtering Data by User Using the GAM API</a></TD><TD><a href="17585.html">HowTo: GAM Automatic Check of Access Permissions for Web Objects</a></TD><TD><a href="18510.html">HowTo: Give Restricted Access to a Group of Web Objects</a></TD></TR><TR><TD><a href="18046.html">HowTo: Implementing Permissions on Modes of a Web Transaction</a></TD><TD><a href="18064.html">HowTo: Manage Execute Permissions on WWSD LIST and SD Panels</a></TD><TD><a href="17935.html">HowTo: Permissions in SD Applications, CRUD Restricted</a></TD></TR><TR><TD><a href="17943.html">HowTo: Permissions in SD Applications, WW and CRUD Restricted</a></TD></TR><TR></TR><TR><TD><a href="23400.html">Offline Native Mobile applications using GAM</a></TD></TR><TR><TD><a href="29723.html">Permissions Created by the User</a></TD><TD><a href="18173.html">Permissions Over a User Action in SD Objects</a></TD><TD><a href="15802.html">Repository ID Environment property</a></TD></TR><TR><TD><a href="18512.html">Require Access Permissions Application Property</a></TD><TD><a href="18495.html">Restricted access to GAM Backend</a></TD><TD><a href="43468.html">Secure Application Content</a></TD><TD><a href="25356.html">Security concerns in Smooth models</a></TD></TR><TR><TD><a href="46412.html">Security Scanner built-in tool</a></TD><TD><a href="48428.html">Security Scanner built-in tool (GeneXus 17 upgrade 4 or prior)</a></TD></TR><TR><TD><a href="18584.html">UserRememberMeType property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/26/22 04:59 PM</em></font></td></TR></table></font>

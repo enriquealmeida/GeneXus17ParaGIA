@@ -1,0 +1,51 @@
+delimiters "$", "$"
+
+action_sync(action) ::=<<
+$action.Name$ = ($action:g_action_parameters()$): void => {
+  const __aSt = this.startAction();
+  $g_action_parameters_bind(action)$
+  $action.Components:g_action_components()$
+$if(action.ActionStateUpdates || action.ActionUpdatesUIModel)$
+  this.cdr.markForCheck();
+$endif$
+  $action.ActionStateUpdates:g_update_usercontrol();separator="\r\n"$
+  this.endAction(__aSt);
+}
+>>
+
+action_async(action) ::=<<
+$action.Name$ = async ($action:g_action_parameters()$): Promise<any> => {
+  const __aSt = this.startAction();
+  $g_action_parameters_bind(action)$
+  try {
+    $action.Components:g_action_components()$
+  } catch (e) {
+    $action:action_async_catch()$
+  } finally {
+$if(action.ActionStateUpdates || action.ActionUpdatesUIModel)$
+    this.cdr.markForCheck();
+$endif$
+    $action.ActionStateUpdates:g_update_usercontrol()$
+    this.endAction(__aSt);
+  }
+}
+>>
+
+action_async_catch(action) ::= <%
+$if(action.ActionIsSub)$
+  throw e;
+$else$
+  this.processCompositeError(e);
+$endif$
+%>
+
+g_update_usercontrol(state_update) ::= <%
+  $if(state_update.BindsUserControl)$
+    $g_update_usercontrol1(state_update)$
+  $endif$
+%>
+
+g_update_usercontrol1(state_update) ::= <<
+this.update$state_update.Target$Bindings();
+
+>>

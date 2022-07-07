@@ -1,0 +1,127 @@
+delimiters "$", "$"
+
+import "DesignSystem_Tokens.stg"
+import "DesignSystem_Images.stg"
+import "DesignSystem_Fonts.stg"
+import "DesignSystem_Includes.stg"
+
+
+g_dso_base_mixins(page, gx) ::= 
+<<
+// *** TOKENS ***
+$g_dso_tokens(page, gx):g_dso_mixin(page, "tokens")$
+
+// *** IMAGES ***
+$g_dso_images(page, gx):g_dso_mixin(page, "images")$
+
+// *** FONTS ***
+$g_dso_fonts(page):g_dso_mixin(page, "fonts")$
+
+// *** STYLES ***
+$g_dso_styles(page):g_dso_mixin(page, "styles")$
+>>
+
+
+g_dso_mixin(body, page, section) ::=
+<<
+@mixin $g_dso_mixin_name(page.Module, page.Id, section)$
+{
+	$body$
+}
+>>
+
+g_dso_mixin_name(module, name, section) ::=
+<%
+$if(module)$
+$module: { m | $gx.ToLower.(m)$}; separator="_"$_
+$endif$
+$gx.ToLower.(name)$_$section$
+%>
+
+g_dso_styles(page) ::=
+<<
+$page.Styles:g_dso_style(); separator="\n"$
+$page.Media:g_dso_media(); separator="\n"$
+>>
+
+g_dso_style(style, mediaQueryName="", parentStyleName="") ::=
+<<
+$if(style.Properties||style.Includes)$
+$g_dso_style_selector(style, mediaQueryName, parentStyleName)$ {
+	$g_dso_style_properties(style)$
+	$g_dso_style_includes(style, mediaQueryName)$
+}
+$style.VirtualStyles:{ virtualStyle | $g_dso_style(virtualStyle, mediaQueryName, style.Name)$}; separator="\n"$
+$endif$
+>>
+
+g_dso_style_body(style, mediaQueryName="", parentStyleName="") ::=
+<%
+$g_dso_style_selector(style, mediaQueryName, parentStyleName)$ {
+	$g_dso_style_properties(style)$
+	$g_dso_style_includes(style, mediaQueryName)$
+}
+$style.VirtualStyles:{ virtualStyle | $g_dso_style(virtualStyle, mediaQueryName, style.Name)$}; separator="\n"$
+%>
+
+g_dso_style_selector(style, mediaQueryName, parentStyleName) ::=
+<%
+$if(style.Selector)$
+$style.Selector$
+$else$
+$if(style.IsVirtual)$
+$g_dso_virtual_selector(parentStyleName, mediaQueryName, style.Name)$
+$else$
+.$style.Name$
+$endif$
+$endif$
+%>
+
+g_dso_style_properties(style) ::=
+<%
+$style.Properties:{ property | $property.Name$:$property.Value$;}; separator="\n"$
+%>
+
+g_dso_media(media) ::=
+<<
+@media $media.Query$ {
+	$media.Styles:{ style | $g_dso_style(style, media.Name)$}; separator="\n"$
+}
+>>
+
+g_dso_style_includes(style, mediaQueryName) ::=
+<<
+$style.Includes:{ include | $(g_dso_style_include_template.(include))(style, mediaQueryName)$}; separator="\n"$
+>>
+
+g_dso_virtual_selector(styleName, mediaQueryName, virtualName) ::=
+<%
+%
+$if(mediaQueryName)$
+media_$mediaQueryName$__
+$endif$
+$styleName$
+$g_dso_style_selector_sufix.(virtualName)$
+%>
+
+g_dso_style_selector_sufix ::=
+[
+	"highlighted":"__gx_highlighted",
+	"variables":"__gx_variables"
+]
+
+g_dso_style_include_template ::=
+[
+	"highlighted":"g_dso_include_highlighted",
+	"highlightedtyped":"g_dso_include_highlighted_typed",
+	"label":"g_dso_include_label",
+	"variables":"g_dso_include_variables",
+	"cssraw":"g_dso_include_cssraw",
+	"dragging":"g_dso_include_dragging",
+	"group":"g_dso_include_group",
+	"tab":"g_dso_include_tab",
+	"grid":"g_dso_include_grid",
+	"horizontalline":"g_dso_include_horizontal_line",
+	"applicationbar":"g_dso_include_application_bar",
+	"application":"g_dso_include_application"
+]

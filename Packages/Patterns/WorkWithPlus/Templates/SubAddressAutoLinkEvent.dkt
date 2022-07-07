@@ -1,0 +1,62 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Address Auto Link Event code" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Architecture.Common.Objects" %>
+<%@ Property Name="Attributes" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="ExtraGrids" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="EventAssocToImage" Type="System.Boolean" %>
+<%@ SubTemplate Name="SubAddressAutoLinkEvent" File="SubAddressAutoLinkEvent.dkt" MergeProperties="True"%>
+<%
+	foreach (IWorkWithPlusInstanceElement item in Attributes)
+	{
+		if (item is IAttributesItem)
+		{
+			IAttributesItem attItem = (IAttributesItem)item;
+			PredefinedDomain? predefinedDomain = null;
+			if ((attItem.Link == null || attItem.Link.LinkExpression == String.Empty)//if it has not auto link attribute
+				&& attItem.AddPredefinedDomainlink(true, out predefinedDomain))
+			{
+				if ((predefinedDomain == PredefinedDomain.Address || predefinedDomain == PredefinedDomain.Geolocation) && attItem.SupportsLink)
+				{
+					string eventName = (EventAssocToImage) ? (attItem is VariableElement ? ((VariableElement)attItem).Name : attItem.Name) + "Image" : attItem.Name;
+					if (predefinedDomain == PredefinedDomain.Address)
+					{
+%>
+Event <%= eventName %>.Click
+	AddressDisplay.Popup(<%= attItem.Name %>, '')
+EndEvent
+<%		
+					}
+					else
+					{
+%>
+Event <%= eventName %>.Click
+	AddressDisplay.Popup('', <%= attItem.Name %>)
+EndEvent
+<%		
+					}
+				}
+			}	
+		}
+	}
+	if (ExtraGrids != null)
+	{
+		foreach (IGrid grid in ExtraGrids)
+		{
+			if (grid is WPGridElement)
+			{
+				WPGridElement gridElement = (WPGridElement)grid;
+%>
+<%@ CallSubTemplate SubAddressAutoLinkEvent Attributes='gridElement.Items' EventAssocToImage='false' ExtraGrids='null' %>
+<%
+			}
+			else if (grid is FreeStyleGridGeneralElement)
+			{
+%>
+<%@ CallSubTemplate SubAddressAutoLinkEvent Attributes='grid.GetAllAttributesAndVariablesOfThisGrid(true, true)' EventAssocToImage='true' ExtraGrids='null' %>
+<%
+			}
+		}
+	}
+%>

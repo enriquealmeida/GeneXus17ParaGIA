@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Remote Notifications External Object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39316,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Remote Notifications External Object</h1>
+<!--Remote Notifications External Object--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><div style="background-color: rgb(255,235,205);border-left: 6.0px solid rgb(245,166,35);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Deprecated</strong>: Since  <a href="https://wiki.genexus.com/commwiki/wiki?33278,," target="_blank">GeneXus 15 Upgrade 3</a>. Replaced by <a href="33687.html">Notification Provider API</a>.</div>
+
+<p></p>
+</p>
+
+<p><a href="19945.html">Push Notifications in Smart Devices Applications</a> are sent using this <a href="17880.html">External Objects for Smart Devices</a>.</p>
+
+<p><img src="./images/32073.png" id="32073" class="WikiImage"/></p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<h2><a id="Send+Notifications" class="HashLink" href="#Send+Notifications">Send Notifications</a></h2>
+
+<p>If you need to send notification or a list of Notifications, you can use the <em>Add</em> and <em>Send</em> methods in conjunction. <sup>1</sup></p>
+
+<p>First, you need to create a list of RemoteNotification objects and add them to the Notifications local variable using the Add method. Then use the Send method to deliver the notifications and check the return value (a collection of RemoteNotificationResult objects).</p>
+
+<p><img src="./images/32074.png" id="32074" class="WikiImage"/><img src="./images/32075.png" id="32075" class="WikiImage"/></p>
+
+<p>For instance, the following code section loads a list of Notifications which are sent with the Send method; the result is validated.</p>
+
+<pre>
+&amp;ErrCode = &amp;Notifications.OpenSession('SampleNotifications')  //Name of Dashboard or SDPanel which enabled notifications.
+
+for each
+  &amp;RemoteNotification = new()
+  &amp;RemoteNotification.DeviceType = DeviceType
+  &amp;RemoteNotification.DeviceToken = DeviceToken.Trim()
+  &amp;RemoteNotification.Message = 'Remote Message'
+  &amp;RemoteNotification.Badge = '1'
+  &amp;Notifications.Add(&amp;RemoteNotification)
+endfor
+
+&amp;RemoteNotificationResult = &amp;Notifications.Send()
+
+for &amp;i = 1 to &amp;RemoteNotificationResult.Count
+  msg(&amp;RemoteNotificationResult.Item(&amp;i).ErrorDescription, status)
+endfor</pre>
+
+<p>Note: OpenSession and Send methods must be invoked outside the loop that loads the devices on the Notifications collection (i.e. based on <strong>RemoteNotifications external object</strong>).</p>
+
+<h3><a id="Error+Codes" class="HashLink" href="#Error+Codes">Error Codes</a></h3>
+
+<table border="1">
+	<tbody>
+		<tr>
+			<td><strong>ErrorCode</strong></td>
+			<td><strong>ErrorDescription</strong></td>
+		</tr>
+		<tr>
+			<td>-1</td>
+			<td>Unknown device type</td>
+		</tr>
+		<tr>
+			<td>0</td>
+			<td>Ok</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>notifications.json not found</td>
+		</tr>
+		<tr>
+			<td>2</td>
+			<td>Invalid Application ID</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p> </p>
+
+<h2><a id="Execute+an+event+on+the+Device" class="HashLink" href="#Execute+an+event+on+the+Device">Execute an event on the Device</a></h2>
+
+<p>Many times sending a Push Notification to invoke the application is not enough, our users expect that an action is executed when they open the received notification.</p>
+
+<p>For example, when you get a Push Notification on the Facebook App that Rachel wants to be Friends with you and you execute the push notification, is not enough to open Facebook App, you expect to open the dialogue to accept or decline Rachel friend proposal. </p>
+
+<p>To do that with GeneXus you need to: </p>
+
+<ol>
+	<li>Setting the Event Name (as well as their parameters) that will be invoked, on the <em>Notifications </em>variable.</li>
+	<li>Define that event on the main object of the app.</li>
+</ol>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h3><a id="1.+Setting+the+Event+Name" class="HashLink" href="#1.+Setting+the+Event+Name">1. Setting the Event Name</a></h3>
+
+<p>This is done using the <em>Event</em> node of the <em>RemoteNotification</em> SDT.<br />
+There we can indicate which event must be executed and when, as well as including parameters and their values, necessary in this case.</p>
+
+<p><img src="./images/32838.png" id="32838" class="WikiImage"/></p>
+
+<p>Domains definitions</p>
+
+<ul>
+	<li><strong>EventExecution </strong>- Enumerated.<br />
+	- <em>OnLauchByUser</em> <br />
+	The event is executed when the user launches the application trough the notification.<br />
+	<strong>- </strong><em>OnNotificationArrive</em> <br />
+	Only available since iOS7 -for iOS 6 or earlier, this value acts the same as OnUserPress.<br />
+	With this value, the event will be executed when the notification arrives at the device, even if the app is inactive. A particular case for this option is when a notification has no message, badge or sound. It's a notification that executes an event and the user does not detect, ie: Get the location of the device remotely or to trigger synchronization of data in case of an offline app. This option is also known as &quot;Silent Notification&quot;<br />
+	 </li>
+	<li><strong>PushNotificationPriority</strong> - Enumerated<br />
+	- <em>High</em><br />
+	- <em>Normal</em><br />
+	 </li>
+</ul>
+
+<p><strong>Code sample</strong></p>
+
+<p>The developer can define on a Web Panel the following event in order to send a notification to all the registered devices.</p>
+
+<pre>
+Event 'RemoteNotification'
+    &amp;ErrCode = &amp;Notifications.OpenSession('MySDMainObject')  
+    For each 
+        &amp;RemoteNotification = new()
+        &amp;RemoteNotification.DeviceType = DeviceType
+        &amp;RemoteNotification.DeviceToken = DeviceToken.Trim()
+        &amp;RemoteNotification.Message = &quot;Look at this new product!&quot;
+        <strong>&amp;RemoteNotification.Event.Name = 'ViewProduct'             </strong>
+        &amp;RemoteNotification.Event.Execution = EventExecution.OnLauchByUser
+            
+       <strong> &amp;Parameter.Name = &quot;Product&quot;    </strong>         
+        <strong>&amp;Parameter.Value = &amp;ProductId.ToString()</strong>
+        &amp;RemoteNotification.Event.Parameters.Add(&amp;Parameter)
+        
+        &amp;Notifications.Add(&amp;RemoteNotification)
+    Endfor
+    &amp;RemoteNotificationResult = &amp;Notifications.Send()
+    for &amp;i = 1 to &amp;RemoteNotificationResult.Count
+          msg(&amp;RemoteNotificationResult.Item(&amp;i).ErrorDescription)
+    endfor
+Endevent</pre>
+
+<p>In this sample, the <strong>&amp;Parameter</strong> variable is based on RemoteNotification.Event.Parameter SDT.</p>
+
+<p> </p>
+
+<p>An alternative to send notifications is through Call or CallActions methods (poor performance for batch sending, use Send method instead). </p>
+
+<pre>
+Event 'RemoteNotificationCall' 
+  For each 
+     &amp;RemoteNotification.Call('MySDMainObject',DeviceType,DeviceToken,&quot;Look at this new product!&quot;)
+  Endfor 
+Endevent
+</pre>
+
+<pre>
+Event 'RemoteNotificationCallActions'
+  For each
+    &amp;RemoteNotification.CallActions('MySDMainObject',DeviceType,DeviceToken,&quot;Look at this new product!&quot;,&amp;NotificationParameters)
+  Endfor
+Endevent</pre>
+
+<p>where <strong>&amp;NotificationParameters</strong> variable is based on <em>NotificationParameters external object</em>.</p>
+
+<p> </p>
+
+<h3><a id="2.+Define+the+Event+on+the+Main+App" class="HashLink" href="#2.+Define+the+Event+on+the+Main+App">2. Define the Event on the Main App</a></h3>
+
+<p>In order to execute the Event previously defined when the user taps on the notification message, you need to set that event on the Main object app. </p>
+
+<h4><a id="2.1+Define+Notification+Event+on+SD+Panels+%2F+WWSD" class="HashLink" href="#2.1+Define+Notification+Event+on+SD+Panels+%2F+WWSD"><strong>2.1 Define Notification Event on SD Panels / WWSD</strong></a></h4>
+
+<p>Define a new <a href="https://wiki.genexus.com/commwiki/wiki?20623,," target="_blank">Action</a> with the exact name of the Event Name field of the <em>RemoteNotifications </em>SDT variable.</p>
+
+<p>If the event receives parameters, you need to define variables with the exact name of the Parameters Name field of the <em>RemoteNotifications </em>SDT variable.</p>
+
+<p><em>Code Sample</em><br />
+Continue with the previous example, in this case, the event will be defined as follows: </p>
+
+<pre>
+Event 'ViewProduct'
+    Composite
+        &amp;ProductId = <strong>&amp;Product</strong>.Trim().ToNumeric()
+        WorkWithDevicesProduct.Product.Detail(&amp;ProductId)
+    Endcomposite
+Endevent</pre>
+
+<h4><a id="2.2+Define+Notification+Event+on+Dashboards" class="HashLink" href="#2.2+Define+Notification+Event+on+Dashboards"><strong>2.2 Define Notification Event on Dashboards</strong></a></h4>
+
+<p>First, add the notification node:<br />
+<img src="./images/33763.png" id="33763" class="WikiImage"/></p>
+
+<p>Add an action to the Notification node:<br />
+<img src="./images/33764.png" id="33764" class="WikiImage"/></p>
+
+<p>This will add an action that is not going to be visible on the dashboard, but you can invoke it from the push notification, putting its name on the Event Name field of the RemoteNotification SDT.</p>
+
+<p>The event of this action will be executed when the push notification is invoked on the device.</p>
+
+<p> </p>
+
+<h2><a id="Set+a+Badge+on+the+Application+icon" class="HashLink" href="#Set+a+Badge+on+the+Application+icon">Set a Badge on the Application icon</a></h2>
+
+<p>Another option when sending a Push Notification is to display a number on the application icon. The badge is the number within a red circle that appears on an application’s home screen icon. The badge is used to denote the number of unread or otherwise unattended-to pieces of content within the app, e.g., unread messages, top news stories or waiting for actions inside the application.</p>
+
+<p>For this scenario, you need to set the value you want to show to the user in the Badge field of the RemoteNotification SDT and send that notification.<br />
+Notice that you need to calculate the number of notifications sent on the server side, tracking the number of notifications sent to each device.</p>
+
+<p>Also, if it is needed to reset this number you can send a push notification with an empty badge.</p>
+
+<p><strong>NOTE:</strong> Badges only exist in iOS apps.</p>
+
+<p> </p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>WARNING: The event defined in the main app with OnNotificationArrive mode cannot contain any command, function or control that includes UI (such as msg, confirm, etc). Remember that this kind of notifications can arrive with the device locked, with the app running on <em>background</em>, and even when the app <em>not running</em>. However, this can be done if the app is running on <em><u>foreground</u></em><em> </em>(the developer must check it through <a href="23734.html">Interop.ApplicationState property</a>).</li>
+</ul>
+
+<p> </p>
+
+<ul>
+</ul>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p><sup>1 </sup>Add, Send and SetConfiguration Methods of the Notifications External Object are only available for .NET as of <a href="https://wiki.genexus.com/commwiki/wiki?20247,," target="_blank">GeneXus X Evolution 3</a></p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /></td></tr></tbody></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Json 2 SDT</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22574,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Json 2 SDT</h1>
+<!--Json 2 SDT--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	<a href='http://en.wikipedia.org/wiki/Representational_State_Transfer#RESTful_web_APIs'>RESTful web APIs</a> are becoming an industry standard. It is the way companies have to provide functionallity to customers and providers over a well known protocol (<a href='http://en.wikipedia.org/wiki/Http'>http</a>).</p>
+<p>
+	With that, the lightweight and human-readable capabilities of <a href='http://en.wikipedia.org/wiki/JSON'>Json</a> have turned it into the standard for data interchange.<br />
+	When considering using an external service with Genexus, you have to create a <a href="https://wiki.genexus.com/commwiki/wiki?1878,," target="_blank">Structured Data Type</a> (<a href="https://wiki.genexus.com/commwiki/wiki?1878,," target="_blank">SDT</a>) to manipulate data from the service. SDTs give you the possibility of using typed data and iteration among other features.<br />
+	Creating such a structure can become quite challenging. Every property must match the exact casing of the source, levels (arrays) are kind of tricky to define. It is quite easy to make a mistake and that's where Json Inspector comes into play.</p>
+<h3>
+	Json to SDT</h3>
+<p>
+	The Json Inspector can be reached from the Tools-&gt;Aplication Integration menu in Genexus' IDE. When you select Json Import a dialog shows up asking for several fields.</p>
+<p>
+	<strong>Source of the Json data</strong><br />
+	Can be either a file from your local computer or the url to a service that serves Json data.</p>
+<p>
+	If you do have a service, it is strongly recomended to use it since copying Json from your browser to paste into a file can affect the encoding and throw parsing errors.</p>
+<p>
+	<strong>Name and description of an SDT</strong><br />
+	Is the name of a new or existing SDT. If it already exists, you will be prompted to update (see below) or completely replace it.</p>
+<p>
+	<strong>The <a href="9757.html">Folder object</a> the SDT must belong to</strong><br />
+	When you hit OK the tool parses the Json and if it is valid, an SDT ready to be used with the provided Json will be created in your Knowledge Base. You can use the <a href="6932.html">HttpClient data type</a> to get the data and the  functions to populate the recently created SDT.</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;url = Format('https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/%1/%2/dep/%3/%4/%5?appId=%6&amp;appKey=%7&amp;utc=false&amp;codeType=%8&amp;extendedOptions=useInlinedReferences',&amp;airline, &amp;number, &amp;year, &amp;month, &amp;day, FlightStatsAPI.ID, FlightStatsAPI.Key, &amp;codeType)
+&amp;HttpClient.Execute('GET', &amp;url)
+&amp;response = &amp;HttpClient.ToString()
+&amp;FSStatus.FromJson(&amp;response)</pre>
+<p>
+	<span style="font-size: x-small;">Sample code using the recently created SDT</span></p>
+<h3>
+	Considerations</h3>
+<p>
+	<strong>Json Arrays</strong><br />
+	Json Inspector maps Json arrays to SDT collections. The data type of each SDT collection item is the data type of the first Json array element.</p>
+<p>
+	<strong>Heterogene​ous arrays</strong><br />
+	Heterogeneous (in contrast to homogeneous) arrays are those where each item has its own, different, data type (i.e. [&quot;hello&quot;, 1, true] is an array with a String, then a Number and then a Boolean).</p>
+<p>
+	They are not supported by GeneXus. The Json Inspector, however, generates an SDT collection using the data type of the first element of the array.</p>
+<p>
+	<strong>Data types</strong><br />
+	Json Inspector guesses the data type of each SDT member based on the value of the first instance in the Json file inspected. It is therefore recommended to check each member's data type after importing.</p>
+<p>
+	The following table shows how Json data types are mapped to Genexus data types.</p>
+<table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td>
+				<strong>Json</strong></td>
+			<td>
+				<strong>Genexus</strong></td>
+		</tr>
+		<tr>
+			<td>
+				Number</td>
+			<td>
+				Numeric(10.5)</td>
+		</tr>
+		<tr>
+			<td>
+				String</td>
+			<td>
+				VarChar(100)</td>
+		</tr>
+		<tr>
+			<td>
+				Boolean</td>
+			<td>
+				Boolean</td>
+		</tr>
+		<tr>
+			<td>
+				DateTime</td>
+			<td>
+				DateTime</td>
+		</tr>
+		<tr>
+			<td>
+				Object</td>
+			<td>
+				SDT Level</td>
+		</tr>
+		<tr>
+			<td>
+				Array</td>
+			<td>
+				SDT Collection Level</td>
+		</tr>
+	</tbody>
+</table>
+<p>
+	 </p>
+<p>
+	 </p>
+<p>
+	<iframe width="420" height="315" src="//www.youtube.com/embed/s3ablCoJyfk" frameborder="0" allowfullscreen></iframe></p>
+<h3>
+	Availability</h3>
+<p>
+	This feature is built in as of <a href="https://wiki.genexus.com/commwiki/wiki?22217,," target="_blank">GeneXus Tilo Beta 1</a><br />
+	There's a downloadable version of Json2SDT Extension for Genexus X Ev2 U3 available <a href='http://marketplace.genexus.com/product.aspx?json2sdt'>here</a>.</p>
+<p>
+	</p>
+   <br />    <br /> <br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

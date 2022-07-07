@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>User Control Object - Scripts definition and usage</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?40598,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">User Control Object - Scripts definition and usage</h1>
+<!--User Control Object - Scripts definition and usage--><div class="TableWikiBody" id="tblwikibody"><p>It is a good practice to include your base Javascript as much as possible in one or more base Javascripts and specify these files by using a Base Library in GeneXus. Thus, every time a user control is used in some <a href="6916.html">Web Panel object</a>, GeneXus includes it automatically.</p>
+
+<p>Anyway, sometimes you want to include some Javascript code before showing the control, and sometimes after showing the control. To achieve this in GeneXus, you should use the Script tag in the Properties tab of a <a href="39356.html">User Control object</a>.<br />
+<br />
+Imagine that you want to create the rendering of the following markup for your control:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<code>&lt;div class="ui-widget"&gt;
+  &lt;label for="tags"&gt;Tags:
+  &lt;/label&gt; &lt;input id="tags"&gt;
+&lt;/div&gt;</code></pre>
+
+<p>And after that, you want to execute the following script:</p>
+
+<pre>
+<code>$("#tags").autocomplete({
+source: availableTags});
+</code></pre>
+
+<p>To allow the creation of this kind of controls, GeneXus User Controls provide a way to declare a Script Tag in their Properties tab. So, you should define the following in the Properties tab of your User Control object:</p>
+
+<pre>
+<code>&lt;Script Name="Autocomplete" When="AfterShow"&gt;
+  $("#tags").autocomplete({ source: availableTags});
+&lt;/Script&gt;</code></pre>
+
+<p>Also, depending on when your script should execute, there are two possibles values for When property:</p>
+
+<ul>
+	<li>AfterShow: The Script will be executed after the control is rendered on the page.</li>
+	<li>BeforeShow: The Script will be executed before the control is on the page; you should not manipulate the Document Object Model (<a href='https://www.w3schools.com/js/js_htmldom.asp'>DOM</a>) at this stage.</li>
+</ul>
+
+<p>Additionally, the User Control object accepts Public and Private methods. Public methods are those that can be called from the code while Private methods are simply defined to be generated.</p>
+
+<p>If the Script does not have the When property, then it is a public method:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;script Name="MyMethod" Parameters="myparm, otroparm"&gt;
+     alert (myparm + otroparm);
+&lt;/script&gt;</pre>
+
+<p>Notes:<br />
+- Methods with return are not supported. To solve that, you can use a property and assign it there and then consult it.<br />
+- There is no type checking by the specifier, so Parameters is simply the list of parameter names.</p>
+
+<p>If you want to define a private method simply put an _ at the beginning of the name of the script:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;script Name = "_ myPrivateMethod"&gt; ....
+</pre>
+
+<p>Sometimes using just the {{DataElement}} to specify what is the element of the DOM that is holding the value of your control is not enough because you are based in more complex controls that hold the value in other places.<br />
+In those cases there is a way to participate in the set and get data operations over your control, so each time GeneXus assign a value to your control you can participate and every time GeneXus get the value of your control you can participate, too.</p>
+
+<p>So, in this cases, you can define a Script tag with the When="beforegetdata" and When="beforesetdata".</p>
+
+<p>See below a sample of a control based on the <a href='https://ace.c9.io/'>Ace Editor</a>:</p>
+
+<p>First of all you define the AceEditorControl and set the properties IsControlType=true DataTypeFilter=varchar,longvarchar,character. In this way, you are defining that the AceEditorControl can be selected as a control type for <a href="6778.html">VarChar</a>, <a href="7371.html">LongVarChar</a> and <a href="6777.html">Character</a> attributes and variables.</p>
+
+<p>The problem here is that the AceEditorControl is not maintaining the value in the HTML DOM, so you need to do some extra work defining Script Tags in the Properties Tab:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Definition auto="false"&gt;
+  &lt;Property Name="Width" Type="Numeric" Default="600"/&gt;
+  &lt;Property Name="Height" Type="Numeric" Default="400"/&gt;
+  &lt;script Name="GetValue" When="BeforeGetData"&gt;
+          return this.myEditor.getValue();  
+  &lt;/script&gt; 
+  &lt;script Name="SetValue" When="BeforeSetData"&gt;
+        if (this.myEditor)
+              this.myEditor.setValue(valueObject.value); 
+  &lt;/script&gt;
+  &lt;script Name="Show" When="AfterShow"&gt;  
+   
+this.myEditor = ace.edit("aceeditor");        
+  
+this.myEditor.setOptions({
+    theme: "ace/theme/xcode",
+            autoScrollEditorIntoView: true,
+            maxLines: Math.trunc(($(window).height()-60)/16),
+            minLines: Math.trunc(($(window).height()-60)/16),
+    mode: "ace/mode/javascript"
+ 
+  });  
+this.myEditor.setValue(valueObject.value);
+
+  &lt;/script&gt;
+&lt;/Definition&gt;</pre>
+
+<p></p>
+
+<p> </p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="40108.html">Toc:Design Systems</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/16/22 05:56 PM</em></font></td></TR></table></font>

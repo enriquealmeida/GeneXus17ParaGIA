@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Impersonation</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24241,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Impersonation</h1>
+<!--GAM - Impersonation--><div class="TableWikiBody" id="tblwikibody"><p>When the GAM Repository allows end users to authenticate with different identity providers (for example using a web service and Twitter), by default they are mapped to different GAM Users.</p>
+
+<p>Due to security concerns, users may authenticate using different mechanisms depending, for example, on whether they are accessing from an intranet. However, the login information has to be mapped to the same GAM logical User.</p>
+
+<p>It is explained, in this article, what to do when a single GAM User is required, regardless of whether users enter the system using one <a href="16508.html">authentication type</a> or the other.</p>
+
+<p><img alt="enlightened" height="23" src="https://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" /><strong>Impersonate </strong>allows the repository to have two different authentication mechanisms, but which both converge on the same user. It is useful for cases in which it is not possible to use the same type of authentication from the intranet and the internet, for example, but you want the user to be the same. It is also used when you want to migrate from one type of authentication to another, the type of &quot;impersonated&quot; authentication is the one to which you are migrating in that case.</p>
+
+<p><strong>Summary</strong></p>
+
+<p><ul><li><a class="HashLink" href="#Scenarios">Scenarios</a></li><ul><li><a class="HashLink" href="#I.+Impersonate+External+Authentication+to+Local+Authentication">I. Impersonate External Authentication to Local Authentication</a></li><li><a class="HashLink" href="#II%3A+Impersonate+External+Authentication+to+any+other+type+of+external+authentication">II: Impersonate External Authentication to any other type of external authentication</a></li></ul></li><li><a class="HashLink" href="#Implementation+Details">Implementation Details</a></li><ul><li><a class="HashLink" href="#Criteria+for+mapping+users">Criteria for mapping users</a></li><li><a class="HashLink" href="#GAM+Remote">GAM Remote</a></li><li><a class="HashLink" href="#Facebook%2C+Twitter%2C+Google%2C+Oauth+2.0">Facebook, Twitter, Google, Oauth 2.0</a></li><li><a class="HashLink" href="#Oauth+2.0+and+SAML+2.0+with+local+impersonate+peculiarities">Oauth 2.0 and SAML 2.0 with local impersonate peculiarities</a></li></ul></li><li><a class="HashLink" href="#Characteristics+of+the+providers">Characteristics of the providers</a></li><ul><li><a class="HashLink" href="#Facebook">Facebook</a></li><li><a class="HashLink" href="#Google">Google</a></li></ul></li><li><a class="HashLink" href="#Notes">Notes</a></li></ul></ul></p>
+
+<h3><a id="Scenarios" class="HashLink" href="#Scenarios">Scenarios</a></h3>
+
+<p>The following are some of the possible scenarios. There are others, like Facebook, Twitter, Google Authentication types impersonating another one.</p>
+
+<h4><a id="I.+Impersonate+External+Authentication+to+Local+Authentication" class="HashLink" href="#I.+Impersonate+External+Authentication+to+Local+Authentication">I. Impersonate External Authentication to Local Authentication</a></h4>
+
+<p>Consider a scenario where we need to have all the users defined as <a href="20703.html">local</a> GAM users in the GAM database, regardless of whether the login is local or external.</p>
+
+<p>In other words, users should be able to authenticate using an external mechanism, such as a certificate, as well as one local to GAM (depending on the physical location of the user). In both cases, the login should map to the same GAM User.</p>
+
+<p>A user who has logged into the application using an external mechanism shouldn't be defined as a different user in the GAM database. Instead, this user should impersonate the local user who has the same username (or email) in <a href="19888.html">GeneXus Access Manager</a>, if it exists. If a user logs in using external authentication, and it does not exist in GAM, it will be <a href="https://wiki.genexus.com/commwiki/wiki?19913,," target="_blank">registered</a> in GAM as a local user.</p>
+
+<p>The article <a href="https://wiki.genexus.com/commwiki/wiki?24441,," target="_blank">Impersonate external authentication to local authentication</a> explains in more detail the scenario where any <a href="21755.html">GAM - External Authentication Type</a> impersonates to local authentication.</p>
+
+<h4><a id="II%3A+Impersonate+External+Authentication+to+any+other+type+of+external+authentication" class="HashLink" href="#II%3A+Impersonate+External+Authentication+to+any+other+type+of+external+authentication">II: Impersonate External Authentication to any other type of external authentication</a></h4>
+
+<p>Any combination of impersonation is supported. That is, any Authentication Type can impersonate any other (except the local authentication type which can only be impersonated).</p>
+
+<p>Suppose that the Custom Authentication Type defined in the Repository impersonates to <a href="17208.html">Twitter</a>. This means that end users use their Twitter login to authenticate to <a href="21751.html">Custom external authentication</a>, and after a successful login they are mapped to Twitter users in GAM.</p>
+
+<h3><a id="Implementation+Details" class="HashLink" href="#Implementation+Details">Implementation Details</a></h3>
+
+<p>Suppose that you have X impersonate Y, where X and Y are authentication types. When a login is made using X, if the user exists with authentication type Y, that is taken. If not, it is searched whether the user exists associated with the X authentication type, and the authentication type is changed to Y. A new user is not created in this case.<br />
+If the above is not fulfilled either (it does not exist with authentication type X and can be considered the same user), a new user is created (with authentication type Y). The criterion to know if a user can be considered to be the same differs according to the type of authentication.</p>
+
+<h4><a id="Criteria+for+mapping+users" class="HashLink" href="#Criteria+for+mapping+users">Criteria for mapping users</a></h4>
+
+<p>Here we detail the criteria used:</p>
+
+<h4><a id="GAM+Remote" class="HashLink" href="#GAM+Remote">GAM Remote</a></h4>
+
+<p>For the case of <a href="25355.html">GAM Remote</a> with impersonating Y, it is mapped by user GUID, <a href="https://wiki.genexus.com/commwiki/wiki?21734,," target="_blank">external ID</a>, and finally email. An exception is handled for the username that is the following:<br />
+If you have a user with the username &quot;A&quot; in the <a href="37038.html">Identity Provider</a> (IDP), and the same username in the client. In addition, the GUID of the user is different in the GAM client and in the IDP, as well as the email that is different in both.<br />
+In that case, you cannot map the users and consider them the same, even if you have the same username, so when the user tries to log in to the IDP &quot;<em>The Username already exists. Error (GAM49)</em>&quot; occurs.<br />
+This implies that the administrator must decide if it is the same user or not configuring any of the elements that are used to consider them the same (External ID, email).</p>
+
+<h4><a id="Facebook%2C+Twitter%2C+Google%2C+Oauth+2.0" class="HashLink" href="#Facebook%2C+Twitter%2C+Google%2C+Oauth+2.0">Facebook, Twitter, Google, Oauth 2.0</a></h4>
+
+<p>First, a user is searched for the type of Impersonated authentication with the same ExternalID as the returned one.<br />
+If it does not exist, we look for a user that has the same ExternalID in the original authentication type (it is used when you add Impersonate and migrate the users).<br />
+In the third case, the type of Impersonated authentication is searched, a user that has the same Email.<br />
+Finally, if it does not exist, a user with the same Email will be searched in the original authentication type after the login.</p>
+
+<h4><a id="Oauth+2.0+and+SAML+2.0+with+local+impersonate+peculiarities" class="HashLink" href="#Oauth+2.0+and+SAML+2.0+with+local+impersonate+peculiarities">Oauth 2.0 and SAML 2.0 with local impersonate peculiarities</a></h4>
+
+<p>To prevent the username from overwriting the local user, there is a difference in Oauth 2.0 behavior.</p>
+
+<p>It can be done because in this case in the configuration it is decided whether or not to update the UserName field of the user.</p>
+
+<p>If in the configuration of the <a href="39484.html">GAM - Oauth 2.0 Authentication Type</a> (Response) the field &quot;User Name Tag&quot; is not mapped, the following can happen:</p>
+
+<ul>
+	<li>If you have impersonate to local, and the user exists, the UserName field is NOT overwritten</li>
+	<li>If you have impersonate to local, and the user is new, the UserName field is loaded with the ExternalID</li>
+</ul>
+
+<p>This only works for local impersonation. If you have Impersonate to a type other than local, and the user exists, the UserName field is loaded with the ExternalID.</p>
+
+<p>This behavior solves another issue, which is that Facebook does not return a value in the user name field. If you have Oauth 2.0 Authentication (using Facebook) with Local impersonate, the user name can be the local user.</p>
+
+<p>Otherwise, if the &quot;User Name Tag&quot; field is filled in the configuration of the <a href="39484.html">GAM - Oauth 2.0 Authentication Type</a> (Response), the UserName is always overwritten.</p>
+
+<h3><a id="Characteristics+of+the+providers" class="HashLink" href="#Characteristics+of+the+providers">Characteristics of the providers</a></h3>
+
+<h4><a id="Facebook" class="HashLink" href="#Facebook">Facebook</a></h4>
+The username is a GUID, which the GAM matches with the ExternalId given by FB. This criterion is used because the email is not always returned in FB.<br />
+The External ID in FB varies according to the Facebook Application (For two users to be the same, you must create a company in FB).
+<h4><a id="Google" class="HashLink" href="#Google">Google</a></h4>
+The username in Google is the email.
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li>Whenever a user logs in using a certain type of external authentication (such as <a href="29007.html">Facebook</a>, GAM remote, Oauth 2.0, <a href="16512.html">Web services</a>), the external provider sends user information, which overwrites the user's existing data. These data (the basic ones) are username, email, external ID. That is, if you have a user with Authentication Type = Custom with a certain External ID, when you set up Custom impersonate Google, the user takes External ID from Google and loses the one it originally had. The same goes for the rest of the data.</li>
+	<li>GAM Impersonate works for <a href="19395.html">Auto-Register Anonymous Users</a> also.</li>
+</ul>
+
+<p>  </p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44478.html">GAM - Apple Authentication type</a></TD><TD><a href="48197.html">GAM - One Time Password (OTP)</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="25385.html">Single Sign On in applications using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/22 05:30 PM</em></font></td></TR></table></font>

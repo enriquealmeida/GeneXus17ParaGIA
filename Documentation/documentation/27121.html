@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Offline Database reorganization</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?27121,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Offline Database reorganization</h1>
+<!--Offline Database reorganization--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As mentioned in the document <a href="23561.html">Offline Database Object Table selection</a>, this object is in charge of selecting the tables that the device is going to use in order to work Offline. But how and when are these tables created in the device? How are they reorganized when the table model changes?</p>
+
+<p>The objective of this document is to answer these questions.</p>
+
+<h3><a id="Smart+Devices+Impact+Analysis" class="HashLink" href="#Smart+Devices+Impact+Analysis">Smart Devices Impact Analysis</a></h3>
+
+<p>Once the Offline Database object determines the selected Tables, GeneXus makes a Smart Devices Impact Analysis that shows all the selected tables and their creation statements.</p>
+
+<p><img src="./images/27122.png" id="27122" class="WikiImage"/></p>
+
+<h3><a id="When+is+this+impact+analysis+called%3F" class="HashLink" href="#When+is+this+impact+analysis+called%3F">When is this impact analysis called?</a></h3>
+
+<p>This impact analysis is always made after the first Build operation of the application when Offline architecture is selected.</p>
+
+<p>After that, it is called in the following situations:</p>
+
+<ul>
+	<li>On every model change: Any modification to model Create/Update/Delete tables or attributes.</li>
+	<li>When table references change: For example, when your application makes reference to a table that was not referenced before.</li>
+	<li>Every time the Rebuild All action is executed.</li>
+	<li>Manually: Using the <a href="27123.html">Create Offline Database</a> action from the Build menu.</li>
+</ul>
+
+<h3><a id="Reorganization+files" class="HashLink" href="#Reorganization+files">Reorganization files</a></h3>
+
+<p>After the Impact Analysis is done, reorganization files are created for each Smart Device generator enabled for the <a href="14451.html">Native Mobile Generator</a>. </p>
+
+<p>These files include the routines to create the database in the device once the application is installed. </p>
+
+<h3><a id="Offline+Local+Database+Reorganization" class="HashLink" href="#Offline+Local+Database+Reorganization">Offline Local Database Reorganization</a></h3>
+
+<p>The Offline local database is created when the application is launched for the first time in the device. In order to do this, the reorganization files must be created as they include the database creation routines.</p>
+
+<p>After that, every time the offline database model changes, the reorganization files re-create the local database tables from scratch<sup><span style="font-size: 10.8333px;line-height: 20.8px;">1</span></sup>, <strong>losing all their existing data</strong>. The exception here is the <em>GXPendingEvents</em> table, where the pending events (those that were not syncrhonized) will be copied into the new database, in order to be sent  to the server in the next sync process. To learn more, read <a href="https://wiki.genexus.com/commwiki/wiki?23606,," target="_blank">SynchronizationEventsAPI external object (X Evolution 3)</a></p>
+
+<p><sup>1 </sup>To know <span style="line-height: 20.8px;">whether the database </span>needs to be re-created, the MD5 of the ReorganizationScript.txt is compared.</p>
+
+<h3><a id="Important+considerations" class="HashLink" href="#Important+considerations">Important considerations</a></h3>
+
+<ol>
+	<li>It is very important that you have the Reorganization files generated and compiled before you run your application in the device. Otherwise, several errors may occur, and your application may even crash as a result of not having these files.<br />
+	 </li>
+	<li>As Reorganization files are generated for every Smart Device generator that is enabled, when enabling a new Smart Device generator, the Impact Analysis may not be done and therefore the reorganization files may not be created. In summary, every time you enable a new Smart Device generator you must run a Rebuild All or the <a href="27123.html">Create Offline Database</a> action manually.<br />
+	 </li>
+	<li>Having more than one Offline <span style="line-height: 20.8px;">main object </span>is not supported, as only one reorganization program is kept by each Smart Device Generator.</li>
+</ol>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="27123.html">Create Offline Database</a></li>
+	<li><a href="23561.html">Offline Database Object Table selection</a></li>
+	<li><a href="23568.html">Offline Database Object Navigation Report</a></li>
+	<li><a href="22509.html">Offline Database object</a></li>
+</ul>
+
+<p><br />
+<br />
+</p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="27123.html">Create Offline Database</a></TD><TD><a href="22509.html">Category:Offline Database object</a></TD></TR><TR><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

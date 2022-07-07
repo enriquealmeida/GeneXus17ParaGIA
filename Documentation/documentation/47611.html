@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Export test results to Allure in Jenkins</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47611,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Export test results to Allure in Jenkins</h1>
+<!--Export test results to Allure in Jenkins--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><a href='http://allure.qatools.ru/'>Allure Framework</a> is an open source test result reporting tool that shows a representation of what has been tested in a web report. On this page, you can find a basic guide on how to use it to see and manage test execution results in a wider way. </p>
+
+<p>Anytime you run tests using MSBuild tasks, you can add an <a href="40738.html">ExportResultsToAllure</a> extra task to output the test results in an Allure compatible format: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ExportResultsToAllure TargetDir=&quot;$(AllureResultsPath)&quot; Properties=&quot;KB=$(KBPath);Environment=$(EnvironmentName);$(TestingEnvironment)&quot;&gt; 
+    &lt;Output TaskParameter=&quot;OutputFile&quot; PropertyName=&quot;OutputFile&quot; /&gt;
+&lt;/ExportResultsToAllure&gt;
+</pre>
+
+<h2><a id="Example+using+Jenkins" class="HashLink" href="#Example+using+Jenkins">Example using Jenkins</a></h2>
+
+<p>This example uses GXtest.msbuild file (located on GeneXus IDE root folder).</p>
+
+<p>First, install the <a href='https://plugins.jenkins.io/allure-jenkins-plugin/'>Allure Jenkins plugin</a> from the <a href='https://www.jenkins.io/doc/book/managing/plugins/'>plugins section in Jenkins</a>. Then, add the Allure commandline installation in the Jenkins global tools configurations:</p>
+
+<p><img src="./images/47669.png" id="47669" class="WikiImage"/></p>
+
+<p>Note: GXtest is compatible with versions 1.x and 2.x of Allure reports format. We recommend using the latest version.</p>
+
+<h3><a id="Step+1%29+Run+UI+tests+step" class="HashLink" href="#Step+1%29+Run+UI+tests+step">Step 1) Run UI tests step</a></h3>
+
+<p>To set the AllureResultsPath in the MSBuild build step, we recommend using the Jenkins variable $WORKSPACE, which targets the directory created by Jenkins for the current project. There are other optional parameters to set as <a href="40738.html">SourceFile and Properties</a>. Note that to see the screenshots in the Allure report you must set the parameter <a href="45420.html">ScreenshotMode, HtmlMode</a> to override the values set on KB environment properties.</p>
+
+<p class="Code"><img src="./images/47903.png" id="47903" class="WikiImage"/></p>
+
+<p>By default, if a test fails, the RunTests task will be marked as failed as well. To process the test results, the additional parameter <em><strong>/p:AllowFailedTests=&quot;true&quot;</strong></em> must be set on this step.</p>
+
+<h3><a id="Step+2%29+Add+Allure+reporting+step" class="HashLink" href="#Step+2%29+Add+Allure+reporting+step">Step 2) Add Allure reporting step</a></h3>
+
+<p>Add a post-build step with Allure Report:</p>
+
+<p><img src="./images/47629.png" id="47629" class="WikiImage"/></p>
+
+<p>Note that the folder location here is relative to the project folder ($WORKSPACE variable).</p>
+
+<h3><a id="Test+execution+report" class="HashLink" href="#Test+execution+report">Test execution report</a></h3>
+
+<p>Selecting the &quot;Allure Report&quot; option, Jenkins goes to the Overview tab of the Allure Framework. The Overview page hosts several default widgets representing the basic characteristics of your project and testing environment.</p>
+
+<p><img src="./images/47670.png" id="47670" class="WikiImage"/></p>
+
+<p>Note that the environment description and the user were above added in the TestingEnvironment target at <a href="47611.html#Step+1%29+Run+UI+tests+step'">RunAllTest MSBuild task</a>.    </p>
+
+<p>The list of executed tests is shown in the Suites tab. Selecting the UI test example, on the right side, you can see more details about the execution such as duration, browser and its version, and the executed commands in the selected test and their screenshots if taken.</p>
+
+<p><img src="./images/47683.png" id="47683" class="WikiImage"/><br />
+ </p>
+
+<p>As we can set ScreenshotMode = &quot;Always&quot; and HtmlMode=&quot;Always&quot;, for each command, you can easily see the screenshot and HTML page when the command was executed: </p>
+
+<p><img src="./images/47684.png" id="47684" class="WikiImage"/></p>
+
+<p>Selecting the unit test example, you can see the execution information and the assertion details:</p>
+
+<p><img src="./images/47637.png" id="47637" class="WikiImage"/></p>
+
+<p>In the Graphs tab, you can see different statistics and trends collected from the test results</p>
+
+<p><img src="./images/47666.png" id="47666" class="WikiImage"/></p>
+
+<p>For more details check the <a href='https://docs.qameta.io/allure/#_report_structure'>Allure Report structure</a>. </p>
+
+<p><a href="47689.html">See the execution video of this example in Jenkins</a></p>
+
+<p> </p>
+
+<p><h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This feature is available since  GeneXus 17 upgrade 2.</p>
+
+<p></p>
+</p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="47893.html">Export test results to Allure in Jenkins (GeneXus 17 upgrade 2)</a></TD><TD><a href="38327.html">Toc:GXtest v4</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/14/21 03:50 PM</em></font></td></TR></table></font>

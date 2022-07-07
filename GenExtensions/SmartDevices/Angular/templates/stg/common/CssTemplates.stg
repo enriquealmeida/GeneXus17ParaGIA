@@ -1,0 +1,297 @@
+﻿delimiters "$", "$"
+
+singleControlImplementation ::= [
+  "Label":			"g_tablecell_positioning",
+  "Combo Box":		"g_tablecell_positioning",
+  default:			"g_default_positioning" // anything else 
+ ]
+
+cellAlign ::= [
+  "start_start" : "top:0px; left:0px;",
+  "start_center" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:0px; text-align:center ",
+  "start_end" : "top:0px; right:0px;",
+  "center_start" : "top:50%; left:0px; transform: translate( 0px, -50%);",
+  "center_center" : "top:50%; left:50%; transform: translate( -50%, -50%);",
+  "center_end" : "top:50%; right:0px; transform: translate( 0px, -50%);",
+  "end_start" : "bottom:0px; left:0px;",
+  "end_center" : "bottom:0px; left:50%; transform: translate( -50%, 0px);",
+  "end_end" : "bottom:0px; right:0px;",
+  "start_": "top:0px; left:0px;",
+  "center_" : "top:50%; left:0px; transform: translate( 0px, -50%);",
+  "end_" : "bottom:0px; left:0px;",
+  "_start" : "top:0px; left:0px;",
+  "_center" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:0px; text-align:center;",
+  "_end" : "top:0px; right:0px;",
+  "_" : "top:0px; left:0px;"
+]
+
+cellAlignTable ::= [
+  "start_start" : "top:0px; left:0px;",
+  "start_center" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:0px; margin-left:auto; margin-right:auto;",
+  "start_end" : "top:0px; right:0px;",
+  "center_start" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:auto; margin-bottom:auto; margin-left:0px",
+  "center_center" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:auto; margin-bottom:auto; margin-right:auto; margin-left:auto;",
+  "center_end" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:auto; margin-bottom:auto; margin-right:0px",
+  "end_start" : "bottom:0px; left:0px;",
+  "end_center" : "top:0px; left:0px; bottom:0px; right:0px; margin-bottom:0px; margin-left:auto; margin-right:auto;",
+  "end_end" : "bottom:0px; right:0px;",
+  "start_": "top:0px; left:0px;",
+  "center_" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:auto; margin-bottom:auto; margin-left:0px",
+  "end_" : "bottom:0px; left:0px;position: absolute; /*NEW*/",
+  "_start" : "top:0px; left:0px;",
+  "_center" : "top:0px; left:0px; bottom:0px; right:0px; margin-top:0px; margin-left:auto; margin-right:auto;",
+  "_end" : "top:0px; right:0px;",
+  "_" : "top:0px; left:0px;"
+]
+
+tableCellVerticalAlign ::= [
+  "start":	"top",
+  "center":	"middle",
+  "end":		"bottom",
+  default:	"middle"
+]
+
+tableCellHorizontalAlign ::= [
+  "start" : "left",
+  "center" : "center",
+  "end" : "right",
+  default: "left"
+]
+
+tableVerticalAlignment ::= [
+  "start":	"start",
+  "end":		"end",
+  default:	"center"
+]
+
+g_page( page, gx)::=<<
+$g_body(page.Layout)$
+>>
+
+g_body(layouts)::= <<
+$layouts:g_layout()$
+>>
+
+g_layout(layout) ::= <<
+/* Layout: $layout$ */
+$if (layout.LayoutMedia)$
+$g_table_with_media( layout.Table, layout.LayoutMedia)$
+$else$
+$layout.Table: g_table()$
+$endif$
+>>
+
+g_table_with_media(table, layoutMedia) ::= <<
+@media $g_processMedia(layoutMedia)$ {
+  $table: g_table()$
+}
+>>
+
+g_processMedia(media)::=<%
+$media.Bounds:{bound | $if (media.Not)$not $endif$screen and $if (bound.HasMin)$(min-width:$bound.Min$px)$endif$$if (bound.HasMax)$$if (bound.HasMin)$ and $endif$(max-width:$bound.Max$px)$endif$$if (bound.HasOrientation)$$if (bound.HasAnyBound)$ and $endif$(orientation:$bound.Orientation$)$endif$};separator=", "$
+%>
+
+g_table(table) ::= <<
+/* Table: $table.ControlName$ */
+.$table.CssPositioningClass$ {
+$if (table.Pos)$
+  $table.Pos: g_cell_position()$
+$else$
+  $table.Pos: g_cell_align_table()$
+$endif$
+  /* new stuff */
+  $if (table.AbsoluteLayout)$
+  position: relative;
+  $endif$
+  $table.Size: html_size()$
+  $if (!table.AutoGrow)$
+  overflow:auto;
+  $endif$
+  $if(table.HasRows)$
+  $table.CssGrid: g_grid_layout()$
+  $endif$
+}
+
+$table.Row: g_row()$
+/* End $table.ControlName$ */
+
+>>
+
+html_size(size) ::= <<
+width: $size.Width$;
+height: $size.Height$;
+$if (size.MinWidth)$
+min-width: $size.MinWidth$;
+$endif$
+$if (size.MinHeight)$
+min-height: $size.MinHeight$;
+$endif$
+$if (size.Overflow)$
+overflow: $size.Overflow$;
+$endif$
+
+>>
+
+g_row(row) ::= <<
+$row.Cell: g_cell()$
+>>
+
+g_cell(cell) ::= <<
+$cell.Data: g_positioning()$
+$cell.Textblock: g_tablecell_positioning()$
+$cell.Ad: g_default_positioning()$
+$cell.Grid: g_grid()$
+$cell.Table:g_table()$
+$cell.AllContent:g_allcontent_positioning()$
+$cell.OneContent:g_default_positioning()$
+$cell.Tab:g_tab()$
+$cell.Action: g_action()$
+$cell.Image: g_default_positioning()$
+$cell.Component: g_default_positioning()$
+>>
+
+g_positioning(data) ::= <<
+$(singleControlImplementation.(data.ControlType))(data)$
+>>
+
+g_tablecell_positioning(data) ::= <<
+.$data.CssPositioningClass$ {
+  $data.Pos: g_cell_position()$
+  $data.Size: html_size()$
+  $if (!data.AutoGrow)$
+  overflow:hidden;
+  $endif$
+}
+>>
+
+g_allcontent_positioning(data) ::= <<
+.$data.CssPositioningClass$ {
+  $data.Pos: g_cell_position()$
+  $data.Size: html_size()$
+  $if (!data.AutoGrow)$
+  overflow:hidden;
+  $endif$
+  $data.Pos: g_cell_align()$
+}
+>>
+
+
+g_default_positioning(data) ::= <<
+.$data.CssPositioningClass$ {
+  $data.Pos: g_cell_position()$
+  $data.Size: html_size()$
+  $if (!data.AutoGrow)$
+  overflow:hidden;
+  $endif$
+  $data.Pos: g_cell_align()$
+}
+>>
+
+g_action(data) ::= <<
+.$data.CssPositioningClass$ {
+  $data.Pos: g_cell_position()$
+}
+>>
+
+g_grid(grid) ::= <<
+$if (grid.IsZoomable)$
+.$grid.CssPositioningClass$__zoom {
+  width:100%;
+  height:100%;
+  $grid.Pos: g_cell_position()$
+}
+.$grid.CssPositioningClass$ {
+  width:100%;
+  height:100%;
+  $grid.Pos: g_cell_position()$
+}
+$else$
+.$grid.CssPositioningClass$ {
+  width:100%;
+  height:100%;
+  $grid.Pos: g_cell_position()$
+}
+$endif$
+$grid.Table:g_table()$
+>>
+
+g_tab(tab) ::= <<
+.$tab.CssPositioningClass$ {
+  $tab.Pos: g_cell_position()$
+}
+$tab.Item: g_tabPage()$
+>>
+
+g_tabPage(tabPage) ::= <<
+.$tabPage.CssPositioningClass$ {
+}
+$tabPage.Table: g_table()$
+>>
+
+g_cell_position( cellPosition) ::= <<
+$if (cellPosition.IsAbsoluteLayout)$
+position:absolute;
+top: $cellPosition.Top$;
+left: $cellPosition.Left$;
+z-index: $cellPosition.Zorder$;
+$else$
+-ms-grid-row: $cellPosition.CssRow$;
+-ms-grid-column: $cellPosition.CssColumn$;
+-ms-grid-row-span: $cellPosition.CssRowSpan$;
+-ms-grid-column-span: $cellPosition.CssColumnSpan$;
+-ms-grid-row-align: $tableVerticalAlignment.(cellPosition.CssRowAlign)$;
+$endif$
+>>
+
+g_tablecell_align( cellPosition ) ::= <<
+text-align: $tableCellHorizontalAlign.(cellPosition.CssColumnAlign)$;
+vertical-align: $tableCellVerticalAlign.(cellPosition.CssRowAlign)$;
+>>
+
+g_cell_align( cellPosition ) ::= <<
+
+$if (cellPosition.IsAbsoluteLayout)$
+width:100%;
+height:100%;
+z-index: $cellPosition.Zorder$;
+$endif$
+>>
+
+g_cell_align_table( cellPosition ) ::= <<
+$cellAlignTable.( getAlignId(cellPosition.CssRowAlign,cellPosition.CssColumnAlign) )$
+>>
+
+getAlignId( row, col) ::= "$row$_$col$"
+
+g_cell_align_table_size( size, cellPosition ) ::= <<
+$(getAlignTemplateName(cellPosition.CssRowAlign,cellPosition.CssColumnAlign))(size)$
+>>
+
+getAlignTemplateName( row, col) ::= "g_cell_align_table_$row$_$col$"
+
+g_cell_align_table_start_start(size) ::= "top:0px; left:0px;"
+g_cell_align_table_start_center(size) ::= "top:0px; $g_cell_align_table_center_horizontal(size)$"
+g_cell_align_table_start_end(size) ::= "top:0px; right:0px;"
+g_cell_align_table_center_start(size) ::= "$g_cell_align_table_center_vertical(size)$ left:0px;"
+g_cell_align_table_center_center(size) ::= "$g_cell_align_table_center_vertical(size)$ $g_cell_align_table_center_horizontal(size)$"
+g_cell_align_table_center_end(size) ::= "$g_cell_align_table_center_vertical(size)$ right:0px;"
+g_cell_align_table_end_start(size) ::= "bottom:0px; left:0px;"
+g_cell_align_table_end_center(size) ::= "bottom:0px; $g_cell_align_table_center_horizontal(size)$"
+g_cell_align_table_end_end(size) ::= "bottom:0px; right:0px;"
+g_cell_align_table_start_(size) ::= "top:0px; left:0px;"
+g_cell_align_table_center_(size) ::= "$g_cell_align_table_center_vertical(size)$ left:0px;"
+g_cell_align_table_end_(size) ::= "bottom:0px; left:0px;"
+g_cell_align_table__start(size) ::= "top:0px; left:0px;"
+g_cell_align_table__center(size) ::= "top:0px; $g_cell_align_table_center_horizontal(size)$"
+g_cell_align_table__end(size) ::= "top:0px; right:0px;"
+g_cell_align_table__(size) ::= "top:0px; left:0px;"
+
+g_cell_align_table_center_horizontal(size) ::= "$if (size)$ left: calc( 50% - $size.Width$ / 2 );$else$ left:50%; transform:translateX(-50%);$endif$"
+g_cell_align_table_center_vertical(size) ::= "$if (size)$ top: calc( 50% - $size.Height$ / 2 );$else$ top:50%; transform:translateY(-50%);$endif$"
+
+g_grid_layout( grid) ::= <<
+display: -ms-grid;
+-ms-grid-rows: $grid.CssRows$;
+-ms-grid-columns: $grid.CssColumns$;
+
+>>

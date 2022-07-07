@@ -1,0 +1,41 @@
+group CommonTrns;
+delimiters "$", "$"
+
+init(transaction, lowerTransaction, variables, foreigns, event, regExp, enums, hasLevel, responses, action, trnCheck)::=<<
+$if(variables)$
+	$insertContent()$
+$else$
+$insertContent()$
+$endif$	
+>>
+
+insertContent()::=<<
+$variables:{variable|$imageVariables(variable)$};separator="\n"$
+$foreigns:{foreign|$foreignValidation(foreign, transaction, lowerTransaction, transaction)$};separator="\n"$
+$regExp:{variable|$regExpValidation(variable)$};separator="\n"$
+$shouldCheckIf(trnCheck, foreigns, regExp, enums)$
+$if(trnCheck.ShouldCheck)$
+	$performInsert()$
+$shouldCheckEndIf(trnCheck)$
+$else$
+$performInsert()$
+$endif$
+>>
+
+performInsert()::=<<
+$variables:{variable|$renderParameters(transaction, variable)$};separator="\n"$
+$enums:{variable|$enumParameters(transaction, variable)$};separator="\n"$
+&$transaction$.Save()
+if &$transaction$.success()
+	commit
+	$if(hasLevel)$
+	$else$
+	&ContextOut.Context.GXAction = ""
+	$endif$
+else
+	&Messages = &$transaction$.GetMessages()
+	for &Message in &Messages
+		&speechOut+= &Message.Description
+	endfor
+endif
+>>

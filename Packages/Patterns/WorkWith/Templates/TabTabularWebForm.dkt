@@ -1,0 +1,89 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Tabular Tab WebForm" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="TabTabularAbstractForm" File="TabTabularAbstractForm.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.WebForm %>">
+	<Source><![CDATA[<%
+
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	WorkWithSettings settings = wwInstance.Settings;
+
+	if (wwInstance.UseAbstractForm)
+	{
+%>
+<%@ CallSubTemplate TabTabularAbstractForm %>
+<%
+	}
+	else
+	{
+		TabElement tab = wwInstance.GetElement<TabElement>(Element);
+		if (tab.Attributes == null)
+			throw new PatternApplicationException("Tabular Tab must have attributes");
+	
+%>
+<body>
+	<table id='TBL2'>
+		<tbody>
+<%
+		int itemIndex = 0;
+		foreach (IAttributesItem item in tab.Attributes)
+		{
+			if (item.Visible)
+			{
+				itemIndex++;
+%>
+			<tr>
+				<td>
+					<%= WebForm.TextBlock("TextBlock" + item.Id, null, item.Description) %>
+				</td>
+				<td>
+					<%= WebFormScript.Item(item) %>
+				</td>
+			</tr>
+<%
+			}
+		}
+%>
+		</tbody>
+	</table>
+	
+	<%-- Action buttons --%>
+<%
+		// Add buttons for actions.
+		Transaction trn = (Transaction)Instance.KBObject;
+		foreach (ActionElement action in tab.Actions)
+		{
+			if (!action.InGrid)
+			{
+%>
+	<%= action.ToHtml() %>
+<%
+			}
+		}
+%>
+
+	<%-- Invisible attributes (needed for navigation) --%>
+<%
+		foreach (AttributeElement attribute in tab.Attributes.Attributes)
+		{
+			if (!attribute.Visible)
+			{
+%>
+	<gxAttribute AttID="<%= attribute.Attribute.Name %>" ControlType="Edit" InputType="Values" />
+<%
+			}
+		}
+%>
+</body>
+<%
+	}
+%>]]>
+	</Source>
+</Part>

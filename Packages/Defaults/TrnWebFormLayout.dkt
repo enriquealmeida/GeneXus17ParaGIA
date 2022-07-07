@@ -1,0 +1,50 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template" %>
+<%@ SubTemplate Name="WebFormInnerLevel" File="TrnWebFormLayout_InnerLevel.dkt"  MergeProperties="True"  %>
+<%@ SubTemplate Name="WebFormLayoutButton" File="TrnWebFormLayout_Button.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="WebFormLayoutButtonToolbar" File="TrnWebFormLayout_ButtonToolbar.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="WebFormLayoutToolbar" File="TrnWebFormLayout_Toolbar.dkt" MergeProperties="True" %>
+<%@ SubTemplate Name="WebFormLayoutFormButtons" File="TrnWebFormLayout_FormButtons.dkt" MergeProperties="True" %>
+<%@ Property Name="transaction" Type="Artech.Genexus.Common.Objects.Transaction" %>
+<%@ Property Name="GenerateToolbar" Type="System.Boolean" %>
+<%@ Property Name="GenerateDelete" Type="System.Boolean" %>
+<%@ Property Name="Counters" Type="System.Collections.Generic.Dictionary<string,int>"%>
+
+<%= WebForm.BeginTable("TableMain", "TableBorder100x100") %>
+	<tr>
+		<td>
+<%
+		if (GenerateToolbar) 
+		{
+%>
+			<%= WebForm.BeginTable("TableToolbar", "ViewTable") %>
+				<tr>
+					<td>
+<%@ CallSubTemplate WebFormLayoutToolbar %>
+					</td>
+				</tr>	  
+				<tr>
+					<td>
+					</td>
+				</tr>
+			<%= WebForm.EndTable() %>
+<%
+		}
+%>
+			<fieldset id="GroupData" CaptionExpression="<%= System.Security.SecurityElement.Escape(transaction.Description) %>">
+				<%= WebForm.BeginTable("Table1", "Table") %>
+					<tr>
+						<td>
+							<%= WebForm.ErrorViewer("ctlError", null) %>
+						</td>
+					</tr>
+<%@ CallSubTemplate WebFormInnerLevel TransactionLevel='transaction.Structure.Root' Counters='Counters' %>
+					<tr>
+						<td>
+<%@ CallSubTemplate WebFormLayoutFormButtons %>
+						</td>
+					</tr>
+				<%= WebForm.EndTable() %>
+			</fieldset>
+		</td>
+	</tr>
+<%= WebForm.EndTable() %>

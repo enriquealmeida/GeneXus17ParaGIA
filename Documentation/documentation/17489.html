@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Call Variable</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17489,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Call Variable</h1>
+<!--Call Variable--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td>Allows the user to make a dynamic call, providing flexibility to the smart device applications. The objects to be called can be defined at design time or execution time. 
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><b>Call(</b> {<i>&amp;var</i> | ATT:att}<i> </i> [ {,  <i>parm</i>} …] <b>)</b></p>
+
+<p>The format of the string value of &amp;var or att  is &lt;<strong>Supported type</strong>&gt;:&lt;object name&gt;[?&lt;parameter&gt;[{, <i>parm</i>} …]]</p>
+
+<h3><a id="Supported+types" class="HashLink" href="#Supported+types">Supported types</a></h3>
+
+<ul>
+	<li><strong>sd </strong>(Dashboard, Workwith for smart devices pattern instance, Panel for Smart Devices)</li>
+	<li><strong>prc </strong>(REST Procedure)</li>
+	<li><strong>wbp </strong>(Web Object)</li>
+</ul>
+
+<p>e.g: </p>
+
+<p><br />
+&amp;Object = &quot;sd:WorkWithDevicesPerson.Person.Detail?&quot;+&amp;PersonId.ToString().Trim()<br />
+call(&amp;object)</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+1) In this example we want to redirect the user or the program flow depending on a control that we are going to do in a procedure once the user select a person from a list. What we want to control is that the selected user has all the data we want from him. <img src="./images/17511.JPG" id="17511" class="WikiImage"/> steps: Create a work with smart devices to show a list of persons and edit the default action of the grid in order to perform an action when the user select a person of the list. <img src="./images/17512.JPG" id="17512" class="WikiImage"/> <strong>Event select fo the grid</strong> // MissingData is a procedure that checks if the selected person have all the information complete and redirect the user to the next screen depending on this. 
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Select'
+  Composite
+   MissingData.Call(PersonId,&amp;object)
+   call(&amp;object,PersonId)
+  EndComposite
+EndEvent
+</pre>
+<strong>MissingData procedure code </strong>// this procedure check the person information an return a variable object that will be used in the work with smart device panel to redirect 
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each 
+  where PersonId = &amp;PersonId
+   &amp;PersonAddress = PersonAddress
+   &amp;PersonName = PersonName
+   &amp;PersonPhone = PersonPhone
+   &amp;PersonPhoto = PersonPhoto
+endfor
+ 
+do case
+  case &amp;PersonAddress.IsEmpty()
+  &amp;ok = false
+ 
+  case &amp;PersonName.IsEmpty()
+  &amp;ok = false
+ 
+  case &amp;PersonPhone.IsEmpty()
+  &amp;ok = False
+ 
+  case &amp;PersonPhoto.IsEmpty()
+  &amp;ok = false
+ 
+  otherwise
+  &amp;ok = true 
+endcase
+ 
+ 
+if &amp;ok = false
+   &amp;Object = &quot;sd:WorkWithDevicesPerson.Person.Detail.Update&quot;
+else
+   &amp;Object = &quot;wbp:ViewPersonWeb&quot;
+endif
+
+</pre>
+2) Dispatcher with fixed parameter
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ViewPerson'
+ Composite
+   &amp;Object = GetPersonDetailLayout(PersonType)
+   call(&amp;Object,PersonId)
+ EndComposite
+EndEvent</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+procedure GetPersonDetailLayout
+Parm(in:&amp;PersonType,out:&amp;Object);
+if &amp;PersonType = Type.Person
+ &amp;Object = &quot;sd:WorkWithDevicesPerson.Person.Detail&quot;
+else
+ &amp;Object = &quot;sd:WorkWithDevicesDean.Dean.Detail&quot;
+endif</pre>
+3) Dispatcher with dynamic parameter assignment
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ViewPerson'
+ Composite
+   &amp;Object = GetPersonDetailLayout(PersonType,PersonId)
+   call(&amp;Object)
+ EndComposite
+EndEvent</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+procedure GetPersonDetailLayout
+Parm(in:&amp;PersonType,in:&amp;PersonId,out:&amp;Object);
+if &amp;PersonType = Type.Person
+ &amp;Object = &quot;sd:WorkWithDevicesPerson.Person.Detail?&quot;+&amp;PersonId.ToString().Trim()
+else
+ &amp;Object = &quot;sd:WorkWithDevicesDean.Dean.Detail?&quot;+&amp;PersonId.ToString().Trim()+&quot;,&quot;+&amp;SecurityLevelId.ToString().Trim()
+
+endif</pre>
+
+<h3><a id="From+Variable+to+Fixed" class="HashLink" href="#From+Variable+to+Fixed">From Variable to Fixed</a></h3>
+
+<p>Note the other ways to call an object</p>
+
+<p>1) Using <a href="8444.html">Link Function</a><br />
+&amp;Object = WorkWithDevicesPerson.Person.Detail.link(&amp;PersonId.ToString().Trim())<br />
+call(&amp;object)</p>
+
+<p>2) Calling directly (ref.: <a href="8260.html">Call command</a>)<br />
+WorkWithDevicesPerson.Person.Detail(&amp;PersonId.ToString().Trim())</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+<strong>Objects</strong>: Smart devices <strong>Platform: </strong>Android, iOS
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="8260.html">Call command</a> <br />
+<a href="17160.html">Calls to Elements in Work Withs from Native Mobile Applications Events</a>.</p>
+
+
+<p><br />
+ </p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8359.html">Create function</a></TD><TD><a href="5404.html">Dynamic Component Creation</a></TD></TR><TR><TD><a href="8444.html">Link Function</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

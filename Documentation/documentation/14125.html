@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Importing/Exporting Reorganizations in the AS/400</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?14125,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Importing/Exporting Reorganizations in the AS/400</h1>
+<!--Importing/Exporting Reorganizations in the AS/400--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h4>
+	Introduction</h4>
+<p>
+	This document describes the exportation facilities for the creation/reorganization of the database done by GeneXus in the AS/400 environment.</p>
+<p>
+	From the GeneXus point of view, the creation and reorganization processes are equal, this is why this document uses the word &quot;reorganization&quot; to cover both concepts.</p>
+<p>
+	The facility to export a reorganization was implemented intending to satisfy two types of requirement brought forward by GeneXus users:</p>
+<ol>
+	<li>
+		The facility to develop the application in a machine different than the production one. This need was brought forward by companies that have in their possesion one machine for production and one machine for development, and software houses.</li>
+	<li>
+		Make available a test environment in the AS/400. This was mostly asked for by companies that only have one machine handling development and production.</li>
+</ol>
+<h4>
+	The Importing/Exporting Basic Principles</h4>
+<p>
+	Each time a reorganization is performed a save file is generated containing all the necessary objects needed to execute the reorganization process again in the same machine (over different libraries) or in a different machine.</p>
+<p>
+	The generated save file always has the same name (GXSAVF) and it is stored in the programs library.</p>
+<p>
+	The exportation process consists in saving (e.g.: on tape), moving (to another library) or renaming the generated save file after each reorganization. This a user task.</p>
+<p>
+	The importation process, on the other hand, consists in restoring the objects from the save file and executing them. To do this, the GXIMPDBR command is made available by GeneXus.</p>
+<p>
+	It is not necessary the compiler (RPG or COBOL) in the production machine, the exported objects are already compiled.</p>
+<h4>
+	Exporting the reorganization</h4>
+<p>
+	The reorganization exportation is a semi-automatic process. GeneXus automatically saves all the required objects for the reorganization, this is the last step taken for each reorganization. If the reorganization cannot be saved, the process is considered to be incomplete.</p>
+<p>
+	Once the reorganization has finished, the user should follow the procedure to transfer the save file (GXSAVF) to the machine where the production model is (it may be the same machine).</p>
+<h4>
+	Importing the reorganization</h4>
+<p>
+	The process of importing the reorganization consists in restoring the objects from the save file and executing them over the production libraries. To do this, the following command must be invoked (GXIMPDBR):</p>
+<p>
+	<span style="FONT-FAMILY: Courier New;">GX/GXIMPDBR PGMLIB(<i>pgmlib</i>) SAVLIB(<i>opgmlib</i>) DEV(*SAVF) SAVF(<i>savflib</i>/<i>savfname</i>)</span></p>
+<p>
+	<b>where:</b></p>
+<p>
+	<em><font face="Courier New">pgmlib</font></em><br />
+	   Is the target programs library (production library). In case, this library does not exist, GeneXus will automatically create it and another screen will be displayed where you will be prompted for the data library name.</p>
+<p>
+	<em><font face="Courier New">opgmlib</font></em><br />
+	   Is the name of the development library where the reorganization to be imported was generated.</p>
+<p>
+	<em><font face="Courier New">savflib</font></em><br />
+	   Is the name of the library where the save file is stored.</p>
+<p>
+	<em><font face="Courier New">savfname</font></em><br />
+	   Is the name of the save file (usually named GXSAVF)</p>
+<p>
+	Command GXIMPDBR can be submitted (except for the case when a new database is created, if the command is submitted and the data library doesn’t exist, the command cancels).</p>
+<p>
+	The following considerations should taken into account, though:</p>
+<ul>
+	<li>
+		The user who executes the command doesn’t need to have ALLOBJ authorization.</li>
+	<li>
+		Because the command is submitted, there is no output to the screen. You may see the job status in the Job List.</li>
+	<li>
+		Even in the cases when the command is not submitted, there is no screen output when the job ends the following message is display: &quot;This database reorganization was just executed successfully&quot;.</li>
+</ul>
+<h4>
+	Requirements</h4>
+<p>
+	To import a reorganization it is necessary to have *ALLOBJ authorization (e.g.: QSECOFR). This is necessary because the restoration process makes use of some RSTOBJ command parameters that require this authorization.</p>
+<p>
+	If the importation is performed in a different machine than the development one, both machines must have the same version of the OS/400 operating system, or at least, the development machine OS/400 version must be prior to the production machine one.</p>
+<p>
+	</p>
+<p>
+	</p>
+<p>
+	</p>
+<br />   <br />    <br /> <br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="14124.html">Generating in COBOL</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

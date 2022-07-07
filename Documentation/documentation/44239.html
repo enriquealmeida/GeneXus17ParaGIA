@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Measure data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44239,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Measure data type</h1>
+<!--Measure data type--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Represents the main metric for evaluating a model in the context of <a href="40167.html">GeneXus Artificial Intelligence</a> for custom models.</p>
+
+<h2><a id="Members" class="HashLink" href="#Members">Members</a></h2>
+
+<ul>
+	<li><strong>Score</strong>: <a href="40190.html">Score, GeneXusAI</a></li>
+	<li><strong>Additional </strong>(collection) -- Additional metrics
+	<ul>
+		<li><em><strong>Key</strong></em>: VarChar(32)</li>
+		<li><em><strong>Value</strong></em>: Numeric (10.5)</li>
+	</ul>
+	</li>
+	<li><strong>Local</strong>: Boolean</li>
+</ul>
+
+<h2><a id="Description" class="HashLink" href="#Description">Description</a></h2>
+
+<p>The Score field is the main metric based on your model type (e.g. for a classification model will be the F1-measure). The Additional field displays a set of additional measures that can help you to decide if your model meets your requirements. The following subsections describe some of these additional fields when metrics are locally calculated by GeneXusAI and their semantic.</p>
+
+<h3><a id="Confusion+Matrix+key" class="HashLink" href="#Confusion+Matrix+key">Confusion Matrix key</a></h3>
+
+<p>The Confusion Matrix information is displayed in the Additional field as follows:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>Key</td>
+			<td>= <span style="font-family: courier new;">ConfusionMatrix[{true-class},{predicted-class}]</span></td>
+		</tr>
+		<tr>
+			<td>Value </td>
+			<td>= <span style="font-family: courier new;">{value}</span></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p>where <span style="font-family: courier new;">{true-class}</span> is the class (or label) defined in the test-data and <span style="font-family: courier new;">{predicted-class}</span> is the class (or label) predicted by your trained model. The meaning of this output is that your model predicts <span style="font-family: courier new;">{value}</span> times that <span style="font-family: courier new;">{true-class}</span> was a <span style="font-family: courier new;">{predicted-class}</span>.</p>
+
+<p>For example, if you have 'ConfusionMatrix[DOG,CAT]' key associated with 3 value, it means that your model predicts 3 times that a DOG was a CAT.</p>
+
+<h3><a id="Macro+Measures+key" class="HashLink" href="#Macro+Measures+key">Macro Measures key</a></h3>
+
+<p>The Macro Measures information is displayed in the Additional field as follows:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>Key</td>
+			<td>= <span style="font-family: courier new;">{metric}<em>@</em>{threshold}</span></td>
+		</tr>
+		<tr>
+			<td>Value</td>
+			<td>= <span style="font-family: courier new;">{value}</span></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p>being <span style="font-family: courier new;">{metric}</span> one of Accuracy, Precision, Recall or FScore; and <span style="font-family: courier new;">{threshold}</span> a numeric value between 000 and 100.The <span style="font-family: courier new;">{value}</span> is the macro-measure (average value) of every value defined by <span style="font-family: courier new;">{metric}</span> for each category when it exceeds the <span style="font-family: courier new;">{threshold}</span> value (otherwise, it counts as 0). </p>
+
+<p>For example, if you have three categories (DOG, CAT, PARROT), the value 0.897 associated with the 'F1Score@80' key means that 0.897 is the average of the F1-Score for DOG, CAT and PARROT which exceeds 80% (or 0.80) threshold.</p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>Examples of additional metrics.
+	<ul>
+		<li><a href='https://en.wikipedia.org/wiki/Precision_and_recall#Precision'>Precision</a></li>
+		<li><a href='https://en.wikipedia.org/wiki/Precision_and_recall#Recall'>Recall</a></li>
+		<li><a href='https://en.wikipedia.org/wiki/Precision_and_recall#F-measure'>F-Score</a>.</li>
+		<li><a href='https://en.wikipedia.org/wiki/Accuracy_and_precision#In_binary_classification'>Accuracy</a> (for Binary classification)</li>
+		<li><a href='https://en.wikipedia.org/wiki/Jaccard_index'>Intersection-over-Union (IoU)</a> (for Region identification)</li>
+		<li><a href='https://en.wikipedia.org/wiki/Confusion_matrix'>Confusion Matrix</a>.<br />
+		 </li>
+	</ul>
+	</li>
+	<li>When you use a cloud-provider and it does not provide evaluation metrics of your model (e.g. IBM), the <em>Local field</em> is set to True and Measure's results were calculated locally. In order to execute a local evaluation your model must be deployed (i.e. <a href="44247.html">Deploy procedure</a> must be executed before call this task) because internally it will call to <a href="44245.html">Predict procedure</a> for each test-data in your dataset (available in <a href="44240.html">Model.Dataset field</a>).<br />
+	 </li>
+	<li>The Main Score for an Image Classification problem will be the F1-Score (or the average over all thresholds).</li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>AI Task</strong></td>
+			<td style="vertical-align: top;"><a href="44244.html">Evaluate procedure</a></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Platforms </strong></td>
+			<td style="vertical-align: top;">Web(.NET,.NETCore,Java), SmartDevices(Android,iOS)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This data type is available as of <a href="https://wiki.genexus.com/commwiki/wiki?43978,," target="_blank">GeneXus 16 upgrade 6</a>.</p>
+
+<ul>
+	<li>As of <a href="https://wiki.genexus.com/commwiki/wiki?44454,," target="_blank">GeneXus 16 upgrade 7</a>:<br />
+	- Local evaluation has been added.</li>
+</ul>
+
+<p></p>
+
+<p></p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44244.html">Evaluate procedure</a></TD><TD><a href="40167.html">Toc:GeneXus Artificial Intelligence</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

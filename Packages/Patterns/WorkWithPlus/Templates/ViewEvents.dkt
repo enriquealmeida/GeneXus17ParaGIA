@@ -1,0 +1,898 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="View Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubAddressAutoLinkEvent" File="SubAddressAutoLinkEvent.dkt" MergeProperties="True"%>
+<%
+
+	ViewElement view = wwInstance.GetElement<ViewElement>(Element);
+	WorkWithPlusSettings settings = wwInstance.Settings;
+
+	bool isAl = view.Table.IsAL();
+	bool hasConditionalTabs, hasTabCaptionCount;
+	view.Has(out hasConditionalTabs, out hasTabCaptionCount); 
+	hasTabCaptionCount = hasTabCaptionCount && isAl;
+	IStandardActionElement shareAction = view.Table.GetStandardAction(StandardAction.Share);
+	
+	List<IActionElement> standaloneActionsWithSecurityCheck = new List<IActionElement>();
+	List<IActionElement> actions = view.AllActions();
+	foreach (IActionElement action in actions)
+	{
+		if (action.HasStandaloneCondition())
+			standaloneActionsWithSecurityCheck.Add(action);
+	}
+    bool addAttSecurityCode, addAttVisibleConditionCode, otherControlVisibleCondition;
+    view.Table.AddShowAttSecurityCode(out addAttSecurityCode, out addAttVisibleConditionCode, out otherControlVisibleCondition);
+	bool addExtraSmallButtonsBehavior = !settings.IsOptimizationNumber(7);
+%>
+Event Start
+<%@ CallSubTemplate SubLoadContext Settings='settings' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' SecurityFunction='view.GetSecurityFunctionKey()' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	string generalInitializationCode = view.Table.GetGeneralInitializationCode(Object);
+	if (generalInitializationCode != "")
+	{
+%>
+
+<%= Indentation.Indent(generalInitializationCode, 1) %>
+<%
+	}
+	if (addAttSecurityCode)
+	{
+%>
+
+	Do 'AttributesSecurityCode'
+<%
+	}
+	foreach (WorkWithLinkElement wwLink in view.GetWWLinks())
+	{
+		if (wwLink.IncludeItemInTable())
+		{
+			ParametersElement parmsElem = wwLink.Gxobject != null || wwLink.Parameters.Count > 0 ? wwLink.Parameters : view.ParentCasted.Selection.GetParameters();
+			string parameters = "";
+			foreach (ParameterElement parm in parmsElem)
+			{
+				if (!String.IsNullOrEmpty(parameters))
+					parameters += ", ";
+			
+				if (parmsElem != wwLink.Parameters && !parm.Name.StartsWith("&")) //if the parameter is an attribute, we set a variable
+					parameters += "&";	
+				
+				parameters += parm.Name;	
+			}
+%>		
+	<%= wwLink.ControlName %>.Link = <%= wwLink.Gxobject != null ? wwLink.GxobjectName : view.ParentCasted.Selection.ObjectName %>.Link(<%= parameters %>)
+<%
+		}
+	}
+	
+	List<IAttributesItem> tableAttributesAndVariables = view.Table.GetTableAttributesAndVariables();
+	
+	SettingsDefinedVariableElement tabCodesVar = view.SettingsTemplate.FindDefinedVariable("TabCodes");
+	List<ITabElement> fixedComponents = view.GetFixedComponents();
+	if (tabCodesVar != null && tabCodesVar.DomainName == "TabCodesDomain")
+	{
+%>
+
+	&TabCodes.Clear()
+<%
+		foreach (ITabElement tab in view.Tabs)
+		{
+%>
+	&TabCodes.Add(!<%= WorkWithStringValues.StringWithQuotes(tab.Code) %>)
+<%
+		}
+	}
+	else
+	{
+		bool assignFormCaption = !view.IsWebComponent();
+		if (wwInstance.HasTransaction())
+		{
+%>
+
+	For each<%= settings.IsOptimizationNumber(11) ? " " + wwInstance.Transaction.TransactionName : "" %>
+<%
+		string parametersWhereCondition = view.Parameters.WhereCondition();
+		if (!string.IsNullOrEmpty(parametersWhereCondition))
+		{
+%>
+		where <%= parametersWhereCondition %>
+<%
+		}
+		var multitenantAtt = wwInstance.MultiTenantAtt;
+		if (multitenantAtt != null)
+		{
+%>
+		where <%= multitenantAtt.Name %> = <%= settings.MultiTenant.CurrentTenantExpression %>
+<%
+		}
+		if (view.Caption != String.Empty && assignFormCaption)
+		{
+%>
+		Form.Caption = <%= view.Caption %>
+<%
+		}
+%>
+		&Exists = True
+<%@  CallSubTemplate SubLinkAttributes Attributes='tableAttributesAndVariables' LinkAssocToImage='true' IndentLevel='2' IndentLevelChar='"\t"' %>
+
+	When none
+<%
+		if (view.IsSplitScreen() && view.Table.IsAL())
+		{
+%>
+		LayoutMainTable.Class += !" Invisible"
+<%
+		}
+		else if (assignFormCaption)
+		{
+%>
+		Form.Caption = "<%= settings.Labels.RecordNotFound %>"
+<%
+		}
+%>
+		&Exists = False
+	Endfor
+
+
+<%
+		}
+		else
+		{
+			if (view.Caption != String.Empty && assignFormCaption)
+			{
+%>
+	Form.Caption = <%= view.Caption %>
+<%
+			}
+%>
+	&Exists = True
+<%
+		}
+%>
+	If (&Exists)
+<%
+		if (isAl && view.IsTypeViewWithTabs())
+		{
+%>
+		&SelectedTabCode = &TabCode
+		Tabs.ActivePageControlName = &SelectedTabCode
+<%
+			if (fixedComponents.Count > 0)
+			{
+%>
+		Do 'LoadFixedTabs'
+<%
+			}
+		}
+		if (fixedComponents.Count < view.Tabs.Items.Count || !(isAl && view.IsTypeViewWithTabs()))
+		{
+%>
+		Do 'LoadTabs'
+<%
+		}
+		if (view.IsTypeViewWithTabs() && !isAl && hasConditionalTabs)
+		{
+%>
+		Do 'CheckTabConditions'
+<%
+		}
+		if (view.IsTypeViewWithTabs() && !isAl)
+		{
+%>	
+		TabbedView.Object = <%= view.GetTabbedViewObjectName() %>.Create(&Tabs, &TabCode)
+<%
+		}
+		if (hasTabCaptionCount)
+		{
+%>
+		Do 'UpdateTabCaptions'
+<%
+		}
+%>
+	Endif
+<%
+	}
+	bool hasDiscussions = view.Table.GetStandardAction(StandardAction.Discussions) != null;
+	if (hasDiscussions || view.Table.GetStandardAction(StandardAction.Subscriptions) != null)
+	{
+%>
+	&RecordDescription = Form.Caption
+<%
+	}
+
+	foreach (WebComponentElement webComp in view.Table.AllWebComponents(false))
+	{
+%>
+	<%= webComp.GetCreateWebComponentCall()%>
+<%		
+	}
+	foreach (IActionElement action in actions)
+	{
+		string initCode = action.InitializationCode();
+		if (initCode != String.Empty)
+		{
+%>
+<%= Indentation.Indent(initCode, 1) %>
+<%
+		}
+	}
+%>
+
+EndEvent
+
+<%@ CallSubTemplate SubAddressAutoLinkEvent Attributes='tableAttributesAndVariables' EventAssocToImage='true' %>
+
+<%
+	bool eventRefreshCreated = false;
+	if (hasDiscussions
+		&& wwInstance.HasTransaction()
+		&& settings.StandardActions.Discussions.IsImageTypeFontIcon()
+		&& settings.StandardActions.Discussions.NoDisImageClass != "")
+	{
+		eventRefreshCreated = true;
+%>
+Event Refresh
+	If Not WWP_HasDiscussionMessages(!'<%= wwInstance.Transaction.TransactionName %>', <%= NotificationElement.GetNotificationRecordId(wwInstance) %>)
+		ddc_Discussions.Icon = <%= WorkWithStringValues.StringWithQuotes(settings.StandardActions.Discussions.NoDisImageClass) %>
+	EndIf
+<%
+	}
+	if (standaloneActionsWithSecurityCheck.Count > 0)
+	{
+		if (!eventRefreshCreated)
+		{
+			eventRefreshCreated = true;
+%>
+
+Event Refresh
+
+<%
+		}
+		foreach (IActionElement action in standaloneActionsWithSecurityCheck)
+		{
+%>
+<%= Indentation.Indent(action.EnableDisableCodeOutsideGrid(), 1) %> 
+<%
+		}
+	}
+	if (eventRefreshCreated)
+	{
+%>
+
+EndEvent
+
+<%
+	}
+
+%>
+
+Event Load
+<%
+	bool hasRequiredAtts = false;
+	foreach (IAttributesItem item in tableAttributesAndVariables)
+	{
+		if (!item.Visible)
+		{
+%>
+	<%= item.ControlName %>.Visible = False
+<%
+		}
+		else if (!hasRequiredAtts && item.GetIsRequired())
+		{
+			hasRequiredAtts = true;
+		}
+	}
+	if (addAttVisibleConditionCode || otherControlVisibleCondition)
+	{
+%>
+
+	// Visible Conditions
+<%
+		if (addAttVisibleConditionCode)
+		{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, tableAttributesAndVariables, false, true), 1) %>
+<%
+		}
+		if (otherControlVisibleCondition)
+		{
+%>
+<%= Indentation.Indent(GeneralTableElement.GetControlVisibleConditionsCode(view.Table), 1) %>
+<%
+		}
+	}
+%>
+EndEvent
+
+<%
+	foreach (IActionElement action in actions)
+	{
+		string eventCode = action.Event();
+		if (eventCode != String.Empty)
+		{
+%>
+
+<%= eventCode %>
+<%
+		}
+	}
+%>
+
+Sub 'Load<%= isAl && view.IsTypeViewWithTabs() && fixedComponents.Count > 0 ? "Fixed" : "" %>Tabs'
+<%
+	if (view.IsTypeExpandedView() || fixedComponents.Count > 0)
+	{
+		System.Collections.IEnumerable expandedTabs;
+		if (view.IsTypeExpandedView() && view.GetTabsPosition() != null)
+		{
+			expandedTabs = view.Tabs;
+		}
+		else
+		{
+			expandedTabs = fixedComponents;
+		}
+		foreach (ITabElement tab in expandedTabs)
+		{
+			bool addSecurityToCall = false;
+			List<string> functionList = null;
+			bool addAdvancedSecurityCondition = WebComponentTabElement.HasAdvancedSecurityCondition(tab, out functionList, out addSecurityToCall);
+			string parmList;
+			if (tab is WebComponentTabElement)
+			{
+				parmList = tab.Parameters.ListWithVariables();
+			}
+			else
+			{
+				parmList = view.Parameters.ListWithVariables();
+			}
+			string webCompCreation = string.Format("WebComponent_{0}.Object = {1}.Create({2})", tab.Code, tab.Wcname, parmList);
+			string webCompDisable;
+			if (fixedComponents.Contains(tab))
+			{
+				webCompDisable = string.Format("{0}_Cell.Class = !'Invisible'", tab.Wcname);
+			}
+			else
+			{
+				webCompDisable = string.Format("TableCmp_{0}.Visible = False", tab.Code);
+			}
+			if (tab.IsConditional() || addAdvancedSecurityCondition)
+			{
+				if (addAdvancedSecurityCondition)
+				{
+					if (addSecurityToCall)
+					{
+%>
+
+	&TempBoolean = <%= settings.Security.SecurityAdvanced.CheckByObjectNameName %>.Udp(!'<%= ((WebComponentTabElement)tab).WcgxnameName %>')
+<%
+					}
+					else
+					{
+						if (functionList.Count > 1)
+						{
+%>
+
+	&SecurityFunctionalityKeys = new()
+<%
+							foreach(string function in functionList)
+							{
+%>
+	&SecurityFunctionalityKeys.Add(!'<%= function.Trim() %>')
+<%
+							}
+%>
+	&TempBoolean = <%= settings.Security.SecurityAdvanced.CheckByFunctionKeysName %>.Udp(&SecurityFunctionalityKeys)
+<%
+						}
+						else
+						{
+							if (settings.Security.IsTypeGAM())
+							{
+%>
+	&TempBoolean = <%= string.Format("{0}.Udp(!'{1}')", settings.Security.SecurityGAM.CheckByFunctionKeyName, functionList[0])%>
+<%
+							}
+							else
+							{
+%>
+	&TempBoolean = <%= settings.Security.SecurityAdvanced.GetTabCheckByFunctionKeyUdp(functionList[0]) %>
+<%							
+							}
+						}
+					}
+%>
+	If &TempBoolean
+<%
+					if (tab.IsConditional())
+					{
+						if (wwInstance.HasTransaction())
+						{
+%>
+		For Each<%= settings.IsOptimizationNumber(11) ? " " + wwInstance.Transaction.TransactionName : "" %>
+			where <%= view.Parameters.WhereCondition() %>
+			If (<%= tab.Condition %>)
+				<%= webCompCreation %>
+			Else
+				<%= webCompDisable %>
+			EndIf
+		EndFor
+<%
+						}
+						else
+						{
+%>
+		If (<%= tab.Condition %>)
+			<%= webCompCreation %>
+		Else
+			<%= webCompDisable %>
+		EndIf
+<%
+						}
+					}
+					else
+					{
+%>
+		<%= webCompCreation %>
+<%
+					}
+%>
+	Else
+		<%= webCompDisable %>
+	EndIf
+<%
+				}
+				else
+				{
+					if (wwInstance.HasTransaction())
+					{
+%>
+
+	For Each<%= settings.IsOptimizationNumber(11) ? " " + wwInstance.Transaction.TransactionName : "" %>
+		where <%= view.Parameters.WhereCondition() %>
+		If (<%= tab.Condition %>)
+			<%= webCompCreation %>
+		Else
+			<%= webCompDisable %>
+		EndIf
+	EndFor
+<%
+					}
+					else
+					{
+%>
+
+	If (<%= tab.Condition %>)
+		<%= webCompCreation %>
+	Else
+		<%= webCompDisable %>
+	EndIf
+<%
+					}
+				}
+			}
+			else
+			{
+%>
+	<%= webCompCreation %>
+<%
+			}
+		}
+	}
+	
+	System.Collections.IEnumerable viewTabs = null;
+	if (view.IsTypeViewWithTabs())
+	{
+		if (fixedComponents.Count == 0)
+		{
+			viewTabs = view.Tabs;
+		}
+		else
+		{
+			viewTabs = view.GetNotFixedTabs(fixedComponents);
+		}
+	if (isAl)
+	{
+		if (fixedComponents.Count > 0 && fixedComponents.Count < view.Tabs.Items.Count)
+		{
+%>
+
+EndSub
+
+Sub 'LoadTabs'
+
+<%
+		}
+		string ind = "";
+		if (hasConditionalTabs && wwInstance.HasTransaction())
+		{
+%>
+	For Each<%= settings.IsOptimizationNumber(11) ? " " + wwInstance.Transaction.TransactionName : "" %>
+		Where <%= view.Parameters.WhereCondition() %>
+<%
+		}
+		bool isFirst = true;
+		int tabIndex = 0;
+		foreach (ITabElement tab in viewTabs)
+		{
+			tabIndex++;
+			bool addSecurityToCall = false;
+			List<string> functionList = null;
+			bool addAdvancedSecurityCondition = WebComponentTabElement.HasAdvancedSecurityCondition(tab, out functionList, out addSecurityToCall);
+			if (addExtraSmallButtonsBehavior)
+			{
+				if (addAdvancedSecurityCondition || tab.IsConditional())
+				{
+					ind = "\t\t";
+%>
+		Cell_<%= tab.Code %>.Visible = True
+<%
+				}
+				else
+				{
+					ind = hasConditionalTabs ? "\t" : "";
+%>
+<%= ind %>	Cell_<%= tab.Code %>.Visible = True
+<%
+				}
+			}
+			if (addAdvancedSecurityCondition || tab.IsConditional())
+			{
+				if (addAdvancedSecurityCondition)
+				{
+					if (addSecurityToCall)
+					{
+%>
+		&TempBoolean = <%= settings.Security.SecurityAdvanced.CheckByObjectNameName %>.Udp(!'<%= ((WebComponentTabElement)tab).WcgxnameName %>')
+<%
+					}
+					else
+					{
+						if (functionList.Count > 1)
+						{
+%>
+		&SecurityFunctionalityKeys = new()
+<%
+							foreach(string function in functionList)
+							{
+%>
+		&SecurityFunctionalityKeys.Add(!'<%= function.Trim() %>')
+<%
+							}
+%>
+		&TempBoolean = <%= settings.Security.GetAdvancedSecurity().CheckByFunctionKeysName %>.Udp(&SecurityFunctionalityKeys)
+<%
+						}
+						else
+						{
+							if (settings.Security.IsTypeGAM())
+							{
+%>
+		&TempBoolean = <%= string.Format("{0}.Udp(!'{1}')", settings.Security.SecurityGAM.CheckByFunctionKeyName, functionList[0])%>
+<%
+							}
+							else
+							{
+%>
+		&TempBoolean = <%= settings.Security.SecurityAdvanced.GetTabCheckByFunctionKeyUdp(functionList[0]) %>
+<%							
+							}
+						}
+					}
+%>
+		If &TempBoolean<%= tab.IsConditional() ? " AND (" + tab.Condition + ")" : "" %>
+<%
+				}
+				else
+				{
+%>
+		If <%= tab.Condition %>
+<%
+				}
+			}
+%>
+<%= ind %>	If &LoadAllTabs<%= isFirst ? " OR &SelectedTabCode = ''" : "" %> OR &SelectedTabCode = !"<%= tab.Code %>"
+<%
+			if (tab is WebComponentTabElement)
+			{
+%>
+<%= ind %>		<%= tab.Code %>WC.Object = <%= tab.Wcname %>.Create(<%= tab.Parameters.ListWithVariables() %>)
+<%
+			}
+			else
+			{
+%>
+<%= ind %>		<%= tab.Code %>WC.Object = <%= tab.Wcname %>.Create(<%= view.Parameters.ListWithVariables() %>)
+<%
+			}
+			if (addExtraSmallButtonsBehavior)
+			{
+%>
+<%= ind %>		TxtTabTitle.Caption = "<%= tab.Name %>"
+<%= ind %>		If <%= isFirst ? "&SelectedTabCode = '' OR " : "" %>&SelectedTabCode = !"<%= tab.Code %>"
+<%= ind %>			Cell_<%= tab.Code %>.Visible = False
+<%= ind %>		EndIf
+<%
+			}
+%>
+<%= ind %>	EndIf
+<%
+			if (addAdvancedSecurityCondition || tab.IsConditional())
+			{
+%>
+		Else
+<%
+				if (addExtraSmallButtonsBehavior)
+				{
+%>
+			Cell_<%= tab.Code %>.Visible = False
+<%
+				}
+%>
+			Tabs.HideTab(<%= tabIndex %>)
+		EndIf
+<%
+			}
+			isFirst = false;
+		}
+		if (hasConditionalTabs && wwInstance.HasTransaction())
+		{
+%>
+	EndFor
+<%
+		}
+	}
+	else
+	{
+%>
+	// Prepares the list of tabs of this view.
+	&Tabs = new()
+<%
+		foreach (ITabElement tab in viewTabs)
+		{
+%>
+
+	&Tab = new()
+	&Tab.Code = !"<%= tab.Code %>"
+	&Tab.Description = "<%= tab.Name %>"
+<%
+			if (tab is WebComponentTabElement)
+			{
+%>
+	&Tab.WebComponent = <%= tab.Wcname %>.Link(<%= tab.Parameters.ListWithVariables() %>)
+<%
+			}
+			else
+			{
+%>
+	&Tab.WebComponent = <%= tab.Wcname %>.Link(<%= view.Parameters.ListWithVariables() %>)
+<%
+			}
+%>
+	&Tab.Link = <%= Object.Name %>.Link(<%= view.Parameters.ListWithVariables() %>, &Tab.Code)
+	&Tab.IncludeInPanel = <%= tab.IncludeInPanel ? "1" : "0" %>
+	&Tab.Collapsable = <%= tab.Collapsable %> 
+	&Tab.CollapsedByDefault = <%= tab.CollapsedByDefault %>
+	&Tabs.Add(&Tab)
+<%
+		}
+	}
+	}
+%>
+EndSub
+<%
+	if (view.IsTypeViewWithTabs() && !isAl && hasConditionalTabs)
+	{
+%>
+
+Sub 'CheckTabConditions'
+	// Check condition for conditional tabs.
+<%
+		if (wwInstance.HasTransaction())
+		{
+%>
+	For Each<%= settings.IsOptimizationNumber(11) ? " " + wwInstance.Transaction.TransactionName : "" %>
+<%
+%>
+		where <%= view.Parameters.WhereCondition() %>
+		
+<%
+		}
+%>
+		&Index = 1
+		Do While (&Index <= &Tabs.Count)
+			&Tab = &Tabs.Item(&Index)
+			&Increment = 1
+			Do Case
+<%
+		foreach (ITabElement tab in viewTabs)
+		{
+			bool addSecurityToCall = false;
+			List<string> functionList = null;
+			bool addAdvancedSecurityCondition = WebComponentTabElement.HasAdvancedSecurityCondition(tab, out functionList, out addSecurityToCall);
+			if (tab.IsConditional() || addAdvancedSecurityCondition)
+			{
+%>
+				Case &Tab.Code = !"<%= tab.Code %>"
+<%
+				if (addAdvancedSecurityCondition)
+				{
+					if (addSecurityToCall)
+					{
+%>
+					&TempBoolean = <%= settings.Security.SecurityAdvanced.CheckByObjectNameName %>.Udp(!'<%= ((WebComponentTabElement)tab).WcgxnameName %>')
+<%
+					}
+					else
+					{
+						if (functionList.Count > 1)
+						{
+%>
+					&SecurityFunctionalityKeys = new()
+<%
+							foreach(string function in functionList)
+							{
+%>
+					&SecurityFunctionalityKeys.Add(!'<%= function.Trim() %>')
+<%
+							}
+%>
+					&TempBoolean = <%= settings.Security.GetAdvancedSecurity().CheckByFunctionKeysName %>.Udp(&SecurityFunctionalityKeys)
+<%
+						}
+						else
+						{
+							if (settings.Security.IsTypeGAM())
+							{
+%>
+					&TempBoolean = <%= string.Format("{0}.Udp(!'{1}')", settings.Security.SecurityGAM.CheckByFunctionKeyName, functionList[0])%>
+<%
+							}
+							else
+							{
+%>
+					&TempBoolean = <%= settings.Security.SecurityAdvanced.GetTabCheckByFunctionKeyUdp(functionList[0]) %>
+<%							
+							}
+						}
+					}
+%>
+					If not (&TempBoolean<%= tab.IsConditional() ? " AND (" + tab.Condition + ")" : "" %>)
+<%
+				}
+				else
+				{
+%>
+					If not (<%= tab.Condition %>)
+<%
+				}
+%>
+						&Tabs.Remove(&Index)
+						&Increment = 0
+					EndIf
+<%
+			}
+		}
+%>
+			Endcase
+			&Index = &Index + &Increment
+		EndDo
+<%
+		if (wwInstance.HasTransaction())
+		{
+%>
+	EndFor
+<%
+		}
+%>
+EndSub
+<%
+	}
+	if (isAl && view.IsTypeViewWithTabs())
+	{
+%>
+Event Tabs.TabChanged
+	&SelectedTabCode = Tabs.ActivePageControlName
+	&LoadAllTabs = false
+	Do 'LoadTabs'
+EndEvent
+<%
+		if (addExtraSmallButtonsBehavior)
+		{
+			int index = 1;
+			foreach (ITabElement tab in viewTabs)
+			{
+%>
+Event '<%= tab.Code %>'
+	Tabs.SelectTab(<%= index %>)
+	&SelectedTabCode = !"<%= tab.Code %>"
+	&LoadAllTabs = false
+	Do 'LoadTabs'
+EndEvent
+
+<%
+				index++;
+			}
+		}
+	}
+	if (hasRequiredAtts)
+	{
+%>
+<%= TableVariableElement.GetRequiredFieldsValidationSub(view.Table, settings) %>
+<%
+	}
+	if (addAttSecurityCode)
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, tableAttributesAndVariables, true, false), 1) %>
+
+EndSub
+<%
+	}
+	if (hasTabCaptionCount)
+	{
+%>
+Sub 'UpdateTabCaptions'
+<%
+		var multitenantAtt = wwInstance.MultiTenantAtt;
+		foreach (ITabElement tab in view.Tabs)
+		{
+			if (tab is GridTabElement && ((GridTabElement)tab).IsCountTrue())
+			{
+%>
+
+	&TabRecordsCount = 0
+	For Each <%= ((GridTabElement)tab).GetForEachLevelName(true, false) %>
+<%
+				int paramIndex = 0;
+				foreach (ParameterElement parameter in ((GridTabElement)tab).GetParameters())
+				{
+					if (parameter.IsAttribute)
+					{
+%>
+		Where <%= parameter.Name %> = &<%= view.Parameters.Count > paramIndex ? view.Parameters[paramIndex].Name.TrimStart('&') : parameter.Name %>
+<%
+					}
+					paramIndex++;
+				}
+				if (multitenantAtt != null)
+				{
+%>
+		Where <%= multitenantAtt.Name %> = <%= settings.MultiTenant.CurrentTenantExpression %>
+<%
+				}
+%>
+		&TabRecordsCount += 1
+	EndFor
+<%
+				if (viewTabs != null && (fixedComponents.Count == 0 || ((List<ITabElement>)viewTabs).Contains(tab)))
+				{
+%>
+	WWPActions.Tabs_EditCaption(LayoutMainTable.InternalName, !'Tabs', !<%= WorkWithStringValues.StringWithQuotes(tab.Code) %>, format('WWP_TabWithCountCaption', <%= WorkWithStringValues.StringWithQuotes(tab.Name) %>, trim(&TabRecordsCount.ToFormattedString())), false, '')
+<%
+				}
+				else
+				{
+%>
+	Panel_<%= tab.Code %>.Title = format('WWP_TabWithCountCaption', <%= WorkWithStringValues.StringWithQuotes(tab.Name) %>, trim(&TabRecordsCount.ToFormattedString()))
+<%
+				}
+			}
+		}
+%>
+EndSub
+<%
+	}
+%>
+<%= view.Table.GetGeneralEventsAndSubs() %>

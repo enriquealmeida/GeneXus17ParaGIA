@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Identity Provider Configuration for GAM Remote Authentication</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37038,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Identity Provider Configuration for GAM Remote Authentication</h1>
+<!--Identity Provider Configuration for GAM Remote Authentication--><div class="TableWikiBody" id="tblwikibody"><p>Below is a guide to configure the GAM Identity Provider for <a href="25355.html">GAM - GAMRemote Authentication Type</a>.</p>
+
+<p>First, define a <span style="line-height: 20.8px;"><a href="15910.html">GAM Application</a> on the server</span> for each web application that is going to be a client of the Identity Provider. The credentials of this Application are going to be used for defining the GAM Remote Authentication type in the client's GAM database, as explained in <a href="37039.html">Client Configuration for GAM Remote Authentication</a>.</p>
+
+<p><span style="line-height: 1.6em;">When the <a href="15935.html">GAM - Web Backoffice</a> is used, Applications are added using the Application menu item. Go through &quot;Applications&quot;, </span><span style="line-height: 20.800001px;">&quot;Add&quot;</span><span style="line-height: 20.800001px;"> </span><span style="line-height: 1.6em;">button. This calls the Web panel GAMExampleEntryApplication.</span></p>
+
+<p>In the General tab, enter the name, description, and other basic information of the Application.</p>
+
+<p><span style="line-height: 1.6em;">In the Remote Authentication tab, you can enter the Application credentials and other information needed when you are configuring GAM remote.</span></p>
+
+<p><img src="./images/48572.png" id="48572" class="WikiImage"/></p>
+
+<p>In sum, the client application information that must be provided is as follows:</p>
+
+<ul>
+	<li><strong>Client ID.</strong>         Client ID of the Application. It has to be a valid GUID. </li>
+	<li><strong>Client Secret.</strong>  Client Secret of the Application. It has to be a valid GUID.</li>
+</ul>
+
+<p>           The &quot;<strong>Allow authentication</strong>&quot; check box - under the section <strong>Web (Identity Provider, SSO)</strong> must be selected to enter the following information (*):</p>
+
+<ul>
+	<li><strong>Can get user roles.</strong> See <a href="25538.html">Managing Roles in applications using SSO</a></li>
+	<li><strong>Can get user additional data. </strong>When additional data must be passed (such as dynamic attributes of GAM User), this option must be selected. The same has to be enabled by the client.</li>
+	<li><strong>Can get session initial properties. </strong>If true, the Application is enabled to send the initial properties to the clients. This corresponds to the &amp;GAMApplication.ClientAllowGetSessionInitialProperties property.<br />
+	For more information, see <a href="44824.html">Howto: sending and receiving properties set at the login</a>.</li>
+	<li><strong>Local Login URL.</strong> URL of the server application login (for example: /TestGAMSSOServer.NetEnvironment/gamremotelogin.aspx). The format is: /&lt;BaseURL&gt;/[&lt;package&gt;.]<strong>gamremotelogin</strong>. The <strong>GAMRemoteLogin</strong> object is distributed in the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>.</li>
+	<li><strong>Callback URL.</strong> URL of the client application (for example: http://server:8080/TestGAMRemoteJavaSQLServer). The format is: http://&lt;Server&gt;:&lt;Port&gt;/&lt;BaseURL&gt;. For Java, do not include &quot;/servlet&quot;. Since GeneXus 16 Upgrade 7, it is possible to set more than one callback URL. The URLs must be separated by &quot;;&quot;. This scenario is useful when many clients have to connect to the same Identity Provider using the same GAM Application. For example, when converting an application and trying to keep both the old and the new version (each one is in a different URL), it is not necessary to define a new GAM Application within the repository in order to specify each Callback URL; it's enough to define both URLs in the Callback URLs property of the same Application.</li>
+	<li><strong>Custom callback URL?.</strong> If selected, GAM will not modify the callback URL. Developers can make their own procedure that handles the response. The custom callback URL field needs to be marked in the GAM Remote authentication type on the client side.</li>
+	<li><strong>State parameter name in response.</strong> The response URL will have the name of the parameter that is placed here. By default, the parameter name is 'state'.</li>
+	<li><strong>Image URL.</strong> URL of the image logo of the client application.</li>
+	<li><strong>Private Encryption Key.</strong> With this private encryption key, the communication between client applications and the server application is encrypted. However, the use of HTTPS is recommended.      <br />
+	<br />
+	(*) If <span style="line-height: 20.8px;">&quot;Allow authentication&quot; is not selected, the following error is thrown when the user tries to authenticate to the Identity Provider:</span><br />
+	Remote authentication is not allowed in this application. Please contact the administrator. (GAM230)</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="37039.html">Client Configuration for GAM Remote Authentication</a></p>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>The following error:</p>
+
+<p>Error code    222<br />
+Error message    Callback URL doesn't match the one configured in the application (http://&lt;server&gt;/&lt;baseURL&gt;/oauth/gam/callback)</p>
+
+<p>This is due to misconfiguring the callback URL in the Identity Provider. Note that in The Provider, the callback URL is http://&lt;server&gt;/&lt;baseURL&gt;.</p>
+
+<p>   </p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="37039.html">Client Configuration for GAM Remote Authentication</a></TD></TR><TR><TD><a href="25355.html">GAM - GAMRemote Authentication Type</a></TD><TD><a href="24241.html">GAM - Impersonation</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD><TD><a href="37703.html">HowTo: Get user's additional information from the GAM Identity Provider</a></TD><TD><a href="44824.html">Howto: sending and receiving properties set at the login</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/22 05:33 PM</em></font></td></TR></table></font>

@@ -1,0 +1,519 @@
+delimiters "$", "$"
+
+spanAtt::=[
+  "1":     "no_att",
+  default: "html_att"
+]
+
+alignAtt::=[
+  "Default": "no_att",
+  default:   "html_att"
+]
+
+sectionAlignAtt::=[
+  "Default": "no_att",
+  "Left":    "no_att",
+  "Top":     "no_att",
+  default:   "html_att"
+]
+
+readonlyMap::=[
+  "True":  "True",
+  default: "False"
+]
+
+//----------------------------------------------------
+
+no_att(name, value)::=<%
+%>
+
+html_att(name, value)::=<%
+$name$="$value$"
+%>
+
+//----------------------------------------------------
+
+g_panel(panel,addBody)::=<%
+$if (addBody)$<body classref="internal(form-horizontal) $panel.Layouts:g_tableclass()$">$endif$
+$panel.Layouts:g_layout()$
+$if (addBody)$</body>$endif$
+%>
+
+g_tableclass(layout)::=<%
+$layout.Table.FormClass$
+%>
+
+g_layout(layout)::=<%
+<div data-abstract-form="" data-gx-base-lib="$layout.ST_ThemeBaseCssLibrary$">
+$layout.Table:g_table()$
+</div>
+%>
+
+g_table(table)::=<%
+$if (table.ST_IsResponsive)$
+	<div id="$table.ControlName$" classref="$table.ClassReference; separator=" "$" >
+		$table.Rows:g_resp_row()$
+	</div>
+$elseif (table.ST_IsFlex)$
+	<div id="$table.ControlName$" classref="$table.ClassReference; separator=" "$" data-gx-flex="" 
+	$if (table.ST_FlexStyle)$
+		style="$table.ST_FlexStyle$"
+	$endif$
+	>
+		$table.Rows:g_flex_row()$
+	</div>
+$elseif (table.ST_IsAbsolute)$
+	<div id="$table.ControlName$" classref="$table.ClassReference; separator=" "$" data-gx-canvas=""  
+	$if (table.ST_AbsoluteStyle)$
+		style="$table.ST_AbsoluteStyle$"
+	$endif$
+	>
+		$table.Rows:g_absolute_row()$
+	</div>
+$elseif (table.ST_IsSmartTable)$
+	<div id="$table.ControlName$" classref="$table.ClassReference; separator=" "$" data-gx-smarttable="" 
+	$if (table.ST_SmartTableStyle)$
+		style="$table.ST_SmartTableStyle$"
+	$endif$
+	>
+		$table.Rows:g_smartTable_row()$
+	</div>
+$elseif (table.Rows)$
+	<table id="$table.ControlName$" classref="$table.ClassReference; separator=" "$" $table.ST_CustomProperties$ 
+	$if (table.ST_BackgroundReference)$
+		backgroundgx="$table.ST_BackgroundReference$"
+	$endif$
+	>
+		$table.Rows:g_row()$
+	</table>
+$endif$
+%>
+
+g_resp_row(row)::=<%
+<div classref="internal(row) $row.RowClassReference; separator=" "$" 
+$if (!row.Cells)$
+$if (row.ST_RowHeightWeb_NotEmpty)$
+	style="min-height:$row.RowHeightWeb$" 
+$endif$
+$endif$
+>
+	$row.Cells:g_resp_cell()$
+</div>
+%>
+
+g_flex_row(row)::=<%
+$row.Cells:g_flex_cell()$
+%>
+
+g_absolute_row(row)::=<%
+$row.Cells:g_absolute_cell()$
+%>
+
+g_smartTable_row(row)::=<%
+$row.Cells:g_smartTable_cell()$
+$row.ST_SmartTable_AddMissingCells$
+%>
+
+g_row(row)::=<%
+<tr>$row.Cells:g_cell()$</tr>
+%>
+
+g_resp_cell(cell)::=<%
+<div 
+$if (cell.ST_RowHeightWeb_NotEmpty)$
+	style="height:$cell.ST_RowHeightWeb$" 
+$endif$
+	classref="internal($cell.ST_Responsive_Class$) $cell.CellClassReference; separator=" "$" 
+$g_common_cell(cell)$
+%>
+
+g_flex_cell(cell)::=<%
+<div 
+$if (cell.ST_FlexStyle)$
+	style="$cell.ST_FlexStyle$" 
+$endif$
+	classref="$cell.CellClassReference; separator=" "$" 
+$g_common_cell(cell)$
+%>
+
+g_absolute_cell(cell)::=<%
+<div 
+$if (cell.ST_AbsoluteStyle)$
+	style="$cell.ST_AbsoluteStyle$" 
+	data-gx-canvas-cell="" 
+$endif$
+	classref="$cell.CellClassReference; separator=" "$" >
+$g_cell_content(cell)$
+</div>
+%>
+
+g_smartTable_cell(cell)::=<%
+<div data-gx-smarttable-cell="" 
+$if (cell.ST_SmartTableStyle)$
+	style="$cell.ST_SmartTableStyle$" 
+$endif$
+classref="$cell.CellClassReference; separator=" "$">
+$g_cell_content(cell)$
+</div>
+%>
+
+g_common_cell(cell)::=<%
+$if (cell.ST_IsPreview)$
+	data-gxcontrol="$cell.Id$" 
+$endif$
+$if (cell.ST_Has_CellControlName)$
+	id="$cell.CellControlName$" 
+$endif$
+	$(sectionAlignAtt.(cell.HAlign))("align",cell.HAlign)$ 
+	$(sectionAlignAtt.(cell.VAlign))("vAlign",cell.VAlign)$ 
+$if (cell.ST_AlignForPreview)$
+	$(sectionAlignAtt.(cell.HAlign))("data-align",cell.ST_HAlignAttribute)$ 
+	$(sectionAlignAtt.(cell.VAlign))("data-valign",cell.ST_VAlignAttribute)$ 
+$endif$
+>
+$if (cell.ST_AlignForPreview)$
+	<div data-align-outer="">
+		<div data-align-inner="">
+$endif$
+	$g_cell_content(cell)$
+$if (cell.ST_AlignForPreview)$
+		</div>
+	</div>
+$endif$
+</div>
+%>
+
+g_cell(cell)::=<%
+<td 
+$if (cell.ST_IsPreview)$
+	data-gxcontrol="$cell.Id$" 
+$endif$
+$if (cell.ST_Has_CellControlName)$
+	id="$cell.CellControlName$" 
+$endif$
+$if (cell.CellClassReference)$
+	classref="$cell.CellClassReference; separator=" "$" 
+$endif$
+	$(spanAtt.(cell.ColSpan))("colSpan",cell.ColSpan)$ 
+	$(spanAtt.(cell.RowSpan))("rowSpan",cell.rowSpan)$ 
+	$(alignAtt.(cell.HAlign))("align",cell.HAlign)$ 
+	$(alignAtt.(cell.VAlign))("valign",cell.VAlign)$
+>
+	$g_cell_content(cell)$
+</td>
+%>
+
+g_cell_content(cell)::=<%
+$cell.Data:g_attribute()$
+$cell.Action:g_button()$
+$cell.Image:g_image()$
+$cell.Textblock:g_textblock()$
+$cell.Grid:g_grid()$
+$cell.Group:g_group()$
+$cell.Html:g_html()$
+$cell.Table:g_table()$
+$cell.Tab:g_tab()$
+$cell.Actiongroup:g_actionGroupBlock()$
+$cell.Simplegrid:g_simpleGrid()$
+$cell.Errorviewer:g_errorViewer()$
+$cell.Contentholder:g_contentholder()$
+$cell.Component:g_component()$
+$cell.Embeddedpage:g_embeddedpage()$
+$cell.Horizontalrule:g_horizontalrule()$
+$cell.Hyperlink:g_hyperlink()$
+$cell.Ucw:g_usercontrol()$
+$cell.Section:g_section()$
+%>
+
+g_attribute(data)::=<%
+$if (data.ST_ShowLabel)$
+<div classref="internal(form-group gx-form-group $data.ST_Group_Class$)" data-gx-att="$data.Attribute.ObjData$$if (data.ST_IsSDT)$-$data.ControlName; format="ControlName"$$endif$">
+	$if (data.ST_IsPreview)$
+	<label class="control-label gx-label $data.ST_Label_Class$" style="$data.ST_Label_Style$"><gxTextBlock class="Label" CaptionExpression="$data.LabelCaption; format="TextTokens"$"/></label>
+	$endif$
+$endif$
+	<div classref="internal($data.ST_Data_Class$ gx-attribute)" style="$data.ST_Data_Style$">
+	<gxAttribute 
+$if (data.ST_IsSDT)$
+		ControlName="$data.ControlName; format="ControlName"$" FieldSpecifier="$data.FieldSpecifier; format="Escape"$" 
+$endif$
+$if (data.ST_IsVectorOrArray)$
+		ControlName="$data.ControlName; format="ControlName"$" 
+$endif$
+		AttID="$data.Attribute.ObjData$" CaptionClass="$data.ST_Label_Class$" CaptionStyle='$data.ST_Label_Style$' LayoutClass="$data.ST_Data_Class$" CaptionPosition="$data.LabelPosition$" CaptionExpression="$data.LabelCaption; format="TextTokens"$" Class="$data.ClassReference; separator=" "$" ReadOnly="$readonlyMap.(data.Readonly)$" invitemsg="$data.inviteMessage$" ReturnOnClick="$data.ReturnOnClick$" $data.ST_CustomProperties$ 
+$if (data.ST_EnableShowPasswordHint)$
+		data-gx-password-reveal="" 
+$endif$
+	 data-gx-att="$data.Attribute.ObjData$$if (data.ST_IsSDT)$-$data.ControlName; format="ControlName"$$endif$"
+	/>
+	</div>
+$if (data.ST_ShowLabel)$
+</div>
+$endif$
+%>
+
+g_button(action)::=<%
+<gxButton ControlType="$action.ControlType$" ControlName="$action.ControlName$" Class="$action.ClassReference; separator=" "$" Event="$action.OnClickEvent; format="Escape"$" CaptionExpression="$action.Caption; format="TextTokens"$" $action.ST_CustomProperties$/>
+%>
+
+g_image(image)::=<%
+<img id="$image.ControlName$" classref="$image.ClassReference; separator=" "$" imagereference="$image.ST_ImageReference$" $image.ST_CustomProperties$ data-gx-image=''/>
+%>
+
+g_navbar_textblock(textblock)::=<%
+<gxTextBlock ControlType="$textblock.ControlType$" id="$textblock.ControlName$" Class="internal(gx-navbar-textblock) $textblock.ClassReference; separator=" "$" CaptionExpression="$textblock.Caption; format="TextTokens"$"  $textblock.ST_CustomProperties$/>
+%>
+
+g_textblock(textblock)::=<%
+<gxTextBlock ControlType="$textblock.ControlType$" id="$textblock.ControlName$" Class="$textblock.ClassReference; separator=" "$" CaptionExpression="$textblock.Caption; format="TextTokens"$"  $textblock.ST_CustomProperties$/>
+%>
+
+g_grid(grid)::=<%
+<gxFreeStyle 
+	ControlName="$grid.ControlName$" Class="$grid.ClassReference; separator=" "$" MaxRows="$grid.ST_Rows$" $grid.ST_CustomProperties$ 
+$if (grid.ST_Collection)$
+	SdtColMember="$grid.ST_Collection$" 
+$endif$
+$if (grid.ST_DataSelectorReference)$
+	idDataSelector="$grid.ST_DataSelectorReference$" idDataSelectorParms="$grid.DataSelectorParameters; format="ParamTokens"$" 
+$endif$
+>
+$if (!grid.ST_IsResponsive)$
+<tr><td>
+$endif$
+	$grid.ST_Table:g_table()$
+$if (!grid.ST_IsResponsive)$
+</td></tr>
+$endif$
+</gxFreeStyle>
+%>
+
+g_simpleGrid(grid)::=<%
+<gxGrid ControlName="$grid.ControlName$" Class="$grid.Class$" $grid.ST_CustomProperties$ 
+$if (grid.ST_Collection)$
+	SdtColMember="$grid.ST_Collection$" 
+$endif$
+	IsAbstractLayoutControl="TRUE"
+	>
+	$grid.Items:g_simpleGridItem()$
+</gxGrid>
+%>
+
+g_group(gp)::=<%
+<fieldset id="$gp.ControlName$" class="$gp.ClassReference; separator=" "$" captionexpression="$gp.Caption; format="TextTokens"$" $gp.ST_CustomProperties$ >
+	<legend class="GroupTitle">$gp.Caption$</legend>
+	$gp.Table:g_table()$
+</fieldset>
+%>
+
+g_html(html)::=<%
+<gxLayout ControlName="$html.ControlName$" formId="$html.FormId$"/>
+%>
+
+g_tab(tab)::=<%
+<gx$tab.ST_RenderName$ ControlName="$tab.ControlName$" Class="$tab.Class$" PageCount="$tab.Items.Count$" HistoryManagement="$tab.HistoryManagement$">$tab.Items:g_tabItem()$</gx$tab.ST_RenderName$>
+%>
+
+g_tabItem(item)::=<%
+<container containerId="title$item.ST_Index$">
+	<gxTextBlock id="$item.ItemControlName$_title" GxFormat="Text" CaptionExpression="$item.Caption; format="TextTokens"$"/>
+	<div style="display:none;">$item.ItemControlName$</div>
+</container>
+<container containerId="panel$item.ST_Index$">
+	$item.Table:g_table()$
+</container>
+%>
+
+g_actionGroupBlock(actionGroupBlock)::=<%
+	$actionGroupBlock.ST_ActionGroup:g_actionGroup()$
+%>
+
+g_actionGroup(actionGroup)::=<%
+$if (actionGroup.ST_IsNavBar)$
+<nav class="navbar navbar-default gx-navbar $actionGroup.ST_NavBarPositionClass$ $actionGroup.Class$" data-gx-actiongroup-type="menu">
+  <div class="internal(container-fluid)">
+    <div class="internal(navbar-header)">
+      <button type="button" class="navbar-toggle collapsed gx-navbar-toggle" data-toggle="collapse" aria-expanded="false">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+$if (actionGroup.Image)$
+	  <span class="navbar-brand">
+		<img imagereference="$actionGroup.ST_ImageReference$" alt="$actionGroup.Caption$" data-gx-image=''/>
+	  </span>
+$else$
+	$if (actionGroup.Caption)$
+		<gxTextBlock Class="internal(navbar-brand)" CaptionExpression="$actionGroup.Caption$"/>
+	$endif$
+$endif$
+    </div>
+	<div id="$actionGroup.ControlName$_inner" class="internal(collapse) internal(navbar-collapse) internal(gx-navbar-inner)">
+      <ul class="nav navbar-nav">
+		$actionGroup.Items:g_actionGroupNavItem()$
+      </ul>
+	</div>
+  </div>
+</nav>
+$else$
+<div classref="internal(gx-action-group) $actionGroup.Class$" data-gx-actiongroup-type="toolbar">
+	$actionGroup.Items:g_actionGroupItem()$
+</div>
+$endif$
+%>
+
+g_actionGroupNavItem(actionGroupItem)::=<%
+$if (actionGroupItem.Textblock)$
+<li>
+	$actionGroupItem.Textblock:g_navbar_textblock()$
+</li>
+$endif$
+$if (actionGroupItem.Image)$
+<li>
+	$actionGroupItem.Image:g_image()$
+</li>
+$endif$
+$if (actionGroupItem.Action)$
+<li>
+	$actionGroupItem.Action:g_button()$
+</li>
+$endif$
+$if (actionGroupItem.Data)$
+<li>
+	<div classref="internal(navbar-form)">
+		$actionGroupItem.Data:g_attribute()$
+	</div>
+</li>
+$endif$
+$if (actionGroupItem.Ucw)$
+	$actionGroupItem.Ucw:g_usercontrol()$
+$endif$
+$if (actionGroupItem.ActionGroup)$
+	$actionGroupItem.ActionGroup:g_nestedActionGroupNav()$
+$endif$
+%>
+
+g_actionGroupNestedNavItem(actionGroupItem)::=<%
+$if (actionGroupItem.Textblock)$
+<li>
+	$actionGroupItem.Textblock:g_navbar_textblock()$
+</li>
+$endif$
+$if (actionGroupItem.Image)$
+<li>
+	$actionGroupItem.Image:g_image()$
+</li>
+$endif$
+$if (actionGroupItem.Action)$
+<li>
+	$actionGroupItem.Action:g_button()$
+</li>
+$endif$
+$if (actionGroupItem.Data)$
+<li>
+	<div classref="internal(navbar-form)">
+		$actionGroupItem.Data:g_attribute()$
+	</div>
+</li>
+$endif$
+$if (actionGroupItem.Ucw)$
+	$actionGroupItem.Ucw:g_usercontrol()$
+$endif$
+$if (actionGroupItem.ActionGroup)$
+	$actionGroupItem.ActionGroup:g_nestedActionGroupNav()$
+$endif$
+%>
+
+g_nestedActionGroupNav(actionGroup)::=<%
+<li class="dropdown">
+	<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+	<gxTextBlock CaptionExpression="$actionGroup.Caption; format="Escape"$"/>
+	<span class="caret"></span></a>
+	<ul class="gx-dropdown-menu dropdown-menu $actionGroup.Class$">
+	$actionGroup.Items:g_actionGroupNestedNavItem()$
+	</ul>
+</li>
+%>
+
+g_actionGroupItem(actionGroupItem)::=<%
+$if (actionGroupItem.Action)$
+<div class="internal(gx-button)">
+	$actionGroupItem.Action:g_button()$
+</div>
+$endif$
+$if (actionGroupItem.Data)$
+	$actionGroupItem.Data:g_attribute()$
+$endif$
+$if (actionGroupItem.Textblock)$
+	$actionGroupItem.Textblock:g_textblock()$
+$endif$
+$if (actionGroupItem.Image)$
+	$actionGroupItem.Image:g_image()$
+$endif$
+$if (actionGroupItem.Ucw)$
+	$actionGroupItem.Ucw:g_usercontrol()$
+$endif$
+$if (actionGroupItem.ActionGroup)$
+	$actionGroupItem.ActionGroup:g_nestedActionGroup()$
+$endif$
+%>
+
+g_nestedActionGroup(actionGroup)::=<%
+<div classref="internal(btn-group)">
+	$actionGroup.Items:g_actionGroupItem()$
+</div>
+%>
+
+g_simpleGridItem(item)::=<%
+<gxColumn 
+$if (item.ST_IsSDT)$
+	ControlName="$item.ControlName; format="ControlName"$" FieldSpecifier="$item.FieldSpecifier; format="Escape"$" 
+$endif$
+$if (item.ST_IsVectorOrArray)$
+	ControlName="$item.ControlName; format="ControlName"$" 
+$endif$
+	ColAttId="$item.Attribute.ObjData$" Class="$item.Class$" ColTitleExpression="$item.TitleExp; format="TextTokens"$" $item.ST_CustomProperties$
+/>
+%>
+
+g_errorViewer(viewer)::=<%
+<gxErrorViewer ControlName="$viewer.ControlName$" class="$viewer.Class$"/>
+%>
+
+g_contentholder(holder)::=<%
+<gxContentPlaceHolder ControlName="$holder.ControlName$"/>
+%>
+
+g_component(comp)::=<%
+<gxWebComponent ControlName="$comp.ControlName$" Object="$comp.WebObject$" Params="$comp.Parameters; format="ParamTokens"$"/>
+%>
+
+g_embeddedpage(embpage)::=<%
+<gxEmbeddedPage ControlName="$embpage.ControlName$" class="$embpage.Class$" $embpage.ST_CustomProperties$/>
+%>
+
+g_horizontalrule(hr)::=<%
+<hr/>
+%>
+
+g_hyperlink(link)::=<%
+<a classref="$link.ClassReference; separator=" "$" $link.ST_CustomProperties$>$link.Text$</a>
+%>
+
+g_usercontrol(uc)::=<%
+<gx$uc.ST_UserControlType$ $uc.ST_CustomProperties$>
+$uc.Tables:{ table | $g_uc_container_part(table)$}$
+</gx$uc.ST_UserControlType$>
+%>
+
+g_uc_container_part(table) ::=<%
+<container containerId="$table.ControlName$">
+	$g_table(table)$
+</container>
+%>
+
+g_section(section)::=<%
+<div id="$section.ControlName$" classref="$section.ClassReference; separator=" "$" $section.ST_CustomProperties$>
+	$section.Items:g_cell_content()$
+</div>
+%>

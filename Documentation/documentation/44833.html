@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Remote Rest Authentication type (Oauth 2.0)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44833,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Remote Rest Authentication type (Oauth 2.0)</h1>
+<!--GAM - Remote Rest Authentication type (Oauth 2.0)--><div class="TableWikiBody" id="tblwikibody"><p>The GAM Remote Rest authentication type allows an application using GAM to use another GAM as an Identity Provider. The user will log in to the application using credentials that are stored in an Identity Provider (IDP).</p>
+
+<p>So, there is a client application (Web or SD, with its own GAM) and an Identity Provider (using GAM) where the user will be authenticated.</p>
+
+<p>In general, this solution is used in a trusted environment, because the user's credentials are entered at the client and flow through that application. </p>
+
+<p>The following is a <strong>very simplified</strong> schema about this solution (implementation details are shown below).</p>
+
+<ol>
+	<li>The user enters his credentials at the client application.</li>
+	<li>These credentials (and other information, which we detail afterwards) are used to call the Identity Provider's Rest authentication services, where the user is authenticated.  </li>
+	<li>The Identity Provider sends a response to the caller, and then it returns to the client application (with an error if the authentication fails).</li>
+</ol>
+
+<p><img src="./images/44946.png" id="44946" class="WikiImage"/></p>
+
+<div style="width: auto;background-color: rgb(255,255,255);padding: 8.0px 12.0px;border-left: 4.0px solid rgb(76,175,80);">
+<p>It's very similar to <a href="25355.html">GAM - GAMRemote Authentication Type</a> (as it uses Oauth 2.0), but in this case the login is done using Rest. So there is no redirection to the Identity Provider's login as in <a href="25385.html">the SSO scenario</a>.</p>
+</div>
+<br />
+<br />
+Some characteristics of this authentication type are:
+<ol>
+	<li>The user enters his credentials in a local login and is not redirected to the Identity Provider's login as in GAM Remote authentication. The Identity Provider is the owner of the user credentials, as always.</li>
+	<li>In fact, the login is done using the same protocol as GAM Remote (Oauth 2.0).</li>
+</ol>
+
+<h3><a id="Cases+for+use" class="HashLink" href="#Cases+for+use">Cases for use</a></h3>
+
+<p>As explained above, in general it will be used in a trusted environment, for credentials are entered at the client.</p>
+
+<ol>
+	<li>It proves especially useful when you need a token to call a service running under another GAM. 
+	<p>After the login, a GAMSession is generated at the Identity Provider's GAM and at the client's (the same as with GAM Remote Authentication). The GAMSession has the local token and the external token, to be used for calling any Rest service (depending on whether the service is hosted at the client or at the server).</p>
+
+	<p>So, if you need to consume a Rest service using GAM from an application that uses GAM as well, you may authenticate to the provider application using GAM Remote Rest authentication type to get a valid token, instead of <a href="15918.html">using HTTP calls</a>.</p>
+	</li>
+	<li>In case of a Smart Devices app, where you need to authenticate against an Identity Provider and want to avoid the user from being redirected to the IDP's web login.</li>
+</ol>
+
+<h3><br />
+Architecture and implementation</h3>
+
+<p>The following is an architecture schema (though it does not fully show its complexity, it's useful for understanding what happens under the hoods).</p>
+
+<p><img src="./images/44880.png" id="44880" class="WikiImage"/></p>
+
+<p>When the user logs in, instead of redirecting to the Identity Provider, the client makes a call to ask for a valid token, using the following URL:</p>
+
+<pre>
+$ServerURL/oauth/gam/v2.0/access_token
+</pre>
+
+<p>The information of the user is requested at this URL</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ServerURL/oauth/gam/v2.0/userinfo
+
+</pre>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Calling a rest service running at the client's KB.</p>
+
+<p>First, you log in using GAM Remote Rest.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AdditionalParameter.AuthenticationTypeName = !&quot;gamremoterest&quot; //&amp;AdditionalParameter is of GAMLoginAdditionalParameters data type
+&amp;LoginOK = GAMRepository.Login(&amp;user, &amp;password, &amp;AdditionalParameter, &amp;GAMErrors)</pre>
+
+<p class="Code">Then, at any time you can get the Token from the GAMSession to call the Rest service.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AccessToken = GAMSession.GetToken()
+//Here call Rest Service using the Authorization headers.
+&amp;httpclient.AddHeader(!&quot;Authorization&quot;,!&quot;OAuth &quot; + &amp;AccessToken)
+&amp;httpclient.AddHeader(!&quot;GeneXus-Agent&quot;,!&quot;SmartDevice Application&quot;)
+&amp;httpclient.Execute(&amp;method,&amp;getstring) //E.g: &amp;httpclient.Execute(!&quot;GET&quot;,!&quot;http://server/baseurl/rest/GetCustomers&quot;)</pre>
+
+<p>The GAMSession.GetToken() method returns the local Token (useful for calling a service of the client KB). Note that for this token, applicable security policies are the web (not Oauth, so the time out expiration of this token is the Web session timeout).</p>
+
+<p>If you want to call a service of the server KB, you must get the external token (to be passed in the authorization headers) using the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMSession = GAMSession.Get(&amp;GAMErrors)
+&amp;AccessToken = &amp;GAMSession.ExternalToken
+</pre>
+
+<h3><a id="GAM+Remote+rest+authentication+for+mobile+apps" class="HashLink" href="#GAM+Remote+rest+authentication+for+mobile+apps">GAM Remote rest authentication for mobile apps</a></h3>
+
+<p>Take a look at <a href="19269.html">GAM Login Method</a>.</p>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h3>
+
+<h4><a id="Server+side+configuration" class="HashLink" href="#Server+side+configuration">Server side configuration</a></h4>
+
+<p>See <a href="44840.html">Server side configuration for GAM Remote Rest Authentication type</a></p>
+
+<h4><a id="Client+side+configuration" class="HashLink" href="#Client+side+configuration">Client side configuration</a></h4>
+
+<p>See <a href="44841.html">Client side configuration for GAM Remote Rest Authentication type</a></p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>As from <a href="https://wiki.genexus.com/commwiki/wiki?44454,," target="_blank">GeneXus 16 upgrade 7</a></p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="46492.html">Single Sign on for Rest Services using GAM</a></p>
+
+<p> </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44841.html">Client side configuration for GAM Remote Rest Authentication type</a></TD></TR><TR><TD><a href="48254.html">GAM - Two Factor Authentication</a></TD><TD><a href="32698.html">GAM Events subscription</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD><TD><a href="15918.html">HowTo: Develop Secure REST Web Services in GeneXus</a></TD><TD><a href="44824.html">Howto: sending and receiving properties set at the login</a></TD><TD><a href="44840.html">Server side configuration for GAM Remote Rest Authentication type</a></TD></TR><TR><TD><a href="46492.html">Single Sign on for Rest Services using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/22 04:59 PM</em></font></td></TR></table></font>

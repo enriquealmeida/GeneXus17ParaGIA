@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Regular Expressions (RegEx)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?4606,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Regular Expressions (RegEx)</h1>
+<!--Regular Expressions (RegEx)--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>A regular expression (regex) is a string used to describe or match a string collection, according to certain syntax rules. The use of Regular Expressions to search and manipulate strings is becoming very popular in text editors, utilities, and programming languages. Given its declarative nature, regular expressions are fully supported in GeneXus.</p>
+
+<p>Java, .NET and Ruby generators support this feature not only on the server side, but on the client side as well (the generated jscripts).</p>
+
+<p>GeneXus supports POSIX and POSIX ERE (Extended) regular expression syntax. More information about these standards <a href='http://en.wikipedia.org/wiki/Regular_expression#POSIX'>here</a>.</p>
+
+<p>Read about the RegExMatch data type <a href='#RegExMatch'>here</a></p>
+
+<h3><a id="Regex+Methods" class="HashLink" href="#Regex+Methods">Regex Methods</a></h3>
+
+<h4><a id="IsMatch" class="HashLink" href="#IsMatch">IsMatch</a></h4>
+
+<p><strong>Scope:</strong> Character, LongVarChar and VarChar data types.</p>
+
+<p><strong>Purpose:</strong> Check if the string matches the pattern.</p>
+
+<p><strong>Syntax:</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+B.IsMatch(C) </pre>
+
+<p>The type returned is Boolean. B and C can be a string attribute or variable. B represents the string where the pattern is tested and C is the string that contains the pattern (regular expression).</p>
+
+<p><strong>Description: </strong>The method tries to match the regular expression in C with the string contained in B. If it matches, &quot;true&quot; is returned. Otherwise &quot;false&quot; is returned. The syntax of the regular expression is specified in the &quot;RegEx syntax&quot; section.</p>
+
+<p><strong>Example:</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;pattern = &quot;\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*&quot; // valid email address pattern
+if(&amp;str.IsMatch(&amp;pattern))
+    &amp;result=&quot;MATCH&quot;
+else
+    &amp;result=&quot;DOESN'T MATCH&quot;
+endif
+
+// The following table shows the value of &amp;result given the value of &amp;str after executing the above code.
+// &amp;str                           &amp;result
+// &quot;john.doe12@mail.com.uk&quot;       &quot;MATCH&quot;
+// &quot;john.doe@mail.&quot;               &quot;DOESN'T MATCH&quot;</pre>
+
+<p>NOTE: When the expression is used as &quot;Regular Expression&quot; attribute/domain property value, it must not include a start and end. Example: \w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)* instead of &quot;\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*&quot;</p>
+
+<h4><a id="ReplaceRegEx" class="HashLink" href="#ReplaceRegEx">ReplaceRegEx</a></h4>
+
+<p><strong>Scope:</strong> Character, LongVarChar and VarChar data types.</p>
+
+<p><strong>Purpose:</strong> Replace all occurrences of the pattern.</p>
+
+<p><strong>Syntax: </strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+B.ReplaceRegEx(C,D) </pre>
+
+<p>The type returned is String. B, C and D can be string attributes or variables. B represents the string where the pattern is replaced; C is the string that contains the pattern (regular expression) and D is the string that replaces the matches.</p>
+
+<p><strong>Description:</strong> This method replaces all occurrences of C pattern in B with D. The pattern uses the syntax described in the &quot;RegEx syntax&quot; section. The replacement string could be a simple string or could refer to parts of the replaced string using the $X expression. (&quot;$X&quot; refers to the group number X defined in the pattern, the groups could be defined in the pattern using the &quot;()&quot; expression, as described in the &quot;RegEx syntax&quot; section, and are numbered in order of appearance).</p>
+
+<p><strong>Example:</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;pattern = &quot;\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b&quot; // date as dd/mm/yyyy
+&amp;str = &quot;11/12/2003 extra 8/12/2003&quot;
+&amp;rslt = &amp;str. ReplaceRegEx(&amp;pattern,&amp;replacement)
+
+// The following table shows the value of &amp;rslt given the value of &amp;str after executing the above code.
+//     &amp;replacement                          &amp;rslt
+//     &quot;$2-$1-$3&quot;                            &quot;12-11-2003 extra 12-8-2003&quot; //transform to mm-dd-yyyy
+//     &quot;&lt;&lt;DATE&gt;&gt;&quot;                            &quot;&lt;&lt;DATE&gt;&gt; extra &lt;&lt;DATE&gt;&gt;&quot;    // date substitution
+
+</pre>
+
+<h4><a id="Matches" class="HashLink" href="#Matches">Matches</a></h4>
+
+<p><strong>Scope:</strong> Character, LongVarChar and VarChar data types</p>
+
+<p><strong>Purpose:</strong> Return a string collection that matches the pattern</p>
+
+<p><strong>Syntax:</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+B.Matches(C)
+</pre>
+
+<p>The type returned is Collection of RegExMatch. B and C can be string attributes or variables. B represents the string where the pattern is tested and C is the string that contains the pattern (regular expression).</p>
+
+<p><strong>Description:</strong> this method returns a collection of substrings, of the input string, which matches the pattern (C). The result is represented as a collection of RegExMatch (more information about it in the RegExMatch DataType section)</p>
+
+<p><strong>Example:</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;pattern = &quot;\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b&quot; // date as dd/mm/yyyy
+&amp;str = &quot;11/12/2003 extra 8/12/2003 extra 2/5 other text&quot;
+&amp;rslt = &amp;str.Matches(&amp;pattern)
+
+// After executing the above code &amp;rslt contains (as RegExMatch): &quot;11/12/2003&quot; and &quot;8/12/2003&quot;
+
+</pre>
+
+<h4><a id="SplitRegEx" class="HashLink" href="#SplitRegEx"><strong>SplitRegEx</strong></a></h4>
+
+<p><strong>Scope</strong>: Character, LongVarChar, VarChar data types</p>
+
+<p><strong>Purpose</strong>: Split the string using the pattern as splitter.</p>
+
+<p><strong>Syntax</strong>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+B.SplitRegEx(C) </pre>
+
+<p>The type returned is a Collection of strings. B and C can be string attributes or variables. B represents the string to be split and C is the string that contains the pattern (regular expression).</p>
+
+<p><strong>Description</strong>: This method returns a collection of substrings of the input string which doesn't match the pattern (C). The result is represented as a collection of strings.</p>
+
+<p><strong>Example</strong>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;pattern = &quot;\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b&quot; // date as dd/mm/yyyy
+&amp;str = &quot;11/12/2003 extra 8/12/2003 extra 2/5 other text&quot;
+&amp;rslt = &amp;str.SplitRegEx(&amp;pattern)
+
+// After executing the above code &amp;rslt contains (as strings): &quot;&quot;, &quot; extra &quot; and &quot; extra 2/5 other text&quot;
+
+</pre>
+
+<h3><a id="Regex+Syntax" class="HashLink" href="#Regex+Syntax"><font color="#000000">Regex Syntax</font></a></h3>
+
+<h4><a id="Characters" class="HashLink" href="#Characters">Characters</a></h4>
+
+<table border="1" cellpadding="1" cellspacing="1" width="600">
+	<tbody>
+		<tr>
+			<td> </td>
+			<td><font size="2">Description</font></td>
+			<td colspan="2"><font size="2">Example</font></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+			<td><font size="2">match</font></td>
+			<td><font size="2">Doesn't match</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">.</font></td>
+			<td><font size="2">Any character</font></td>
+			<td><font size="2">X</font></td>
+			<td><font size="2">[everything matches]</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">[abcde]</font></td>
+			<td><font size="2">A character of the set {abcde}*</font></td>
+			<td><font size="2">a</font></td>
+			<td><font size="2">A or f or #</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">[^abcde]</font></td>
+			<td><font size="2">A character which is not in the set {abcde}*</font></td>
+			<td><font size="2">A or g</font></td>
+			<td><font size="2">c</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">[a-z0-9]</font></td>
+			<td><font size="2">A character in the sets {a,b,c...z} {0,1,2...9}*</font></td>
+			<td><font size="2">b</font></td>
+			<td><font size="2">B or #</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">\w</font></td>
+			<td><font size="2">[a-zA-Z0-9_] (literal or digit or underscore)</font></td>
+			<td><font size="2">B or 9 or _ </font></td>
+			<td><font size="2"># or &quot; &quot;(space)</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">\W</font></td>
+			<td><font size="2">[^a-zA-Z0-9_] (not literal nor digit nor underscore)</font></td>
+			<td><font size="2"># or &quot; &quot; (space)</font></td>
+			<td><font size="2">B or 9 _ </font></td>
+		</tr>
+		<tr>
+			<td><font size="2">\d</font></td>
+			<td><font size="2">[0-9] (digit)</font></td>
+			<td><font size="2">8</font></td>
+			<td><font size="2">A or #</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">\D</font></td>
+			<td><font size="2">[^0-9] (not a digit)</font></td>
+			<td><font size="2">A or #</font></td>
+			<td><font size="2">8</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">\s</font></td>
+			<td><font size="2">Space</font></td>
+			<td><font size="2">&quot; &quot;</font></td>
+			<td><font size="2">A or 8 or #</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">\S</font></td>
+			<td><font size="2">No space</font></td>
+			<td><font size="2">A or 8 or #</font></td>
+			<td><font size="2">&quot; &quot;</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">\xdd</font></td>
+			<td><font size="2">dd is a hexadecimal number. Matches the character with ascii code dd.</font></td>
+			<td>
+			<p><font size="2">\x41 matches A \x40 matches @</font></p>
+			</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><font size="2">\udddd</font></td>
+			<td><font size="2">dddd is a hexadecimal character. Matches the character with unicode code dddd.</font></td>
+			<td><font size="2">\u0013 matches # \u0030 matches @</font></td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p>* Metacharacters Inside Character Classes:</p>
+
+<p>Note that the only special characters or metacharacters inside a character class are the closing bracket (]), the backslash (\), the caret (^) and the hyphen (-). The usual metacharacters are normal characters inside a character class, and do not need to be escaped by a backslash. To search for a star or plus, use [+*]. Your regex will work fine if you escape the regular metacharacters inside a character class, but doing so significantly reduces readability.</p>
+
+<p>To include a backslash as a character without any special meaning inside a character class, you have to escape it with another backslash. [\\x] matches a backslash or an x. The closing bracket (]), the caret (^) and the hyphen (-) can be included by escaping them with a backslash, or by placing them in a position where they do not take on their special meaning. I recommend the latter method, since it improves readability. To include a caret, place it anywhere except right after the opening bracket. [x^] matches an x or a caret. The hyphen can be included right after the opening bracket, or right before the closing bracket, or right after the negating caret. Both [-x] and [x-] match an x or a hyphen.</p>
+
+<p>You can put the closing bracket right after the opening bracket, or the negating caret. []x] matches a closing bracket or an x. [^]x] matches any character that is not a closing bracket or an x. However, we do not recommend this particular practice because it may reduce readability and with the ruby generator it prints a warning in its standard error output.</p>
+
+<h4><a id="Matching+Limits" class="HashLink" href="#Matching+Limits">Matching Limits</a></h4>
+
+<p></p>
+
+<table border="1" cellpadding="1" cellspacing="1" width="600">
+	<tbody>
+		<tr>
+			<td> </td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Description</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">^</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Start of line i.e.: pattern= ^ab string that matches=ab doesn't match=aab</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">$</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">End of line i.e.: pattern= ab$ string that matches=ab&lt;&lt;enter&gt;&gt; doesn't match=abc</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">\b</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Limit between words i.e.: pattern= ab.\bcde string that matches=ab cde doesn't match=abocde</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">\B</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">No match limit between words</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">\A</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Start of input string</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">\G</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">At the end of previous match</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">\Z</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">At the end of the string or before the \n at the end of the string </font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">\z</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">At the end of the string</font></span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p></p>
+
+<h4><a id="Quantifiers" class="HashLink" href="#Quantifiers">Quantifiers</a></h4>
+
+<p></p>
+
+<table border="1" cellpadding="1" cellspacing="1" width="600">
+	<tbody>
+		<tr>
+			<td> </td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Description</font></span></td>
+			<td colspan="3"><span style="color: rgb(0,0,0);"><font size="2">Example</font></span></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">RE</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">match</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Doesn't match </font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">*</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Zero or more</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a*</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aaaaa or &quot;&quot;</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">b</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Zero or one</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a or &quot;&quot;</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">b</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">+</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">One or more </font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a+</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aaaa or a</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a or b</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">{n}</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Exactly n times</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a{3}</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aaa</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aa or aaaa </font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">{n, }</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">At least n times</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a{2, }</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aa or aaaaa</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a or bb</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">{n,m}</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">At least n and not more than m</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a{2,4}</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aa or aaa or aaaa</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a or aaaaa</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">*?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Zero or more with the minimum use of repetitions (lazy)</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a*?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aaaa or &quot;&quot;</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">b</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">??</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Zero or one repetition, preferably zero (lazy)</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a??</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a or &quot;&quot;</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">b or aa</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">+?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">One or more with the minimum use of repetitions (lazy)</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a+?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aaa or a</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">&quot;&quot; b</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">{n,}?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">At least n times with the minimum use of repetitions (lazy)</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a{2,}?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aa or aaaa</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">{n,m}?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">At least n and not more than m with the minimum use of repetitions (lazy)</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a{2,3}?</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">aa or aaa</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">a or aaaa</font></span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p></p>
+
+<h4><a id="Groups" class="HashLink" href="#Groups">Groups</a></h4>
+
+<table border="1" cellpadding="1" cellspacing="1" width="700">
+	<tbody>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">() </font></span></td>
+			<td>
+			<p><span style="color: rgb(0,0,0);"><font size="2">Capture Group. Everything that matches the regular expression defined between &quot;(&quot; and &quot;)&quot; can be accessed using the $n expression in a replace string. [see ReplaceRegEx for more information]</font></span></p>
+
+			<p><span style="color: rgb(0,0,0);"><font size="2">i.e.: pattern= a(b*)c string=abbbc replacement=$1 result=bbb</font></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">(?:X) </font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">no capture X. Defines a group that is not accessible with the $n expression</font></span></td>
+		</tr>
+		<tr>
+			<td width="50"><span style="color: rgb(0,0,0);"><font size="2">(?flgs)</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Turn on flags for the group. i.e.: pattern=(?i)ac string that matches=ac also matches=AC [flag i=ignoreCase]</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">(?flgs:X) </font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Turn on or off flags for X. i.e.: pattern=(?i:ac) string that matches=ac also matches=AC [flag i=ignoreCase]</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">(?=X)</font></span></td>
+			<td>
+			<p><span style="color: rgb(0,0,0);"><font size="2">Continue to match only if X matches right side. It doesn't consume the right side, i.e. if (?=X) matches then (?=X)X also matches </font></span></p>
+
+			<p><span style="color: rgb(0,0,0);"><font size="2">i.e.: pattern=aaa(?=bbb) string=aaabbb matches. i.e.: pattern=(aaa(?=bbb)) string=aaabbb replacement=$1 result=aaa</font></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">(?!X)</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Continue to match only if X does not match right side</font> </span></td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><a id="Other" class="HashLink" href="#Other">Other</a></h4>
+
+<p></p>
+
+<table border="1" cellpadding="1" cellspacing="1" width="200">
+	<tbody>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">$n </font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">Replaces with group Nr. n </font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">X|Y</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">X or Y </font></span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p></p>
+
+<h4><a id="Flags" class="HashLink" href="#Flags">Flags</a></h4>
+
+<p></p>
+
+<table border="1" cellpadding="1" cellspacing="1" width="200">
+	<tbody>
+		<tr>
+			<td>s</td>
+			<td>dot matches all (including newline)</td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">m</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">multiline</font></span></td>
+		</tr>
+		<tr>
+			<td><span style="color: rgb(0,0,0);"><font size="2">i</font></span></td>
+			<td><span style="color: rgb(0,0,0);"><font size="2">ignore case</font></span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p></p>
+
+<h3><a id="RegExMatch+Data+Type" class="HashLink" href="#RegExMatch+Data+Type">RegExMatch Data Type</a></h3>
+
+<p><strong>Type</strong>: Data type used to handle matches in regular expression methods.</p>
+
+<p><strong>Properties:</strong></p>
+
+<p>Value: String found by the pattern Groups: Collection of strings that matches each of the groups defined in the pattern.</p>
+
+<p><strong>Example:</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Input             =&quot;11/12/2003 extra 8/12/2003 extra 2/5 other text&quot; 
+&amp;RegularExpression =&quot;\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b&quot;   // regular expression for Date of type xx/xx/xxxx
+ 
+&amp;matchCollection = &amp;Input.Matches(&amp;RegularExpression) //&amp;matchCollection is RegExpMatch collection
+&amp;rslt =&quot;&quot;
+for &amp;match in &amp;matchCollection     
+   &amp;rslt += &quot;[&quot; + &amp;match.Value + &quot; &quot; 
+   for &amp;item in &amp;match.Groups 
+       &amp;rslt += &quot;(&quot; + &amp;item + &quot;)&quot;  
+   endFor
+   &amp;rslt += t + &quot;]&quot;
+endfor
+ 
+// &amp;rslt is  &quot;[11/12/2003 (11)(12)(2003)] [8/12/2003 (8)(12)(2003)]&quot; </pre>
+
+<p><strong>In the example...</strong></p>
+
+<p>The value of &amp;rslt will be &quot;[11/12/2003 (11)(12)(2003)] [8/12/2003 (8)(12)(2003)]&quot; where 11/12/2003 and 8/12/2003 represent the strings found by the pattern; the values between &quot;(&quot; and &quot;)&quot; are the values found by the groups defined in the pattern for each string found.</p>
+
+<h3><a id="Error+Checking" class="HashLink" href="#Error+Checking">Error Checking</a></h3>
+
+<p>Errors occurred when using Regular Expressions methods can be checked using the following static methods:</p>
+
+<h4><a id="GetLastErrCode%28%29" class="HashLink" href="#GetLastErrCode%28%29">GetLastErrCode()</a></h4>
+
+<p><strong>Scope</strong>: RegEx</p>
+
+<p><strong>Purpose</strong>: Check the error code after the last Regular Expressions method call</p>
+
+<p><strong>Syntax</strong>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+RegEx.GetLastErrCode()</pre>
+
+<p><strong>Description</strong>: The method returns a numeric value. 0 indicates no error and 1 indicates that an error has occurred.</p>
+
+<h4><a id="GetLastErrDescription%28%29" class="HashLink" href="#GetLastErrDescription%28%29">GetLastErrDescription()</a></h4>
+
+<p><strong>Scope</strong>: RegEx</p>
+
+<p><strong>Purpose</strong>: Get last error description after the last Regular Expressions method call</p>
+
+<p><strong>Syntax</strong>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+RegEx.GetLastErrDescription()</pre>
+
+<p><strong>Description</strong>: The method returns a string indicating last error description. The description depends on the generator being use.</p>
+
+<h4><a id="Example%3A" class="HashLink" href="#Example%3A">Example:</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;pattern = &quot;[z-a]&quot; //this is an invalid regular expression
+&amp;str = &quot;abc&quot;
+&amp;rslt = &amp;str.Matches(&amp;pattern)
+&amp;errCode = RegEx.GetLastErrCode()
+&amp;errDsc = RegEx.GetLastErrDescription()
+// In this case &amp;errCode will be 1 and &amp;errDsc will be:
+// .net:
+// parsing &quot;[z-a]&quot; - [x-y] range in reverse order
+// 
+// java:
+// Illegal character range near index 3
+// [z-a]
+//    ^</pre>
+
+<h3><a id="Regex+Examples" class="HashLink" href="#Regex+Examples">Regex Examples</a></h3>
+
+<h5><a id="Use+of+lazy+expressions+%28%22%3F%22%29" class="HashLink" href="#Use+of+lazy+expressions+%28%22%3F%22%29">Use of lazy expressions (&quot;?&quot;)</a></h5>
+
+<p></p>
+
+<pre class="Code">
+&amp;string = &quot;alaalaalaala&quot;
+&amp;replaceSentence = &quot;($1) &quot;
+&amp;rslt = &amp;string.ReplaceRegEx(&amp;RegularExpression,&amp;replaceSentence)</pre>
+
+<p></p>
+
+<p>In the example if  &amp;RegularExpression = &quot;((ala)+?)&quot; then &amp;rslt= &quot;(ala) (ala) (ala) (ala) &quot;, but if &amp;RegularExpression = &quot;((ala)+)&quot; then &amp;rslt= &quot;(alaalaalaala) &quot;<br />
+<br />
+But why? When a lazy expression is used with a quantifier (i.e. the &quot;+?&quot;), the quantifier matches the shortest occurrence of the pattern quantified that makes the regular expression match. But when a quantifier is used without &quot;?&quot;, it will match the longest occurrence of the pattern that produces a match for the expression.<br />
+That's why the first regular expression obtains 4 results with the minimum match &quot;ala&quot;, but the second one obtains 1 result with all the input string &quot;alaalaalaala&quot;</p>
+
+<h3><a id="Regular+Expression+Examples%3A" class="HashLink" href="#Regular+Expression+Examples%3A">Regular Expression Examples:</a></h3>
+
+<p><u>Valid email address:</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*</pre>
+
+<p><u>Valid email address (allows empty email):</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+^(\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*)??\s*$</pre>
+
+<p><u>URL (protocol, domain, port, file, parameters):</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+\b(?i:https?|ftp)(://([\w.]+(:\d{1,4})?)(/[\w+&amp;@#/%=_!:,.;]*))?(\?[\w+&amp;@#/%=_|!:,.;]*)?</pre>
+
+<p><u>Valid IP: from 0.0.0.0 to 255.255.255.255 (no capture)</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d{1,2})\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d{1,2})\b</pre>
+
+<p><u>Path (drive, folder, filename):</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+\b(?i:[a-z]):\\([^/:*?&quot;&lt;&gt;]*\\)?([^\\/:*?&quot;&lt;&gt;]*)</pre>
+
+<p><u>Valid characters are numbers, letters and underscore:</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+^[\w]*$</pre>
+
+<h3><a id="Resources" class="HashLink" href="#Resources">Resources</a></h3>
+
+<p>Online tools to test regular expressions:</p>
+
+<p><a href='http://regexpal.com'>Regexpal</a>. It's a JS regular expression tester, powerful and easy to use.</p>
+
+<p><a href='http://www.gethifi.com/tools/regex'>HiFi Regex Tools</a>. Another JS regular expression tester, with some nice eyecandy. Great for testintg ReplaceRegEx and Matches methods.</p>
+
+<p><a href='http://www.fileformat.info/tool/regex.htm'>http://www.fileformat.info/tool/regex.htm</a></p>
+
+<p><a href='http://www.radsoftware.com.au/regexdesigner/'>http://www.radsoftware.com.au/regexdesigner/</a> usefull tool to test regex, ReplaceRegEx and Matches methods.</p>
+
+<p>More Information:</p>
+
+<p><a href='http://www.regular-expressions.info/tutorial.html'>Regular expressionsTutorial</a></p>
+
+<p><a href='http://java.sun.com/docs/books/tutorial/essential/regex/'>Java RegEx implementation</a> used by GeneXus generated applications.</p>
+
+<p><a href='http://msdn2.microsoft.com/en-us/library/az24scfc(VS.71).aspx'>C# RegEx implementation</a> used by GeneXus generated applications.</p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6779.html">Data types list</a></TD><TD><a href="9723.html">Find option</a></TD></TR><TR><TD><a href="10484.html">Regular Expression property</a></TD><TD><a href="33337.html">Replace option</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/02/20 06:22 PM</em></font></td></TR></table></font>

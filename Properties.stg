@@ -1,0 +1,70 @@
+group ControlProperties;
+
+delimiters "$", "$"
+
+g_control_properties(component, gx) ::=<<
+<?xml version="1.0"?>
+<Content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<Object id="$component.Name$">
+		<Group>
+			<Name>General</Name>
+			<Type>Main</Type>
+			<Children>
+				$component.Properties:{ prop |$g_property(prop, gx)$};separator="\n"$
+			</Children>
+		</Group>
+	</Object>
+</Content>
+>>
+
+g_property(prop, gx) ::=<<
+<Prop>
+	<Id>$prop.Id$</Id>
+	<Name>$prop.Name$</Name>
+	<Type>$propType.(prop.Type)$</Type>
+	<Default>$prop.Default$</Default>
+	$g_write_values(prop, gx)$
+	$(propTypeMetadata.(prop.Type))(prop, gx)$
+</Prop>
+>>
+
+propType ::= [
+	"boolean" : "Boolean",
+	"decimal" : "Decimal",
+	"string" : "Text",
+	"numeric" : "Integer",
+	"enum" : "Combo",
+	"color": "Color",
+	default: "Custom"
+]
+
+propTypeMetadata ::= [ 
+	"sdt" : "g_write_metadata",
+	"custom" : "g_write_metadata",
+	default: "g_empty"
+]
+
+propTypeFilter ::= [
+	"string" : "string",
+	"numeric" : "numeric",
+	default: ""
+]
+
+g_empty(prop, gx) ::=<<
+>>
+
+g_write_values(prop, gx) ::=<<
+<Values>$prop.Values:{ value | <Value id='$value$' desc='$value$' /> };separator="\n"$</Values>
+>>
+
+g_write_metadata(prop, gx) ::=<<
+<CustomType>Artech.Genexus.Common.CustomTypes.ControlAttVarReference, Artech.Genexus.Common</CustomType>
+<Metadata>
+	<Value name="FlagScope">Designtime</Value>
+	<Value name="FlagSetValueMethod">set$prop.Name$</Value>
+	<Value name="FlagGetValueMethod">get$prop.Name$</Value>
+	<Value name="FlagHideAttributes">True</Value>
+	<Value name="FlagDataTypeFilter">$prop.Filter$</Value>
+</Metadata>
+>>
+

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Update GAM Role Permissions</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20593,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Update GAM Role Permissions</h1>
+<!--Update GAM Role Permissions--><div class="TableWikiBody" id="tblwikibody"><p>You can add <a href="15912.html">GAM Permissions</a> to <a href="17569.html">GAM Roles</a> using the <a href="15935.html">GAM Backoffice</a> (see <a href="17963.html">HowTo: Adding a Permission to a Role using GAM</a>), or programmatically using the <a href="16535.html">GAM API</a>.</p>
+
+<p>In this article you see how to do it programmatically.</p>
+
+<p>GAMRole object, which is part of <a href="19888.html">GeneXus Access Manager</a> Library, has methods to add, update, and delete Permissions to the Role, which we explain below.</p>
+
+<h3><a id="AddPermission+Method+of+GAMRole+Object" class="HashLink" href="#AddPermission+Method+of+GAMRole+Object">AddPermission Method of GAMRole Object</a></h3>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p>GAMRole.AddPermission(in:GAMPermission,out:GAMError Collection) : Boolean</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>In this example, you will learn how to create a new Role, and add a Permission to the Role (the permission needs to exist in any Application). See <a href="20590.html">Update GAM Application Permissions</a> for more information on how to add Permissions to <a href="15910.html">applications</a>.</p>
+
+<p>So in this example assume that the Permission already exists in some Application.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Application.Load(&amp;ApplicationID) //&amp;Application is GAMApplication data type
+//First create a new Role (if it doesn´t exist)
+&amp;GAMRole = new()
+&amp;GAMRole.Name= 'TestRol2'
+&amp;GAMRole.Description  = 'TestRol2'
+&amp;GAMRole.SecurityPolicyId = &amp;SecurityPolicyId
+&amp;GAMRole.Save()</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+If &amp;GAMRole.Success()
+   &amp;RoleId = &amp;GAMRole.Id
+   //&amp;PermissionGUID is the GUID of the Permission I want to add to the Role
+   &amp;GAMPermission.ApplicationId = &amp;ApplicationId //&amp;GAMPermission is GAMPermission type.
+   &amp;GAMPermission.GUID = &amp;PermissionGUID
+   &amp;GAMPermission.Type = GAMPermissionAccessType.Allow //Posible values are Allow, Deny and Restricted
+   &amp;isok =  &amp;GAMRole.AddPermission(&amp;GAMPermission,&amp;Errors)
+   if &amp;isok
+      commit
+   else
+      For &amp;Error in &amp;Errors
+          Msg(Format(!"%1 (GAM%2)", &amp;Error.Message, &amp;Error.Code))
+      EndFor
+   Endif
+Endif</pre>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>There are other methods in GAMRole object used to update and delete GAM Permissions, like DeletePermission, DeletePermissionById, and UpdatePermission.<br />
+You can edit the GAMRole object in order to see the methods available:</p>
+
+<p><img src="./images/20594.png" id="20594" class="WikiImage"/></p>
+
+<p><br />
+</p>
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17569.html">GAM - Roles</a></TD><TD><a href="22082.html">GAM - Users</a></TD></TR><TR><TD><a href="17963.html">HowTo: Adding a Permission to a Role using GAM</a></TD><TD><a href="20583.html">Update GAM User Permissions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/21/22 03:55 PM</em></font></td></TR></table></font>

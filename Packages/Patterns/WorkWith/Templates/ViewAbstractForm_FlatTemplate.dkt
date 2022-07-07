@@ -1,0 +1,89 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="View Abstract Form" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Import Namespace="Artech.Patterns.WorkWithDevices.Copy" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="GenerateForSmartDevices" Type="System.Boolean" %>
+
+<%
+
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	WorkWithSettings settings = wwInstance.Settings;
+
+	ViewElement view = wwInstance.GetElement<ViewElement>(Element);
+	SelectionElement selection = view.Parent.Selection;
+
+	ResponsiveSizes mainTableSizes = Artech.Patterns.WorkWith.Helpers.ViewAbstractForm.MainTableResponsiveSizes(view.FixedData.Attributes.VisibleAttributesCount, false);
+	
+%>
+<%= WebMultiForm.BeginMultiForm(1) %>
+	<%-- Main form --%>
+	<%= WebMultiForm.BeginLayoutForm(1) %>
+		<%= WebLayout.BeginLayout() %>
+			<%= WebLayout.BeginResponsiveTable(mainTableSizes, "Main", Constants.ContainerClass) %>
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebLayout.TextBlock("ViewTitle", settings.Theme.Subtitle, view.Description) %>
+					<%= WebLayout.EndTableCell() %>
+<%
+	if (view.BackToSelection && selection != null)	
+	{
+%>
+					<%= WebLayout.BeginTableCell(null, Constants.ActionsCellClass) %>
+						<%= WebLayout.TextBlock("ViewAll", Constants.BtnTextBlockClass, selection.Description) %>
+					<%= WebLayout.EndTableCell() %>
+<%
+	}
+%>
+				<%= WebLayout.EndTableRow() %>
+<% 
+		if (view.FixedData != null)
+		{
+			foreach (IAttributesItem fixedAtt in view.FixedData.Attributes.VisibleAttributes)
+			{
+%>
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebFormScript.Item(fixedAtt, true, true) %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+<%
+			}
+		}
+		
+		Dictionary<string, object> tabProperties = new Dictionary<string, object>();
+		tabProperties[Artech.Patterns.WorkWithDevices.Copy.InstanceAttributes.LayoutTab.HistoryManagement] = true;
+%>
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebLayout.BeginTab(Constants.TabName, null, tabProperties) %>
+<%
+		foreach (TabElement tab in view.Tabs)
+		{ 
+%>
+							<%= WebLayout.BeginTabPage(tab.Code, tab.Name) %>
+								<%= WebLayout.BeginResponsiveTable(Artech.Patterns.WorkWith.Helpers.AbstractForm.SimpleResponsiveSizesHelper(1, 1), "Table" + tab.Code, null) %>
+									<%= WebLayout.BeginTableRow() %>
+										<%= WebLayout.BeginTableCell() %>
+											<%= WebLayout.WebComponent(tab.Code + "WC", null) %>
+										<%= WebLayout.EndTableCell() %>
+									<%= WebLayout.EndTableRow() %>
+								<%= WebLayout.EndResponsiveTable() %>
+							<%= WebLayout.EndTabPage() %>
+<%
+		}
+%>
+						<%= WebLayout.EndTab() %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+			<%= WebLayout.EndResponsiveTable() %>
+		<%= WebLayout.EndLayout() %>
+	<%= WebMultiForm.EndLayoutForm() %>
+<%= WebMultiForm.EndMultiForm() %>

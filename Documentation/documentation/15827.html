@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Creating List User Controls for iOS</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15827,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Creating List User Controls for iOS</h1>
+<!--Creating List User Controls for iOS--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The purpose of this document is to explain how to create a user control for Smart Devices, in this particular case, a user control for iOS.</p>
+
+<p>What are e going to create?</p>
+
+<p>We will create an image gallery from a given list of images. The image gallery will display a thumbnail image of the original image and when a certain image is selected, the original image will be displayed instead of the gallery along with a message showing a description.</p>
+
+<p>After completing this step by step guide you will have a new user control named &quot;ImageGallery&quot; available in Work With for Smart Devices Pattern.</p>
+
+<p><img src="./images/15831.png" id="15831" class="WikiImage"/> <img src="./images/15832.png" id="15832" class="WikiImage"/> <img src="./images/15833.png" id="15833" class="WikiImage"/></p>
+
+<h2><a id="Software+Requirements" class="HashLink" href="#Software+Requirements">Software Requirements</a></h2>
+
+<p>To develop user controls for iOS you'll need the following:</p>
+
+<ul>
+	<li>Intel-based Mac running Mac OS X Snow Leopard or later</li>
+	<li>XCode</li>
+</ul>
+
+<h2><a id="Basic+Steps" class="HashLink" href="#Basic+Steps">Basic Steps</a></h2>
+
+<p>A list of steps to create the user control (with the basic functionality) is detailed below.</p>
+
+<p>Create the <a href="18338.html">user control definition</a> and make sure it is available in GeneXus.</p>
+
+<h3><a id="Project+setup" class="HashLink" href="#Project+setup">Project setup</a></h3>
+
+<p>In XCode, create a new <em>Cocoa Touch Static Library</em> project and there a new class named <em>UCImageGalleryList</em>.<br />
+Make the new class a subclass of <em>GXControlGridBase</em>. This provides most of the functionality for a List User Control.</p>
+
+<p>Get the <a href='https://github.com/kirbyt/KTPhotoBrowser'>KTPhotoBrowser</a> project from GitHub, and add the files to the project.<br />
+The files needed are located under src/KTPhotoBrowser, plus the ones at src/Flickr+JSONSample/Flickr+JSONSample with names KTPhotoView+SDWebImage.* and KTThumbView+SDWebImage.*<br />
+We'll need to make some small changes to this files in order to make the user control work.<br />
+Rename the <em>SDWebImageManager</em> class to <em>SDWebImageManager2</em> not to clash with the GeneXus User Control internal implementation within the <a href="https://wiki.genexus.com/commwiki/wiki?15308,," target="_blank">SD ImageGallery control</a>. Make sure the project compiles, you will have to change internal references (use a find/replace strategy).</p>
+
+<p>Add the <em>GXFlexibleClient.framework</em> located on the /Users/MacUserName/Library/Artech/GeneXus to the project.</p>
+
+<p>Add the following classes to the project:</p>
+
+<ul>
+	<li><em>UCImageGalleryList</em> class.</li>
+	<li><em>UCImageGalleryDataSource</em> protocol.</li>
+	<li>UCImageGalleryDetail class</li>
+</ul>
+
+<p>Check the complete source code <a href="https://wiki.genexus.com/commwiki/wiki?18405,," target="_blank">here</a>.</p>
+
+<p>Now, you have to make some changes to the <em>KTPhotoBrowser</em> files, <em>KTPhotoBrowserDataSource</em>, add the methods:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+- (NSString *)titleForImageAtIndex:(NSInteger)index;
+- (NSString *)captionForImageAtIndex:(NSInteger)index;
+- (void) presentDetailViewForPhotoAtIndex:(NSUInteger) index;
+</pre>
+
+<p>the <em>KTPhotoScrollViewCntroller</em> class, add an iVar</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+UIBarStyle navbarPreviousStyle_</pre>
+
+<p>set it in <em>viewWillAppear </em>(see how it is done with <em>navbarWasTranslucent_</em>, set the navigation bar style to black translucent there, and remember to set it back to what it was in <em>viewWillDisappear</em>.</p>
+
+<p>add the method</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+- (void) presentDetailViewForPhotoAtIndex:(NSUInteger) index;</pre>
+
+<p>with the following implementation:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+- (void) presentDetailViewForPhotoAtIndex:(NSUInteger)index {
+    [self showChrome];
+    [dataSource_ presentDetailViewForPhotoAtIndex:index];
+}</pre>
+
+<p>Modify the <em>KTThumbsViewController</em> class, repeating the same with the iVar navbarPreviousStyle_ from <em>KTPhotoScrollViewController</em> (see above)</p>
+
+<p>create an iVar</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+UINavigationController *navController;</pre>
+
+<p>@synthesize it, and add the getter with the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+- (UINavigationController *) navController {
+    if (self-&gt;navController) {
+        return self-&gt;navController;
+    }
+    else {
+        return [self navigationController];
+    }
+}</pre>
+
+<p>replace all the references to</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+[self navigationController]</pre>
+
+<p>with</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+[self navController]</pre>
+
+<p>Finally, make sure the project compiles.</p>
+
+<p>Add a new target to generate a <a href="https://wiki.genexus.com/commwiki/wiki?18088,," target="_blank">library</a> and deploy your control as a <em>.a</em> file.</p>
+
+<p>Once you have got the <em>.a</em> file associated to the User Control you are ready to copy it to the GeneXus User Control folder and start using it. </p>
+
+<p><br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18330.html">Creating User Controls for iOS</a></TD><TD><a href="15301.html">Category:User Controls for Smart Devices</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

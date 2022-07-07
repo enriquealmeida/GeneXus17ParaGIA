@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Export Reorganization</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?34476,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Export Reorganization</h1>
+<!--Export Reorganization--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Exporting the reorganization and executing it is part of the deployment process of an application. GeneXus creates (and by default also runs) the reorganization programs during <a href="5691.html">Build All/Rebuild All</a> and specifically using Build / Create Database Tables, or Build / Impact Database Tables.</p>
+
+<p>The Export Reorganization option can be found under Build / Export Reorganization and lets you create a package with the files required to execute the reorganization programs that have been built in the last build process. That package can be sent to another execution environment (e.g. Production Environment) to be executed there to create or reorganize the corresponding Database schemas.</p>
+
+<p><img src="./images/44658.png" id="44658" class="WikiImage"/></p>
+
+<h3><a id="Java+Specifics" class="HashLink" href="#Java+Specifics">Java Specifics</a></h3>
+
+<p>In a Java Environment, the Export Reorganization option creates a .jar file with the last reorganization programs.</p>
+
+<p>The Dialog asks for</p>
+
+<ul>
+	<li>Filename: The name of the .jar that contains the reorganization programs (e.g. Reorganization_20170425155404.jar)</li>
+	<li>JDBC URL: Here, enter the server name, port and name of the database to be reorganized. The specification varies according to the <a href='http://www.gxtechnical.com/gxdlsp/pub/genexus/java/docum/manuals/8.0/MjavaB2-2.htm'>JDBC driver</a> used. The JDBC URL configured in the model is suggested by default. (e.g. jdbc:mysql://apps6.genexus.com:3306/Idc17c75b1c3d40de51410883a256e5f2f)</li>
+	<li>JDBC Driver: The driver's class name (e.g. com.mysql.jdbc.Driver)</li>
+	<li>User: The database user with permissions to run reorganization programs has to be entered here. The user account configured in the model is suggested by default.</li>
+	<li>Password: The password of the user account specified in the User field has to be entered here. The password configured in the model is suggested by default.</li>
+	<li>Include configuration file in JAR: If set, the reorg.cfg is included in the .jar</li>
+</ul>
+
+<p>As a result, a .jar with the reorganization files is created. In the containing folder, the  JDBC driver is copied too.</p>
+
+<p>To execute it, you may run</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>java -cp <strong>Reorg.jar</strong>; gxclassR.jar;&lt;drivers jdbc&gt; &lt;package name if it has been defined&gt;.<strong>Reorganization</strong> –force -nogui</em></pre>
+
+<p>More information regarding the flags: <a href="9016.html">Create Database Options property</a></p>
+
+<p>If the –force option is not included, an error such as the one below will be displayed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+There are no reorganization specifications
+
+</pre>
+
+<p>If the -nogui option is not included, when running on non-Windows platforms that don’t have a graphic interface, the following error may occur:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Exception in thread &quot;main&quot; java.lang.InternalError: Can't connect to X11 window server using ':0.0' as the value of the DISPLAY variable.
+
+         at sun.awt.X11GraphicsEnvironment.initDisplay(Native Method)
+
+         at sun.awt.X11GraphicsEnvironment.&lt;clinit&gt;(X11GraphicsEnvironment.java:134)
+
+         at java.lang.Class.forName0(Native Method)
+
+         at java.lang.Class.forName(Class.java:141)
+
+         at java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment(GraphicsEnvironment.java:62)
+
+         at java.awt.Window.init(Window.java:231)
+
+         at java.awt.Window.&lt;init&gt;(Window.java:275)
+
+         at java.awt.Frame.&lt;init&gt;(Frame.java:401)
+
+         at com.genexus.GXReorganization.showUI(GXReorganization.java:168)
+
+         at com.genexus.GXReorganization.executeReorg(GXReorganization.java:228)
+
+         at com.genexus.GXReorganization.executeReorg(GXReorganization.java:215)
+
+         at Reorganization.main(Reorganization.java)</pre>
+
+<p> </p>
+
+<p>To avoid using a graphic interface, the –nogui option should be used. For example, on Linux the command to be executed would be similar to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>java -cp <strong>Reorg.jar</strong>:gxclassR.jar:&lt;drivers jdbc&gt; &lt;package name if it has been defined&gt;.<strong>Reorganization</strong> –nogui –force</em></pre>
+
+<h3><a id=".NET+Specifics" class="HashLink" href="#.NET+Specifics">.NET Specifics</a></h3>
+
+<p>In a .NET Environment, the Export Reorganization option creates a .zip file with the last reorganization programs.</p>
+
+<p>The Dialog asks for</p>
+
+<ul>
+	<li>Filename: The name of the .zip that contains the reorganization files</li>
+	<li>Trusted Connection: If checked, the reorganization will execute using Windows Authentication to connect to the DBMS
+	<ul>
+		<li>User: The DBMS User that is used to execute the reorganization</li>
+		<li>Password: The Password of that User.</li>
+	</ul>
+	</li>
+</ul>
+
+<p>As a result, a .zip with the reorganization files is created.</p>
+
+<p>To execute the reorganization, unzip the files and execute reor.exe. You may use some flags, like -force, -nogui, etc. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+reor.exe -nogui -force
+
+</pre>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>The following exception may occurr if the reorganization.zip file is downloaded from Internet and Windows marks it as &quot;blocked&quot;<br />
+<br />
+Could not load file or assembly or ones of its dependencies<br />
+Operation is not supported <br />
+System.NotSupportedException</p>
+
+<p>The solution is:</p>
+
+<ol>
+	<li>Right click over the files downloaded</li>
+	<li>Select Properties</li>
+	<li>Check the ‘Unblock’ box in bottom right corner<br />
+	 </li>
+</ol>
+
+<h3><a id=".NET+Core+Specifics" class="HashLink" href="#.NET+Core+Specifics">.NET Core Specifics</a></h3>
+
+<p>.NET Core packages the reorg as a zip file as well. To execute the reorganization program run the following command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+dotnet Reor.dll -nogui -noverifydatabaseschema -force</pre>
+
+<p> </p>
+
+<p>More information regarding the flags: <a href="9016.html">Create Database Options property</a></p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This option is available as of <a href="https://wiki.genexus.com/commwiki/wiki?33798,," target="_blank">GeneXus 15 Upgrade 4</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<ul>
+	<li><a href="42568.html">Reorganization Deployment MSBuild Tasks</a></li>
+	<li><a href="3154.html">Features of Reorganizations</a> </li>
+	<li><a href="9016.html">Create Database Options property</a></li>
+	<li>Third Party tools
+	<ul>
+		<li><a href="https://wiki.genexus.com/commwiki/wiki?25300,," target="_blank">Gx X Java Reorg Console Exporter</a></li>
+		<li><a href="https://wiki.genexus.com/commwiki/wiki?9041,," target="_blank">CSharp XCopy Deployment Extension</a></li>
+	</ul>
+	</li>
+</ul>
+
+<p></p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD></TR><TR><TD><a href="36951.html">How to Deploy an Application to Docker</a></TD></TR><TR><TD><a href="42568.html">Reorganization Deployment MSBuild Tasks</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/05/20 04:27 PM</em></font></td></TR></table></font>

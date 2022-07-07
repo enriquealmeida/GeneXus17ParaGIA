@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Remote Configuration in Native Mobile apps</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48101,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Remote Configuration in Native Mobile apps</h1>
+<!--Remote Configuration in Native Mobile apps--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>Being able to configure an application that has already been deployed, without modifying the code, is one important feature of GeneXus Native Mobile applications and that possibility has been around since the first version of the generator.</p>
+
+<p>However easy it is to implement these remote configurations in GeneXus, it should be noted that there are tools (outside GeneXus) designed specifically for this task. One such tool is Firebase Remote Config.</p>
+
+<p>One of these features is the one of Remote Config. What is it? As described by <a href='https://firebase.google.com/docs/remote-config?hl=en'>the Firebase Remote Config’s documentation</a>:</p>
+
+<blockquote>
+<p>Firebase Remote Config is a cloud service that lets you change the behavior and appearance of your app without requiring users to download an app update. When using Remote Config, you create in-app default values that control the behavior and appearance of your app. Then, you can later use the Firebase console or the Remote Config backend APIs to override in-app default values for all app users or for segments of your user base. Your app controls when updates are applied, and it can frequently check for updates and apply them with a negligible impact on performance.</p>
+</blockquote>
+
+<p>The key part of the Remote Config description, the one that is not easily solved with GeneXus, is this: “you can later use the Firebase console … to override in-app default values <strong>for all app users or for segments of your user base</strong>”. The user segmentation that Firebase can achieve is by far more complete than a custom solution a developer could manage to implement.</p>
+
+<p>Note that you can still remotely configure any aspect of your app by coding the remote configuration directly in GeneXus. This is just another alternative to give the developer more power.</p>
+
+<h2><a id="A%2FB+testing" class="HashLink" href="#A%2FB+testing">A/B testing</a></h2>
+
+<p>Support of Remote Config is the sole requirement to also support A/B testing in your app with Firebase.</p>
+
+<p>From <a href='https://firebase.google.com/docs/ab-testing?hl=en'>the Firebase page on A/B testing</a>:</p>
+
+<blockquote>
+<p>A/B Testing helps you optimize your app experience by making it easy to run, analyze, and scale product and marketing experiments.</p>
+</blockquote>
+
+<h2><a id="Common+scenario" class="HashLink" href="#Common+scenario">Common scenario</a></h2>
+
+<p>The most common scenario for this feature is to have a set of application parameters that the developer will want to modify in runtime, and for some non-trivial user segmentation.</p>
+
+<p>To achieve that, you'll have to provide a set of default valus, that is, values that will be used when they are not configured in the server or they have not been fetched yet.</p>
+
+<p>The parameter fetching from the server will be performed mostly on application launch, but may also be performed at a given time interval. In some special cases.</p>
+
+<p>Also applying the fetched parameters will be done at certain fixed moments. The most common case is at application launch so that the parameters don't change while the application is running. Another option is to apply them immediately after the parameters have been fetched from the server.</p>
+
+<p>After the parameters have been fetched from the server and applyed locally, the application can read them by using getter functions.</p>
+
+<h3><a id="Declarative+vs.+Imperative" class="HashLink" href="#Declarative+vs.+Imperative">Declarative vs. Imperative</a></h3>
+
+<p>Solving the most common scenario has been implemented in a declarative way so that no code is required to use this feature. That includes:</p>
+
+<ul>
+	<li>defining the default values</li>
+	<li>indicating when to fetch the values from the server</li>
+	<li>indicating when the fetched values are applied</li>
+	<li>providing a strongly-typed definition for the valid parameters</li>
+</ul>
+
+<p>Besides providing the declarative solution, a custom, imperative solution is also provided to allow maximum flexibility.</p>
+
+<h2><a id="Remote+Configuration+providers" class="HashLink" href="#Remote+Configuration+providers">Remote Configuration providers</a></h2>
+
+<p>A new property has been added to the Native Mobile Main objects, to indicate the desired remote configuration provider.</p>
+
+<p>Note that the only provider implemented at this point is Firebase, but others may come in the future.</p>
+
+<h4><a id="wiki%3F48146%2CRemote%2BConfiguration%2BProvider%2Bproperty+Remote+Configuration+Provider+property" class="HashLink" href="#wiki%3F48146%2CRemote%2BConfiguration%2BProvider%2Bproperty+Remote+Configuration+Provider+property"><a href="48146.html">Remote Configuration Provider property</a></a></h4>
+
+<p>Provider to use for remotely configuring the mobile app, by using the RemoteConfig external object.</p>
+
+<p>Values:</p>
+
+<ul>
+	<li>None (default)</li>
+	<li>Firebase</li>
+</ul>
+
+<p>If the value <strong>None</strong> is selected, then this feature will be turned off.</p>
+
+<h3><a id="Additional+properties" class="HashLink" href="#Additional+properties">Additional properties</a></h3>
+
+<p>The following properties are available when the selected value for <strong>Remote Configuration Provider</strong> is different than <strong>None</strong>, in a section called &quot;Remote Configuration Settings&quot; inside the &quot;Main object properties&quot; section.</p>
+
+<h4><a id="wiki%3F48142%2CDefault%2BValues%2Bproperty+Default+Values+property" class="HashLink" href="#wiki%3F48142%2CDefault%2BValues%2Bproperty+Default+Values+property"><a href="48142.html">Default Values property</a></a></h4>
+
+<p>Provides the default values for the remote configuration parameters.</p>
+
+<h4><a id="wiki%3F48143%2CFetching%2Bof%2BRemote%2BValues%2Bproperty+Fetching+of+Remote+Values+property" class="HashLink" href="#wiki%3F48143%2CFetching%2Bof%2BRemote%2BValues%2Bproperty+Fetching+of+Remote+Values+property"><a href="48143.html">Fetching of Remote Values property</a></a></h4>
+
+<p>Indicates how the values are fetched from the server.</p>
+
+<p>Values:</p>
+
+<ul>
+	<li>On Application Activation (default): the app will try to fetch the remote values every time it launches or returns from a background state, but only if the Minimum Fetch Interval (see below) has passed since the last successful fetch.</li>
+	<li>After Elapsed Time: while the app is running, and after the Minimum Fetch Interval (see below) has passed since the last successful fetch, the app will try to fetch the values from the server.</li>
+	<li>Manual: the app will not fetch the values automatically, it is up to the developer to add the corresponding code to perform the fetching.</li>
+</ul>
+
+<h4><a id="wiki%3F48145%2CMinimum%2BFetch%2BInterval%2Bproperty+Minimum+Fetch+Interval+property" class="HashLink" href="#wiki%3F48145%2CMinimum%2BFetch%2BInterval%2Bproperty+Minimum+Fetch+Interval+property"><a href="48145.html">Minimum Fetch Interval property</a></a></h4>
+
+<p>Indicates the minimum time that has to pass after a successful fetch, to perform a new automatic fetch (that is, when Fetching of Remote Values != Manual).</p>
+
+<p>Value: An Integer value in minutes. Default value is 1.440 minutes (== 24 hours)</p>
+
+<h4><a id="wiki%3F48144%2CApplication%2Bof%2BFetched%2BValues%2Bproperty+Application+of+Fetched+Values+property" class="HashLink" href="#wiki%3F48144%2CApplication%2Bof%2BFetched%2BValues%2Bproperty+Application+of+Fetched+Values+property"><a href="48144.html">Application of Fetched Values property</a></a></h4>
+
+<p>Indicates when the fetched values should be applied.</p>
+
+<p>Values:</p>
+
+<ul>
+	<li>On Application Launch (default): the app will apply the fetched values, if any, when the application launches. If Fetching of Remote Values is set to On Application Activation, then the values are applied before fetching new values, meaning that the fetched values are applied on the next application launch.</li>
+	<li>Immediately: the fetched values are applied immediately after the fetch finishes. The next read of these values will return the newly fetched value.</li>
+	<li>Manual: values are not applied automatically, the developer is responsible for applying them.</li>
+</ul>
+
+<h2><a id="wiki%3F48160%2CRemoteConfig%2Bexternal%2Bobject+RemoteConfig+external+object" class="HashLink" href="#wiki%3F48160%2CRemoteConfig%2Bexternal%2Bobject+RemoteConfig+external+object"><a href="https://wiki.genexus.com/commwiki/wiki?48160,," target="_blank">RemoteConfig external object</a></a></h2>
+
+<p>This external object provides the functionality to be used by the application developer, to interact with the Remote Configuration Provider.</p>
+
+<ul>
+	<li>Name: <strong>RemoteConfig</strong></li>
+	<li>Location: GeneXus.SD module.</li>
+</ul>
+
+<p>This external object can be used in user events as well as in generated code (offline).</p>
+
+<h3><a id="Properties" class="HashLink" href="#Properties">Properties</a></h3>
+
+<h4><a id="LastSuccessfulFetch%3A+DateTime" class="HashLink" href="#LastSuccessfulFetch%3A+DateTime">LastSuccessfulFetch: DateTime</a></h4>
+
+<p>Indicates the timestamp of the last time the configuration was fetched successfully from the server.</p>
+
+<p>Note: if the Remote Configuration Property is set to None, or if the values haven’t been fetched yet, it returns the empty DateTime. If the last fetch resulted in an error, the DateTime returned corresponds to the previous fetch.</p>
+
+<p>Note: this property also takes into account fetch operations performed automátically.</p>
+
+<h4><a id="LastFetchStatus%3A+Enum%28FetchStatus%29+%7B+None%2C+Success%2C+Failure+%7D" class="HashLink" href="#LastFetchStatus%3A+Enum%28FetchStatus%29+%7B+None%2C+Success%2C+Failure+%7D">LastFetchStatus: Enum(FetchStatus) { None, Success, Failure }</a></h4>
+
+<p>Returns the last fetch status.</p>
+
+<p>Values:</p>
+
+<ul>
+	<li>None: values have never been fetched from the server</li>
+	<li>Success: the last fetch was successful</li>
+	<li>Failure: the last fetch could not be completed.</li>
+</ul>
+
+<p>Note: this property also takes into account fetch operations performed automátically.</p>
+
+<h3><a id="Methods" class="HashLink" href="#Methods">Methods</a></h3>
+
+<h4><a id="HasValue%28key%3A+String%29%3A+Boolean" class="HashLink" href="#HasValue%28key%3A+String%29%3A+Boolean">HasValue(key: String): Boolean</a></h4>
+
+<p>Returns True if there is a value with the given key (being it a default value or a value fetched from the server), False otherwise.</p>
+
+<h4><a id="GetStringValue%28key%3A+String%29%3A+String" class="HashLink" href="#GetStringValue%28key%3A+String%29%3A+String">GetStringValue(key: String): String</a></h4>
+
+<p>Returns the configured value for the given key as a String.</p>
+
+<p>Considerations:</p>
+
+<ul>
+	<li>If the value has been fetched from the server, it returns that value. If not, the default value is returned. If there is no value from the server, nor a default value, the empty String is returned.</li>
+	<li>If the Remote Configuration Provider is set to None, this method will return the empty string.</li>
+</ul>
+
+<h4><a id="GetIntegerValue%28key%3A+String%29%3A+Numeric%289%2C0%29" class="HashLink" href="#GetIntegerValue%28key%3A+String%29%3A+Numeric%289%2C0%29">GetIntegerValue(key: String): Numeric(9,0)</a></h4>
+
+<p>Returns the configured value for the given key as a number without decimals.</p>
+
+<p>Considerations: same consideration as from GetStringValue apply.</p>
+
+<h4><a id="GetDecimalValue%28key%3A+String%29%3A+Numeric%2812%2C4%29" class="HashLink" href="#GetDecimalValue%28key%3A+String%29%3A+Numeric%2812%2C4%29">GetDecimalValue(key: String): Numeric(12,4)</a></h4>
+
+<p>Returns the configured value for the given key as a number with decimals.</p>
+
+<p>Considerations: same consideration as from GetStringValue apply.</p>
+
+<h4><a id="GetBooleanValue%28key%3A+String%29%3A+Boolean" class="HashLink" href="#GetBooleanValue%28key%3A+String%29%3A+Boolean">GetBooleanValue(key: String): Boolean</a></h4>
+
+<p>Returns the configured value for the given key as boolean.</p>
+
+<p>Considerations: same consideration as from GetStringValue apply.</p>
+
+<h4><a id="GetDateValue%28key%3A+String%29%3A+Date" class="HashLink" href="#GetDateValue%28key%3A+String%29%3A+Date">GetDateValue(key: String): Date</a></h4>
+
+<p>Returns the configured value for the given key as a date.</p>
+
+<p>Considerations: same consideration as from GetStringValue apply.</p>
+
+<h4><a id="GetDateTimeValue%28key%3A+String%29%3A+DateTime" class="HashLink" href="#GetDateTimeValue%28key%3A+String%29%3A+DateTime">GetDateTimeValue(key: String): DateTime</a></h4>
+
+<p>Returns the configured value for the given key as a date-time.</p>
+
+<p>Considerations: same consideration as from GetStringValue apply.</p>
+
+<h4><a id="Fetch%28%29%3A+Boolean" class="HashLink" href="#Fetch%28%29%3A+Boolean">Fetch(): Boolean</a></h4>
+
+<p>Tries to get the values synchronically from the server. Returns True if successful, False otherwise.</p>
+
+<p>If the Remote Configuration Provider is set to None, this method returns False and finishes immediately.</p>
+
+<h4><a id="Apply%28%29%3A+Boolean" class="HashLink" href="#Apply%28%29%3A+Boolean">Apply(): Boolean</a></h4>
+
+<p>Tries to apply the values fetched by the last fetch operation (being it automatic or manual). Returns True if successful, False otherwise.</p>
+
+<p>If the Remote Configuration Provider is set to None or if there are no fetched values, this method returns False and finishes immediately.</p>
+
+<h2><a id="Examples" class="HashLink" href="#Examples">Examples</a></h2>
+
+<h3><a id="Before+you+start" class="HashLink" href="#Before+you+start">Before you start</a></h3>
+
+<p>To use Firebase Remote Config, you'll have to first create a project in the <a href='https://console.firebase.google.com/'>Firebase Console</a>, get the iOS and Android configuration files, and set them in your GeneXus KB.</p>
+
+<p>Take a look at <a href="41573.html">Firebase Analytics Android File property</a> and <a href="https://wiki.genexus.com/commwiki/wiki?41574,," target="_blank">Firebase Analytics iOS File property</a> for more information.</p>
+
+<h3><a id="Configuring+values+in+the+Firebase+Console" class="HashLink" href="#Configuring+values+in+the+Firebase+Console">Configuring values in the Firebase Console</a></h3>
+
+<p>To add or change the properties' values in Firebase, go to the <a href='https://console.firebase.google.com/'>Firebase Console</a>, select the appropriate project, and then search for Engage &gt; Remote Config on the menu on the left.</p>
+
+<p>There you can add or modify the values.</p>
+
+<h3><a id="About+the+examples" class="HashLink" href="#About+the+examples">About the examples</a></h3>
+
+<p>For this examples, suppose that you want to show some text inside a &quot;box&quot;, and you want to be able to change the box's border and background color by applying certain Theme Classes. For that, you create three classes: RedBox, GreenBox and BlueBox with the appropriate colors, and also, define a remote-configuration property with name &quot;box-class&quot; that you can configure in the Firebase Console.</p>
+
+<h3><a id="Fetch+on+app+activation%2C+Apply+on+app+launch%2C+change+the+class+in+the+ClientStart+event" class="HashLink" href="#Fetch+on+app+activation%2C+Apply+on+app+launch%2C+change+the+class+in+the+ClientStart+event">Fetch on app activation, Apply on app launch, change the class in the ClientStart event</a></h3>
+
+<p>Leave the <strong>Fetching of Remote Values</strong> and <strong>Application of Fetched Values</strong> properties with their default values, add a default value in the <strong>Default Values</strong> property for &quot;box-class&quot;.</p>
+
+<p>Then, add the following code to the ClientStart event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event ClientStart
+    composite
+        &amp;themeClassName = RemoteConfig.GetStringValue(&quot;box-class&quot;)
+        ctlBox.class = &amp;themeClassName
+    endComposite
+EndEvent</pre>
+
+<p>Note that:</p>
+
+<ul>
+	<li>the first time the app launches, it will fetch the values from the server but it will not apply them</li>
+	<li>the first time the ClientStart event is executed, the GetStringValue method will return the value defined in the <strong>Default Values</strong> property.</li>
+	<li>the next time the app launches it will apply the fetched values and return the value configured in the Firebase Console (if any).</li>
+</ul>
+
+<h3><a id="Fetch+on+app+activation%2C+Apply+immediately%2C+change+the+class+in+the+ClientStart+event" class="HashLink" href="#Fetch+on+app+activation%2C+Apply+immediately%2C+change+the+class+in+the+ClientStart+event">Fetch on app activation, Apply immediately, change the class in the ClientStart event</a></h3>
+
+<p>Leave the <strong>Fetching of Remote Values</strong> property with it's default value, set <strong>Application of Fetched Values</strong> to Immediately, add a default value in the <strong>Default Values</strong> property for &quot;box-class&quot;.</p>
+
+<p>Then, add the following code to the ClientStart event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event ClientStart
+    composite
+        &amp;themeClassName = RemoteConfig.GetStringValue(&quot;box-class&quot;)
+        ctlBox.class = &amp;themeClassName
+    endComposite
+EndEvent</pre>
+
+<p>Note that:</p>
+
+<ul>
+	<li>the first time the app launches, it will fetch the values from the server and it will apply them immediately</li>
+	<li>the first time the ClientStart event is executed, the GetStringValue method will return the value fetched from the Firebase Console (if any), or it will fall back to the one defined in the <strong>Default Values</strong> property.</li>
+</ul>
+
+<h3><a id="Manually+Fetch+and+Apply+values%2C+change+the+class+in+the+ClientStart+event" class="HashLink" href="#Manually+Fetch+and+Apply+values%2C+change+the+class+in+the+ClientStart+event">Manually Fetch and Apply values, change the class in the ClientStart event</a></h3>
+
+<p>Set <strong>Fetching of Remote Values</strong> property to Manual, set <strong>Application of Fetched Values</strong> to Manual, add a default value in the <strong>Default Values</strong> property for &quot;box-class&quot;.</p>
+
+<p>Then, add the following code to the ClientStart event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event ClientStart
+    composite
+        &amp;themeClassName = RemoteConfig.GetStringValue(&quot;box-class&quot;)
+        ctlBox.class = &amp;themeClassName
+    endComposite
+EndEvent</pre>
+
+<p>Also add another event, somewhere in your app, like this:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'FetchAndApply'
+    composite
+        &amp;success = RemoteConfig.Fetch()
+        if &amp;success
+            RemoteConfig.Apply()
+        endif
+    endComposite
+EndEvent</pre>
+
+<p>Note that:</p>
+
+<ul>
+	<li>no values will be fetched unless the 'FetchAndApply' event is executed.</li>
+</ul>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="48144.html">Application of Fetched Values property</a></TD><TD><a href="48142.html">Default Values property</a></TD><TD><a href="48143.html">Fetching of Remote Values property</a></TD></TR><TR><TD><a href="47936.html">GeneXus 17 upgrade 4</a></TD><TD><a href="48145.html">Minimum Fetch Interval property</a></TD></TR><TR><TD><a href="48146.html">Remote Configuration Provider property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/21 06:57 PM</em></font></td></TR></table></font>

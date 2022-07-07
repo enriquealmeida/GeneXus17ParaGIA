@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Scenario of backward compatible reorganizations</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48715,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Scenario of backward compatible reorganizations</h1>
+<!--Scenario of backward compatible reorganizations--><div class="TableWikiBody" id="tblwikibody"><p>In some scenarios, it would be useful to know in advance whether a certain database reorganization may cause the current programs to be incompatible with the new DB schema.</p>
+
+<p>To become aware of these situations at an early stage, GeneXus has incorporated the following information message in the Impact Analysis Report:</p>
+
+<p>nfo0003 The reorganization for this table makes the schema not backward compatible.</p>
+
+<p>Thus, you can choose to apply the change in the database or perform the reorganization differently to maintain compatibility with the current programs.</p>
+
+<p>Below is a description of some of the possible scenarios and the different controls currently performed at impact time.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>When a change is made to the data model, GeneXus not only impacts the database, but also regenerates all programs that may be affected by this change. That is, a change from version v1 to version v2 of the database also implies a change in the binaries (v1 → v2).</p>
+
+<p>These changes in the data model don’t always generate new physical models or schemas that are compatible with the previous programs. In addition, it is not always possible to deploy v1 and v2 programs in a mutually exclusive way; that is, it is not always possible to prevent v1 and v2 programs from connecting to the database at the same time.</p>
+
+<p>Below are some of these scenarios, where v2 programs have to coexist for a certain time with v1 programs, accessing the same v2 version of the database:</p>
+
+<ul>
+	<li>High availability scenario and multiple nodes with load balancing: While some nodes are still running the old programs, others are already starting to run the new ones.</li>
+	<li>A/B testing scenario: A segment of users is running the new programs while the rest are still running the old ones.</li>
+	<li>Mini service architecture scenarios: Various apps, web apps, processes, services open to third parties, accessing the same database; only some of these apps need to be upgraded to v2 while the others must continue to work in v1.</li>
+</ul>
+
+<p>Note that this time is indeterminate, as it can be seconds, but it can also be days or months.</p>
+
+<p>For these scenarios, it is useful to know in advance whether the impact is timely, and to have the option of not enabling this type of reorganization.</p>
+
+<p>For this purpose, GeneXus incorporates different verifications in the impact analysis, which make it possible to report these cases, and even to stop them when they appear.</p>
+
+<h3><a id="Backward+Incompatible+Information+Message+in+the+Impact+Analysis" class="HashLink" href="#Backward+Incompatible+Information+Message+in+the+Impact+Analysis">Backward Incompatible Information Message in the Impact Analysis</a></h3>
+
+<p>The impact analysis report informs whether the reorganization to be performed on the table is “backward incompatible” with the current programs.</p>
+
+<p>In the “Information” section, this message is displayed: “nfo0003 The reorganization for this table makes the schema not backward compatible”, with the corresponding description.</p>
+
+<p>For example, suppose there is a “Customer” Transaction in production that is composed as follows (v1):</p>
+
+<p><img src="./images/48716.png" id="48716" class="WikiImage"/></p>
+
+<p>These changes are applied to the structure (v2) to represent the new reality:</p>
+
+<p><img src="./images/48717.png" id="48717" class="WikiImage"/></p>
+
+<p>Note that:</p>
+
+<ul>
+	<li>Two new attributes, <em>CustomerFirstName</em> and <em>CustomerLastName</em>, are added</li>
+	<li><em>CustomerName</em> is deleted</li>
+</ul>
+
+<p>The impact analysis report shows the following information:</p>
+
+<p><img src="./images/48718.png" id="48718" class="WikiImage"/></p>
+
+<p>They indicate that these changes are not backward compatible.</p>
+
+<p>Therefore, if the current programs (v1) must continue to work with the new schema (v2), some actions will be necessary before executing this reorganization. For example, configuring the new attributes <em>CustomerFirstName</em> and <em>CustomerLastName</em> as Nullables (Nullable = Yes).</p>
+
+<h3><a id="Compatibility+controls" class="HashLink" href="#Compatibility+controls">Compatibility controls</a></h3>
+
+<p>These are the compatibility controls made by GeneXus:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<th scope="row">Case</th>
+			<td style="text-align: center;"><strong>Change Made</strong></td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Add not null attribute %1</p>
+			</th>
+			<td>
+			<p>A new attribute %1 is added with Nullable=No</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Rename table %1</p>
+			</th>
+			<td>
+			<p>Table %1 is renamed</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Remove nullability for attribute %1</p>
+			</th>
+			<td>
+			<p>The Nullable property of the attribute %1 is changed to the value “No”</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Delete attribute %1</p>
+			</th>
+			<td>
+			<p>Attribute %1 is deleted from the table</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Delete table %1</p>
+			</th>
+			<td>
+			<p>Table %1 is deleted</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Rename attribute %1</p>
+			</th>
+			<td>
+			<p>Attribute %1 is renamed</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Change type for attribute %1</p>
+			</th>
+			<td>
+			<p>The data type of attribute %1 is changed</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Change length/decimals for attribute %1</p>
+			</th>
+			<td>
+			<p>The length for attribute %1 of Numeric type is changed</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Decrease length for attribute %1</p>
+			</th>
+			<td>
+			<p>The length of the numeric attribute %1 is changed to a smaller size</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Change primary key composition</p>
+			</th>
+			<td>
+			<p>The composition of the table’s primary key is changed</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Add unique constraint %1</p>
+			</th>
+			<td>
+			<p>A new candidate key is created from the index %1 of the table</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row" style="text-align: left;">
+			<p>Add foreign key constraint %1</p>
+			</th>
+			<td>
+			<p>A new foreign key is added which implies a new integrity constraint</p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<p>As design criteria for determining which cases to report, the above scenarios were considered. Therefore, cases are reported when:</p>
+
+<ul>
+	<li>They would generate a SQL error in v1 programs. For example, if an attribute is deleted, v1 programs would give an “Invalid Column” error when trying to access it.</li>
+	<li>They would generate great risks in v1 program navigations. For example, “Change primary key composition” doesn’t necessarily generate a SQL error, but it causes old programs to not navigate as expected and compromises data integrity.</li>
+</ul>
+
+<h3><a id="How+to+avoid+executing+reorganizations+of+this+type" class="HashLink" href="#How+to+avoid+executing+reorganizations+of+this+type">How to avoid executing reorganizations of this type</a></h3>
+
+<p>To not only be informed, but also to stop these reorganizations, the message 'nfo0003' must be included in the list of <a href="8010.html">Warnings treated as errors property</a>.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="48247.html">GeneXus 17 upgrade 5</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="3154.html">Features of Reorganizations</a></p>
+
+<p></p>
+<br />
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="3154.html">Features of Reorganizations</a></TD><TD><a href="48247.html">GeneXus 17 upgrade 5</a></TD><TD><a href="45847.html">Information messages at Specification time</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/20/21 02:41 PM</em></font></td></TR></table></font>

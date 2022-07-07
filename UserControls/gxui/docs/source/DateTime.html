@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * GxUI Library 2.0.1
+ * Copyright (c) 2009, Artech
+ * All rights reserved.
+ * 
+ * GxUI Library is freely distributable under the terms of the BSD license.
+ * 
+ */
+
+<span id='Ext-ux-form-field-DateTime'>/**
+</span>* @class Ext.ux.form.field.DateTime
+* @extends Ext.form.FieldContainer
+* @version 0.2 (July 20th, 2011)
+* @author atian25 (http://www.sencha.com/forum/member.php?51682-atian25)
+* @author ontho (http://www.sencha.com/forum/member.php?285806-ontho)
+* @author jakob.ketterl (http://www.sencha.com/forum/member.php?25102-jakob.ketterl)
+* @link http://www.sencha.com/forum/showthread.php?134345-Ext.ux.form.field.DateTime
+* @ignore
+*/
+Ext.define('Ext.ux.form.field.DateTime', {
+	extend: 'Ext.form.FieldContainer',
+	mixins: {
+		field: 'Ext.form.field.Field'
+	},
+	alias: 'widget.xdatetime',
+
+<span id='Ext-ux-form-field-DateTime-property-combineErrors'>	//configurables
+</span>
+	combineErrors: true,
+<span id='Ext-ux-form-field-DateTime-property-msgTarget'>	msgTarget: 'under',
+</span><span id='Ext-ux-form-field-DateTime-property-layout'>	layout: 'hbox',
+</span><span id='Ext-ux-form-field-DateTime-property-readOnly'>	readOnly: false,
+</span>
+<span id='Ext-ux-form-field-DateTime-cfg-dateFormat'>	/**
+</span>	* @cfg {String} dateFormat
+	* Convenience config for specifying the format of the date portion.
+	* This value is overridden if format is specified in the dateConfig.
+	* The default is 'Y-m-d'
+	*/
+	dateFormat: 'Y-m-d',
+<span id='Ext-ux-form-field-DateTime-cfg-timeFormat'>	/**
+</span>	* @cfg {String} timeFormat
+	* Convenience config for specifying the format of the time portion.
+	* This value is overridden if format is specified in the timeConfig. 
+	* The default is 'H:i:s'
+	*/
+	timeFormat: 'H:i:s',
+	//    /**
+	//     * @cfg {String} dateTimeFormat
+	//     * The format used when submitting the combined value.
+	//     * Defaults to 'Y-m-d H:i:s'
+	//     */
+	//    dateTimeFormat: 'Y-m-d H:i:s',
+<span id='Ext-ux-form-field-DateTime-cfg-dateConfig'>	/**
+</span>	* @cfg {Object} dateConfig
+	* Additional config options for the date field.
+	*/
+	dateConfig: {},
+<span id='Ext-ux-form-field-DateTime-cfg-timeConfig'>	/**
+</span>	* @cfg {Object} timeConfig
+	* Additional config options for the time field.
+	*/
+	timeConfig: {},
+
+
+<span id='Ext-ux-form-field-DateTime-property-dateValue'>	// properties
+</span>
+	dateValue: null, // Holds the actual date
+<span id='Ext-ux-form-field-DateTime-property-dateField'>	/**
+</span>	* @property dateField
+	* @type Ext.form.field.Date
+	*/
+	dateField: null,
+<span id='Ext-ux-form-field-DateTime-property-timeField'>	/**
+</span>	* @property timeField
+	* @type Ext.form.field.Time
+	*/
+	timeField: null,
+
+<span id='Ext-ux-form-field-DateTime-method-initComponent'>	initComponent: function () {
+</span>		var me = this
+            , i = 0
+            , key
+            , tab;
+
+		me.items = me.items || [];
+
+		me.dateField = Ext.create('Ext.form.field.Date', Ext.apply({
+			format: me.dateFormat,
+			flex: 1,
+			isFormField: false, //exclude from field query's
+			submitValue: false
+		}, me.dateConfig));
+		me.items.push(me.dateField);
+
+		me.timeField = Ext.create('Ext.form.field.Time', Ext.apply({
+			format: me.timeFormat,
+			flex: 1,
+			isFormField: false, //exclude from field query's
+			submitValue: false
+		}, me.timeConfig));
+		me.items.push(me.timeField);
+
+		for (; i &lt; me.items.length; i++) {
+			me.items[i].on('focus', Ext.bind(me.onItemFocus, me));
+			me.items[i].on('blur', Ext.bind(me.onItemBlur, me));
+			me.items[i].on('specialkey', function (field, event) {
+				key = event.getKey();
+				tab = key == event.TAB;
+
+				if (tab &amp;&amp; me.focussedItem == me.dateField) {
+					event.stopEvent();
+					me.timeField.focus();
+					return;
+				}
+
+				me.fireEvent('specialkey', field, event);
+			});
+		}
+
+		me.callParent();
+
+		// this dummy is necessary because Ext.Editor will not check whether an inputEl is present or not
+		//		this.inputEl = {
+		//			dom: {},
+		//			swallowEvent: function () { }
+		//		};
+
+		me.initField();
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-focus'>	focus: function () {
+</span>		this.callParent();
+		Ext.defer(this.dateField.focus, 100, this.dateField);
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-onItemFocus'>	onItemFocus: function (item) {
+</span>		if (this.blurTask) {
+			this.blurTask.cancel();
+		}
+		this.focussedItem = item;
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-onItemBlur'>	onItemBlur: function (item, e) {
+</span>		/*var me = this;
+		if (item != me.focussedItem) { return; }
+		// 100ms to focus a new item that belongs to us, otherwise we will assume the user left the field
+		me.blurTask = new Ext.util.DelayedTask(function () {
+			me.fireEvent('blur', me, e);
+		});
+		me.blurTask.delay(100);*/
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-getValue'>	getValue: function () {
+</span>		var value = null
+            , date = this.dateField.getSubmitValue()
+            , time = this.timeField.getSubmitValue()
+            , format;
+
+		if (date) {
+			if (time) {
+				format = this.getFormat();
+				value = Ext.Date.parse(date + ' ' + time, format);
+			} else {
+				value = this.dateField.getValue();
+			}
+		}
+		return value;
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-getSubmitValue'>	getSubmitValue: function () {
+</span>		//        var value = this.getValue();
+		//        return value ? Ext.Date.format(value, this.dateTimeFormat) : null;
+
+		var me = this
+            , format = me.getFormat()
+            , value = me.getValue();
+
+		return value ? Ext.Date.format(value, format) : null;
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-setValue'>	setValue: function (value) {
+</span>		if (Ext.isString(value)) {
+			value = Ext.Date.parse(value, this.getFormat()); //this.dateTimeFormat
+		}
+		this.dateField.setValue(value);
+		this.timeField.setValue(value);
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-getFormat'>	getFormat: function () {
+</span>		return (this.dateField.submitFormat || this.dateField.format) + &quot; &quot; + (this.timeField.submitFormat || this.timeField.format);
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-getSubmitData'>	// Bug? A field-mixin submits the data from getValue, not getSubmitValue
+</span>	getSubmitData: function () {
+		var me = this
+            , data = null;
+
+		if (!me.disabled &amp;&amp; me.submitValue &amp;&amp; !me.isFileUpload()) {
+			data = {};
+			data[me.getName()] = '' + me.getSubmitValue();
+		}
+		return data;
+	},
+
+<span id='Ext-ux-form-field-DateTime-method-isValid'>	isValid: function () {
+</span>		return this.dateField.isValid() &amp;&amp; this.timeField.isValid();
+	}
+});</pre>
+</body>
+</html>

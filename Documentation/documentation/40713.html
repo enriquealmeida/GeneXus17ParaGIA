@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>OData Support in GeneXus</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?40713,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">OData Support in GeneXus</h1>
+<!--OData Support in GeneXus--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Many times we want to integrate a GeneXus application with external data sources.</p>
+
+<p>When this source comes from a DBMS and direct access is allowed, the <a href="https://wiki.genexus.com/commwiki/wiki?2468,," target="_blank">DBRet</a> can be used to integrate it into the GeneXus model.</p>
+
+<p>Currently, when the interface with the external source is not SQL, integration with GeneXus must be performed through procedures and/or external objects. The drawback of this solution is that it does not integrate the data source into the GeneXus model, and therefore natural language constructions (<a href="1908.html">Transactions</a>, <a href="5846.html">Business Components</a>, <a href="24744.html">For Each commands</a>, <a href="5271.html">Data Selectors</a>) cannot be used, and the use of others (<a href="5270.html">Data Providers</a>, grids, etc.) is limited or cumbersome. In this scenario, the specifier cannot generate navigations for this Datasource.</p>
+
+<p>To solve this, a mechanism has been added to GeneXus in order to integrate non-SQL external sources into the GeneXus model. This mechanism is extensible and allows adding new data sources.</p>
+
+<p>This mechanism incorporates a new type of extensible <a href="7117.html">Data Store</a> (Service). In this way, a GeneXus navigation can be calculated over this Data Store and later translated into a query to the external source.</p>
+
+<p>The solution consists of 3 phases (design, generation, execution time):</p>
+
+<ul>
+	<li>Design: Inspection of the external data source and integration into the GX model.</li>
+	<li>Generation: From the navigations determined by the specifier, generation of the queries for the external source.</li>
+	<li>Execution time: Execution of a query for the external source and reinterpretation of results in the GX model.</li>
+</ul>
+
+<p>One of the possible data sources, in the above scenario, is an OData Service.</p>
+
+<p>Open Data Protocol (a.k.a OData) is a data access protocol designed to provide standard CRUD access to a data source via a website.</p>
+
+<p>&quot;Open Data Protocol (OData) is a standardized protocol for creating and consuming data APIs. OData builds on core protocols like HTTP and commonly accepted methodologies like REST. The result is a uniform way to expose full-featured data APIs.&quot;</p>
+
+<p>Source: <a href='https://www.odata.org/'>Odata Home page.</a></p>
+
+<h2><a id="Technology+used" class="HashLink" href="#Technology+used">Technology used</a></h2>
+
+<p>The GeneXus implementation is based on version 4 of the protocol (OData Version Documentation), and even though services implemented in previous versions are supported, there is no guarantee that there won't be any problems.</p>
+
+<h3><a id="How+to+Consume+OData+Services" class="HashLink" href="#How+to+Consume+OData+Services">How to Consume OData Services</a></h3>
+
+<p>Let's see this feature with an example.</p>
+
+<p>Suppose you want to integrate the OData TripPin model into your Knowledge Base.</p>
+
+<p><strong>OData model of the example (TripPin)</strong></p>
+
+<p><img src="./images/36123.png" id="36123" class="WikiImage"/></p>
+
+<p>It consists of 4 main entities:</p>
+
+<ol>
+	<li>Person</li>
+	<li>Airline</li>
+	<li>Airport</li>
+	<li>Photo</li>
+</ol>
+
+<p>The other entities cannot be the &quot;base entity&quot; of a query; that is to say, for example, I cannot access a Trip directly and I should do it through a Person instead.</p>
+
+<p>The model is quite complete in that it uses a lot of OData v4 features, some of which are not directly mapped to the GeneXus model:</p>
+
+<ul>
+	<li>There are fields of entities that are collections.</li>
+	<li>There are entities of complex data types (a Person has a collection of AddressInfo where each AddressInfo is a complex type that has a City, for example).</li>
+	<li>There are fields based on <a href="2207.html">Enumerated Domanins</a> (Gender), as well as <a href="20206.html">Subtypes</a> (Friends),<a href="32408.html">Geography data type</a> (Loc), Multimedia (Photo), <a href="25327.html">Formulas</a> (Concurrency).</li>
+</ul>
+
+<h2><a id="Importing+the+model+from+GeneXus" class="HashLink" href="#Importing+the+model+from+GeneXus">Importing the model from GeneXus</a></h2>
+
+<p>To import the model, select <strong>Tools / Application Integration / External Data Store Service Import</strong>.</p>
+
+<p>Since the import will create attributes with long names, increasing the value of Significant Attribute Name Length in the version's properties is convenient.</p>
+
+<p>A screen like the following will be displayed:</p>
+
+<p><img src="./images/36124.png" id="36124" class="WikiImage"/></p>
+
+<p>There, select &quot;OData&quot; as a Service Provider and select a Data Store of Service type.</p>
+
+<p>If one doesn't exist, you can create it right there using the New button.</p>
+
+<p>Next, add:</p>
+
+<ul>
+	<li>The service URL, in this case: https://services.odata.org/V4/(S(40gwjcqlhjmuyfayfnplov0o))/TripPinServiceRW/</li>
+	<li>User and Password to access the service (in this case it has no authentication).</li>
+	<li>Extra connection information; in this case, filter_strings=n to indicate that the service doesn't support conditions through &gt;, &lt;, &gt;=, &lt;= with the String data type.</li>
+</ul>
+
+<p>When inspecting the service, a new dialog appears to choose which entities to import:</p>
+
+<p><img src="./images/36126.png" id="36126" class="WikiImage"/></p>
+
+<p>By default, this dialog only shows transactions associated with main entities. In this case, the Import process will import all the additional transactions required to work with the selected main entities. If you want to specifically import part of the model, you can deselect &quot;Show only top level&quot; and manually select the transactions you want to import (not recommended).</p>
+
+<h2><a id="SAP%27s+OData+Services" class="HashLink" href="#SAP%27s+OData+Services">SAP's OData Services</a></h2>
+
+<p>SAP has widely adopted this protocol for exchanging data. Although it provides many pre-built services that can be consumed with GeneXus using this mechanism, you can also invoke Abap functions (or BAPIs) of SAP ERP, published as OData services in SAP NetWeaver Gateway.</p>
+
+<p>To publish a BAPI as OData service, follow this <a href='https://blogs.sap.com/2012/10/26/step-by-step-guide-to-build-an-odata-service-based-on-rfcs-part-1/'>wizard</a>.</p>
+
+<p>SAP NetWeaver Gateway uses &quot;cross-site request forgery&quot; as <a href='https://laravel.com/docs/5.4/csrf'>security method</a>. You need to send your username and password to SAP and it sends a token similar to 'X-CSRF-Token: qyFwSG-_meLAJt-Ei7gOBA==' that you need to use in future POST/PUT/PATCH/DELETE operations. To have GeneXus do it automatically when importing the service, in the <strong>Connection info </strong>field (and/or in the property Additional connection string attributes of the Data store associated with the OData services), enter <strong>SAP=true</strong>. </p>
+
+<p>In case you want to consume from SAP Business One instead of ERP you have to add <strong>SapLogin=&lt;sapLogin&gt;</strong>,<strong> </strong>rather than SAP=true, where &lt;<strong>sapLogin&gt;</strong> is the CompanyDB name (Temporary only available on for C#)</p>
+
+<p> </p>
+
+<h2><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h2>
+
+<ul>
+	<li>OData allows exposing functions; for example, the TripPin model has a function that returns the nearest airport. This could be modeled as a method of an external object, but at the moment it is not implemented.</li>
+	<li>Some things have to be worked on; for example, not all orders are valid in OData, or some orders are partial. The queries currently generated generally work, but sometimes the order is not taken into account. </li>
+	<li>In .Net, updates over the multimedia type do not work well.</li>
+	<li>In Java, it is only supported OData v4. </li>
+	<li>The query object does not support OData (it only generates SQL queries at the moment, no OData queries). For this reason, the solution is to create a Data Provider that returns the data (since the Data Provider does support the generation of OData queries) and associate this DP to the Query Viewer (Property Data bindings / Object)</li>
+</ul>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This feature is available as of <a href="https://wiki.genexus.com/commwiki/wiki?35351,," target="_blank">GeneXus 16</a>.</p>
+
+<p> </p>
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="47418.html">GeneXus 17 upgrade 2</a></TD></TR><TR><TD><a href="46884.html">GeneXus for SAP Systems 17 Release Notes</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/13/21 05:05 PM</em></font></td></TR></table></font>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Request data from Facebook using Graph API and Access Token</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?38437,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Request data from Facebook using Graph API and Access Token</h1>
+<!--HowTo: Request data from Facebook using Graph API and Access Token--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document presents an example of how to use <a href='https://developers.facebook.com/docs/graph-api'>Facebook's GraphAPI</a> in Smart Device applications using GeneXus. </p>
+
+<h3><a id="Step+1%3A+Register+your+application" class="HashLink" href="#Step+1%3A+Register+your+application">Step 1: Register your application</a></h3>
+
+<p>You must register your application on the Facebook developer site and get your <em>Facebook App Id</em>.<br />
+Refer to <a href="19399.html">HowTo: Register a Facebook App for Smart Device interaction</a> for detailed information.</p>
+
+<h3><a id="Step+2%3A+Integrate+Facebook%27s+login+and+request+access+token" class="HashLink" href="#Step+2%3A+Integrate+Facebook%27s+login+and+request+access+token">Step 2: Integrate Facebook's login and request access token</a></h3>
+
+<p>Use <a href="31841.html">Facebook Button control</a> to allow the end user to log in to the GeneXus app using Facebook's credentials. This action will allow you to get the user's Access Token and use the Graph API for retrieving user data.</p>
+
+<p>For example, you can use the <em>OnUserInfoUpdated</em><em> </em>event and request the <a href="38432.html">access token</a> as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &amp;SDFacebookButton.OnUserInfoUpdated
+    &amp;FacebookAccessToken = Facebook.AccessToken
+Endevent</pre>
+
+<p>where <span style="font-family: courier new;">&amp;FBAccessToken</span> is based on <a href="38432.html">FacebookAccessToken SDT</a>.</p>
+
+<p>In this case, we will use the Graph API for getting the <a href='https://developers.facebook.com/docs/facebook-login/permissions/#reference-user_posts'>user's posts</a>. To do so, the developer must ensure that &quot;user_posts&quot; tag is added to <a href="31841.html">Read Permission property</a>. When the end user logs in, <u><strong>Facebook will inform</strong></u><strong> </strong>him/her about your purpose (in this case, get his/her posts).</p>
+
+<h3><a id="Step+3%3A+Request+data+from+Facebook+using+Graph+API" class="HashLink" href="#Step+3%3A+Request+data+from+Facebook+using+Graph+API">Step 3: Request data from Facebook using Graph API</a></h3>
+
+<p>Write an online Procedure for requesting the GraphAPI data by using <a href="6932.html">HttpClient data type</a>. This procedure should receive in its parm rule the access token and user identifier strings obtained from the device.</p>
+
+<p>For example, suppose the procedure is called <span style="font-family: courier new;">GetUserPosts</span>, and it has defined the following parm rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;AccessToken, in:&amp;UserId, out:&amp;FBJson);</pre>
+
+<p>You can write a source code as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;FBVersion = !&quot;v2.12&quot; // Change it if it is necessary
+&amp;Url = !&quot;https://graph.facebook.com/<strong>%version</strong>/<strong>%user_id</strong>/feed?access_token=<strong>%access_token</strong>&quot;
+&amp;Url = &amp;Url.Replace(&quot;<strong>%version</strong>&quot;,&amp;FBVersion)
+&amp;Url = &amp;Url.Replace(&quot;<strong>%user_id</strong>&quot;,&amp;UserId)
+&amp;Url = &amp;Url.Replace(&quot;<strong>%access_token</strong>&quot;,&amp;AccessToken)
+&amp;HttpClient.Execute(HttpMethod.Get,&amp;Url)
+&amp;FBJson = &amp;HttpClient.ToString()
+</pre>
+
+<p>Then, in a user event, you can invoke this procedure as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Get My Posts'
+    &amp;FBJson = GetUserPosts(&amp;FacebookAccessToken.AccessToken, &amp;FacebookAccessToken.UserId)
+Endevent
+</pre>
+
+<p>As a result, after the user has logged in, the <span style="font-family: courier new;">&amp;FBJson </span>string-based variable will have the following value:</p>
+
+<pre>
+{
+   &quot;data&quot;: [
+      {
+         &quot;story&quot;: &quot;Damian Salvia is with Pablo Martinez and 5 others.&quot;,
+         &quot;created_time&quot;: &quot;2018-05-07T16:13:21+0000&quot;,
+         &quot;id&quot;: &quot;&lt;id&gt;&quot;
+      },
+      {
+         &quot;story&quot;: &quot;Stella Marys Pereira Larrosa added a new photo \u2014 with Nicolas Mechulam and 2 others.&quot;,
+         &quot;created_time&quot;: &quot;2019-07-11T15:12:25+0000&quot;,
+         &quot;id&quot;: &quot;&lt;id&gt;&quot;
+      },
+      ...
+      ], 
+   &quot;paging&quot;: {
+      &quot;previous&quot;: &quot;https://graph.facebook.com/v2.12/&lt;user_id&gt;/feed?since=&lt;datetime&gt;&amp;access_token=&lt;token&gt;&amp;limit=&lt;number&gt;&amp;__paging_token=&lt;token&gt;&amp;__previous=1&quot;,
+      &quot;next&quot;: &quot;https://graph.facebook.com/v2.12/&lt;user_id&gt;/feed?access_token=&lt;token&gt;&amp;limit=&lt;number&gt;&amp;until=&lt;datetime&gt;&amp;__paging_token=&lt;token&gt;&quot;
+}
+</pre>
+
+<p>It's your responsibility to parse the result to meet your requirements.</p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>Full Graph API integration is available as of <a href="https://wiki.genexus.com/commwiki/wiki?38023,," target="_blank">Genexus 15 Upgrade 10</a>.</p>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li><a href='https://developers.facebook.com/docs/graph-api/reference'>Graph API Reference</a></li>
+	<li><a href="19399.html">HowTo: Register a Facebook App for Smart Device interaction</a></li>
+	<li><a href="31841.html">Facebook Button control</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38432.html">Facebook external object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

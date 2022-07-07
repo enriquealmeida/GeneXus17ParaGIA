@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Translation exceptions property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?13245,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Translation exceptions property</h1>
+<!--Translation exceptions property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td> Lists the exceptions that must not be translated.  <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Level:</strong> <a href="7115.html">Environment</a><br /></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>When using <a href="6330.html">Application Localization</a>, there may be many string constants in an application that must <u>not</u> be translated. They can be marked as not translatable by preceding each one with the &quot;!&quot; (bang) sign. Doing so one at a time is usually an error-prone and time-consuming task.</p>
+
+<p>In many situations, you will notice that untranslatable strings share certain patterns (<a href="4606.html">Regular Expressions (RegEx)</a>). To name a few untranslatable string constant patterns:</p>
+
+<ul>
+	<li>String constants holding HTML (or XML) code usually start with a &quot;&lt;&quot; and end with a &quot;&gt;&quot; sign.</li>
+	<li>Numeric constants only have numbers, a decimal separator, and an optional sign.</li>
+	<li>String constants holding a single character are usually codes.</li>
+</ul>
+
+<p>This property is intended as a &quot;development time saver&quot; holding a list of regular expressions. If a string constant matches any of these expressions, it is considered as if it were preceded by a “!” symbol (i.e. not translatable).</p>
+
+<p>It will be considered when the value of the <a href="https://wiki.genexus.com/commwiki/wiki?9126,," target="_blank">Translation Type Property</a> is <em>Run-time</em> or <em>Static</em>.</p>
+
+<p>Examples are: HTML code, SQL Statements (using the standard create/update/delete/insert keywords), strings representing numbers, underlining, etc. Regular expression syntax is described below (it is a partial list of the default regular expressions):</p>
+
+<table>
+	<tbody>
+		<tr>
+			<td>[- ]?\d \.?\d*</td>
+			<td>Strings representing numbers</td>
+		</tr>
+		<tr>
+			<td>[ \t\-_=x\*]</td>
+			<td>Underlining</td>
+		</tr>
+		<tr>
+			<td>#[0123456789ABCDEF]{6}</td>
+			<td>HTML color</td>
+		</tr>
+		<tr>
+			<td>.*javascript.*</td>
+			<td>Javascript code</td>
+		</tr>
+		<tr>
+			<td>&lt;.*&gt;</td>
+			<td>XML or HTML code</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>GeneXus incorporates a list of default values displayed in the property. They can be deleted and changed, and new ones can be entered using the associated editor.</p>
+
+<p><img src="./images/19930.png" id="19930" class="WikiImage"/></p>
+
+<p>The <em>Add</em>, <em>Delete,</em> and <em>Edit</em> buttons will allow you to add, delete and change an exception. Case sensitivity can be changed with the <em>Toggle Case</em> button to determine the interpretation of uppercase and lowercase characters.</p>
+
+<p>To enter or edit an exception, read the document <a href="4606.html">Regular Expressions (RegEx)</a> that explains the rules for writing exceptions.</p>
+
+<h3><a id="Translating+untranslatable+string+constants" class="HashLink" href="#Translating+untranslatable+string+constants">Translating untranslatable string constants</a></h3>
+
+<p>Having, for example, “&lt;.*&gt;” as a Translation Exception so that HTML (or XML) tags are not translatable will make the string constant “&lt;Enter&gt;” to be considered untranslatable too. To translate the constant, follow one of the alternatives below:</p>
+
+<ul>
+	<li>Replace the constant with:</li>
+</ul>
+
+<p style="margin-left: 40.0px;">format(“&lt;%1&gt;”, “Enter”)</p>
+
+<p style="margin-left: 40.0px;">Note that here the “Enter” constant is to be translated but not the “&lt;%1&gt;” constant.</p>
+
+<ul>
+	<li>Delete the Translation Exception and in the code look for all the constants starting with “&lt;” and ending with “&gt;” to add a “!” symbol in front of them.</li>
+</ul>
+
+<h4><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h4>
+
+<p>Since <a href="47936.html">GeneXus 17 upgrade 4</a> the following exceptions were removed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+create[[:blank:]]+.*
+delete[[:blank:]]+.*[[:blank:]]+from[[:blank:]]+.*
+insert[[:blank:]]+into[[:blank:]]+.*
+select[[:blank:]]+ .*[[:blank:]]+from[[:blank:]]+.*
+truncate[[:blank:]]+table[[:blank:]]+.*
+update[[:blank:]]+.*[[:blank:]]+set[[:blank:]]+.*</pre>
+
+<p> </p></p>
+ <h3><a id="Run-time%2FDesign-time" class="HashLink" href="#Run-time%2FDesign-time">Run-time/Design-time</a></h3>
+
+<p> This property applies only at design-time.</p>
+ <h3><a id="wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes" class="HashLink" href="#wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes"><a href="17719.html">How to apply changes</a></a></h3>
+
+<p> <table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>To apply the corresponding changes when the property value is configured, execute a <a href="5691.html">Rebuild All</a>.</p></td></tr></tbody></table></p>
+ <h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p> <p><a href="https://wiki.genexus.com/commwiki/wiki?9126,," target="_blank">Translation Type Property</a><br />
+<a href="13242.html">Translate to language property</a><br />
+<a href="4606.html">Regular Expressions (RegEx)</a></p></p>
+ </td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/31/21 05:22 PM</em></font></td></TR></table></font>

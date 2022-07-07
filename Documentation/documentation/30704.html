@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Inserting data using a BC exposed as Rest service</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?30704,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Inserting data using a BC exposed as Rest service</h1>
+<!--HowTo: Inserting data using a BC exposed as Rest service--><div class="TableWikiBody" id="tblwikibody"><p>This document explains how to insert new data using a <a href="5846.html">Business Component</a> exposed as a Rest web service in GeneXus.</p>
+
+<p>First, see the basic guidelines:</p>
+
+<h3><a id="How+do+I+call+the+Rest+service+in+GeneXus%3F" class="HashLink" href="#How+do+I+call+the+Rest+service+in+GeneXus%3F">How do I call the Rest service in GeneXus?</a></h3>
+
+<p>Use the HttpClient data type.</p>
+
+<h3><a id="Which+HTTP+method+should+I+use+to+insert+new+data%3F" class="HashLink" href="#Which+HTTP+method+should+I+use+to+insert+new+data%3F">Which HTTP method should I use to insert new data?</a></h3>
+
+<p>The HTTP method used for inserting new data is the HTTP POST method.</p>
+
+<h3><a id="How+are+the+parameters+going+to+be+passed+in+the+call%3F" class="HashLink" href="#How+are+the+parameters+going+to+be+passed+in+the+call%3F">How are the parameters going to be passed in the call?</a></h3>
+
+<p>All the parameters for inserting new data using the BC (except the PK parameters) need to be included in the body of the HTTP request. The message body should be in JSON format and contain the structure of the Business Component as it comes when it makes an HTTP GET.</p>
+
+<p>The easiest way to build the body with the correct format is by defining an <a href="https://wiki.genexus.com/commwiki/wiki?1878,," target="_blank">Structured Data Type</a> based on the BC structure and using the method to format it to a valid JSON string.</p>
+
+<p>That JSON string needs to be added to the body of the HTTP request before executing the POST to the service.</p>
+
+<h3><a id="Which+is+the+URL+format+to+execute+the+POST%3F" class="HashLink" href="#Which+is+the+URL+format+to+execute+the+POST%3F">Which is the URL format to execute the POST?</a></h3>
+
+<p>&lt;server uri&gt;/rest/&lt;module&gt;/&lt;bc name&gt;/&lt;param1&gt;,&lt;param2&gt;,..,&lt;paramN&gt;</p>
+
+<p>Where &lt;param1&gt;,&lt;param2&gt;,..,&lt;paramN&gt; is the compound Primary Key.</p>
+
+<p>If the Primary Key is autonumbered, just use 0 in the URL.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Consider the Product Business Component Transaction that is exposed as a Rest web service, as shown in the figure below:</p>
+
+<p><img src="./images/30705.png" id="30705" class="WikiImage"/></p>
+
+<p>In this example, you want to insert a new Product, whose ProductId is 5.</p>
+
+<h3><a id="Sample+code" class="HashLink" href="#Sample+code">Sample code</a></h3>
+
+<p>You have defined a ProductSDT Structured Data Type based on the Product structure, as shown in the figure below:</p>
+
+<p><img src="./images/30706.png" id="30706" class="WikiImage"/></p>
+
+<p>Then, the code would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Host= &amp;server
+&amp;httpclient.Port = &amp;port
+&amp;httpclient.BaseUrl = &amp;urlbase
+
+&amp;productSDT.ProductName = &quot;Samsung Galaxy&quot;
+&amp;productSDT.ProductPrice = 22
+
+&amp;httpclient.AddString(&amp;productSDT.ToJson())
+&amp;httpclient.AddHeader('content-type','application/json')
+&amp;httpclient.Execute('POST','Product/5')
+
+if &amp;httpclient.StatusCode = 201
+    msg(&quot;Data successfully added&quot;)
+else
+   msg(&quot;There was an error retrieving the data: &quot; + &amp;httpclient.StatusCode.ToString())
+endif</pre>
+
+<p>Download the sample from <a href="https://wiki.genexus.com/commwiki/wiki?30732,," target="_blank">Sample insert data using a Rest BC</a></p>
+
+<h4><a id="Notes%3A" class="HashLink" href="#Notes%3A">Notes:</a></h4>
+
+<ul>
+	<li>Do not forget to add the 'content-type:application/json' header.</li>
+	<li>If more than one parameter should be passed in the URL (a compound PK), they need to be separated by commas.</li>
+	<li>If the service URI is &quot;http://localhost/TestRESTFullGX.NetEnvironment/rest/Product&quot;, the BASE URL is: &quot;/TestRESTFullGX.NetEnvironment/rest/&quot;</li>
+	<li>Error handling is managed by querying the HTTP Status Code after the invocation.</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="28214.html">Business Components as Rest web services in GeneXus</a></p>
+
+<p><br />
+</p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31864.html">OpenAPI import tool</a></TD></TR><TR><TD><a href="49248.html">OpenAPI import tool (GeneXus 17 upgrade 5 or prior)</a></TD><TD><a href="28213.html">Toc:Rest web services in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/03/22 07:08 PM</em></font></td></TR></table></font>

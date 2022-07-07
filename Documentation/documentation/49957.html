@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy mobile services to Azure Serverless using API Management (GeneXus 17 upgrade 8)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49957,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy mobile services to Azure Serverless using API Management (GeneXus 17 upgrade 8)</h1>
+<!--Deploy mobile services to Azure Serverless using API Management (GeneXus 17 upgrade 8)--><div class="TableWikiBody" id="tblwikibody"><p>When deploying mobile app services to an Azure Serverless architecture, you use the <strong>&quot;Microsoft Azure Serverless (backend services)&quot;</strong> deployment target.</p>
+
+<p>This document explains details about the deployment to <a href='https://azure.microsoft.com/en-us/services/api-management/'>Azure API Management</a> (APIM), which is optional.</p>
+
+<p>First, note that you have to set the <a href="31859.html">Generate OpenAPI interface property</a> to Yes and <a href="https://wiki.genexus.com/commwiki/wiki?49531,," target="_blank">OpenAPI version property</a> to either 2.0 or 3.0, and do a rebuild all in the model, previous to deploying to Azure Serverless.</p>
+
+<p>The following error is shown if the property is no set:</p>
+
+<p><em>&quot;Error: All the objects of the Deployment unit must have Generate OpenAPI Interface property set to Yes.  Alternatevely, set to Yes the property at the generator level, and do a rebuild all.&quot;</em></p>
+
+<p>Before going on, read <a href="49266.html">Azure Http-triggered functions</a>.</p>
+
+<p>To deploy to APIM, you need to configure the following deployment properties:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>
+			<p>APIM service name</p>
+			</td>
+			<td>
+			<p>Name of the API Management service instance.</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p>APIM resource group</p>
+			</td>
+			<td>
+			<p>Azure API Management resource group.</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p>API Identification</p>
+			</td>
+			<td>
+			<p>API revision identifier. It must be unique in the current API Management service instance.</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p>API display name</p>
+			</td>
+			<td>
+			<p>Display name of this API.</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p>API backend service URL</p>
+			</td>
+			<td>
+			<p>Absolute URL of the backend service implementing this API. </p>
+
+			<p>It corresponds to the URL given for the Azure function app, plus &quot;/rest&quot;:</p>
+
+			<p>E.g: https://MyFunctionApp.azurewebsites.net/rest</p>
+
+			<p><img src="./images/49108.png" id="49108" class="WikiImage"/></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p>API path</p>
+			</td>
+			<td>
+			<p>Relative URL uniquely identifying this API and all of its resource paths within the API Management service instance.</p>
+
+			<p>E.g: Clients</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p>API subscription required</p>
+			</td>
+			<td>
+			<p>If true, the API requires a subscription key on requests. The recommended value for services being called from mobile clients is False.</p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>Consider the following deployment configuration:</p>
+
+<p><img src="./images/49110.png" id="49110" class="WikiImage"/></p>
+
+<p>With the above settings, the API can be seen as follows in the Azure portal:</p>
+
+<p><img src="./images/49109.png" id="49109" class="WikiImage"/></p>
+
+<p>To run the app and use the services just deployed, configure the <a href="21146.html">Services URL property</a> as follows:</p>
+
+<p><img src="./images/49111.png" id="49111" class="WikiImage"/></p>
+
+<p>Note that the URL is the Gateway URL shown in the Azure portal for the APIM service, followed by the API path you configured on deployment (the /rest suffix in the URL is added automatically to make the calls).</p>
+
+<p><img src="./images/49112.png" id="49112" class="WikiImage"/></p>
+
+<h2><a id="Angular+applications" class="HashLink" href="#Angular+applications">Angular applications</a></h2>
+
+<p>In the case of Angular applications, you have to configure the <a href='https://en.wikipedia.org/wiki/Cross-origin_resource_sharing'>CORS</a>.</p>
+
+<p>Go through the API inbound policies of APIM, on the Azure portal, and configure the CORS Allow Origin policy for the machine where the Angular app is running.</p>
+
+<p><img src="./images/49113.png" id="49113" class="WikiImage"/></p>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;cors allow-credentials=&quot;true&quot;&gt;
+  &lt;allowed-origins&gt;
+    &lt;origin&gt;http://localhost:62560/&lt;/origin&gt;
+  &lt;/allowed-origins&gt;
+  &lt;allowed-methods preflight-result-max-age=&quot;300&quot;&gt;
+     &lt;method&gt;*&lt;/method&gt;
+  &lt;/allowed-methods&gt;
+  &lt;allowed-headers&gt;
+    &lt;header&gt;*&lt;/header&gt;
+  &lt;/allowed-headers&gt;
+  &lt;expose-headers&gt;
+    &lt;header&gt;*&lt;/header&gt;
+  &lt;/expose-headers&gt;
+&lt;/cors&gt;</pre>
+
+<p>For more information on this topic, read the <a href='https://docs.microsoft.com/en-us/azure/api-management/api-management-cross-domain-policies#CORS'>Azure documentation</a>.</p>
+
+<p>If you do not use APIM, configure the CORS at the Function App CORS setting (located at the left hand side menu) of the Function App.</p>
+
+<p><img src="./images/49728.png" id="49728" class="WikiImage"/></p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>APIM support is available since <a href="49301.html">GeneXus 17 upgrade 7</a>.</p>
+
+<p></p>
+
+<p></p>
+   <br /></div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/22/22 03:02 PM</em></font></td></TR></table></font>

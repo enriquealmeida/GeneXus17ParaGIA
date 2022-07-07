@@ -1,0 +1,55 @@
+ ************************************************************** 
+C           GXVAL     BEGSR
+ ************************************************************** 
+C                     MOVEA$GXALF    #2
+C                     MOVE *ZEROS    $GXNUM
+C                     Z-ADD1         @I      40
+C           #1        DOWEQ' '
+C           @I        ANDLT64
+C                     ADD  1         @I
+C                     END
+C           #1        IFEQ '-'
+C                     MOVE '-'       $F0106
+C                     ADD  1         @I
+C                     ELSE
+C                     MOVE ' '       $F0106  1
+C                     END
+C                     SETON                     50
+C           *IN50     DOWEQ'1'
+C           @I        ANDLE64
+C                     MOVE #1        $F0104  1
+C           $F0104    LOKUP$012                     50
+C           *IN50     IFEQ '1'
+C                     MOVE #1        $F0105  10
+C                     MULT 10        $GXENT
+C                     ADD  $F0105    $GXENT
+C                     END
+C                     ADD  1         @I
+C                     END
+C           $F0104    IFEQ '.'
+C           $F0104    OREQ ','
+C                     Z-ADD1         $F0101 100
+C                     Z-ADD0         $F0102  10
+C                     SETON                     50
+C           *IN50     DOWEQ'1'
+C           @I        ANDLE64
+C           $F0102    ANDLT9
+C                     MOVE #1        $F0104  1
+C           $F0104    LOKUP$012                     50
+C           *IN50     IFEQ '1'
+C                     MOVE #1        $F0105
+C                     MULT 10        $GXDEC
+C                     ADD  $F0105    $GXDEC
+C                     MULT 10        $F0101
+C                     ADD  1         @I
+C                     ADD  1         $F0102
+C                     END
+C                     END
+C           $GXDEC    DIV  $F0101    $F0103 109
+C                     Z-ADD0         $GXDEC
+C                     ADD  $F0103    $GXNUM
+C                     END
+C           $F0106    IFEQ '-'
+C                     MULT -1        $GXNUM
+C                     END
+C                     ENDSR

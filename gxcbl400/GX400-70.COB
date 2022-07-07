@@ -1,0 +1,5 @@
+IF #3 = 0
+   PERFORM #1
+ELSE
+   PERFORM #2
+END-IF

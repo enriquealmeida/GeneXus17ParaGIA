@@ -1,0 +1,69 @@
+delimiters "$", "$"
+
+g_settings(page, gx) ::=<<
+{
+  "SERVICE_DEBUG": true,
+  $if(page.UseHostRelativeUrl)$
+  "SERVICE_HOSTNAME": "/$page.HostRelativeUrl$/",
+  $else$
+  "SERVICE_HOSTNAME": "$page.TargetHostUrl$",
+  $endif$
+  "SERVICE_BASE_PATH": "",
+  "SERVICE_REST_PATH": "rest/",
+  "SERVICE_OAUTH_PATH": "oauth/",
+
+  "WEB_RELATIVE_PATH": "servlet/",
+  "WEB_MAIN_OBJECT": "com.kbgenng.dashboard",
+
+  $if( page.Security)$
+  "GAM_CLIENT_ID": "$page.Security.ClientId$",
+  "GAM_CLIENT_SECRET": "",
+  "GAM_CLIENT_LOGIN": "$page.Security.LoginObject$",
+  "GAM_CLIENT_NOTAUTHORIZED": "$page.Security.NotAuthorizedObject$",
+  "GAM_CLIENT_CHANGEPASSWORD": "$page.Security.ChangePasswordObject$",
+  $if( page.Security.IsEnabledAnonymousUser)$
+  "GAM_ANONYMOUS_USER": true,
+  $else$
+  "GAM_ANONYMOUS_USER": false,
+  $endif$
+  $else$
+  "GAM_CLIENT_ID": "",
+  "GAM_CLIENT_SECRET": "",
+  "GAM_CLIENT_LOGIN": "",
+  "GAM_CLIENT_NOTAUTHORIZED": "",
+  "GAM_CLIENT_CHANGEPASSWORD": "",
+  "GAM_ANONYMOUS_USER": false,
+  $endif$
+
+  "DEFAULT_LANGUAGE": "$page.DefaultLanguage$",
+  "DEFAULT_ISLOADING_UPDATE_DELAY": 300,
+
+  "APPLICATION_LAYOUTS": [
+    $page.UsedLayoutsVariants:{ layout |$g_layout_variant(layout, gx)$};separator=",\n"$
+  ],
+
+  "APPLICATION_LANGUAGES": [
+    $page.ApplicationLanguages:{ lang |$g_language_definition(lang, gx)$};separator=",\n"$
+  ],
+
+  "DEFAULT_NAVIGATION_STYLE": "$gx.ToLower.(page.NavigationStyle)$",
+
+  "APPLICATION_VERSION_CODE": "$page.ApplicationVersionCode$",
+  "APPLICATION_VERSION_NAME": "$page.ApplicationVersionName$"
+}
+
+>>
+
+g_layout_variant(layout, gx) ::=<<
+{
+    "navigationStyle": "$gx.ToLower.(layout.NavigationStyle)$",
+    "minShortestBound": $layout.MinShortestBound$,
+    "maxShortestBound": $layout.MaxShortestBound$,
+    "minLongestBound": $layout.MinLongestBound$,
+    "maxLongestBound": $layout.MaxLongestBound$
+}>>
+
+g_language_definition(lang, gx) ::=<<
+{ "name": "$gx.ToLower.(lang.Name)$", "isRightToLeft":$lang.IsRightToLeft$ }
+>>
+

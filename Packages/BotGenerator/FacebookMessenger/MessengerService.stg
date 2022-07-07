@@ -1,0 +1,182 @@
+﻿group Facebook;
+delimiters "$", "$"
+
+init(securityToken, pageToken, model, guid, module, guidManager)::=<<
+<Object parent="$module.Name$" parentType="c88fffcd-b6f8-0000-8fec-00b5497e2117" parentGuid="$module.Guid$" user="$model.UserName$" fullyQualifiedName="$module.Name$.messengerHandler" guid="$guidManager.setguid.("messengerHandler")$" name="messengerHandler" type="84a12160-f59b-4ad7-a683-ea4481ac23e9" description="Messenger Handler">
+      <Part type="528d1c06-a9c2-420d-bd35-21dca83f12ff">
+        <Source><![CDATA[if &httprequest.Method = HttpMethod.Get	
+	&query_string_coll = &httprequest.QueryString.SplitRegEx("&")
+	if &query_string_coll.Count > 0
+		&hub_mode = &query_string_coll.Item(1).Replace(!"hub.mode=", "")
+		&hub_challenge = &query_string_coll.Item(2).Replace(!"hub.challenge=", "")
+		&hub_verify_token = &query_string_coll.Item(3).Replace(!"hub.verify_token=", "")
+		if &hub_mode = !"subscribe" AND &hub_verify_token = !"$securityToken$"
+			&httpresponse.AddString(&hub_challenge)			
+		else
+			&httpresponse.AddString(!"Token validation failed")
+		endif
+	else
+		&httpresponse.AddString(!"Token validation failed")
+	endif
+else
+	if &httprequest.Method = HttpMethod.Post		
+		&SDTFacebookGetMsg.FromJson(&httprequest.ToString())
+		if not &SDTFacebookGetMsg.entry.Item(1).messaging.Item(1).message.text.IsEmpty() OR &SDTFacebookGetMsg.entry.Item(1).messaging.Item(1).message.attachments.Count>0
+		//	FacebookHandler(&SDTFacebookGetMsg)
+		endif
+	endif
+endif
+]]></Source>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="c414ed00-8cc4-4f44-8820-4baf93547173">
+        <Properties />
+      </Part>
+      <Part type="9b0a32a3-de6d-4be1-a4dd-1b85d3741534">
+        <Properties />
+      </Part>
+      <Part type="763f0d8b-d8ac-4db4-8dd4-de8979f2b5b9">
+        <Properties />
+      </Part>
+      <Part type="e4c4ade7-53f0-4a56-bdfd-843735b66f47">
+        <Variable Name="httprequest">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>httprequest</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>ext:HttpRequest</Value></Property></Properties>
+        </Variable>
+        <Variable Name="httpresponse">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>httpresponse</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>ext:HttpResponse</Value></Property></Properties>
+        </Variable>
+        <Variable Name="hub_challenge">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>hub_challenge</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property></Properties>
+        </Variable>
+        <Variable Name="hub_mode">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>hub_mode</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property></Properties>
+        </Variable>
+        <Variable Name="hub_verify_token">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>hub_verify_token</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property></Properties>
+        </Variable>
+        <Variable Name="query_string_coll">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>query_string_coll</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>40</Value></Property><Property><Name>AttMaxLen</Name><Value>40</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property></Properties>
+        </Variable>
+        <Variable Name="SDTFacebookGetMsg">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>SDTFacebookGetMsg</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:SDTFacebookGetMsg, $module.Name$</Value></Property></Properties>
+        </Variable>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="ad3ca970-19d0-44e1-a7b7-db05556e820c">
+        <Help>
+          <HelpItem>
+            <Language>88313f43-5eb2-0000-0028-e8d9f5bf9588-English</Language>
+            <Content />
+          </HelpItem>
+        </Help>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="babf62c5-0111-49e9-a1c3-cc004d90900a">
+        <Properties />
+      </Part>
+      <Properties><Property><Name>Name</Name><Value>messengerHandler</Value></Property><Property><Name>IsMain</Name><Value>True</Value></Property><Property><Name>CALL_PROTOCOL</Name><Value>HTTP</Value></Property><Property><Name>SOAP</Name><Value>False</Value></Property><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+    </Object>
+	<Object parent="$module.Name$" parentType="c88fffcd-b6f8-0000-8fec-00b5497e2117" parentGuid="$module.Guid$" user="$model.UserName$" fullyQualifiedName="$module.Name$.SDTFacebookGetMsg" guid="$guidManager.setguid.("SDTFacebookGetMsg")$" name="SDTFacebookGetMsg" type="447527b5-9210-4523-898b-5dccb17be60a" description="">
+      <Part type="5c2aa9da-8fc4-4b6b-ae02-8db4fa48976a">
+        <Level Name="SDTFacebookGetMsg">
+          <LevelInfo guid="e5087c4f-2aee-49bf-8ef1-82600ae30949" name="SDTFacebookGetMsg" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="SDTFacebook Get Msg" user="ARTECH\dscaffo">
+            <Properties><Property><Name>Name</Name><Value>SDTFacebookGetMsg</Value></Property></Properties>
+          </LevelInfo>
+          <Item guid="094bcf38-7a64-4bf3-b001-b31cfc297d0f" name="object" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="object" user="ARTECH\dscaffo">
+            <Properties><Property><Name>Name</Name><Value>object</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+          </Item>
+          <Level Name="entry">
+            <LevelInfo guid="81846c1c-b6a8-407c-9502-af526e889d44" name="entry" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="entry" user="ARTECH\dscaffo">
+              <Properties><Property><Name>Name</Name><Value>entry</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property></Properties>
+            </LevelInfo>
+            <Item guid="3b03d4bb-8229-4183-8b4e-9fc8d2300ed3" name="id" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="id" user="ARTECH\dscaffo">
+              <Properties><Property><Name>Name</Name><Value>id</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+            </Item>
+            <Item guid="25aeb489-4311-471d-9895-eb1c0ffde6eb" name="time" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="time" user="ARTECH\dscaffo">
+              <Properties><Property><Name>Name</Name><Value>time</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>10</Value></Property><Property><Name>Decimals</Name><Value>5</Value></Property><Property><Name>AttMaxLen</Name><Value>10</Value></Property><Property><Name>AttAvgLen</Name><Value>5</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+            </Item>
+            <Level Name="messaging">
+              <LevelInfo guid="50db298b-a7b1-4dc8-8d6a-9f36ec2f6177" name="messaging" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="messaging" user="ARTECH\dscaffo">
+                <Properties><Property><Name>Name</Name><Value>messaging</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property></Properties>
+              </LevelInfo>
+              <Level Name="sender">
+                <LevelInfo guid="f849ab3d-ed41-49a0-8cef-5288b90805f7" name="sender" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="sender" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>sender</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </LevelInfo>
+                <Item guid="2eaca33c-7493-481b-b6b9-9234fb2286c2" name="id" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="id" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>id</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </Item>
+              </Level>
+              <Level Name="recipient">
+                <LevelInfo guid="38ff9a50-f8eb-4841-978e-05821bfb5a13" name="recipient" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="recipient" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>recipient</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </LevelInfo>
+                <Item guid="7f0ecbc4-a771-4084-b48e-2d58e5ae7c43" name="id" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="id" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>id</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </Item>
+              </Level>
+              <Item guid="a4044354-1141-4230-b117-5e2609a44a5b" name="timestamp" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="timestamp" user="ARTECH\dscaffo">
+                <Properties><Property><Name>Name</Name><Value>timestamp</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>10</Value></Property><Property><Name>Decimals</Name><Value>5</Value></Property><Property><Name>AttMaxLen</Name><Value>10</Value></Property><Property><Name>AttAvgLen</Name><Value>5</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+              </Item>
+              <Level Name="message">
+                <LevelInfo guid="81317151-b559-444d-9196-19379b211cd3" name="message" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="message" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>message</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </LevelInfo>
+                <Item guid="306055d3-6b06-4358-a01d-a2ea3d905afa" name="mid" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="mid" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>mid</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </Item>
+                <Level Name="attachments">
+                  <LevelInfo guid="0eeacbd1-71e6-48e2-a06d-50341013c4ba" name="attachments" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="attachments" user="ARTECH\dscaffo">
+                    <Properties><Property><Name>Name</Name><Value>attachments</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property></Properties>
+                  </LevelInfo>
+                  <Item guid="15f16bb9-3e47-4666-afe7-6607767cbdf5" name="title" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="title" user="ARTECH\dscaffo">
+                    <Properties><Property><Name>Name</Name><Value>title</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property></Properties>
+                  </Item>
+                  <Item guid="7bf88b00-76cc-43c1-9d00-3cf63e838529" name="url" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="url" user="ARTECH\dscaffo">
+                    <Properties><Property><Name>Name</Name><Value>url</Value></Property><Property><Name>idBasedOn</Name><Value>Domain:Url, GeneXus</Value></Property></Properties>
+                  </Item>
+                  <Item guid="5c5668c9-8a60-4163-a387-9e147d0e0453" name="type" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="type" user="ARTECH\dscaffo">
+                    <Properties><Property><Name>Name</Name><Value>type</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property></Properties>
+                  </Item>
+                  <Level Name="payload">
+                    <LevelInfo guid="5a799dc5-acd0-4b38-a388-1a5e5d5f6051" name="payload" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="payload" user="ARTECH\dscaffo">
+                      <Properties><Property><Name>Name</Name><Value>payload</Value></Property></Properties>
+                    </LevelInfo>
+                    <Level Name="coordinates">
+                      <LevelInfo guid="7a21761c-8471-4eec-b220-50e1ec760bdc" name="coordinates" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="coordinates" user="ARTECH\dscaffo">
+                        <Properties><Property><Name>Name</Name><Value>coordinates</Value></Property></Properties>
+                      </LevelInfo>
+                      <Item guid="b934b3c4-816a-477c-83f9-ecd89e7dcd45" name="lat" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="lat" user="ARTECH\dscaffo">
+                        <Properties><Property><Name>Name</Name><Value>lat</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>10</Value></Property><Property><Name>Decimals</Name><Value>5</Value></Property><Property><Name>AttMaxLen</Name><Value>10</Value></Property><Property><Name>AttAvgLen</Name><Value>5</Value></Property></Properties>
+                      </Item>
+                      <Item guid="499d353f-820c-4a0a-b2b4-0c7b248a2426" name="long" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="long" user="ARTECH\dscaffo">
+                        <Properties><Property><Name>Name</Name><Value>long</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>10</Value></Property><Property><Name>Decimals</Name><Value>5</Value></Property><Property><Name>AttMaxLen</Name><Value>10</Value></Property><Property><Name>AttAvgLen</Name><Value>5</Value></Property></Properties>
+                      </Item>
+                    </Level>
+                  </Level>
+                </Level>
+                <Item guid="c9736ea0-1ea5-40aa-8840-04f059d561e6" name="seq" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="seq" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>seq</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>10</Value></Property><Property><Name>Decimals</Name><Value>5</Value></Property><Property><Name>AttMaxLen</Name><Value>10</Value></Property><Property><Name>AttAvgLen</Name><Value>5</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </Item>
+                <Item guid="959f83da-3694-4c9d-92ba-c57dc2ef18a1" name="text" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="text" user="ARTECH\dscaffo">
+                  <Properties><Property><Name>Name</Name><Value>text</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>100</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>100</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property></Properties>
+                </Item>
+              </Level>
+            </Level>
+          </Level>
+        </Level>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="babf62c5-0111-49e9-a1c3-cc004d90900a">
+        <Properties />
+      </Part>
+      <Properties><Property><Name>Name</Name><Value>SDTFacebookGetMsg</Value></Property><Property><Name>Description</Name><Value /></Property><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+    </Object>
+>>

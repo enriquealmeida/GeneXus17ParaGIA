@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>API Object - Delete service definition and declaration</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49781,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">API Object - Delete service definition and declaration</h1>
+<!--API Object - Delete service definition and declaration--><div class="TableWikiBody" id="tblwikibody"><p>This article describes all the necessary steps to declare, inside an <a href="46151.html">API object</a> called APICustomers, a Delete service that deletes a certain customer record (received by parameter) from the Database.</p>
+
+<p>Consider a <a href="1836.html">Knowledge Base</a> containing:</p>
+
+<p>1) A Customer <a href="1908.html">Transaction object</a>:</p>
+
+<pre>
+Customer
+{
+  CustomerId*
+  CustomerName
+  CustomerLastName
+}  </pre>
+
+<p>Note: The Customer Transaction has <a href="32706.html">Automatic data population</a>.</p>
+
+<p>2) An <a href="46151.html">API object</a> called APICustomers. In its <strong>Service Source </strong>tab, it already contains four services declared that map external names exposed as services with the internal implementations in the KB:</p>
+
+<p><img src="./images/50948.png" id="50948" class="WikiImage"/></p>
+
+<p>Now, suppose you need to define another service (method) named Delete, as part of the APICustomers object, to allow deleting a certain Customer from the database (the customer identifier is sent as a parameter). </p>
+
+<p>To achieve this, the Customer Transaction must be set as a <a href="5846.html">Business Component</a>.</p>
+
+<p>Next, you have to create a new <a href="6293.html">Procedure object</a> named CustomerDelete. </p>
+
+<p>In the Procedure Rules section, define a <a href="6862.html">Parm rule</a> as follows:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Parm(in:&amp;CustomerId, out:&amp;Messages);
+</pre>
+
+<p>In the Procedure Source, define the following code:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+&amp;Customer.Load(&amp;CustomerId)
+&amp;Customer.Delete()
+If &amp;Customer.Success()
+    commit
+else
+    rollback
+endif
+&amp;Messages=&amp;Customer.GetMessages()
+
+</pre>
+
+<ul>
+	<li>&amp;Customer is a variable based on the Customer Business Component data type.</li>
+	<li>&amp;Messages is a variable based on the Messages data type.</li>
+</ul>
+
+<p><br />
+Now, go to the APICustomers API Object, and inside its <strong>Service Source</strong> declare the new method (Delete) under the last method:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Customer{
+    ...
+    [RestMethod(DELETE)]
+    Delete(in:&amp;CustomerId, out:&amp;Messages)
+    =&gt; CustomerDelete(&amp;CustomerId, &amp;Messages);
+}
+</pre>
+
+<p>Note that in this case, the <a href="50508.html">RestMethod annotation</a> precedes the service declaration indicating that the HTTP method to be used is DELETE.</p>
+
+<p>It is important to add the same variables you already defined in the Procedure object in the API object.</p>
+
+<p>The next step is to define–if necessary–the <a href="46151.html">Events</a> in the Events section of the API Object (APICustomers).</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Delete.Before
+    //Some Code if is needed
+EndEvent
+Event Delete.After
+    //Some Code if is needed
+EndEvent</pre>
+
+<p>The order of events executed in this example is as follows:</p>
+
+<ol style="margin-left: 40.0px;">
+	<li>Event 'Before'</li>
+	<li>Event 'Delete.Before'</li>
+	<li>Delete method (CustomerDelete procedure internally)</li>
+	<li>Event 'Delete.After'</li>
+	<li>Event 'After'<br />
+	 </li>
+</ol>
+
+<p>Below you can see all the steps being executed:</p>
+
+<p><font color="#ff0000"><b> </b></font><img src="./images/50030.gif" id="50030" class="WikiImage"/></p>
+
+<p></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="50054.html">Calling rest API Using Postman app</a></TD><TD><a href="49754.html">Toc:First Steps with API Objects</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/03/22 01:13 PM</em></font></td></TR></table></font>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>External Objects for Javascript</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31064,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">External Objects for Javascript</h1>
+<!--External Objects for Javascript--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>By the means of an <a href="6148.html">External Object</a> the user can publish methods and properties of an external Javascript resource. As a consequence, these methods can be called from the GeneXus code. This functionality is in favor of code integration and allows to access the functionalities given by external resources in a smooth way.</p>
+
+<p>Moreover, GeneXus Events can be triggered from the Javascript code (see <a href="31075.html">How to execute GeneXus events from JS code using External Objects</a>).</p>
+
+<h2><a id="Questions+%26+Answers" class="HashLink" href="#Questions+%26+Answers">Questions &amp; Answers</a></h2>
+
+<h3><a id="When+should+I+use+an+External+Object+to+map+JS+resources%3F" class="HashLink" href="#When+should+I+use+an+External+Object+to+map+JS+resources%3F">When should I use an External Object to map JS resources?</a></h3>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" /> When you need to publish methods of a Javascript in order to provide an easy way in GeneXus to call those methods.</p>
+
+<h3><a id="What+about+User+Controls+vs.+External+Objects%3F" class="HashLink" href="#What+about+User+Controls+vs.+External+Objects%3F">What about User Controls vs. External Objects?</a></h3>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" /> <a href="27212.html">Web User Controls</a> definitions are only needed when you need to implement a UI control. There are cases when you only need to use javascript functions and methods in your code, but no UI is involved in the solution. In that case, you use External Objects mapped to JS.</p>
+
+<h3><a id="What+code+is+executed+when+Java+%28or+Net%29+and+Javascript+also+is+mapped+to+the+EO%3F" class="HashLink" href="#What+code+is+executed+when+Java+%28or+Net%29+and+Javascript+also+is+mapped+to+the+EO%3F">What code is executed when Java (or Net) and Javascript also is mapped to the EO?</a></h3>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />The question to answer is what code is actually executed when the EO defines a mapping for Java (or Net) code, and for Javascript code also.</p>
+
+<p>Well, it depends on the tier where the code is generated (<a href="22529.html">Event execution on the client and server side</a>)</p>
+
+<ul>
+	<li>If the code is generated client side, the javascript code is triggered.</li>
+	<li>If the code is generated server side, the Java (or Net) code is executed.</li>
+	<li>When only Javascript is mapped to the EO, and the code is generated server-side, it's also executed, but properties cannot be read, and the methods should not return values.</li>
+</ul>
+
+<h2><a id="How+to+implement+the+interaction+with+JS+using+External+Objects" class="HashLink" href="#How+to+implement+the+interaction+with+JS+using+External+Objects">How to implement the interaction with JS using External Objects</a></h2>
+
+<ul>
+	<li>To publish JS properties and methods to be accessible from GeneXus code, you need to declare them in the External Object.</li>
+	<li>To use the external JS resource, you have to add the reference to the HTML header, for instance, using the HeaderRawHTML Form method.</li>
+	<li>The <img src="./images/31082.png" id="31082" class="WikiImage"/> must be configured for each Property, Method or Event, to determine the correspondence to the external javascript source.</li>
+	<li>If you define a variable based on the External Object in any GeneXus object, a constructor needs to be defined in the JS code.</li>
+	<li>If you need to call a GeneXus event from a JS external code:
+	<ul>
+		<li>declare the event in an External Object</li>
+		<li>notify the GeneXus event using the <strong>gx</strong><strong>.fx.obs.notify</strong> expression within the JS external code. This is the only way to notify a GeneXus event from the javascript (<strong>gx</strong> <strong>.fx.obs.notify </strong>definition is in the standard GeneXus js library - gxgral.js)</li>
+	</ul>
+	</li>
+	<li>Events in GeneXus are always static, so in the External Object Events definition, you have to set the IsStatic property to TRUE. The Events can be called from other events, as if they were methods.</li>
+</ul>
+
+<h2><a id="Examples" class="HashLink" href="#Examples">Examples</a></h2>
+
+<p>There are many uses of External Objects for Javascript functionality; here we're introducing some of them.</p>
+
+<h3><a id="1.+Implementing+a+Dictionary+which+runs+server+side+and+client+side+" class="HashLink" href="#1.+Implementing+a+Dictionary+which+runs+server+side+and+client+side+">1. Implementing a Dictionary which runs server side and client side </a></h3>
+
+<p>Let's implement a dictionary, which by definition is a data type composed of a collection of (key, value) pairs, such that each possible key appears just once in the collection. One of the most interesting issues of this example is that it executes NET or Java code on the server-side and Javascript code on the client-side.</p>
+
+<p>Look at this example in <a href="31066.html">How to implement a dictionary data type using JS and server side code</a>.</p>
+
+<h3><a id="2.+Change+the+page+appeareance+on+Scroll" class="HashLink" href="#2.+Change+the+page+appeareance+on+Scroll">2. Change the page appeareance on Scroll</a></h3>
+
+<p>This is a canonical example where you interact with the window and execute events in GeneXus accordingly. In particular, this example shows how to interact with the <a href='https://developer.mozilla.org/es/docs/Web/Events/scroll'>scroll event</a>.</p>
+
+<p>Look at this example in <a href="31075.html">How to execute GeneXus events from JS code using External Objects</a>.</p>
+
+<h3><a id="3.+Easy+access+to+Window%27s+Object+methods." class="HashLink" href="#3.+Easy+access+to+Window%27s+Object+methods.">3. Easy access to Window's Object methods.</a></h3>
+
+<p>See <a href="31086.html">How to interact with the Window Object's Methods</a></p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>1. error spc0200: External Object X does not implement method 'scroll(' for C# Web environment ). <br />
+Specification Failed</p>
+
+<p><strong>Cause: </strong>The previous error is thrown if you miss assigning a Javascript External Name to an event of the EO.</p>
+
+<p>2. TypeError: X is not a constructor</p>
+
+<p><strong>Cause:</strong> If the object in GeneXus defines a variable based on the X EO,  the Javascript linked to the EO has to define a constructor function. This is because the JS code generated for the object executes the &quot;new&quot; command. </p>
+
+<p>3. If the EO isn't working properly, use the Javascript debugging tools provided by the browser. One possible reason it doesn't work can be that the Javascript doesn't load because of syntax errors in the source code.</p>
+
+<p> </p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5669.html">Category:External object</a></TD><TD><a href="6148.html">External Object: Native Object</a></TD></TR><TR><TD><a href="31164.html">Global Events</a></TD><TD><a href="31075.html">How to execute GeneXus events from JS code using External Objects</a></TD><TD><a href="31066.html">How to implement a dictionary data type using JS and server side code</a></TD></TR><TR><TD><a href="31086.html">How to interact with the Window Object's Methods</a></TD><TD><a href="8809.html">JSEvent Method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

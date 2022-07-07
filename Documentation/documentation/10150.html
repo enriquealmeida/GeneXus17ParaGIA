@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Data Types for Http Handling</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?10150,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Data Types for Http Handling</h1>
+<!--Data Types for Http Handling--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h4><a id="Scope" class="HashLink" href="#Scope">Scope</a></h4>
+
+<p><b>Objects:</b> <a href="6293.html">Procedures</a>, <a href="1908.html">Transactions</a>, <a href="6916.html">Web Panels</a><br />
+<b>Languages:</b> .NET, Java, Visual Basic, Visual FoxPro</p>
+
+<h4><a id="Purpose" class="HashLink" href="#Purpose">Purpose</a></h4>
+
+<p>In order to handle HTTP protocol GeneXus provides the following <a href="6560.html">data types</a>:</p>
+
+<ul>
+	<li><a href="6932.html">HttpClient</a>, which allows you to build a request, send it to a URL and read the results. </li>
+	<li><a href="6934.html">HttpResponse</a> and <a href="6933.html">HttpRequest</a>, which allow you to read the request's data and record the response.</li>
+</ul>
+
+<h4><a id="Interaction+with+XML" class="HashLink" href="#Interaction+with+XML">Interaction with XML</a></h4>
+
+<p>These objects enable interaction with XMLReader and XMWriter objects. The following methods are used for this:</p>
+
+<p>&amp;XMLReader.openResponse(HttpClient)<br />
+It is used in any object to read whatever was returned by a request as XML. </p>
+
+<p>&amp;XMLWriter.openRequest(HttpClient)<br />
+It is used to send an XML in the body of an http request. </p>
+
+<p>&amp;XMLWriter.openResponse(HttpResponse)<br />
+It is used to write an xml which will be returned in the body of the http response. </p>
+
+<p>&amp;XMLReader.openRequest(HttpRequest)<br />
+It is used to read an xml which comes in the body of the http request. </p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>This example shows how a GeneXus object calls another one via http, by transferring its parameters in an XML and by receiving the same also in an XML. </p>
+
+<p>The XML to be sent has the following format: </p>
+
+<p>&lt;parameters&gt;<br />
+   &lt;a&gt;value&lt;/a&gt;<br />
+   &lt;b&gt;value&lt;/b&gt;<br />
+&lt;/parameters&gt;</p>
+
+<p>The returned XML is the same, with the  ‘A’ and ‘B’ values modified. </p>
+
+<h5><a id="The+%27Client%27+Program+will+be+the+following%3A" class="HashLink" href="#The+%27Client%27+Program+will+be+the+following%3A">The 'Client' Program will be the following:</a></h5>
+
+<p>&amp;Client,  HttpClient type<br />
+&amp;Writer,  XMLWriter type<br />
+&amp;Reader, XMLReader type</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Defines the host and the port to which the request will be made  
+&amp;client.host = &quot;localhost&quot;
+&amp;client.port = 88  
+
+// Adds the XML to the request
+&amp;writer.openRequest(&amp;client)
+&amp;writer.WriteStartElement(&quot;parameters&quot;)
+&amp;writer.WriteElement(&quot;a&quot;, &amp;A)
+&amp;writer.WriteElement(&quot;b&quot;, &amp;B)
+&amp;writer.WriteEndElement()
+&amp;writer.close()
+
+// Makes the POST to the webproc
+&amp;client.execute(&quot;POST&quot;, &quot;/servlet/awebproc&quot;)
+
+// Reads the returned XML and load it in the internal variables.   
+&amp;reader.openResponse(&amp;client)
+&amp;reader.read()
+
+&amp;reader.read()
+&amp;a = val(&amp;reader.value)
+
+&amp;reader.read()    
+&amp;b = val(&amp;reader.value)
+
+&amp;reader.close()</pre>
+
+<h5><a id="The+%27Server%27+Program+will+be+the+following+WebProc%3A" class="HashLink" href="#The+%27Server%27+Program+will+be+the+following+WebProc%3A">The 'Server' Program will be the following WebProc:</a></h5>
+
+<p>&amp;Request,   HttpRequest type<br />
+&amp;Response, HttpResponse type<br />
+&amp;Writer,      XMLWriter type<br />
+&amp;Reader,     XMLReader type</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Reads the XML parameters. 
+&amp;reader.openRequest(&amp;Request)
+&amp;reader.read()
+&amp;reader.read()
+&amp;a = val(&amp;reader.value)
+&amp;reader.read()    
+&amp;b = val(&amp;reader.value)
+&amp;reader.close()
+
+// Adds one to each value  
+&amp;a = &amp;a + 1
+&amp;b = &amp;b + 1
+
+// Records the parameters in the response
+&amp;writer.openResponse(&amp;Response)
+&amp;writer.WriteStartElement(&quot;parameters&quot;)
+   &amp;writer.WriteElement(&quot;a&quot;, &amp;A)
+   &amp;writer.WriteElement(&quot;b&quot;, &amp;B)
+&amp;writer.WriteEndElement()
+
+&amp;writer.close()</pre>
+
+<h4><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h4>
+
+<p><a href="6928.html">XmlReader</a><br />
+<a href="6938.html">XmlWriter</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

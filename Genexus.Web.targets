@@ -1,0 +1,98 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup>
+		<StaticDir Condition="'$(StaticDir)' == ''">static</StaticDir>
+	</PropertyGroup>
+
+	<Target Name="CopyStatic" Condition="'$(Incremental)' != 'true' And ('$(CopyStaticFiles)' == 'true' or '$(HasWorkflow)' == 'true')">
+		<Message Text="CopyingStaticFiles" Importance="high" />
+
+		<ItemGroup>
+			<UserControlDirectory Include="@(UserControl -> '$(WebPath)\%(Library)')" Condition="'%(UserControl.Library)' != ''" />
+		</ItemGroup>
+
+		<ItemGroup>
+			<Js Include="$(WebPath)\bootstrap\**\*.*" Exclude="$(WebPath)\bootstrap\**\*.map" />
+			<Js Include="$(WebPath)\Help\**\*.*" Condition="Exists('$(WebPath)\Help\')" />
+			<Js Include="$(WebPath)\*.gif" />
+			<Js Include="$(WebPath)\autosuggest.css" />
+			<Js Include="$(WebPath)\calendar-system.css" />
+			<Js Include="$(WebPath)\gxcfg.js" />
+			<Js Include="$(WebPath)\gxgral.js" />
+			<Js Include="$(WebPath)\gxcore.js" Condition="Exists('$(WebPath)\gxcore.js')" />
+			<Js Include="$(WebPath)\gxi.js" Condition="Exists('$(WebPath)\gxi.js')"/>
+			<Js Include="$(WebPath)\gxtimezone.js" />
+			<Js Include="$(WebPath)\html2canvas.js" />
+			<Js Include="$(WebPath)\calendar.js" />
+			<Js Include="$(WebPath)\calendar-setup.js" />
+			<Js Include="@(Language -> '$(WebPath)\calendar-%(Code).js')" />
+			<Js Include="@(Language -> '$(WebPath)\messages.%(MessageCode).js')" />
+			<Js Include="$(WebPath)\gxdec.js"/>
+			<Js Include="$(WebPath)\jquery.js" />
+			<Js Include="$(WebPath)\gxtimezone.js" />
+			<Js Include="%(UserControlDirectory.Identity)\**\*.*" Condition="'@(UserControlDirectory->Count())' > 0"/>
+		</ItemGroup>
+
+		<ItemGroup>
+			<UCview Include="@(UserControl -> '$(WebPath)\gxusercontrols\$([System.String]::new('%(UserControl.QualifiedName)').ToLower()).view')" />
+		</ItemGroup>
+
+		<ItemGroup>
+			<Js Condition="'%(Js.RelativeTargetDir)' == ''">
+				<RelativeTargetDir>$([System.String]::new('%(RelativeDir)').Substring($([MSBuild]::Add($(WebPath.Length), 1))))</RelativeTargetDir>
+			</Js>
+		</ItemGroup>
+
+		<Copy SourceFiles="@(Js)" DestinationFiles="@(Js -> '$(DeployFullPath)\$(StaticDir)\%(RelativeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" ContinueOnError="true" />
+		<Copy SourceFiles="@(UCview)" DestinationFiles="@(UCview -> '$(UCviewDestination)\%(RelativeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" ContinueOnError="true" />
+
+		<ItemGroup>
+			<ThemesJson Include="$(WebPath)\themes\*.*" />
+		</ItemGroup>
+		
+		<Message Text="Copying{Themes}" Importance="high" />
+		<Copy SourceFiles="@(ThemesJson)" DestinationFolder="$(ThemesDeployPath)" SkipUnchangedFiles="true" />
+	
+	</Target>
+	
+	<Target Name="CopyResourcesFolder" Condition="'$(Incremental)' != 'true' And ('$(CopyStaticFiles)' == 'true' Or '$(ImagesInvolved)' == 'true')">
+		<Message Text="CopyingStaticFiles" Importance="high" />
+
+		<ItemGroup>
+			<LangThemeResources Include="@(Theme)" >
+				<Lang>%(Language.Identity)</Lang>
+			</LangThemeResources>
+			<LangDSOResources Include="@(DesignSystemObject)" >
+				<Lang>%(Language.Identity)</Lang>
+			</LangDSOResources>
+			<LanguageTheme Include="@(Language)">
+				<ThemeLang>%(Theme.Identity)</ThemeLang>
+				<DSOLang>%(DesignSystemObject.QualifiedName)</DSOLang>
+			</LanguageTheme>
+		</ItemGroup>
+		<ItemGroup>
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\*.*"></Resource>
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(Theme.Identity)\*.*"></Resource>
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(DesignSystemObject.QualifiedName)\**\*.*" Condition="'%(DesignSystemObject.QualifiedName)' != ''"></Resource>
+
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(LangThemeResources.Lang)\%(LangThemeResources.Identity)\*.*"></Resource>
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(LangDSOResources.Lang)\%(LangDSOResources.QualifiedName)\**\*.*" Condition="'%(LangDSOResources.Lang)' != '' And '%(LangDSOResources.QualifiedName)' != ''"></Resource>
+
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(Language.Identity)\*.*" Exclude="$(WebPath)\$(ResourcesPrefix)Resources\%(Language.Identity)\*.css"></Resource>
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(LanguageTheme.Identity)\%(LanguageTheme.ThemeLang).css" Condition = "Exists('$(WebPath)\$(ResourcesPrefix)Resources\%(LanguageTheme.Identity)\%(LanguageTheme.ThemeLang).css')" />
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(LanguageTheme.Identity)\%(LanguageTheme.DSOLang).css" Condition="Exists('$(WebPath)\$(ResourcesPrefix)Resources\%(LanguageTheme.Identity)\%(LanguageTheme.DSOLang).css')" />
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(LanguageTheme.Identity)\%(LanguageTheme.DSOLang)_Tokens.css" Condition="Exists('$(WebPath)\$(ResourcesPrefix)Resources\%(LanguageTheme.Identity)\%(LanguageTheme.DSOLang)_Tokens.css')" />
+
+			<Resource Include="$(WebPath)\$(ResourcesPrefix)Resources\%(Language.Identity)\AnyStyles.ImagesTokens.css" Condition="Exists('$(WebPath)\$(ResourcesPrefix)Resources\%(Language.Identity)\AnyStyles.ImagesTokens.css')"></Resource>
+		</ItemGroup>
+		<ItemGroup>
+			<Resource Condition="'%(Resource.RelativeTargetDir)' == ''">
+				<RelativeTargetDir>$([System.String]::new('%(RelativeDir)').Substring($([MSBuild]::Add($(WebPath.Length), 1))))</RelativeTargetDir>
+			</Resource>
+		</ItemGroup>
+
+		<Copy SourceFiles="@(Resource)" DestinationFiles="@(Resource -> '$(DeployFullPath)\$(StaticDir)\%(RelativeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+
+	</Target>
+
+</Project>

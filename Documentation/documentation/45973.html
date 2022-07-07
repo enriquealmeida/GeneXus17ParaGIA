@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GeneXus Office Module</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45973,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GeneXus Office Module</h1>
+<!--GeneXus Office Module--><div class="TableWikiBody" id="tblwikibody"><div>It implements a module for the creation and management of excel spreadsheets.</div>
+
+<p>It includes the following objects:</p>
+
+<div style="overflow-x:auto"><table border="2" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><a href="46040.html">ExcelSpreadSheet data type</a></td>
+			<td>module GeneXusOffice.Office.Excel</td>
+			<td>Manages the excel spreadsheet.</td>
+		</tr>
+		<tr>
+			<td><a href="46080.html">ExcelWorksheet data type</a></td>
+			<td>module GeneXusOffice.Office.Excel</td>
+			<td>Manages a specific worksheet in the spreadsheet.</td>
+		</tr>
+		<tr>
+			<td><a href="46081.html">ExcelCellRange data type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Cell</td>
+			<td>Manages a cell or a group of cells in the spreadsheet.</td>
+		</tr>
+		<tr>
+			<td><a href="46082.html">ExcelAlignment data type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Style   </td>
+			<td>Sets the vertical and horizontal alignment of a cell.</td>
+		</tr>
+		<tr>
+			<td><a href="46308.html">ExcelBorderStyle data type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Style</td>
+			<td>Sets the color and type of the border of a cell.</td>
+		</tr>
+		<tr>
+			<td><a href="46084.html">ExcelCellBorder data type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Style</td>
+			<td>Sets the different borders of a cell (up, down, left, right and diagonal).</td>
+		</tr>
+		<tr>
+			<td><a href="46315.html">ExcelCellStyle data type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Style</td>
+			<td>Sets the style of a cell.</td>
+		</tr>
+		<tr>
+			<td><a href="46086.html">ExcelColor data type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Style</td>
+			<td>Sets the color of a cell.</td>
+		</tr>
+		<tr>
+			<td><a href="46316.html">ExcelFill data type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Style</td>
+			<td>Sets the style of the background of a cell.</td>
+		</tr>
+		<tr>
+			<td><a href="46318.html">ExcelFont Data Type</a></td>
+			<td>module GeneXusOffice.Office.Excel.Style</td>
+			<td>Sets the font of a cell.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><strong>Languages:</strong> Java</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+event &quot;Excel&quot;
+
+    //opens an excel sheet
+    &amp;excelSpreadsheet.Open(&quot;C:\testExcel\test.xlsx&quot;)
+
+    //select a cell
+    &amp;excelcellrange = &amp;excelSpreadsheet.Cell(1,2)
+
+    //sets a value in the cell
+    &amp;excelcellrange.ValueText = &quot;hidden&quot;
+    
+
+    //sets the style of a cell
+    &amp;excelCellStyle = new()
+    &amp;excelCellStyle.Hidden = true
+    &amp;excelCellStyle.Indent = 5
+    &amp;excelCellStyle.Alignment.Horizontal = CellHorizontalAlignment.Left
+    //sets the border in the style (diagonal down and bottom borders)
+    &amp;ExcelCellStyle.Border.DiagonalDown.Type = CellBorderType.DOUBLE
+    &amp;ExcelCellStyle.Border.DiagonalDown.Color.SetColorRGB(200,20,50)
+    &amp;ExcelCellStyle.Border.Bottom.Type = CellBorderType.DOUBLE
+    &amp;ExcelCellStyle.Border.bottom.Color.SetColorRGB(200,20,50)
+    
+
+    //sets the new style in the cell 
+    &amp;excelcellrange.SetCellStyle(&amp;excelCellStyle)
+
+    //saves the changes in the sheet and close
+    &amp;boolean =&amp;excelSpreadsheet.Save()
+    if &amp;boolean
+        &amp;excelSpreadsheet.Close()
+    else
+        msg(&quot;Error code:&quot;+&amp;excelSpreadsheet.ErrCode.ToString())    
+        msg(&quot;Error description:&quot;+&amp;excelSpreadsheet.ErrDescription.ToString())    
+    endif
+
+endevent</pre>
+
+<h2><a id="This+module+compared+to+Excel+document+data+type" class="HashLink" href="#This+module+compared+to+Excel+document+data+type">This module compared to Excel document data type</a></h2>
+
+<p>This module has more features to customize spreadsheets and workbooks than the <a href="2476.html">ExcelDocument data type</a>. But, on the other side, it does not support (by the design of the implementation on which it lies, called <a href='https://poi.apache.org/components/spreadsheet/'>POI XSSF</a> in Java) creating spreadsheets with thousands of rows and hundreds of columns.<br />
+You may use one or another depending on your needs.</p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This feature is available since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a>.</p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46082.html">ExcelAlignment data type</a></TD><TD><a href="46084.html">ExcelCellBorder data type</a></TD><TD><a href="46081.html">ExcelCellRange data type</a></TD></TR><TR><TD><a href="46086.html">ExcelColor data type</a></TD><TD><a href="2476.html">ExcelDocument data type</a></TD><TD><a href="46040.html">ExcelSpreadSheet data type</a></TD><TD><a href="46080.html">ExcelWorksheet data type</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/10/21 03:03 PM</em></font></td></TR></table></font>

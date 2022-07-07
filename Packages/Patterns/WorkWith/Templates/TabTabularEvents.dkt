@@ -1,0 +1,111 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Tabular Tab Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubPrepareTransaction" File="SubPrepareTransaction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Events %>">
+	<Source><![CDATA[<%
+
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	TabElement tab = wwInstance.GetElement<TabElement>(Element);
+	if (tab.Attributes == null)
+		throw new PatternApplicationException("Tabular Tab must have attributes");
+
+	WorkWithSettings settings = wwInstance.Settings;
+
+	List<ActionElement> actionsWithSecurity = new List<ActionElement>(tab.Actions.FindAll(delegate (ActionElement action) { return (action.Condition != String.Empty); }));
+%>
+Event Start
+<%@ CallSubTemplate SubLoadContext Settings='settings' %>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	if (settings.Template.UseTransactionContext)
+	{
+%>
+	Do 'PrepareTransaction'
+<%
+	}
+%>
+EndEvent
+
+Event Load
+<%@  CallSubTemplate SubLinkAttributes Level='tab.Level' Element='tab' Attributes='tab.Attributes' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	foreach (IAttributesItem item in tab.Attributes)
+	{
+		if (!item.Visible)
+		{
+%>
+	<%= item.Name %>.Visible = False
+<%
+		}
+	}
+	
+	foreach (VariableElement variable in tab.Attributes.Variables)
+	{
+		if (variable.LoadCode != String.Empty)
+		{
+%>
+
+	// Load variable '<%= variable.VariableName %>'
+<%= Indentation.Indent(variable.VariableLoadCode(), 1) %>
+<%
+		}
+	}
+
+	foreach (ActionElement action in actionsWithSecurity)
+	{
+%>
+
+	// Security check for '<%= action.Name %>'
+<%= Indentation.Indent(action.EnableDisableCode(), 1) %> 
+<%
+	}
+
+	if (tab.Actions.GridActions.Count > 0)
+	{
+%>
+
+<%
+		foreach (ActionElement action in tab.Actions.GridActions)
+		{
+%>
+	// WARNING: Action '<%= action.Name %>' is defined with InGrid=true. Ignored in this context.
+<%
+		}
+	}
+%>
+EndEvent
+<%
+	foreach (ActionElement action in tab.Actions)
+	{
+		if (action.Event() != String.Empty)
+		{
+%>
+
+<%= action.Event() %>
+<%
+		}
+	}
+
+	if (settings.Template.UseTransactionContext)
+	{
+%>
+
+Sub 'PrepareTransaction'
+<%@ CallSubTemplate SubPrepareTransaction Transaction='tab.TabTransaction' CallerIsRecord='true' Parameters='tab.Parameters' %>
+EndSub
+<%
+	}
+%>]]>
+	</Source>
+</Part>

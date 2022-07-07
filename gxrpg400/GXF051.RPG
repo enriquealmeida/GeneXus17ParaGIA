@@ -1,0 +1,723 @@
+ *****************************************************
+ * TEST DATE-TIME
+ * PARAMETERS: (I) $GXDTC C(22)
+ *             (O) $GXDTN DS(YYYYMMDDHHMMSS)
+ *             (O) $GXOUT N(1,0)
+ * IF ERROR RETURNS: $GXDTN='00000000000000'
+ *                   $GXOUT=0
+ *****************************************************
+C           GXFTT     BEGSR
+ * INIT
+C                     Z-ADD1         $GXOUT  10
+C                     Z-ADD1         $F5112  10
+C                     MOVE '00000000'$DTFN
+C                     MOVE '000000'  $DTTN
+ * IF DATE-TIME IS NOT NULL
+C           $GXDTC    IFNE *BLANKS
+ * DATE-TIME = LTRIM(DATE-TIME)
+C                     MOVEL$GXDTC    $F7200255 P
+C                     Z-ADD22        $F7201  40
+C                     EXSR GXLTRM
+C                     MOVEL$F7202    $F5124255 P
+C                     MOVEL$F5124    $GXDTC    P
+C           $GXOUT    IFEQ 1
+ * DATE-TIME(M,N) WHERE M <> 0, THERE IS A DATE
+C           $DTDL     IFNE 0
+ * SEARCH MANDATORY BLANK SEPARATOR
+C                     MOVE *OFF      *IN98
+C           ' '       SCAN $GXDTC    @J      40     98
+ * ERROR IF MANDATORY BLANK SEPARATOR WAS NOT FOUND
+C           *IN98     IFEQ *OFF
+C                     Z-ADD0         $GXOUT
+C                     ENDIF
+ * MANDATORY BLANK SEPARATOR WAS FOUND
+C           $GXOUT    IFEQ 1
+ * EXTRACT DATE PORTION
+C                     MOVE *BLANKS   $F5101 22
+C           @J        SUBST$GXDTC    $F5101
+ * PARSE DATE SUBSTRING
+C                     EXSR GXFPSD
+ * IF DATE PORTION IS OK
+C           $GXOUT    IFEQ 1
+ * EXTRACT TIME PORTION
+C                     MOVE *BLANKS   $F5108 22
+C                     SUBST$GXDTC:@J $F5108
+ * TIME = LTRIM(TIME)
+C                     MOVEL$F5108    $F7200255 P
+C                     Z-ADD22        $F7201  40
+C                     EXSR GXLTRM
+C                     MOVEL$F7202    $F5124255 P
+C                     MOVEL$F5124    $F5108    P
+C           $F5108    IFNE *BLANKS
+ * PARSE TIME SUBSTRING
+C                     EXSR GXFPST
+C                     ELSE
+C                     MOVEL'000000'  $DTTN     P
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ELSE
+ * DATE-TIME(0,N), THERE IS NO DATE PORTION
+C           $GXOUT    IFEQ 1
+C                     MOVEL$GXDTC    $F5108 22 P
+C           $F5108    IFNE *BLANKS
+ * PARSE TIME STRING
+C                     EXSR GXFPST
+C                     ELSE
+C                     MOVEL'000000'  $DTTN     P
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+ * IF DATE-TIME IS NULL
+C                     ELSE
+C                     MOVEL'00000000'$DTFN     P
+C                     MOVEL'000000'  $DTTN     P
+C                     ENDIF
+ * RETURNS NULL-VALUE(DATE-TIME) IF ERROR
+C           $GXOUT    IFEQ 0
+C                     MOVEL'00000000'$DTFN     P
+C                     MOVEL'000000'  $DTTN     P
+C                     ENDIF
+C                     ENDSR
+ *****************************************************
+ * PARSE DATE STRING
+C           GXFPSD    BEGSR
+ *****************************************************
+ * RIGHT JUSTIFY THE DATE STRING WITH LEFT ZEROS
+C           ' '       SCAN $F5101    @
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5101    #2
+C                     MOVEA#1        $F5101
+ * SEARCH FOR DATE SEPARATORS
+C                     MOVE *OFF      *IN98
+C           GXVN      CHECK$F5101                   98
+ * IF THERE ARE NO DATE SEPARATORS
+C           *IN98     IFEQ *OFF
+ * IF DATE-LENGHT IS 10
+C           $DTDL     IFEQ 10
+ * IF ONLY WERE TYPED 5 OR 6 DATE DIGITS
+C           @         IFEQ 17
+C           @         OREQ 18
+C                     Z-ADD0         $F5102
+C           $DTDF     IFNE 'Y'             
+C           18        SUBST$F5101:3  $F5113 18
+C           2         SUBST$F5101:21 $F5114  2
+C                     Z-ADD0         $F5102 220
+C                     MOVE $F5114    $F5102
+C                     ELSE                 
+C           18        SUBST$F5101:1  $F5113
+C                     MOVE $F5113    $F5102
+C                     ENDIF                
+ * IF DATE NOT-NULL
+C           $F5101    IFNE *ZEROS
+ * YEAR WITH 2 DIGITS TO YEAR WITH 4 DIGITS
+C           $F5102    IFLT $DTXX
+C                     ADD  2000      $F5102
+C                     ELSE
+C                     ADD  1900      $F5102
+C                     ENDIF
+C                     ENDIF
+C           $DTDF     IFNE 'Y'
+C                     MOVEL$F5113    $F5102
+C                     MOVE $F5102    $F5101
+C                     ELSE                 
+C                     MOVE $F5102    $F5113
+C                     MOVEL$F5113    $F5101
+C                     ENDIF                
+C                     ENDIF
+C                     ENDIF
+ * IF NUMBER HAS MORE THAN 8 DIGITS IS AN ERROR
+C                     Z-ADD0         $F5102 220
+C                     MOVE $F5101    $F5102
+C           $F5102    IFGT 99991231
+C                     Z-ADD0         $GXOUT
+ * THE NUMBER HAS 8 OR LESS DIGITS
+C                     ELSE
+C           $DTDF     IFEQ 'D'
+C           $DTDL     IFEQ 8
+ * 4 DIGIT YEAR TIPED
+C           @         IFEQ 15
+C           @         OREQ 16
+C           2         SUBST$F5101:15 $DTDC            DD
+C           2         SUBST$F5101:17 $DTMC            MM
+C           4         SUBST$F5101:19 $DTYC            YYYY
+ * 2 DIGIT YEAR TIPED
+C                     ELSE
+C           2         SUBST$F5101:17 $DTDC            DD
+C           2         SUBST$F5101:19 $DTMC            MM
+C           2         SUBST$F5101:21 $F5120  2        YY
+C                     MOVE *ZEROS    $DTYN
+C                     MOVE $F5120    $DTYN            YYYY
+C                     MOVE $F5120    $F5121  20
+C           $DTFN     IFNE 0
+C           $F5121    IFLT $DTXX
+C                     MOVEL'20'      $DTYN
+C                     ELSE
+C                     MOVEL'19'      $DTYN
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C           $DTDL     IFEQ 10
+C           2         SUBST$F5101:15 $DTDC            DD
+C           2         SUBST$F5101:17 $DTMC            MM
+C           4         SUBST$F5101:19 $DTYC            YYYY
+C                     ENDIF
+C                     ELSE
+C           $DTDF     IFEQ 'M'
+C           $DTDL     IFEQ 8
+ * 4 DIGIT YEAR TIPED
+C           @         IFEQ 15
+C           @         OREQ 16
+C           2         SUBST$F5101:15 $DTMC            DD
+C           2         SUBST$F5101:17 $DTDC            MM
+C           4         SUBST$F5101:19 $DTYC            YYYY
+ * 2 DIGIT YEAR TIPED
+C                     ELSE
+C           2         SUBST$F5101:17 $DTMC            MM
+C           2         SUBST$F5101:19 $DTDC            DD
+C           2         SUBST$F5101:21 $F5120           YY
+C                     MOVE *ZEROS    $DTYN
+C                     MOVE $F5120    $DTYN            YYYY
+C                     MOVE $F5120    $F5121
+C           $DTFN     IFNE 0
+C           $F5121    IFLT $DTXX
+C                     MOVEL'20'      $DTYN
+C                     ELSE
+C                     MOVEL'19'      $DTYN
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C           $DTDL     IFEQ 10
+C           2         SUBST$F5101:15 $DTMC            MM
+C           2         SUBST$F5101:17 $DTDC            DD
+C           4         SUBST$F5101:19 $DTYC            YYYY
+C                     ENDIF
+C                     ELSE
+C           $DTDF     IFEQ 'Y'
+C           4         SUBST$F5101:15 $F5122  4
+C                     MOVE *ZEROS    $DTYN
+C                     MOVE $F5122    $DTYN            YYYY
+C                     MOVE $F5122    $F5123  40
+C           $F5123    IFLT 100
+C           $DTDL     ANDEQ8
+C           $DTFN     IFNE 0
+C           $F5123    IFLT $DTXX
+C                     MOVEL'20'      $DTYN
+C                     ELSE
+C                     MOVEL'19'      $DTYN
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C           2         SUBST$F5101:19 $DTMC            MM
+C           2         SUBST$F5101:21 $DTDC            DD
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+ * IF YEAR IS EXPECTED WITH 2 DIGITS BUT HAS 4
+C           $DTDL     IFEQ 8
+C           $DTFN     ANDNE0
+C                     MOVE $DTYN     $F5105  40
+C           $DTXX     ADD  1900      $F5106  40
+C           $DTXX     ADD  2000      $F5107  40
+C                     SUB  1         $F5107
+ * IF LT 1940 OR GT 2039 SETS OUT OF TIME-FRAME FLAG
+C           $F5105    IFLT $F5106
+C           $F5105    ORGT $F5107
+C                     Z-ADD0         $F5112  10
+C                     ELSE
+C                     Z-ADD1         $F5112
+C                     ENDIF
+C                     ENDIF
+ * IF NO PREVIOUS ERRORS THEN VALIDATES THE DATE
+C           $GXOUT    IFEQ 1
+C                     MOVE $DTFN     $GXDTE  8
+C                     EXSR GXFTDT
+C                     ENDIF
+C                     ENDIF
+ * IF THERE ARE DATE SEPARATORS
+C                     ELSE
+ * SEARCH FOR VALID SEPARATORS (/ OR -)
+C                     MOVE *OFF      *IN98
+C           $DTVCD    CHECK$F5101                   98
+ * ERROR IF INVALID SEPARATORS WERE FOUND
+C           *IN98     IFEQ *ON
+C                     Z-ADD0         $GXOUT
+ * VALID SEPARATORS WERE FOUND
+C                     ELSE
+ * SEARCH DATE SEPARATORS' LOCATION
+C           GXVN      CHECK$F5101    #3
+ * COUNTS DATE SEPARATORS
+C                     Z-ADD0         $F5103  50
+C                     MOVE *OFF      *IN98
+C                     DO   22        @
+C           #4        IFNE 0
+C                     ADD  1         $F5103
+C                     ELSE
+C                     MOVE *ON       *IN98
+C                     ENDIF
+C  N98                ENDDO
+ * ERROR IF DATE DOESN'T HAVE 2 SEPARATORS
+C           $F5103    IFNE 2
+C                     Z-ADD0         $GXOUT
+ * REMOVES THE SEPARATORS
+C                     ELSE
+C                     Z-ADD1         $F5111  10
+C                     EXSR GXFXT1
+C                     EXSR GXFXT2
+C                     EXSR GXFXT3
+ * NULL DATE
+C           $F5111    IFEQ 1
+C                     Z-ADD0         $DTYN
+C                     ENDIF
+ * IF YEAR IS EXPECTED WITH 2 DIGITS BUT HAS 4
+C           $DTDL     IFEQ 8
+C                     MOVE $DTYN     $F5105  40
+C           $DTXX     ADD  1900      $F5106  40
+C           $DTXX     ADD  2000      $F5107  40
+C                     SUB  1         $F5107
+ * IF LT 1940 OR GT 2039 SETS OUT OF TIME-FRAME FLAG
+C           $F5105    IFLT $F5106
+C           $F5105    ORGT $F5107
+C                     Z-ADD0         $F5112
+C                     ELSE
+C                     Z-ADD1         $F5112
+C                     ENDIF
+C                     ENDIF
+ * IF NO PREVIOUS ERRORS THEN VALIDATES THE DATE
+C           $GXOUT    IFEQ 1
+C                     MOVE $DTFN     $GXDTE  8
+C                     EXSR GXFTDT
+C                     ENDIF
+ * IF NO ERROR AT THIS POINT, VALIDATES THE DATE
+C           $GXOUT    IFNE 0
+C                     MOVE $DTFN     $GXDTE  8
+C                     EXSR GXFTDT
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR
+ *****************************************************
+ * EXTRACT 1ST PART
+C           GXFXT1    BEGSR
+ *****************************************************
+C                     MOVE *BLANKS   $F5104 22
+C           #5        SUB  1         $F5103
+C           $F5103    SUBST$F5101:1  $F5104
+C           ' '       SCAN $F5104    @
+C           @         IFGT 3
+ * DO NOT ADJUST YEAR
+C                     Z-ADD0         $F5110  10
+C                     ELSE
+ * FLAG TO ADJUST YEAR OF 2 OR LESS DIGITS TO 4 DIGITS FORMAT
+C                     Z-ADD1         $F5110
+C                     ENDIF
+ * RIGHT JUSTIFY THE STRING WITH LEFT ZEROS
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5104    #2
+C                     MOVEA#1        $F5104
+C                     Z-ADD0         $F5102
+C                     MOVE $F5104    $F5102
+ * IF DATE FORMAT IS DMY
+C           $DTDF     IFEQ 'D'
+ * 1ST PART IS THE DAY
+C           $F5102    IFGT 31
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+ * FLAG FOR DATE NOT NULL
+C           $F5102    IFNE 0
+C                     Z-ADD0         $F5111
+C                     ENDIF
+ * STORES THE DAY
+C                     MOVE $F5102    $DTDN            DD
+C                     ENDIF
+C                     ELSE
+ * IF DATE FORMAT IS MDY
+C           $DTDF     IFEQ 'M'
+ * 1ST PART IS THE MONTH
+C           $F5102    IFGT 12
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+ * FLAG FOR DATE NOT NULL
+C           $F5102    IFNE 0
+C                     Z-ADD0         $F5111
+C                     ENDIF
+ * STORES THE MONTH
+C                     MOVE $F5102    $DTMN            MM
+C                     ENDIF
+C                     ELSE
+ * IF DATE FORMAT IS YMD
+C           $DTDF     IFEQ 'Y'
+ * 1ST PART IS THE YEAR
+C           $F5102    IFGT 9999
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+ * FLAG FOR DATE NOT NULL
+C           $F5102    IFNE 0
+C                     Z-ADD0         $F5111
+C                     ENDIF
+ * YEAR WITH 2 DIGITS TO YEAR WITH 4 DIGITS
+C                     EXSR GXF2Y4
+ * STORES THE YEAR
+C                     MOVE $F5102    $DTYN            YYYY
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR
+ *****************************************************
+ * EXTRACT 2ND PART
+C           GXFXT2    BEGSR
+ *****************************************************
+C                     MOVE *BLANKS   $F5104 22
+C           #5        ADD  1         @
+C           #6        SUB  #5        $F5103
+C                     SUB  1         $F5103
+C           $F5103    SUBST$F5101:@  $F5104
+C           ' '       SCAN $F5104    @
+C           @         IFGT 3
+ * DO NOT ADJUST YEAR
+C                     Z-ADD0         $F5110
+C                     ELSE
+ * FLAG TO ADJUST YEAR OF 2 OR LESS DIGITS TO 4 DIGITS FORMAT
+C                     Z-ADD1         $F5110
+C                     ENDIF
+ * RIGHT JUSTIFY THE STRING WITH LEFT ZEROS
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5104    #2
+C                     MOVEA#1        $F5104
+C                     Z-ADD0         $F5102
+C                     MOVE $F5104    $F5102
+ * IF DATE FORMAT IS MDY
+C           $DTDF     IFEQ 'M'
+ * 2ND PART IS THE DAY
+C           $F5102    IFGT 31
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+ * FLAG FOR DATE NOT NULL
+C           $F5102    IFNE 0
+C                     Z-ADD0         $F5111
+C                     ENDIF
+ * STORES THE DAY
+C                     MOVE $F5102    $DTDN            DD
+C                     ENDIF
+ * IF DATE FORMAT IS YMD OR DMY
+C                     ELSE
+ * 2ND PART IS THE MONTH
+C           $F5102    IFGT 12
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+ * FLAG FOR DATE NOT NULL
+C           $F5102    IFNE 0
+C                     Z-ADD0         $F5111
+C                     ENDIF
+ * STORES THE MONTH
+C                     MOVE $F5102    $DTMN            MM
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR
+ *****************************************************
+ * EXTRACT 3RD PART
+C           GXFXT3    BEGSR
+ *****************************************************
+C                     MOVE *BLANKS   $F5104 22
+C           #6        ADD  1         @
+C           22        SUB  #6        $F5103
+C           $F5103    SUBST$F5101:@  $F5104
+C           ' '       SCAN $F5104    @
+C           @         IFGT 3
+ * DO NOT ADJUST YEAR
+C                     Z-ADD0         $F5110
+C                     ELSE
+ * FLAG TO ADJUST YEAR OF 2 OR LESS DIGITS TO 4 DIGITS FORMAT
+C                     Z-ADD1         $F5110
+C                     ENDIF
+ * RIGHT JUSTIFY THE STRING WITH LEFT ZEROS
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5104    #2
+C                     MOVEA#1        $F5104
+C                     Z-ADD0         $F5102
+C                     MOVE $F5104    $F5102
+ * IF DATE FORMAT IS YMD
+C           $DTDF     IFEQ 'Y'
+ * 3RD PART IS THE DAY
+C           $F5102    IFGT 31
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+ * FLAG FOR DATE NOT NULL
+C           $F5102    IFNE 0
+C                     Z-ADD0         $F5111
+C                     ENDIF
+ * STORES THE DAY
+C                     MOVE $F5102    $DTDN            DD
+C                     ENDIF
+ * IF DATE FORMAT IS MDY OR DMY
+C                     ELSE
+ * 3RD PART IS THE YEAR
+C           $F5102    IFGT 9999
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+ * FLAG FOR DATE NOT NULL
+C           $F5102    IFNE 0
+C                     Z-ADD0         $F5111
+C                     ENDIF
+ * YEAR WITH 2 DIGITS TO YEAR WITH 4 DIGITS
+C                     EXSR GXF2Y4
+ * STORES THE YEAR
+C                     MOVE $F5102    $DTYN            YYYY
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR
+ *****************************************************
+ * YEAR WITH 2 DIGITS TO YEAR WITH 4 DIGITS
+C           GXF2Y4    BEGSR
+ *****************************************************
+C           $F5102    IFLT 100
+C           $DTDL     ANDEQ8
+C           $F5102    ORLT 100
+C           $DTDL     ANDEQ10
+C           $F5110    ANDEQ1
+C           $F5102    IFLT $DTXX
+C                     ADD  2000      $F5102
+C                     ELSE
+C                     ADD  1900      $F5102
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR
+ *****************************************************
+ * PARSE TIME STRING
+C           GXFPST    BEGSR
+ *****************************************************
+ * SEARCH 1ST BLANK
+C                     MOVE *OFF      *IN98
+C           ' '       SCAN $F5108    @I             98
+ * ERROR IF MANDATORY BLANKS NOT FOUND
+C           *IN98     IFEQ *OFF
+C                     Z-ADD0         $GXOUT
+ * MANDATORY BLANKS WERE FOUND
+C                     ELSE
+ * EXTRACT AM/PM PART
+C                     MOVE *BLANKS   $F5119 22
+C                     SUBST$F5108:@I $F5119
+C           $F5119    IFNE *BLANKS
+ * AM/PM = LTRIM(AM/PM)
+C                     MOVEL$F5119    $F7200255 P
+C                     Z-ADD22        $F7201  40
+C                     EXSR GXLTRM
+C                     MOVEL$F7202    $F5124255 P
+C                     MOVEL$F5124    $F5119    P
+ * TEST AM/PM PART
+C           $F5119    IFEQ 'a'
+C           $F5119    OREQ 'A'
+C           $F5119    OREQ 'am'
+C           $F5119    OREQ 'AM'
+C                     MOVEL'AM'      $F5119    P
+C                     ELSE
+C           $F5119    IFEQ 'p'
+C           $F5119    OREQ 'P'
+C           $F5119    OREQ 'pm'
+C           $F5119    OREQ 'PM'
+C                     MOVEL'PM'      $F5119    P
+C                     ELSE
+C                     Z-ADD0         $GXOUT
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C           $GXOUT    IFEQ 1
+ * EXTRACT HOURS, MINUTES AND SECONDS
+C                     MOVE *BLANKS   $F5109 22
+C           @I        SUBST$F5108    $F5109
+ * RIGHT JUSTIFY THE TIME STRING WITH LEFT ZEROS
+C           ' '       SCAN $F5109    @
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5109    #2
+C                     MOVEA#1        $F5109
+ *SEARCH FOR TIME SEPARATORS
+C                     MOVE *OFF      *IN98
+C           GXVN      CHECK$F5109                   98
+ * IF THERE ARE NO TIME SEPARATORS
+C           *IN98     IFEQ *OFF
+ * ERROR IF TIME GT 235959
+C                     Z-ADD0         $F5102
+C                     MOVE $F5109    $F5102
+C           $F5102    IFGT 235959
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C           $F5102    IFLE 23
+C           $F5102    MULT 10000     $F5102
+C                     MOVE $F5102    $F5109
+C                     ELSE
+C           $F5102    IFLE 2359
+C           $F5102    MULT 100       $F5102
+C                     MOVE $F5102    $F5109
+C                     ENDIF
+C                     ENDIF
+C           2         SUBST$F5109:17 $DTHC            HH
+C           $DTTL     IFNE 2
+C           2         SUBST$F5109:19 $DTNC            MM
+C                     ELSE
+C                     MOVE *ZEROS    $DTNN            MM
+C                     ENDIF
+C           $DTTL     IFEQ 8
+C           2         SUBST$F5109:21 $DTSC            SS
+C                     ELSE
+C                     MOVE *ZEROS    $DTSN            SS
+C                     ENDIF
+C                     ENDIF
+ * IF THERE ARE TIME SEPARATORS
+C                     ELSE
+ * SEARCH FOR VALID TIME SEPARATORS
+C                     MOVE *OFF      *IN98
+C           $DTVCT    CHECK$F5109                   98
+ * ERROR IF INVALID SEPARATORS WERE FOUND
+C           *IN98     IFEQ *ON
+C                     Z-ADD0         $GXOUT
+ * VALID SEPARATORS WERE FOUND
+C                     ELSE
+ * SEARCH TIME SEPARATORS' LOCATION
+C           GXVN      CHECK$F5109    #3
+ * COUNT TIME SEPARATORS
+C                     Z-ADD0         $F5103
+C                     MOVE *OFF      *IN98
+C                     DO   22        @
+C           #4        IFNE 0
+C                     ADD  1         $F5103
+C                     ELSE
+C                     MOVE *ON       *IN98
+C                     ENDIF
+C  N98                ENDDO
+ * ERROR IF TIME HAS MORE THAN 2 SEPARATORS
+C           $F5103    IFGT 2
+C                     Z-ADD0         $GXOUT
+ * REMOVES THE SEPARATORS
+C                     ELSE
+ * EXTRACT HOUR
+C                     MOVE *BLANKS   $F5104
+C           #5        SUB  1         $F5103
+C           $F5103    SUBST$F5109:1  $F5104
+ * RIGHT JUSTIFY THE HOUR WITH LEFT ZEROS
+C           ' '       SCAN $F5104    @
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5104    #2
+C                     MOVEA#1        $F5104
+C                     Z-ADD0         $F5102
+C                     MOVE $F5104    $F5102
+C           $F5102    IFGT 23
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C                     MOVE $F5102    $DTHN            HH
+ * EXTRACT MINUTES
+C                     MOVE *BLANKS   $F5104
+ * IF HH:MM:SS
+C           #6        IFNE 0
+C           #5        ADD  1         @
+C           #6        SUB  #5        $F5103
+C                     SUB  1         $F5103
+C           $F5103    SUBST$F5109:@  $F5104
+ * IF HH:MM
+C                     ELSE
+C           #5        ADD  1         @
+C           22        SUB  #5        $F5103
+C           $F5103    SUBST$F5109:@  $F5104
+C                     ENDIF
+ * RIGHT JUSTIFY THE MINUTES WITH LEFT ZEROS
+C           ' '       SCAN $F5104    @
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5104    #2
+C                     MOVEA#1        $F5104
+C                     Z-ADD0         $F5102
+C                     MOVE $F5104    $F5102
+C           $F5102    IFGT 59
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C           $DTTL     IFNE 2
+C                     MOVE $F5102    $DTNN            MM
+C                     ELSE
+C                     MOVE *ZEROS    $DTNN            MM
+C                     ENDIF
+ * EXTRACT SECONDS IF THERE ARE
+C           #6        IFNE 0
+C                     MOVE *BLANKS   $F5104
+C           #6        ADD  1         @
+C           22        SUB  #6        $F5103
+C           $F5103    SUBST$F5109:@  $F5104
+ * RIGHT JUSTIFY THE SECONDS WITH LEFT ZEROS
+C           ' '       SCAN $F5104    @
+C           22        SUB  @         @
+C                     ADD  2         @
+C                     MOVEA*ZEROS    #1
+C                     MOVEA$F5104    #2
+C                     MOVEA#1        $F5104
+C                     Z-ADD0         $F5102
+C                     MOVE $F5104    $F5102
+C           $F5102    IFGT 59
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C           $DTTL     IFEQ 8
+C                     MOVE $F5102    $DTSN            SS
+C                     ELSE
+C                     MOVE *ZEROS    $DTSN            SS
+C                     ENDIF
+C                     ENDIF
+ * SECONDS ARE ABSENT
+C                     ELSE
+C                     MOVE *ZEROS    $DTSN            SS
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+ * TEST TIME STORED IN $DTTN
+C                     Z-ADD0         $F5102
+C                     MOVE $DTSN     $F5102
+ * TEST SECONDS
+C           $F5102    IFGT 59
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C                     Z-ADD0         $F5102
+C                     MOVE $DTNN     $F5102
+ * TEST MINUTES
+C           $F5102    IFGT 59
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C                     Z-ADD0         $F5102
+C                     MOVE $DTHN     $F5102
+ * TEST HOUR
+C           $F5119    IFNE *BLANKS
+C           $F5102    ANDGT12
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C           $F5102    IFEQ 12
+C           $F5119    IFEQ 'AM'
+C                     MOVE *ZEROS    $DTHN
+C                     ENDIF
+C                     ELSE
+C           $F5119    IFEQ 'PM'
+C                     ADD  12        $F5102
+C                     ENDIF
+C                     MOVE $F5102    $DTHN
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Query Object Compatibility</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?11032,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Query Object Compatibility</h1>
+<!--Query Object Compatibility--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Changes+in+GeneXus+17+Upgrade+1" class="HashLink" href="#Changes+in+GeneXus+17+Upgrade+1">Changes in GeneXus 17 Upgrade 1</a></h2>
+
+<p>The <a href="9026.html">Query Object</a> <a href="19577.html">Axis</a> and <a href="43697.html">Visible</a> properties were completely refactored since <a href="46852.html">GeneXus 17 upgrade 1</a>. Check <a href="47094.html">here</a> for more information.</p>
+
+<h2><a id="Changes+in+GeneXus+16" class="HashLink" href="#Changes+in+GeneXus+16">Changes in GeneXus 16</a></h2>
+
+<p>This section details changes made to the <a href="9026.html">Query Object</a> since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a>.</p>
+
+<p>In case of using<a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a> and <a href="9026.html">Query Objects</a>, it is mandatory to update GeneXus Server to the same upgrade; check the <a href="11032.html">compatibility section</a> for further detail.</p>
+
+<h3><a id="Grammar+changes" class="HashLink" href="#Grammar+changes">Grammar changes</a></h3>
+
+<p>The grammar associated to the <a href="9026.html">Query Object</a> was updated and improved. The following sections detail the associated changes.</p>
+
+<h4><a id="IN" class="HashLink" href="#IN">IN</a></h4>
+
+<p>The <em>IN</em> operator with straight brackets changes to curved brackets; it applies to a list of values ​​with parentheses, for example the expression</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+att in [value1, value2, value3, ...]</pre>
+
+<p>changes automatically to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+att in (value1, value2, value3, ...)</pre>
+
+<h4><a id="By" class="HashLink" href="#By">By</a></h4>
+
+<p>The <em>By (att1, att2, att3, ...)</em> with parentheses clause is no longer mandatory; to add an attribute but before grouping by another one (for example, to calculate the monthly average of the invoices) use the <em>By</em> clause. The expression:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Average (att1) By (att2, att3, ...)</pre>
+
+<p>changes to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Average (att1) by att2, att3, ...</pre>
+
+<p>The same criteria is followed as for the <a href="33957.html">for each clause</a>.</p>
+
+<h4><a id="DefinedBy" class="HashLink" href="#DefinedBy">DefinedBy</a></h4>
+
+<p>The <em>DefinedBy (att1, att2, att3, ...)</em> with parentheses clause is no longer mandatory and is separated into 2 words. To change the base table (for example to count not all Customers but Customers with Invoices) use the <em>defined by</em> clause. The expression:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Count (att1) DefinedBy (att2, att3, ...)</pre>
+
+<p>changes to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Count (att1) defined by att2, att3, ...</pre>
+
+<h4><a id="WeightedBy" class="HashLink" href="#WeightedBy">WeightedBy</a></h4>
+
+<p>The <em>WeightedBy (att)</em> with parentheses clause is no longer mandatory and separated into 2 words. To do a weighted average use the <em>weighted by</em> clause. The expression:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Average (att1) WeightedBy (numericAtt2)</pre>
+
+<p>changes to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Average (att1) weighted by numericAtt2</pre>
+
+<h4><a id="Not" class="HashLink" href="#Not">Not</a></h4>
+
+<p>Expressions with the <em>NOT</em> clause (used in the middle of expressions) is moved to the beginning. These expressions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+att not like &quot;xxx&quot;
+att not in [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]
+att not in [1 to 10]</pre>
+
+<p>changes to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+not att like &quot;xxx&quot;
+not att in (&quot;a&quot;, &quot;b&quot;, &quot;c&quot;)
+not att in (1 to 10)</pre>
+
+<h4><a id="Is+Null" class="HashLink" href="#Is+Null">Is Null</a></h4>
+
+<p>Expressions with the <em>IS NULL</em> clause changes to use the <em>IsNull()</em> function:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+att is null
+att is not null</pre>
+
+<p>changes to</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+att.IsNull ()
+not att.IsNull ()
+</pre>
+
+<h4><a id="Filters+in+aggregations" class="HashLink" href="#Filters+in+aggregations">Filters in aggregations</a></h4>
+
+<p>Filters within an aggregation function are removed; the expressions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sum (att1 where att2 = &quot;xxx&quot;)
+Sum (att1) where (&gt; 1)
+</pre>
+
+<p>change to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sum (att1) where att2 = &quot;xxx&quot;
+Sum (att1) where Sum (att1)&gt; 1
+</pre>
+
+<h3><a id="New+Constructions" class="HashLink" href="#New+Constructions">New Constructions</a></h3>
+
+<p>The following new language constructions were added.</p>
+
+<h4><a id="Enumerated+Domain" class="HashLink" href="#Enumerated+Domain">Enumerated Domain</a></h4>
+
+<p>Enumerated Domain values can be used in filters and also formula fields, example</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+# Formula
+Att + Domain.Element1
+# Filter
+CustomerSex = Sex.Female</pre>
+
+<h4><a id="Boolean+Expressions" class="HashLink" href="#Boolean+Expressions">Boolean Expressions</a></h4>
+
+<p>The use of booleans is less verbose, you can directly reference a boolean attribute in a filter, insted of using</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Att = true
+Att = false</pre>
+
+<p>simply write:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Att
+not Att</pre>
+
+<h4><a id="Conditional+Expressions" class="HashLink" href="#Conditional+Expressions">Conditional Expressions</a></h4>
+
+<p>Support for conditional expressions, such as</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;expr1&gt; if &lt;cond1&gt;; &lt;expr2&gt; if &lt;cond2&gt;; &lt;expr3&gt; otherwise</pre>
+
+<h4><a id="Nullvalue" class="HashLink" href="#Nullvalue">Nullvalue</a></h4>
+
+<p>Use of the <em>Nullvalue()</em> function in query elements and filters:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+# Edition
+Nullvalue(att)
+# Filter
+Att &lt;&gt; Nullvalue (Att)</pre>
+
+<h3><a id="Miscellaneous" class="HashLink" href="#Miscellaneous">Miscellaneous</a></h3>
+
+<ul>
+	<li>Each expression is fully validated in edition time to prevent errors later on while generating the SQL statement.</li>
+	<li>Better Undo support (query edition).</li>
+	<li>Better intellisense support, suggestions for attributes, method names, parameter names, enumerations and other clauses applicable to aggregations (<em>by</em>, <em>defined by</em>, <em>weighted by</em>).</li>
+</ul>
+
+<h2><a id="Changes+in+GeneXus+X" class="HashLink" href="#Changes+in+GeneXus+X">Changes in GeneXus X</a></h2>
+
+<p>This section details changes made to the <a href="9026.html">Query Object</a> since <a href="https://wiki.genexus.com/commwiki/wiki?3146,," target="_blank">GeneXus X</a>.</p>
+
+<p>When upgrading <a href="https://wiki.genexus.com/commwiki/wiki?3146,," target="_blank">GeneXus X</a>, if you are using <a href="9026.html">queries</a> check the following compatibility section:</p>
+
+<h3><a id="Upgrading+from+GeneXus+X+Upgrade+%233+to+GeneXus+X+Upgrade+%234" class="HashLink" href="#Upgrading+from+GeneXus+X+Upgrade+%233+to+GeneXus+X+Upgrade+%234">Upgrading from GeneXus X Upgrade #3 to GeneXus X Upgrade #4</a></h3>
+
+<h4><a id="Filter+Section+Breaking+Change" class="HashLink" href="#Filter+Section+Breaking+Change">Filter Section Breaking Change</a></h4>
+
+<p>Several changes have been done to the <a href="9026.html">query filter section</a> making the new specification (upgrade #4 or higher) incompatible with the old one (upgrade #3 or lower).</p>
+
+<p>If you are using filters in your queries; you will need to delete all the filters section and add them again using the new specification.</p>
+
+<h4><a id="Query+Viewer+Control" class="HashLink" href="#Query+Viewer+Control">Query Viewer Control</a></h4>
+
+<p>The <a href="9075.html">Query Viewer control</a> has been improved supporting Java and .Net environments.</p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9105.html">Query Object - Troubleshooting</a></TD><TD><a href="11032.html">Query Object Compatibility</a></TD><TD><a href="25314.html">Toc:Reporting in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/23/20 04:48 PM</em></font></td></TR></table></font>

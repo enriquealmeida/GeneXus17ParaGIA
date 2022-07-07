@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>ConfigurationManager external object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?40085,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">ConfigurationManager external object</h1>
+<!--ConfigurationManager external object--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The ConfigurationManager external object allows you to read the application configuration at runtime.<br />
+This means that you have a way to access the configuration that is being used at runtime and has been set in environment variables (only the variables explained in <a href="39459.html">this</a> document) or configuration files (a.k.a. web.config, client.cfg., CloudServices.config).</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><img src="./images/40091.png" id="40091" class="WikiImage"/></td>
+			<td><img src="./images/40092.png" id="40092" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Methods" class="HashLink" href="#Methods">Methods</a></h2>
+
+<h3><a id="HasValue+" class="HashLink" href="#HasValue+">HasValue </a></h3>
+
+<p>Returns true if the property has a value set.<br />
+The parameter <em>filename</em> is optional. If it is not set, a valid property is one that is set in the standard configuration files (web.config / client.cfg or CloudServices.config) or an environment variable.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Return value</strong></td>
+			<td><a href="4374.html">Boolean data type</a></td>
+		</tr>
+		<tr>
+			<td><strong>Parameters</strong></td>
+			<td>propName:<a href="6778.html">VarChar</a> [  fileName:<a href="6778.html">VarChar</a> ]</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="GetValue" class="HashLink" href="#GetValue">GetValue</a></h3>
+
+<p>Returns the value set in the property.<br />
+The parameter <em>filename</em> is optional. If it is not set, the property must be one that is set in the standard configuration files (web.config / client.cfg or CloudServices.config) or an environment variable.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Return value</strong></td>
+			<td><a href="6778.html">VarChar</a></td>
+		</tr>
+		<tr>
+			<td><strong>Parameters</strong></td>
+			<td>propName:<a href="6778.html">VarChar</a> [  fileName:<a href="6778.html">VarChar</a> ]</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<p>In both methods, the name of the property is instantiated as it is in the web.config or client.cfg. If you require a property of another file, either from the CloudServices.config file or from your own, the name of the property must be prefixed with the service type separated by a colon (:). eg: Notifications: APP_ID.</p>
+
+<p>If a file is specified, the format of this file must be similar to the CloudServices.config and the way to choose the value of a property is the same as in the case of the CloudServices.config (&lt;ServiceType&gt;:&lt;propName&gt;)</p>
+
+<p>As of GeneXus 16 Upgrade 7, services from the same type can appear more than once. That's the case of the Chatbot type where every property is saved under a Chatbot instance identified by the Conversational Flows name. So in that case you should get the property with the following format &lt;ServiceType&gt;:&lt;ServiceName&gt;:&lt;propName&gt;,</p>
+
+<h3><a id="Sample+Configuration+file%3A" class="HashLink" href="#Sample+Configuration+file%3A">Sample Configuration file:</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;Services&gt;
+  &lt;Service&gt;
+    &lt;Name&gt;MyServiceName&lt;/Name&gt;
+    &lt;Type&gt;MyServiceType&lt;/Type&gt;
+    &lt;ClassName&gt;MyServiceClass&lt;/ClassName&gt;
+    &lt;Properties&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;Property1&lt;/Name&gt;
+        &lt;Value&gt;Value of Property 1&lt;/Value&gt;
+      &lt;/Property&gt;
+      &lt;Property&gt;
+        &lt;Name&gt;Property2&lt;/Name&gt;
+        &lt;Value&gt;Value of Property 2&lt;/Value&gt;
+      &lt;/Property&gt;
+    &lt;/Properties&gt;
+  &lt;/Service&gt;
+&lt;/Services&gt;
+</pre>
+
+<p>To get the value of Property1, write the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;FileName = !&quot;MyConfigFile.config&quot;
+&amp;propName = !&quot;MyServiceType:Property1&quot;
+if ConfigurationManager.HasValue(&amp;propName, &amp;FileName)
+   msg(ConfigurationManager.GetValue(&amp;propName, &amp;FileName))
+else
+   msg(&quot;Property has not been set&quot;)
+endif</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Configuration Manager is available as of <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="39459.html">Application Configuration using Environment Variables</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="39459.html">Application Configuration using Environment Variables</a></TD><TD><a href="40607.html">Docker Environment variables property</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/18/20 03:56 PM</em></font></td></TR></table></font>

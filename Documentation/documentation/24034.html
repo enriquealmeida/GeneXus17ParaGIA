@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using GAM and Windows Authentication</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24034,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using GAM and Windows Authentication</h1>
+<!--HowTo: Using GAM and Windows Authentication--><div class="TableWikiBody" id="tblwikibody"><p>Consider a scenario where a .NET Web application authenticates using IIS <a href='http://en.wikipedia.org/wiki/Integrated_Windows_Authentication'>Windows Authentication</a>, but <a href="19888.html">GeneXus Access Manager</a> has to be used to manage the entire security of the application.<br />
+<br />
+In this scenario, since GAM does not support Windows Authentication, it can delegate the authentication to IIS and solve the security concerns of the application after the user has logged in successfully (which means that IIS recognizes the user logged into Windows).<br />
+<br />
+The main goal of this feature is to allow the user to access the web application using his or her Windows credentials without the need to enter the credentials in a dialog box.<br />
+<br />
+Below are the steps to follow:</p>
+
+<h4><a id="Step+1" class="HashLink" href="#Step+1">Step 1</a></h4>
+
+<p>The condition is that the virtual directory in IIS web server allows Windows Authentication (it is enabled). Besides, consider <a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,4,61,O,E,0,,11464;S;0;A;0;15174'>SAC #11464</a>.</p>
+
+<h4><a id="Step+2" class="HashLink" href="#Step+2">Step 2</a></h4>
+
+<p>In GeneXus, the solution consists of implementing <a href="21751.html">Custom Authentication Type</a>, where in this case the Procedure will get the information of the user who is logged into the application and return this information to GAM. This is a GeneXus Procedure which implements the authentication.</p>
+
+<p>In this example, a custom authentication external service version 1.0 is implemented using the guide in <a href='[GAM External Authentication: version 1.'>[GAM External Authentication: version 1.</a> link.</p>
+
+<p>The Procedure which implements the authentication looks as follows (named "gamwslogin" in this example):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm( in:&amp;GAMWSLoginInStr ,out:&amp;GAMWSLoginOutStr ); //&amp;GAMWSLoginInStr and &amp;GAMWSLoginOutStr are varchar(256)
+
+&amp;GAMWSLoginIn.FromJson(&amp;GAMWSLoginInStr) //&amp;GAMWSLogin is GAMWSLogin SDT data type
+&amp;UserLogin = &amp;GAMWSLoginIn.GAMUsrLogin
+if not &amp;UserLogin.IsEmpty() //If there is no error, load the out parameters of the authentication Procedure.
+   &amp;GAMWSLoginOut             = New GAMWSLoginOutSDT()
+   &amp;GAMWSLoginOut.WSVersion   = !"1."
+   &amp;GAMWSLoginOut.User        = New GAMWSLoginOutUserSDT()
+
+   &amp;GAMWSLoginOut.WSStatus          = 1 //Success
+   &amp;GAMWSLoginOut.User.Code         = &amp;UserLogin
+
+else
+   &amp;GAMWSLoginOut.WSStatus = 2 //User unknown
+endif
+
+&amp;GAMWSLoginOutStr = &amp;GAMWSLoginOut.ToJson()</pre>
+
+<p><strong>Note:</strong> The data type of &amp;GAMWSLoginOut is GAMWSLoginOut SDT, which is available <a href="https://wiki.genexus.com/commwiki/wiki?16927,," target="_blank">here</a>.</p>
+
+<h4><a id="Step+3" class="HashLink" href="#Step+3">Step 3</a></h4>
+
+<p>Suppose the name of the GAM custom authentication type is "Windows Authentication".</p>
+
+<h5><a href='[24036'>[24036</a>]<br />
+Figure 1. Definition of the Custom Authentication type, which is implemented by "gamwslogin" GeneXus Procedure.</h5>
+
+<p><br />
+Using <a href="15935.html">GAM - Web Backoffice</a> configure the following:</p>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?17669,," target="_blank">GAM Repository: Default Authentication Type property</a> = "Windows Authentication"</li>
+	<li><a href="21030.html">User Identification</a> = name</li>
+	<li>Required Email = No</li>
+	<li>Required Password = No</li>
+	<li>User Email is unique = No</li>
+</ul>
+
+<h5><img src="./images/24037.png" id="24037" class="WikiImage"/><br />
+Figure 2. Repository settings. </h5>
+
+<h4><a id="Step+4" class="HashLink" href="#Step+4">Step 4</a></h4>
+
+<p>The behavior of the <a href="6916.html">Web Panel</a> and Web Transactions which have <a href="15214.html">Integrated Security Level property</a> = Authentication / Authorization, is that when they execute and there is no valid user session, the object specified in <a href="https://wiki.genexus.com/commwiki/wiki?15590,," target="_blank">Login Object for Web property</a> (GAMExampleLogin Web Panel) is launched.</p>
+
+<p>Then you need to program the Start Event of this object so that the GAMRepository.Login method is executed before showing any screens.</p>
+
+<p>In this case, the login method calls the external authentication Procedure, which returns the user given by <a href="8518.html">UserId function</a>, and GAM creates a session for that user.</p>
+
+<p>Below is the code of the Login object. Note that you execute the GAMRepository.Login method, and when the operation is successful, there is a redirect to the web object which had thrown the user session invalid exception.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Start Event
+    ........................
+    &amp;UserName = userid() //Get the user login using the [[UserId Function]].
+    &amp;LoginOK = GAMRepository.Login(&amp;UserName, "", &amp;AdditionalParameter, &amp;Errors ) //Login using external Procedure which is called automatically.
+    If &amp;LoginOK
+       &amp;URL = GAMRepository.GetLastErrorsURL()
+       If &amp;URL.IsEmpty()
+          Home()
+       Else
+          Link(&amp;URL) //return and continue with the flow of the application.
+       Endif
+    Else
+       If &amp;Errors.Count &gt; 0
+          ........................
+       Endif
+    EndIf
+  
+EndEvent</pre>
+
+<p>The first time the user executes the application, GAM registers it in the GAM User table. This registration is done automatically (see <a href="https://wiki.genexus.com/commwiki/wiki?19913,," target="_blank">GAM Registration</a> for more information).</p>
+
+<p>Since then, each time the web session expires, the login is performed again, but a different session is given to the user.</p>
+
+<p>Download the sample <a href="https://wiki.genexus.com/commwiki/wiki?24041,," target="_blank">here</a>. The xpz file contains the Procedure which implements the authentication (gamwslogin) and all the SDTs needed. Besides, it contains a SampleLogin Web Panel which should be configured as <a href="https://wiki.genexus.com/commwiki/wiki?15590,," target="_blank">Login Object for Web property</a>.</p>
+
+<p></p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="8518.html">UserId function</a><br />
+<a href="16508.html">GAM - Authentication Types</a></p>
+
+<p>   </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/07/22 04:21 PM</em></font></td></TR></table></font>

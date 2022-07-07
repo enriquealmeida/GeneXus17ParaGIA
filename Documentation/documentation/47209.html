@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Example to not overwrite the screenshots</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47209,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Example to not overwrite the screenshots</h1>
+<!--Example to not overwrite the screenshots--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>If you need to save all the screenshots of the <a href="41616.html">takeScreenshot command</a> in the different executions of the same test, this article provides a possible solution.</p>
+
+<p>As a possible solution, we propose that the UI test creates a folder with the name of the test execution date and saves the screenshots in that folder with a unique name of &quot;date_hour&quot;. This way the captures will not be replaced.</p>
+
+<p>The following code is the UI test code which it will code two auxiliary procedures written below:  </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<b id="docs-internal-guid-3bc7a4b1-7fff-bedf-7e89-2c6309866af4">// UI test with takeScreenShot command implementation </b>
+//Start webdriver
+&amp;driver.Start()
+&amp;driver.Maximize()
+//Folder creation to save screenshots
+&amp;absFolderName = folderCreation()
+//First screenshot
+&amp;driver.Go(&quot;https://www.genexus.com/en/products/gxtest&quot;)
+&amp;ScreenshotFile.Source = &amp;absFolderName + &quot;\&quot; + screenShotName()
+&amp;driver.takeScreenshot(&amp;ScreenshotFile.GetAbsoluteName(), 0) 
+//Second screenshot
+&amp;driver.Go(&quot;https://abstracta.us/&quot;) 
+&amp;ScreenshotFile.Source = &amp;absFolderName + &quot;\&quot; + screenShotName() 
+&amp;driver.takeScreenshot(&amp;ScreenshotFile.GetAbsoluteName(), 0) 
+//End webdriver
+&amp;driver.End()</pre>
+
+<p class="Code">The following code is the folderCreation() procedure implementation:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>// folderCreation auxiliar procedure implementation</strong>
+&amp;now = now()
+//convert now variable to string
+&amp;nowVar = &amp;now.ToFormattedString()
+/*to convert nowVar in folder Name 
+i.e. &amp;nowVar=11/02/2020 10:46:13 AM --&gt;  &amp;folderName=&quot;11-02-2020&quot;
+*/
+&amp;pattern = &quot;\b(\d{1,2})/(\d{1,2})/(\d{2,4})\s(\d{1,2}):(\d{1,2}):(\d{1,2})\s(AM|PM)\b&quot;
+&amp;folderName = &amp;nowVar.ReplaceRegEx(&amp;pattern, &quot;$1$2$3&quot;)
+//folder creation in c:\
+&amp;ScreenshotDirectory.Source = &quot;c:\GXtestScreenshots&quot;
+&amp;ScreenshotDirectory.Create()
+//&amp;folderName folder creation
+&amp;ScreenshotDirectory.Source = &amp;ScreenshotDirectory.GetAbsoluteName() + &quot;\&quot; + &amp;folderName
+&amp;ScreenshotDirectory.Create()
+//to save and to return the folder path in which the screenshots will be saved
+&amp;absFolderName = &amp;ScreenshotDirectory.GetAbsoluteName()</pre>
+
+<p class="Code">The following code is the screenShotNow() procedure implementation:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>// screenShotName auxiliar procedure implementation</strong>
+&amp;now = now()
+//convert now variable to srting
+&amp;nowVar = &amp;now.ToFormattedString()
+/*to save and to return part of the screenshort name in the variable &amp;screenShotName 
+i.e. &amp;nowVar=11/02/2020 10:46:13 AM --&gt;  &amp;screenShotName=&quot;11022020_104613&quot;
+*/
+&amp;pattern = &quot;\b(\d{1,2})/(\d{1,2})/(\d{2,4})\s(\d{1,2}):(\d{1,2}):(\d{1,2})\s(AM|PM)\b&quot;
+&amp;screenShotName = &amp;nowVar.ReplaceRegEx(&amp;pattern, &quot;$1$2$3_$4$5$6&quot;) + &quot;.png&quot;</pre>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="41616.html">GXtest UI Commands - Browser</a></TD><TD><a href="47311.html">GXtest UI Commands - Browser (GeneXus 17 upgrade 0 and prior)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/05/20 10:08 PM</em></font></td></TR></table></font>

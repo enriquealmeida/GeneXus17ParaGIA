@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Like operator</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?9991,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Like operator</h1>
+<!--Like operator--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This operator allows the user to select data according to a matching text string.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><i>CExp1</i> <b>LIKE </b><i>CExp2</i> [<b>when </b><em>constraint</em>]</p>
+
+<h4><a id="Where%3A" class="HashLink" href="#Where%3A">Where:</a></h4>
+
+<p><i>CExp1, CExp2 </i><br />
+   Can be attributes, variables, or character strings between quotes.</p>
+
+<p><a href="8629.html">When</a><br />
+   Specifies when the where clause will apply.</p>
+
+<p>Working with iSeries Environment: CExp2 will work just as the iSeries Search Pattern; also, it makes use of the '*' and ‘_’ wildcard characters. '*' indicates that 0 or n characters can exist in the position where this character is placed, and '_' indicates that one character can exist in the position where this character is placed. After searching in CExp1, it returns all instances that contain CExp2.</p>
+
+<p>Working with Client/Server Environment: Programs generated for this environments implement the LIKE operator differently than how the other generators implement it:</p>
+
+<ul>
+	<li>This change gives rise to a more potential search criteria since it makes use of statistics and as a consequence, it uses indices created by the system; its performance is much better than the comparison involving '&gt;='.</li>
+	<li>It is also possible to search for Wildcard characters (% and _) apart from searching for sequential characters located in any position of a string (floating). It is possible to search for those which &quot;start with ...&quot;, &quot;have a letter in a certain position of the string&quot;, etc. It is not possible to search for &quot;those which end with ....&quot;.</li>
+	<li>Allows DBMSs to perform optimizations when searching.</li>
+	<li>Compatible with SQL. All users who are familiar with this language will not require training. This implementation is similar to how the SQL's LIKE operator works. There are two characters that act as wildcards:</li>
+	<li>'%' (percent sign). Used to indicate that the position where the symbol is placed can contain 0 or n numbers of any type of character.</li>
+	<li>'_' (underscore sign). Used to indicate that the position where the symbol is placed can contain 1 character of any type. Note: This operator is case sensitive.</li>
+</ul>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Let us assume we have a system that handles information about clients. In the fixed-part of a Web Panel, we have included a &amp;Search variable, where the user can enter a string. The scrolling part of the panel will contain a name that is &quot;like&quot; the character string mentioned. In other words, in the <a href="24817.html">Grid control</a> we want to include only lines whose descriptions match or contain a given string.</p>
+
+<p>The solution is very simple: We must include a line in the Web Panel Conditions (ClientName LIKE &amp;Search), defining the corresponding Grid attribute that is to be &quot;like&quot; the variable used in the fixed-part of the panel.</p>
+
+<p>In iSeries, these would be the results according to the entered search string:</p>
+
+<table style="border-right-style: none;border-bottom-style: none;border-left-style: none;border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;background-color: rgb(204,204,204);"><strong>Search string</strong></td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;background-color: rgb(204,204,204);"><strong>Result</strong></td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;">JOHN</td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All names starting with the ‘JOHN’ string.</td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;">*SMITH</td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All names containing the ‘SMITH’ string at any place within the name.</td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;">JOHN*SMITH</td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All names starting with the ‘JOHN’ string followed by the ‘SMITH’ string, 0 or more characters may exist between the two strings.</td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;">ANDERS_N</td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All names containing the ‘ANDERS’ string followed by another character and then an ‘N’. Useful to search for ANDERSON and ANDERSEN.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p>In SQL environment:</p>
+
+<table style="border-right-style: none;border-bottom-style: none;border-left-style: none;border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;background-color: rgb(204,204,204);"><strong>Search string</strong></td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;background-color: rgb(204,204,204);"><strong>Result</strong></td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;">JOHN</td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All names that start with the following character sequence, 'JOHN', are valid.</td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;">%SMITH</td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All names that contain ‘SMITH’ anywhere within the string are considered.</td>
+		</tr>
+		<tr>
+			<td style="border-top-width: 1.0px;border-right-width: 1.0px;border-bottom-width: 1.0px;border-left-width: 1.0px;border-right-style: dotted;border-bottom-style: dotted;border-left-style: dotted;vertical-align: top;padding-top: 4.0px;padding-right: 4.0px;padding-bottom: 4.0px;padding-left: 4.0px;">JOHN%SMITH</td>
+			<td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All names that start with 'JOHN' and are followed by 'SMITH' are considered. Zero or more characters can lie between these two sequences.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><strong>Objects    </strong><a href="6293.html">Procedure object</a>, <a href="1908.html">Transaction object</a>, <a href="6916.html">Web Panel object</a>, <a href="https://wiki.genexus.com/commwiki/wiki?7387,," target="_blank">Work Panel object</a><br />
+ </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31862.html">HowTo: In-app search in Smart Devices</a></TD><TD><a href="6882.html">Category:Operators</a></TD><TD><a href="8629.html">When clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Anonymous Sessions in GAM - Web Applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16414,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Anonymous Sessions in GAM - Web Applications</h1>
+<!--Anonymous Sessions in GAM - Web Applications--><div class="TableWikiBody" id="tblwikibody"><p>Applications that use <a href="19888.html">GeneXus Access Manager</a> can have private and public pages depending on the <a href="15214.html">Integrated Security Level property</a>. Public pages are those where the <a href="15214.html">Integrated Security Level property</a> is set to none.</p>
+
+<p>In cases where applications have both private and public web pages, when a user visits the public pages, a Session can be kept anyway (optionally).</p>
+
+<p>Although the user is not logged in to the application (because he has visited only public pages of the application), a Session can be saved with information that in most cases is useful for statistical purposes. From now on, this Session will be called an "anonymous session."</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>Anonymous Sessions are GAM Sessions that are given to users of the application who have not been authenticated.</p>
+
+<p>As with any other Session, they are identified by a Token and have other properties such as Date, InitialURL, LastURL, etc.</p>
+
+<p>The GAMRepositoryConfiguration web panel (located in the GAM Example folder) is an example where this property is used.</p>
+
+<p>The way to use it in GeneXus code (by using the <a href="16535.html">GAM API</a>) is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Repository.GiveAnonymousSession   = &amp;GiveAnonymousSession // GAMBoolean data type</pre>
+
+<h3><a id="Anonymous+sessions%3A+Example+of+use" class="HashLink" href="#Anonymous+sessions%3A+Example+of+use">Anonymous sessions: Example of use</a></h3>
+
+<p>An example is to record the user's browsing activity in a site until the user authenticates.<br />
+When the user logs in, the same Session is given to him (the same Token is used), so the backwards information that has been obtained is saved and added to the new Session information.<br />
+This is a typical case of portals, where "navigability" is the information needed to obtain statistics of visited pages.</p>
+
+<p>See it in more detail:</p>
+
+<p>In this example, an "anonymous session" stores the information of all public web pages visited by an anonymous user, until he/she logs in.</p>
+
+<p>1. Edit the repository configuration (using the <a href="15935.html">Backoffice GAM</a>) and configure:</p>
+
+<p>Give Anonymous Session = TRUE<br />
+Generate Session Statistics = Minimum (or Detail)</p>
+
+<p><img src="./images/16415.png" id="16415" class="WikiImage"/></p>
+
+<h5><a id="Figure+1.+GAMRepositoryConfiguration+form." class="HashLink" href="#Figure+1.+GAMRepositoryConfiguration+form.">Figure 1. GAMRepositoryConfiguration form.</a></h5>
+
+<p>2. Program the following in any non-secure web object:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &amp;SessionValid = GAMSession.IsValid(&amp;Session, &amp;Errors)  //&amp;SessionValid is Boolean, &amp;Session is GAMSession data type
+ If &amp;SessionValid
+  &amp;sessionToken = &amp;Session.Token
+  &amp;sessionInitialURL = &amp;Session.InitialURL
+  &amp;sessionLastURL = &amp;Session.LastURL  //Obtain the current Web Page
+  &amp;sessionStatus = &amp;Session.Status
+  &amp;sessionIsAnonymous = &amp;Session.IsAnonymous    //Ask if Session is Anonymous or not
+  &amp;sessionDate = &amp;Session.Date
+else
+ do 'DisplayMessages' 
+Endif</pre>
+
+<p>- When &amp;session.isvalid is executed, GAM returns a token of the session.</p>
+
+<p>If the user is not logged in (or the session has expired), the session is identified as an anonymous session (IsAnonymous flag is set to True).</p>
+
+<p><strong>Note:</strong></p>
+
+<p>If a GAMSession.get() is executed immediately after the session has expired, it can give an error (GAM 21 Session finished, log in again.) because the new anonymous session has not been created yet; at the next GAMSession.get() the anonymous session is created and it will return the new session without errors.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?18463,," target="_blank">GAM Repository features and properties</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="19910.html">Auto-register anonymous user - How to identify auto-registered users</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="18574.html">Going into production: checklist for Applications using GAM</a></TD><TD><a href="16338.html">Security Session Management in Applications using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 03:32 PM</em></font></td></TR></table></font>

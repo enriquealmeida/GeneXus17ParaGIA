@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Calling a GeneXus generated program from other Environments</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?21387,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Calling a GeneXus generated program from other Environments</h1>
+<!--Calling a GeneXus generated program from other Environments--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	If you want to execute a GeneXus program from other environments using the generated objects, you will need to understand the generation conventions in the selected platform:</p>
+<ul>
+	<li>
+		the generated object name.</li>
+	<li>
+		how the <a href="6862.html">Parm rule</a> parameters are resolved.</li>
+	<li>
+		how to use <em>In</em>, <em>InOut</em> and <em>Out</em> type <a href="8220.html">parameters</a>.</li>
+	<li>
+		extra parameters if needed.</li>
+	<li>
+		<a href="21392.html">platform specific data type mappings</a> and Structured Data type mapping.</li>
+</ul>
+<p>
+	Suppose you have the GeneXus object &quot;calltype01&quot; with the following parm rule</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;c01,inout:&amp;c02,out:&amp;c03); // &amp;c01 to &amp;c03 are character data type</pre>
+<h3>
+	C#</h3>
+<p>
+	From C#, you need to instantiate the class associated to the GeneXus object, call the <em>execute</em> method taking into account the parameter type. <em>In</em> parameters will be passed by value and the rest by reference.</p>
+<ul>
+	<li>
+		<em>In</em>: use the parameter by reference.</li>
+	<li>
+		<em>InOut</em>: use the C# ref keyword.</li>
+	<li>
+		<em>Out</em>: use the C# out keyword.</li>
+</ul>
+<p>
+	Following the example, you can call the object as follows:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+String c01 = &quot;csharp_c01&quot; ;
+String c02 = &quot;csharp_c02&quot; ;
+String c03 = &quot;csharp_c03&quot; ;
+new calltype01().execute(  c01, ref  c02, out  c03) ;  // c01 to c03 are strings</pre>
+<p>
+	In this case the object is generated using the .Net Application namespace property.</p>
+<p>
+	If you use Collection data types, you will need to cast the element to <em>IGxCollection</em>.</p>
+<h3>
+	Java</h3>
+<p>
+	When using Java, you need to instantiate the class associated to the GeneXus object with a context initializer, you can use &quot;-1&quot; to create a new context. Call the <em>execute</em> method taking into account the parameter type. All parameters are passed by value, for <em>InOut</em> and <em>Out</em> parameters you will need to do an extra handling before and after executing the method to set and retrieve the returned values.</p>
+<ul>
+	<li>
+		<em>In</em>: set the Java variable as is.</li>
+	<li>
+		<em>InOut</em>|<em>Out</em>: Create a 1 element array for each parameter type. Before and after calling the object you will need to assign and retrieve its value from the first position.</li>
+</ul>
+<p>
+	Following the example, you can call the object as follows:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+String c01 = &quot;java_c01&quot; ;
+String c02 = &quot;java_c02&quot; ;
+String c03 = &quot;java_c03&quot; ;
+String GXv_char02[] = new String [1] ;
+String GXv_char03[] = new String [1] ;
+GXv_char02[0] = c02 ;
+GXv_char03[0] = c03 ;
+new calltype01(-1).execute( c01, GXv_char02, GXv_char03) ;
+String c022 = GXv_char02[0] ;  // c02 return value
+String c033 = GXv_char03[0] ;  // c03 return value</pre>
+<p>
+	Check the <a href="https://wiki.genexus.com/commwiki/wiki?9111,," target="_blank">Java Package Name Property (GeneXus X Evolution 2)</a> to locate the generated java and class files; you will need to qualify the call if you use this property.</p>
+<p>
+	If you use Collection data types, you will need to use the <em>GxObjectCollection </em>class.</p>
+<h3>
+	Ruby</h3>
+<p>
+	When using Ruby, you need to instantiate the class associated to the GeneXus object with a context initializer, you can use <em>nil</em> to create a new context. Call the <em>execute</em> method taking into account that <em>In</em> and <em>InOut</em> parameters should be method arguments and <em>InOut</em> and <em>Out</em> parameters must be assigned as return values.</p>
+<ul>
+	<li>
+		<em>In</em>|<em>InOut</em>: set the Ruby variable as is in the method argument section.</li>
+	<li>
+		<em>InOut</em>|<em>Out</em>: assign them as return values.</li>
+</ul>
+<p>
+	Following the example, you can call the object as follows:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+c01 = 'c01'
+c02 = 'c02'
+c03 = 'c03'
+c02, c03 = Calltype01.new(nil).execute( c01, c02)</pre>
+<p>
+	If you use Collection data types, you will need to use the <em>GX::Collection</em> class.</p>
+<h3>
+	Considerations</h3>
+<p>
+	Depending on the case, you will need to add the <a href="18859.html">GeneXus Standard Classes</a> and other generated objects in your project.</p>
+<p>
+	When using Extended data types and <a href="6286.html">SDT</a> objects in the <a href="6862.html">Parm rule</a>, you will need to check the GeneXus generated code objects to do a correct data type mapping and add these references to the project.</p>
+<p>
+	For standard GeneXus SDT objects, you need to find the associated generated class. For example, if you create a <em>UserSDT</em> object, the generator will create a <em>SdtUserSDT</em> class in the target language.</p>
+<h3>
+	See Also</h3>
+<p>
+	<a href="21392.html">Attribute and Variable Data types mapping by Generator</a><br />
+	<a href="8220.html">Definition of type of parameters received (in, out, inout)</a></p>
+<p>
+	</p>
+<br />   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

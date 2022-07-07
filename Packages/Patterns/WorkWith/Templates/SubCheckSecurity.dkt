@@ -1,0 +1,64 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prepare Transaction event code" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Settings" Type="WorkWithSettings" %>
+<%@ Property Name="ProgramNameVariable" Type="System.String" %>
+<%@ Property Name="DoNotRedirect" Type="System.Boolean" %>
+<%
+	SettingsSecurityElement security = Settings.Security;
+	if (security.Enabled)
+	{
+		if (String.IsNullOrEmpty(ProgramNameVariable))
+			ProgramNameVariable = "PgmName";
+	
+		if (security.Check != null && security.NotAuthorized != null)
+		{
+			string securityCustomParams = security.CustomParameters();
+			if (!String.IsNullOrEmpty(securityCustomParams))
+				securityCustomParams = ", " + securityCustomParams;
+
+			if (DoNotRedirect)
+			{
+				if (String.IsNullOrEmpty(securityCustomParams))
+				{
+%>
+&IsAuthorized = <%= security.CheckName %>(&<%= ProgramNameVariable %>)
+<%
+				}
+				else
+				{
+%>
+<%= security.CheckName %>(&<%= ProgramNameVariable %><%= securityCustomParams %>, &IsAuthorized)
+<%
+				}
+			}
+			else
+			{
+				if (String.IsNullOrEmpty(securityCustomParams))
+				{
+%>
+If not <%= security.CheckName %>(&<%= ProgramNameVariable %>)
+<%
+				}
+				else
+				{
+%>
+<%= security.CheckName %>(&<%= ProgramNameVariable %><%= securityCustomParams %>, &IsAuthorized)
+If not &IsAuthorized
+<%
+				}
+%>
+	<%= security.NotAuthorizedName %>(&<%= ProgramNameVariable %>)
+Endif
+<%
+			}
+		}
+		else
+		{
+%>
+// ERROR: Security check is set to true in Work With Settings, but either the 'Check' procedure or the 'Not Authorized' webpanel has not been set.
+<%
+		}
+	}
+%>

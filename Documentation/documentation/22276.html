@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Best Practices for Manual Synchronization</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22276,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Best Practices for Manual Synchronization</h1>
+<!--Best Practices for Manual Synchronization--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When choosing the first option of <a href="22266.html">Coding your Data Synchronization programs</a>, the developer has to code all the objects which manage the interaction with the server.</p>
+
+<p>A sample code for manual synchronization can be seen here: <a href="22543.html">Manual Synchronization Code Sample</a>.</p>
+
+<p>This document states best practices for programming these objects.</p>
+
+<h3><a id="1.+Clear+after+using+the+wiki%3F2427%2CSDT+SDT+wiki%3F6296%2CImplementing%2BSDT%2Bcollections+collections" class="HashLink" href="#1.+Clear+after+using+the+wiki%3F2427%2CSDT+SDT+wiki%3F6296%2CImplementing%2BSDT%2Bcollections+collections">1. Clear after using the <a href="2427.html">SDT</a> <a href="6296.html">collections</a></a></h3>
+
+<p>Using the clear function of the SDT at the end of the for-endfor block will free memory allocated for that collection. If this is not done, the OS will keep memory allocated for that collection even though the routine is not using it any more.</p>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Execute(!'GET', !'GetAllDepartments?fmt=json')
+&amp;departmentslist.FromJson(&amp;httpclient.ToString())
+For &amp;department in &amp;departmentslist
+new
+  DepartmentId = &amp;department.DepartmentId
+  DepartmentName = &amp;department.DepartmentName
+endnew
+&amp;i+= 1
+endFor
+<strong>&amp;departmentsList.Clear()</strong></pre>
+
+<h3><a id="2.+Different+wiki%3F6293%2CCategory%253AProcedure%2Bobject+Procedure+for+each+Local+Table" class="HashLink" href="#2.+Different+wiki%3F6293%2CCategory%253AProcedure%2Bobject+Procedure+for+each+Local+Table">2. Different <a href="6293.html">Procedure</a> for each Local Table</a></h3>
+
+<p>To ensure that all the memory allocated for a table synchronization process is released, it is recomended to separete each table synch on a different Procedure. This will force the OS to release all the memory allocated used for one table before synchronizing the next one. This can be done because once you inserted the data on the local database it is unlikely that you are going to use the SDT collection and httpclient for that table again.</p>
+
+<h3><a id="3.+Use+wiki%3F5846%2CToc%253ABusiness%2BComponent+Business+Component" class="HashLink" href="#3.+Use+wiki%3F5846%2CToc%253ABusiness%2BComponent+Business+Component">3. Use <a href="5846.html">Business Component</a></a></h3>
+
+<p>Using Business Components instead of New - EndNew code blocks is better in order to have the <a href="2428.html">KB</a> ready to pass from Manual to Automatic Synchronization with less problems.</p>
+
+<p>This best practice applies only for the <a href="22269.html">Events Tables</a>, because all the data that are going to be inserted via <a href="2416.html">BC</a> (in Procedure or <a href="20840.html">WWSD</a>) is the one that in Automatic Synchronization is going to be replicated on the server. So, this best practice can be taken in consideration if your application is going to convert to <a href="22267.html">Automatic Synchronization</a> at any time in the future.</p>
+
+<h3><a id="4.+Conceptually+divide+tables+in+Master+and+Event+Tables" class="HashLink" href="#4.+Conceptually+divide+tables+in+Master+and+Event+Tables">4. Conceptually divide tables in Master and Event Tables</a></h3>
+
+<p>Having this virtual division done will also help to be able to switch from one synchronization criteria back and forward. Remember that the data received from the server is usually the Master Tables and the ones added locally and sent to the server are the Event Tables.</p>
+
+<p>This division is going to make your code more maintainable and is easier to see the flow of the information on your system.</p>
+
+<h3><a id="5.+Use+Paging+when+synchronizing" class="HashLink" href="#5.+Use+Paging+when+synchronizing">5. Use Paging when synchronizing</a></h3>
+
+<p>To optimize the memory resources of the devices this is quite crucial. Using paging on the request of master Data can save lots of space on the local memory of the device's OS.</p>
+
+<h4><a id="How+to+do+it%3F" class="HashLink" href="#How+to+do+it%3F">How to do it?</a></h4>
+
+<p>Note: This sample suposes that the variable based on <a href="6932.html">HttpClient data type</a> has already been initialized.</p>
+
+<h5><a id="Server+side" class="HashLink" href="#Server+side">Server side</a></h5>
+
+<p><a href="5270.html">Data Provider object</a>: with the total quantity of registers of the Product Table.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product [NoOutput] Order ProductId
+{
+    &amp;Total = &amp;Total + 1
+}
+SDTTotal
+{
+    Total = &amp;Total
+}</pre>
+
+<p>Data Provider: which given a page and quantity returns a subset of registers.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SDTProduct [Count = &amp;PageSize] [Skip = (&amp;PageNumber - 1) * &amp;PageSize]
+{
+ProductId
+ProductName
+ProductPrice = ProductPrice.ToString()
+ProductStock
+ProductImage = ProductImage.ImageURI
+DepartmentId
+}</pre>
+
+<h5><a id="Client+Side" class="HashLink" href="#Client+Side">Client Side</a></h5>
+
+<p>Procedure: Code to Get the Products in pages.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Execute(!'GET', !'GetTotalProducts?fmt=json')
+&amp;SDTTotal.FromJson(&amp;httpclient.ToString())
+
+&amp;TotalProducts = &amp;SDTTotal.Total
+
+&amp;PageSize = 10
+&amp;TolalPages = (&amp;TotalProducts / &amp;PageSize)
+If &amp;TolalPages &gt; &amp;TolalPages.Truncate(0) 
+&amp;TolalPages = &amp;TolalPages.Truncate(0)  + 1
+Endif
+
+For &amp;PageId = 1 to &amp;TolalPages.Truncate(0) step 1
+    &amp;httpclient.Execute(!'GET', !'GetAllProducts?Pagenumber='+ &amp;PageId.ToString().Trim() + '&amp;Pagesize=' + &amp;PageSize.ToString().Trim() + '&amp;fmt=json')
+    &amp;productslist.FromJson(&amp;httpclient.ToString())
+    For &amp;product in &amp;productslist
+        new
+            ProductId = &amp;product.ProductId
+            ProductName = &amp;product.ProductName
+            ProductPrice = &amp;product.ProductPrice.ToNumeric()
+            ProductStock = &amp;product.ProductStock
+            DepartmentId = &amp;product.DepartmentId
+        endnew
+    endfor
+endfor
+commit</pre>
+
+<p><br />
+</p>
+ 
+
+<p> </p>
+<br />
+<br />
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22266.html">Coding your Data Synchronization programs</a></TD><TD><a href="22543.html">Manual Synchronization Code Sample</a></TD><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

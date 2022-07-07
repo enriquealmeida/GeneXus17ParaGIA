@@ -1,0 +1,74 @@
+ ************************************************************** 
+C           GXCTOD    BEGSR
+ ************************************************************** 
+C                     MOVEA$GXDTC    #1
+C                     Z-ADD0         @       40
+C                     Z-ADD1         @I      40
+C                     Z-ADD0         $XDAY
+C                     Z-ADD0         $XMNTH
+C                     Z-ADD0         $XYEAR
+C*                     MOVE #2        $F6203  1
+C*           $F6203    LOKUP$012                     99
+C*           *IN99     IFEQ '1'
+ *
+C           @         DOUEQ3
+C                     Z-ADD0         @X      40
+ *
+C           #2        DOWEQ' '
+C           @I        ANDLE10
+C           #2        OREQ '-'
+C           @I        ANDLE10
+C           #2        OREQ '/'
+C           @I        ANDLE10
+C           #2        OREQ '.'
+C           @I        ANDLE10
+C                     ADD  1         @I
+C                     END
+ *
+C                     MOVE *ZEROS    $F6201  
+C           #2        DOUEQ' '
+C           #2        OREQ '.'
+C           #2        OREQ '-'
+C           #2        OREQ '/'
+C           @I        OREQ 10
+C           @X        OREQ 4
+C                     MOVE #2        $F6203  1
+C           $F6203    LOKUP$012                     99
+C           *IN99     IFEQ '1'
+C                     MOVE #2        $F6202  10
+C                     MULT 10        $F6201
+C                     ADD  $F6202    $F6201
+C                     ENDIF
+C                     ADD  1         @X
+C                     ADD  1         @I
+C                     END
+ *
+C           @I        IFEQ 10
+C                     MOVE #2        $F6203  1
+C           $F6203    LOKUP$012                     99
+C           *IN99     IFEQ '1'
+C                     MOVE #2        $F6202  10
+C                     MULT 10        $F6201
+C                     ADD  $F6202    $F6201
+C                     ENDIF
+C                     END
+ *
+C                     ADD  1         @
+C                     SELEC
+C           @         WHEQ #3
+C                     Z-ADD$F6201    $XDAY  
+C           @         WHEQ #4
+C                     Z-ADD$F6201    $XMNTH 
+C                     OTHER
+C                     Z-ADD$F6201    $XYEAR
+C                     ENDSL
+C                     END
+C                     EXSR XTD
+C*                     END
+C                     MOVE $DTCHR    $GXDTE
+C                     EXSR GXFTDT
+C           $GXOUT    IFEQ 0
+C                     MOVE *ZEROS    $DTCHR
+C                     ENDIF
+C                     MOVE *ZEROS    $GXDTC 22
+C                     ENDSR

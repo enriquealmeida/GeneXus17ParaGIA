@@ -1,0 +1,54 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Conditions" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+<%
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>
+      <Part type="<%= PartType.Conditions.ToString() %>">
+        <Source>
+          <![CDATA[<%
+	}
+
+	foreach (PromptAttribute filterAtt in Definition.Fixed)
+	{
+		Artech.Genexus.Common.Objects.Attribute att = GetAttribute(filterAtt.AttriId);
+
+		if (filterAtt.FixType == "c" && ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+		{
+			string conditionOperator = ">=";
+			if (att.Type == eDBType.CHARACTER || att.Type == eDBType.VARCHAR || att.Type == eDBType.LONGVARCHAR)
+				conditionOperator = "LIKE";
+			string whenClause = (Array.IndexOf(Definition.Order, filterAtt.AttriId) >= 0) ? "" : "when not &" + GetConditionVarName(att.Name) + ".IsEmpty()";
+%>
+<%= att.Name %> <%= conditionOperator %> &<%= GetConditionVarName(att.Name) %> <%= whenClause %>;
+<%
+		}
+		else if (filterAtt.FixType == "f")
+		{
+%>
+<%= att.Name %> = &<%= GetParameterVarName(att.Name) %>;
+<%
+		}
+	}
+	
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>]]>
+        </Source>
+      </Part>
+<%
+	}
+%>

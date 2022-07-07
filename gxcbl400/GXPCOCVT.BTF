@@ -1,0 +1,45 @@
+@echo off
+	rem #1 = Data library
+	rem #2 = Programs library
+	rem #3 = GX Library
+cls
+	echo.
+	echo ------ Transfering Sources
+	echo.ÿ
+	CALL CVTTFR
+	if errorlevel 1 goto abend
+
+	echo.
+	echo ------ Compiling Conversion Program
+	echo.ÿ
+	rmtcmd CALL PGM(#3/GXCGCL) PARM(#3 #2 #1 CVTJOB *NOEXC *NODLT) /z
+	if errorlevel 20 goto abend
+
+	echo.
+	echo ------ Executing Conversion Program
+	echo.ÿ
+	echo This is a long running program. It depends on the ammount of
+	echo tables and records in each table that your application has.
+	echo.
+	echo Please do not cancel this process unless you are shure the
+	echo PC->AS/400 connection went down.
+	echo.
+	rmtcmd CALL PGM(#2/CVTJOB) PARM(#2 #1 *BATCH) /z
+	if errorlevel 20 goto abend
+:nend
+	echo.
+	echo Library convertion to V3.1 NORMAL termination.
+	echo.ÿ
+	goto end
+
+:abend
+	echo.
+	echo                            --------------------
+	echo Library convertion to V3.1 ABNORMAL termination.
+	echo                            --------------------
+	echo.ÿ
+	echo Please take note of the above error messages and contact your
+	echo local dealer to correct the problem.
+	echo.
+	goto end
+:end

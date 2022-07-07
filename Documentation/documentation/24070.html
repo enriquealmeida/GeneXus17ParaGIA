@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>File data type: Text file handling</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24070,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">File data type: Text file handling</h1>
+<!--File data type: Text file handling--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>You can use the <a href="6915.html">File data type</a> to handle text files. Besides the basic file operations -like copying, deleting, etc.- it allows us to manage the content of text files (reading and writing file's content).</p>
+
+<p>It is quite useful for scenarios where the file contents must be dumped directly into a memory variable, or in the case of writing a log file with the contents of a string variable.</p>
+
+<p>Below are the methods available for the <a href="6915.html">File data type</a>, meant for reading or writing text files.</p>
+
+<h3><a id="Methods+for+reading+or+writing+text+files" class="HashLink" href="#Methods+for+reading+or+writing+text+files">Methods for reading or writing text files</a></h3>
+
+<p>The following methods are for reading or writing text files. The operation is done in a single step: the file is opened, the contents are read from or written to the file, and then the file is closed.</p>
+
+<p>This is very useful for small files. For larger files, methods for reading and writing line by line are provided.</p>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Method</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>ReadAllText([encoding]):String</td>
+			<td>Opens a text file, reads all text in the file, and closes the file, using the optionally specified <a href="https://wiki.genexus.com/commwiki/wiki?19316,," target="_blank">encoding</a> (UTF-8 when not specified).</td>
+		</tr>
+		<tr>
+			<td>ReadAllLines([encoding]):StringCollection</td>
+			<td>Opens a text file, reads all lines in the file, and closes the file. Each item in the collection is a line from the file, using the optionally specified <a href="https://wiki.genexus.com/commwiki/wiki?19316,," target="_blank">encoding</a> (UTF-8 when not specified). The value returned is a Character Collection.</td>
+		</tr>
+		<tr>
+			<td>WriteAllText(String[, encoding])</td>
+			<td>Opens the file, writes the string to the file, and closes the file. If the file existed, it is overwritten, using the optionally specified encoding (UTF-8 when not specified).</td>
+		</tr>
+		<tr>
+			<td>WriteAllLines(StringCollection[, encoding])</td>
+			<td>Opens the file, writes the string collection to the file -each item followed by a line terminator-, and closes the file. If the file existed, it is overwritten, using the optionally specified encoding (UTF-8 when not specified).</td>
+		</tr>
+		<tr>
+			<td>AppendAllText(String[, encoding])</td>
+			<td>Opens the file, appends the specified string to the end of the file, and closes the file, using the optionally specified encoding (UTF-8 when not specified).</td>
+		</tr>
+		<tr>
+			<td>AppendAllLines(StringCollection[, encoding])</td>
+			<td>Opens the file, appends the specified string collection to the end of the file -each string followed by a line terminator-, and closes the file, using the optionally specified encoding (UTF-8 when not specified).</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><a id="Example+I" class="HashLink" href="#Example+I">Example I</a></h4>
+
+<p>In this example, you search for files with HTML extension and load their contents into the database. To scan the files you have to use a &amp;File variable (based on the <a href="6915.html">File data type</a>), and a &amp;Directory variable (based on the <a href="6567.html">Directory data type</a>), and then use the ReadAllText method to dump the contents of the file into the database.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;File in &amp;Directory.GetFiles(&quot;*.html&quot;)
+   New
+      ContentHtml = &amp;File.ReadAllText()
+   EndNew
+​EndFor</pre>
+
+<h4><a id="Example+II" class="HashLink" href="#Example+II">Example II</a></h4>
+
+<p>In this example, a log file was written with data from a Business Component.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;LogLines = new()  //&amp;LogLines is a string collection.
+&amp;LogLines.Add(Format(&quot;[%1] Error updating Customer&quot;, Now()))
+&amp;LogLines.Add(&amp;CustomerBC.ToJson())
+&amp;LogFile.AppendAllLines(&amp;LogLines) //&amp;LogFile is File Data Type.</pre>
+
+<h3><a id="Methods+for+reading+or+writing+lines+in+the+text+file" class="HashLink" href="#Methods+for+reading+or+writing+lines+in+the+text+file">Methods for reading or writing lines in the text file</a></h3>
+
+<p>The following methods are used to read or write a file by line. </p>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Method </strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>ReadLine(): String</td>
+			<td>Reads a line of characters from the file. The string returned does not contain the terminating carriage return or line feed. The file must be opened before using this method (using OpenRead or Open method).</td>
+		</tr>
+		<tr>
+			<td>WriteLine(String)</td>
+			<td>Writes the specified string followed by a line terminator. The file must be opened before using this method (using OpenWrite or Open method).</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>In this case, the file must be opened prior to performing the operation. Following is a detail of the methods to be used for opening the file.</p>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Method</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>Open([encoding])</td>
+			<td>Opens a file with reading/writing access, using the optionally specified encoding (UTF-8 when not specified). If the file exists, the content to write is appended to the file. Otherwise, a new file is created.</td>
+		</tr>
+		<tr>
+			<td>OpenWrite([encoding])</td>
+			<td>Opens a file for writing to append content, or creates a new file when one does not exist, using the optionally specified encoding (UTF-8 when not specified).</td>
+		</tr>
+		<tr>
+			<td>OpenRead([encoding])</td>
+			<td>Opens a file for reading, using the optionally specified encoding (UTF-8 when not specified).</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Methods+for+creating+and+closing+a+text+file" class="HashLink" href="#Methods+for+creating+and+closing+a+text+file">Methods for creating and closing a text file</a></h3>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Method</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>Create()</td>
+			<td>Creates a file in the path specified in the Source property. The file is not opened.<br />
+			If the file already exists, it sets ErrCode = 1, and the file is not created nor truncated.</td>
+		</tr>
+		<tr>
+			<td>Close() </td>
+			<td>Closes the file.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Properties" class="HashLink" href="#Properties">Properties</a></h3>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Name</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>EOF</td>
+			<td>True if the end of the file has been reached. Before using this property, the file must be opened for reading.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><a id="Example+III" class="HashLink" href="#Example+III">Example III</a></h4>
+
+<p>Processing a file by line.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;File.Source = &quot;C:\Files\Data.txt&quot; //&amp;File is File Data Type.
+&amp;File.OpenRead()
+do while not &amp;File.EOF
+    ProcessLine(&amp;File.ReadLine())
+enddo
+&amp;File.Close()
+</pre>
+
+<h3><a id="FromJsonFile+and+FromXMLFile+Methods+" class="HashLink" href="#FromJsonFile+and+FromXMLFile+Methods+">FromJsonFile and FromXMLFile Methods </a></h3>
+
+<p>The following methods allow to return and load a SDT or an XML variable from the contents of a file into this format (JSON or XML).</p>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Method</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>FromJsonFile(File)</td>
+			<td>Opens a JSON file, parses its content, loads the SDT, and closes the file.</td>
+		</tr>
+		<tr>
+			<td>FromXMLFile(File)</td>
+			<td>Opens a XML file, parses its content, loads the SDT, and closes the file.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><a id="Example+IV" class="HashLink" href="#Example+IV">Example IV</a></h4>
+
+<p>In the following example the file content is in JSON format, and it is compatible with the structure of CustomerSDT.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;File.Source = &quot;C:\Files\data.json&quot; //&amp;File is File Data Type
+&amp;CustomerSDT.FromJsonFile(&amp;File) //&amp;CustomerSDT is a SDT variable
+</pre>
+
+<p>Note:</p>
+
+<p>Since GeneXus 15 Release version, FromJsonFile and FromXMLFile can optionally return a Boolean value and a variable Message for error checking.</p>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;File.Source = &quot;C:\Files\data.json&quot; //&amp;File is File Data Type
+&amp;Boolean = &amp;CustomerSDT.FromJsonFile(&amp;File, &amp;Message) //&amp;CustomerSDT is a SDT variable
+</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Genexus Tilo RC (X Ev3)</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="6293.html">Procedure object</a>, <a href="1908.html">Transaction object</a>, <a href="6916.html">Web Panel object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Languages</strong></td>
+			<td>.NET, Java, Ruby</td>
+		</tr>
+		<tr>
+			<td><strong>Applies to</strong></td>
+			<td>Web, Smart Devices</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>These methods run in <a href="20286.html">Offline Native Mobile Applications</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="6915.html">File data type</a><br />
+<a href="6567.html">Directory data type</a></p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6915.html">File data type</a></TD></TR><TR><TD><a href="46412.html">Security Scanner built-in tool</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

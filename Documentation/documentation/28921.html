@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Interact with Exchange Online, Exchange Server 2013, Office 365</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?28921,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Interact with Exchange Online, Exchange Server 2013, Office 365</h1>
+<!--HowTo: Interact with Exchange Online, Exchange Server 2013, Office 365--><div class="TableWikiBody" id="tblwikibody"><div style="background-color: rgb(255,235,205);border-left: 6.0px solid rgb(245,166,35);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Deprecated</strong> Microsoft has deprecated the EWS API and should not be used anymore. Please use SMTPSession and Pop3Session with Oauth to access a Exchange Mailbox.</div>
+
+<p>To read and send messages using Microsoft Exchange Online, Microsoft Exchange Server 2013 or Office 365, you can use the following API.</p>
+
+<h3><a id="Properties" class="HashLink" href="#Properties"><strong>Properties</strong></a></h3>
+
+<ul>
+	<li><strong>ServerUrl</strong>: Character<br />
+	Exchange Server URL. If it is empty, the API tries to find a server based on the UserName.</li>
+	<li><strong>UserName</strong>: Character<br />
+	Email of the user as defined in the Exchange Server</li>
+	<li><strong>Password</strong>: Character</li>
+	<li><strong>AttachDir</strong>: Character<br />
+	Attached files will be saved here. If it is empty, the attachments will not be downloaded.</li>
+	<li><strong>Count</strong>: Numeric<br />
+	Total number of messages or number of unread messages depending on the NewMessages property.</li>
+	<li><strong>NewMessages</strong>: bool<br />
+	<span style="line-height: 1.6em;">True: (Default) Only unread emails are read<br />
+	False: All emails are read</span></li>
+	<li><strong>SetProperty(Character key, Character value)</strong><br />
+	Allows setting a property and its associated value. It may be used, for example, to set the Exchange Server version.</li>
+	<li><strong>ErrCode</strong>: Numeric</li>
+	<li><strong>ErrDescription</strong>: Character</li>
+</ul>
+
+<h3><a id="Methods" class="HashLink" href="#Methods"><strong>Methods</strong></a></h3>
+
+<ul style="line-height: 20.8px;">
+	<li><strong>Login</strong>()<br />
+	Starts the connection with the Exchange Server.</li>
+	<li><strong>Logout</strong>()<br />
+	Ends the connection with the Exchange Server. </li>
+	<li><strong>Receive</strong>(MailMessage): Numeric<br />
+	Downloads the message from the server. Returns 0 if it succeeded. By default, it downloads the message from the 'Inbox' folder.</li>
+	<li><strong>Send</strong>(MailMessage): Numeric</li>
+	<li><strong>Delete</strong>(MailMessage): Numeric</li>
+	<li><strong>MarkAs</strong>(MailMessage, IsRead): Numeric</li>
+</ul>
+
+<p style="margin-left: 40.0px;">IsRead = true. Mark the message as Read. IsRead = false, marks the message as unread. </p>
+
+<ul style="line-height: 20.8px;">
+	<li><strong>GetMailMessage</strong>(MsgId, Boolean FetchEntireMessage, MailMessage): Numeric</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Gets the MailMessage with the MsgId specified. FetchEntireMessage indicates if MailMessage must be downloaded completely (subject, body, attachments) from server. </p>
+
+<ul style="line-height: 20.8px;">
+	<li><strong>ChangeFolder</strong>(Character): Numeric<br />
+	Changes the folder for the next Receive() operations. Backlashes must be used to refer to Subfolders (e.g., 'Folder1\Subfolder11\Subfolder111')</li>
+</ul>
+
+<h3><a id="Error+Codes" class="HashLink" href="#Error+Codes"><strong>Error Codes</strong></a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="color: rgb(0,0,0);font-family: sans-serif , Arial , Verdana , segoeui;font-size: 14.0px;line-height: 24.0px;">
+	<tbody style="vertical-align: top;">
+		<tr>
+			<td><font size="2"><strong>Code</strong></font></td>
+			<td>
+			<p align="center" style="margin-top: 0.0px;"><font size="2"><strong>Message</strong></font></p>
+			</td>
+		</tr>
+		<tr>
+			<td><font size="2">0</font></td>
+			<td><font size="2">Ok</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">5</font></td>
+			<td><font size="2">Could not change folder</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">10</font></td>
+			<td><font size="2">Could not send message</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">11</font></td>
+			<td><font size="2">No messages to receive</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">15</font></td>
+			<td><font size="2">Invalid Attachment</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">16</font></td>
+			<td><font size="2">Could not save attachment</font></td>
+		</tr>
+		<tr>
+			<td><font size="2">22</font></td>
+			<td><font size="2">Error receiving message</font></td>
+		</tr>
+		<tr>
+			<td>24</td>
+			<td><span style="color: rgb(0,0,0);font-family: sans-serif , Arial , Verdana , segoeui;font-size: small;line-height: 24.0px;">Authentication Error</span></td>
+		</tr>
+		<tr>
+			<td>27</td>
+			<td>Mail Message with Id not found</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p style="line-height: 20.8px;">Sample to receive new Emails:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ReceiveMails'
+    Do 'Login'
+    
+    if (&amp;GXMailExchange.ErrCode = 0)
+        &amp;MailMessage = new()
+        do while (&amp;GXMailExchange.Receive(&amp;MailMessage) = 0)
+            
+            &amp;MailMessageSDT.Subject = &amp;MailMessage.Subject
+            &amp;MailMessageSDT.From = Format(!&quot;%1 (%2)&quot;, &amp;MailMessage.From.Name, &amp;MailMessage.From.Address)
+            
+            if (not &amp;MailMessage.Text.IsEmpty())
+                &amp;MailMessageSDT.Body = &amp;MailMessage.Text
+            else
+                &amp;MailMessageSDT.Body = &amp;MailMessage.HTMLText
+            endif
+            &amp;MailMessageSDT.DateReceived = &amp;MailMessage.DateReceived
+            &amp;MailMessageSDT.DateSent = &amp;MailMessage.DateSent
+            
+            for &amp;attach in &amp;MailMessage.Attachments
+                &amp;MailMessageSDT.Attachments.Add(&amp;attach.Trim())
+            endfor
+                    
+            //Mark As Read
+            &amp;GXMailExchange.MarkAs(&amp;MailMessage, true)        
+            
+            //Delete Message
+            //&amp;GXMailExchange.Delete(&amp;MailMessage)        
+                    
+            &amp;MailMessages.Add(&amp;MailMessageSDT)
+            &amp;MailMessageSDT = new()
+            &amp;MailMessage = new()
+        enddo
+    
+        
+    else
+        msg(!&quot;Error: &quot; + &amp;GXMailExchange.ErrDescription)                
+    endif
+    
+Endevent
+
+Sub 'Login'
+    
+    &amp;GXMailExchange.SetProperty(ExchangeVersion.Property, &amp;ExchangeVersion)
+    
+    &amp;GXMailExchange.ServerUrl = &amp;ServerUrl.Trim()
+    &amp;GXMailExchange.UserName = &amp;UserName.Trim()
+    &amp;GXMailExchange.Password = &amp;Password.Trim()
+    &amp;GXMailExchange.AttachDir = &amp;AttachDir.Trim()
+    
+    &amp;GXMailExchange.NewMessages = &amp;FetchNewMessagesOnly
+    
+    &amp;GXMailExchange.Login()    
+EndSub</pre>
+
+<p style="line-height: 20.8px;">where</p>
+
+<ul>
+	<li style="line-height: 20.8px;"><em>&amp;GXMailExchange</em> variable data type is GXMailExchange (External Object)</li>
+</ul>
+
+<h3 style="line-height: 20.8px;"><a id="Requirements" class="HashLink" href="#Requirements">Requirements</a></h3 style="line-height: 20.8px;">
+
+<ul>
+	<li style="line-height: 20.8px;"><span style="line-height: 20.8px;"> <a href="https://wiki.genexus.com/commwiki/wiki?28922,," target="_blank">GXMicrosoftExchangeXPZ</a></span></li>
+</ul>
+
+<h3 style="line-height: 20.8px;"><a id="Availability" class="HashLink" href="#Availability"><span style="line-height: 20.8px;">Availability</span></a></h3 style="line-height: 20.8px;">
+
+<p style="line-height: 20.8px;">.NET Generator of <a href="https://wiki.genexus.com/commwiki/wiki?28251,," target="_blank">GeneXus X Evolution 3 Upgrade 4</a></p>
+
+<p style="line-height: 20.8px;">For Java Generator use the <a href='https://www.genexus.com/developers/websac?en,,,33666'>Java mail</a> implementation.</p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/31/22 02:59 PM</em></font></td></TR></table></font>

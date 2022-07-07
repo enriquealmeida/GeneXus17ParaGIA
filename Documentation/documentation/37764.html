@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM deploy tool command line (windows and unix-like operating systems)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37764,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM deploy tool command line (windows and unix-like operating systems)</h1>
+<!--GAM deploy tool command line (windows and unix-like operating systems)--><div class="TableWikiBody" id="tblwikibody"><p>The purpose of the GAM deploy tool command line is to run in any platform (Windows or Unix-like), and perform all the actions that the same UI tool performs, except the creation and reorganization of the GAM database tables (which can be executed by the DBA using the reorganization scripts).</p>
+
+<p>This tool allows running several types of actions, so the call must have this format:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>JAVA: </strong>java -cp &lt;classpath&gt; genexus.security.api.agamdeploytool &quot;&lt;Action&gt; &lt;Corresponding Flags&gt;&quot;
+
+<strong>.NET Framework:</strong> agamdeploytool.exe &quot;&lt;Action&gt; &lt;Corresponding Flags&gt;&quot;
+<strong>
+.NET: </strong>dotnet agamdeploytool.dll &quot;&lt;Action&gt; &lt;Corresponding Flags&gt;&quot;</pre>
+
+<p>Note that the configuration files for connecting to the database must be in the current directory (client.cfg in the case of Java and client.exe.config in the case of NET). Ideally, you run this tool positioned under the deployment environment. In the case of NET, under the virtual directory\bin directory. In the case of Java, under your Webapp.</p>
+
+<p>The tool doesn't ask for the GAM database connection settings (such as the server, port, user, password) because that information is taken from the configuration files mentioned before.</p>
+
+<p>It's distributed together with the GAM libraries, for each corresponding DBMS.</p>
+
+<p>For Java, it is important that the classpath points to the entire lib folder to prevent errors of missing jars, since they could vary with time. For example: -cp &quot;../lib/*&quot;</p>
+
+<h2><a id="+Tool+parameters" class="HashLink" href="#+Tool+parameters"> Tool parameters</a></h2>
+
+<p><br />
+The actions provided by the tool are as follows:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;border: 1.0px solid rgb(221,221,221);">
+	<tbody>
+		<tr>
+			<td><strong>Action</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td><a href='#Initialize'>-Initialize</a></td>
+			<td>Initializes the GAM database with its metadata</td>
+		</tr>
+		<tr>
+			<td><a href='#Import'>-Import</a></td>
+			<td>Imports a package</td>
+		</tr>
+		<tr>
+			<td>-UpgradeGAM</td>
+			<td>Updates the GAM database version; if a reorganization is necessary, the user will have to previously perform it and then run this tool action.</td>
+		</tr>
+		<tr>
+			<td>-Help</td>
+			<td>Shows the actions available in the tool.</td>
+		</tr>
+		<tr>
+			<td><a href='#Export'>-Export</a></td>
+			<td>Exports a GAM database data and stores it in a .gpkg package.</td>
+		</tr>
+		<tr>
+			<td><a href='#GetConnections'>-GetConnections</a></td>
+			<td>Obtains the connections grouped by Repository. This function is useful to obtain the repository GUIDs and connection names that will be sent as parameters in the UpdateConnectionFile option.</td>
+		</tr>
+		<tr>
+			<td><a href='#UpdateConnectionFile'>-UpdateConnectionFile</a></td>
+			<td>Updates/Creates the Connection.gam file with the connection data it obtains.</td>
+		</tr>
+		<tr>
+			<td>-xml_config_file</td>
+			<td>This is a special flag that only receives an XML file in which all the parameters to enter in the tool are loaded, including the action. The XML format is the one given by the -GenerateXML flag.</td>
+		</tr>
+		<tr>
+			<td>-GenerateXML</td>
+			<td>Generates a sample XML and displays it in standard output. It's a sample XML that can be used as input for the tool, changing the corresponding tag values.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+For each action, different flags are expected:<br />
+ </p>
+
+<h3><a id="Initialize" class="HashLink" href="#Initialize">Initialize</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;border: 1.0px solid rgb(221,221,221);">
+	<tbody>
+		<tr>
+			<td><strong>Flag</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>-admin_name</td>
+			<td>It's the GAM admin name (default: gamadmin)</td>
+		</tr>
+		<tr>
+			<td>-admin_pass</td>
+			<td>It's the GAM admin password (default: gamadmin123)</td>
+		</tr>
+		<tr>
+			<td>-xml_config_file  string</td>
+			<td>Indicates the path to the XML file that has all the parameters configured. If this flag is set, all the others are automatically ignored and only the file parameters are taken into account. </td>
+		</tr>
+		<tr>
+			<td>-help</td>
+			<td>Shows the flags expected for this action.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<h3><a id="UpgradeGAM" class="HashLink" href="#UpgradeGAM">UpgradeGAM</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;border: 1.0px solid rgb(221,221,221);">
+	<tbody>
+		<tr>
+			<td><strong>Flag</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>-admin_name <em>(*)</em></td>
+			<td>It's the GAM admin name</td>
+		</tr>
+		<tr>
+			<td>-admin_pass <em>(*)</em></td>
+			<td>It's the GAM admin password</td>
+		</tr>
+		<tr>
+			<td>-xml_config_file  string</td>
+			<td>Indicates the path to the XML file that has all the parameters configured. If this flag is set, all the others are automatically ignored and only the file parameters are taken into account. </td>
+		</tr>
+		<tr>
+			<td>-help</td>
+			<td>Shows the flags expected for this action.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p>(*)required flag.</p>
+
+<p> </p>
+
+<h3><a id="Export" class="HashLink" href="#Export">Export</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;border: 1.0px solid rgb(221,221,221);">
+	<tbody>
+		<tr>
+			<td><strong>Flag</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>-admin_name <em>(*)</em></td>
+			<td>It's the GAM admin name.</td>
+		</tr>
+		<tr>
+			<td>-admin_pass <em>(*)</em></td>
+			<td>It's the GAM admin password.</td>
+		</tr>
+		<tr>
+			<td>-target <em>(*)</em></td>
+			<td>It's the target directory where the package is to be stored.</td>
+		</tr>
+		<tr>
+			<td>-rep_guid <em>(*)</em></td>
+			<td>GUID of the repository to be exported.</td>
+		</tr>
+		<tr>
+			<td>-full_export (true/false)</td>
+			<td>If this flag is set to true, a full export is made, as follows: All roles, users and applications.</td>
+		</tr>
+		<tr>
+			<td>-exp_users (true/false)</td>
+			<td>Indicates if the users are to be exported (it only works if full_export  = false)</td>
+		</tr>
+		<tr>
+			<td>-exp_roles (true/false)</td>
+			<td>Indicates if the roles are to be exported (it only works if full_export  = false)</td>
+		</tr>
+		<tr>
+			<td>
+			<p>-exp_eve_subscriptions</p>
+
+			<p>(true/false)</p>
+			</td>
+			<td>Indicates if the events subscriptions data will be exported (it only works if full_export  = false). Available since <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a>.</td>
+		</tr>
+		<tr>
+			<td>-verbose (true/false)</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>-apps</td>
+			<td>It's the list of GUIDs of applications to be exported. Format: App_Guid_1,App_Guid_2,App_Guid_3</td>
+		</tr>
+		<tr>
+			<td>-roles</td>
+			<td>It's the list of GUIDs of roles to be exported. Format: Role_Guid_1,Role_Guid_2,Role_Guid_3</td>
+		</tr>
+		<tr>
+			<td>-pkg_name</td>
+			<td>It's the name that will be given to the exported package.</td>
+		</tr>
+		<tr>
+			<td>-xml_config_file</td>
+			<td>Indicates the path to the xml file that has all the parameters configured. If this flag is set, all the others are automatically ignored and only the file parameters are taken into account. The format is the same as that of the import SDT.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><em>(*)</em><em>required flag</em>.</p>
+
+<p> </p>
+
+<h3><a id="Import" class="HashLink" href="#Import">Import</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;border: 1.0px solid rgb(221,221,221);">
+	<tbody>
+		<tr>
+			<td><strong>Flag</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>-file_path_package</td>
+			<td>Receives the package to import.</td>
+		</tr>
+		<tr>
+			<td>-admin_name <em>(*)</em></td>
+			<td>It's the GAM admin name.</td>
+		</tr>
+		<tr>
+			<td>-admin_pass <em>(*)</em></td>
+			<td>It's the GAM admin password.</td>
+		</tr>
+		<tr>
+			<td>-admin_user_name</td>
+			<td>It's the administrator user name.</td>
+		</tr>
+		<tr>
+			<td>-admin_role_guid</td>
+			<td>GUID of the administrator role.</td>
+		</tr>
+		<tr>
+			<td>-upd_rep (true/false)</td>
+			<td>Indicates if an update of the existing repository is to be made.</td>
+		</tr>
+		<tr>
+			<td>-upd_rep_guid </td>
+			<td>Indicates the GUID of the repository to update. It is used if the flag -upd_rep = true.</td>
+		</tr>
+		<tr>
+			<td>-new_rep_create (true/false)</td>
+			<td>Indicates if a new repository is to be created.</td>
+		</tr>
+		<tr>
+			<td>-new_rep_name<em> (**)</em></td>
+			<td>It's the name of the new repository</td>
+		</tr>
+		<tr>
+			<td>-new_rep_namespace</td>
+			<td>It's the namespace of the new repository.</td>
+		</tr>
+		<tr>
+			<td>-new_rep_guid <em>(**)</em></td>
+			<td>It's the GUID of the new repository</td>
+		</tr>
+		<tr>
+			<td>-new_rep_admin_name <em>(**)</em></td>
+			<td>It's the name of the new repository admin</td>
+		</tr>
+		<tr>
+			<td>-new_rep_admin_pass <em>(**)</em></td>
+			<td>It's the password of the new repository admin</td>
+		</tr>
+		<tr>
+			<td>-new_rep_conn_usr_name <em>(**)</em></td>
+			<td>It's the new repository connection user  name</td>
+		</tr>
+		<tr>
+			<td>-new_rep_conn_usr_pass<em> (**)</em></td>
+			<td>It's the password of the new repository connection user</td>
+		</tr>
+		<tr>
+			<td>-imp_auth_types (true/false)</td>
+			<td>Indicates if the authentication types are to be imported.</td>
+		</tr>
+		<tr>
+			<td>-imp_sec_policies (true/false)</td>
+			<td>Indicates if the security policies are to be imported.</td>
+		</tr>
+		<tr>
+			<td>-imp_users (true/false)</td>
+			<td>Indicates if the users are to be imported.</td>
+		</tr>
+		<tr>
+			<td>-imp_roles (true/false)</td>
+			<td>Indicates if the roles are to be imported.</td>
+		</tr>
+		<tr>
+			<td>-imp_full</td>
+			<td>Indicates that all the entities will be imported (auth_types, sec_policies, users, roles, apps, connections, eve_subscriptions). Available since GeneXus 16 upgrade 6.</td>
+		</tr>
+		<tr>
+			<td>-disable_upd_role_prm (true/false)</td>
+			<td>Indicates whether the permissions of the roles that already exist in the Database should be imported<br />
+			The default value is false.</td>
+		</tr>
+		<tr>
+			<td>-imp_apps (full/none/custom)</td>
+			<td>
+			<p>It's the level with which the applications are imported.</p>
+
+			<ul>
+				<li>full: all applications are imported with all permissions</li>
+				<li>none: nothing is imported in relation to applications</li>
+				<li>custom: they are configured according to -imp_apps_details</li>
+			</ul>
+			</td>
+		</tr>
+		<tr>
+			<td>-imp_apps_details <em>(***)</em></td>
+			<td>
+			<p>It's the list of &quot;GUID,Boolean&quot; pairs of (applicationsGuids,ImportPermissionsOfThatApplication) to be imported.</p>
+
+			<p>Format: App_Guid_1,Imp_Prms_App1;App_Guid_2,Imp_Prms_App2;App_Guid_3,Imp_Prms_App3 </p>
+			</td>
+		</tr>
+		<tr>
+			<td>-imp_connections</td>
+			<td>Import the package connections. The connection name is changed to &lt;original name&gt; + Repository Id.<br />
+			For new repositories, a new connection is always created, regardless the value of this flag.<br />
+			If the repository is being updated, and -imp_connections=true, the connections are imported if they don't have the same connection user name of an existing connection. In other words, the connections are not updated.</td>
+		</tr>
+		<tr>
+			<td>-imp_eve_subscriptions</td>
+			<td>Import the events subscriptions data. Available since <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a></td>
+		</tr>
+		<tr>
+			<td>-verbose (true/false)</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>-connection_gam_file_path</td>
+			<td>It's the target directory where the connection.gam file is to be generated.</td>
+		</tr>
+		<tr>
+			<td>-xml_config_file</td>
+			<td>Indicates the path to the xml file that has all the parameters configured. If this flag is set, all the others are automatically ignored and only the file parameters are taken into account. </td>
+		</tr>
+		<tr>
+			<td>-help</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><em>(*) required flag.<br />
+(**) flags required if flag new_rep_create = true.<br />
+(***) flags required if imp_apps = custom.</em></p>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h3><a id="GetConnections" class="HashLink" href="#GetConnections">GetConnections</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;border: 1.0px solid rgb(221,221,221);">
+	<tbody>
+		<tr>
+			<td><strong>Flag</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>-admin_name <em>(*)</em></td>
+			<td>It's the GAM admin name (for example: gamadmin)</td>
+		</tr>
+		<tr>
+			<td>-admin_pass <em>(*)</em></td>
+			<td>It's the GAM admin password (for example: gamadmin123)</td>
+		</tr>
+		<tr>
+			<td>-xml_config_file   </td>
+			<td>Indicates the path to the xml file that has all the parameters configured. If this flag is set, all the others are automatically ignored and only the file parameters are taken into account.</td>
+		</tr>
+		<tr>
+			<td>-help</td>
+			<td>Shows the flags expected for this action</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><em>(*) required flag.</em></p>
+
+<p> </p>
+
+<h3><a id="UpdateConnectionFile" class="HashLink" href="#UpdateConnectionFile">UpdateConnectionFile</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;border: 1.0px solid rgb(221,221,221);">
+	<tbody>
+		<tr>
+			<td><strong>Flag</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td>-admin_name <em>(*)</em></td>
+			<td>It's the GAM admin name (for example: gamadmin)</td>
+		</tr>
+		<tr>
+			<td>-admin_pass <em>(*)</em></td>
+			<td>It's the GAM admin password (for example: gamadmin123)</td>
+		</tr>
+		<tr>
+			<td>-target</td>
+			<td>It's the target directory where the connection.gam file is to be generated.</td>
+		</tr>
+		<tr>
+			<td>-connections <em>(*)</em></td>
+			<td>It's a list with the following format: &lt;GuidRepoA&gt;,&lt;NameOfAConnectionOfRepoA&gt;;&lt;GuidRepoB&gt;,&lt;NameOfAConnectionOfRepoB&gt;</td>
+		</tr>
+		<tr>
+			<td>-xml_config_file</td>
+			<td>Indicates the path to the xml file that has all the parameters configured. If this flag is set, all the others are automatically ignored and only the file parameters are taken into account. </td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><em>(*) required flag.</em></p>
+
+<p> </p>
+
+<h2><a id="Examples+of+how+to+execute+the+tool" class="HashLink" href="#Examples+of+how+to+execute+the+tool">Examples of how to execute the tool</a></h2>
+
+<h3><a id="Initialize+GAM+database+%28.NET%29" class="HashLink" href="#Initialize+GAM+database+%28.NET%29">Initialize GAM database (.NET)</a></h3>
+
+<p>C:\Models\TestGDT\NetCore\web\bin&gt; <span style="font-family: courier new;">dotnet agamdeploytool.dll -initilize -admin_name testadmin -admin_pass testadmin123</span></p>
+
+<h3><a id="Upgrade+GAM+database+version+%28.NET%29" class="HashLink" href="#Upgrade+GAM+database+version+%28.NET%29">Upgrade GAM database version (.NET)</a></h3>
+
+<p>C:\Models\TestGDT\NetCore\web\bin&gt; <span style="font-family: courier new;">dotnet agamdeploytool.dll -upgradegam -admin_name gamadmin -admin_pass gamadmin123</span></p>
+
+<h3><a id="Get+connections+%28.NET+Framework%29" class="HashLink" href="#Get+connections+%28.NET+Framework%29">Get connections  (.NET Framework)</a></h3>
+
+<p>C:\Models\TestGDT\CSharpModel\web\bin&gt; <span style="font-family: courier new;">agamdeploytool.exe -getconnections -admin_name gamadmin -admin_pass gamadmin123</span></p>
+
+<h3><a id="Updating+connection+file+%28.NET+Framework%29" class="HashLink" href="#Updating+connection+file+%28.NET+Framework%29">Updating connection file (.NET Framework)</a></h3>
+
+<p>C:\Models\TestGDT\CSharpModel\web\bin&gt; <span style="font-family: courier new;">agamdeploytool.exe -updateconnectionfile -admin_name gamadmin -admin_pass gamadmin123 -target C:\Models\TestGDT\CSharpModel\web\ -connections 92b783a2-2a50-4261-8ba7-684fb780967d,GAM-Manager</span></p>
+
+<h3><a id="Creating+a+new+repository+%28JAVA%29" class="HashLink" href="#Creating+a+new+repository+%28JAVA%29">Creating a new repository (JAVA)</a></h3>
+
+<p>root@ubuntu:/opt/tomcatproduction/webapps/Test/WEB-INF/classes# <span style="font-family: courier new;">java -cp &quot;../lib/*&quot; genexus.security.api.agamdeploytool -import -admin_name gamadmin -admin_pass gamadmin123 -file_path_package /home/sabrina/test.gpkg -new_rep_create true -new_rep_name testrepo -new_rep_namespace testrepo -new_rep_admin_name adminnew -new_rep_admin_pass admin123 -new_rep_guid 19bd e07d-8b37-4668-8c65-4cab29d8a38c -verbose true -new_rep_conn_usr_name newconn -new_rep_conn_usr_pass newconn123 -admin_role_guid 2a984733-5308-4444-b893-473200d40eda -imp_connections true </span></p>
+
+<h3><a id="Exporting+a+repository+%28JAVA%29" class="HashLink" href="#Exporting+a+repository+%28JAVA%29">Exporting a repository (JAVA)</a></h3>
+
+<p>root@ubuntu:/opt/tomcatproduction/webapps/Test/WEB-INF/classes# <span style="font-family: courier new;">java -cp &quot;../lib/*&quot; genexus.security.api.agamdeploytool -export -target /home/sabrina -admin_name gamadmin -admin_pass gamadmin123 -full_export TRUE -pkg_name test -rep_guid 1e89a9ca-bc52-482b-a344-c4cda4a9cc8f</span></p>
+
+<p> </p>
+
+<h2><a id="Important+notes" class="HashLink" href="#Important+notes">Important notes</a></h2>
+
+<ul>
+	<li>You may need to copy the client.cfg to the classes directory if you have a package.</li>
+	<li>If you are getting erros of access denied when connecting to the dbms when executing one of the tool actions, please check the following <a href='https://www.genexus.com/developers/websac?es,,,43289'>SAC#43289</a>.</li>
+</ul>
+
+<p> </p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?43446,," target="_blank">GeneXus 16 upgrade 5</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><span style="color: rgb(255,255,255);">linux</span></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18608.html">GAM Deploy Tool</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/17/22 01:59 PM</em></font></td></TR></table></font>

@@ -1,0 +1,65 @@
+group PanelInterfaceControllerSwiftClass;
+
+delimiters "$", "$"
+
+ibActionTemplate ::= [
+	"Void":			"g_ibActionVoid",
+	"WithBool" :	"g_ibActionWithBool",
+	default:		"g_ibActionVoid"
+ ]
+
+g_panelSwiftClass(model)::=<<
+//
+//  $model.ClassName$.swift
+//
+
+import GXCoreUI
+
+$g_panelSwiftClassWithoutHeader(model)$
+>>
+
+g_panelSwiftClassWithoutHeader(model)::=<<
+class $model.ClassName$: $model.SuperClassName$ {
+$if(model.HasIBOutlets)$
+
+$model.IBOutlets:{ibOutlet|		@IBOutlet @objc var $ibOutlet.PropertyName$: $ibOutlet.PropertyType$!};separator="\n"$
+$endif$
+$if(model.HasIBActions)$
+
+$model.IBActions:{ibAction|	$(ibActionTemplate.(ibAction.SelectorType))(ibAction)$};separator="\n\n"$
+$endif$
+$if(model.HasGridControls)$
+
+	override func table(_ table: WKInterfaceTable, didSelectRowAt rowIndex: Int) {
+		switch table {
+$model.GridControls:{gridControl|			case gxControl_$gridControl.NormalizedLowercaseControlName$:
+			self.handleGXControlGrid("$gridControl.ControlName$", interfaceObjectIdentifier: gxControl_$gridControl.NormalizedLowercaseControlName$.interfaceProperty, didSelectRowAt: rowIndex)};separator="\n"$
+		default:
+			super.table(table, didSelectRowAt: rowIndex)
+		}
+	}
+$endif$
+}
+$if(model.HasGridControls)$
+
+$model.GridControls:{gridControl|	$g_gridRowControllers(gridControl)$};separator="\n\n"$
+$endif$
+>>
+
+g_ibActionVoid(ibAction)::=<<
+	@IBAction func $ibAction.SwiftMethodName$() {
+		self.handleGXControlWithActionSelector(for: "$ibAction.ControlName$", interfaceObjectIdentifier: $ibAction.InterfaceObjectPropertyName$.interfaceProperty)
+	}
+>>
+
+g_ibActionWithBool(ibAction)::=<<
+	@IBAction func $ibAction.SwiftMethodName$(_ value: Bool) {
+		self.handleGXControlWithBoolValueActionSelector(for: "$ibAction.ControlName$", interfaceObjectIdentifier: $ibAction.InterfaceObjectPropertyName$.interfaceProperty, value: value)
+	}
+>>
+
+g_gridRowControllers(gridControl)::=<<
+// MARK: $gridControl.ControlName$ Row Controllers
+
+$gridControl.RowControllers:{rowController|	$g_panelSwiftClassWithoutHeader(rowController.SwiftClass)$};separator="\n\n"$
+>>

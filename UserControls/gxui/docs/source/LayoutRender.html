@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * GxUI Library 2.0.1
+ * Copyright (c) 2009, Artech
+ * All rights reserved.
+ * 
+ * GxUI Library is freely distributable under the terms of the BSD license.
+ * 
+ */
+
+/// &lt;reference path=&quot;..\..\Freezer\Ext\ext-all-dev.js&quot; /&gt;
+
+<span id='gxui-Layout'>/**
+</span>* @class gxui.Layout
+* Layout User Control. Wraps an Ext.panel.Panel with a BorderLayout so it can be used from GeneXus.
+* This is a multi-pane, application-oriented UI layout style that supports multiple nested panels, 
+* automatic split bars between regions and built-in expanding and collapsing of regions.
+*
+* By setting {@link #Nested} = false (its defualt value), the control will automatically size itself to the size of the browser viewport 
+* and manage window resizing. If you want to nest the gxui.Layout control inside another control, set {@link #Nested} = true.
+*
+* To hide a region, set the Hidden property of the region to false ({@link #NorthHidden}, {@link #SouthHidden}, {@link #WestHidden} , {@link #EastHidden} and {@link #CenterHidden} properties).
+*/
+Ext.define('gxui.Layout', function () {
+	var regions = [&quot;North&quot;, &quot;West&quot;, &quot;Center&quot;, &quot;East&quot;, &quot;South&quot;];
+
+	return {
+		extend: 'gxui.UserControl',
+
+		onRender: function () {
+			var regionsCfg = Ext.Array.map(regions, function (regionName) {
+				return this.createConfig(regionName);
+			}, this);
+
+			if (this.Width) {
+				this.Width = parseInt(this.Width);
+			}
+
+			if (this.Height) {
+				this.Height = parseInt(this.Height);
+			}
+
+			if (gxui.CBoolean(this.Nested)) {
+				this.m_layout = Ext.create('Ext.panel.Panel', {
+					id: this.getUniqueId(),
+					border: 0,
+					items: regionsCfg,
+					layout: 'border',
+					cls: this.Cls || undefined,
+					width: this.Width != 0 ? this.Width : 'auto',
+					height: this.Height != 0 ? this.Height : 'auto',
+					stateful: gxui.CBoolean(this.Stateful),
+					stateId: (this.StateId != &quot;&quot;) ? this.StateId : undefined
+				});
+			}
+			else {
+				if (this.getContainerControl()) {
+					this.m_layout = Ext.create('gxui.container.NestedViewport', {
+						id: this.getUniqueId(),
+						items: regionsCfg,
+						layout: 'border',
+						cls: this.Cls || undefined,
+						renderTo: 'MAINFORM',
+						stateful: gxui.CBoolean(this.Stateful),
+						stateId: (this.StateId != &quot;&quot;) ? this.StateId : undefined
+					});
+				}
+			}
+
+			// Register this User Control as a container. Each region of the layout is registered
+			// as an individual container.
+			this.registerAsContainer();
+		},
+
+		onRefresh: function () {
+			Ext.each(regions, this.refreshRegion, this);
+		},
+
+		onAfterRender: function () {
+			this.displayRegions();
+			// WA to avoid problems with focus on first field if it's inside de Layout
+			if (document.activeElement == document.body) {
+				gx.fn.setFocusOnload();
+			}
+		},
+
+		getUnderlyingControl: function () {
+			return this.m_layout;
+		},
+
+		addToParent: function () {
+			return gxui.CBoolean(this.Nested);
+		},
+
+		getMargins: function (regionKey, str) {
+			var margins = this[regionKey + &quot;Margins&quot;];
+			if (margins)
+				return margins.replace(/,/ig, ' ');
+		},
+
+		getProperty: function (regionKey, propName) {
+			var value = this[regionKey + propName];
+
+			if (regionKey == &quot;Center&quot; &amp;&amp; (propName == &quot;Width&quot; || propName == &quot;MaxWidth&quot; || propName == &quot;MinWidth&quot;))
+				return undefined;
+
+			if ((propName == &quot;Width&quot; || propName == &quot;Height&quot;) &amp;&amp; (typeof (value) == &quot;string&quot; &amp;&amp; value.indexOf(&quot;%&quot;) == -1))
+				return parseInt(value);
+
+			if (value == &quot;true&quot; || value == &quot;false&quot;)
+				return gxui.CBoolean(value);
+			else if (propName.indexOf(&quot;Margins&quot;) &gt;= 0)
+				return this.getMargins(regionKey, value);
+			else if (propName.indexOf(&quot;Border&quot;) &gt;= 0)
+				return gx.lang.gxBoolean(value) ? undefined : 0;
+			else if (propName == &quot;Layout&quot;)
+				return value == &quot;default&quot; ? undefined : value;
+			else
+				return value;
+		},
+
+		setRegionProperty: function (regionKey, propName, value) {
+			if (regionKey) {
+				var r = regionKey.toLowerCase();
+				r = r.charAt(0).toUpperCase() + r.substr(1);
+				if (this[r + propName]) {
+					this[r + propName] = value;
+				}
+			}
+		},
+
+		createConfig: function (regionKey) {
+			var config = {
+				id: this.getUniqueId() + &quot;-&quot; + regionKey,
+				itemId: regionKey.toLowerCase(),
+				region: regionKey.toLowerCase(),
+				contentEl: this.getChildContainer(regionKey),
+				autoScroll: (this.getProperty(regionKey, &quot;Layout&quot;) != &quot;fit&quot;) ? this.getProperty(regionKey, &quot;AutoScroll&quot;) : false,
+				cls: &quot;x-region-&quot; + regionKey.toLowerCase(),
+				bodyCls: &quot;gxui-noreset&quot;,
+				duration: this.getProperty(regionKey, &quot;Duration&quot;) / 1000,
+				listeners: {
+					'collapse': function (p) {
+						this.setRegionProperty(p.region, &quot;Collapsed&quot;, &quot;true&quot;);
+					},
+
+					'expand': function (p) {
+						this.setRegionProperty(p.region, &quot;Collapsed&quot;, &quot;false&quot;);
+					},
+
+					scope: this
+				},
+				stateful: gxui.CBoolean(this.Stateful),
+				stateId: (this.StateId != &quot;&quot;) ? this.StateId + &quot;-&quot; + regionKey : undefined,
+				stateEvents: gxui.CBoolean(this.Stateful) ? ['collapse', 'expand'] : undefined
+			};
+
+			if (!this.getProperty(regionKey, &quot;TitleBar&quot;)) {
+				config.header = false;
+			}
+
+			gxui.tryPropertyMapping(config, Ext.bind(this.getProperty, this, [regionKey], 0), {
+				&quot;hidden&quot;: &quot;Hidden&quot;,
+				&quot;split&quot;: &quot;Split&quot;,
+				&quot;title&quot;: &quot;Title&quot;,
+				&quot;width&quot;: &quot;Width&quot;,
+				&quot;height&quot;: &quot;Height&quot;,
+				&quot;minWidth&quot;: &quot;MinWidth&quot;,
+				&quot;minHeight&quot;: &quot;MinHeight&quot;,
+				&quot;maxWidth&quot;: &quot;MaxWidth&quot;,
+				&quot;maxHeight&quot;: &quot;MaxHeight&quot;,
+				&quot;margins&quot;: &quot;Margins&quot;,
+				&quot;collapsible&quot;: &quot;Collapsible&quot;,
+				&quot;collapsed&quot;: &quot;Collapsed&quot;,
+				&quot;floatable&quot;: &quot;Floatable&quot;,
+				&quot;animate&quot;: &quot;Animate&quot;,
+				&quot;animFloat&quot;: &quot;Animate&quot;,
+				&quot;layout&quot;: &quot;Layout&quot;,
+				&quot;border&quot;: &quot;Border&quot;
+			});
+
+			return config;
+		},
+
+		displayRegions: function () {
+			var layout = this.m_layout;
+
+			var displayRegion = function (region) {
+				Ext.fly(layout.child('#' + region.toLowerCase()).contentEl).setDisplayed(true);
+			};
+
+			Ext.each(regions, displayRegion);
+		},
+
+		registerAsContainer: function () {
+			Ext.each(regions, function (regionName) {
+				var region = this.getRegion(regionName);
+				this.registerCt(region.contentEl, region.add, region.doLayout, region);
+			}, this);
+		},
+
+		getRegion: function (regionKey) {
+			return this.m_layout.child('#' + regionKey.toLowerCase())
+		},
+
+		refreshRegion: function (regionKey) {
+			var region = this.getRegion(regionKey);
+			if (region) {
+				region.setTitle(this.getProperty(regionKey, &quot;Title&quot;));
+			}
+		},
+
+		methods: {
+			// Methods
+<span id='gxui-Layout-method-CollapseRegion'>			/**
+</span>			* Collapses the region body so that it becomes hidden.
+			* @param {String} regionKey Region name (&quot;North&quot;, &quot;South&quot;, &quot;West&quot; or &quot;East&quot;)
+			* @param {Boolean} [animate=true] True to animate the transition, else false.
+			* @method
+			*/
+			CollapseRegion: function (regionKey, animate) {
+				var region = this.getRegion(regionKey);
+
+				if (region) {
+					region.collapse(animate);
+					this.setRegionProperty(regionKey, &quot;Collapsed&quot;, &quot;true&quot;);
+				}
+			},
+
+<span id='gxui-Layout-method-ExpandRegion'>			/**
+</span>			* Expands the region body so that it becomes visible.
+			* @param {String} regionKey Region name (&quot;North&quot;, &quot;South&quot;, &quot;West&quot; or &quot;East&quot;)
+			* @param {Boolean} [animate] True to animate the transition, else false (defaults to the value of the AnimateCollapse property).
+			* @method
+			*/
+			ExpandRegion: function (regionKey, animate) {
+				var region = this.getRegion(regionKey);
+
+				if (region) {
+					region.expand(animate);
+					this.setRegionProperty(regionKey, &quot;Collapsed&quot;, &quot;false&quot;);
+				}
+			},
+
+<span id='gxui-Layout-method-HideRegion'>			/**
+</span>			* Hides the region.
+			* @param {String} regionKey Region name (&quot;North&quot;, &quot;South&quot;, &quot;West&quot; or &quot;East&quot;)
+			* @method
+			*/
+			HideRegion: function (regionKey) {
+				var region = this.getRegion(regionKey);
+
+				if (region) {
+					region.hide();
+					this.m_layout.doLayout();
+					this.setRegionProperty(regionKey, &quot;Hidden&quot;, &quot;true&quot;);
+				}
+			},
+
+<span id='gxui-Layout-method-ShowRegion'>			/**
+</span>			* Shows the region.
+			* @param {String} regionKey Region name (&quot;North&quot;, &quot;South&quot;, &quot;West&quot; or &quot;East&quot;)
+			* @method
+			*/
+			ShowRegion: function (regionKey) {
+				var region = this.getRegion(regionKey);
+
+				if (region) {
+					region.show();
+					this.m_layout.doLayout();
+					this.setRegionProperty(regionKey, &quot;Hidden&quot;, &quot;false&quot;);
+				}
+			}
+		}
+	};
+} ());
+</pre>
+</body>
+</html>

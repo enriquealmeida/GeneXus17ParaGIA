@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deployment of Java Applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20110,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deployment of Java Applications</h1>
+<!--Deployment of Java Applications--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>To deploy applications generated with GeneXus 15 and the Java generator, use the <a href="32092.html">Application Deployment tool</a>.<br />
+That generates a .war file containing the Web application and/or the Web services (SOAP or REST) or a .jar file containing your command line programs.</p>
+
+<h3><a id="Servlet+server+specific+considerations" class="HashLink" href="#Servlet+server+specific+considerations">Servlet server specific considerations</a></h3>
+
+<p>Although <a href="32092.html">Application Deployment tool</a> does the job creating the .war following standard servlet server specifications, there are some special considerations to take into account in some servlet servers depending on their configuration.<br />
+JBoss</p>
+
+<p>JBoss implements its own module for REST services called RESTeasy. Since Smart Device applications created with GeneXus use Rest services for their implementation using the Sun RESTful module, the JBoss RESTeasy module has to be disabled for the application in order to avoid incompatibility issues between them.</p>
+
+<p>To do so, 2 options are available:<br />
+    1- Disable the RESTeasy module just for one application by adding the following lines to the web.xml file:<br />
+        &lt;context-param&gt;<br />
+            &lt;param-name&gt;resteasy.scan&lt;/param-name&gt;<br />
+            &lt;param-value&gt;false&lt;/param-value&gt;<br />
+        &lt;/context-param&gt;<br />
+        &lt;context-param&gt;<br />
+            &lt;param-name&gt;resteasy.scan.providers&lt;/param-name&gt;<br />
+            &lt;param-value&gt;false&lt;/param-value&gt;<br />
+        &lt;/context-param&gt;<br />
+        &lt;context-param&gt;<br />
+            &lt;param-name&gt;resteasy.scan.resources&lt;/param-name&gt;<br />
+            &lt;param-value&gt;false&lt;/param-value&gt;<br />
+        &lt;/context-param&gt;</p>
+
+<p>  2-Disable the JBoss RESTeasy module:</p>
+
+<p>    - For JBoss 6, deleting the RESTeasy module is enough.<br />
+    - For JBoss 7, before performing the following procedure, backing up the modified files is recommended:</p>
+
+<p>Remove the references to jaxrs from the configuration. Depending on the JBoss configuration used -which can be standalone or domain- the corresponding file must be edited:<br />
+        &lt;JBoss_AS_7_Home&gt;/standalone/configuration/standalone.xml</p>
+
+<p>        &lt;JBoss_AS_7_Home&gt;/domain/configuration/domain.xml</p>
+
+<p>            By deleting the following lines (comments can be added to these lines, but JBoss removes them at startup):</p>
+
+<p>        ...<br />
+        &lt;extension module=&quot;org.jboss.as.jaxrs&quot;/&gt;<br />
+        ...<br />
+        &lt;subsystem xmlns=&quot;urn:jboss:domain:jaxrs:1.0&quot;/&gt;<br />
+        ...</p>
+
+<p>        When working with JBoss 7.1.0.Final, the references to WebServices must also be removed (org.jboss.as.webservices). The tags that belong to the extension and its corresponding subsystem must be deleted as well.</p>
+
+<p>        To learn more about JBoss, click <a href='https://wikis.forgerock.org/confluence/display/openam/Deploy+OpenAM+in+JBoss+AS+7'>here</a>.</p>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<p>GeneXus 15 uses JAX 2.0 libraries. If your server is configured to use JAX 1.0, you have to turn the libraries off, as the following example shows.<br />
+<br />
+In Jboss, for instance, you have to add the following file jboss-deployment-structure.xml in the web-inf directory </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;jboss-deployment-structure xmlns=&quot;urn:jboss:deployment-structure:1.2&quot;&gt;
+  &lt;deployment&gt;
+    &lt;exclude-subsystems&gt;
+      &lt;subsystem name=&quot;jaxrs&quot; /&gt;
+      &lt;subsystem name=&quot;webservices&quot; /&gt;
+      &lt;subsystem name=&quot;resteasy&quot; /&gt;
+    &lt;/exclude-subsystems&gt;
+    &lt;exclusions&gt;
+      &lt;module name=&quot;javaee.api&quot; /&gt;
+      &lt;module name=&quot;javax.ws.rs.api&quot; /&gt;
+      &lt;module name=&quot;org.jboss.as.jaxrs&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-jaxrs&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-cdi&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.jackson-provider&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-atom-provider&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-hibernatevalidator-provider&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-jaxb-provider&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-jettison-provider&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-jsapi&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-multipart-provider&quot; /&gt;
+      &lt;module name=&quot;org.jboss.resteasy.resteasy-yaml-provider&quot; /&gt;
+      &lt;module name=&quot;org.codehaus.jackson.jackson-core-asl&quot; /&gt;
+      &lt;module name=&quot;org.codehaus.jackson.jackson-jaxrs&quot; /&gt;
+      &lt;module name=&quot;org.codehaus.jackson.jackson-mapper-asl&quot; /&gt;
+      &lt;module name=&quot;org.codehaus.jackson.jackson-xc&quot; /&gt;
+      &lt;module name=&quot;org.codehaus.jettison&quot; /&gt;
+      &lt;module name=&quot;org.jboss.as.webservices.*&quot; /&gt;
+      &lt;module name=&quot;org.jboss.ws.*&quot; /&gt;
+    &lt;/exclusions&gt;
+
+    &lt;dependencies&gt;
+      &lt;module name=&quot;javax.activation.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.annotation.api&quot; export=&quot;true&quot; /&gt;
+      &lt;!-- &lt;module name=&quot;javax.ejb.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.el.api&quot; export=&quot;true&quot; /&gt; --&gt;
+      &lt;module name=&quot;javax.enterprise.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.enterprise.deploy.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.inject.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.interceptor.api&quot; export=&quot;true&quot; /&gt;
+      &lt;!-- &lt;module name=&quot;javax.jms.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.jws.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.mail.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.management.j2ee.api&quot; export=&quot;true&quot; /&gt; --&gt;
+      &lt;module name=&quot;javax.persistence.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.resource.api&quot; export=&quot;true&quot; /&gt;
+      &lt;!-- &lt;module name=&quot;javax.rmi.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.security.auth.message.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.security.jacc.api&quot; export=&quot;true&quot; /&gt; --&gt;
+      &lt;module name=&quot;javax.servlet.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.servlet.jsp.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.transaction.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.validation.api&quot; export=&quot;true&quot; /&gt;
+      
+      &lt;!-- &lt;module name=&quot;javax.ws.rs.api&quot; export=&quot;true&quot; services=&quot;export&quot; /&gt; --&gt;
+      
+      &lt;module name=&quot;javax.xml.bind.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.xml.registry.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.xml.soap.api&quot; export=&quot;true&quot; /&gt;
+      &lt;module name=&quot;javax.xml.ws.api&quot; export=&quot;true&quot; /&gt;
+
+      &lt;!-- This one always goes last. --&gt;
+      &lt;module name=&quot;javax.api&quot; export=&quot;true&quot; /&gt;
+    &lt;/dependencies&gt;
+   &lt;/deployment&gt;
+&lt;/jboss-deployment-structure&gt;</pre>
+
+<p> </p>
+
+<h3><a id="Glassfish" class="HashLink" href="#Glassfish">Glassfish</a></h3>
+
+<p style="margin-left: 30.0pt;">PDF Reports</p>
+
+<p style="margin-left: 30.0pt;">During deployment, the *.rpt files generated in the generation directory of the WebApp root must be included:</p>
+
+<p style="margin-left: 30.0pt;">To learn more about dynamic reports, click <a href="https://wiki.genexus.com/commwiki/wiki?14918,," target="_blank">here</a></p>
+
+<p> </p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46032.html">Deploying a Java application on a JBoss server</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

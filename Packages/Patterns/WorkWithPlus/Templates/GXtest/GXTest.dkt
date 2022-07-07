@@ -1,0 +1,66 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Startup Test Case" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Common.Helpers" %>
+<%@ Assembly Name="Artech.Packages.Patterns" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="Artech.Genexus.Common.Entities" %>
+<%@ Import Namespace="System" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ SubTemplate Name="WWTransaction" File="WWTransaction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="Header" File="Header.dkt"%>
+<%@ SubTemplate Name="FatalError" File="FatalError.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="CRUDMaster" File="CRUDMaster.dkt" MergeProperties="True"%>
+<%@ Include Name="WebFormHelper.cs" %>
+<%
+	try
+	{
+		// Get standard properties
+		model = DVelop.Patterns.WorkWithPlus.ArtechGetSetObjectsUtilities.GetWorkingModel(myInstance.Model.KB);
+		Object = myInstance.ParentObject;
+		Part = myInstance.Transaction.Transaction.Structure;
+		
+		// Generate internal Metadata 
+		WebFormBasicElements basicElements = WebFormHelper.VisitWebFormPart(myInstance.Transaction.Transaction.WebForm);
+		Artech.Genexus.Common.Objects.Attribute att = TransactionHelper.GetTransactionDescriptionAttribute(myInstance);
+		basicElements.ObjectName = selection.ObjectName;
+		basicElements.ObjectType = "WebPanel";
+		basicElements.BaseURL = GenericHelper.GetURL(model, Object.Name);
+		basicElements.SetProperties(myInstance);
+		basicElements.ProcessSourceCode(myInstance.Transaction.Transaction);
+		if (att != null)
+		{
+			basicElements.DescriptionAttribute = att.Name;
+			basicElements.DescriptionAttributeType = TransactionHelper.GetAttributeType(att);
+		}
+%>
+<%@ CallSubTemplate CRUDMaster basicElements='basicElements' IndentLevel='IndentLevel' selection = 'selection' IndentLevelChar='"\t"' %>
+<%
+		if (att != null)
+		{
+			basicElements.WWBaseURL = GenericHelper.GetURL(model, basicElements.ObjectName);
+%>
+<%@ CallSubTemplate WWTransaction basicElements='basicElements' Object='Object' model='model' Part='Part' selection='selection' myInstance='myInstance' %>
+<%
+		}
+		FileHelper.GenerateDataPool(Object, Part, myInstance, basicElements);
+	}
+	catch(System.Exception e)
+	{
+%>
+<%@ CallSubTemplate FatalError msg='e.Message' %>
+<%		DVelop.Patterns.WorkWithPlus.Helpers.LogHelper.WriteErrorLog(string.Format("{0}{1}{2}{1}{3}",e.Message,System.Environment.NewLine,e.Source,e.StackTrace));	
+	}
+%>

@@ -1,0 +1,501 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Audit Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	WorkWithPlusSettings settings = wwInstance.Settings;
+
+	bool includeForEachTrns = settings.IsOptimizationNumber(11);
+	
+	Transaction transaction = wwInstance.Transaction.Transaction;
+	string constraints = "";
+	foreach (TransactionAttribute att in transaction.Structure.Root.PrimaryKey)
+	{
+		if (constraints == "")
+			constraints += att.Attribute.Name + " = &" + att.Attribute.Name;
+		else
+			constraints += " And " + att.Attribute.Name + " = &" + att.Attribute.Name;
+	}
+	string associatedTableName = "Unknown table name";
+	if(transaction.Structure != null && transaction.Structure.Root != null && transaction.Structure.Root.AssociatedTable != null)
+	{
+		associatedTableName = transaction.Structure.Root.AssociatedTable.Name;
+	}
+	bool AuditSecondLevels = !wwInstance.GetAppropiateTemplate().IsAuditingLevelsOnlyFirstLevel() && transaction.Structure.Root.Levels.Count > 0;
+	//Save the values necessary for levels, only if needed
+	Dictionary<string, string> definedByAttribute = null;
+	Dictionary<string, string> associatedSecondLevelTableName = null;
+	Dictionary<string, string> constraintLevel = null;
+	Dictionary<string, List<TransactionAttribute>> attsSecondLevel = null;
+	Dictionary<string, string> secondLevelRecordExists = null;
+	bool inlcudeDsc = wwInstance.Settings.AuditIncludeDescriptions;
+	
+	if (AuditSecondLevels)
+	{
+		definedByAttribute = new Dictionary<string, string> ();
+		associatedSecondLevelTableName = new Dictionary<string, string> ();
+		attsSecondLevel = new Dictionary<string, List<TransactionAttribute>>();
+		secondLevelRecordExists = new Dictionary<string, string>();
+		constraintLevel = new Dictionary<string, string> ();
+		
+		foreach (TransactionLevel level in transaction.Structure.Root.Levels)
+        {
+			definedByAttribute[level.Name] = level.Attributes[0].Name;
+			associatedSecondLevelTableName[level.Name] = "Unknown table name";
+			if(level.AssociatedTable != null)
+			{
+				associatedSecondLevelTableName[level.Name] = level.AssociatedTable.Name;
+			}
+			attsSecondLevel[level.Name] = new List<TransactionAttribute>();
+			foreach (TransactionAttribute att in level.Attributes)
+			{
+				if (att.Attribute.Type != Artech.Genexus.Common.eDBType.BITMAP
+					&& att.Attribute.Type != Artech.Genexus.Common.eDBType.AUDIO
+					&& att.Attribute.Type != Artech.Genexus.Common.eDBType.BINARY
+					&& att.Attribute.Type != Artech.Genexus.Common.eDBType.VIDEO
+					&& att.Attribute.Type != Artech.Genexus.Common.eDBType.BINARYFILE)
+				{
+					attsSecondLevel[level.Name].Add(att);
+				}
+			}
+			secondLevelRecordExists[level.Name] = "";
+			constraintLevel[level.Name] = "";
+			foreach (TransactionAttribute att in level.PrimaryKey)
+			{
+				if (constraintLevel[level.Name] != String.Empty)
+				{
+					constraintLevel[level.Name] += " And ";
+				}
+				constraintLevel[level.Name] += att.Attribute.Name + " = &Key" + att.Attribute.Name;
+				
+				if (secondLevelRecordExists[level.Name] != String.Empty)
+				{
+					secondLevelRecordExists[level.Name] += " And "; 
+				}
+				secondLevelRecordExists[level.Name] += "&RecordExists" + att.Attribute.Name;
+			}
+        }
+	}
+%>
+If &SaveOldValues = !'Y'
+	If &ActualMode = TrnMode.Delete or &ActualMode = TrnMode.Update
+		Do 'LoadOldValues'
+	EndIf
+Else
+	Do 'LoadNewValues'
+EndIf
+
+Sub 'LoadOldValues'
+	For Each<%= includeForEachTrns ? " " + transaction.Name : "" %>
+		Where <%= constraints %>
+		&AuditingObject = new AuditingObject()
+		&AuditingObject.Mode = &ActualMode
+
+		&AuditingObjectRecordItem = new AuditingObject.RecordItem()
+		&AuditingObjectRecordItem.TableName = !'<%= associatedTableName %>'
+<%
+			if (!wwInstance.GetAppropiateTemplate().IsAuditingLevelsOnlyFirstLevel())
+			{
+%>
+		&AuditingObjectRecordItem.Mode = &ActualMode
+<%			
+			}
+%>			
+		&AuditingObject.Record.Add( &AuditingObjectRecordItem)
+
+<%
+	List<TransactionAttribute> atts = new List<TransactionAttribute>();
+	foreach (TransactionAttribute att in transaction.Structure.Root.FullLevelAttributes)
+	{
+		if (att.Attribute.Type != Artech.Genexus.Common.eDBType.BITMAP
+			&& att.Attribute.Type != Artech.Genexus.Common.eDBType.AUDIO
+			&& att.Attribute.Type != Artech.Genexus.Common.eDBType.BINARY
+			&& att.Attribute.Type != Artech.Genexus.Common.eDBType.VIDEO
+			&& att.Attribute.Type != Artech.Genexus.Common.eDBType.BINARYFILE)
+		{
+			atts.Add(att);
+		}
+	}
+	foreach (TransactionAttribute att in atts)
+	{
+%>
+		&AuditingObjectRecordItemAttributeItem = new AuditingObject.RecordItem.AttributeItem()
+		&AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+<%
+		if (inlcudeDsc)
+		{
+%>
+		&AuditingObjectRecordItemAttributeItem.Description = '<%= DVelop.Patterns.WorkWithPlus.Helpers.AuditHelper.GetAttributeDescription(wwInstance, att) %>'
+<%
+		}
+%>
+		&AuditingObjectRecordItemAttributeItem.IsPartOfKey = <%= att.IsKey ? "True" : "False" %>
+		&AuditingObjectRecordItemAttributeItem.IsDescriptionAttribute = <%= att.IsDescriptionAttribute ? "True" : "False" %>
+		&AuditingObjectRecordItemAttributeItem.OldValue = <%= att.Attribute.Name %>.ToString()
+		&AuditingObjectRecordItem.Attribute.Add(&AuditingObjectRecordItemAttributeItem)
+
+<%	
+	}
+	if (AuditSecondLevels)
+	{
+        foreach (TransactionLevel level in transaction.Structure.Root.Levels)
+        {
+%>
+		For Each<%= includeForEachTrns ? " " + level.FullType : "" %>
+<%
+			if (!includeForEachTrns)
+			{
+%>
+			Defined By <%= definedByAttribute[level.Name] %>
+<%
+			}
+%>
+			
+			&AuditingObjectRecordItem = new AuditingObject.RecordItem()
+			&AuditingObjectRecordItem.TableName = !'<%= associatedSecondLevelTableName[level.Name] %>'
+			&AuditingObjectRecordItem.Mode = &ActualMode
+			&AuditingObject.Record.Add( &AuditingObjectRecordItem)
+
+<%
+			foreach (TransactionAttribute att in attsSecondLevel[level.Name])
+			{
+%>
+			&AuditingObjectRecordItemAttributeItem = new AuditingObject.RecordItem.AttributeItem()
+			&AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+<%
+				if (inlcudeDsc)
+				{
+%>
+			&AuditingObjectRecordItemAttributeItem.Description = '<%= DVelop.Patterns.WorkWithPlus.Helpers.AuditHelper.GetAttributeDescription(wwInstance, att) %>'
+<%
+				}
+%>
+			&AuditingObjectRecordItemAttributeItem.IsPartOfKey = <%= att.IsKey ? "True" : "False" %>
+			&AuditingObjectRecordItemAttributeItem.IsDescriptionAttribute = <%= att.IsDescriptionAttribute ? "True" : "False" %>
+			&AuditingObjectRecordItemAttributeItem.OldValue = <%= att.Attribute.Name %>.ToString()
+			&AuditingObjectRecordItem.Attribute.Add(&AuditingObjectRecordItemAttributeItem)
+
+<%	
+			}
+%>
+		EndFor
+<%
+		}	
+	}	
+%>
+	EndFor
+EndSub
+
+Sub 'LoadNewValues'
+	For Each<%= includeForEachTrns ? " " + transaction.Name : "" %>
+		Where <%= constraints %>
+		If &ActualMode = TrnMode.Insert
+
+			&AuditingObject = new AuditingObject()
+			&AuditingObject.Mode = &ActualMode
+
+			&AuditingObjectRecordItem = new AuditingObject.RecordItem()
+			&AuditingObjectRecordItem.TableName = !'<%= associatedTableName %>'
+<%
+			if (AuditSecondLevels)
+			{
+%>
+			&AuditingObjectRecordItem.Mode = &ActualMode
+<%			
+			}
+%>
+			&AuditingObject.Record.Add( &AuditingObjectRecordItem)
+
+<%
+	foreach (TransactionAttribute att in atts)
+	{
+%>
+			&AuditingObjectRecordItemAttributeItem = new AuditingObject.RecordItem.AttributeItem()
+			&AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+<%
+		if (inlcudeDsc)
+		{
+%>
+			&AuditingObjectRecordItemAttributeItem.Description = '<%= DVelop.Patterns.WorkWithPlus.Helpers.AuditHelper.GetAttributeDescription(wwInstance, att) %>'
+<%
+		}
+%>
+			&AuditingObjectRecordItemAttributeItem.IsPartOfKey = <%= att.IsKey ? "True" : "False" %>
+			&AuditingObjectRecordItemAttributeItem.IsDescriptionAttribute = <%= att.IsDescriptionAttribute ? "True" : "False" %>
+			&AuditingObjectRecordItemAttributeItem.NewValue = <%= att.Attribute.Name %>.ToString()
+			&AuditingObjectRecordItem.Attribute.Add(&AuditingObjectRecordItemAttributeItem)
+
+<%
+	}
+	if (AuditSecondLevels)
+	{
+	  foreach (TransactionLevel level in transaction.Structure.Root.Levels)
+      {
+%>
+			For Each<%= includeForEachTrns ? " " + level.FullType : "" %>
+<%
+		if (!includeForEachTrns)
+		{
+%>
+				Defined By <%= definedByAttribute[level.Name] %>
+<%
+		}
+%>
+				
+				&AuditingObjectRecordItem = new AuditingObject.RecordItem()
+				&AuditingObjectRecordItem.TableName = !'<%= associatedSecondLevelTableName[level.Name] %>'
+				&AuditingObjectRecordItem.Mode = TrnMode.Insert
+				&AuditingObject.Record.Add( &AuditingObjectRecordItem)
+				
+<%
+			foreach (TransactionAttribute att in attsSecondLevel[level.Name])
+			{
+%>
+				&AuditingObjectRecordItemAttributeItem = new AuditingObject.RecordItem.AttributeItem()
+				&AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+<%
+				if (inlcudeDsc)
+				{
+%>
+				&AuditingObjectRecordItemAttributeItem.Description = '<%= DVelop.Patterns.WorkWithPlus.Helpers.AuditHelper.GetAttributeDescription(wwInstance, att) %>'
+<%
+				}
+%>
+				&AuditingObjectRecordItemAttributeItem.IsPartOfKey = <%= att.IsKey ? "True" : "False" %>
+				&AuditingObjectRecordItemAttributeItem.IsDescriptionAttribute = <%= att.IsDescriptionAttribute ? "True" : "False" %>
+				&AuditingObjectRecordItemAttributeItem.NewValue = <%= att.Attribute.Name %>.ToString()
+				&AuditingObjectRecordItem.Attribute.Add(&AuditingObjectRecordItemAttributeItem)
+
+<%	
+			}
+%>
+			EndFor
+<%
+		}
+	}	
+%>
+		EndIf
+		If &ActualMode = TrnMode.Update
+<%
+	if (AuditSecondLevels)
+	{
+		foreach (TransactionLevel level in transaction.Structure.Root.Levels)
+		{
+%>
+			&CountUpdated<%= definedByAttribute[level.Name] %> = 0
+<%	
+		}
+	}
+%>			
+			For &AuditingObjectRecordItem in &AuditingObject.Record
+<%
+	if (AuditSecondLevels)
+	{
+%>
+				Do Case
+					Case &AuditingObjectRecordItem.TableName = !'<%= associatedTableName %>'
+<%	
+	}
+	if (!settings.IsOptimizationNumber(11))
+	{
+		//this For Each generated a "break For Each" that is not needed
+%>
+				For Each
+<%
+	}
+%>
+					For &AuditingObjectRecordItemAttributeItem in &AuditingObjectRecordItem.Attribute
+						Do Case
+<%
+	foreach (TransactionAttribute att in atts)
+	{
+%>
+							Case &AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+								&AuditingObjectRecordItemAttributeItem.NewValue = <%= att.Attribute.Name %>.ToString()
+
+<%
+	}
+%>
+						EndCase
+					EndFor
+<%	
+	if (!settings.IsOptimizationNumber(11))
+	{
+%>
+				EndFor
+<%
+	}
+	if (AuditSecondLevels)
+	{
+		foreach (TransactionLevel level in transaction.Structure.Root.Levels)
+		{
+%>
+				Case &AuditingObjectRecordItem.TableName = !'<%= associatedSecondLevelTableName[level.Name] %>'
+					
+					&CountKeyAttributes = 0
+					For &AuditingObjectRecordItemAttributeItem in &AuditingObjectRecordItem.Attribute
+						Do Case
+<%			
+			foreach (TransactionAttribute att in level.PrimaryKey)
+			{
+%>
+							Case &AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+								<%= TableAttributeElement.GetAssignVarFromStringValue("&Key" + att.Attribute.Name, att.Attribute.Type, TableAttributeElement.IsBasedOnEnumerated(att.Attribute), "&AuditingObjectRecordItemAttributeItem.OldValue")  %>											
+								&CountKeyAttributes += 1
+								If &CountKeyAttributes = <%= level.PrimaryKey.Count %>
+									Exit
+								EndIf
+<%
+			}
+%>
+						EndCase
+					EndFor
+
+					For Each<%= includeForEachTrns ? " " + level.FullType : "" %>
+						Where <%= constraintLevel[level.Name] %>
+
+						&AuditingObjectRecordItem.Mode = TrnMode.Update
+						&CountUpdated<%= definedByAttribute[level.Name] %> += 1
+
+						For &AuditingObjectRecordItemAttributeItem in &AuditingObjectRecordItem.Attribute
+							Do Case
+<%
+			foreach (TransactionAttribute att in attsSecondLevel[level.Name])
+			{
+%>
+								Case &AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+									&AuditingObjectRecordItemAttributeItem.NewValue = <%= att.Attribute.Name %>.ToString()
+
+<%
+			}
+%>
+							EndCase
+						EndFor
+					When None
+						&AuditingObjectRecordItem.Mode = TrnMode.Delete
+					EndFor
+<%	
+		}
+%>
+
+				EndCase
+<%
+	}
+%>
+			EndFor
+<%
+	if (AuditSecondLevels)
+	{
+		foreach (TransactionLevel level in transaction.Structure.Root.Levels)
+		{
+%>
+			If &CountUpdated<%= definedByAttribute[level.Name] %> < Count(<%= definedByAttribute[level.Name] %>, <%= constraints %>)
+
+				&AuditingObjectNewRecords = New()
+
+				For Each<%= includeForEachTrns ? " " + level.FullType : "" %>
+					Where <%= constraints %>
+<%
+			if (!includeForEachTrns)
+			{
+%>
+					Defined By <%= definedByAttribute[level.Name] %>
+<%
+			}
+			foreach (TransactionAttribute att in level.PrimaryKey)
+			{
+%>
+					&Key<%= att.Attribute.Name %> = <%= att.Attribute.Name %>
+					&RecordExists<%= att.Attribute.Name %> = False
+<%
+			}
+%>
+
+					For &AuditingObjectRecordItem in &AuditingObject.Record
+						If &AuditingObjectRecordItem.TableName = !'<%= associatedSecondLevelTableName[level.Name] %>'
+							&CountKeyAttributes = 0
+							For &AuditingObjectRecordItemAttributeItem in &AuditingObjectRecordItem.Attribute
+								Do Case
+<%
+			foreach (TransactionAttribute att in level.PrimaryKey)
+			{
+%>
+									Case &AuditingObjectRecordItemAttributeItem.Name = !'<%= att.Attribute.Name %>'
+<%
+				if (!TableAttributeElement.IsEDBTypeText(att.Attribute.Type))
+				{
+%>
+										If &AuditingObjectRecordItemAttributeItem.OldValue.Trim() = <%= TableAttributeElement.GetIAttributeItemStringValue("&Key" + att.Attribute.Name, att.Attribute.Type, false) %>
+<%
+				}
+				else
+				{
+%>
+										If &AuditingObjectRecordItemAttributeItem.OldValue = &Key<%= att.Attribute.Name %>
+<%
+				}
+%>
+											&RecordExists<%= att.Attribute.Name %> = True
+											&CountKeyAttributes += 1
+											If &CountKeyAttributes = <%= level.PrimaryKey.Count %>
+												Exit
+											EndIf
+										EndIf
+<%
+			}
+%>
+								EndCase
+							EndFor
+						EndIf
+					EndFor
+
+					If Not (<%= secondLevelRecordExists[level.Name] %>)
+						&AuditingObjectRecordItemNew = New AuditingObject.RecordItem()
+						&AuditingObjectRecordItemNew.TableName = !'<%= associatedSecondLevelTableName[level.Name] %>'
+						&AuditingObjectRecordItemNew.Mode = TrnMode.Insert
+						&AuditingObjectNewRecords.Record.Add( &AuditingObjectRecordItemNew)
+
+<%
+			foreach (TransactionAttribute att in attsSecondLevel[level.Name])
+			{
+%>
+						&AuditingObjectRecordItemAttributeItemNew = New AuditingObject.RecordItem.AttributeItem()
+						&AuditingObjectRecordItemAttributeItemNew.Name = !'<%= att.Attribute.Name %>'
+<%
+				if (inlcudeDsc)
+				{
+%>
+						&AuditingObjectRecordItemAttributeItemNew.Description = '<%= DVelop.Patterns.WorkWithPlus.Helpers.AuditHelper.GetAttributeDescription(wwInstance, att) %>'
+<%
+				}
+%>
+						&AuditingObjectRecordItemAttributeItemNew.IsPartOfKey = <%= att.IsKey ? "True" : "False" %>
+						&AuditingObjectRecordItemAttributeItemNew.IsDescriptionAttribute = <%= att.IsDescriptionAttribute ? "True" : "False" %>
+						&AuditingObjectRecordItemAttributeItemNew.NewValue = <%= att.Attribute.Name %>.ToString()
+						&AuditingObjectRecordItemNew.Attribute.Add(&AuditingObjectRecordItemAttributeItemNew)
+
+<%
+			}
+%>
+					EndIf
+				EndFor
+				For &AuditingObjectRecordItem in &AuditingObjectNewRecords.Record
+					&AuditingObject.Record.Add(&AuditingObjectRecordItem)
+				EndFor
+			EndIf
+<%
+		}
+	}
+%>
+		EndIf
+	EndFor
+EndSub

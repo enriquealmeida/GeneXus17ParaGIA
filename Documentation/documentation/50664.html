@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - One Time Password for mobile</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50664,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - One Time Password for mobile</h1>
+<!--GAM - One Time Password for mobile--><div class="TableWikiBody" id="tblwikibody"><p>In this article, you will find the steps to use One Time Password (OTP) authentication in a mobile application:</p>
+
+<p>First, you must configure an <a href="48197.html">OTP Authentication type</a>.</p>
+
+<p>After completing the configuration for OTP authentication, you need to consider the following:</p>
+
+<p>OTP runs two core events. The first event validates the user's existence, and the second event verifies the user code. All the Events described below are in the same <a href="24829.html">Panel</a>.<br />
+<br />
+<img src="./images/50691.png" id="50691" class="WikiImage"/></p>
+
+<h3><a id="Step+1%3A+Verify+user+event" class="HashLink" href="#Step+1%3A+Verify+user+event">Step 1: Verify user event</a></h3>
+
+<p>The logic inside this event will include a call to a method of the <a href="31350.html">Actions external object</a> named LoginExternal.</p>
+
+<p>The first parameter is based on the GAMAuthenticationTypes domain and its value should be OTP.</p>
+
+<p>The <span style="font-family: courier new;">&amp;password</span> parameter is ignored in this case.</p>
+
+<p>The <span style="font-family: courier new;">&amp;LoginExternalAdditionalParameters</span> has an AuthenticationTypeName property where you can set the name of the Authentication Type. This is because more than one OTP Authentication Type can be defined in the Repository.</p>
+
+<p>Also, the <span style="font-family: courier new;">&amp;LoginExternalAdditionalParameters</span> has the OTPStep which has the value &quot;1&quot; if it is validating the user, and &quot;2&quot; if it is validating the OTP code that the user inserted.</p>
+
+<p>If the <span style="font-family: courier new;">LoginExternal </span>method returns TRUE, the event <span style="font-family: courier new;">GeneXusSecurity.GAMLoginEvents.OTPAuthenticationRequested</span> is triggered.</p>
+
+<p>This event calls the &quot;<span style="font-family: arial;">DisplayOTPStep2&quot; </span>subroutine to change the Panel inputs, so it is prepared to read the OTP code that the user will insert. In addition, this event also warns the user that an authentication code was sent to them.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'BtnNext'
+    Composite
+        GeneXus.Common.UI.Progress.ShowWithTitle(&quot;Connecting...&quot;)
+        &amp;LoginExternalAdditionalParameters = new()
+        &amp;LoginExternalAdditionalParameters.AuthenticationTypeName    = !&quot;OTP-FFA&quot;
+        &amp;LoginExternalAdditionalParameters.OTPStep                    = 1
+        &amp;isLoginOK = GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.OTP, &amp;UserName, &amp;Password, &amp;LoginExternalAdditionalParameters)
+        GeneXus.Common.UI.Progress.Hide()
+        If &amp;isLoginOK
+            //OK
+        Else
+            GAMSDGetLastErrors(&amp;Messages)
+        Endif
+    EndComposite
+Endevent
+
+
+Event GeneXusSecurity.GAMLoginEvents.OTPAuthenticationRequested
+    Msg(&quot;An email was sent with your access code...&quot;)
+    
+    Do &quot;DisplayOTPStep2&quot;
+    &amp;LoginOTPStep = 2
+    GeneXus.Client.ClientStorage.Set(!'LoginOTP-Step', &amp;LoginOTPStep.ToString())
+      GeneXus.Client.ClientStorage.Set(!'LoginOTP-UserName', &amp;UserName.Trim())
+EndEvent</pre>
+
+<h3><a id="Step+2%3A+Validate+code+event" class="HashLink" href="#Step+2%3A+Validate+code+event">Step 2: Validate code event</a></h3>
+
+<p>In this event, the external object method <span style="font-family: courier new;">LoginExternal </span>is used to validate the code given by the user. Therefore, the <span style="font-family: courier new;">&amp;LoginExternalAdditionalParameters.OTPStep</span> property is defined as &quot;2.&quot; </p>
+
+<p>Besides, the <span style="font-family: courier new;">&amp;password</span> parameter is changed to <span style="font-family: courier new;">&amp;OTPCode</span> in the LoginExternal method.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'BtnValidCode'
+    Composite
+        GeneXus.Common.UI.Progress.ShowWithTitle(&quot;Connecting...&quot;)
+        &amp;LoginExternalAdditionalParameters = new()
+        &amp;LoginExternalAdditionalParameters.AuthenticationTypeName         = !&quot;OTP-FFA&quot;
+        &amp;LoginExternalAdditionalParameters.OTPStep                        = 2
+        GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.OTP, &amp;UserName, &amp;OTPCode, &amp;LoginExternalAdditionalParameters)
+        GeneXus.Common.UI.Progress.Hide()
+        Do &quot;SetOTPStep1&quot;
+        Return
+    EndComposite
+Endevent</pre>
+
+<h3><a id="Event+start" class="HashLink" href="#Event+start">Event start</a></h3>
+
+<p>In cases where the app is running in the background, it is important to keep the state of the login process. This means that when users have been verified in the first verification step and received a code, they must be able to open another app to read the code without losing the state of the OTP step that had already been done.</p>
+
+<p>To solve this problem, the <a href="31272.html">&quot;ClientStorage&quot; external object</a> is used. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event ClientStart
+    &amp;UserName.Enabled     = True
+    BtnNext.Visible       = True
+    TblCode.Visible       = False
+    &amp;LoginOTPStep.FromString(GeneXus.Client.ClientStorage.Get(!'LoginOTP-Step'))
+    If &amp;LoginOTPStep = 2
+        Do &quot;DisplayOTPStep2&quot;
+        &amp;UserName = GeneXus.Client.ClientStorage.Get(!'LoginOTP-UserName')
+    Endif
+Endevent</pre>
+
+<h3 class="Code"><a id="Go+Back+event" class="HashLink" href="#Go+Back+event">Go Back event</a></h3 class="Code">
+
+<p class="Code">This event calls the subroutine &quot;SetOTPStep1&quot; to cancel the OTP login process.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'BtnBack'
+    Composite
+        Do &quot;SetOTPStep1&quot;
+        Return
+    EndComposite
+Endevent</pre>
+
+<h3><a id="Subroutines" class="HashLink" href="#Subroutines">Subroutines</a></h3>
+
+<p>The above events call two different <a href="24767.html">subroutine</a>s. </p>
+
+<p>The &quot;DisplayOTPStep2&quot; subroutine makes changes in the elements of the Panel so that the user can interact with either the username input or the OTPcode input. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub &quot;DisplayOTPStep2&quot;
+    &amp;UserName.Enabled      = False
+    BtnNext.Visible        = False
+    TblCode.Visible        = True
+EndSub</pre>
+
+<p class="Code">The &quot;SetOTPStep1&quot; subroutine reset the steps of the OTP login process, leaving the Panel by default.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub &quot;SetOTPStep1&quot;
+    &amp;LoginOTPStep = 1
+    GeneXus.Client.ClientStorage.Set(!'LoginOTP-Step', &amp;LoginOTPStep.ToString())
+    GeneXus.Client.ClientStorage.Set(!'LoginOTP-UserName', &quot;&quot;)
+EndSub</pre>
+
+<h3 class="Code"><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3 class="Code">
+
+<p>This feature is available since <a href="49956.html">GeneXus 17 Upgrade 9</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="48197.html">GAM - One Time Password (OTP)</a><br />
+<a href="49974.html">GAM - Time Based One Time Password (TOTP)</a><br />
+<a href="50708.html">GAM - Time Based One Time Password for mobile</a><br />
+<a href="50726.html">GAM - Two factor Authentication for mobile</a></p>
+
+<p class="Code"></p>
+
+<p class="Code"></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="48197.html">GAM - One Time Password (OTP)</a></TD><TD><a href="50708.html">GAM - Time Based One Time Password for mobile</a></TD><TD><a href="48254.html">GAM - Two Factor Authentication</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/13/22 03:00 PM</em></font></td></TR></table></font>

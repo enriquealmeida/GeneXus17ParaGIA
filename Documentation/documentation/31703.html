@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Components - Differences between the Save method and the Insert and Update methods</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31703,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Components - Differences between the Save method and the Insert and Update methods</h1>
+<!--Business Components - Differences between the Save method and the Insert and Update methods--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>While the <a href="23229.html">Save method</a> takes into account the current mode of the variable based on the <a href="5846.html">business component</a> to which it is applied, the <a href="31695.html">Insert</a> and <a href="31696.html">Update</a> methods don't take it into account to determine if an addition or an update has to be performed in the database. The <a href="31695.html">Insert</a> and <a href="31696.html">Update</a> methods directly perform the operations indicated by their names.</p>
+
+<p>In addition, the Update method does not require the use of the <a href="23211.html">Load method</a>, as opposed to the Save method when it is used to update the database. This is advantageous because the Load method produces an access to the database and it can be avoided.</p>
+
+<p>So, the first code is more performant than the second, even though the result of both of them is the same:</p>
+
+<p><strong>1)</strong> </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer=new()   //in this case the new operator can be omitted, but if several customers are updated, it must be used
+&amp;Customer.CustomerId = 8    
+&amp;Customer.CustomerEmail = !'marybrown@gmail.com'
+If &amp;Customer.Update()
+   commit
+else
+   rollback
+endif   
+</pre>
+
+<p> </p>
+
+<p><strong>2)</strong> </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer.Load(8)
+&amp;Customer.CustomerEmail = !'marybrown@gmail.com'
+&amp;Customer.Save()
+if &amp;Customer.Success()
+  commit
+else
+  rollback
+endif
+</pre>
+
+<p> </p>
+
+<p><strong>Note:</strong> If the above codes are inside a loop, by using the Load() method, you don't need to use the New operator (because the variable is reloaded every time regardless if you are using the Save or the Update method). On the other hand, if you decide to assign the primary key attribute(s) value(s), you have to precede that assignment with the New operator.</p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31695.html">Business Component Insert method</a></TD><TD><a href="31696.html">Business Component Update method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

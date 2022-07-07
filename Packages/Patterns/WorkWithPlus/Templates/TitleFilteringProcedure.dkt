@@ -1,0 +1,606 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Audit Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="RegularFiltersLoadState" File="RegularFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersLoadState" File="DynamicFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="TitleFilteringProcedureInitializeFilters" File="TitleFilteringProcedureInitializeFilters.dkt" MergeProperties="True"%>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	SettingsTemplateElement template = wwInstance.GetAppropiateTemplate();
+	
+	IGridObject GridObject = wwInstance.GetElement<IGridObject>(Element);
+	IGrid grid = GridObject.GetGrid();
+%>
+
+&Options = new()
+&OptionsDesc = new()
+&OptionIndexes = new()
+<%
+	bool addSecurityEndIf = false;
+	string mainIndentation = "";
+	SettingsSecurityElement securityElement = wwInstance.Settings.Security;
+	string securityKey;
+	if (securityElement.IsTypeAdvanced())
+	{
+		string secFuntionKey = GridObject.GetSecurityFunctionKey();
+		if (secFuntionKey != null && secFuntionKey.Trim().Length > 0)
+		{
+			addSecurityEndIf = true;
+			mainIndentation = "	";
+%>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' SecurityFunction='secFuntionKey' IndentLevel='0' DoNotRedirect='true' %>
+
+If &IsAuthorized
+
+<%
+		}
+	}
+	else if (securityElement.IsTypeGAM() && securityElement.SecurityGAM.AddSecurityProgrammatically(template, GridObject, out securityKey))
+	{
+		addSecurityEndIf = true;
+		mainIndentation = "	";
+%>
+&IsAuthorized = <%= securityElement.SecurityGAM.CheckByFunctionKeyName %>.Udp(!'<%= securityKey %>')
+
+If &IsAuthorized
+
+<%
+	}
+%>
+<%@ CallSubTemplate SubLoadContext Settings='settings' IndentLevel='addSecurityEndIf ? 1 : 0' IndentLevelChar='"\t"' %>
+
+<%= mainIndentation %>Do 'LoadGridState'
+<%= mainIndentation %>Do Case
+<%
+	List<IAttributesItem> titlesWithFilters = new List<IAttributesItem>();
+	List<IWorkWithPlusInstanceElement> allFiltersWithProcService = new List<IWorkWithPlusInstanceElement>();
+	foreach (IWorkWithPlusInstanceElement item in grid.Items)
+	{
+		if (item is IFilterableByTitle)
+		{
+			IFilterableByTitle gridItem = (IFilterableByTitle)item;
+			if (gridItem.IsIncludeTitleFilterTrue())
+			{
+				titlesWithFilters.Add(gridItem);
+				if (gridItem.IsDataListDynamic())
+				{
+					allFiltersWithProcService.Add(item);
+					string name = gridItem.ControlName.TrimStart('&');
+%>
+<%= mainIndentation %>	Case &DDOName.ToUpper() = !'DDO_<%= name.ToUpper() %>'
+<%
+					if (!wwInstance.HasTransaction())
+					{
+%>
+<%@ CallSubTemplate TitleFilteringProcedureInitializeFilters gridItem='gridItem' filterMultiple='null' name='name' IndentLevel='mainIndentation.Length + 1' IndentLevelChar='"\t"' %>
+<%
+					}
+%>
+<%= mainIndentation %>		Do 'Load<%= name %>Options'
+<%
+				}
+			}
+		}
+	}
+	DynamicFilterAttributesElement dynamicFilters = GridObject.Table.GetDynamicFilters();
+	List<IRegularFilter> filters = GridObject.GetFilters();
+	List<System.Collections.IEnumerable> allFilterAndDynamic = new List<System.Collections.IEnumerable>();
+	if (filters.Count > 0)
+	{
+		allFilterAndDynamic.Add(filters);
+	}
+	if (dynamicFilters != null)
+	{
+		if (dynamicFilters.FixedFilters != null)
+		{
+			allFilterAndDynamic.Add(dynamicFilters.FixedFilters.Items);
+		}
+		allFilterAndDynamic.Add(dynamicFilters.Items);
+	}
+	if (allFilterAndDynamic.Count > 0)
+	{
+		foreach (System.Collections.IEnumerable list in allFilterAndDynamic)
+		{
+			foreach (IWorkWithPlusInstanceElement item in list)
+			{
+				if (item is FilterAttributeMultipleGeneralElement && ((FilterAttributeMultipleGeneralElement)item).IsTypeDropDownSelector() && ((FilterAttributeMultipleGeneralElement)item).IsDataListDynamic())
+				{
+					allFiltersWithProcService.Add(item);
+					string name = ((FilterAttributeMultipleGeneralElement)item).Name;
+					if (((FilterAttributeMultipleGeneralElement)item).IsDynamicFilter())
+					{
+						int maxFilters = ((DynamicFilterAttributesElement)item.Parent).MaxFilters;
+						string caseCondition = "";
+						for (int i = 1; i <= maxFilters; i++)
+						{
+							caseCondition += " OR &DDOName.ToUpper() = !'DDO_FILTERMULTIPLE" + name.ToUpper() + i + "'";
+						}
+%>
+<%= mainIndentation %>	Case <%= caseCondition.Substring(4) %>
+<%
+					}
+					else
+					{
+%>
+<%= mainIndentation %>	Case &DDOName.ToUpper() = !'DDO_FILTERMULTIPLE<%= name.ToUpper() %>'
+<%
+					}
+					if (!wwInstance.HasTransaction())
+					{
+%>
+<%@ CallSubTemplate TitleFilteringProcedureInitializeFilters gridItem='null' filterMultiple='(FilterAttributeMultipleGeneralElement)item' name='name' IndentLevel='mainIndentation.Length + 1' IndentLevelChar='"\t"' %>
+<%
+					}
+%>
+<%= mainIndentation %>		Do 'LoadFilterMultiple<%= name %>Options'
+<%
+				}
+			}
+		}
+	}
+%>
+<%= mainIndentation %>EndCase
+<%
+	if (addSecurityEndIf)
+	{
+%>
+
+EndIf
+<%
+	}
+
+	bool hasConditionalFormattingFilters = grid is GridGeneralElement && ((GridGeneralElement)grid).ConditionalFormatting != null && ((GridGeneralElement)grid).ConditionalFormatting.HasFilter;
+	bool hasDynamicFilters = (dynamicFilters != null && dynamicFilters.Items.Count > 0);
+	int amountOfFixedFilters = (dynamicFilters != null && dynamicFilters.FixedFilters != null ? dynamicFilters.FixedFilters.Items.Count : 0);
+	int totalAmountOfRegularFilters = filters.Count + amountOfFixedFilters + titlesWithFilters.Count + (hasConditionalFormattingFilters ? 1 : 0);
+	foreach (IFilterableByTitle item in titlesWithFilters)
+	{
+		if (TitleFilterProcedureHelper.ConsiderFilterCondition(item)
+			&& TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+		{
+			totalAmountOfRegularFilters++;
+		}
+	}
+%>
+
+&OptionsJson = &Options.ToJson()
+&OptionsDescJson = &OptionsDesc.ToJson()
+&OptionIndexesJson = &OptionIndexes.ToJson()
+
+Sub 'LoadGridState'
+
+	// Load grid state from session.
+<%
+	string sessionKey = settings.Objects.IGridObjectName(GridObject, true) + Constants.SessionKeys.GridState;
+	if (!settings.Grid.IsSaveGridStateCustom())
+	{
+%>	
+	&GridState.From<%= template.SerializationFormat %>(&Session.Get(!"<%= sessionKey %>"))
+<%
+	}
+	else
+	{
+		
+%>	
+	If &Session.Get(!"<%= sessionKey %>") = !""
+		&GridState.From<%= template.SerializationFormat %>(LoadGridState.Udp(!"<%= sessionKey %>"))
+	Else
+		&GridState.From<%= template.SerializationFormat %>(&Session.Get(!"<%= sessionKey %>"))
+	Endif	
+<%
+	}
+
+	if (totalAmountOfRegularFilters > 0)
+	{
+		List<System.Collections.IEnumerable> filtersAddFixedFilters = SelectionGeneralElement.GetFiltersAddFixedFiltersLists(filters, dynamicFilters);
+%>
+
+<%@ CallSubTemplate RegularFiltersLoadState Instance='wwInstance' TotalAmountOfRegularFilters='totalAmountOfRegularFilters' FiltersAddFixedFilters='filtersAddFixedFilters' TitlesWithFilters='titlesWithFilters' HasConditionalFormattingFilters='hasConditionalFormattingFilters' IsWebPanelLoad='false' SourceType='4' GridObject='GridObject' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	}
+	if (hasDynamicFilters)
+	{
+%>
+<%@ CallSubTemplate DynamicFiltersLoadState Instance='wwInstance' Settings='settings' DynamicFilters='dynamicFilters' ActualFilter='1' SourceType='2' ExcelWriteFilter='false' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	}
+%>
+
+EndSub
+
+<%
+	bool generateDataSelector = DataSelectorHelper.GenerateDataSelector(GridObject, settings);
+	foreach (IWorkWithPlusInstanceElement item in allFiltersWithProcService)
+	{
+		FilterAttributeMultipleGeneralElement filterMultiple = item as FilterAttributeMultipleGeneralElement;
+		IFilterableByTitle gridItem = item as IFilterableByTitle;
+		if (filterMultiple == null && gridItem == null)
+		{
+			throw new Exception("filterMultiple or gridItem must be not null");
+		}
+
+			string name = gridItem != null ? gridItem.ControlName.TrimStart('&') : filterMultiple.Name;
+			Artech.Genexus.Common.Objects.Attribute dscAtt = null;
+			string dscAttName;
+			if (gridItem != null)
+			{
+				dscAttName = gridItem.Name;
+				if (gridItem is GridVariableElement && ((GridVariableElement)gridItem).Domain is Artech.Genexus.Common.Objects.SDT)
+				{
+					if (((GridVariableElement)item).Name.Equals(grid.GetSDTCollection().Trim().TrimStart('&'), StringComparison.InvariantCultureIgnoreCase))
+					{
+						dscAttName += "Item";
+					}
+					dscAttName += "." + ((GridVariableElement)gridItem).SdtItem.Replace("item(0).", "");
+				}
+			}
+			else
+			{
+				dscAttName = wwInstance.HasTransaction() ? filterMultiple.ValuesAttribute.Name : "&" + filterMultiple.Name;
+			}
+			if (wwInstance.HasTransaction())
+			{
+				if (gridItem != null && TableAttributeElement.IsExplicitDynamicComboBox(gridItem, out dscAtt) && dscAtt != null
+					|| filterMultiple != null && (dscAtt = filterMultiple.DescriptionsAttribute) != null)
+				{
+					Artech.Genexus.Common.Objects.Attribute gridAtt;
+					if (gridItem != null)
+					{
+						gridAtt = gridItem is GridAttributeElement ? ((GridAttributeElement)gridItem).Attribute : (gridItem is FSTableAttributeElement ? ((FSTableAttributeElement)gridItem).Attribute : null);
+					}
+					else
+					{
+						gridAtt = filterMultiple.ValuesAttribute;
+					}
+					dscAtt = TitleFilterProcedureHelper.GetTrnAttFromDynamicComboBoxDscAtt(GridObject.Transaction, gridAtt, dscAtt);
+					dscAttName = dscAtt.Name;
+				}
+			}
+			else
+			{
+				if (filterMultiple != null && filterMultiple.DescriptionsAttribute != null)
+				{
+					dscAtt = filterMultiple.DescriptionsAttribute;
+					dscAttName += "Description";
+				}
+			}
+			string order = TitleFilterProcedureHelper.GetOrder(gridItem, filterMultiple, dscAtt);
+			bool sortFieldsProgrammatically = (order == "" || !order.ToLower().EndsWith(dscAttName.ToLower()));
+%>
+Sub 'Load<%= filterMultiple != null ? "FilterMultiple" : "" %><%= name %>Options'
+
+<%
+			if (wwInstance.HasTransaction())
+			{
+%>
+<%@ CallSubTemplate TitleFilteringProcedureInitializeFilters gridItem='gridItem' filterMultiple='filterMultiple' name='name' %>
+<%
+			}
+			bool isDataListIncludeTotalRecordsTrue = gridItem != null && gridItem.IsDataListIncludeTotalRecordsTrue()
+													|| filterMultiple != null && filterMultiple.IsDataListIncludeTotalRecordsTrue();
+			
+			if (wwInstance.HasTransaction())
+			{
+%>
+	For Each<%= GridObject.GetForEachLevelName(false, true) %>
+<%
+			if (order != "")
+			{
+%>
+		Order <%= order %>
+<%
+			}
+
+			if (generateDataSelector)
+			{
+%>
+		using <%= settings.Objects.GridDataSelectorName(GridObject, false) %>(<%= DataSelectorHelper.GetParameters(GridObject, grid, "\t\t\t\t\t") %>)
+<%
+			}
+			else
+			{
+				if (GridObject.IsPrompt())
+				{
+					foreach (PromptParameterElement param in GridObject.GetParameters())
+					{
+						if (param.AttributeBasedOn != null)
+						{
+							if (param.Type == "In")
+							{
+%>
+		Where <%= param.AttributeBasedOn %> = <%= param.GetVariableName() %>
+<%
+							}
+						}
+					}
+				}
+				else
+				{
+					foreach (ParameterElement parameter in GridObject.GetParameters())
+					{
+						if (parameter.IsRealAttribute())
+						{
+%>
+		Where <%= parameter.ParameterCondition %>
+<%
+						}
+					}
+				}
+		
+				foreach (string filterCond in GridObject.GetFiltersConditions())
+				{
+%>
+		Where <%= filterCond %>
+<%
+				}
+			
+				if (hasDynamicFilters || amountOfFixedFilters > 0)
+				{
+					foreach (string filterCond in dynamicFilters.GetConditions())
+					{
+%>
+		Where <%= filterCond %>
+<%
+					}
+				}
+				if (GridObject.HasTitleFilter)
+				{
+					foreach (string cond in TitleFilterProcedureHelper.GetConditions(grid))
+					{
+%>
+		Where <%= cond %>
+<%
+					}
+				}
+			}
+
+			bool? filterInDataSelector = (!generateDataSelector || !template.IncludeAutomaticConditionsInDataSelector) ? (bool?)null : (bool?)false;
+			List<string> automaticConditions = GridObject.GetAutomaticConditions(filterInDataSelector);
+			if (automaticConditions != null)
+			{
+				foreach (string conditions in automaticConditions)
+				{
+%>
+		Where <%= conditions %>
+<%
+				}
+			}
+	
+			foreach (string condition in SelectionGeneralElement.GetCustomConditionsFromObject(GridObject))
+			{
+%>
+		Where <%= condition %>
+<%
+			}
+			if (filterMultiple != null && TitleFilterProcedureHelper.ConsiderFilterCondition(filterMultiple))
+			{
+%>
+		Where <%= filterMultiple.FilterCondition %>
+<%
+			}
+			var multitenantAtt = wwInstance.MultiTenantAtt;
+			if (multitenantAtt != null)
+			{
+%>
+		Where <%= multitenantAtt.Name %> = <%= settings.MultiTenant.CurrentTenantExpression %>
+<%
+			}
+%>
+
+<%
+			if (order != "")
+			{
+				if (isDataListIncludeTotalRecordsTrue)
+				{
+%>
+		&count = 0
+		For Each<%= GridObject.GetForEachLevelName(false, true) %>
+			Order <%= order %>
+			&count += 1
+		EndFor
+<%
+				}
+				else
+				{
+%>
+		Option Distinct
+<%
+				}
+			}
+
+			}
+			else
+			{
+				if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+				{
+%>
+	//<%= grid.GetSDTCollection() %> must be loaded manually before this code
+
+	For <%= grid.GetSDTCollection() %>Item in <%= grid.GetSDTCollection() %>
+<%
+				}
+				else
+				{
+%>
+	//this code should be inside the For Each used to load the data
+<%
+				}
+				if (GridObject.HasTitleFilter || hasDynamicFilters || amountOfFixedFilters > 0
+					|| DVelop.Patterns.WorkWithPlus.Helpers.DataSelectorHelper.GetSDTBasedGridObjectExampleConditions(GridObject, settings) != "")
+				{
+%>
+
+	//sample conditions available in the Events of <%= GridObject.ObjectName %> object
+
+<%
+				}
+			}
+			bool hasOptionDsc = false;
+			bool isBoolean = false;
+			if (gridItem != null && gridItem is VariableElement)
+			{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(((VariableElement)gridItem).GetLoadCode(), 2) %>
+<%
+			}
+			if (gridItem != null && TitleFilterProcedureHelper.GetEDBType(gridItem) != Artech.Genexus.Common.eDBType.Boolean
+				|| filterMultiple != null && TitleFilterProcedureHelper.GetEDBType(filterMultiple) != Artech.Genexus.Common.eDBType.Boolean)
+			{
+%>
+		If not <%= dscAttName %>.IsEmpty()
+<%
+			}
+			else
+			{
+				isBoolean = true;
+			}
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(TitleFilterProcedureHelper.GetDataListValue(gridItem, filterMultiple, dscAtt, settings, out hasOptionDsc), isBoolean ? 2 : 3) %>
+<%
+			if (sortFieldsProgrammatically)
+			{
+%>
+			&InsertIndex = 1
+			Do while &InsertIndex <= &Options.Count AND &Options<%= hasOptionDsc ? "Desc" : "" %>.Item(&InsertIndex) < &Option<%= hasOptionDsc ? "Desc" : "" %>
+				&InsertIndex = &InsertIndex + 1
+			EndDo
+<%
+				if (order == "")
+				{
+					if (isDataListIncludeTotalRecordsTrue)
+					{
+%>
+			If &InsertIndex <= &Options.Count AND &Options<%= hasOptionDsc ? "Desc" : "" %>.Item(&InsertIndex) = &Option<%= hasOptionDsc ? "Desc" : "" %>
+				&count.FromString(&OptionIndexes.Item(&InsertIndex))
+				&count += 1
+				&OptionIndexes.Remove(&InsertIndex)
+				&OptionIndexes.Add(trim(&count.ToFormattedString()), &InsertIndex)
+			Else
+				&Options.Add(&Option, &InsertIndex)
+<%
+						if (hasOptionDsc)
+						{
+%>
+				&OptionsDesc.Add(&OptionDesc, &InsertIndex)
+<%
+						}
+%>
+				&OptionIndexes.Add(!'1', &InsertIndex)
+			EndIf
+<%
+					}
+					else
+					{
+%>
+			If (&InsertIndex = &Options.Count + 1) OR &Options<%= hasOptionDsc ? "Desc" : "" %>.Item(&InsertIndex) <> &Option<%= hasOptionDsc ? "Desc" : "" %>
+				&Options.Add(&Option, &InsertIndex)
+<%
+					if (hasOptionDsc)
+					{
+%>
+				&OptionsDesc.Add(&OptionDesc, &InsertIndex)
+<%
+					}
+%>
+			EndIf
+<%
+					}
+				}
+				else
+				{
+%>
+			&Options.Add(&Option, &InsertIndex)
+<%
+					if (hasOptionDsc)
+					{
+%>
+			&OptionsDesc.Add(&OptionDesc, &InsertIndex)
+<%
+					}
+					if (isDataListIncludeTotalRecordsTrue)
+					{
+%>
+			&OptionIndexes.Add(trim(&count.ToFormattedString()), &InsertIndex)
+<%
+					}
+				}
+			}
+			else
+			{
+%>
+			&Options.Add(&Option)
+<%
+				if (hasOptionDsc)
+				{
+%>
+			&OptionsDesc.Add(&OptionDesc)
+<%
+				}
+				if (isDataListIncludeTotalRecordsTrue)
+				{
+%>
+			&OptionIndexes.Add(trim(&count.ToFormattedString()))
+<%
+				}
+			}
+			if (!isBoolean)
+			{
+%>
+		EndIf
+<%
+				string dataListMaxValues;
+				if (gridItem != null)
+				{
+					dataListMaxValues = gridItem.DataListMaxValues;
+				}
+				else
+				{
+					dataListMaxValues = ((FilterAttributeMultipleGeneralElement)item).DataListMaxValues;
+				}
+				if (dataListMaxValues != "" && dataListMaxValues != "0")
+				{
+%>
+		If &Options.Count = <%= dataListMaxValues %>
+<%
+					if (wwInstance.HasTransaction() || !string.IsNullOrEmpty(grid.GetSDTCollection()))
+					{
+%>
+			Exit
+<%
+					}
+					else
+					{
+%>
+			//the iteration of the For Each should be stopped (i.e.: Exit)
+<%
+					}
+%>
+		EndIf
+<%
+				}
+			}
+			if (wwInstance.HasTransaction() || !string.IsNullOrEmpty(grid.GetSDTCollection()))
+			{
+%>
+	EndFor
+<%
+			}
+%>
+
+EndSub
+<%
+	}
+%>

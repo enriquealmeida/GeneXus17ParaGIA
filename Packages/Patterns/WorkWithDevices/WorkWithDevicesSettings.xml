@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pattern xmlns="http://schemas.genexus.com/Patterns/InstanceSpecification/v1.0"
+         Name="WorkWithDevices"
+         Version="16.10.0"
+         RootElement="Config"
+         RootType="Config">
+	<ElementTypes>
+		<ElementType Name="Config" Caption="Work With for Smart Devices Configuration">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="Template" ElementType="Template" Multiple="false" Optional="false" />
+				<ChildElement Name="Platforms" ElementType="Platforms" Multiple="false" Optional="false" />
+				<ChildElement Name="Labels" ElementType="Labels" Multiple="false" Optional="false" />
+				<ChildElement Name="StandardActions" ElementType="StandardActions" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Template" Caption="Defaults" Icon="Pattern_Template" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="TabsForParallelTransactions" Type="bool" Description="Add sections to the detail for parallel transactrions." DefaultValue="false" PrettyName="Sections for parallel transactions" />
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="Platforms" Caption="Platforms" Icon="MobilePlatforms" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="Platform" ElementType="Platform" Multiple="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Platform" Caption="{0}" CaptionParameters="Name" KeyAttribute="Name" Icon="MobilePlatforms" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="Name" Type="string" Description="Platform name." NotNull="true" ReadOnlyIf="self::*[@Predefined = 'True']"/>
+				<Attribute Name="OS" Type="enum{All;Android;iOS;Windows;Web}" Description="Target Operating System for the platform." ReadOnlyIf="self::*[@Predefined = 'True']" Resolver="Artech.Patterns.WorkWithDevices.Custom.OSResolver"/>
+				<Attribute Name="Version" Type="string" Description="Minimum Operating System Version for the platform."  VisibleIf="self::*[not(@OS='All')]" ReadOnlyIf="self::*[@Predefined = 'True']"/>
+				<Attribute Name="DeviceKind" Type="enum{All;Phone or Tablet;TV;Watch}" Description="Target device kind for the platform." ReadOnlyIf="self::*[@Predefined = 'True']"/>
+				<Attribute Name="Size" Type="enum{All;Small;Medium;Large}" Description="Platform screen size."/>
+				<Attribute Name="Theme" PrettyName="Style" Type="reference(ThemeForSmartDevices;DesignSystem)" Description="UI Theme associated to this platform." Resolver="Artech.Patterns.WorkWithDevices.Custom.ThemeResolver"/>
+				<Attribute Name="AdditionalThemes" PrettyName="Additional Styles" Type="reference-collection(ThemeForSmartDevices;DesignSystem)" Description="UI Additional Themes associated to this platform." Resolver="Artech.Patterns.WorkWithDevices.Custom.AdditionalThemesResolver"/>
+				<Attribute Name="NavigationStyle" Type="enum{Default;Flip;Split}" Description="Platform navigation style." Resolver="Artech.Patterns.WorkWithDevices.Custom.NavigationStyleResolver" />
+				<Attribute Name="DefaultLayoutOrientation" Type="enum{Any;Landscape;Portrait}" Description="Default layout orientation" Resolver="Artech.Patterns.WorkWithDevices.Custom.DefaultLayoutOrientationResolver"/>
+				<Attribute Name="Predefined" Type="bool" Description="Predefined Platform, can't be changed or removed" Visible="false" />
+				<Attribute Name="BoundsName" Type="string" Description="Name for the given bounds"/>
+				<Attribute Name="MinimumShortestBound" PrettyName="Minimum Shortest Bound" Type="int" Description="Specify the minimum size in dips of the shortest device bound" VisibleIf="self::*[@OS!='Web']"/>
+				<Attribute Name="MaximumShortestBound" PrettyName="Maximum Shortest Bound" Type="int" Description="Specify the maximum size in dips of the shortest device bound" VisibleIf="self::*[@OS!='Web']"/>
+				<Attribute Name="MinimumLongestBound" PrettyName="Minimum Longest Bound" Type="int" Description="Specify the minimum size in dips of the longest device bound" VisibleIf="self::*[@OS='iOS' or @OS='Web']"/>
+				<Attribute Name="MaximumLongestBound" PrettyName="Maximum Longest Bound" Type="int" Description="Specify the maximum size in dips of the longest device bound" VisibleIf="self::*[@OS='iOS' or @OS='Web']"/>
+			</Attributes> 
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="Labels" Caption="Labels" Icon="TextBlock" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="GeneralTab" Type="string" Description="" DefaultValue="General" />
+				<Attribute Name="WorkWithTitle" Type="string" Description="" DefaultValue="Work With &lt;Object&gt;" />
+				<Attribute Name="DetailDescription" Type="string" Category="Default Instance" Description="Format string for Detail Description." DefaultValue="&lt;Object&gt; Information" />
+				<Attribute Name="LabelPosition" Type="enum{Platform Default;None;Left;Top;Right;Bottom;Float}" Description="Visualization position of the associated label." DefaultValue="Platform Default" />
+				<!-- disabled for now 
+				<Attribute Name="OrderedBy" Type="string" Description="" DefaultValue="Ordered By" />
+				<Attribute Name="AllInCombo" Type="string" Description="Caption used for the All option in combos." DefaultValue="GX_AllItems" />
+				<Attribute Name="PreviousTab" Type="string" Description="Tooltip to appear in the previous tab button" DefaultValue="Previous Tab" />
+				<Attribute Name="NextTab" Type="string" Description="Tooltip to appear in the next tab button" DefaultValue="Next Tab" />
+				<Attribute Name="RecordNotFound" Type="string" Description="Text used on Views when the requested record is not found in the database." DefaultValue="Record not found" />
+				-->
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="StandardActions" Caption="Standard Actions" Icon="Event" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="DisabledAppearance" Type="enum{Disabled;Hidden}" PrettyName="Disabled Actions" Description="Whether actions that are disabled due to a custom security check are shown as disabled or not shown at all." DefaultValue="Disabled" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="Insert" ElementType="Action" Multiple="false" Optional="false" />
+				<ChildElement Name="Update" ElementType="Action" Multiple="false" Optional="false" />
+				<ChildElement Name="Delete" ElementType="Action" Multiple="false" Optional="false" />
+				<ChildElement Name="Search" ElementType="Action" Multiple="false" Optional="false"/>
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Action" Caption="{0}" CaptionParameters="[ElementName]" Icon="Event" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="Caption" Type="string-t" Description="Standard caption." />
+				<Attribute Name="DefaultMode" Type="bool" Description="Indicates whether to include this action by default." PrettyName="Enabled by Default"  DefaultValue="true" />
+				<Attribute Name="Image" Type="reference(Image)" Category="Style" Description="Image to be used for the action." />
+				<Attribute Name="DisabledImage" Type="reference(Image)" Category="Style" Description="Image to be used when the action is disabled." />
+				<!-- disabled for now
+				<Attribute Name="ButtonClass" Type="custom(ThemeClass)" Category="Style" Description="Theme class for this action, when inserted as a button in a form." />
+				-->
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+	</ElementTypes>
+</Pattern>

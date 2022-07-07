@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Single Sign on for Rest Services using GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46492,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Single Sign on for Rest Services using GAM</h1>
+<!--Single Sign on for Rest Services using GAM--><div class="TableWikiBody" id="tblwikibody"><p>This functionality aims to solve centralized authentication between multiple distributed Rest Services.</p>
+
+<p>Consider the scenario where App A wants to invoke a Rest service of App B and, for that, there is a centralized authentication entity that gives App A the token to call the secure Rest service of B.</p>
+
+<p>It's similar to Single Sign on (SSO), except that the login to the centralized authentication entity (the Identity Provider) is done using Rest (not by using a UI). </p>
+
+<p>Some characteristics of this authentication type are as follows:</p>
+
+<ul>
+	<li>The user enters his credentials in a local login and is not redirected to the Identity Provider's login as in <a href="25355.html">GAM Remote Authentication</a>. The Identity Provider (IDP) is the owner of the user credentials, as always.</li>
+	<li>The login is done using <a href="44833.html">GAM - Remote Rest Authentication type (Oauth 2.0)</a> against the IDP.</li>
+	<li>After login, the client app can get from the IDP an <em>SSO Rest Token</em> which enables the app to call a Rest service of another app (different than the IDP) which is subscribed to this scheme.</li>
+</ul>
+
+<p>This page contains the following:</p>
+
+<p><ul><li><a class="HashLink" href="#Architecture+overview">Architecture overview</a></li><li><a class="HashLink" href="#Use+Cases">Use Cases</a></li><li><a class="HashLink" href="#Implementation">Implementation</a></li><li><a class="HashLink" href="#Configuration">Configuration</a></li><ul><li><a class="HashLink" href="#Server-side+configuration">Server-side configuration</a></li><li><a class="HashLink" href="#Client-side+configuration">Client-side configuration</a></li></ul></li><li><a class="HashLink" href="#Example">Example</a></li><li><a class="HashLink" href="#Availability">Availability</a></li></ul></ul></p>
+
+<h3><a id="Architecture+overview" class="HashLink" href="#Architecture+overview">Architecture overview</a></h3>
+
+<p>The following is a simplified scheme of the solution. It's based on Oauth 2.0 protocol. For more information, read the Implementation section below.</p>
+
+<p>Suppose that you have 3 KBs (App A, App B, and the IDP). All of them have GAM activated.</p>
+
+<ol>
+	<li>From App A, log in to the Identity Provider (IDP) using <a href="44833.html">GAM - Remote Rest Authentication type (Oauth 2.0)</a>.<br />
+	{ClientId + Credentials + Scopes + <a href='RepositoryGUID'>RepositoryGUID</a>} are sent to the IDP.</li>
+	<li>The IDP answers with an access token.</li>
+	<li>Ask for user information.<br />
+	{access token} is sent to the IDP.</li>
+	<li>The IDP answers with user information.</li>
+	<li>Generate GAM session at the IDP.</li>
+	<li>Generate local GAM session in App A.</li>
+	<li>Post to Rest Service of App B.<br />
+	{Authorization: &lt;<em>SSO Rest Token</em>&gt;} is sent as an authorization header. The Client ID is sent in the HTTP body request.</li>
+	<li>Using the <em>SSO Rest Token </em>received, App B requests a token and User Info to the IDP.<br />
+	{Authorization: &lt;<em>SSO Rest Token</em>&gt;} is sent as an authorization header. The Client ID is sent in the HTTP body request.</li>
+	<li>The Token and User info is returned from the IDP to App B.</li>
+	<li>A local GAM session is generated in App B.</li>
+	<li>App B sends the Rest service response to App A.<br />
+	<br />
+	<img src="./images/46494.png" id="46494" class="WikiImage"/></li>
+</ol>
+
+<ul>
+</ul>
+
+<h3><a id="Use+Cases" class="HashLink" href="#Use+Cases">Use Cases</a></h3>
+
+<p>As stated above, the use scenario is to have more than one application, which must interact with each other calling Rest services. Once the user has logged in one of them (against an Identity Provider configured to return an SSO Rest token) the application can use this token to call a Rest service of any other application which is subscribed to this scheme.</p>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>When the user logs in, the client makes a call to ask for a valid token using the following URL:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ServerURL/oauth/gam/v2.0/access_token</pre>
+
+<p>The user's information is requested through this HTTP request:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+POST $ServerURL/oauth/gam/v2.0/RequestTokenAndUserInfo HTTP/1.1
+</pre>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h3>
+
+<p>All the KBs need to have <a href="19888.html">GeneXus Access Manager</a> (GAM) activated.</p>
+
+<h4><a id="Server-side+configuration" class="HashLink" href="#Server-side+configuration">Server-side configuration</a></h4>
+
+<p>See <a href="https://wiki.genexus.com/commwiki/wiki?46496,," target="_blank">Server-side configuration for SSO in Rest applications</a></p>
+
+<h4><a id="Client-side+configuration" class="HashLink" href="#Client-side+configuration">Client-side configuration</a></h4>
+
+<p>See <a href="https://wiki.genexus.com/commwiki/wiki?46499,," target="_blank">Client-side configuration for SSO in Rest applications</a></p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>The &amp;GAMSession.SSORestToken property can be used to get the <em>SSO Rest Token</em> to call a Rest service subscribed to the same scheme.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+        &amp;GAMSession = GAMSession.Get(&amp;GAMErrorCollection) 
+        if not &amp;GAMSession.SSORestToken.IsEmpty()
+       
+        &amp;httpClient.AddHeader(!&quot;Content-Type&quot;, !&quot;application/x-www-form-urlencoded&quot;)
+        &amp;httpClient.AddHeader(!&quot;Authorization&quot;, &amp;GAMSession.SSORestToken )
+
+        &amp;httpClient.Execute(HttpMethod.Post, &amp;StrCall )
+        &amp;ResultHttpC = &amp;httpClient.ToString()
+        
+       endif        </pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="46066.html">GeneXus 17</a>.</p>
+
+<p></p>
+
+<p></p>
+
+<p> </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44833.html">GAM - Remote Rest Authentication type (Oauth 2.0)</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="46593.html">Integration and Evolution with GeneXus 17</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/02/22 06:06 PM</em></font></td></TR></table></font>

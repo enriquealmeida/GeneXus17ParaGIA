@@ -1,0 +1,52 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tab Variables" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubStandardVariables" File="SubStandardVariables.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Variables %>">
+<%
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	WorkWithSettings settings = wwInstance.Settings;
+	VariablesWrapper variables = new VariablesWrapper();
+
+	TabElement tab = wwInstance.GetElement<TabElement>(Element);
+	if (tab.Attributes == null)
+		throw new PatternApplicationException("Tabular Tab must have attributes");
+%>
+
+<%@ CallSubTemplate SubStandardVariables Settings='settings' %>
+
+<%
+	// Variables for parameters.
+	foreach (ParameterElement parameter in tab.Parameters)
+	{
+%>
+	<%= parameter.DefineVariable(variables) %>
+<%
+	}
+
+	// Transaction context variables.
+	if (settings.Template.UseTransactionContext)
+	{
+%>
+	<%= variables.Sdt("TrnContext", "TransactionContext") %>
+	<%= variables.Sdt("TrnContextAtt", "TransactionContext.Attribute") %>
+	<%= variables.Extended("Session", null, "WebSession") %>
+	<%= variables.Extended("HTTPRequest", null, "HttpRequest") %>
+<%
+	}
+
+	// Variables included in the tab.
+	foreach (VariableElement var in tab.Attributes.Variables)
+	{
+%>
+	<%= variables.BasedOnDomain(var.Name, var.Domain) %>
+<%
+	}
+%>
+</Part>

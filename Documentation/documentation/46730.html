@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to: Deploy a Kubernetes cluster to AKS</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46730,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to: Deploy a Kubernetes cluster to AKS</h1>
+<!--How to: Deploy a Kubernetes cluster to AKS--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In this document, we show how to deploy an application to an <a href='https://azure.microsoft.com/en-us/services/kubernetes-service/'>Azure Kubernetes Service</a> (AKS) cluster. The application has been previously packaged into a container image using the <a href="32092.html">Application Deployment tool</a>.</p>
+
+<p>Requirements to follow this tutorial: <a href='https://docs.microsoft.com/en-us/cli/azure/install-azure-cli'>Azure CLI</a>.</p>
+
+<p><b>Summary</b></p>
+
+<p><ul><li><a class="HashLink" href="#Create+an+Azure+Container+Registry">Create an Azure Container Registry</a></li><li><a class="HashLink" href="#Tag+your+Docker+image">Tag your Docker image</a></li><li><a class="HashLink" href="#Push+your+Docker+image+to+the+registry">Push your Docker image to the registry</a></li><li><a class="HashLink" href="#Create+the+AKS+cluster">Create the AKS cluster</a></li><li><a class="HashLink" href="#Deploy+the+application+to+Kubernetes">Deploy the application to Kubernetes</a></li><li><a class="HashLink" href="#Run+the+application">Run the application</a></li><li><a class="HashLink" href="#References">References</a></li><li><a class="HashLink" href="#See+also">See also</a></li></ul></ul></p>
+
+<h3><a id="Create+an+Azure+Container+Registry" class="HashLink" href="#Create+an+Azure+Container+Registry">Create an Azure Container Registry</a></h3>
+
+<p>First, the Docker image will have to be pushed to an <a href='https://azure.microsoft.com/en-us/services/container-registry/'>Azure Container Registry</a> (ACR). So, at the Azure portal, or using Azure CLI, create an Azure resource and an Azure Container Registry (<sup>1</sup>).<br />
+To use the ACR instance, you must first log in using the following command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ az acr login --name &lt;acrName&gt;</pre>
+
+<p>You'll be asked to enter the credentials, which you can get at the Access Keys panel of the ACR instance in the Azure portal:</p>
+
+<p><img src="./images/46733.png" id="46733" class="WikiImage"/></p>
+
+<h3><a id="Tag+your+Docker+image" class="HashLink" href="#Tag+your+Docker+image">Tag your Docker image</a></h3>
+
+<p>Get the login server information of your ACR, as you will have to use it to tag (<sup>2</sup>) the container image:</p>
+
+<p><img src="./images/46734.png" id="46734" class="WikiImage"/></p>
+
+<p>Now, tag your local Docker image with the ACR Login Server address of the container registry, for example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker tag sjuarez2020/test:1.0 testdockergx.azurecr.io/test:1.0</pre>
+
+<p>To confirm that the tags are applied, run &quot;docker images&quot; at the command line.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ docker images</pre>
+
+<h3><a id="Push+your+Docker+image+to+the+registry" class="HashLink" href="#Push+your+Docker+image+to+the+registry">Push your Docker image to the registry</a></h3>
+
+<p>Following the example above, it would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ docker push testdockergx.azurecr.io/test:1.0</pre>
+
+<p>It may be necessary to log in first.</p>
+
+<p><img src="./images/46735.png" id="46735" class="WikiImage"/></p>
+
+<p>If you followed the previous steps, you have the container image already stored in a private Azure Container Registry instance.</p>
+
+<p><img src="./images/46736.png" id="46736" class="WikiImage"/></p>
+
+<h3><a id="Create+the+AKS+cluster" class="HashLink" href="#Create+the+AKS+cluster">Create the AKS cluster</a></h3>
+
+<p>One possibility for creating the AKS cluster is by the command line:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ az aks create --resource-group TestAzureapp --name testaksgx --node-count 2 --node-vm-size Standard_B2s --enable-managed-identity --attach-acr testdockergx --generate-ssh-keys</pre>
+
+<h3><a id="Deploy+the+application+to+Kubernetes" class="HashLink" href="#Deploy+the+application+to+Kubernetes">Deploy the application to Kubernetes</a></h3>
+
+<p>To deploy the application, use the <a href='https://kubernetes.io/docs/reference/kubectl/overview/'>kubectl</a> command.</p>
+
+<p>First, get the AKS credentials; to do so, you need to log in:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ az login</pre>
+
+<p>Then:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ az aks get-credentials --resource-group TestAzureapp --name testaksgx
+Merged &quot;testaksgx&quot; as current context in C:\Users\sjuarez\.kube\config</pre>
+
+<p>Now you can apply the desired settings to your Kubernetes cluster.</p>
+
+<p>Do the following for all the metadata files you have:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ kubectl apply -f .\K8s-DeploymentUnit1-App.yaml
+service/deploymentunit1-svc created</pre>
+
+<p>Important: The Application Deployment tool generates Kubernetes metadata. See <a href="45416.html">How to Deploy an Application to a Kubernetes cluster</a>. Note that the Exposed Service Type property, in this case, was set to Load Balancer because it is deployed to a cloud service.</p>
+
+<h3><a id="Run+the+application" class="HashLink" href="#Run+the+application">Run the application</a></h3>
+
+<p>Using the following command you can find out where the app is running (external IP), so you can test it. In this example, &quot;test1app&quot; is the name of the namespace service.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$ kubectl get service -n test1app
+NAME                  TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)        AGE
+deploymentunit1-svc   LoadBalancer   10.0.47.234   52.154.207.98   80:31568/TCP   75s
+gx-redis-svc          ClusterIP      10.0.114.75   &lt;none&gt;          6379/TCP       52s</pre>
+
+<h3><a id="References" class="HashLink" href="#References">References</a></h3>
+
+<p style="margin-left: 40.0px;">(<sup>1</sup>) <a href='https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr#create-an-azure-container-registry'>How to create an Azure Container Registry</a>.<br />
+(<sup>2</sup>) <a href='https://docs.docker.com/engine/reference/commandline/push/'>Docker Push command</a>.<br />
+(<sup>3</sup>) <a href='https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-cluster'>Deploy a Kubernetes cluster in Azure.</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="45416.html">How to Deploy an Application to a Kubernetes cluster</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD><TD><a href="46594.html">Expanded DevOps with GeneXus 17</a></TD><TD><a href="45416.html">How to Deploy an Application to a Kubernetes cluster</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/15/20 05:55 PM</em></font></td></TR></table></font>

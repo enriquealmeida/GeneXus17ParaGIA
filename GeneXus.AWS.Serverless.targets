@@ -1,0 +1,68 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DeployPath>$(DEPLOY_PATH)</DeployPath>
+    <ServerlessTargetPath>$(DeployPath)\LambdaPackage</ServerlessTargetPath>
+    <ClassesDir>$(DeployPath)\WEB-INF\classes</ClassesDir>
+    <LibDir>$(DeployPath)\WEB-INF\lib</LibDir>
+    <JavaPath>$(JDKPath)</JavaPath>
+    <SupportFolder>$(SupportLib)</SupportFolder>
+  </PropertyGroup>
+
+  <Target Name="CopyLibs">
+    <Message Text="Copying Libs to Lambda Deploy" Importance="high" />
+
+    <ItemGroup>
+      <Lib Include="$(LibDir)\*.jar" />
+      <Lib Include="$(SupportFolder)\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Lib)"	DestinationFolder="$(ServerlessTargetPath)\lib\" SkipUnchangedFiles="true"/>
+  </Target>
+
+  <Target Name="CopyClasses">
+    <Message Text="Copying classes to Lambda Deploy" Importance="high" />
+    <ItemGroup>
+      <Classes Include="$(ClassesDir)\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Classes)"	DestinationFolder="$(ServerlessTargetPath)\%(Classes.RecursiveDir)" SkipUnchangedFiles="true"/>
+  </Target>
+
+  <Target Name="CopyAdditionalFiles">
+    <ItemGroup>
+      <ConfigFiles Include="$(ClassesDir)\**\client.cfg" />
+      <ConfigFiles Include="$(ClassesDir)\**\Images.txt" />
+      <ConfigFiles Include="$(ClassesDir)\**\*.services" />
+      <ConfigFiles Include="$(ClassesDir)\..\*.key" />
+      <ConfigFiles Include="$(ClassesDir)\**\*.key" />
+      <ConfigFiles Include="$(ClassesDir)\..\*.gam" />
+      <ConfigFiles Include="$(ClassesDir)\**\*.gam" />
+      <ConfigFiles Include="$(ClassesDir)\**\GXApplicationClasses.txt" />
+      <ConfigFiles Include="$(ClassesDir)\..\*.config" />
+      <ConfigFiles Include="$(ClassesDir)\**\messages.*.txt" />
+      <ConfigFiles Include="$(ClassesDir)\**\log4j2.xml" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ConfigFiles)"	DestinationFolder="$(ServerlessTargetPath)\" SkipUnchangedFiles="true"/>
+    
+    <!--Temporal WA for GAM always looking into WEB-INF folder for GAM configuration-->
+    <ItemGroup>
+      <GAMConfigFiles Include="$(ClassesDir)\..\*.gam" />
+      <GAMConfigFiles Include="$(ClassesDir)\**\*.gam" />
+    </ItemGroup>
+    <Copy SourceFiles="@(GAMConfigFiles)"	DestinationFolder="$(ServerlessTargetPath)\WEB-INF\" SkipUnchangedFiles="true"/>
+  </Target>
+  <Target Name="CopyAdditionalFolders">
+    <ItemGroup>
+      <FolderCopy Include="$(DeployPath)\Metadata\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FolderCopy)"	DestinationFolder="$(ServerlessTargetPath)\Metadata\%(FolderCopy.RecursiveDir)" SkipUnchangedFiles="true"/>
+  </Target>
+
+
+  <Target Name="PrepareFiles" DependsOnTargets="CopyLibs;CopyClasses;CopyAdditionalFiles;CopyAdditionalFolders;"/>
+  <Target Name="CreatePackage" DependsOnTargets="PrepareFiles;CreateJar" />
+
+  <Target Name="CreateJar">
+    <Message Text="Generating $(PackagePath) output file" Importance="high"/>
+    <Exec Command='"$(JavaPath)\jar" cf $(PackagePath) .' WorkingDirectory="$(ServerlessTargetPath)" EchoOff="true" />
+  </Target>
+
+</Project>

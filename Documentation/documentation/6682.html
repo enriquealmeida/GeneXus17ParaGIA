@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Full Text Search example 3</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6682,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Full Text Search example 3</h1>
+<!--Full Text Search example 3--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	To our last example, <a href="6666.html">Full Text Search example 2</a>, let's add the possibility of working with a dictionary in order to refine the search query.</p>
+<p>
+	If the user query is not available in the index, another word or expression will be suggested to the user in order to make the query. The function used for that purpose will be TextSearch.CheckSpell. The suggested word is looked up in the dictionary; that is, for each word in the search query, CheckSpell returns the most similar one found in the dictionary.</p>
+<p>
+	The dictionary can be built up from the index, using the function TextSearch.BuildDictionary:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ReindexAll'
+    &amp;er = TextSearch.ReindexAll()
+    &amp;BooleanVar = TextSearch.BuildDictionary()
+EndEvent</pre>
+<p>
+	So, the code in the &quot;Search&quot; <a href="6916.html">Web Panel object</a> will be like the one below. Remember that:</p>
+<ul>
+	<li>
+		&amp;SearchResult is of SearchResult DataType</li>
+	<li>
+		&amp;SearchResultItem is of SearchResultItem DataType</li>
+</ul>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SearchResult = TextSearch.Find(&amp;searchpattern,&amp;items,&amp;pagenumber)
+&amp;maxItems     = &amp;SearchResult.MaxItems 
+&amp;elapsedTime  = &amp;SearchResult.ElapsedTime
+if &amp;maxItems = 0 //There are no results
+   &amp;suggestword = TextSearch.CheckSpell(&amp;searchpattern)
+   if  &amp;suggestword = ' '
+       &amp;tpage = 0
+       msg(format(&quot;Your search - &lt;b&gt;%1&lt;/b&gt; - did not match any documents.&quot;, &amp;searchpattern))
+   else
+       msg('Did you mean .. ' + &amp;suggestword + ' ?')
+       &amp;searchpattern = &amp;suggestword
+   endif
+endif</pre>
+<h3>
+	Note</h3>
+<p>
+	If you have a dictionary (which you can download in HTML format), you can index it and call BuildDictionary afterwards.</p>
+<h3>
+	See also</h3>
+<p>
+	<a href="5278.html">Full-Text Search in Applications</a><br />
+	<a href="6036.html">Full Text Search Examples - Indexing</a><br />
+	<a href="5292.html">Full Text Search Data Types</a></p>
+<p>
+	</p>
+<p>
+	</p>
+<p>
+	</p>
+<p>
+	</p>
+<br />   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6701.html">Full Text Search Examples</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

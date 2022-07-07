@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>When to use Subtypes</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?2213,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">When to use Subtypes</h1>
+<!--When to use Subtypes--><div class="TableWikiBody" id="tblwikibody"><p><strong>Rule of thumb: don't use subtypes unless they are needed.</strong><br />
+<br />
+<a href="1756.html">GeneXus</a> uses the <a href="https://wiki.genexus.com/commwiki/wiki?1870,," target="_blank">Universal Relation Assumption</a> (URA), which says that one attribute has the same name everywhere. For example, the Customer's number is CustomerId in the Customer <a href="1908.html">Transaction</a> AND in the Invoice Transaction. However, URA can't be used in the following situations:</p>
+
+<ul>
+	<li>More than one relationship in the same <a href="1908.html">Transaction</a>.</li>
+</ul>
+
+<ul>
+	<li>Self reference.</li>
+</ul>
+
+<ul>
+	<li>Unnecessary integrity constraints.</li>
+</ul>
+
+<ul>
+	<li>Inheritance.</li>
+</ul>
+
+<p>Therefore, in these cases the use of <a href="20206.html">Subtype Group object</a> is mandatory.</p>
+
+<h3><a id="More+than+one+relationship+in+the+same+Transaction" class="HashLink" href="#More+than+one+relationship+in+the+same+Transaction">More than one relationship in the same Transaction</a></h3>
+
+<p>The canonical example is the Airport/Flight Transactions relationship. The Flight Transaction has two relationships with the Airport Transaction: one that defines which is the Departure airport and another one for the Arrival airport. The model is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Airport
+{
+  AirportId*
+  AirportName
+}
+
+Flight
+{
+  FlightId*
+  DepartureAirportId
+  DepartureAirportName
+  ArrivalAirportId
+  ArrivalAirportName
+}
+
+Departure Subtype Group
+  DepartureAirportId   subtype of AirportId
+  DepartureAirportName subtype of AirportName
+
+Arrival Subtype Group
+  ArrivalAirportId     subtype of AirportId
+  ArrivalAirportName   subtype of AirportName
+</pre>
+
+<p>Note that there exists an alternative design that doesn't need the use of subtypes:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Airport
+{
+  AirportId*
+  AirportName
+}
+
+Flight
+{
+  FlightId*
+  {
+      FlightAirportType* (Arrival or Departure)
+      AirportId
+      AirportName
+  }
+}</pre>
+
+<p>This design isn't very common, probably because is a little more difficult to find both airport at the same time.</p>
+
+<h3><a id="Self+reference" class="HashLink" href="#Self+reference">Self reference</a></h3>
+
+<p><span style="font-size: 12.0px;">Consider an old-style Company where each employee has only one boss. In this case the model is as follows:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Employee
+{
+  EmployeeId*
+  EmployeeName
+  ManagerId
+  ManagerName
+}
+
+Subtype Group: Manager 
+  ManagerId      subtype of   EmployeeId
+  ManagerName    subtype of   EmployeeName</pre>
+
+<h3><a id="Unnecessary+integrity+constraints" class="HashLink" href="#Unnecessary+integrity+constraints">Unnecessary integrity constraints</a></h3>
+
+<p>Consider the following online broker model for tracking stocks:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Account
+{
+  AccountId*
+  AccountName
+}
+
+Stock
+{
+  StockId*
+  StockName
+}
+
+Trade
+{
+  TradeId*
+  TradeTime
+  AccountId
+  AccountName
+  StockId
+  StockName
+  TradeType  (buy or sell)
+  TradeQuantity
+  TradePrice
+}</pre>
+
+<p>What the Trade Transaction does is to record all the stocks an account has traded. Now suppose you add a 'Watch List' functionality: creating a set of stocks that an account regularly wants to watch (or 'have in the radar', in stock trading slang). At first sight this can be implemented with the following Transaction:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+BadWatchList 
+{
+  AccountId*
+  AccountName
+  StockId*
+  StockName
+}</pre>
+
+<p>The problem with this Transaction is that there is an integrity constraint between the Trade base table and that of BadWatchList, meaning that only the stocks in the watch list can be traded by the account. To avoid this unwelcome side effect, the correct Watch List Transaction is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+WatchList
+{
+  AccountId*
+  AccountName
+  WatchListStockId*
+  WatchListStockName
+}
+
+Subtype Group: WatchListStock 
+  WatchListStockId      subtype of   StockId
+  WatchListStockName    subtype of   StockName</pre>
+
+<p>Probably a more intuitive way of viewing this case is: given an account it's necessary to track two different sets of stocks, those the account has traded and those the account wants to regularly watch. Since these two sets are not related (one can buy stocks that aren't in the watch list or watch stocks that haven't been traded), two different names for stocks are needed (subtypes).</p>
+
+<h3 class="titlebar"><a id="Inheritance" class="HashLink" href="#Inheritance">Inheritance</a></h3 class="titlebar">
+
+<p>Suppose it's necessary to store information about People, Students, and Employees. The point is that all Students are People (even though, some high school teachers would disagree with this proposition) and all Employees are People too (no joke here). The best way to model this situation is to define subtypes for Students and Employees:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Person
+{
+  PersonId*
+  PersonName
+}
+
+Student
+{
+  StudentId*
+  StudentName
+  StudentUniversity
+}
+
+Subtype Group: Student 
+  StudentId      subtype of   PersonId
+  StudentName    subtype of   PersonName
+
+Employee
+{
+  EmployeeId*
+  EmployeeName
+  EmployeeDateOfHire
+}
+
+Subtype Group: Employee 
+  EmployeeId      subtype of   PersonId
+  EmployeeName    subtype of   PersonName</pre>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?1834,," target="_blank">People And Organizations Knowledge Base</a> has a good example of this case.<br />
+<br />
+See <a href="https://wiki.genexus.com/commwiki/wiki?2214,," target="_blank">Types of Inheritance</a> for more info on the subject.</p>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?3572,," target="_blank">Attachment</a></p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="20206.html">Category:Subtype Group object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/03/22 01:54 AM</em></font></td></TR></table></font>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Input clause</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25406,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Input clause</h1>
+<!--Input clause--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Is used in a <a href="25082.html">Data provider Group statement</a> in order to the associated group could iterate n times, being n the number of elements taken from an <strong>input</strong> that is not a database table, but a variable that assume multiple values. </p>
+
+<p>Scanning these variable values, for each one, you will have a group item in the output. That is to say, for each iteration into the variable, you will have an iteration into the group. Thus, you can use the variable iteration information as an input for the group. </p>
+
+<h2><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h2>
+
+<p><strong>Input</strong> {<em>&lt;forIter&gt;</em> | <em>&lt;forIn&gt;</em>}</p>
+
+<p>where:</p>
+
+<ul>
+	<li style="margin-left: 40.0px;"><em>&lt;ForIter&gt;</em>::=<strong> </strong><em>&lt;&amp;i&gt;</em> <strong>'='</strong> <em>&lt;numberFrom&gt;</em> to &lt;numberTo&gt;<br />
+	        It is like the For command to iterate (i.e. &quot;for &amp;i = ... to ...&quot; but without the &quot;for&quot; keyword)</li>
+	<li style="margin-left: 40.0px;"><em>&lt;ForIn&gt;</em>::= <em>&lt;&amp;item&gt;</em> <strong>in</strong> <em>&lt;SDTcollection&gt;<br />
+	        </em>It is like the <a href="6359.html">For in Command</a> (i.e. &quot;for &amp;item in &amp;SDTCollection...&quot; but without the &quot;for&quot; keyword</li>
+</ul>
+
+<p> </p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>It is usually necessary to have other kinds of Input data besides database. For example, the output of some Procedure or Data Provider. The obvious way to work with that is through variables that, once assigned, can be treated as usual.</p>
+
+<p>For example, you need a Data Provider that outputs a collection of clients that live in the same neighborhood as the customer returned by another Data Provider. Suppose 'DPSpendsMoreClient' is an already declared Data Provider that returns <strong>a customer SDT</strong> with the country, city and neighborhood information of the higher spending customer in the Database.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Clients
+{
+   &amp;Customer = DPSpendsMoreClient()
+   Client 
+      where CountryId = &amp;Customer.CountryId
+      where CityId = &amp;Customer.CityId
+      where CustomerNeighborhood = &amp;Customer.Neighborhood
+   {
+      Name = CustomerName
+      Address = CustomerAddress
+      Phone = CustomerPhone
+   }
+}
+</pre>
+
+<p>As you can see, the &amp;customer was taken from another Data Provider and used as usual. But what if you need to work not with a simple data type, but with a collection returned by a Procedure or Data Provider? Or if you need to iterate at certain fixed times? The <strong>Input clause</strong> lets you work with these other cases.</p>
+
+<p>The simpler one is just a <strong>set of fixed values</strong>, for example, a Data Provider that Outputs the months:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+VerySimple
+{
+   Month Input &amp;i = 1 to 12
+   {
+      MonthNumber = &amp;i
+   }
+}</pre>
+
+<p><strong>Note:</strong> this is similar to a For &amp;i = 1 to 12 in the procedural language.</p>
+
+<p>A more sophisticated Input can be another SDT <strong>collection</strong>. For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CustomersFromAnotherDataProvider
+{
+   &amp;CustomersSDT = GetCustomers() // a DataProvider that Outputs Customers collection
+   Customer <strong>Input &amp;Customer in &amp;CustomersSDT</strong>
+   {
+      Id   = &amp;Customer.Code
+      Name = &amp;Customer.Name
+   }
+}
+</pre>
+
+<p>In sum, any <a href="6352.html">collection variable</a> should be treated through the <strong>Input clause</strong> to achieve iteration.</p>
+
+<p>For a summary of the different Input sources, read <a href="6292.html">Data Provider: Input</a></p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25082.html">Data provider Group statement</a></TD><TD><a href="5309.html">Toc:Data Provider language</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/10/21 03:06 PM</em></font></td></TR></table></font>

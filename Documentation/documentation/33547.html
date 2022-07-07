@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>External Objects and User Controls for Smart Devices Compatibility in GeneXus 15</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33547,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">External Objects and User Controls for Smart Devices Compatibility in GeneXus 15</h1>
+<!--External Objects and User Controls for Smart Devices Compatibility in GeneXus 15--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>GeneXus #15 introduces the concept of a <a href="33545.html">Library</a> when developing External Objects or User Controls for Smart Devices.</p>
+
+<p>The following are important comments to port your code to the new version.</p>
+
+<h2><a id="Android" class="HashLink" href="#Android">Android</a></h2>
+
+<p>The environment to develop native controls for Android is updated from Eclipse/Ant to Android Studio/Gradle.</p>
+
+<p>The <em>FlexibleClient</em> component is not distributed as source file now it is compiled in a Module. To develop native controls you need to package your code in an Android Library and add it to GeneXus as third parties repository.</p>
+
+<p>For more information check <a href="33545.html">Extension Library concept for Extending GeneXus for Smart Devices</a></p>
+
+<h3><a id="External+Objects" class="HashLink" href="#External+Objects">External Objects</a></h3>
+
+<p>There are two important changes to the implementation of External Objects.</p>
+
+<p>The first is that the <em>execute()</em> method now returns an <em><strong>ExternalApiResult</strong></em> instead of a plain object. This class allows indicating both the actual returned value of the method (if any) and whether it succeeded or not. As a third option, it can also indicate that the call is <em>incomplete</em> (by returning <em>ExternalApiResult.SUCCESS_WAIT</em>) -- this is necessary when the operation needs to wait for another activity (or user input) for completion, and therefore cannot simply block execution in order to do so.</p>
+
+<p>The <em>catchOnActivityResult()</em> method was removed as a consequence of this change -- basically any EO that returned true for <em>catchActivityResult()</em> can simply return <em>SUCCESS_WAIT</em> now.</p>
+
+<p>The second difference is that since GeneXus 15 targets API level &gt;= 23 (Android 6.0 Marshmallow) any External Objects that use system calls protected by permissions (such as reading contacts, accesssing the user's location, sending SMS, &amp;c)  are responsible for requesting those permissions in runtime as well. You can either use the native Android calls (such as <em>ActivityCompat.requestPermissions()</em>) or via the <em>ExternalApi.executeRequestingPermissions()</em> method, which will take of the actual asking of the permission/checking its result for you.</p>
+
+<p>Check the following samples on how to return values</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Correct execution
+return new ExternalApiResult(ActionResult.SUCCESS_CONTINUE);
+// Return a String
+String data; // load it with the desired return value
+return new ExternalApiResult(ActionResult.SUCCESS_CONTINUE, data);</pre>
+
+<h3><a id="External+Object+Helper+methods" class="HashLink" href="#External+Object+Helper+methods">External Object Helper methods</a></h3>
+
+<p>While not a breaking change per se, we've included a number of methods in the ExternalApi class to help reduce the amount of boilerplate in EO implementations. These are:</p>
+
+<ul>
+	<li><em>addMethodHandler</em>: registers an <em>IMethodInvoker</em> to handle a method with a particular name and number of parameters. The implementation for <em>IMethodInvoler.invoke()</em> must return an <em>ExternalApiResult</em> as described in the previous section.</li>
+	<li><em>addSimpleMethodHandler</em>: registers and <em>ISimpleMethodInvoker</em>. Unlike the previous option, <em>ISimpleMethodInvoker.invoke()</em> simply returns the actual output of the method. This is a simpler option when implementing methods that cannot actually fail or need to wait, so the <em>ExternalApiResult</em> mechanism is not really needed.</li>
+	<li><em>addMethodHandlerRequestingPermissions</em>: registers an <em>IMethodInvoker</em> that will be only executed if the specified permissions can be obtained when the EO method is called (or if the app already had them at that point). If this is not possible, the method call will fail, returning <em>ExternalApiResult.FAILURE</em>, and thus aborting the execution of the current Composite block.</li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

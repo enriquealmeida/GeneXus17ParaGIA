@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Going into production: checklist for Applications using GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18574,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Going into production: checklist for Applications using GAM</h1>
+<!--Going into production: checklist for Applications using GAM--><div class="TableWikiBody" id="tblwikibody"><p>This checklist shows the tasks you need to perform after testing an application that uses <a href="14960.html">GAM</a>, in order to put the application into production.</p>
+
+<p>The idea is to mitigate risks that compromise the security of the application. </p>
+
+<p>Pursuing the purpose of protecting the privacy of the company and keeping the information secure, the decision on how to configure the following items depends on the severity and characteristics of the application.</p>
+
+<ul>
+	<li>Set up HTTPS protocol in the Application Server.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">This is essential in case of SD Applications. In case of WEB Applications it is essential to have HTTPS at least in all objects where passwords are entered, like the login and registration Panels.</p>
+
+<ul>
+	<li>Change <a href="https://wiki.genexus.com/commwiki/wiki?15215,," target="_blank">Administrator</a> Password.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">The password of administrator users of GAM repository has to be changed using <a href="15935.html">GAM Backend</a>.</p>
+
+<ul>
+	<li>Change "Gamadmin" user password.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">This is the password of the <a href="18617.html">administrator of the Repositories</a>.</p>
+
+<ul>
+	<li>Delete all users defined for testing purposes.<br />
+	 </li>
+	<li>Create new <a href="16150.html">Repository Connections</a>.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">By default, the GAM <a href="15217.html">Connection User</a> is &lt;version_name&gt;, the connection user password needs to be changed when the application is going into production.</p>
+
+<ul>
+	<li>In production time, when the application is deployed, the gxmetadata directory (with all its contents) should not be deployed for security.<br />
+	That means that the "gxmetadata" directory should be deleted from the deployment (except the files &lt;main_object&gt;.&lt;plataform&gt;.json and the gxversion.json file). The appid.json file is necessary to be kept if dynamic services URL are used.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">The web server should not serve the connection.gam file.</p>
+
+<ul>
+	<li>The <a href="15935.html">GAM Backend</a> should be private, so as only Administrator users can execute these <a href="6916.html">Web Panel</a>.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">The Web Panels of the Web Backoffice have the code to keep this privacy (see: <a href="18495.html">Access restricted to GAM Backend</a>). </p>
+
+<p style="margin-left: 40.0px;">If you don't use the <a href="15935.html">GAM - Web Backoffice</a> distributed binaries to take into production, but compile the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>, consider that the Web Panels "GAMExampleRecoverPasswordStep1" and "GAMExampleRecoverPasswordStep2" have to be edited and changed as suggested in <a href="16923.html">GAM: A way to solve Forgot Password</a>, they should not be left as they are distributed (they are examples consolidated in GAM_Examples folder).</p>
+
+<p style="margin-left: 40.0px;">The same happens with the GAMExampleRegisterUser, GAMExampleUpdateRegisterUser and the GAMExampleChangePassword Panels.</p>
+
+<ul>
+	<li>Regarding the <a href="16052.html">Native Mobile architecture</a>,</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Actions programmed by GeneXus users are translated into <a href="14573.html">REST Web Services</a> calls in general. So REST services need to be protected as well as SD objects. Make a search in the KB by "Rest Protocol= True", so you can easily find all the REST services and check the <a href="15912.html">Permissions</a> configuration for each of them.</p>
+
+<p>Depending on the security needed:</p>
+
+<ul>
+	<li>Do not use <a href="https://wiki.genexus.com/commwiki/wiki?17403,," target="_blank">Client Side Caching</a> in SD applications. <br />
+	 </li>
+	<li>Configure the following in the <a href="https://wiki.genexus.com/commwiki/wiki?18463,," target="_blank">Repository</a>:
+	<ul>
+		<li><a href="18584.html">UserRememberMeType property</a> (None, Login, Authentication, Both). The most secure value is "None".</li>
+		<li><a href="18586.html">User Remember Me Timeout</a> (days)</li>
+		<li><a href="18590.html">User Recovery Password Key Timeout</a> (minutes)</li>
+		<li>Minimum Amount Of Characters In Login</li>
+		<li><a href="18592.html">Login Attempts To Lock User</a></li>
+		<li><a href="18593.html">Login attempts to lock session Repository property</a></li>
+		<li><a href="18926.html">GAM Unblock User Timeout property</a></li>
+		<li><a href="16414.html">Give WEB Anonymous Session</a></li>
+		<li><a href="18582.html">User Session Cache Timeout (seconds)</a>. It's advisable to be set with a value less or equal to 30 seconds.</li>
+		<li><a href="18925.html">Session Expires On IP Change property</a></li>
+		<li><a href="18932.html">User Activation Method Repository property</a>. It's not advisable to set to "Automatic" value.</li>
+		<li><a href="18934.html">User Automatic Activate TimeOut property</a></li>
+		<li>Check the <a href="18521.html">Default Security Policy</a> of GAM Repository, and the <a href="17569.html">Repository Default Role</a>.</li>
+		<li><a href="https://wiki.genexus.com/commwiki/wiki?21863,," target="_blank">Cache Timeout (minutes) Repository Property</a>.<br />
+		 </li>
+	</ul>
+	</li>
+	<li>Configure the following in all the <a href="18521.html">Security Policies</a> defined in the Repository:
+	<ul>
+		<li><a href="16338.html">Web Session timeout (minutes)</a></li>
+		<li><a href="18939.html">Allow Multiple Concurrent Web Sessions Security Policy Property</a>. The most secure value is "No".</li>
+		<li><a href="18577.html">Oauth token expire (minutes)</a></li>
+		<li><a href="19324.html">Oauth token maximum renovations</a></li>
+		<li>Period change password (days)</li>
+		<li><a href="18942.html">Minimum Time to Change Passwords Security Policy</a></li>
+		<li>Minimum Length Of The Password</li>
+		<li>Minimum Numeric Characters Password</li>
+		<li>Minimum Upper Case Characters Password</li>
+		<li>Minimum Special Characters Password</li>
+		<li><a href="18579.html">Maximum Password History Entries</a></li>
+	</ul>
+	</li>
+</ul>
+
+<ul>
+	<li>In case of SD Applications, take into consideration setting <a href="17242.html">Single User Access</a> property.<br />
+	 </li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?20744,," target="_blank">Security recommendations for Smart Devices Applications</a><br />
+<a href='https://www.owasp.org/index.php/Top_10_2010-Main'>OWASP Top 10 Security Risks</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?21889,," target="_blank">OWASP 2013 Top 10 in GeneXus Applications</a><br />
+<a href="21219.html">GAM - Applications deployment</a><br />
+<a href="18608.html">GAM - Deploy Tool</a></p>
+
+<p><br />
+ </p>
+
+<p>   </p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="21219.html">GAM - Applications deployment</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="47237.html">Hardening of GeneXus Systems and Deployments with GAM</a></TD></TR><TR><TD><a href="16052.html">Secure Native Mobile applications architecture</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 06:33 PM</em></font></td></TR></table></font>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Creating n instances of a task and automatically assigning them</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20635,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Creating n instances of a task and automatically assigning them</h1>
+<!--HowTo: Creating n instances of a task and automatically assigning them--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>There are cases where we will need to create a variable number of parallel tasks and automatically assign them to specific users. For instance, we may want several users to authorize a purchase in parallel (where the number of users could vary) and the process to continue only when all users have authorized it.</p>
+
+<p>Such behavior can be modeled as in the following diagram.</p>
+
+<p><img src="./images/20636.png" id="20636" class="WikiImage"/></p>
+
+<p>In this case, for the <em>Order Authorization </em> task, we create as many <a href="11731.html">workitems</a> as users have the &quot;Chief&quot; role (this number is determined in a procedure).</p>
+
+<p>For a task to be executed <em>n</em> times in parallel, we must indicate, in the <em>Looping </em> properties group, that the <a href="11898.html">Loop type</a> is Multi-instance. We must also indicate whether the expression type (<em>Expression type</em> property) is a <em>Rule</em> or <em> Procedure, </em>and accordingly indicate the procedure or rule as well.</p>
+
+<p>In this example, we will use the above procedure.</p>
+
+<p><img src="./images/20637.png" id="20637" class="WikiImage"/></p>
+
+<p>We also indicate a parallel ordering so that the n instances are performed in parallel, and the condition (Flow condition) is All, so it will continue only after all of them have been completed.</p>
+
+<p>After generating the <em>n</em> tasks, in order to have them automatically assigned to the corresponding users, the first thing we must do is save the users’ ID in a relevant data of <strong>vector </strong>type. So we must create a a relevant data of vector type called <em>Items.</em></p>
+
+<p><img src="./images/23120.png" id="23120" class="WikiImage"/></p>
+
+<p>In the same procedure we use to count the number of instances to be created, we will add the users in the <em>Items</em> relevant data:</p>
+
+<pre class="Code" style="color: red;">
+<span style="color: rgb(0,0,0);">parm(in:&amp;WorkflowProcessDefinition,in:&amp;WorkflowProcessInstance,in:&amp;WorkflowWorkitem,out:&amp;numberofinstances);</span><span style="color: rgb(0,0,0);">
+
+&amp;WorkflowApplicationData = &amp;WorkflowContext.ProcessInstance.GetApplicationDataByName(&quot;Items&quot;)
+
+&amp;WFServer.Connect('WFADMINISTRATOR','WFADMINISTRATOR')
+&amp;WFOrgModel = &amp;WFServer.GetOrganizationalModel()
+&amp;WFFilter.Role = &amp;WFOrgModel.GetRoleByName('Chief') 
+&amp;Users = &amp;WFOrgModel.ListUsers(&amp;WFFilter) // </span><span style="color: rgb(0,0,0);">Listing the users filtering by role &quot;Chief&quot;</span><span style="color: rgb(0,0,0);">
+
+&amp;i = 1
+For &amp;User in &amp;Users
+     &amp;WorkflowApplicationData.SetValue(&amp;i, &amp;User.Id.ToString())
+     &amp;i += 1
+EndFor // </span><span style="color: rgb(0,0,0);">It saves each of those users in the relevant figure &quot;Items&quot;</span><span style="color: rgb(0,0,0);">
+
+
+</span><span style="color: rgb(0,0,0);">// &amp;User type is WorkflowUser, and &amp;Users is a collection of the same type. &amp;Users will </span><span style="color: rgb(0,0,0);">contain the list of users that meet the conditions.</span><span style="color: rgb(0,0,0);">
+// &amp;numberofinstances </span><span style="color: rgb(0,0,0);">is the output parameter indicating how many workitems to be created</span><span style="color: rgb(0,0,0);">
+&amp;numberofinstances = &amp;Users.Count </span></pre>
+
+<p>If we want the tasks to be assigned to users when they are created, then we must configure, in the &quot;On new instance&quot; property, a procedure that will perform such assignment.</p>
+
+<p><img src="./images/20639.png" id="20639" class="WikiImage"/></p>
+
+<p>In this example we use the following procedure:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;WorkflowEvent);
+
+
+&amp;WorkflowWorkItem = &amp;WorkflowEvent.Target.ToWorkitem()
+
+// It lifts the relevant data containing users that qualify
+&amp;WorkflowApplicationData = &amp;WorkflowContext.ProcessInstance.GetApplicationDataByName(&quot;Items&quot;) 
+
+&amp;WFServer.Connect('WFADMINISTRATOR','WFADMINISTRATOR')
+&amp;WFOrgModel = &amp;WFServer.GetOrganizationalModel()
+&amp;UserId = &amp;WorkflowApplicationData.GetValue(&amp;WorkflowWorkItem.Index)
+&amp;WorkflowUser = &amp;WFOrgModel.GetUserById(&amp;UserId)
+&amp;WorkflowWorkItem.Assign(&amp;WorkflowUser)
+
+</pre>
+
+<p>What it does is: assign, to each workitem generated, one of the users saved in the relevant data.</p>
+
+<p><strong>NOTE: </strong>To execute the procedures defined in Event handling, we must enable the events in the Workflow client properties (Settings -&gt; Server -&gt; Advanced -&gt; Event handling).</p>
+
+<h3><a id="Downloads" class="HashLink" href="#Downloads">Downloads</a></h3>
+
+<p>XPZ containing the example.</p>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?20648,," target="_blank">Evolution 1</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?20640,," target="_blank">Evolution 2</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

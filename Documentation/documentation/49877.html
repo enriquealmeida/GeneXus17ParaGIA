@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy Front-end applications to Cloud Provider Object Storage</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49877,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy Front-end applications to Cloud Provider Object Storage</h1>
+<!--Deploy Front-end applications to Cloud Provider Object Storage--><div class="TableWikiBody" id="tblwikibody"><p>To deploy your front end application to a Cloud provider storage, you can use the Application Deployment tool from inside the GeneXus IDE, or MSBuild commands.</p>
+
+<p><strong>Summary</strong>:</p>
+
+<p><ul><li><a class="HashLink" href="#Deploy+using+Application+Deployment+tool+inside+GeneXus">Deploy using Application Deployment tool inside GeneXus</a></li><li><a class="HashLink" href="#MSBuild+tasks+to+deploy+to+a+Cloud+Provider+Object+Storage">MSBuild tasks to deploy to a Cloud Provider Object Storage</a></li><ul><li><a class="HashLink" href="#1.+Create+FrontEnd+Project">1. Create FrontEnd Project</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li></ul></li><li><a class="HashLink" href="#2.+Create+Package">2. Create Package</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li></ul></li></ul></li><li><a class="HashLink" href="#Temporal+Limitation">Temporal Limitation</a></li><li><a class="HashLink" href="#Availability">Availability</a></li><li><a class="HashLink" href="#See+also">See also</a></li></ul></ul></p>
+
+<h2><a id="Deploy+using+Application+Deployment+tool+inside+GeneXus" class="HashLink" href="#Deploy+using+Application+Deployment+tool+inside+GeneXus">Deploy using Application Deployment tool inside GeneXus</a></h2>
+
+<p>In GeneXus, after having created the <a href="38886.html">Deployment Unit object</a> containing the main objects of your app, go through the "Deploy Application" contextual menu option,</p>
+
+<p><img src="./images/49880.png" id="49880" class="WikiImage"/></p>
+
+<p>and select the "Static Front end" option from the Targets combo box.</p>
+
+<p>Next, from the Properties dialog, select a Front-end Deployment target (AWS S3, or Azure Blob Storage).<br />
+Depending on the target selected, you have to enter different options.<br />
+Finally, press the deployment button.</p>
+
+<p><img src="./images/49879.png" id="49879" class="WikiImage"/></p>
+
+<p>If you wish, you can just create the deploy package by checking "Only Package". In this case, you will have the package under the Deploy\STATICFRONTEND\&lt;DeploymentUnit&gt; directory of the KB.</p>
+
+<h2><a id="MSBuild+tasks+to+deploy+to+a+Cloud+Provider+Object+Storage" class="HashLink" href="#MSBuild+tasks+to+deploy+to+a+Cloud+Provider+Object+Storage">MSBuild tasks to deploy to a Cloud Provider Object Storage</a></h2>
+
+<p>The Application Deployment tool is based on MSBuild tasks. Using those tasks, you can automate deployment.</p>
+
+<p>In the case of front-end applications, three MSBuild scripts are executed to perform the deployment.</p>
+
+<h3><a id="1.+Create+FrontEnd+Project" class="HashLink" href="#1.+Create+FrontEnd+Project">1. Create FrontEnd Project</a></h3>
+
+<p>GeneXus provides a script called deploy.msbuild (located at the root of the GeneXus installation) which is used to create a deployment project for front-end applications, when the Target deployment (TargetId) is "STATICFRONTEND".</p>
+
+<p>This step creates a file called &lt;ProjectName&gt;.gxdproj (an MSBuild script) which contains a list of the selected objects of the Deployment Unit object, and some environment properties for the deployment. This gxdproj file is used as input of the MSBuild task that deploys to the cloud.</p>
+
+<p>Properties to add to the MSBuild execution:</p>
+
+<ul>
+	<li><strong>TargetId</strong>: STATICFRONTEND</li>
+	<li><strong>DEPLOY_TARGETS: </strong>Reference to .targets file where the validations are implemented (staticfrontend.targets).</li>
+	<li><strong>KBPath</strong>: Path to the Knowledge Base</li>
+	<li><strong>KBVersion</strong>: Name of the version to be set as active</li>
+	<li><strong>KBEnvironment</strong>: Name of the environment in that version</li>
+	<li><strong>DeploymentUnit: </strong>Name of the deployment unit</li>
+	<li><strong>ProjectName</strong>: Name of the generated .gxdproj file. By default it is "DeploymentUnit_&lt;TimeStamp&gt;.gxdproj".</li>
+	<li><strong>ObjectNames</strong>: Names and types of the objects to deploy (deployment units can also be selected) (ref: <a href="44328.html">How to specify an object list in a MSBuild task</a>). This parameter is optional if you specify the DeploymentUnit property.</li>
+	<li><strong>Outputpath</strong>: Where the .gxdproj is saved. The gxdproj file is saved under $KB.Location$\$Model.TargetPath$\web if Outputpath is not defined. </li>
+</ul>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe /noconsolelogger /nologo /logger:DeployLogger,"C:\Development\Trunk\Genexus\GeneXus.Deploy.MSBuild.Tasks.dll"
+/verbosity:quiet /ToolsVersion:4.0 "C:\Development\Trunk\Genexus\deploy.msbuild"
+/p:TargetId ="STATICFRONTEND"
+/p:DEPLOY_TARGETS="C:\Development\Trunk\Genexus\DeploymentTargets\StaticFrontEnd\staticfrontend.targets"
+/p:KBPath="C:\models\TestAngular\TestAngular"
+/p:KBEnvironment="NetSQLServer1"
+/p:KBVersion="TestAngular"
+/p:DeploymentUnit="DeploymentUnit2"
+/p:ProjectName="myproject"
+/p:ObjectNames="SDPanel:Panel1"  
+/t:CreateDeploy
+</pre>
+
+<h3><a id="2.+Create+Package" class="HashLink" href="#2.+Create+Package">2. Create Package</a></h3>
+
+<p>The build of the project is triggered by the CreateFrontendPackage.msbuild script, which receives the parameters explained below.</p>
+
+<ul>
+	<li><strong>GXDeployFileProject: </strong>The path to the .gxdproj file generated in the "Create FrontEnd Project" step (including the name of the file). </li>
+	<li><strong>ProjectRootDirectory: </strong>The path to the directory under the KB, where the Angular application is generated (it is always under the mobile\Angular folder). E.g: "C:\models\TestAngular\TestAngular\NetSQLServer005\mobile\Angular"</li>
+	<li><strong>GenExtensionName: </strong>The name of the front end generator (e.g.:Angular)</li>
+	<li><strong>DeploymentScript: </strong>Each Frontend generator should have its own script for packaging (building the application). This should be specified at the DeploymentScript msbuild property.</li>
+	<li><strong>GX_PROGRAM_DIR: </strong>GeneXus program directory.</li>
+</ul>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe /noconsolelogger /nologo /logger:DeployLogger,"C:\Development\Trunk\Genexus\GeneXus.Deploy.MSBuild.Tasks.dll" /verbosity:minimal /ToolsVersion:4.0 "C:\Development\Trunk\Genexus\CreateFrontendPackage.msbuild" /p:GXDeployFileProject="C:\models\TestAngular\TestAngular\NetSQLServer005\web\DeploymentUnit1_20220614182207.gxdproj"
+/p:ProjectRootDirectory="C:\models\TestAngular\TestAngular\NetSQLServer005\mobile\Angular" 
+/p:GenExtensionName="Angular"
+/p:DeploymentScript="deploy.angular.msbuild"
+/p:GX_PROGRAM_DIR="C:\Development\Deploy\Genexus"
+/t:CreatePackage
+</pre>
+
+<p class="Code">Note: In the case of Angular, the DeploymentScript is "deploy.angular.msbuild" and is declared at the angular.generator file. The deploy.angular.msbuild is located at GenExtensions\SmartDevices\Angular\deploy under the GeneXus installation.</p>
+
+<h3 class="Code"><br />
+3. Deploy to the Cloud Provider</h3>
+
+<p class="Code">The solution to deploy the front end of an application is extensible and available at Github (<a href='https://github.com/genexuslabs/deployment-targets/tree/beta/src/StaticFrontEnd'>StaticFrontEnd deployment target</a>). Those files are in your GeneXus installation, under the DeploymentTarget folder.</p>
+
+<p>There's a built-in solution for deploying to AWS S3 and to Azure Blob Storage. </p>
+
+<p>In this step, the application is built and everything is set up for distribution.</p>
+
+<p>It has a deploy.msbuild script which includes the .target file depending on the STATICFRONTEND_PROVIDER property value (it can be "aws3" or "azureblobstorage"). Depending on the Provider, different properties are needed in order to deploy to that cloud.</p>
+
+<p>For details on how to execute this step, see <a href="49878.html">Deploy Front-end applications to Azure Blob Storage</a>.</p>
+
+<h2><a id="Temporal+Limitation" class="HashLink" href="#Temporal+Limitation">Temporal Limitation</a></h2>
+
+<p>At the moment, only one main object must be deployed to each Storage.</p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>Since <a href="49956.html">GeneXus 17 Upgrade 9</a></p>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<p>Consider that in most cases you have to configure the CORS. See the following for more details:<br />
+<a href="49963.html">How to: Angular front end applications using serverless backend</a></p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD><TD><a href="49878.html">Deploy Front-end applications to Azure Blob Storage</a></TD><TD><a href="50142.html">Deploy static files to Azure Storage in Serverless deploy</a></TD></TR><TR><TD><a href="49956.html">GeneXus 17 Upgrade 9</a></TD><TD><a href="44771.html">How to deploy an app generated by Angular Generator</a></TD><TD><a href="49963.html">How to: Angular front end applications using serverless backend</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/20/22 04:50 PM</em></font></td></TR></table></font>

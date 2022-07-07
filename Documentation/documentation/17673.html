@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Workflow Engine States</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17673,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Workflow Engine States</h1>
+<!--Workflow Engine States--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2 style="text-align: justify;"><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2 style="text-align: justify;">
+
+<p style="text-align: justify;">An important component for the Workflow engine working performance is a states machine where processes, process instances and workitems change their state according to internal or external events or specific control decisions internally taken by the Workflow engine.</p>
+
+<h2 style="text-align: justify;"><a id="+" class="HashLink" href="#+"> </a></h2 style="text-align: justify;">
+
+<h2 style="text-align: justify;"><a id="Process+Definition+States" class="HashLink" href="#Process+Definition+States">Process Definition States</a></h2 style="text-align: justify;">
+
+<div style="text-align: justify;">A process definition can be enabled or disabled, which determines whether new process instances based on this definition can be created or not.  </div>
+
+<div style="text-align: justify;">The following figure shows the process definition states chart. </div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><img src="./images/17674.png" id="17674" class="WikiImage"/></div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><strong>Enabled</strong>: If the Process Definition is enabled new Process Instances can be created.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><strong>Disabled</strong>: If the Process Definition is disabled, it is not possible to create new Process Instances.<strong> </strong></div>
+
+<h2 style="text-align: justify;"><a id="+" class="HashLink" href="#+"> </a></h2 style="text-align: justify;">
+
+<h2 style="text-align: justify;"><a id="Process+Instance+States" class="HashLink" href="#Process+Instance+States">Process Instance States</a></h2 style="text-align: justify;">
+
+<p style="text-align: justify;">The following figure shows the process instances states chart.  </p>
+
+<p style="text-align: justify;"><img src="./images/17676.png" id="17676" class="WikiImage"/></p>
+
+<div style="text-align: justify;"><strong>open</strong></div>
+
+<div style="text-align: justify;">When a process instance is created, it takes the open state. This is a (super)state of all the possible states that a process instance would be able to take while executed by the Workflow engine. Once the process instance execution terminates, it takes the closed state.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><strong>open.notRunning</strong></div>
+
+<div style="text-align: justify;">A process instance is in the open.notRunning state when it is not participating actively in the Workflow process execution. If it is in the open.notRunning state, it can change to the  open.running state or to the  closed.aborted or closed.terminated states.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.notRunning.notStarted</strong></div>
+
+<div style="text-align: justify;">A process instance is in the notStarted (sub)state when it has not started to participate actively in the Workflow process execution.</div>
+
+<div style="text-align: justify;">E.g.: when the &amp;ProcessDefinition.CreateInstance() method is executed, the process instance created takes the open.notRunning.notStarted state.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.notRunning.suspended</strong></div>
+
+<div style="text-align: justify;">When a process instance execution is suspended, it takes the suspended (sub)state.  Besides, this state (suspended) is inherited by all the active objects  (workitems, sub-processes) belonging to the suspended process instance. I.e.: while the process instance remains in this state, no other Workflow object contained in the instance can be actively participating in the Workflow process execution.</div>
+
+<div style="text-align: justify;">E.g.: when the &amp;ProcessInstance.Suspend() method is executed, the process instance takes the open.notRunning.suspended state.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.running</strong></div>
+
+<div style="text-align: justify;">A process instance takes the open.running state when it starts participating actively in the Workflow process execution. If it is in the open.running state, it can change to the  suspended state or the closed state (and therefore, to any of its(sub)states, i.e.: aborted, terminated or completed).</div>
+
+<div style="text-align: justify;">E.g.: When the &amp;ProcessInstance.Start() method is executed, the process instance takes the open.running state.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed</strong></div>
+
+<div style="text-align: justify;">A process instance takes the closed state when it does no longer  participate in the Workflow process execution.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed.completed</strong></div>
+
+<div style="text-align: justify;">When a process instance terminates its execution normally, it takes the closed.completed state.  It is assumed that all Workflow objects belonging to the process instance have terminated.</div>
+
+<div style="text-align: justify;">There is no method in the ProcessInstance object that allows taking the closed.completed state. This state can only be reached by the normal termination of the instance and not by an external event or action.  </div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed.terminated</strong></div>
+
+<div style="text-align: justify;">The execution of a process instance can be terminated before the normal execution terminates, taking the closed.terminated state.  At present, this state is used to represent the occurrence of the process instance deadline (*). I.e.: when the process instance deadline occurs, it takes the closed.terminated state. Besides, this state is inherited by all the active objects (workitems, sub-processes) belonging to the aborted process instance.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;">(*) The reason for using the terminated state to model the deadline occurrence instead of using the expired state (as in the workitems), is for keeping the compatibility with the states machine  suggested by the WFMC for the process instances.   </div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><strong>closed.aborted</strong></div>
+
+<div style="text-align: justify;">A process instance can be aborted before its normal execution terminates (or even before its execution starts), taking the closed.aborted state. Besides, this state is inherited by all the active objects (workitems, sub-processes) belonging to the aborted process instance.</div>
+
+<div style="text-align: justify;">E.g.: when the &amp;ProcessInstance.Abort() method is executed, the process instance takes the closed.aborted state. </div>
+
+<div style="text-align: justify;"> </div>
+
+<h3 style="text-align: justify;"><a id="States+Transition" class="HashLink" href="#States+Transition"><strong>States Transition</strong></a></h3 style="text-align: justify;">
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;">When a Process Instance is created, it takes the initial state; i.e.: open.notRunning.notStarted. The most common transition in this case (originated in the notStarted state) is to the  open.running state, which occurs when we do the Start of the process instance. Other transitions (also shared by the</div>
+
+<div style="text-align: justify;">suspended state) are to the closed.terminated or closed.aborted state. Transitions from the running state to the notRunning state  can only be directed to the  suspended (sub)state. When the process instance execution is terminated, it takes the  closed (super)state. Depending on the way it terminates, the (sub)states can be  completed, terminated or aborted. The completed state can only be reached from the  running state, since it represents the normal termination of the process instance. The terminated state is reached when the process instance deadline occurs. Finally, the aborted state occurs when the process instance execution aborts.</div>
+
+<div style="text-align: justify;">The closed sate is final; i.e.: there are no transitions from the closed state to the open state.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<h2 style="text-align: justify;"><a id="+" class="HashLink" href="#+"> </a></h2 style="text-align: justify;">
+
+<h2 style="text-align: justify;"><a id="Workitems+States" class="HashLink" href="#Workitems+States">Workitems States</a></h2 style="text-align: justify;">
+
+<p style="text-align: justify;">The following figure shows the workitems states chart.</p>
+
+<p style="text-align: justify;"><img src="./images/17675.png" id="17675" class="WikiImage"/></p>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><strong>open</strong></div>
+
+<div style="text-align: justify;">When a workitem is created, it takes the open state. This is a (super)state of all the possible states that the workitem would take while it has not been processed.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.active</strong></div>
+
+<div style="text-align: justify;">When a workitem takes the open.active state, it is added to the worklist of all the users with rights to process this workitem (for this, the workflow engine is based on the users’ functional roles and restrictions). Besides, while the workitem is in this state, users can execute specific actions on it (take, release, execute, next) depending on the (sub)state that the workitem has taken.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;">There is a transition from the open.active (or any of the (sub)states: ready, assigned, in_process), to the open.suspended state. This transition is taken when the process instance the workitem belongs to is suspended.  </div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.active.ready</strong></div>
+
+<div style="text-align: justify;">A workitem is in the open.active.ready state when it has been created but has not been assigned any user yet. The most common transition from this state is to the open.active.assigned state, which occurs when a user takes the workitem (take action).</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.active.assigned</strong></div>
+
+<div style="text-align: justify;">When a user assigns himself a workitem (take action, only allowed when the workitem is in the open.active.ready state), it takes the open.active.assigned state. In this moment, the Workflow engine removes the workitem from the worklist of the other users that shared it.  There are transitions from this state to the  open.active.ready state (release action), to the open.active.in_process state (execute action) and to the closed.abnormal state (on account of an event or an internal action of the Workflow engine).</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.active.in_process</strong></div>
+
+<div style="text-align: justify;">When the user that has the workitem assigned starts processing it (executes the associate application), the workitem takes the open.active.in_process state.  The workitem remains in this state (independently of the number of times that the user executes the application) until the user completes the workitem  (next action), and causes the transition to the  closed.completed state. Another possibility is the transition to the closed.abnormal state, either because the process instance to which the workitem belongs to has aborted (transition to the closed.abnormal.aborted state) or due to events or internal actions taken by the Workflow engine (transition to the closed.abnormal.expired, closed.abnormal.left_aside or closed.abnormal.terminated states).</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>open.suspended</strong></div>
+
+<div style="text-align: justify;">A workitem takes the open.suspended state when the process instance it belongs to is suspended. Once the process instance execution is resumed, the workitem returns to its original state (transition to the open.active state). It may be also possible that some internal or external event occurs, causing the abnormal termination of the workitem while it is in the  open.suspended state (transition to the closed.abnormal state).</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed</strong></div>
+
+<div style="text-align: justify;">A workitem takes the closed state when it “terminates” its process. This termination may be caused by the normal termination of the workitem process, by an external event or by an internal action taken by the Workflow engine. The closed state is the final state; i.e.: there are no transition from this state to other states.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed.completed </strong></div>
+
+<div style="text-align: justify;">When a workitem process terminates successfully, (the user processes the workitem and then completes it  (next action), the workitem takes the closed.completed state.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed.abnormal</strong></div>
+
+<div style="text-align: justify;">A workitem takes the closed.abnormal state when it terminates abnormally. This abnormality, can be caused by an event or internal action taken by the Workflow engine.</div>
+
+<div>
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed.abnormal.terminated</strong></div>
+
+<div style="text-align: justify;">A workitem takes the closed.abnormal.terminated state when the deadline assigned to the process instance the workitem belongs to expires. Please note that the existence of the expired and terminated states allows differentiating the occurrence of the workitem deadline from the occurrence of the deadline of the process instance the workitem belongs to.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><strong>closed.abnormal.aborted</strong></div>
+
+<div style="text-align: justify;">A workitem takes the closed.abnormal.aborted status when the execution of the process instance the workitem belongs to aborts.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;"><strong>closed.abnormal.expired</strong></div>
+
+<div style="text-align: justify;">A workitem takes the closed.abnormal.expired state when the deadline assigned to the workitem expires. </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;"><strong>closed.abnormal.delegated</strong></div>
+
+<div style="text-align: justify;">A workitem takes the closed.abnormal.delegated state when the workitem has been asigned to another user.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;">
+<div><strong>closed.abnormal.skipped</strong></div>
+
+<div>A workitem takes the closed.abnormal.skipped state when it is left aside by the Workflow engine (under certain circumstances, the Workflow engine may abandon workitems whose execution is no longer necessary).</div>
+</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;">
+<div><strong>closed.abnormal.undone</strong></div>
+
+<div>A workitem takes the closed.abnormal.undone state when the workitem has been undone to execute again.</div>
+
+<div> </div>
+
+<div>
+<div><strong>closed.abnormal.interrupted</strong></div>
+
+<div>A workitem takes the closed.abnormal.interrupted state when the workitem has been interrupted by an attached event.</div>
+</div>
+
+<div> </div>
+</div>
+
+<h3 style="text-align: justify;"><a id="States+Transitions" class="HashLink" href="#States+Transitions"><strong>States Transitions</strong></a></h3 style="text-align: justify;">
+
+<div style="text-align: justify;"> </div>
+
+<div>
+<div style="text-align: justify;">When a new workitem is created, it takes the open.ready initial state, indicating that the conditions to start its process are given. Once in the open.ready state, the workitem can be assigned to a user, thus taking the open.assigned state. This transition can be made on the opposite direction (release action), thus enabling the workitem to return to the open.ready state.</div>
+
+<div style="text-align: justify;">Once the user starts processing the workitem (execute action), the workitem takes the  open.in_process state.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;">From the open.active (super)state, it can change to the open.suspended state and vice versa. These transitions occur when the execution of the  process instance the workitem belongs to is suspended or resumed.</div>
+
+<div style="text-align: justify;">When the workitem process terminates (next action), it takes the closed state. Depending on  the way the workitem terminates, the transition can be to the closed.completed state or the closed.abnormal (super)state.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;">The closed.completed state can only be reached from the open.active.in_process state, since it represents the normal termination of the workitem. On the other hand, the  closed.abnormal state can be reached from any open (sub)state, when an abnormal termination occurs. The aborted and terminated (sub)states are reached when the process instance the workitem belongs to is aborted or terminated respectively. Besides, the expired (sub)state is reached when the deadline assigned to the workitem expires. Finally, the skipped (sub)state is reached when the Workflow engine, based on its planning scheme, decides leaving the workitem aside because its execution is deemed unnecessary.</div>
+
+<div style="text-align: justify;"> </div>
+
+<div style="text-align: justify;">The closed state is final; i.e.: there are no transitions from the closed state to the open state. </div>
+</div>
+
+<p> </p>
+
+<p><span style="line-height: 1.6em;"></span></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+   <br />    <br /> <br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25238.html">Execution and process monitoring</a></TD><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

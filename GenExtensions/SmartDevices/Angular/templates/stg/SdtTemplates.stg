@@ -1,0 +1,60 @@
+delimiters "$", "$"
+import "Types.stg"
+import "Expressions.stg"
+
+g_data(page, gx)::=<<
+
+$g_sdt( page)$
+>>
+
+g_sdt( level) ::= <<
+$page.Imports:g_imports();separator="\r\n"$
+
+import { UIListElementItem } from 'app/gx/ui/model/ui-list';
+import { Type, Transform } from 'class-transformer';
+
+$level:g_sdt_rootlevel()$
+
+$level.Levels:g_sdt_nested_level();separator="\r\n"$
+
+>>
+
+g_sdt_rootlevel(level) ::= <%
+$if(level.IsCollection)$
+  $g_sdt_collection_level( level)$
+$else$
+  $g_sdt_level(level, {$gx.TypeToObjectName.(level.Name)$Data})$
+$endif$
+%>
+
+g_sdt_collection_level( level)::= <<
+export class $gx.TypeToObjectName.(level.Name)$Data extends $level.GeneratorType:g_type_name()$ {
+}
+$g_sdt_level(level, {$level.ItemGeneratorType:g_type_name()$})$
+>>
+
+g_sdt_nested_level(level) ::= <%
+$if(level.IsCollection)$
+	$g_sdt_level(level, {$level.ItemGeneratorType:g_type_name()$})$
+$else$
+	$g_sdt_level(level, {$level.GeneratorType:g_type_name()$})$
+$endif$
+%>
+
+g_sdt_level(level, levelName) ::= <<
+export class $levelName$ {
+  $level.Items:g_declare_item_var()$
+
+  constructor() {
+    $level.Items:g_init_item()$
+  }
+}
+>>
+
+g_sdt_IfExtendsDataStructure( level, templ, elseTempl) ::=<%
+$if (level.IsCollection)$
+$templ$
+$else$
+$elseTempl$
+$endif$
+%>

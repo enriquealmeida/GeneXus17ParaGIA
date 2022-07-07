@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy static files to Azure Storage in Serverless deploy</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50142,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy static files to Azure Storage in Serverless deploy</h1>
+<!--Deploy static files to Azure Storage in Serverless deploy--><div class="TableWikiBody" id="tblwikibody"><p>A specific problem to solve in a Serverless architecture is that the functions are &quot;microservices&quot; and in order to access other resources, such as static images or videos, for example, it is necessary to deploy those resources on a static website. </p>
+
+<p>The same happens with the gxmetadata of mobile apps, which are static resources that need to be accessed by the mobile client to update the app (major or minor change), or to guarantee that the services are available to the knowledge base navigator (KBN). Those features are activated through the <a href="46541.html">Enable KBN property</a> and <a href="46540.html">App Update property</a> at deploy time.</p>
+
+<p>The static resources in mobile panels are included in the app package (.apk or .ipa). Therefore, in general, they are accessed from there, except when an image is added to the app, and only an app update via metadata is necessary. In this case, they are not in the apk/ipa. It looks for the image in the address of the app, plus the location indicated in the images.json file of the gxmetadata.</p>
+
+<p>In order to cover all those cases, we need to store the resources in an <a href='https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction'>Azure Blob Storage</a> and automatically solve the redirection to that location when a resource is requested.</p>
+
+<p>You can use the <a href='https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website'>Static Website feature</a> inside your existing Storage Account from the <a href="https://wiki.genexus.com/commwiki/wiki?47419,," target="_blank">Function App</a>. It is also possible to use a different one. The front end hosted as a static website doesn’t require a web server to render the pages; instead, only the files are delivered to the clients. </p>
+
+<p><strong>Note:</strong> In the case of Angular applications, the static resources are included in the bundle of the app and deployed with it (see <a href="49877.html">Deploy Front-end applications to Cloud Provider Object Storage</a>), so you do not need to follow this document in this case.</p>
+
+<p>In conclusion, if you deploy the back-end services of an app to <a href="49107.html">Azure Serverless</a> and enable the <a href="46541.html">Enable KBN property</a> or <a href="46540.html">App Update property</a>, or have some static resources that should be rendered by the Azure functions, follow the steps below.</p>
+
+<h3><a id="1.+Define+an+Azure+Account+and+an+Azure+Web+Site" class="HashLink" href="#1.+Define+an+Azure+Account+and+an+Azure+Web+Site">1. Define an Azure Account and an Azure Web Site</a></h3>
+
+<p>See <a href='https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal#enable-static-website-hosting'>Enable Web Site Hosting</a>.</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  You only need to enable the Web Site, as the deploy uploads all the resources automatically to there.</div>
+</p>
+
+<h3><a id="2.+Configure+the+following+properties+at+the+deploy" class="HashLink" href="#2.+Configure+the+following+properties+at+the+deploy">2. Configure the following properties at the deploy</a></h3>
+
+<p><img src="./images/50143.png" id="50143" class="WikiImage"/></p>
+
+<p>To get the Access Key (to fill in the &quot;Storage Account Key&quot; property at deployment), go through the Access Keys pane of the Storage account at the Azure portal.</p>
+
+<h3><a id="3.+Configure+the+APIM+policy+to+redirect+to+the+Static+WebSite" class="HashLink" href="#3.+Configure+the+APIM+policy+to+redirect+to+the+Static+WebSite">3.  Configure the APIM policy to redirect to the Static WebSite</a></h3>
+
+<p>The deploy engine automatically creates two operations in the APIM management. One is for the gxmetadata, and the other is for the Resources.</p>
+
+<p>For example, the gxmetadata operation looks as follows:</p>
+
+<p><img src="./images/50144.png" id="50144" class="WikiImage"/></p>
+
+<p>At this point, you need to configure the policy to redirect to the Static WebSite using the Azure portal.</p>
+
+<p>To do so, select gxmetadata operation, and go through the Inbound processing pane.</p>
+
+<p><img src="./images/50145.png" id="50145" class="WikiImage"/></p>
+
+<p>Next, add the following and replace the base-url of the example with yours (the endpoint of the Static WebSite or the CDN endpoint if you configured one).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;inbound&gt;
+ &lt;base /&gt;
+ &lt;set-backend-service base-url=&quot;https://storagegxapps.z13.web.core.windows.net/&quot; /&gt;
+&lt;/inbound&gt;</pre>
+
+<p>It should looks as follows:</p>
+
+<p><img src="./images/50146.png" id="50146" class="WikiImage"/></p>
+
+<p>Then, do the same with the Resources operation.</p>
+
+<p><img src="./images/50147.png" id="50147" class="WikiImage"/></p>
+
+<h2><a id="Using+MSBuild" class="HashLink" href="#Using+MSBuild">Using MSBuild</a></h2>
+
+<p>Through MSBuild scripts, the third MSBuild script that should be executed (after having executed the <a href="42073.html">create deploy and create package scripts</a>) is as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSBuild.exe /nologo /verbosity:minimal /ToolsVersion:4.0 &quot;C:\Genexus\DeploymentTargets\AzureServerless\deploy.msbuild&quot;
+/p:AZURE_SERVERLESS_FUNCTION_APP=&quot;HttpWinNet6&quot;
+/p:AZURE_SERVERLESS_RESOURCE_GROUP=&quot;HttpWinNet6&quot;
+/p:AZURE_SERVERLESS_SP_APP_ID=&quot;xxxxxx&quot;
+/p:AZURE_SERVERLESS_SP_CREDENTIALS=&quot;xxxxx&quot;
+<strong>/p:AZURE_SERVERLESS_AZURE_STORAGE_ACCOUNT=&quot;storagegxapps&quot; /p:AZURE_SERVERLESS_AZURE_STORAGE_ACCOUNT_KEY=&quot;xxxxxx&quot;</strong> /p:AZURE_APIM_SERVICE_NAME=&quot;GXAPIManagement&quot;
+/p:AZURE_APIM_RESOURCE_GROUP=&quot;apimanage&quot;
+/p:AZURE_APIM_API_ID=&quot;APIresTest2&quot;
+/p:AZURE_APIM_API_DISPLAY_NAME=&quot;API resources test 2&quot;
+/p:AZURE_APIM_API_SERVICE_URL=&quot;https://httpwinnet6.azurewebsites.net&quot;
+/p:AZURE_APIM_API_PATH=&quot;APIresTest2&quot;
+/p:AZURE_APIM_API_SUBSCRIPTION_REQUIRED=&quot;false&quot;
+/p:APP_UPDATE=&quot;MINOR&quot;
+/p:ENABLE_KBN=&quot;True&quot;
+/p:GENERATOR=&quot;.NET&quot;
+/p:APPLICATION_NAME=&quot;DpuMeta_20220223141801&quot;
+/p:DEPLOY_PATH=&quot;C:\models\Test\NETSQLServerCloud\Deploy\AZURE_SERVERLESS\DpuMeta\20220223141801&quot;
+/p:GX_PROGRAM_DIR=&quot;C:\Genexus&quot;
+/p:ProjectName=&quot;DpuMeta_20220223141801&quot;
+/p:TargetId=&quot;AZURE_SERVERLESS&quot;
+/p:ObjectNames=&quot;Dashboard:MenuAir;SDPanel:Panel1&quot;
+/p:DeployFullPath=&quot;C:\models\Test\NETSQLServerCloud\Deploy\AZURE_SERVERLESS\DpuMeta\20220223141801&quot;
+/t:Deploy
+</pre>
+
+<p> </p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/25/22 03:26 PM</em></font></td></TR></table></font>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Dynamic Transactions Samples</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?36273,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Dynamic Transactions Samples</h1>
+<!--Dynamic Transactions Samples--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Below are shown samples of use of <a href="28062.html">Dynamic Transactions</a>.</p>
+
+<p><strong>1) </strong>Consider the following Product transaction:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product
+{
+   ProductId*
+   ProductDescription
+   ProductStock
+   ProductExpirationDate
+}  </pre>
+
+<p>Now suppose the company has defined promotions in the following way. They offer a 50% off for:</p>
+
+<p style="margin-left: 40.0px;">- products for which there are more than 1000 units in stock<br />
+- products for which their expiration date is during this year</p>
+
+<p>To always know the current promotions, we suggest to create a Dynamic Transaction (called Promotion) and with its associated Data Provider (Promotion_DataProvider) retrieve the products that meet the requirements for promotion.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Promotion
+{
+  PromotionId*
+  PromotionDescription
+  PromotionStock
+  PromotionExpirationDate
+}</pre>
+
+<p>We set the properties of the Promotion Transaction:</p>
+
+<ul>
+	<li><a href="29597.html">Data Provider property</a> = True</li>
+	<li><a href="29584.html">Used To property</a> = Retrieve Data</li>
+</ul>
+
+<p>GeneXus understands that it must not create any physical table associated with the Promotion Transaction, and creates the Data Provider by default (Promotion_DataProvider) with its source initialized with the transaction’s structure:</p>
+
+<p><img src="./images/36247.png" id="36247" class="WikiImage"/></p>
+
+<p>The next step we must follow is to complete the Promotion_DataProvider with the data we wish to load in the attributes of the Promotion Transaction:</p>
+
+<p><img src="./images/36307.png" id="36307" class="WikiImage"/></p>
+
+<p>The Data Provider, as you can see, is scanning the products that fulfill with the defined conditions to be in the promotion. Then, for each product that fulfills with that conditions, its attributes values are loaded to the Promotion attributes values.  </p>
+
+<p>Note that we have used the <a href="8490.html">ServerDate Function</a> in order to obtain the current date because variables nor functions that can't be evaluated in the server are not allowed to be used in Data Providers associated with Dynamic Transactions.</p>
+
+<p>Once we have thus modeled the Promotion transaction with its associated Data Provider, it is possible to work with the Promotion transaction and its attributes as usual. We could, for example, execute the form of the Promotion transaction to view the current promotions. We could apply also the Work With for Web and the Work With for Smart Devices Patterns to the Promotion transaction. Besides, the Promotion attributes can be used as regular attributes in a transparent way regardless of not having neither physical tables nor physical fields associated. In addition to this, it is possible to mention the Promotion transaction as <a href="25418.html">Base Transaction</a> in For each commands, Data Providers and grids in Web Panels and SD Panels. </p>
+
+<p><strong>Why is it advantageous to define a dynamic transaction to obtain the current promotions?</strong><br />
+Because it is a global definition in the Knowledge Base and this is powerful. The Promotion concept exists and in this way, it is defined without storing the involved data (in the database, a view will be created instead a table).<br />
+Note that if the way to define promotions in the company changes, by only modifying the Data Provider associated with the Promotion Dynamic Transaction, all the rest objects that work with the promotions are still valid!</p>
+
+<p> </p>
+
+<p><strong>2) </strong>Let's suppose that in the same GeneXus KB we have the following transactions: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+   CustomerId*
+   CustomerName
+   CustomerAddress
+   .... 
+}
+
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Invoice
+{
+   InvoiceId*
+   InvoiceDate
+   CustomerId
+   CustomerName
+   CustomerAddress
+   InvoiceAmount
+   ....
+}</pre>
+
+<p>Some queries that can be requested to you would be:</p>
+
+<p>2.1.  For a given period, to know the amount billed per day.<br />
+2.2. For a given date, to know the total amount billed.<br />
+2.3.  Best day of the year.</p>
+
+<p>Although it is possible to define individual and local solutions to solve each of the above queries, there is a more powerful way to solve the above petitions, and it consists of defining a Dynamic Transaction and executing it in several scenarios to solve the above queries. So, we propose to create a Dynamic Transaction (called Statistics):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Statistics
+{
+   StatisticsDate*
+   StatisticsTotalAmount
+}</pre>
+
+<p>We set the properties of the Statistics Transaction:</p>
+
+<p><a href="29597.html">Data Provider property</a> = Yes<br />
+<a href="29584.html">Used To property</a> = Retrieve Data</p>
+
+<p>GeneXus understands that it must not create any physical table associated with the Statistics Transaction, and creates the Data Provider by default (Statistics_DataProvider) with its source initialized with the transaction’s structure. The next step we must follow is to complete the Statistics_DataProvider, with the data we wish to load in the attributes of the Statistics transaction:</p>
+
+<p><img src="./images/36342.png" id="36342" class="WikiImage"/></p>
+
+<p>The Data Provider, as you can see, is scanning the invoices. Each value of invoice date is being used one time only, and it is assigned to the StatisticsDate attribute. For the said date, all the invoice amounts are summarized and the result is assigned to the StatisticsTotalAmount attribute. Then, having the total amounts per date available in Statistics, we will now see that each need can be solved navigating Statistics as our base transaction, and using its attributes as usual.</p>
+
+<p><strong>2.1.  For a given period, to know the amount billed per day.</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Statistics
+      where StatisticsDate &gt;= &amp;InitialDate 
+      where StatisticsDate &gt;= &amp;FinalDate 
+      Print Printblock1 {StatisticsDate,StatisticsTotalAmount}
+Endfor
+</pre>
+
+<p><strong>2.2. For a given date, to know the total amount billed.</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Statistics 
+   where StatisticsDate = &amp;Date
+  Print Printblock1 {StatisticsDate,StatisticsTotalAmount}
+Endfor</pre>
+
+<p><strong>2.3.  Best day of the year.</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Statistics order (StatisticsTotalAmount)
+    where StatisticsDate.Year() = &amp;Today.Year() 
+        Print Printblock1 {StatisticsDate,StatisticsTotalAmount}
+        exit
+Endfor
+</pre>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="28062.html">Toc:Dynamic Transactions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

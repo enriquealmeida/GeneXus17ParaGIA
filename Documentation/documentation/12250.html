@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Query object: Filters</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?12250,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Query object: Filters</h1>
+<!--Query object: Filters--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Diagrams are used here to show the <b>filters</b> that can be applied in a query through the Query object's <b>Filters</b> node, as illustrated by the example below:</p>
+
+<p><img src="./images/46208.png" id="46208" class="WikiImage"/></p>
+
+<h2><a id="Filters" class="HashLink" href="#Filters">Filters</a></h2>
+
+<p>Valid <i>filter:</i></p>
+
+<p>The following diagram represents a valid entry for the Filters node. In other words: a valid filter will be composed of:</p>
+
+<p><strong>Filter:</strong><br />
+<img src="./images/46217.png" id="46217" class="WikiImage"/></p>
+
+<p><strong>logical expression:</strong><br />
+<img src="./images/46218.png" id="46218" class="WikiImage"/></p>
+
+<p><strong>logical operator:</strong><br />
+<img src="./images/46219.png" id="46219" class="WikiImage"/></p>
+
+<p>Based on the previous initial definition and the following detail, possible filters values are:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CustomerId = 1
+CustomerId &gt; 5
+CustomerId &lt;&gt; 10
+CustomerId in (1 to 5)
+not CustomerId in (1 to 5)
+CustomerId in (1,2,5,17,30)
+not CustomerId in (1,2,5,17,30)
+CustomerName like &quot;Peter Pan&quot;
+not CustomerName like &quot;Peter Pan&quot;
+CustomerId in (CustomerId where (ProductId = 10))
+not CustomerId in (CustomerId where (ProductId = 10))
+Sum( InvoiceAmount ) &gt; 10000
+not Count( CustomerId ) in (4, 500, 1000)
+Average( InvoiceAmount) by InvoiceDate &gt; 1000
+</pre>
+
+<h2><a id="Values" class="HashLink" href="#Values">Values</a></h2>
+
+<h4><a id="Valid+values" class="HashLink" href="#Valid+values">Valid values</a></h4>
+
+<p><img src="./images/46222.png" id="46222" class="WikiImage"/></p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<table>
+	<tbody>
+		<tr>
+			<td>1</td>
+			<td>Numeric Constant</td>
+		</tr>
+		<tr>
+			<td>&quot;Peter&quot;</td>
+			<td>Character Constant</td>
+		</tr>
+		<tr>
+			<td>#2009-12-31#</td>
+			<td>Date Constant</td>
+		</tr>
+		<tr>
+			<td>#2009-12-31 08:55:00#</td>
+			<td>DateTime Constant</td>
+		</tr>
+		<tr>
+			<td>&amp;Balance</td>
+			<td>Parameter defined in the Query object's Parameter node</td>
+		</tr>
+		<tr>
+			<td>Sum(InvoiceAmount)</td>
+			<td>Sum</td>
+		</tr>
+		<tr>
+			<td>Count(CustomerId)</td>
+			<td>Count</td>
+		</tr>
+		<tr>
+			<td>Average(InvoiceAmount)</td>
+			<td>Average</td>
+		</tr>
+		<tr>
+			<td>Sum(Average(InvoiceAmount) by InvoiceDate)</td>
+			<td>Sum</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Date+and+Datetime" class="HashLink" href="#Date+and+Datetime">Date and Datetime</a></h3>
+
+<p>When using a <i>Date</i> or <i>Datetime</i> attribute, the filter format is #YYYY-MM-DD# for Date and #YYYY-MM-DD HH:MM:SS# for Datetime; otherwise the following error will occur:</p>
+
+<p style="margin-left: 40.0px;"><i>invalid date constant; ANSI format expected: YYYY-MM-DD HH:MM:SS.</i></p>
+
+<h2><a id="Subqueries" class="HashLink" href="#Subqueries">Subqueries</a></h2>
+
+<p>Valid <i>subqueries</i>:</p>
+
+<p>They're used to specify a filter that is not a constant or a list of constant values, but in which values are drawn from the database.</p>
+
+<p><img src="./images/46220.png" id="46220" class="WikiImage"/><br />
+<strong>where:</strong><br />
+<img src="./images/46221.png" id="46221" class="WikiImage"/></p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Suppose we have a table that relates Supplier with Product sold.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SupplierId*
+ProductId*</pre>
+
+<p>We need to have a query that shows all the suppliers that sell product 5, and the amount of product that each supplier sells. To do that, we have to specify the query as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+# Attributes
+SupplierName
+ProductDescription
+# Filters
+SupplierId in (<b>SupplierId where ProductId = 5</b>)
+</pre>
+
+<p>Observations</p>
+
+<p>The subquery has to return one or more values, as applicable. If either a relational operator is used (=, &gt;, &gt;=, &lt;, &lt;=, &lt;&gt;), it must return a single value. E.g.: <b>att=(subquery)</b>.<br />
+If the query returns N values instead of the single value it should return, then the first value will be taken as the result of the subquery.</p>
+
+<p>It should also return a single value when it is used with the <b>in</b> operator and a list of values that includes the subquery as one of those values. E.g.: <b>att in (value1, value2, subquery, value3)</b>. The list can be a list of clients 1, 2 and 3 plus the client that bought the most products (this client is obtained through a subquery). A single value is also returned when a range is established.</p>
+
+<p>The only case in which the subquery can return N values is when it is used with an <b>in</b> operator that has a single element: the subquery. It's the example that returns all the suppliers that sold product 5 and the amount of product sold by these suppliers. That is: <b>att in (subquery)</b>.</p>
+
+<h2><a id="Logical+Operators" class="HashLink" href="#Logical+Operators">Logical Operators</a></h2>
+
+<h4><a id="Filters+made+up+of+logical+operators%3A" class="HashLink" href="#Filters+made+up+of+logical+operators%3A"><i>Filters</i> made up of logical operators:</a></h4>
+
+<p><img src="./images/46217.png" id="46217" class="WikiImage"/></p>
+
+<p><strong>logical expression:</strong><br />
+<img src="./images/46218.png" id="46218" class="WikiImage"/></p>
+
+<p><strong>logical operator:</strong><br />
+<img src="./images/46219.png" id="46219" class="WikiImage"/></p>
+
+<p>An example of different kind of filters can be the following:</p>
+
+<p><img src="./images/46223.png" id="46223" class="WikiImage"/></p>
+
+<p>If you need to combine AND and OR will need to specify it explicitly for example link them by OR and both results are joined by AND:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+(filter1 or filter2, or... or filterN) and (anotherFilter1 or anotherFilter2 or ... or anotherFilterM)</pre>
+
+<p>example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+(CustomerId &gt; 5 or CustomerId &lt;&gt; 10 or CustomerId in (1 to 5) or CustomerId in (CustomerId where CustomerName &lt;&gt; &quot;Peter Pan&quot;)) and (not CustomerName like &quot;Hook&quot; or CustomerId in (1,2,3,4))</pre>
+
+<h2><a id="Aggregations" class="HashLink" href="#Aggregations">Aggregations</a></h2>
+
+<p>Valid <i>Sum | Count | Average | Min | Max</i>:</p>
+
+<p><img src="./images/46209.png" id="46209" class="WikiImage"/></p>
+
+<p><strong>by:</strong><br />
+<img src="./images/46212.png" id="46212" class="WikiImage"/></p>
+
+<p><strong>defined by:</strong><br />
+<img src="./images/46213.png" id="46213" class="WikiImage"/></p>
+
+<p><strong>weighted by:</strong><br />
+<img src="./images/46214.png" id="46214" class="WikiImage"/></p>
+
+<p><strong>arithmetic expression:</strong><br />
+<img src="./images/46216.png" id="46216" class="WikiImage"/></p>
+
+<p>Nesting is possible using <em>Sum</em>, <em>Count</em>, <em>Average</em>, <em>Max</em> and <em>Min</em>. Remember that the Where conditions the elements that are to be added; that is, it is applied before aggregating. For example, if you have</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sum(InvoiceAmount) where InvoiceAmount &gt; 1000</pre>
+
+<p>only the invoices with amount &gt; 1000 will be added together.</p>
+
+<h2><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h2>
+
+<p>Some differences of the Query object filters with filters specified in other GeneXus objects (procedures, web panels, data providers, etc.):</p>
+
+<ul>
+	<li>Filters in the Query object must be resolved in the server, so no client logic invocations, such as an invocation to a data provider, can be made.</li>
+	<li>Data Selectors cannot be used yet.</li>
+</ul>
+
+<p><h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This behavior is available since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a>.</p>
+
+<p></p>
+</p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46592.html">Multi-experience with GeneXus 17</a></TD><TD><a href="9026.html">Category:Query object</a></TD></TR><TR><TD><a href="11782.html">Query object expressions</a></TD><TD><a href="25314.html">Toc:Reporting in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/11/20 01:51 PM</em></font></td></TR></table></font>

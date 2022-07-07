@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Create a deployment pipeline for an application using GXflow</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49176,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Create a deployment pipeline for an application using GXflow</h1>
+<!--HowTo: Create a deployment pipeline for an application using GXflow--><div class="TableWikiBody" id="tblwikibody"><p>In this article, you will find how to create a deployment pipeline when using <a href="https://wiki.genexus.com/commwiki/wiki?4179,," target="_blank">GXflow</a> in your application.</p>
+
+<p>First, it describes the scenario where the <a href="15041.html">Deploy to Cloud</a> option is used for a development environment, and then the scenario of a test or production environment where you want to deploy on your own web and database server.</p>
+
+<h2><a id="Pipeline+with+Deploy+to+Cloud" class="HashLink" href="#Pipeline+with+Deploy+to+Cloud">Pipeline with Deploy to Cloud</a></h2>
+
+<p>Following the steps provided in the article <a href="46966.html">CI integrated to GeneXus and GXserver</a>, you can create a pipeline with the “Deploy to Cloud” option. In this way, your application will be automatically built and will run on a certain URL, including GXflow.</p>
+
+<h2><a id="Pipeline+to+deploy+on+your+own+web+and+database+server" class="HashLink" href="#Pipeline+to+deploy+on+your+own+web+and+database+server">Pipeline to deploy on your own web and database server</a></h2>
+
+<p>Three stages will be described to perform the process in a fully automated way. They are carried out together; for example, using a Jenkins Job:</p>
+
+<p>STEP 1:</p>
+
+<p>Build the corresponding <a href="2428.html">KB</a> using <a href="https://wiki.genexus.com/commwiki/wiki?31337,," target="_blank">GXServer</a> as in the previous step, only that now the “Deploy to Cloud” option has to be cleared. Here you can use your own databases and use only one for the GXflow tables. Below is how to do so:</p>
+
+<ul>
+	<li>Create the pipeline to be used in GXServer with the “Deploy to Cloud” option cleared.</li>
+	<li>Open the “jenkings.config” file found in your GXServer installation; for example, it could be: “C:\GeneXusServer\GeneXusServer17\VDir\BinGenexus\Packages\ContinuousIntegration.”</li>
+	<li>Here you will find several “jobs” nodes, one for each pipeline you have in GXServer.</li>
+	<li>Under the “friendlyname” tag, find the node that has the name of your new pipeline and change the tag localsettings=”BuildOnly.settings” customsettings=”false” to localsettings=”MySettings.settings” customsettings=”true” (MySettings is just an example, you can use another file name).</li>
+	<li>In the folder you downloaded from Git (when you followed the steps in <a href="46996.html">How to configure GeneXus Server for Continuous Integration</a>), find the KBSettings folder; for example, it can be located at “C:\GXJenkins\CIscripts\KBSettings.” Initially, you will only find these files: “BuildOnly.setting” and “DeployToCloud.settings.”</li>
+	<li>Create a new .settings file. According to the previous example, it would be “MySettings.settings.”</li>
+	<li>In it, copy the contents of the “BuildOnly.settings” file.</li>
+	<li>You will find the following nodes:</li>
+</ul>
+
+<pre class="Code" style="margin-left: 40.0px;">
+&lt;DataStoreProperty Include=&quot;Database name&quot;&gt;
+&lt;Datastore&gt;Default&lt;/Datastore&gt;
+&lt;PropertyName&gt;Database name&lt;/PropertyName&gt;
+&lt;PropertyValue&gt;EMPTY&lt;/PropertyValue&gt;
+&lt;/DataStoreProperty&gt;
+&lt;DataStoreProperty Include=&quot;Server name&quot;&gt;
+&lt;Datastore&gt;Default&lt;/Datastore&gt;
+&lt;PropertyName&gt;Server name&lt;/PropertyName&gt;
+&lt;PropertyValue&gt;EMPTY&lt;/PropertyValue&gt;</pre>
+
+<ul>
+	<li>Change the “EMPTY” values to their values (if the database doesn’t exist, it will be created).</li>
+	<li>If you are using a database for GXflow only, add the following below the above, also changing the “EMPTY” values.</li>
+</ul>
+
+<pre class="Code" style="margin-left: 40.0px;">
+&lt;DataStoreProperty Include=&quot;Database name&quot;&gt;
+&lt;Datastore&gt;GXFLOW&lt;/Datastore&gt;
+&lt;PropertyName&gt;Database name&lt;/PropertyName&gt;
+&lt;PropertyValue&gt;EMPTY&lt;/PropertyValue&gt;
+&lt;/DataStoreProperty&gt;
+&lt;DataStoreProperty Include=&quot;Server name&quot;&gt;
+&lt;Datastore&gt;GXFLOW&lt;/Datastore&gt;
+&lt;PropertyName&gt;Server name&lt;/PropertyName&gt;
+&lt;PropertyValue&gt;EMPTY&lt;/PropertyValue&gt;
+&lt;Datastore&gt;GXFLOW&lt;/Datastore&gt;
+&lt;/DataStoreProperty&gt;</pre>
+
+<ul>
+	<li class="Code" style="margin-left: 40.0px;">Finally, in GXServer select the created pipeline for editing and, without doing anything else, select “SAVE.” In this way, the recent changes will be saved.</li>
+	<li class="Code" style="margin-left: 40.0px;">In case of an error stating that the jenkins.config file was modified by another program, restart the server.</li>
+</ul>
+
+<p>STEP 2:</p>
+
+<p>From a deployment unit already created, the .war or .zip file will be generated depending on your Environment. To deploy your application, you will need to call two MSBuild tasks. They are explained together with their parameters in <a href="42073.html">Application Deployment MSBuild tasks</a>.</p>
+
+<p>In this article, you will find an example of automation with Jenkins: <a href="https://wiki.genexus.com/commwiki/wiki?44704,," target="_blank">How to deploy the application using the GeneXus Jenkins Plugin</a>.</p>
+
+<p>STEP 3:</p>
+
+<p>Finally, the second MSBuild task will create the deployment file in the path you have specified. Run it with the web server you use. For example, Docker or Tomcat, depending on the deployment file you have created.</p>
+
+<p> </p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="38363.html">DevOps in GeneXus</a></p>
+
+<p>  </p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/08/21 02:36 PM</em></font></td></TR></table></font>

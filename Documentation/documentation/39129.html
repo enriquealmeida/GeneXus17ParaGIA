@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>PayPal recurring payments</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39129,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">PayPal recurring payments</h1>
+<!--PayPal recurring payments--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When selling products that require a subscription (eg: monthly payments), recurring payments are used.</p>
+
+<p>First you need to setup your plan. A plan is the specification of what the user will pay.<br />
+Eg: premium account, $15, monthly.</p>
+
+<p>To do so, you need to create your plan on Paypal and then activate it.<br />
+Use CreateBillingPlan SDT and payment_definitions to setup your plan, and create it using CreateBillingPlanAPI procedure.<br />
+If created correctly (check error code = 0), map the API Response to CreateBillingPlanResponse SDT and activate the plan using ActivateBillingPlan procedure and the plan Id.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;BaseURL = &amp;HttpRequest.BaseUrl
+
+&amp;CreateBillingPlan.name = &quot;Plan 1&quot;
+&amp;CreateBillingPlan.description = &quot;Description 1&quot;
+&amp;CreateBillingPlan.type = PlanType.INFINITE
+
+&amp;CreateBillingPlan.merchant_preferences.return_url = &amp;BaseURL + CancelAgreement.Link()
+&amp;CreateBillingPlan.merchant_preferences.cancel_url = &amp;BaseURL + ExecuteAgreement.Link()
+&amp;CreateBillingPlan.merchant_preferences.auto_bill_amount = &quot;no&quot;
+&amp;CreateBillingPlan.merchant_preferences.max_fail_attempts = &quot;0&quot; 
+&amp;CreateBillingPlan.merchant_preferences.initial_fail_amount_action = &quot;CONTINUE&quot;
+
+
+&amp;payment_definitions.amount.value = &quot;50&quot;
+&amp;payment_definitions.amount.currency = &quot;USD&quot;
+&amp;payment_definitions.frequency_interval = &quot;1&quot;
+&amp;payment_definitions.frequency = &quot;DAY&quot;
+&amp;payment_definitions.cycles = &quot;0&quot;
+&amp;payment_definitions.name = &quot;SHIPPING&quot;
+&amp;payment_definitions.type = &quot;REGULAR&quot;
+
+&amp;CreateBillingPlan.payment_definitions.Add(&amp;payment_definitions)
+
+CreateBillingPlanAPI(&amp;CreateBillingPlan.ToJson(),&amp;APIResponse,&amp;ErrorCode)
+
+if &amp;ErrorCode = 0
+    &amp;CreateBillingPlanResponse.FromJson(&amp;APIResponse)
+    &amp;planId = &amp;CreateBillingPlanResponse.id
+    ActivateBillingPlan(&amp;planId,&amp;APIResponse,&amp;ErrorCode)
+endif
+
+if &amp;ErrorCode = 0
+    Msg(&quot;Success&quot;,status)
+endif
+</pre>
+
+<p>Billing Agreements create a relationship between the buyer and the plan.<br />
+As with payments, you need to create an agreement, make the user authenticate and execute the agreement.<br />
+To set up an agreement, use CreateBillingAgreement SDT and CreateBillingAgreementAPI procedure. Use CreateBillingAgreementResponse SDT to handle the response and redirect the user to Paypal’s website.</p>
+
+<p>Note: agreements take a minimum of 24 hours to become active (you can set more time if you want)</p>
+
+<p>Afer user authentication, Paypal calls a success URL and sends a token as a parameter. Use that token to execute the agreement. It will become active once the time you indicated before is completed (24 hours minimum).</p>
+
+<p>On the Success WebPanel:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    Do 'ParseString'
+    ExecuteAgreementAPI(&amp;token,&amp;APIResponse,&amp;ErrorCode)
+    if &amp;ErrorCode = 0
+        Msg(&quot;Agreement Success&quot;)
+    endif
+EndEvent
+
+Sub 'ParseString'
+    &amp;Regex = &quot;=&quot;
+    &amp;Parms = &amp;httpRequest.QueryString
+    &amp;Matches = &amp;Parms.SplitRegEx(&amp;Regex)
+    &amp;token = &amp;Matches.Item(2)
+EndSub
+</pre>
+
+<p> </p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="39115.html">Toc:GeneXus SDK for PayPal</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

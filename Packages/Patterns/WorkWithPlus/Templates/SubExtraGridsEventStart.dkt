@@ -1,0 +1,162 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Sub Extra Grids Event Start" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="iGenObj" Type="DVelop.Patterns.WorkWithPlus.IGeneratedObject" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="grids" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="actions" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="advancedSecurity" Type="System.Boolean" %>
+<%@ Property Name="rootTable" Type="DVelop.Patterns.WorkWithPlus.WPTableElement" %>
+<%@ Property Name="isSmooth" Type="System.Boolean" %>
+<%
+	bool hasPaginationBar = false;
+	foreach (IGrid grid in grids)
+    {
+		WPGridElement gridElem = null;
+		if (GridGeneralElement.IncludeGridEmpowerer(grid, settings))
+		{
+%>
+	<%= grid.GetControlName() %>_Empowerer.GridInternalName = <%= grid.GetControlName() %>.InternalName
+<%
+		}
+		if (grid is WPGridElement && Object.TypeName != "SDPanel")
+		{
+			gridElem = (WPGridElement)grid;
+			string infiniteScrollingType;
+			string pageSize = gridElem.GetPageSize(out infiniteScrollingType);
+			if (pageSize != String.Empty)
+			{
+%>
+	<%= grid.GetControlName() %>.Rows = <%= pageSize %>
+<%
+			}
+			
+			if (gridElem.HasTitlesCategory())
+			{
+%>
+	<%= grid.GetControlName() %>_TitlesCategories.GridInternalName = <%= grid.GetControlName() %>.InternalName
+<%
+			}
+		}
+		else if (grid is FreeStyleGridGeneralElement)
+		{
+			foreach (IAttributesItem item in grid.GetAllAttributesAndVariablesOfThisGrid(true, true))
+			{
+				if (!item.Visible)
+				{
+%>	
+	<%= item.ControlName %>.Visible = False
+<%
+				}
+			}
+		}
+		if (grid.IncludePagBar())
+		{
+			hasPaginationBar = true;
+			SettingsPaginationBarActionElement paginationBarSettings = settings.StandardActions.PaginationBar;
+			if (string.IsNullOrEmpty(grid.GetSDTCollection()))
+			{
+%>
+	&<%= grid.GetControlName() %>CurrentPage = 1
+	&<%= grid.GetControlName() %>CurrentPage.Visible = False
+<%
+				if (paginationBarSettings.IncludePageCount)
+				{
+%>
+	&<%= grid.GetControlName() %>PageCount = -1
+<%
+				}
+				else
+				{
+%>
+	&<%= grid.GetControlName() %>RecordCount = -1
+<%
+				}
+			}
+		}
+		if (advancedSecurity)
+		{
+			foreach (IWorkWithPlusInstanceElement item in grid.GetAllAttributesAndVariablesOfThisGrid(true, true))
+			{
+				if(item is IAttributesItem && ((IAttributesItem)item).Link != null
+					&& ((IAttributesItem)item).Link.HasAdvancedSecurityCondition())
+				{
+%>
+<%= Indentation.Indent(((IAttributesItem)item).Link.GetAdvancedSecurityInitialization(), 1) %>
+<%
+				}
+			}
+		}
+	}	
+	
+	if (actions != null)
+	{
+		foreach (IActionElement action in actions)
+		{
+			string initCode;
+			if ((!isSmooth || !action.InGrid) && (initCode = action.InitializationCode()) != String.Empty)
+			{
+%>
+<%= Indentation.Indent(initCode, 1) %>
+<%
+			}
+		}
+	}
+	if (rootTable != null)
+	{
+		foreach (WebComponentElement webComp in rootTable.AllWebComponents(false))
+		{
+%>
+	<%= webComp.GetCreateWebComponentCall() %>
+<%
+		}
+	}
+    foreach (IGrid grid in grids)
+    {
+		bool hasCheckAll;
+		if (grid.HasMultiRowActions(out hasCheckAll) && hasCheckAll)
+		{
+			if (!grid.IsGXUIMultiRowSelectionAndCheckAll())
+			{
+%>
+	&<%= grid.GetMultiRowSelectedVariableName() %>.TitleFormat = 1
+	&<%= grid.GetMultiRowSelectedVariableName() %>.Title = format(!'<input name="selectAllCheckbox<%= grid.GetControlName() %>" type="checkbox" value="Select All" onClick="WWPSelectAll(this, %1);" onMouseOver="WWPSelectAllRemoveParentOnClick(this)" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', !"'<%= grid.GetMultiRowSelectedVariableName().ToUpper() %>'")
+<%
+			}
+			else
+			{
+%>
+	&<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>.Visible = False
+<%
+			}
+		}
+		else if (grid.GetSDTCollection() != "" && grid is WPGridElement && ((WPGridElement)grid).MultiRowSelectAll)
+		{
+%>
+	<%= grid.GetSDTCollection().TrimStart('&') %>__Selected.TitleFormat = 1
+	<%= grid.GetSDTCollection().TrimStart('&') %>__Selected.Title = format(!'<input name="selectAllCheckbox<%= grid.GetControlName() %>" type="checkbox" value="Select All" onClick="WWPSelectAll(this, %1);" onMouseOver="WWPSelectAllRemoveParentOnClick(this)" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', !"'<%= grid.GetSDTCollection().TrimStart('&').ToUpper() %>__SELECTED'")
+<%
+		}
+		if (grid.IncludePagBar() && grid.IncludeRowsPerPageInPagBar())
+		{
+			if (!isSmooth)
+			{
+%>
+	If &HTTPRequest.Method = HttpMethod.Get
+		<%= grid.GetControlName() %>PaginationBar.RowsPerPageSelectedValue = <%= grid.GetControlName() %>.Rows
+	EndIf
+<%
+			}
+			else
+			{
+%>
+	<%= grid.GetControlName() %>PaginationBar.RowsPerPageSelectedValue = <%= grid.GetControlName() %>.Rows
+<%
+			}
+		}
+    }
+%>

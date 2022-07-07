@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>In-App Purchase Sample - My Kitchen</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20021,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">In-App Purchase Sample - My Kitchen</h1>
+<!--In-App Purchase Sample - My Kitchen--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Here is an example of how to use <a href="https://wiki.genexus.com/commwiki/wiki?20003,," target="_blank">In-App Purchase</a> in a GeneXus-generated Smart Device application using the <a href="https://wiki.genexus.com/commwiki/wiki?20004,," target="_blank">StoreAPI external object (X Evolution 3)</a>.</p>
+
+<p>It is a simple case of what we call &quot;One-time-service&quot; product, which means that a product is purchased only once and then it becomes available to the user in every device. It is also known as &quot;Non-consumable&quot; product in <a href='https://developer.apple.com/reference/storekit'>iOS Store Kit Framework</a> and &quot;In-App unmanaged&quot; product in <a href='http://developer.android.com/guide/google/play/billing/billing_overview.html'>Android In-App Billing Service</a>.</p>
+
+<p>We have an application which provides different types of Food Recipes. There are some public recipes available to all users for free and we will include the possibility to buy new groups of recipes. After being purchased, the recipes in these groups will always be available to the user. In addition, new recipe groups available for purchase can be added, modified or deleted anytime.</p>
+
+<p>One important thing to have in mind is that we need to store information about the purchases and products in our application; in this case:</p>
+
+<ul>
+	<li>Each recipe will have an associated Product Identifier to know which store product has to be purchased in order to have the recipe available. We will also use a &quot;General&quot; value to indicate public recipes.</li>
+	<li>After a purchase is completed, we will store the relation &quot;User Id - Product Purchased&quot;. This information is checked before loading the list of recipes, to include all the purchased ones.</li>
+	<li>We will also maintain a database table with information about available products. This table will be used to list the products available for purchase (listing those that haven't purchased yet) and mainly is included to be able to add new recipe groups for purchase anytime.</li>
+</ul>
+
+<h3><a id="How+do+we+implement+this+functionality%3F" class="HashLink" href="#How+do+we+implement+this+functionality%3F">How do we implement this functionality?</a></h3>
+
+<ul style="">
+	<li>Before you start developing in GeneXus, configure the application In-App Purchases on the platform store.
+	<ul>
+		<li><a href="20043.html">How to configure In-App Purchases in an iOS application</a>.</li>
+		<li><a href="21330.html">How to configure In-App Billing in an Android application</a>.<br />
+		 </li>
+	</ul>
+	</li>
+	<li>First of all, define all the required transactions, <em>Recipes</em>, <em>PurchasesInfo</em> and <em>AvailableProducts</em>.</li>
+</ul>
+
+<p style="margin-left: 40.0px;"><img src="./images/33923.jpg" id="33923" class="WikiImage"/><br />
+<strong>Note</strong>: The <em>RecipePurchased procedure </em>checks if the recipe is public (&quot;General&quot;) or if the user has purchased the associated product.<br />
+<br />
+<img src="./images/33924.jpg" id="33924" class="WikiImage"/><br />
+<strong>Note</strong>: The <em>PurchaseExpiration attribute</em> do not anything in this basic sample, but it can be used to simulate a subscription scenario managed by the developer.<br />
+<br />
+<img src="./images/33925.jpg" id="33925" class="WikiImage"/><br />
+<strong>Note</strong>: The <em>ProductPurchased procedure </em>checks if the product has been previously purchased by the user.<br />
+ </p>
+
+<ul style="">
+	<li>Then, our database must have a <em>Product Identifier</em> associated which each recipe. We will use the value &quot;General&quot; to indicate the public recipes, which will be available the first time we enter the application. The <em>Product Identifier</em> is a string value with one of the Product-IDs defined for the application In-App Purchases in the platform store.</li>
+</ul>
+
+<p style="margin-left: 40.0px;"><img src="./images/33926.png" id="33926" class="WikiImage"/><br />
+ </p>
+
+<ul>
+	<li>In addition, we need to fill the <em>Available Products table</em> with the products available for purchase. These values can be later modified, to offer new recipe groups for purchase. Remember that the associated <em>Product Identifier</em> has to be previously configured in the platform store (as was described in the previous point).<br />
+	 </li>
+</ul>
+
+<ul>
+	<li>Then we need to set a filter for the <em>Recipes </em>list in the WorkWithDevicesRecipes pattern instance. We just include the condition <em>RecipeIsPurchased = True</em>. In the first execution, when no purchases have been performed, only the public (&quot;General&quot;) recipes will be displayed. Also, we can see the detail of our purchased <em>Recipes</em>.<img src="./images/33960.png" id="33960" class="WikiImage"/><img src="./images/33961.png" id="33961" class="WikiImage"/><br />
+	 </li>
+	<li>Then we select the &quot;<em>Get More</em>&quot; action and we will see a panel where all the non-purchased available products are displayed. Each one has a &quot;<em>Get Recipes</em>&quot; action to perform the purchase. Let's buy the Meat Recipes group !!<br />
+	<img src="./images/33962.png" id="33962" class="WikiImage"/><br />
+	<img src="./images/33963.png" id="33963" class="WikiImage"/><br />
+	 </li>
+	<li>After the purchase is successfully completed, we need to store the User-Product information in the <em>PurchasesInfo table</em> to make the recipes group available to the user in the future. Finally, from now on, when we list the recipes, we will also see the new recipes purchased. In the products available for purchase, the already purchased group is no longer displayed.<br />
+	<img src="./images/33964.png" id="33964" class="WikiImage"/><br />
+	 </li>
+</ul>
+
+<p style="margin-left: 40.0px;"><a href="https://wiki.genexus.com/commwiki/wiki?33979,," target="_blank">Download this sample</a></p>
+
+<h3><a id="Other+options+for+the+sample" class="HashLink" href="#Other+options+for+the+sample">Other options for the sample</a></h3>
+
+<ol>
+	<li>In the previous sample, the interaction with the platform In-App Purchase store was minimized. Managing complete information in your application gives more flexibility, allowing you to check purchases by GAM Users, Device Id or any other entity.</li>
+	<li>Since we are managing all the information about users, products, and purchases in the application database, we are able to simulate a subscription scenario. We can add a <em>PurchaseExpiration</em> date attribute in the <em>PurchasesInfo</em> table, and when checking if a user has purchased a product we just check that the <em>PurchaseExpiration</em> date is still valid.</li>
+</ol>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="20010.html">In-App Purchase Sample - Classified Ads</a></p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="20010.html">In-App Purchase Sample - Classified Ads</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR><TD><a href="31320.html">StoreManager external object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

@@ -1,0 +1,72 @@
+delimiters "$", "$"
+import "Actions_Statements.stg"
+
+g_action(action) ::=<%
+$if(action.ActionIsAsync)$
+$g_action_async(action)$
+$else$
+$g_action_sync(action)$
+$endif$
+%>
+
+g_action_async(action) ::=<<
+$action.Name$ = async ($action:g_action_parameters()$): Promise<any> => {
+  const __aSt = this.startAction();
+  $g_action_parameters_bind(action)$
+  try {
+    $action.Components:g_action_components()$
+  } catch (e) {
+    this.processCompositeError(e);
+  } finally {
+    this.endAction(__aSt);
+  }
+}
+>>
+
+g_action_sync(action) ::=<<
+$action.Name$ = ($action:g_action_parameters()$): void => {
+  const __aSt = this.startAction();
+  $g_action_parameters_bind(action)$
+  $action.Components:g_action_components()$
+  this.endAction(__aSt);
+}
+>>
+
+g_action_components(comp) ::=<<
+$comp.Action:{stmt|$stmt:g_one_statement()$};separator="\r\n"$
+>>
+
+g_action_parameters(action) ::=<<
+$if (action.HasParameters)$
+$action.eventparameters.parameter:{parm|$parm.value$};separator=", "$
+$endif$
+>>
+
+g_action_parameters_bind(action) ::=<<
+$if (action.HasParameters)$
+$action.eventparameters.parameter:{parm|$parm:g_one_parameter()$};separator="\r\n"$
+$endif$
+>>
+
+g_one_parameter( parm) ::= <<
+$parm.Expression:g_expression()$ = $parm.value$;
+>>
+
+g_subscriptions(page) ::= <<
+$if (page.ComponentSubscriptions)$
+startEvents() {
+  $page.ComponentSubscriptions:g_subscription_start();separator="\r\n"$
+}
+endEvents() {
+  $page.ComponentSubscriptions:g_subscription_end();separator="\r\n"$
+}
+$endif$
+>>
+
+g_subscription_start(s) ::= <<
+this.$s.SubscriptionVariableName$ = $s.ObservableExpression:g_expression()$.subscribe('$s.ObservableId$', (...parms) => {this.callAction( this.$s.EventName$, ...parms)});
+>>
+
+g_subscription_end(s) ::= <<
+$s.ObservableExpression:g_expression()$.unsubscribe( this.$s.SubscriptionVariableName$);
+>>

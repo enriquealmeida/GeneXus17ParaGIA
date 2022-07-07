@@ -1,0 +1,66 @@
+delimiters "$", "$"
+
+
+dataprovider_load_entity(data) ::= <<
+$if (data.DataExpressions.EntityItemExpression.ExprType)$
+$data.DataExpressions.EntityItemExpression:g_expression()$ = await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$);
+$if (page.MustLoadDynprops)$
+this.updateGxdynprops($data.DataExpressions.EntityItemExpression:g_expression()$, this.uiModel);
+$endif$
+$endif$
+>>
+
+grid_loadfromserver_methods( data) ::= <<
+async $data.EntityUIControlName$Load() {
+ $data.GridControllerExpression:g_expression()$.initPaging();
+  const data = await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$);
+  $data.DataExpressions.EntityCollectionExpression:g_expression()$ = data;
+  $data.DataExpressions.UIEntityCollectionExpression:g_expression()$ = $g_type_ctor(data.DataExpressions.UIEntityCollectionExpression.ExprDataType)$;
+  $data.GridControllerExpression:g_expression()$.loadFromData($data.DataExpressions.EntityCollectionExpression:g_expression()$, $data.DataExpressions.UIEntityCollectionExpression:g_expression()$, this.viewManager.getUIModelDefaults( '$data.ControlInfo.ControlName$') $data.BreakBy:g_grid_load_breakby()$);
+  $data.GridControllerExpression:g_expression()$.updatePaging($data.DataExpressions.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, null);    
+}
+
+async fetchNextPage$data.EntityUIControlName$(event) {
+  const data = await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$);
+  $data.DataExpressions.EntityCollectionExpression:g_expression()$.push(...data);
+  $data.GridControllerExpression:g_expression()$.loadFromData($data.DataExpressions.EntityCollectionExpression:g_expression()$, $data.DataExpressions.UIEntityCollectionExpression:g_expression()$, this.viewManager.getUIModelDefaults( '$data.ControlInfo.ControlName$') $data.BreakBy:g_grid_load_breakby()$);
+  $data.GridControllerExpression:g_expression()$.updatePaging($data.DataExpressions.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, event);
+  this.cdr.markForCheck();
+}
+>>
+
+grid_loadcached_methods( data) ::= <<
+$data.EntityUIControlName$Load(): Observable<void> {
+  $data.GridControllerExpression:g_expression()$.initPaging();
+  return this.panelService.get$data.ProviderName$_Cacheable( $data:g_call_parameters()$)
+    .pipe(map((data) => {
+        $data.GridControllerExpression:g_expression()$.initPaging();
+        $data.DataExpressions.EntityCollectionExpression:g_expression()$.length = 0;
+        $data.DataExpressions.EntityCollectionExpression:g_expression()$.push(...data);
+        $data.DataExpressions.UIEntityCollectionExpression:g_expression()$ = $g_type_ctor(data.DataExpressions.UIEntityCollectionExpression.ExprDataType)$;
+        $data.GridControllerExpression:g_expression()$.loadFromData($data.DataExpressions.EntityCollectionExpression:g_expression()$, $data.DataExpressions.UIEntityCollectionExpression:g_expression()$, this.viewManager.getUIModelDefaults( '$data.ControlInfo.ControlName$') $data.BreakBy:g_grid_load_breakby()$);
+        $data.GridControllerExpression:g_expression()$.updatePaging($data.DataExpressions.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, null);
+     }
+  ));
+}
+
+async fetchNextPage$data.EntityUIControlName$(event) {
+  await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$)
+    .pipe(map((data) => {
+      $data.DataExpressions.EntityCollectionExpression:g_expression()$.push(...data);
+      $data.GridControllerExpression:g_expression()$.loadFromData($data.DataExpressions.EntityCollectionExpression:g_expression()$, $data.DataExpressions.UIEntityCollectionExpression:g_expression()$, this.viewManager.getUIModelDefaults( '$data.ControlInfo.ControlName$') $data.BreakBy:g_grid_load_breakby()$);
+      $data.GridControllerExpression:g_expression()$.updatePaging($data.DataExpressions.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, event);
+      this.cdr.markForCheck();
+    }
+  )).toPromise();
+}
+
+>>
+
+dataprovider_load_grid(data) ::= <%  
+  $if(data.CacheEnabled)$
+  await this.$data.EntityUIControlName$Load().toPromise();
+  $else$
+  await this.$data.EntityUIControlName$Load();
+  $endif$
+%>

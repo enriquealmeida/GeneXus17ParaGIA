@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * GxUI Library 2.0.1
+ * Copyright (c) 2009, Artech
+ * All rights reserved.
+ * 
+ * GxUI Library is freely distributable under the terms of the BSD license.
+ * 
+ */
+
+/// &lt;reference path=&quot;..\VStudio\vswd-ext_2.2.js&quot; /&gt;
+// gxui namespace and user controls base class definition
+
+<span id='gxui'>/**
+</span>* @class gxui
+* gxui core utilities and functions.
+* @singleton
+* @ignore
+*/
+gxui = function () {
+	var m_GenexusBuild = null;
+
+	var fixCssReset = function () {
+		var cssLines = [],
+			cellSpacing,
+			cellPadding;
+
+		cssLines.push(&quot;table, table[cellspacing='0'] {&quot;,
+					&quot;    border-collapse: separate;&quot;,
+					&quot;}&quot;);
+
+		// CSS rules are created on the fly so cellpadding and cellspacing values are not reseted.
+		for (var i = 1; i &lt;= 100; i++) {
+			if (gxui.fixSpacingReset) {
+				cellSpacing = [
+					&quot;table[cellspacing='&quot;, i, &quot;'] {&quot;,
+					&quot;    border-collapse: separate;&quot;,
+					&quot;    border-spacing: &quot;, i, &quot;px;&quot;,
+					&quot;}&quot;
+				];
+
+				cssLines.push(cellSpacing.join(&quot;&quot;));
+			}
+			if (gxui.fixPaddingReset) {
+				cellPadding = [
+					&quot;table[cellpadding='&quot;, i, &quot;'] &gt; tbody &gt; tr &gt; td:not([class]), table[cellpadding='&quot;, i, &quot;'] &gt; tbody &gt; tr &gt; th:not([class]) {&quot;,
+					&quot;    padding: &quot;, i, &quot;px;&quot;,
+					&quot;}&quot;
+				];
+
+				cssLines.push(cellPadding.join(&quot;&quot;));
+			}
+		}
+
+		var head = document.getElementsByTagName('head')[0],
+			styleEl = document.createElement('style');
+
+		styleEl.type = 'text/css';
+
+		if (styleEl.styleSheet) {
+			styleEl.styleSheet.cssText = cssLines.join(&quot;&quot;);
+		}
+		else {
+			styleEl.appendChild(document.createTextNode(cssLines.join(&quot;&quot;)));
+		}
+		head.appendChild(styleEl);
+	};
+
+	return {
+<span id='global-property-fixPaddingReset'>		/**
+</span>		* If true, the reset on TD and TH elements padding made by ExtJS is reverted.
+		* @private
+		* @ignore
+		*/
+		fixPaddingReset: true,
+
+<span id='global-property-fixSpacingReset'>		/**
+</span>		* If true, the reset on TABLE elements border-spacing and border-collapse properties made by ExtJS is reverted.
+		* @private
+		* @ignore
+		*/
+		fixSpacingReset: true,
+
+		initialize: function () {
+
+			// Initialize QuickTips
+			Ext.tip.QuickTipManager.init();
+
+			// Define a namespace for extensions of Ext components
+			Ext.namespace('gxui.ext');
+			// Define a namespace for object properties management classes
+			Ext.namespace('gxui.Properties');
+			// Define a namespace for GX interop classes
+			Ext.namespace('gxui.GX');
+			// Define a namespace for GxUI user extensions
+			Ext.namespace('gxui.ux');
+
+			gx.fx.obs.addObserver('gx.onready', this, function () {
+				if (gx &amp;&amp; Ext.ieVersion &gt; 0 &amp;&amp; Ext.ieVersion &lt; 8) {
+					if (gx.staticDirectory != &quot;&quot;)
+						this.StaticContent = gx.staticDirectory;
+					else
+						this.StaticContent = this.getCookie('StaticContent');
+
+					Ext.BLANK_IMAGE_URL = gx.util.resourceUrl(gx.basePath + this.StaticContent + &quot;Shared/ext/resources/themes/images/default/tree/s.gif&quot;, true);
+				}
+
+				// Fix CSS reset made by ExtJS that affects tables
+				gxui.afterShow(fixCssReset, gxui);
+
+				// Force popup size recalculation after showing controls
+				if (gx.popup.ispopup()) {
+					gxui.afterShow(function () {
+						var popup = gx.popup.getPopup().window.gx.popup;
+						Ext.defer(popup.autofit, 100, popup)
+					}, gx.popup);
+				}
+			});
+
+			// Default State provider
+			Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+				expires: new Date(new Date().getTime() + (1000 * 60 * 60 * 24 * 365)) //365 days
+			}));
+
+			// For versions prior to build 55424, gx.lang.inherits function is overriden to allow
+			// GxUI to work properly with older versions of GeneXus.
+			var gxBuild = gxui.getGeneXusBuild();
+			if (gxBuild) {
+				if (gxBuild &gt; 54798) {
+					var docEl = Ext.fly(document.documentElement);
+					if (docEl) {
+						docEl.addCls(&quot;gxui-xev2&quot;);
+						if (gxBuild &lt;= 64355) {
+							docEl.addCls(&quot;gxui-msg-fix&quot;);
+						}
+					}
+				}
+				if (gxBuild &lt; 55424) {
+					gx.lang.inherits = function (subclass, superclass) {
+						var oldProt = subclass.prototype;
+						subclass.prototype = new superclass();
+						for (var pName in oldProt) {
+							if (typeof (subclass.prototype[pName]) == 'undefined')
+								subclass.prototype[pName] = oldProt[pName];
+						}
+						if (typeof (subclass.prototype.base) == 'undefined')
+							subclass.prototype.base = superclass;
+
+						subclass.prototype.constructor = function () {
+							superclass.prototype.constructor.apply(this, arguments);
+							oldProt.constructor.apply(this, arguments);
+						};
+					};
+				}
+			}
+			
+			// Override Ext.getBody() to allow ExtJS to work with SPA
+			Ext.getBody = (function() {
+				var body, domBody;
+				return function() {
+					if (!domBody || domBody != document.body) {
+						domBody = document.body;
+						body = Ext.get(domBody);
+						return body;
+					}
+					return body;
+				};
+			}())
+		},
+
+<span id='global-method-CBoolean'>		/**
+</span>		* Converts a string representing a boolean value, to its corresponding Boolean value.
+		* @param {String} string representation of the boolean value to convert.
+		* @return {Boolean} The boolean value.
+		* @method
+		* @ignore
+		*/
+		CBoolean: function (str) {
+			if (str) {
+				if (typeof (str) == 'string')
+					return (str.toLowerCase() == &quot;true&quot;)
+				return str;
+			}
+			else
+				return false;
+		},
+
+
+<span id='global-method-clone'>		/**
+</span>		* Clones an object.
+		* @param {Object} object to Clone.
+		* @param {Function} [fn] Function to apply to the clone.
+		* @return {Boolean} Cloned object.
+		* @method
+		* @ignore
+		*/
+		clone: function (obj, fn) {
+			if (obj instanceof Array)
+				return gxui.copyArray(obj, fn);
+			if (typeof (obj) != 'object')
+				return obj;
+			if (obj == null)
+				return obj;
+			if (obj.clone)
+				return obj.clone();
+			var cloneObj = new Object();
+			for (var i in obj)
+				cloneObj[i] = gxui.clone(obj[i], fn);
+			if (fn &amp;&amp; typeof (fn) == 'function')
+				fn(cloneObj);
+			return cloneObj;
+		},
+
+<span id='global-method-copyArray'>		/**
+</span>		* Clones an array.
+		* @param {Object} array to Clone.
+		* @param {Function} [fn] Function to apply to the clone.
+		* @return {Boolean} Cloned array.
+		* @method
+		* @ignore
+		*/
+		copyArray: function (arr, fn) {
+			var res = [];
+			for (var i = 0; i &lt; arr.length; i++)
+				res.push(gxui.clone(arr[i], fn));
+			return res;
+		},
+
+		getCookie: function (c_name) {
+			if (document.cookie.length &gt; 0) {
+				c_start = document.cookie.indexOf(c_name + &quot;=&quot;);
+				if (c_start != -1) {
+					c_start = c_start + c_name.length + 1;
+					c_end = document.cookie.indexOf(&quot;;&quot;, c_start);
+					if (c_end == -1) c_end = document.cookie.length;
+					return unescape(document.cookie.substring(c_start, c_end));
+				}
+			}
+			return &quot;&quot;;
+		},
+
+		setCookie: function (name, value, days) {
+			if (days) {
+				var date = new Date();
+				date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+				var expires = &quot;; expires=&quot; + date.toGMTString();
+			}
+			else expires = &quot;&quot;;
+			document.cookie = name + &quot;=&quot; + value + expires + &quot;; path=/&quot;;
+		},
+
+		dateFormat: function () {
+			var gxDF = gx.dateFormat;
+			switch (gxDF) {
+				case &quot;MDY&quot;: return &quot;m/d/y&quot;;
+				case &quot;MDY4&quot;: return &quot;m/d/Y&quot;;
+				case &quot;YMD&quot;: return &quot;y/m/d&quot;;
+				case &quot;Y4MD&quot;: return &quot;Y/m/d&quot;;
+				case &quot;DMY&quot;: return &quot;d/m/y&quot;;
+				case &quot;DMY4&quot;: return &quot;d/m/Y&quot;;
+			}
+		},
+
+		date: function (string) {
+			return new Date.parseDate(string, this.dateFormat());
+		},
+
+<span id='global-method-afterShow'>		/**
+</span>		* Fires after the show method of all the registered User Controls has been executed.
+		* Shorthand method for gxui.UserControlManager.afterShow.
+		* @param {Function} fn The method the event invokes
+		* @param {Object} scope (optional) An object that becomes the scope of the handler
+		* @param {Boolean} options (optional) An object containing standard Ext.EventManager.addListener options
+		* @ignore
+		*/
+		afterShow: function (fn, scope, options) {
+			gxui.UserControlManager.afterShow(fn, scope, options);
+		},
+
+<span id='gxui-method-tryPropertyMapping'>		/**
+</span>		* Maps a set of properties from a source object to another set of properties of a target object.
+		* If the value of the source property is undefined, it is not mapped to the target object.
+		* The source can be a function instead of an object, in which case it is called passing the source property name.
+		* @param {Object} targetObj Target object
+		* @param {Mixed} source If it's an object, the properties will be mapped from here. If it's a function, it will be called for each property, passing the source property name.
+		* @param {Object} propertyMap An object mapping the target and source properties. The keys of the hash are the names of the target properties. The values are the names of the source properties.
+		* @method
+		* @private
+		*/
+		tryPropertyMapping: function (targetObj, source, propertyMap) {
+			for (var targetProp in propertyMap) {
+				var sourceValue,
+					sourceProp = propertyMap[targetProp],
+					ignoreEmpty = false;
+
+				if (typeof (propertyMap[targetProp]) == &quot;object&quot;) {
+					ignoreEmpty = propertyMap[targetProp].ignoreEmpty || false;
+					sourceProp = propertyMap[targetProp].property;
+				}
+
+				if (typeof (source) == &quot;function&quot;)
+					sourceValue = source(sourceProp);
+				else
+					sourceValue = source[sourceProp];
+
+				if (ignoreEmpty) {
+					if (sourceValue)
+						targetObj[targetProp] = sourceValue;
+				}
+				else {
+					if (sourceValue !== undefined)
+						targetObj[targetProp] = sourceValue;
+				}
+			}
+		},
+
+<span id='global-method-getGeneXusBuild'>		/**
+</span>		* Returns the number of the build of GeneXus used to generate the application
+		* @return {Number} GeneXus Build number.
+		* @method
+		* @ignore
+		*/
+		getGeneXusBuild: function () {
+			if (m_GenexusBuild === null) {
+				try {
+					var metaElements = document.getElementsByTagName('meta'),
+						generatorEl = null,
+						versionEl = null;
+					for (var i = 0, len = metaElements.length; i &lt; len; i++) {
+						if (metaElements[i].name.toLowerCase() == &quot;version&quot;)
+							versionEl = metaElements[i];
+						if (metaElements[i].name.toLowerCase() == &quot;generator&quot;)
+							generatorEl = metaElements[i];
+					}
+
+					var value = versionEl ? versionEl.getAttribute('content') : generatorEl.getAttribute('content');
+					var matches = value.match(/-(\d+)$/);
+					if (matches.length &gt; 1)
+						m_GenexusBuild = parseInt(matches[1]);
+				}
+				catch (e) {
+					m_GenexusBuild = 0;
+				}
+			}
+
+			return m_GenexusBuild;
+		}
+	};
+} ();
+
+gxui.initialize();</pre>
+</body>
+</html>

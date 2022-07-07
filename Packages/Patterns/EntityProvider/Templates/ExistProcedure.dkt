@@ -1,0 +1,42 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Architecture.Common" %>
+
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Procedure %>">
+	<Source><![CDATA[// Check if record exist
+<%
+	EntityProviderInstance epInstance = EntityProviderInstance.Load(Instance);
+	//IGridObject gridObject = epInstance.GetElement<IGridObject>(Element);
+
+	//EntityProviderSettings settings = epInstance.Settings;
+
+	Transaction transaction = epInstance.Transaction.Transaction;
+	if (transaction == null)
+		throw new ArgumentNullException("Object");
+%>
+
+for each 
+    <%  foreach (TransactionLevel LVL in transaction.Structure.GetLevels()) { 
+	         foreach (Artech.Genexus.Common.Objects.Attribute a in LVL.Structure.GetAttributes())
+                {   %>
+			//	<%= a.Name %>
+	<%			}
+	}  %>
+	           
+		&Exist = True
+	when none
+		&Exist = False
+Endfor
+]]>
+	</Source>
+</Part>

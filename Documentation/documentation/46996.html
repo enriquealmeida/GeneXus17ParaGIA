@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to configure GeneXus Server for Continuous Integration</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46996,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to configure GeneXus Server for Continuous Integration</h1>
+<!--How to configure GeneXus Server for Continuous Integration--><div class="TableWikiBody" id="tblwikibody"><p>These are the necessary software requirements to be able to work with continuous integration pipelines from GeneXus and GeneXus Server:</p>
+
+<ul>
+	<li><a href="46942.html">GeneXus Server 17</a> installation</li>
+	<li>One or more <a href="46066.html">GeneXus 17</a> installations </li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?38360,," target="_blank">Jenkins</a> server</li>
+	<li>Copy of the <a href='https://github.com/genexuslabs/GeneXusJenkinsIntegration'>GeneXus-Jenkins Integration</a> repository</li>
+</ul>
+
+<p>The machines where GeneXus Server and Jenkins are located must have HTTP and HTTPS connectivity between them. It is highly recommended that they be separate machines.</p>
+
+<p>It is necessary install and configure Jenkins to work with CI pipelines and catalog credentials in Jenkins to integrate to GeneXus Server. Follow <a href='https://github.com/genexuslabs/GeneXusJenkinsIntegration/tree/main/GXServer-JenkinsSetup'>these instructions</a> if you are interested in installing a Jenkins server.</p>
+
+<p>If you want to perform these steps manually please refer the following documents:</p>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?46997,," target="_blank">How to install and configure Jenkins to work with CI pipelines</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?47005,," target="_blank">How to configure credentials to work with CI pipelines</a></li>
+</ul>
+
+<p> </p>
+
+<p>Finally, the integration with Jenkins must be configured in GeneXus Server. To do this, in the <a href="https://wiki.genexus.com/commwiki/wiki?26410,," target="_blank">GeneXus Server Console</a>, click on the “Continuous Integration” option that appears in the menu on the left. When you do this, two tabs will appear on the right: “Pipelines” and “Providers.” Click on &quot;Providers,&quot; and complete the following:</p>
+
+<h3><a id="Provider" class="HashLink" href="#Provider">Provider</a></h3>
+
+<ul>
+	<li><strong>URL:</strong> Jenkins URL (must be accessible from the GXserver installation)</li>
+	<li><strong>User Name:</strong> Jenkins username with which the token was created in the previous step (e.g. admin)</li>
+	<li><strong>User Token:</strong> Token generated in Jenkins for that user (ex: 11d8ba61ed02b39605355dcaeb2bbe77ea). See <a href="https://wiki.genexus.com/commwiki/wiki?47005,," target="_blank">How to configure credentials to work with CI pipelines</a> &quot;Obtain token for GeneXus Server&quot; section for more information</li>
+</ul>
+
+<h3><a id="Default+values" class="HashLink" href="#Default+values">Default values</a></h3>
+
+<ul>
+	<li><strong>GXserver URL (as seen from Jenkins):</strong> URL of this GeneXus Server, which is accessible from the Jenkins machine.</li>
+	<li><strong>GXserver Credentials:</strong> Aliases of the credentials that Jenkins will use when communicating with GXserver (<a href="https://wiki.genexus.com/commwiki/wiki?46994,," target="_blank">a valid GXserver user</a>). See &quot;Catalog access credentials to GeneXus Server&quot; of <a href="https://wiki.genexus.com/commwiki/wiki?47005,," target="_blank">How to configure credentials to work with CI pipelines</a> if you followed the manual installation.</li>
+	<li><strong>Pipelines folder:</strong> Name with which this GXserver will be identified (among others that could also communicate with Jenkins itself). A folder will be created in Jenkins with this identifier, to create the KBs within it. </li>
+	<li><strong>GeneXus installation:</strong> Name given to a GeneXus installation as it was cataloged in Jenkins. See Step 6 of <a href="https://wiki.genexus.com/commwiki/wiki?46997,," target="_blank">How to install and configure Jenkins to work with CI pipelines</a> if you followed the manual installation.</li>
+	<li><strong>MSBuild installation:</strong> Name given to an MSBuild installation as cataloged in Jenkins. See Step 6 of <a href="https://wiki.genexus.com/commwiki/wiki?46997,," target="_blank">How to install and configure Jenkins to work with CI pipelines</a> if you followed the manual installation.</li>
+	<li><strong>SQL Server for Knowledge Bases:</strong> Instance of SQL Server used on the machine where Jenkins is located for GeneXus KBs.</li>
+	<li><strong>SQL Server credentials on Jenkins:</strong> Aliases of the credentials that Jenkins will use when communicating with SQL Server (if SQL Server Authentication method is used). Refer to <a href='https://www.genexus.com/developers/websac?es,,,49217'>SAC# 49217</a> for more information.</li>
+	<li><strong>Deploy To Cloud:</strong> Default value for the Deploy To Cloud option of the pipeline executions that will be created.</li>
+	<li><strong>Force Rebuild:</strong> Default value for the Force Rebuild option of the pipeline executions that will be created.</li>
+	<li><strong>Run Tests:</strong> Default value for the Run Tests option of the pipeline executions that will be created.</li>
+</ul>
+
+<p><img src="./images/47811.png" id="47811" class="WikiImage"/></p>
+
+<p>Done!<br />
+Now you can create and monitor <a href="46972.html">continuous integration pipelines</a> from GeneXus and GeneXus Server.</p>
+
+<h3><a id="Temporary+Limitation" class="HashLink" href="#Temporary+Limitation">Temporary Limitation</a></h3>
+
+<p>The GXserver Credentials must be configured in the jenkins.config file located in &lt;GXserver installation directory&gt;\VDir\BinGenexus\Packages\ContinuousIntegration as shown in the example code (credentials parameter).</p>
+
+<pre>
+        &lt;jenkinsdefaultselements&gt;
+            &lt;jenkinsdefaults url=&quot;http://localhost:8081/&quot; serverurl=&quot;http://localhost/GeneXusServer17/&quot;
+                folder=&quot;GeneXusServer17&quot; <strong>credentials=&quot;GXserverLogin&quot;</strong> genexus=&quot;GX17&quot; forcerebuild=&quot;false&quot;
+                msbuild=&quot;MSBuild17&quot; sqlserver=&quot;SCRATCHSRV2019\SQLEXPRESS&quot;
+                runtests=&quot;true&quot; deploytocloud=&quot;true&quot; /&gt;
+        &lt;/jenkinsdefaultselements&gt;</pre>
+
+<p>Fixed in GXserver V17U1, refer to <a href='https://www.genexus.com/developers/websac?es,,,48314'>SAC# 48314</a> for more information.</p>
+
+<p> </p>
+
+<p></p>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+
+<ul>
+</ul>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46966.html">CI integrated to GeneXus and GXserver</a></TD><TD><a href="38363.html">Toc:DevOps in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/25/21 02:28 PM</em></font></td></TR></table></font>

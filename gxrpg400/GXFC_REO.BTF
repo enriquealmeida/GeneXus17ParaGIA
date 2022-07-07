@@ -1,0 +1,142 @@
+@echo off
+rem
+rem Generation parameters:
+rem	1. Data Library
+rem	2. Program Library
+
+  if exist rmtcmd.log del rmtcmd.log
+
+  %FILEPATH%\gxmulti -p RMTCMD.exe
+  if not errorlevel 255 goto err1
+
+  echo.> rmtcmd.err
+  echo.>> rmtcmd.err
+  echo.>> rmtcmd.err
+  echo.Responses from RMTCMD executions >> rmtcmd.err
+  echo.-------------------------------- >> rmtcmd.err
+  echo.>> rmtcmd.err
+
+  RMTCMD "CHKOBJ OBJ(QSYS/#1) OBJTYPE(*LIB)" /Z >>rmtcmd.err 
+  if not errorlevel 1 goto dlnotnew
+
+  %FILEPATH%\gxmulti -p RMTCMD.exe
+  if not errorlevel 255 goto err1
+
+  echo.
+  echo Creating DataBase Library on AS/400
+  echo.
+  RMTCMD /I GXFC_CDL.cmd /Z /Q >>rmtcmd.err
+  if errorlevel 20 goto err2 
+
+:dlnotnew
+  %FILEPATH%\gxmulti -p RMTCMD.exe
+  if not errorlevel 255 goto err1
+  RMTCMD "CHKOBJ OBJ(QSYS/#2) OBJTYPE(*LIB)" /Z >>rmtcmd.err 
+  if not errorlevel 1 goto plnotnew
+
+  %FILEPATH%\gxmulti -p RMTCMD.exe
+  if not errorlevel 255 goto err1
+
+  echo.
+  echo Creating Programs Library on AS/400
+  echo.
+  RMTCMD /I GXFC_CPL.cmd /Z /Q >>rmtcmd.err
+  if errorlevel 20 goto err3
+
+:plnotnew
+
+  %FILEPATH%\gxmulti -p GXTFF.exe
+  if not errorlevel 255 goto err5
+
+  GXTFF DBRDLTF.CLP #2 QCLSRC
+  if errorlevel 1 goto err6
+
+  if not exist DBTFR.BAT goto err7
+  CALL DBTFR >>rmtcmd.err
+
+  GXTFF GXAPPPGM.LST #2 GXAPPPGM
+  if errorlevel 1 goto err8
+
+  %FILEPATH%\gxmulti -p RMTCMD.exe
+  if not errorlevel 255 goto err1
+  echo.
+  echo Executing DataBase Reorganization on AS/400
+  echo.
+  RMTCMD /I GXFC_REO.CMD /Z /Q >>rmtcmd.err
+  if errorlevel 20 goto err4 
+  %FILEPATH%\gxmulti -m "Reorganization execution OK" "%MDLDIR%\gxfc_dbr.ok"
+  if exist rmtcmd.err ren rmtcmd.err rmtcmd.log
+  goto end
+
+:err1
+  echo.
+  echo Error ! RMTCMD not found in path.
+  echo.
+  call %FILEPATH%\gx400\gxerrlev.bat
+  %FILEPATH%\gxmulti -m "RMTCMD not found in path. Please check setup" "%MDLDIR%\GXFCycle.LOG"
+  %FILEPATH%\gxmulti -m "RMTCMD return code : %ELC% " "%MDLDIR%\GXFCycle.LOG"
+  goto error
+
+:err2
+  echo.
+  echo Database Library Creation Error !
+  echo.
+  call %FILEPATH%\gx400\gxerrlev.bat
+  %FILEPATH%\gxmulti -m "Database Library Creation ERROR" "%MDLDIR%\GXFCycle.LOG"
+  %FILEPATH%\gxmulti -m "RMTCMD return code : %ELC% " "%MDLDIR%\GXFCycle.LOG"
+  goto error
+
+:err3
+  echo.
+  echo Programs Library Creation Error !
+  echo.
+  call %FILEPATH%\gx400\gxerrlev.bat
+  %FILEPATH%\gxmulti -m "Programs Library Creation ERROR" "%MDLDIR%\GXFCycle.LOG"
+  %FILEPATH%\gxmulti -m "RMTCMD return code : %ELC% " "%MDLDIR%\GXFCycle.LOG"
+  goto error
+
+:err4
+  echo.
+  echo Reorganization execution Error !
+  echo.
+  call %FILEPATH%\gx400\gxerrlev.bat
+  %FILEPATH%\gxmulti -m "Reorganization execution ERROR" "%MDLDIR%\GXFCycle.LOG"
+  %FILEPATH%\gxmulti -m "RMTCMD return code : %ELC% " "%MDLDIR%\GXFCycle.LOG"
+  goto error
+
+:err5
+  echo.
+  echo Error ! GXTFF not found.
+  echo.
+  %FILEPATH%\gxmulti -m "GXTFF.EXE not found." "%MDLDIR%\GXFCycle.LOG"
+  goto error
+
+:err6
+  echo.
+  echo Error ! GXTFF returned an error code.
+  echo.
+  call %FILEPATH%\gx400\gxfc_err.bat DBRDLTF.CLP
+  goto error
+
+:err7
+  echo.
+  echo Error ! DBTFR not found.
+  echo.
+  %FILEPATH%\gxmulti -m "DBTFR.BAT not found." "%MDLDIR%\GXFCycle.LOG"
+  goto error
+
+:err8
+  echo.
+  echo Error ! GXTFF returned an error code.
+  echo.
+  call %FILEPATH%\gx400\gxfc_err.bat GXAPPPGM.LST
+  goto error
+
+:error
+  set ELC=
+  echo error1 >%MDLDIR%\gxfc_1.err
+  goto end
+
+:end
+
+

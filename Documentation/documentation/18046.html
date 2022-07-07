@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Implementing Permissions on Modes of a Web Transaction</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18046,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Implementing Permissions on Modes of a Web Transaction</h1>
+<!--HowTo: Implementing Permissions on Modes of a Web Transaction--><div class="TableWikiBody" id="tblwikibody"><h4><a id="Purpose" class="HashLink" href="#Purpose">Purpose</a></h4>
+
+<p>Show how to configure permissions over web transaction modes, so only authorized users can view the transaction's data (execute the transaction in display mode); insert, update, or delete data of the web transaction.</p>
+
+<h4><a id="How+to+do+it" class="HashLink" href="#How+to+do+it">How to do it</a></h4>
+
+<p><a href="14960.html">GAM</a> defines <a href="17916.html">automatic permissions</a> which includes permissions to execute the web transaction (DSP), and one permission for each mode INS, UPD, DLT.</p>
+
+<p>The name of the permissions are determined from the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> property value set in the web transaction properties (as shown in Figure 1).</p>
+
+<p>In runtime, these permissions are checked automatically, and the GeneXus user just needs to declare the <a href="https://wiki.genexus.com/commwiki/wiki?20603,," target="_blank">Permission Access Type</a> in <a href="15935.html">GAM Backend</a>.</p>
+
+<p>The process at execution time consists on validating if the user has rights to execute the web transaction object. In this case GAM checks that the user has &lt;prefix&gt;_execute permission (where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> defined for the transaction). So the &lt;prefix&gt;_execute permission enables the user to display the data of the transaction (display mode).</p>
+
+<p>If the user executes an action over the transaction (Insert, Update or Delete) another permission will be required :</p>
+
+<p>&lt;prefix&gt;_Insert<br />
+&lt;prefix&gt;_Update<br />
+&lt;prefix&gt;_Delete</p>
+
+<p>In fact there is a permission which "groups" the other permissions (see <a href="17664.html">Full Control Permissions</a> for more details):</p>
+
+<p>&lt;prefix&gt;.FullControl</p>
+
+<p>    &lt;prefix&gt;_Execute<br />
+    &lt;prefix&gt;_Insert<br />
+    &lt;prefix&gt;_Update<br />
+    &lt;prefix&gt;_Delete</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>Let's suppose we have a "product" web transaction, where some users will have access rights to execute the web transaction, but not to insert, update, or delete data.</p>
+
+<p>Just follow this steps:</p>
+
+<p>1. Check that <a href="14706.html">Enable Integrated Security Property</a> is set to TRUE at version level of the KB, and <a href="15214.html">Integrated Security Level Property</a> is set to Authorization at version level or at least for the transaction object properties.</p>
+
+<p>Check also that <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> property of "product" web transaction is set to any value (in this example the Permission Prefix property is set to "product", as shown in figure 1).</p>
+
+<h6><img src="./images/18047.png" id="18047" class="WikiImage"/><br />
+Figure 1.</h6>
+
+<p>2. Define a role where the permissions mentioned above are specified with their corresponding <a href="https://wiki.genexus.com/commwiki/wiki?20603,," target="_blank">Permission Access Type</a>.</p>
+
+<h5><img src="./images/18048.png" id="18048" class="WikiImage"/><br />
+Figure 2.</h5>
+
+<p>3. The users need to be associated to the role newly created.</p>
+
+<h5><img src="./images/18049.png" id="18049" class="WikiImage"/><br />
+Figure 3.</h5>
+
+<p>In this example WW pattern has been associated to product transaction.</p>
+
+<p>The user associated to the role defined previously, will be able to execute wwproduct webpanel, and select products from the list in order to view the data.<br />
+<br />
+When the user tries to update or delete an existing product, or insert a new product, the <a href="https://wiki.genexus.com/commwiki/wiki?17551,," target="_blank">Not Authorized Object for Web</a> object will be called, as seen in the following figures (if the transaction does not receive KEY and Mode as parameters, the permission error is shown using the Error Viewer).</p>
+
+<h6><img src="./images/18053.png" id="18053" class="WikiImage"/><br />
+Figure 4.</h6>
+
+<h6><img src="./images/18054.png" id="18054" class="WikiImage"/><br />
+Figure 5.</h6>
+
+<h6><img src="./images/18055.png" id="18055" class="WikiImage"/><br />
+Figure 6.</h6>
+
+<h4><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h4>
+
+<p><a href="15912.html">GAM - Permissions</a><br />
+<a href="17664.html">Full Control Permissions and inheritance</a><br />
+<a href="17569.html">GAM Roles</a><br />
+<a href="17583.html">GAM Authorization Scenarios</a></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br />
+<br />
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17583.html">GAM - Authorization Scenarios</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 05:11 PM</em></font></td></TR></table></font>

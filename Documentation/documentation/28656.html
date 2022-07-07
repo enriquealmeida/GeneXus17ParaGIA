@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Dynamic Transactions that update data</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?28656,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Dynamic Transactions that update data</h1>
+<!--Dynamic Transactions that update data--><div class="TableWikiBody" id="tblwikibody"><p>By default <a href="28062.html">Dynamic Transactions</a> are defined with its <a href="29599.html">Update Policy property</a> = Read Only. So, as we know, <span style="line-height: 20.8px;">the data is queried in runtime, and the Transaction form does neither allow updating nor inserting nor deleting.</span></p>
+
+<p>However, in some scenarios, the capability of allowing the update of data is practical.</p>
+
+<p style="line-height: 20.8px;"><span style="line-height: 1.6em;">To define a </span><a href="28062.html">Dynamic Transaction</a><span style="line-height: 1.6em;"> </span><span style="line-height: 20.8px;">that allows data updates, the following transaction properties must be set:</span></p>
+
+<ul style="line-height: 20.8px;">
+	<li><a href="29597.html">Data Provider</a> = True</li>
+	<li><a href="29584.html">Used To</a> = Retrieve Data</li>
+	<li><a href="29599.html">Update Policy</a> = Updatable</li>
+</ul>
+
+<p><span style="line-height: 20.8px;">and you have to complete the Data Provider that is automatically created </span>in consequence of having set <a href="29597.html">Data Provider property</a> = True<span style="line-height: 20.8px;">.</span></p>
+
+<p><span style="line-height: 1.6em;">Let's see an interesting scenario that proposes the use of a Dynamic Transaction </span><span style="line-height: 20.8px;">that allows data updates. </span></p>
+
+<p><span style="line-height: 20.8px;">We have a GeneXus KB for tracking body weight, with the following transactions:</span></p>
+
+<pre class="Code" style="line-height: 20.8px;">
+Person
+{
+   PersonId*
+   PersonName
+   GenderId
+   GenderName 
+}
+
+</pre>
+
+<pre class="Code" style="line-height: 20.8px;">
+Gender
+{
+   GenderId*
+   GenderName
+   GenderMembers = count(PersonName)
+}
+
+</pre>
+
+<pre class="Code" style="line-height: 20.8px;">
+WeightLog
+{
+   PersonId*
+   WeightLogDate*
+   WeightLogKilos
+}</pre>
+
+<p><span style="line-height: 1.6em;">Now suppose that, with the system already up and running, people want to track not only their weight but also other body measurements (like chest or waist circumference). The database model needs to be redesigned in order to store this new data. Of course, it's possible to create a new Transaction object for each new measurement to be tracked, but a better (and more extensible) design is to have just one Transaction for any kind of measurements:</span></p>
+
+<pre class="Code" style="line-height: 20.8px;">
+MeasureLog
+{
+   PersonId*
+   MeasureId*
+   MeasureLogDate*
+   MeasureLogValue
+}</pre>
+
+<p><span style="line-height: 1.6em;">in conjunction with a Measure Transaction:</span></p>
+
+<pre class="Code" style="line-height: 20.8px;">
+Measure
+{
+   MeasureId*
+   MeasureName
+}</pre>
+
+<p>whose <a href="29597.html">Data Provider property</a> = True, its  <a href="29584.html">Used To property</a> = Retrieve Data, its <a href="29599.html">Update Policy property</a> = Read Only, and its associated Data Provider is:</p>
+
+<p><img src="./images/29649.png" id="29649" class="WikiImage"/></p>
+
+<p>The WeightLog transaction is not needed anymore since all measurements will be stored in the physical table associated with the new MeasureLog transaction. However, the application code still references it as <a href="25418.html">Base Transaction</a> in many places, such as For Each statements. So, instead of removing the <span style="line-height: 20.8px;">WeightLog transaction</span> and having to modify wherever it is referenced, it's a good idea to change it into a <a href="28062.html">Dynamic Transaction</a>.</p>
+
+<p>For that purpose, you have to:</p>
+
+<ol>
+	<li>&quot;Turn on&quot; the WeightLog <a href="29597.html">Data Provider property</a> = True</li>
+	<li>Set <span style="line-height: 20.8px;">the WeightLog</span> <span style="line-height: 20.8px;"> <a href="29584.html">Used to property</a> = Retrieve Data</span></li>
+	<li><span style="line-height: 20.8px;">Complete the Data Provider that was automatically created and named &quot;WeightLog_</span><span style="line-height: 20.8px;">DataProvider&quot;, like the following image shows:</span></li>
+</ol>
+
+<p><img src="./images/29650.png" id="29650" class="WikiImage"/></p>
+
+<p>With these definitions, the WeightLog Transaction can still be used in queries exactly as before (no code changes are needed to any For Each statement that references it, and its attributes can be kept in grids, printblocks, etc.). <strong><span style="line-height: 1.6em;">However, you must not forget that if you define a transaction as Dynamic, the associated physical tables will no longer exist. So, before proceeding with this proposal, you have to move the data </span></strong><span style="line-height: 1.6em;">(in this case, weights from WeightLog to MeassureLog table).</span></p>
+
+<p>Well, and what about the <strong>updates</strong>? The user is accustomed to executing the <span style="line-height: 20.8px;">WeightLog Transaction form, so, the idea is he can use both: the MeasureLog and the </span>WeightLog transactions.</p>
+
+<p>By setting the WeightLog Transaction <a href="29599.html">Update Policy property</a> = Updatable, its Form will allow the user to edit the data; but in which physical table the updates will be stored? </p>
+
+<p><span style="line-height: 20.8px;">You have to codify the Insert, Update and Delete events </span><span style="line-height: 1.6em;">in the </span><span style="line-height: 20.8px;">WeightLog Transaction Events section, in order to specify his intention. In this example, the logical solution is to store the data in the MeasureLog physical table, using the </span><a href="5846.html">Business Component</a><span style="line-height: 1.6em;"> concept as follows:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span style="line-height: 1.6em;"><strong>Event Insert(&amp;Messages)</strong>
+    &amp;MeasureLog = new()
+    &amp;MeasureLog.PersonId        = PersonId
+    &amp;MeasureLog.MeasureId       = 1
+    &amp;MeasureLog.MeasureLogDate  = WeightLogDate
+    &amp;MeasureLog.MeasureLogValue = WeightLogKilos
+    &amp;MeasureLog.Insert()
+    &amp;Messages = &amp;MeasureLog.GetMessages()
+<strong>Endevent</strong></span>
+
+<span style="line-height: 1.6em;"><strong>Event Update(&amp;Messages)</strong>
+    &amp;MeasureLog.Load(PersonId, 1, WeightLogDate)
+    &amp;MeasureLog.MeasureLogValue = WeightLogKilos
+    &amp;MeasureLog.Update()
+    &amp;Messages = &amp;MeasureLog.GetMessages()
+<strong>Endevent</strong></span>
+
+<span style="line-height: 1.6em;"><strong>Event Delete(&amp;Messages)</strong>
+    &amp;MeasureLog.Load(PersonId, 1, WeightLogDate)
+    &amp;MeasureLog.Delete()
+    &amp;Messages = &amp;MeasureLog.GetMessages()
+<strong>Endevent</strong></span></pre>
+
+<p class="Code"><span style="line-height: 1.6em;">Note that after applying respectively the Insert(), Update() and Delete() methods to the &amp;MeasureLog business component variable, you obtain the messages and/or errors triggered (in the &amp;Messages collection variable). By declaring the &amp;Messages variable as a parameter in each event (as shown), those messages are displayed in the </span>WeightLog Dynamic Transaction in a transparent way, like its own messages.</p>
+
+<p><span style="line-height: 1.6em;">In this way, the WeightLog Dynamic Transaction can be used </span><strong style="line-height: 1.6em;">exactly the same way as before </strong><span style="line-height: 20.8px;">and no changes are necessary to dependent programs.</span><span style="line-height: 1.6em;"> This also applies if the transaction is used as </span><a href="5846.html">Business Component</a>, because it is a Dynamic Transaction that allows updates and the corresponding events to store the data are codified. </p>
+
+<h3><br />
+Considerations</h3>
+
+<p>Some considerations must be taken into account to use this feature:</p>
+
+<ul>
+	<li>This feature is not available for multi-level dynamic transactions.</li>
+	<li>If you are using MySQL the 5.7.7 or higher version is required. </li>
+	<li>Informix and SQLite do not support this kind of Transaction.</li>
+	<li>To prototype Java applications on the cloud, use <a href="https://wiki.genexus.com/commwiki/wiki?26157,," target="_blank">apps6.genexus.com</a> </li>
+</ul>
+
+<ol>
+</ol>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31018.html">Automatic data population associated to transactions - FAQ</a></TD><TD><a href="28062.html">Toc:Dynamic Transactions</a></TD></TR><TR><TD><a href="6774.html">Specification Codes from spc0150 onwards</a></TD><TD><a href="29599.html">Update Policy property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/07/21 11:54 PM</em></font></td></TR></table></font>

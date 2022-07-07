@@ -1,0 +1,43 @@
+delimiters "$", "$"
+
+init(transaction, lower, variables, foreigns, event, level, action, regExp, enums, pk, responses, trnCheck)::=<<
+$if(variables)$
+	$insertLevelContent()$
+$else$
+$insertLevelContent()$
+$endif$
+>>
+
+insertLevelContent()::=<<
+$variables:{variable|$imageVariables(variable)$};separator="\n"$
+&$level$ = new()
+$foreigns:{foreign|$foreignValidation(foreign, transaction, lower, level)$};separator="\n"$
+$regExp:{variable|$regExpValidation(variable)$};separator="\n"$
+$shouldCheckIf(trnCheck, foreigns, regExp, enums)$
+$if(trnCheck.ShouldCheck)$
+	$performInsertLevel()$
+$shouldCheckEndIf(trnCheck)$
+$else$
+performInsertLevel()$
+$endif$
+>>
+
+performInsertLevel()::=<<
+&$transaction$.Load(&ContextIn.Context.$pk$)
+$variables:{variable|$renderParameters(level, variable)$};separator="\n"$
+$enums:{variable|$enumParameters(transaction, variable)$};separator="\n"$
+&$transaction$.$level$.Add(&$level$)
+&$transaction$.Update()
+
+if &$transaction$.success()
+	commit
+	&speechOut = !"$level$ inserted!"
+	&ContextOut.Context.$pk$ = &ContextIn.Context.$pk$
+else
+	&ContextOut.FromJson(&ContextPrevMsg.ToJson())
+	&Messages = &$transaction$.GetMessages()
+	for &Message in &Messages
+		&speechOut+= &Message.Description
+	endfor
+endif
+>>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Geolocation - Showing My Location</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16433,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Geolocation - Showing My Location</h1>
+<!--Geolocation - Showing My Location--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Every day, the postal service employee has to deliver many letters, and for this reason he needs to know the places near his delivery points, based on his current location.</p>
+
+<p>To this end, we will create a transaction where we will store all of the post office's requirements. In addition, we will have a smart device application to display, in a map, the delivery points (using the <a href="15309.html">Control type SDMaps</a>) and its current position (using the GetMyLocation method of the GeoLocation External Object).</p>
+
+<p>Below is a detailed description of the four steps required for this implementation. See in detail the four steps to perform this implementation.</p>
+
+<h3><a id="1.+Create+the+PostOffice+transaction" class="HashLink" href="#1.+Create+the+PostOffice+transaction">1. Create the PostOffice transaction</a></h3>
+
+<p>First, create the transaction that will be used to store all of the Post Office's requirements. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+POReqId *           // Autonumber
+POREqAddress        // CHar(500): Address or description
+POReqLoc            // Geolocation: Latitude, Longitude
+POReqDeliver        // boolean
+PoReqPin            // Image: Image Icon  </pre>
+
+<p><img src="./images/16440.png" id="16440" class="WikiImage"/></p>
+
+<h3><a id="2.+Create+a+wiki%3F16321%2CCategory%253AMenu%2Bobject+Menu+object+and+an+Entry+panel+%28WWPostNear%29+based+on+WorkWithdevicesPostOffice" class="HashLink" href="#2.+Create+a+wiki%3F16321%2CCategory%253AMenu%2Bobject+Menu+object+and+an+Entry+panel+%28WWPostNear%29+based+on+WorkWithdevicesPostOffice">2. Create a <a href="16321.html">Menu object</a> and an Entry panel (WWPostNear) based on WorkWithdevicesPostOffice</a></h3>
+
+<p>Apply the Work With for Smart Devices pattern (WorkWithDevicesPostOffice will be created) and set:</p>
+
+<ul>
+	<li>List/Grid/Control Type = SD MAPS</li>
+	<li>List/Grid/Location Attribute = POReqLoc</li>
+	<li>List/Grid/Pin image Attribute = POReqPin</li>
+</ul>
+
+<p><img src="./images/16435.png" id="16435" class="WikiImage"/></p>
+
+<p>Create a <a href="16321.html">Menu object</a> and add WorkWithDevicesPostOffice item. (For further information see <a href="15975.html">Applying Work With for Smart Devices Pattern</a>).</p>
+
+<h3><a id="3.+Get+my+location+and+store+it+in+the+database" class="HashLink" href="#3.+Get+my+location+and+store+it+in+the+database">3. Get my location and store it in the database</a></h3>
+
+<p>Create the &quot;<strong>GetMyLoc</strong>&quot; action in the WorkWithDevicesPostOffice List object, and invoke the <strong>GetMyLocation</strong> method. </p>
+
+<p>To create the action, click on List node, go to Events and select the &quot;Add&quot; action button (GetMyLoc). To invoke the GetMyLocation method, go to Events and write the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'GetMyloc'
+    &amp;GetMyLocation = Geolocation.GetMyLocation(0,0,false)
+EndEvent
+// where:
+//        &amp;GetMyLocation is based on GeoLocationInfo Data type, 
+//        Geolocation is not a variable, it's an external object's static reference</pre>
+
+<p>Note: The GetMyLocation method must be invoked from an action; it can’t be invoked from a procedure because this method is executed on the device side.</p>
+
+<p>Create a nested action and from there invoke the procedure that stores “my position” in the database (the <a href="17389.html">Composite command</a> clause must be used to synchronically trigger nested actions). This action sets the GeoLocationInfo parameter, which is the result of invoking the GetMyLocation method mentioned above. It will be similar to the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'GetMyloc' 
+    Composite
+         &amp;GetMyLocation = Geolocation.GetMyLocation(0,0,false) 
+         StoreMyLocation(&amp;GetMyLocation)
+    EndComposite
+EndEvent </pre>
+
+<p>The <strong>StoreMyLocation</strong> procedure is similar to the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(&amp;GetMyLocation); //Important: the name of the parmeter MUST Be the same of the Method which is invoked
+
+new
+    POReqAddress = 'I am Here'
+    POReqLoc = &amp;GetMyLocation.Location
+    POReqDeliver = false
+    PoReqPin.FromImage(here)
+endnew</pre>
+
+<div>Create a nested action to refresh the data, writing code similar to this: SD Actions.Refresh().<br />
+<br />
+In the end it will look as follows:</div>
+
+<p><img src="./images/16436.png" id="16436" class="WikiImage"/> </p>
+
+<div>
+<div>
+<h3><a id="4.+Execute+" class="HashLink" href="#4.+Execute+">4. Execute </a></h3>
+</div>
+
+<div>After execute, it looks like: </div>
+
+<div> </div>
+
+<div><img src="./images/16439.PNG" id="16439" class="WikiImage"/></div>
+
+<div> </div>
+</div>
+
+<p>A complete Knowledge Base of these examples is available <a href="https://wiki.genexus.com/commwiki/wiki?20658,," target="_blank">Postman</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="16473.html">Geolocation - Show points near me</a><br />
+<a href="16433.html">Geolocation - Showing My Location</a><br />
+<a href="31274.html">Geolocation external object</a></p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="16433.html">Geolocation - Showing My Location</a></TD><TD><a href="21763.html">Geolocation API - Scenarios</a></TD><TD><a href="25164.html">GetMyLocation method</a></TD></TR><TR><TD><a href="20832.html">HowTo: Using Geolocation Tracking</a></TD><TD><a href="16756.html">HowTo: Using SD Geolocation Control in Smart Devices</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

@@ -1,0 +1,174 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="DeployNewApp" ToolsVersion="3.5">
+	<PropertyGroup>
+		<GXInstallationUnset>true</GXInstallationUnset>
+		<GXInstallationUnset Condition=" '$(GXInstallation)' != '' ">false</GXInstallationUnset>
+		<GXInstallation Condition="$(GXInstallationUnset)">.</GXInstallation>
+
+		<GXTargets>$(GXInstallation)\Genexus.Tasks.targets</GXTargets>
+		<GXTargetsValid>false</GXTargetsValid>
+		<GXTargetsValid Condition=" Exists('$(GXTargets)') ">true</GXTargetsValid>
+
+		<CloudTargets>$(GXInstallation)\GxCloud.Tasks.targets</CloudTargets>
+		<CloudTargetsValid>false</CloudTargetsValid>
+		<CloudTargetsValid Condition=" Exists('$(CloudTargets)') ">true</CloudTargetsValid>
+
+		<AllowUnsafeCertificates Condition=" '$(AllowUnsafeCertificates)' == '' ">false</AllowUnsafeCertificates>
+	</PropertyGroup>
+
+	<Import Condition="$(GXTargetsValid)" Project="$(GXTargets)"/>
+	<Import Condition="$(CloudTargetsValid)" Project="$(CloudTargets)"/>
+
+	<Target Name="Authenticate">
+		<Error Text="Target file 'GxCloud.Tasks.targets' wasn't found in the current directory. You should set the GXTnstallation parameter to target a GX installation with the cloud extension installed." Condition=" $(GXTargetsValid) and !$(CloudTargetsValid) " />
+		<Error Text="Target file 'GxCloud.Tasks.targets' wasn't found in '$(GXInstallation)'. You should set the GXInstallation parameter to target a GX installation with the cloud extension installed." Condition="!$(GXInstallationUnset) and !$(CloudTargetsValid)" />
+
+		<Authorization CloudUri="$(CloudUri)" CloudUserName="$(CloudUserName)" CloudPassword="$(CloudPassword)" AllowUnsafeCertificates="$(AllowUnsafeCertificates)">
+			<Output TaskParameter="AccessToken" PropertyName="AccessToken" />
+		</Authorization>
+		<Message Text="User was authenticated with oauth token $(AccessToken)." />
+	</Target>
+
+	<Target Name="GetCloudGuid" DependsOnTargets="Authenticate">
+		<Error Text="You must specify the CloudName parameter." Condition=" '$(CloudName)' == '' " />
+		<GetCloudGuid AccessToken="$(AccessToken)" CloudName="$(CloudName)">
+			<Output TaskParameter="CloudGuid" PropertyName="CloudGuid" />
+		</GetCloudGuid>
+		<Message Text="The Cloud guid for '$(CloudName)' is '$(CloudGuid)'." />
+	</Target>
+
+	<Target Name="GetTargetGuid" DependsOnTargets="Authenticate">
+		<Error Text="You must specify the TargetName parameter." Condition=" '$(TargetName)' == '' " />
+		<GetTargetGuid AccessToken="$(AccessToken)" TargetName="$(TargetName)">
+			<Output TaskParameter="TargetGuid" PropertyName="TargetGuid" />
+		</GetTargetGuid>
+		<Message Text="The Target guid for '$(TargetName)' is '$(TargetGuid)'." />
+	</Target>
+
+	<Target Name="GetAppGuid" DependsOnTargets="GetCloudGuid;GetTargetGuid">
+		<Error Text="You must specify the AppName parameter." Condition=" '$(AppName)' == '' " />
+		<GetApplicationGuid AccessToken="$(AccessToken)" CloudGuid="$(CloudGuid)" TargetGuid="$(TargetGuid)" ApplicationName="$(AppName)">
+			<Output TaskParameter="ApplicationGuid" PropertyName="AppGuid" />
+		</GetApplicationGuid>
+		<Message Text="The Application guid for '$(AppName)' is '$(AppGuid)'." />
+	</Target>
+
+	<Target Name="GetApplicationInfo" DependsOnTargets="Authenticate;GetCloudGuid">
+		<Error Text="You must specify the ApplicationName parameter." Condition=" '$(ApplicationName)' == '' " />
+		<GetApplicationInstallations ApplicationName="$(ApplicationName)" CloudGuid="$(CloudGuid)" AccessToken="$(AccessToken)" >
+			<Output TaskParameter="AppGuid" PropertyName="AppGuid" />
+			<Output TaskParameter="AppInfo" PropertyName="AppInfo" />
+		</GetApplicationInstallations>
+		<Message Text="The guid for  '$(ApplicationName)' is  $(AppGuid)." />
+	</Target>
+
+	<Target Name="PrepareDeploy" DependsOnTargets="Authenticate;OpenKB"/>
+
+	<Target Name="OpenKB">
+		<Error Text="You must specify the KBPath parameter." Condition=" '$(KBPath)' == '' " />
+		<Error Text="Target file 'Genexus.Tasks.targets' wasn't found in the current directory. You should set the GXInstallation parameter to target a GX installation with the cloud extension installed." Condition="$(GXInstallationUnset) and !$(GXTargetsValid)" />
+		<Error Text="Target file 'Genexus.Tasks.targets' wasn't found in '$(GXInstallation)'. You should set the GXInstallation parameter to target a GX installation with the cloud extension installed." Condition="!$(GXInstallationUnset) and !$(GXTargetsValid)" />
+
+		<OpenKnowledgeBase Directory="$(KBPath)" />
+	</Target>
+
+	<Target Name="DeployNewApp" DependsOnTargets="PrepareDeploy;GetCloudGuid;GetTargetGuid">
+		<Error Text="You must specify the AppName parameter." Condition=" '$(AppName)' == '' " />
+		<CheckApplicationName AccessToken="$(AccessToken)" CloudGuid="$(CloudGuid)" ApplicationName="$(AppName)">
+			<Output TaskParameter="IsValid" PropertyName="IsValidName" />
+		</CheckApplicationName>
+		<Message Condition="$(IsValidName)" Text="Application name '$(AppName)' is valid in cloud '$(CloudGuid)'." />
+		<Error Condition="!$(IsValidName)" Text="Application name '$(AppName)' should be valid in cloud '$(CloudGuid)'." />
+
+		<DeployNewApplication
+			AccessToken="$(AccessToken)"
+			ApplicationName="$(AppName)"
+			DeployTargetGuid="$(TargetGuid)"
+			DatabaseGuid="$(DatabaseGuid)"
+			GamPackageFile="$(GamPackageFile)"
+			GamAdminUser="$(GamAdminUser)"
+			GamAdminPassword="$(GamAdminPassword)"
+			GamManagerUser="$(GamManagerUser)"
+			GamManagerPassword="$(GamManagerPassword)"
+			FlowPackageFile="$(FlowPackageFile)" >
+			<Output TaskParameter="ApplicationGuid" PropertyName="AppGuid" />
+		</DeployNewApplication>
+		<Message Text="The Application guid for '$(AppName)' is '$(AppGuid)'." />
+	</Target>
+
+	<Target Name="DeployNewVersion" DependsOnTargets="PrepareDeploy">
+		<PropertyGroup>
+			<BackupDb Condition=" '$(BackupDb)' == '' ">true</BackupDb>
+			<DuplicateDb Condition=" '$(DuplicateDb)' == '' ">false</DuplicateDb>
+			<DeployNewUrl Condition=" '$(DeployNewUrl)' == '' ">false</DeployNewUrl>
+		</PropertyGroup>
+		<DeployNewVersion
+			AccessToken="$(AccessToken)"
+			BackupDatabase="$(BackupDb)"
+			DuplicateDatabase="$(DuplicateDb)"
+			DeployToNewUrl="$(DeployNewUrl)"
+			GamPackageFile="$(GamPackageFile)"
+			GamAdminUser="$(GamAdminUser)"
+			GamAdminPassword="$(GamAdminPassword)"
+			GamManagerUser="$(GamManagerUser)"
+			GamManagerPassword="$(GamManagerPassword)"
+			FlowPackageFile="$(FlowPackageFile)" />
+	</Target>
+
+	<Target Name="ConnectToExistingApplication" DependsOnTargets="PrepareDeploy;GetTargetGuid;GetAppGuid">
+		<ConnectToExistingApplication AccessToken="$(AccessToken)" TargetGuid="$(TargetGuid)" ApplicationGuid="$(AppGuid)" />
+	</Target>
+
+	<Target Name="RemoveConnectionToApplication" DependsOnTargets="OpenKB;GetAppGuid">
+		<RemoveConnectionToApplication ApplicationGuid="$(AppGuid)" />
+	</Target>
+
+	<Target Name="RestoreApplicationDeploy" DependsOnTargets="Authenticate">
+		<Error Text="You must specify the InstallationID parameter." Condition=" '$(InstallationID)' == '' " />
+		<RestoreApplicationDeploy
+			AccessToken="$(AccessToken)"
+			InstallationId="$(InstallationID)" />
+	</Target>
+	
+	<Target Name="BackupDatabase" DependsOnTargets="Authenticate">
+		<Error Text="You must specify the ApplicationGUID parameter." Condition=" '$(ApplicationGUID)' == '' " />
+		<Error Text="You must specify the ApplicationStageID parameter." Condition=" '$(ApplicationStageID)' == '' " />
+    <BackupDatabase
+      AccessToken="$(AccessToken)"
+      ApplicationGUID="$(ApplicationGUID)"
+      ApplicationStageID="$(ApplicationStageID)">
+      <Output TaskParameter="DatabaseGUID" PropertyName="DatabaseGUID" />
+      <Output TaskParameter="DatabaseBackupID" PropertyName="DatabaseBackupID" />
+    </BackupDatabase>
+	</Target>
+
+  <Target Name="CheckBackupStatus" DependsOnTargets="Authenticate">
+    <Error Text="You must specify the DatabaseGUID parameter." Condition=" '$(DatabaseGUID)' == '' " />
+    <Error Text="You must specify the DatabaseBackupID parameter." Condition=" '$(DatabaseBackupID)' == '' " />
+    <CheckBackupStatus
+      AccessToken="$(AccessToken)"
+      DatabaseGUID="$(DatabaseGUID)"
+      DatabaseBackupID="$(DatabaseBackupID)" >
+      <Output TaskParameter="DatabaseBackupStatus" PropertyName="DatabaseBackupStatus" />
+    </CheckBackupStatus>
+    <Message Text="Backup $(DatabaseBackupID) status is $(DatabaseBackupStatus)." />
+  </Target>
+	
+	<Target Name="RevertBackup" DependsOnTargets="Authenticate;GetCloudGuid">
+		<Error Text="You must specify the DatabaseGUID parameter." Condition=" '$(DatabaseGUID)' == '' " />
+		<Error Text="You must specify the BackupInstallationID parameter." Condition=" '$(BackupDatabaseID)' == '' " />	
+		<RevertBackup
+			AccessToken="$(AccessToken)"
+			DatabaseGuid="$(DatabaseGUID)"
+			DatabaseBackupID="$(BackupDatabaseID)"
+			CloudGUID="$(CloudGuid)"
+		/>
+	</Target>
+	
+	<Target Name="GetCloudsInfo" DependsOnTargets="Authenticate">
+		<GetUserCloudsInfo AccessToken="$(AccessToken)" />
+	</Target>
+	
+	<Target Name="GetCloudDatabases" DependsOnTargets="Authenticate;GetCloudGuid">
+		<GetCloudDatabases CloudGUID="$(CloudGuid)" AccessToken="$(AccessToken)"/>
+	</Target>
+</Project>

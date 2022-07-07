@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Error_Handler Rule</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6853,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Error_Handler Rule</h1>
+<!--Error_Handler Rule--><div class="TableWikiBody" id="tblwikibody"><div class="Section1">Provides a dynamic way to perform user-specific actions when a database-related error occurs during program runtime. Transactional and connection errors are detected and a user-defined routine is executed.
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+<b>Error_Handler(‘</b><i>subname</i>'<b>);</b><br />
+<br />
+<b>Where:</b><br />
+<br />
+<i>subname</i><br />
+   Is the name of a subroutine contained in the program which makes use of this rule.
+<h3><br />
+Scope</h3>
+
+<p><b>Objects:</b> <a href="6293.html">Procedure</a>, <a href="1908.html">Transaction</a>, <a href="6916.html">Web Panel</a><br />
+<b>Languages:</b> <a href="38604.html">.NET</a>, <a href="2892.html">.NET Framework</a> <a href="12258.html">Java</a></p>
+
+<h3><br />
+Description</h3>
+The error_handler rule is declarative. It applies to the whole program, anywhere that an active error_handler command does not exist.<br />
+<br />
+The scope of the rule or command will only be taken into consideration by the program that makes use of it. This means that it will not affect any programs called by the program that uses it, and if a program that uses this rule/command happens to call another program that also makes use of it, the second program will ignore the specification of the rule/command belonging to the calling program (the original program) and will not affect the calling program at all. Again, it should be pointed out that the use of this rule/command is limited to the program that uses it.<br />
+<br />
+The error_handler program is called whenever a database related error is detected at run time. It receives no parameters and it allows usage of the &amp;err global variable to identify GeneXus Error as specified below:<br />
+ 
+<div>
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 1431.0px;height: 193.0px;">
+	<tbody>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;"><b>Name</b></span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;"><b>Data Type</b></span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;"><b>Description</b></span> </span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">&amp;Err</span></span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Numeric(3)</span></span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">It contains the GeneXus standard error codes or 999 if an undefined database error code is detected. We strongly recommend using this variable whenever possible to identify errors. This technique will make your programs portable from one GeneXus platform to another. The following list shows &amp;Err values and their meaning:</span></span></p>
+
+			<p><span style="font-size: small;"><span style="color: black;">1                       Duplicate record<br />
+			101                   End of file<br />
+			103                   Object locked (record or file)<br />
+			105                   Object not found<br />
+			106                   Database already exists<br />
+			500                   Parent primary key not found<br />
+			600                   Referential Integrity error raised (only Java Generator)<br />
+			999                   Unexpected DBMS error.</span></span></p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+Also, it is possible to receive more detailed information about database native error codes and descriptions, defining these variables:<br />
+ </p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 1442.0px;height: 321.0px;">
+	<tbody>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><strong>Name</strong></span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><strong>Data Type</strong></span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><strong>Description</strong></span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">&amp;gxDBErr</span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Numeric(5)</span> <span style="color: black;"> </span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">It contains the native DBMS error code. Its value is set only when &amp;Err is greater than 500, otherwise, its value is undefined.</span> </span></p>
+			</td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;"><span style="color: black;">&amp;GxDbSqlState</span></span></td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Character(5)</span></span></p>
+			</td>
+			<td><span style="font-size: small;"><span style="color: black;">It contains the native <a href='https://en.wikipedia.org/wiki/SQLSTATE'>SQLSate</a> error code.</span></span></td>
+		</tr>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">&amp;gxDBTxt</span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Character(255)</span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">It contains the native DBMS error message. Its value is set only when &amp;Err is greater than 500, otherwise, its value is undefined.</span> </span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">&amp;gxOper</span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Character(30)</span> <span style="color: black;"> </span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">It contains a descriptive identification of the operation that had been taking place when the error was encountered. Possible values for this variable are:</span> <span style="color: black;">Declare,</span> <span style="color: black;">Fetch,</span> <span style="color: black;">Insert,</span> <span style="color: black;">Update,</span> <span style="color: black;">Delete</span> </span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">&amp;gxErrTbl</span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Character(30)</span> <span style="color: black;"> </span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">It contains the name of the table (if any) that was being accessed when the error occurred. This variable may contain the special value 'N/A' if no table is related to the database operation (i.e. database creation, remote procedure calls, etc.).</span> </span></p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">&amp;gxErrOpt</span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Numeric(1)</span> <span style="color: black;"> </span> </span></p>
+			</td>
+			<td>
+			<p><span style="font-size: small;"><span style="color: black;">Used as a return code by the error_handler. Depending on the value set by the error_handler, the program will:</span></span></p>
+
+			<p><span style="font-size: small;"><span style="color: black;">0 = Continue processing - The error is ignored.<br />
+			1 = Retry the operation (retries the specified amount using the Lock retry count property). If the error continues after the retries it continues with the processing <br />
+			2 = Cancel application execution (at any SQL error it will cancel the application)<br />
+			3 = Perform default GeneXus processing </span><span style="color: rgb(0,0,0);line-height: 20.8px;">(Default value) (it will behave in the same way as a program without error handler (some error are ignored like locked, duplicate, etc , and the rest cancel the application execution))</span></span></p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+</div>
+
+<h4><br />
+Notes</h4>
+
+<ul>
+	<li>If the &amp;gxErrOpt is set to 0 or 1 it will not show the error in the standard output because it's being captured by the GeneXus generated code.</li>
+	<li>These Variables are not global and can be used on each object that has an Error_handler rule or command.</li>
+	<li><span class="WikiBody" id="W0025BODY">Any DBMS exception is </span>caught <span class="WikiBody" id="W0025BODY">by the error_hanlder rule or command. The standard variables are loaded then in the following cases:</span>
+	<ul>
+		<li><span class="WikiBody">&amp;gxDBErr and &amp;gxDBTxt are loaded in any case</span></li>
+		<li>&amp;gxDBSqlState is loaded in:
+		<ul>
+			<li>Java
+			<ul>
+				<li>All DBMSes</li>
+			</ul>
+			</li>
+			<li>.Net
+			<ul>
+				<li>PostgreSQL</li>
+				<li>Informix   </li>
+			</ul>
+			</li>
+			<li>.Net Core:
+			<ul>
+				<li>MySQL</li>
+				<li>PostgreSQL</li>
+			</ul>
+			</li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+</ul>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<h4><a id="Rules%3A" class="HashLink" href="#Rules%3A">Rules:</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error_handler('DBErrors');</pre>
+
+<h4><a id="Events%3A" class="HashLink" href="#Events%3A">Events:</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub 'DBErrors'
+    If &amp;Err = 1
+        Msg('Duplicate record')
+    Endif 
+EndSub</pre>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+<a href="8238.html">Error_Handler Command</a></div>
+
+<p> </p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9093.html">Declare referential integrity property</a></TD><TD><a href="51028.html">Err variable</a></TD><TD><a href="8238.html">Error_Handler Command</a></TD></TR><TR><TD><a href="44808.html">Exception_Handler Rule</a></TD><TD><a href="25410.html">Paging clauses in Data Provider Group Statement</a></TD><TD><a href="8213.html">Transaction rules</a></TD></TR><TR><TD><a href="8288.html">Web Panel rules</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/21/22 04:04 PM</em></font></td></TR></table></font>

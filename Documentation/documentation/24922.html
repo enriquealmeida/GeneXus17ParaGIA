@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Introduction to BPMN - Error Handling</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24922,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Introduction to BPMN - Error Handling</h1>
+<!--Introduction to BPMN - Error Handling--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h3><a id="Error+Handling" class="HashLink" href="#Error+Handling">Error Handling</a></h3>
+
+<p>BPMN uses the Error Event to handle the occurrence of errors during the execution of a certain activity or at a certain point in the flow of a process. This event can be an Intermediate or an End Event.</p>
+
+<h4><a id="Error+Intermediate+Event" class="HashLink" href="#Error+Intermediate+Event">Error Intermediate Event</a></h4>
+
+<p>Error Intermediate Events can only be attached to an activity. This makes it possible to set an alternative path to handle the possible occurrence of an error during the execution of a task.</p>
+
+<p>The figure below shows an example of this modeling pattern:</p>
+
+<p><img src="./images/25012.png" id="25012" class="WikiImage"/></p>
+
+<p>In the previous case, if an error occurs during the execution of the &quot;Handle shipment&quot; activity, this error is caught by the attached Error Event, the activity is interrupted and the flow moves down the alternative path towards the &quot;Handle Shipment Failure&quot; activity.</p>
+
+<p>In general, various types of errors can occur during the execution of an activity. To catch a certain error, a code must be specified that identifies the error in the &quot;ErrorCode&quot; attribute of the Error Event. If no value is specified for &quot;ErrorCode&quot;, the corresponding event will catch any error that occurs in the activity. According to the BPMN 2.0 specification, this attribute is of String type.</p>
+
+<p>If an error occurs in an activity and it isn’t caught using an intermediate event attached to the activity, the error propagates to the parent process of the process where the error occurred. In this case, the error may be caught as shown below:</p>
+
+<p> </p>
+
+<p><img src="./images/25013.png" id="25013" class="WikiImage"/></p>
+
+<p>If the error isn’t caught in the parent process, it propagates to the following parent process and so on until it is caught or there aren't any more ancestors. It's important to make clear that the error can only be caught once (it is similar to the try/catch mechanisms of programming languages).</p>
+
+<h4><a id="Error+End+Event" class="HashLink" href="#Error+End+Event">Error End Event</a></h4>
+
+<p>Error End Events are used to indicate that a certain process path ends with an error. This error will propagate to the parent processes in the same way as in Error Intermediate Events. </p>
+
+<p>The figure below shows an example of this modeling pattern:</p>
+
+<p><img src="./images/25014.png" id="25014" class="WikiImage"/></p>
+
+<h3><a id="Transaction+Sub-processes" class="HashLink" href="#Transaction+Sub-processes">Transaction Sub-processes</a></h3>
+
+<p>BPMN allows stating that an embedded sub-process can be considered as a transaction. That is to say, all the sub-process tasks must be completed correctly; otherwise the process is undone, which means that all the activities included in it are undone (rollback). </p>
+
+<p>A transaction sub-process is graphically represented with a double line boundary:</p>
+
+<p><img src="./images/25015.png" id="25015" class="WikiImage"/></p>
+
+<p>To indicate that an embedded sub-process is a transaction, the &quot;Is Transaction&quot; attribute of Boolean type is used.</p>
+
+<p>To indicate that an embedded transaction sub-process needs to be rolled back, the Cancel End Event is used. Therefore, these events are used to indicate the sub-process paths that end in the process rollback. The figure below shows an example of how it is used:</p>
+
+<p><img src="./images/25016.png" id="25016" class="WikiImage"/></p>
+
+<p>In the example above, if an error occurs due to lack of availability in any of the reservations, the flow moves down to a Cancel End Event. This will activate the process rollback and any reservation activity that has been completed will be undone.  It should be pointed out that tasks are undone in the reverse order in which they were completed.  </p>
+
+<p>In addition, a Cancel Intermediate Event can be attached to the embedded sub-process. Once the sub-process is undone, this enables the flow to continue down the path indicated by this event.</p>
+
+<h4><a id="Compensation+of+activities+when+doing+a+rollback" class="HashLink" href="#Compensation+of+activities+when+doing+a+rollback">Compensation of activities when doing a rollback</a></h4>
+
+<p>When a transaction sub-process is rolled back, specific actions may have to be performed to undo certain activities. Typically, the execution of these activities implies making changes to a database. To address these cases, each activity of the sub-process can be associated with a compensation activity. This association is performed through the Compensation Intermediate Event as shown in the example below:</p>
+
+<p><img src="./images/25017.png" id="25017" class="WikiImage"/></p>
+
+<p>In the above example, each reservation activity is associated with a compensation task that will undo the activity with which it is associated. </p>
+
+<p>Note that compensation activities are connected to the compensation events using association connectors –not sequence connectors. In addition, these activities cannot be part of any sequence flow, that is, they can't have incoming or outgoing sequence connectors.</p>
+
+<p>When a multiple activity is compensated, the corresponding compensation activity is executed once for each complete instance of the activity to compensate.</p>
+
+<h4><a id="Serious+Errors+%28Hazards%29" class="HashLink" href="#Serious+Errors+%28Hazards%29">Serious Errors (Hazards)</a></h4>
+
+<p>It may happen that an error occurred in a transaction sub-process is too complicated to be fixed by the rollback mechanism. In these cases, a Cancel End Event is not used. Instead, the error is caught using an Error Event attached to the sub-process and is later handled by an alternative flow.</p>
+
+<h3><a id="Triggering+compensation+activities+without+a+transaction" class="HashLink" href="#Triggering+compensation+activities+without+a+transaction">Triggering compensation activities without a transaction</a></h3>
+
+<p>The Compensation End Event allows indicating that an activity must be compensated. The activity to be compensated must be identified with an event attribute –BPMN doesn’t specify which one should be used. This activity must be included in the same process as the Compensation End Event; in addition, it must have an attached compensation event. If the activity to compensate is not specified, all the activities that have been successfully completed and have an attached compensation event will be compensated.</p>
+
+<p>The figure below shows an example of this modeling pattern:</p>
+
+<p><img src="./images/25018.png" id="25018" class="WikiImage"/></p>
+
+<p><a href="24913.html">Go to the main article</a> - <a href="24921.html">Return to the previous section</a></p>
+
+<p><br />
+<br />
+</p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD><TD><a href="24913.html">Introduction to BPMN</a></TD></TR><TR><TD><a href="24921.html">Introduction to BPMN - Connectors</a></TD><TD><a href="24917.html">Introduction to BPMN - Events</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

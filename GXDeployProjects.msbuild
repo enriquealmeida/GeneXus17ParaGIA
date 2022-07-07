@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  
+	<PropertyGroup Label="Globals">
+		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<OutputPath>Output\$(Configuration)\</OutputPath>
+		<ProjectGuid>{192DE3A6-6A1C-4EB5-93CF-BA6C5FEECCCA}</ProjectGuid>
+	</PropertyGroup>
+  
+	<ItemGroup>
+		<File Include="Deploy.msbuild" />
+		<File Include="DeployProject.msbuild.template" />
+		<File Include="Genexus.Common.targets" />
+		<File Include="Genexus.Web.targets" />
+		<File Include="Java\Genexus.Java.Server.targets" />
+		<File Include="Java\Templates\Generic_Servlet_v2.3.st" />
+		<File Include="Java\Templates\Generic_Servlet_v2.4.st" />
+		<File Include="Java\Templates\Generic_Servlet_v2.5.st" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<File Include="..\GeneXus.Deploy.MSBuild.Tasks\bin\$(Configuration)\GeneXus.Deploy.MSBuild.Tasks.dll" >
+			<TargetPath>$(OutputPath)Deploy\</TargetPath>
+		</File>
+		<File Include="..\GeneXus.Deploy.MSBuild.Tasks\bin\$(Configuration)\GeneXus.Deploy.MSBuild.Tasks.pdb" Condition=" '$(Configuration)' == 'Debug' " >
+			<TargetPath>$(OutputPath)Deploy\</TargetPath>
+		</File>
+		<File Include="..\GeneXus.Deploy.MSBuild.Tasks\bin\$(Configuration)\GeneXus.Deploy.MSBuild.Tasks.targets" >
+			<TargetPath>$(OutputPath)Deploy\</TargetPath>
+		</File>
+		<File Include="..\GeneXus.Java.MSBuild.Tasks\bin\$(Configuration)\GeneXus.Java.MSBuild.Tasks.dll" >
+			<TargetPath>$(OutputPath)Deploy\Java\</TargetPath>
+		</File>
+		<File Include="..\GeneXus.Java.MSBuild.Tasks\bin\$(Configuration)\GeneXus.Java.MSBuild.Tasks.pdb" Condition=" '$(Configuration)' == 'Debug' " >
+			<TargetPath>$(OutputPath)Deploy\Java\</TargetPath>
+		</File>
+		<File Include="..\GeneXus.Java.MSBuild.Tasks\bin\$(Configuration)\GeneXus.Java.Tasks.targets" >
+			<TargetPath>$(OutputPath)Deploy\Java\</TargetPath>
+		</File>
+		<File Include="..\StringTemplate\bin\$(Configuration)\GeneXus.StringTemplate.MSBuild.Tasks.dll" >
+			<TargetPath>$(OutputPath)</TargetPath>
+		</File>
+		<File Include="..\StringTemplate\bin\$(Configuration)\GeneXus.StringTemplate.MSBuild.Tasks.pdb" Condition=" '$(Configuration)' == 'Debug' " >
+			<TargetPath>$(OutputPath)</TargetPath>
+		</File>
+		<File Include="..\StringTemplate\bin\$(Configuration)\GeneXus.StringTemplate.Tasks.targets" >
+			<TargetPath>$(OutputPath)</TargetPath>
+		</File>
+	</ItemGroup>
+
+	<Target Name="Build" DependsOnTargets="Copy;IncrementalClean" />
+	<Target Name="Rebuild" DependsOnTargets="Clean;Build" />
+
+	<Target Name="SetFilesTargetPath">
+		<ItemGroup>
+			<File Condition=" '%(File.TargetPath)' == '' ">
+				<TargetPath>$(OutputPath)Deploy\%(File.RelativeDir)</TargetPath>
+			</File>
+		</ItemGroup>	
+	</Target>
+	
+	<Target Name="Copy" DependsOnTargets="SetFilesTargetPath" >
+		<Copy 
+			SkipUnchangedFiles="true"
+			SourceFiles="@(File)"
+			DestinationFiles="@(File -> '%(TargetPath)%(Filename)%(Extension)')" 
+		/>
+	</Target>
+
+	<Target Name="IncrementalClean" DependsOnTargets="SetFilesTargetPath" >
+		<ItemGroup>
+			<FilesToRemove Include="$(OutputPath)**\*.*" Exclude="@(File -> '%(TargetPath)%(Filename)%(Extension)')"/>
+		</ItemGroup>
+		<Delete Files="@(FilesToRemove)" Condition="'$(NoIncrementalClean)' == ''"/>
+	</Target>
+
+	<Target Name="Clean">
+		<RemoveDir Directories="$(OutputPath)" />
+	</Target>
+	
+</Project>

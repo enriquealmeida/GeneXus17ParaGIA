@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy to GeneXus Prototyping Cloud: under the hood</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18292,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy to GeneXus Prototyping Cloud: under the hood</h1>
+<!--Deploy to GeneXus Prototyping Cloud: under the hood--><div class="TableWikiBody" id="tblwikibody"><p>This document describes some useful details on the deployment process to a GeneXus Prototyping Cloud (when <a href="15041.html">Deploy to cloud property</a> is set), and common issues that may arise. To learn how to deploy an application in the cloud follow the <a href="18250.html">Deploy to cloud: Step by Step</a> guide.</p>
+
+<h2><a id="FAQ" class="HashLink" href="#FAQ">FAQ</a></h2>
+
+<hr />
+<h3><a id="How+does+GeneXus+Account+%28ex+GXTechnical%29+authentication+work%3F" class="HashLink" href="#How+does+GeneXus+Account+%28ex+GXTechnical%29+authentication+work%3F">How does GeneXus Account (ex GXTechnical) authentication work?</a></h3>
+
+<p>Whenever a KB is created or checked out from a GeneXus Server, a GUID (unique universal identifier) is assigned to it. Also, when an environment is created, a GUID is assigned to it as well.</p>
+
+<p>GeneXus Account uses both GUIDs (together) as &quot;application id&quot;. That is, the first time an application (KB/Environment) is run using <a href="15046.html">deploy to cloud</a>, it's cataloged in <a href='https://www.genexus.com/developers'>GeneXus Developer site</a>. This cataloging includes, for each application, information on the configuration: PK (KB GUID and Environment GUID), the owner (GeneXus user), the KB Name, the Environment Name, the Web Server, the Virtual Directory, the DB Name, etc.</p>
+
+<p>Every time the application is run, this information is sent to GeneXus Account to be updated.</p>
+
+<hr />
+<h3><a id="What+type+of+IDE+%22request%22+is+sent+to+GeneXus+Cloud%3F" class="HashLink" href="#What+type+of+IDE+%22request%22+is+sent+to+GeneXus+Cloud%3F">What type of IDE &quot;request&quot; is sent to GeneXus Cloud?</a></h3>
+
+<p>There are two types of requests: CREATE and CHECK SETTINGS.</p>
+
+<p>Create: the first time an application is run, and upon every modification of a &quot;sensitive&quot; property (e.g. Virtual Directory, DBName, GAM, etc.)</p>
+
+<p>Check settings: every time the application is run.</p>
+
+<p>The main difference between the two types is that the &quot;create&quot; request must be made &quot;online&quot;, and property values are validated (e.g. Virtual Directory and DB Name availability, application ownership, etc.) When that fails, the build process (i.e. program specification/generation/compilation) stops. On the other hand, &quot;check settings&quot; requests do not need to be made &quot;online&quot; because, when it fails, the build process continues anyway.</p>
+
+<hr />
+<h3><a id="Where+are+GeneXus+Account%27s+Credentials+stored%3F" class="HashLink" href="#Where+are+GeneXus+Account%27s+Credentials+stored%3F">Where are GeneXus Account's Credentials stored?</a></h3>
+
+<p>They're stored using Windows Credential Manager.</p>
+
+<p>You can remove this credential from IDE option <em>Tools &gt; GeneXus Account</em> by unchecking &quot;Remember my password&quot; or directly from Windows <em>Control Panel &gt; User Accounts &gt; Credential Manager &gt; Windows Credentials &gt; Generic Credentials</em> by removing &quot;GXCredential4GXTechnical&quot; credential.</p>
+
+<hr />
+<h3><a id="How+to+access+share+DB+between+different+applications%3F" class="HashLink" href="#How+to+access+share+DB+between+different+applications%3F">How to access share DB between different applications?</a></h3>
+
+<p>Example: you have a Java Environment which had created a DB &quot;Invoicing&quot;, and you want to create a Ruby environment accessing this DB.</p>
+
+<p>Just set &quot;Reorganize Server Tables&quot; Ruby generator property to &quot;No&quot;, and set Data Store properties with the Java Environment values, that is: copy Server Name, DataBase Name, User and Password from Java environment to Ruby environment.</p>
+
+<hr />
+<h3><a id="Deploying+by+proxy" class="HashLink" href="#Deploying+by+proxy">Deploying by proxy</a></h3>
+
+<p>If you are using a proxy, you have to add the following exceptions in order to deploy the app and create the database:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;server-name&gt;  tcp/80
+&lt;server-name&gt;  tcp/443
+&lt;server-name&gt;  tcp/3306  (mysql)
+&lt;server-name&gt; tcp/1433   (ms sqlserver)</pre>
+
+<p>e.g.:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+trialapps.genexus.com  tcp/80
+trialapps.genexus.com  tcp/443
+trialapps.genexus.com  tcp/3306  (mysql)
+trialapps.genexus.com  tcp/1433   (ms sqlserver)</pre>
+
+<h4><a id="Using+GeneXus+Trial+version%2C+you+will+need" class="HashLink" href="#Using+GeneXus+Trial+version%2C+you+will+need">Using GeneXus Trial versión, you will need</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+trialapps2.genexus.com  tcp/80
+trialapps2.genexus.com  tcp/443
+trialapps2.genexus.com  tcp/1433</pre>
+
+<p>and also:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+www2.genexusnet.com    tcp/443
+www2.genexusnet.com    tcp/80
+www2.gxtechnical.com     tcp/80
+www2.gxtechnical.com     tcp/443</pre>
+
+<p>A typical error you can get is the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error: GXtechnical service exception: &quot;The remote server returned an error: (407) Proxy Authentication Required.&quot;.
+========== GXtechnical Cloud Request started ==========
+error: GXtechnical service exception: &quot;The remote server returned an error: (407) Proxy Authentication Required.&quot;.
+GXtechnical Cloud Request Failed</pre>
+
+<p><strong>Note: GeneXus requires the proxy used for the connection can support http 1.1 protocol</strong></p>
+
+<h2><a id="Common+issues" class="HashLink" href="#Common+issues">Common issues</a></h2>
+
+<hr />
+<h3><a id="The+operation+has+timed+out" class="HashLink" href="#The+operation+has+timed+out">The operation has timed out</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Building file gx_last_transfer.zip...
+Uploading 2944 Kbytes
+error:
+Could not deploy Application to cloud
+Error:
+The operation has timed out</pre>
+
+<p>You may get this error if you are running Windows on a VirtualBox virtual machine when you use NAT network mode. This mode has some restrictions that enable you to browse the web but don't allow you to deploy your app on the cloud.</p>
+
+<p>Solution: Try to change your virtual network mode to a different one.</p>
+
+<p>References: <a href='http://www.virtualbox.org/manual/ch06.html'>http://www.virtualbox.org/manual/ch06.html</a></p>
+
+<hr />
+<h3><a id="Deploy+to+cloud+with+Populate+Data%3A+Connection+Timeout+Expired" class="HashLink" href="#Deploy+to+cloud+with+Populate+Data%3A+Connection+Timeout+Expired">Deploy to cloud with Populate Data: Connection Timeout Expired</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+========== Populate Data started ==========
+Type:GeneXus.Data.GxADODataException.DBMS Error Code:-2.Connection Timeout Expired.
+The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.
+This could be because the pre-login handshake failed or the server was unable to respond back in time.
+The duration spent while attempting to connect to this server was - [Pre-Login] initialization=315; handshake=12432;
+Populate Data Failed
+Rebuild All Failed</pre>
+
+<p>When you perform <a href="18250.html">deploy to cloud</a> and use <a href="29584.html">populate data associated to transactions</a> you may get this error in the output.</p>
+
+<p>Solution: Set a large connect timeout in <a href="9037.html">Additional connection string attributes property</a></p>
+
+<p><img src="./images/43644.png" id="43644" class="WikiImage"/></p>
+
+<hr />
+<h3><a id="Deploy+to+cloud+with+Java%3A+Requested+Resource+is+not+available." class="HashLink" href="#Deploy+to+cloud+with+Java%3A+Requested+Resource+is+not+available."><strong>Deploy to cloud with Java: Requested Resource is not available.</strong></a></h3>
+
+<p>The requested resource (/Id2eaaa0f5f95e44cfbffa6c01aff366f6/servlet/webpanel1) is not available.</p>
+
+<p>When you run with Java, you may get this error if you have a local tomcat version 7.x installation.</p>
+
+<p>Solution: If you're using <strong>apps2 </strong>set generator property &quot;<a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,4,61,O,S,0,,29992'>Use Annotations for servlet definition</a>&quot; = <b>No</b>. If you're using <strong>apps4 </strong>set generator property &quot;<a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,4,61,O,S,0,,29992'>Use Annotations for servlet definition</a> = <b>Yes</b>.</p>
+
+<hr />
+<h3><a id="Deploy+to+cloud+with+Java%3A+HTTP+Status+500+-+webpanel1%3A+Unsupported+major.minor+version+xx.0." class="HashLink" href="#Deploy+to+cloud+with+Java%3A+HTTP+Status+500+-+webpanel1%3A+Unsupported+major.minor+version+xx.0.">Deploy to cloud with Java: HTTP Status 500 - webpanel1: Unsupported major.minor version xx.0.</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java.lang.UnsupportedClassVersionError: tickets : Unsupported major.minor version xx.0 (unable to load class tickets)
+        org.apache.catalina.loader.WebappClassLoader.findClassInternal(WebappClassLoader.java:2335)
+        org.apache.catalina.loader.WebappClassLoader.findClass(WebappClassLoader.java:976)
+        org.apache.catalina.loader.WebappClassLoader.loadClass(WebappClassLoader.java:1451)
+        org.apache.catalina.loader.WebappClassLoader.loadClass(WebappClassLoader.java:1329)</pre>
+
+<p>When you run with Java, you may get this error if you have a JDK higher than the java running in the cloud.</p>
+
+<p>Solution: If you're using <strong>apps2 or apps4</strong> set generator property <a href="36672.html">Compiler Path</a> to a compiler (javac.exe) from JDK 7 or lower.</p>
+
+<hr />
+<h3><a id="Remote+server+Error%3A+%28411%29+-+Required+length" class="HashLink" href="#Remote+server+Error%3A+%28411%29+-+Required+length">Remote server Error: (411) - Required length</a></h3>
+
+<h3><a id="You+may+be+using+a+proxy.+Check+the+proxy+configuration." class="HashLink" href="#You+may+be+using+a+proxy.+Check+the+proxy+configuration.">You may be using a proxy. Check the proxy configuration.</a></h3>
+
+<p>For Squid try adding: ignore_expect_100 on (<a href='http://squid-web-proxy-cache.1019090.n4.nabble.com/http-returncode-417-and-POST-request-td3031566.html'>http://squid-web-proxy-cache.1019090.n4.nabble.com/http-returncode-417-and-POST-request-td3031566.html</a>).</p>
+
+<hr />
+<h3><a id="Error%3A+Authentication+error%3A+%22Invalid+GXtechnical%27s+user+or+password.%22" class="HashLink" href="#Error%3A+Authentication+error%3A+%22Invalid+GXtechnical%27s+user+or+password.%22">Error: Authentication error: &quot;Invalid GXtechnical's user or password.&quot;</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+User or password provided is not valid. </pre>
+
+<p>If you already have a user, set it using &quot;Tools/Gxtechnical's user&quot; option</p>
+
+<p>If you don't have a user, create it <a href='http://www.gxtechnical.com/register'>here</a>.</p>
+
+<hr />
+<h3><a id="Error%3A+Exception+trying+to+authenticate+user" class="HashLink" href="#Error%3A+Exception+trying+to+authenticate+user">Error: Exception trying to authenticate user</a></h3>
+
+<p>Complete error message: &quot;\error: Exception trying to authenticate user: &quot;There was no endpoint listening at https://www2.genexusnet.com/wside/adeployserverslist.aspx?wsdl that could accept the message. This is often caused by an incorrect address or SOAP action. See InnerException, if present, for more details.&quot;.</p>
+
+<p>This error means you're trying to create an application and GeneXus Account is not accessible. Check your internet connection.</p>
+
+<hr />
+<h3><a id="error%3A+GeneXus+Account+pending+for+authentication" class="HashLink" href="#error%3A+GeneXus+Account+pending+for+authentication">error: GeneXus Account pending for authentication</a></h3>
+
+<p>If this error appears in the output, go to <a href='http://www.gxtechnical.com/'>http://www.gxtechnical.com/</a> and confirm your account (your email address has to be validated)</p>
+
+<hr />
+<h3><a id="error%3A+Invalid+GeneXus+Account+information." class="HashLink" href="#error%3A+Invalid+GeneXus+Account+information.">error: Invalid GeneXus Account information.</a></h3>
+
+<p>This error appears for example when you log in using your email instead of your username. Use your username instead.</p>
+
+<hr />
+<h3><a id="Error%3A+GXtechnical+%2815%29%3A+NoWiki+2+application+directory+is+not+available." class="HashLink" href="#Error%3A+GXtechnical+%2815%29%3A+NoWiki+2+application+directory+is+not+available.">Error: GXtechnical (15): [URL] application directory is not available.</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Complete error message: &quot;error: Authentication error: &quot;'http://apps2.genexusx.com/MyApp/' application directory is not available.&quot;.</pre>
+
+<p>This error means another application is already using this server/virtual directory, so it cannot be used to deploy another application. Change server or virtual directory.</p>
+
+<p>Remember that &quot;application&quot; means KB GUID + Environment GUID.</p>
+
+<p>Note: prior to X Evolution 2 Upgrade 3 the message was: &quot;Authentication error: [URL] application directory is not available.&quot;</p>
+
+<hr />
+<h3><a id="Error%3A+Authentication+error%3A+%22Cannot+create+NoWiki+4+database+because+it+already+exists." class="HashLink" href="#Error%3A+Authentication+error%3A+%22Cannot+create+NoWiki+4+database+because+it+already+exists.">Error: Authentication error: &quot;Cannot create [DbName] database because it already exists.</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Complete error message: &quot;error: Authentication error: &quot;Cannot create 'MyDB' database because it already exists.&quot;.</pre>
+
+<p>This error means another application is already using this Server/DbName, so it cannot be used to deploy another application. If you're trying to create another DataBase, change &quot;Database name&quot; property. If you want to access an existing DB, set &quot;Reorganize Server Tables&quot; property to &quot;No&quot; and set the right credentials (server, DBname, user and password) to access this DB.</p>
+
+<hr />
+<h3><a id="Error%3A+Internal+error%3A+Function+call+failed+%28Login+failed+for+user+%27xxxxx%27.%29" class="HashLink" href="#Error%3A+Internal+error%3A+Function+call+failed+%28Login+failed+for+user+%27xxxxx%27.%29">Error: Internal error: Function call failed (Login failed for user 'xxxxx'.)</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Complete error message: 
+&quot;Internal error: Function call failed (Login failed for user 'xxxxx.)
+The reorganization process was not successfully completed.&quot;</pre>
+
+<p>Check <a href="9117.html">Server Name Property</a> and <a href="15042.html">Deploy Server URL property</a>. Remember that the application and DB must be in the same server when d2c is being used.</p>
+
+<hr />
+<h3><a id="Error%3A+Authentication+error%3A+%22User+is+not+the+owner+of+application%22" class="HashLink" href="#Error%3A+Authentication+error%3A+%22User+is+not+the+owner+of+application%22">Error: Authentication error: &quot;User is not the owner of application&quot;</a></h3>
+
+<p>Once an application is deployed the owner is the Gxtechnnical's user that had deployed it.</p>
+
+<p>This error means a GXtechnical's user that is not the owner is trying to change DB or Virtual Directory.</p>
+
+<hr />
+<h3><a id="Error%3A+Authentication+error%3A+%22User+not+authorized+to+use+deploy+servers%22." class="HashLink" href="#Error%3A+Authentication+error%3A+%22User+not+authorized+to+use+deploy+servers%22.">Error: Authentication error: &quot;User not authorized to use deploy servers&quot;.</a></h3>
+
+<p>This error means the user does not have the privileges to deploy an application to Artech's cloud. Check your user information with the company's Contact Manager.</p>
+
+<hr />
+<h3><a id="Error%3A+GXtechnical+%2814%29%3A+%22DBMS%2C+Generator+and+Server+combination+is+not+available%22." class="HashLink" href="#Error%3A+GXtechnical+%2814%29%3A+%22DBMS%2C+Generator+and+Server+combination+is+not+available%22.">Error: GXtechnical (14): &quot;DBMS, Generator and Server combination is not available&quot;.</a></h3>
+
+<p>This error means the selected combination of DBMS, Generator and Cloud Server is not available.</p>
+
+<p>Check Notes section of <a href="18250.html">this</a> document for further information.</p>
+
+<hr />
+<h3><a id="Error%3A+GXtechnical+%2815%29%3A+%22DB+Server+not+available%3A+NNN%22" class="HashLink" href="#Error%3A+GXtechnical+%2815%29%3A+%22DB+Server+not+available%3A+NNN%22">Error: GXtechnical (15): &quot;DB Server not available: NNN&quot;</a></h3>
+
+<p>&quot;NNN&quot; is the database server where the tables are being created.</p>
+
+<p>Check the <a href="9080.html">Database name property</a>.</p>
+
+<p>Note: prior to X Evolution 2 Upgrade 3 the message was: &quot;Error: DB Server not available&quot;</p>
+
+<hr />
+<h3><a id="Error%3A+GXtechnical+%2816%29%3A+%22Application+Server+not+available+NNN%22" class="HashLink" href="#Error%3A+GXtechnical+%2816%29%3A+%22Application+Server+not+available+NNN%22">Error: GXtechnical (16): &quot;Application Server not available NNN&quot;</a></h3>
+
+<p>&quot;NNN&quot; is the application server where the application is being deployed.</p>
+
+<p>Check the <a href="15042.html">Deploy Server URL property</a></p>
+
+<p>Note: prior to X Evolution 2 Upgrade 3 the message was: &quot;Error: Application Server not available&quot;</p>
+
+<hr />
+<h3><a id="Error%3A+%28417%29+Expectation+failed" class="HashLink" href="#Error%3A+%28417%29+Expectation+failed">Error: (417) Expectation failed</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+========== Web config update started ==========
+Updating web config ...
+Web config update Success
+Building file gx_last_transfer.zip...
+Uploading 6219 Kbytes
+error:  Could not deploy Application to cloud
+Error:  O servidor remoto retornou um erro: (417) Expectation failed.</pre>
+
+<p>This problem may happen in some situation when the server is processing the request header in order to accept the data from the workstation. To avoid this verification, add the following information in the <em>genexus.exe.config</em>, under the <strong>&lt;system.net&gt; </strong>tag:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;settings&gt;
+     &lt;servicePointManager expect100Continue=&quot;false&quot; /&gt;
+&lt;/settings&gt;</pre>
+
+<hr />
+<h3><a id="Error%3A+Invalid+URI%3A+The+format+of+the+URI+could+not+be+determined." class="HashLink" href="#Error%3A+Invalid+URI%3A+The+format+of+the+URI+could+not+be+determined.">Error: Invalid URI: The format of the URI could not be determined.</a></h3>
+
+<p>This message appears:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Building file gx_last_transfer.zip...
+Uploading 34692 Kbytes
+error: Invalid URI: The format of the URI could not be determined.
+Run Developer Menu Failed&quot;</pre>
+
+<p>Check <a href="15042.html">Deploy Server URL property</a> ensuring that includes http or https</p>
+
+<p> </p>
+
+<hr />
+<h3><a id="Error%3A+Could+not+deploy+Application+to+cloud" class="HashLink" href="#Error%3A+Could+not+deploy+Application+to+cloud">Error: Could not deploy Application to cloud</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+544 Kbytes left
+289 Kbytes left
+34 Kbytes left
+Deploying website
+error: 
+Could not deploy Application to cloud 
+Error:
+The underlying connection was closed: A connection that was expected to be kept alive was closed by the server.
+
+Run Home Failed</pre>
+
+<p><strong>Solution</strong></p>
+
+<p>Run the app again (press F5).</p>
+
+<hr />
+<h3><a id="Error%3A+Could+not+reach+web+server" class="HashLink" href="#Error%3A+Could+not+reach+web+server">Error: Could not reach web server</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+========== Execution started ==========
+... waiting for server ...
+error: Could not reach web server
+Execution Failed
+Run Home Failed</pre>
+
+<p>Notes:</p>
+
+<ul>
+	<li>the message may be &quot;Could not reach webserver or something went wrong running your application, please try again. If the problem persists contact us at gxcloud (at) genexus.com&quot;</li>
+	<li>from Evolution 3 Upgrade 1 the message includes the URL trying to be executed and technical detail about the error. e.g. &quot;Could not reach webserver or something went wrong running your application at &quot;Link&quot; please try again. The request was aborted: The operation has timed out. If the problem persists contact us at gxcloud (at) genexus.com&quot;</li>
+</ul>
+
+<p><strong>Solution</strong></p>
+
+<p>Run the app again (press F5) or execute the associated URL for further information about the error.</p>
+
+<hr />
+<h3><a id="Could+not+load+file+or+assembly+%27sapnco%27+or+one+of+its+dependencies.+An+attempt+was+made+to+load+a+program+with+an+incorrect+format." class="HashLink" href="#Could+not+load+file+or+assembly+%27sapnco%27+or+one+of+its+dependencies.+An+attempt+was+made+to+load+a+program+with+an+incorrect+format.">Could not load file or assembly 'sapnco' or one of its dependencies. An attempt was made to load a program with an incorrect format.</a></h3>
+
+<p>Exception Details: System.BadImageFormatException: Could not load file or assembly 'sapnco' or one of its dependencies. An attempt was made to load a program with an incorrect format.</p>
+
+<p><strong>Solution</strong></p>
+
+<p>Use the 64bits version of the sapnco*.dll. More information at <a href="https://wiki.genexus.com/commwiki/wiki?28181,," target="_blank">ERP Connector - Generating the application with GeneXus .NET Generator</a>.</p>
+
+<hr />
+<h3><a id="Internal+error%3A+Function+call+failed" class="HashLink" href="#Internal+error%3A+Function+call+failed">Internal error: Function call failed</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Internal error: Function call failed (Login failed. The login is from an untrusted domain and cannot be used with Windows authentication.)</pre>
+
+<p>This internal error usually happens when the Data Store is local and the developer starts using Deploy To Cloud. Remote Data Stores do not work with trusted connections. This error occurs when the Data Store has the <a href="9418.html">Use trusted connection property</a> and the <a href="15041.html">Deploy to cloud property</a><strong> </strong>set to <b>True.</b></p>
+
+<p><strong>Soution</strong></p>
+
+<p>Go to the Data Store and set <strong>Use Trusted Connection</strong> = False.</p>
+
+<hr />
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/prototyping-features-and-deployment-of-applications-for-smart-devices?p=3694'>Prototyping features and Deployment of applications for Smart Devices</a></p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49557.html">Deploy to Cloud Troubleshooting</a></TD><TD><a href="18250.html">Deploy to cloud: Step by Step</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/12/22 05:01 PM</em></font></td></TR></table></font>

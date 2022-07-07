@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project InitialTargets="LoadGxProperties" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+
+	<PropertyGroup> 
+		<OutputPath>..\..\web\bin</OutputPath>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>0</WarningLevel>
+		<NoWarn>2008</NoWarn>
+		<OutDir>$(OutputPath)</OutDir>
+		<WebDirectory>$(MSBuildProjectDirectory)\..\..\web</WebDirectory>
+		<WebBinDirectory>$(WebDirectory)\bin</WebBinDirectory>
+		<Configuration>Release</Configuration>
+		<Prefer32Bit>false</Prefer32Bit>
+		<PlatformTarget Condition="'$(PlatformTarget)' == ''">AnyCPU</PlatformTarget>
+		<ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>true</ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>
+		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+		<_FindDependencies>false</_FindDependencies>
+		<InformationalVersion>$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</InformationalVersion>
+		<FrameworkPathOverride Condition="'$(FrameworkPath)'!=''">$(FrameworkPath)</FrameworkPathOverride>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="GxClasses">
+			<HintPath>$(WebBinDirectory)\GxClasses.dll</HintPath>
+		</Reference>
+		<Reference Include="GxEncrypt">
+			<HintPath>$(WebBinDirectory)\GxEncrypt.dll</HintPath>
+		</Reference>
+		<Reference Include="Jayrock-JSON">
+			<HintPath>$(WebBinDirectory)\Jayrock-JSON.dll</HintPath>
+		</Reference>
+		<Reference Include="GxMail">
+			<HintPath>$(WebBinDirectory)\GxMail.dll</HintPath>
+		</Reference>
+		<Reference Include="GxExcelI">
+			<HintPath>$(WebBinDirectory)\GxExcelI.dll</HintPath>
+		</Reference>
+		<Reference Include="WordDoc">
+			<HintPath>$(WebBinDirectory)\Interop.GXOFFICE2Lib.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(PostgresqlSupport)'=='true'">
+		<Reference Include="Npgsql">
+			<HintPath>$(WebBinDirectory)\Npgsql.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(WebDirectory)\packages.config" />
+	</ItemGroup>
+
+	<ItemGroup Label="Reference the common Framework libraries csc.rsp">
+		<Reference Include="Accessibility" />
+		<Reference Include="Microsoft.CSharp" />
+		<Reference Include="System.Configuration" />
+		<Reference Include="System.Configuration.Install" />
+		<Reference Include="System.Core" />
+		<Reference Include="System.Data" />
+		<Reference Include="System.Data.Linq" />
+		<Reference Include="System.DirectoryServices" />
+		<Reference Include="System" />
+		<Reference Include="System.DirectoryServices" />
+		<Reference Include="System.Drawing.Design" />
+		<Reference Include="System.Drawing" />
+		<Reference Include="System.EnterpriseServices" />
+		<Reference Include="System.Management" />
+		<Reference Include="System.Messaging" />
+		<Reference Include="System.Runtime.Remoting" />
+		<Reference Include="System.Runtime.Serialization" />
+		<Reference Include="System.Runtime.Serialization.Formatters.Soap" />
+		<Reference Include="System.Security" />
+		<Reference Include="System.ServiceModel" />
+		<Reference Include="System.ServiceModel.Web" />
+		<Reference Include="System.ServiceProcess" />
+		<Reference Include="System.Transactions" />
+		<Reference Include="System.Web" />
+		<Reference Include="System.Web.Extensions.Design" />
+		<Reference Include="System.Web.Extensions" />
+		<Reference Include="System.Web.Mobile" />
+		<Reference Include="System.Web.RegularExpressions" />
+		<Reference Include="System.Web.Services" />
+		<Reference Include="System.Windows.Forms" />
+		<Reference Include="System.Workflow.Activities" />
+		<Reference Include="System.Workflow.ComponentModel" />
+		<Reference Include="System.Workflow.Runtime" />
+		<Reference Include="System.Xml" />
+		<Reference Include="System.Xml.Linq" />
+	</ItemGroup>
+
+	<Target Name="LoadGxProperties" Condition="'$(GxExternalReference)' != '' OR '$(GxBaseReference)' != ''">
+		<ItemGroup>
+			<GxReference Include="$(GxExternalReference.Split(';'))" />
+			<GxReference Include="$(GxBaseReference.Split(';'))" />
+		</ItemGroup>
+		<ItemGroup>
+			<Reference Include="%(GxReference.Identity)">
+				<HintPath>$(WebBinDirectory)\%(GxReference.Identity)</HintPath>
+			</Reference>
+		</ItemGroup>
+	</Target>
+
+	<Target Name="CopyConfig" AfterTargets="Build">
+		<ItemGroup>
+			<ConfigFiles Include="$(WebDirectory)\client.exe.config"/>
+			<ConfigFiles Include="$(WebDirectory)\reorgpgm.gen"/>
+			<ConfigFiles Include="$(WebDirectory)\WCFClient.config"/>
+		</ItemGroup>
+		<ItemGroup Condition="'$(OutputType)' == 'exe'">
+			<ObjConfigFiles Include="$(WebDirectory)\$(AssemblyName.Replace(`.`, `\`)).exe.config">
+				<DestFileName>$(AssemblyName).exe.config</DestFileName>
+			</ObjConfigFiles>
+		</ItemGroup>
+		<Copy SkipUnchangedFiles="true" SourceFiles="@(ConfigFiles)" DestinationFiles="@(ConfigFiles->'$(WebBinDirectory)\%(Filename)%(Extension)')"  Condition="Exists('%(ConfigFiles.FullPath)')" />
+		<Copy SkipUnchangedFiles="true" SourceFiles="@(ObjConfigFiles)" DestinationFiles="@(ObjConfigFiles->'$(WebBinDirectory)\%(DestFileName)')"  Condition="Exists('%(ObjConfigFiles.FullPath)')" />
+	</Target>
+	<ItemGroup>
+		<ResourceFiles Include="$(WebBinDirectory)\messages.*.resources"/>
+		<TxtResourceFiles Include="$(WebDirectory)\messages.*.txt"/>
+	</ItemGroup>
+
+	<Target Name="BuildResources" Inputs="@(TxtResourceFiles)" Outputs="@(TxtResourceFiles -> '$(WebBinDirectory)\%(Filename).dll')" BeforeTargets="Build">
+		<csc NoLogo="true" WarningLevel="0" Resources="@(ResourceFiles->'$(WebBinDirectory)\%(Filename).resources')" OutputAssembly="@(ResourceFiles->'$(WebBinDirectory)\%(Filename).dll')" TargetType="library" ContinueOnError="true" Condition="Exists('%(ResourceFiles.FullPath)')"/>
+		<Delete Files="@(ResourceFiles)" />
+	</Target>
+
+	<Target Name="Info">
+		<Message Text="Configuration is $(Configuration)" />
+		<Message Text="MSBuildToolsPath is $(MSBuildToolsPath)" />
+	</Target>
+	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+	
+</Project>

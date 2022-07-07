@@ -1,0 +1,166 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Append transaction redirection" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="DynamicFilters" Type="DynamicFilterAttributesElement" %>
+<%@ Property Name="IsTabAndALTabs" Type="System.Boolean" %>
+<%@ Property Name="IsSmooth" Type="System.Boolean" %>
+<%@ Property Name="AssignGAMOAuthToken" Type="System.Boolean" %>
+<%
+	bool isAl = DynamicFilters.IsAL();
+	if (DynamicFilters.MaxFilters > 1)
+	{
+%>
+	JSDynamicFilters.Caption = ''
+<%
+	}
+	string dynIndent = "";
+	if (!IsSmooth && !IsTabAndALTabs)
+	{
+		dynIndent = "\t";
+%>
+	If &HTTPRequest.Method = HttpMethod.Get
+<%
+	}
+	bool addHiddenVars = !(Settings.IsOptimizationNumber(7) && IsSmooth);
+	if (addHiddenVars)
+	{
+		for (int i = 2; i <= DynamicFilters.MaxFilters; i++)
+		{
+%>
+<%= dynIndent %>	&DynamicFiltersEnabled<%= i.ToString() %>.Visible = False
+<%
+		}
+	}
+
+	bool hideFieldsExceptFirst = !Settings.IsOptimizationNumber(2);
+	if (hideFieldsExceptFirst && ((IFilter)DynamicFilters.Items[0]).HasOperators())
+	{
+		if (((FilterAttributeGeneralElement)DynamicFilters.Items[0]).HasFixedValueOperator() || ((FilterAttributeGeneralElement)DynamicFilters.Items[0]).HasRangeOperatorNotFixed(null))
+		{
+			hideFieldsExceptFirst = false;
+		}
+	}
+	for (int i = 1; i <= DynamicFilters.MaxFilters; i++)
+	{
+		bool isFirst = true;
+        foreach (IFilter filter in DynamicFilters.Items)
+        {
+			if (filter is FilterAttributeMultipleGeneralElement)
+			{
+				if (((FilterAttributeMultipleGeneralElement)filter).IsTypePrompt())
+				{
+					if (addHiddenVars)
+					{
+%>
+<%= dynIndent %>	&Prompt<%= filter.Name + i %>ValuesExecutionStep.Visible = False
+<%
+					}
+				}
+				else if (AssignGAMOAuthToken)
+				{
+%>
+<%= dynIndent %>	DDO_FilterMultiple<%= filter.Name + i %>.GAMOAuthToken = &GAMSession.Token
+<%
+				}
+			}
+			if (!isFirst && hideFieldsExceptFirst)
+			{
+%>
+<%= dynIndent %>	<%= DynamicFilterAttributeElement.ControlNameToShowAndHide(filter) + i %>.Visible = False
+<%
+			}
+			if (filter.AllValue && !filter.ControlIsNotCombo())
+			{
+				if (filter.Default == String.Empty)
+				{
+%>
+<%= dynIndent %>	&<%= filter.Name + i %> = nullvalue(&<%= filter.Name + i %>)
+<%
+				}
+			}
+			if (filter.Default != String.Empty)
+			{
+%>
+<%= dynIndent %>	&<%= filter.Name + i %> = <%= filter.Default %>
+<%
+			}
+			if (filter is IFilterWithRange && ((IFilterWithRange)filter).IsPickerRange()
+				|| filter.HasRangeOperatorNotFixed(false))
+			{
+%>
+	<%= filter.Name %>_RangePicker<%= i %>.Attach(&<%= filter.Name %>_RangeText<%= i %>.InternalName)
+<%
+				if (i == 1 && filter.HasDateRangePickerOptions())
+				{
+%>
+	&<%= filter.Name %>_RangePickerOptions = <%= filter.GetDateRangePickerOptionsName() %>()
+<%
+				}
+			}
+			isFirst = false;
+        }
+		if (!hideFieldsExceptFirst)
+		{
+			if (((IFilter)DynamicFilters.Items[0]).VisibleCondition != "")
+			{
+%>
+<%= dynIndent %>	&DynamicFiltersSelector<%= i %> = &DynamicFiltersFirstFilter
+<%
+			}
+			else
+			{
+%>
+<%= dynIndent %>	&DynamicFiltersSelector<%= i %> = <%= Settings.IncludeNamesInSDTGridState ? "!'" + ((IFilter)DynamicFilters.Items[0]).Name.ToUpper() + "'" : "0" %>
+<%
+			}
+%>
+<%= dynIndent %>	Do 'EnableDynamicFilters<%= i %>'
+<%
+		}
+	}
+	if (!IsSmooth && !IsTabAndALTabs)
+	{
+%>
+	EndIf
+<%
+	}
+%>
+	
+<%
+	bool dynFilersIsAl = DynamicFilters.IsAL();
+	for (int i = 1; i < DynamicFilters.MaxFilters; i++)
+	{
+		if (dynFilersIsAl)
+		{
+%>
+	AddDynamicFilters<%= i.ToString() %>.JSEvent('onclick', format(!"WWPDynFilterShow_AL('%1', <%= (i + 1).ToString() %>, <%= DynamicFilters.FixedFilters != null ? DynamicFilters.FixedFilters.Items.Count : 0 %>)", Table<%= DynamicFilters.Name %>.InternalName))
+	RemoveDynamicFilters<%= i.ToString() %>.JSEvent('onclick', format(!"WWPDynFilterHideLast_AL('%1', <%= DynamicFilters.MaxFilters.ToString() %>, <%= DynamicFilters.FixedFilters != null ? DynamicFilters.FixedFilters.Items.Count : 0 %>)", Table<%= DynamicFilters.Name %>.InternalName))
+<%
+		}
+		else
+		{
+%>
+	AddDynamicFilters<%= i.ToString() %>.JSEvent('onclick', !"WWPDynFilterShow(<%= (i + 1).ToString() %>)")
+	RemoveDynamicFilters<%= i.ToString() %>.JSEvent('onclick', !"WWPDynFilterHideLast(<%= DynamicFilters.MaxFilters.ToString() %>)")
+<%
+		}
+	}
+	if (DynamicFilters.MaxFilters > 1)
+	{
+		if (dynFilersIsAl)
+		{
+%>
+	RemoveDynamicFilters<%= DynamicFilters.MaxFilters.ToString() %>.JSEvent('onclick', format(!"WWPDynFilterHideLast_AL('%1', <%= DynamicFilters.MaxFilters.ToString() %>, <%= DynamicFilters.FixedFilters != null ? DynamicFilters.FixedFilters.Items.Count : 0 %>)", Table<%= DynamicFilters.Name %>.InternalName))
+<%
+		}
+		else
+		{
+%>
+	RemoveDynamicFilters<%= DynamicFilters.MaxFilters.ToString() %>.JSEvent('onclick', !"WWPDynFilterHideLast(<%= DynamicFilters.MaxFilters.ToString() %>)")
+<%
+		}
+	}
+%>

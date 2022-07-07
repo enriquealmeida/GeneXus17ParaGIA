@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Pay using WeChat Pay in GeneXus applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37321,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Pay using WeChat Pay in GeneXus applications</h1>
+<!--HowTo: Pay using WeChat Pay in GeneXus applications--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="What+is+WeChat+Pay%3F" class="HashLink" href="#What+is+WeChat+Pay%3F">What is WeChat Pay?</a></h2>
+
+<p><a href='https://pay.weixin.qq.com/index.php/public/wechatpay'>WeChat Pay</a> is a mobile payment platform included with the Chinese social media application <a href='https://www.wechat.com/en/'>WeChat</a>. It was developed by Tencent and currently has more than 900 million users in China and other countries. It has a significant share of the mobile payment market in China and, as a result, integration with WeChat Pay is a standard requirement for mobile applications. For that purpose, <a href='https://open.weixin.qq.com/'>WeChat Open Platform</a> must be used.</p>
+
+<h2><a id="Integration+with+GeneXus" class="HashLink" href="#Integration+with+GeneXus">Integration with GeneXus</a></h2>
+
+<p>From Upgrade 8 of GeneXus 15, payment functions with WeChat Pay can be integrated into the generated Android and iOS applications using an <a href="33545.html">Extension Library</a> included in the GeneXus installation and importing the <a href="37322.html">Payment API</a>. </p>
+
+<h2><a id="Step-by-step+instructions" class="HashLink" href="#Step-by-step+instructions">Step-by-step instructions</a></h2>
+
+<h3><a id="1+-+Register+the+application+on+the+WeChat+Open+Platform+site" class="HashLink" href="#1+-+Register+the+application+on+the+WeChat+Open+Platform+site">1 - Register the application on the WeChat Open Platform site</a></h3>
+
+<p>Developers need to be registered in the WeChat Open Platform site and need to register all the applications that will integrate the payment functions. In this process, developers get the application credentials required to integrate with WeChat Pay. Check <a href="https://wiki.genexus.com/commwiki/wiki?37323,," target="_blank">this document</a> for detailed information about the registration process.</p>
+
+<h3><a id="2+-+Set+configuration+information" class="HashLink" href="#2+-+Set+configuration+information">2 - Set configuration information</a></h3>
+
+<p>The first &quot;programming&quot; step is to set the configuration information. By default, the WeChat Pay API loads the configuration information from an XML file called WeChatPay_Config, using the procedure LoadConfig. Modifying this file is enough to set all the configurations needed to integrate the application with WeChat Pay. Following is a description of the WeChatPay_Config.xml file structure.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Configuration&gt;     
+   &lt;AppId /&gt;     
+   &lt;Environment /&gt;     
+   &lt;CallbackURL /&gt;     
+   &lt;Timeout /&gt;     
+   &lt;MerchantId /&gt;     
+   &lt;MerchantKey /&gt;     
+   &lt;AdditionalConfig /&gt; 
+&lt;/Configuration&gt;
+
+</pre>
+
+<ul>
+	<li><strong>AppId:</strong> Identifier obtained when the application was registered in WeChat Pay.</li>
+	<li><strong>Environment:</strong> Possible values are <em>Production / Sandbox</em>. Execution environment that will be used to execute the payment transactions. </li>
+	<li><strong>CallbackURL: </strong>URL of the payment notification service that WeChat Pay will call to complete the payment transaction. By default, the URL of the procedure CallbackService included in the <a href="37322.html">WeChat Pay API</a> is used.</li>
+	<li><strong>Timeout:</strong> Timeout in minutes for the payment transactions.</li>
+	<li><strong>MerchantId</strong>: Identifier of the user registered in WeChat Open Platform.</li>
+	<li><strong>MerchantKey</strong>: Key assigned to the application in the WeChat Open Platform.</li>
+	<li><strong>AdditionalConfig :</strong> List of additional information. </li>
+</ul>
+
+<p>When the application where we are integrating WeChat Pay is going to be generated for iOS, we need to make an additional configuration step. The Smart Device main object property, <a href="37001.html">WeChat Pay Application Id</a> has to be set with the same value we set in AppId tag in the configuration file.</p>
+
+<h3><a id="3+-+Prepare+payment+data" class="HashLink" href="#3+-+Prepare+payment+data">3 - Prepare payment data</a></h3>
+
+<p>The next step is to prepare the payment data to send it to WeChat  Pay. First, the user needs to set some values in a variable based on <em>PaymentApplicationData</em> SDT from the <a href="37322.html">WeChat Pay API</a> (product code, product description, currency and amount). This variable will be the input of the procedure <em>GetPaymentInformation</em> which returns the processed information ready to be sent to WeChat Pay.</p>
+
+<p>There is an intermediate step performed by the <em>GetPaymentInformation</em> procedure; it allows processing the ready-to-send payment information (which includes the generated order number) by the user, for example, to store it in the application database tables. These actions can be edited in the procedure <em>OnAboutToPay</em> from the <a href="37322.html">WeChat Pay API</a>.</p>
+
+<h3><a id="4+-+Send+payment+information+to+WeChat+Pay" class="HashLink" href="#4+-+Send+payment+information+to+WeChat+Pay">4 - Send payment information to WeChat Pay</a></h3>
+
+<p>Now the user is ready to send the payment information to WeChat Pay, using the Pay method from the External Object <em>WeChatPayProvider</em> included in the <a href="37322.html">WeChat Pay API</a>. This method receives the processed payment information returned by the procedure <em>GetPaymentInformation</em> in the previous step in a variable based on the <em>PaymentInformation</em> SDT.</p>
+
+<p>The following is an example code in a GeneXus Smart Device object event with the actions from steps 4 and 5:</p>
+
+<pre>
+Event 'Pay with WeChat Pay'
+   Composite
+      &amp;PaymentApplicationData.ProductCode = 'Product name'
+      &amp;PaymentApplicationData.ProductDescription = 'Product description'
+      &amp;PaymentApplicationData.Currency = 'CNY'
+      &amp;PaymentApplicationData.Amount = 1000
+      GeneXus.Common.UI.Progress.ShowWithTitleAndDescription(&quot;Please Wait...&quot;,&quot;Preparing payment information...&quot;)
+      WeChatPay.GetPaymentInformation(&amp;PaymentApplicationData, &amp;PaymentInformation)
+      GeneXus.Common.UI.Progress.Hide()
+      if &amp;PaymentInformation.ErrorCode &gt; 0
+          Msg(&quot;Error: &quot; + &amp;PaymentInformation.ErrorDescription)
+      else
+          WeChatPayProvider.Pay(&amp;PaymentInformation)
+      endif
+   EndComposite
+Endevent</pre>
+
+<h3><a id="5+-+Process+payment+result" class="HashLink" href="#5+-+Process+payment+result">5 - Process payment result</a></h3>
+
+<p>The user needs to code two actions to process a WeChat Pay payment result. The first one is the <em>WeChatPayProvider</em> External Object event called <em>OnPaymentFinished</em>. This event receives a variable based on the <em>PaymentResult</em> SDT which contains an ErrorCode, ErrorDescription, and OrderNumber of the completed payment. Check detailed information about the <a href="37322.html">WeChat Pay API here</a>.</p>
+
+<p>The following is an example code of this event:</p>
+
+<pre>
+Event WeChatPayProvider.OnPaymentFinished(&amp;PaymentResult)
+   Composite
+      if &amp;PaymentResult.ErrorCode = 0
+         GeneXus.Common.UI.Progress.ShowWithTitleAndDescription(&quot;Please Wait...&quot;,&quot;Finishing transaction...&quot;)
+         SetSaleStatus(&amp;PaymentResult.OrderNumber, PaymentStatus.Paid)
+         ClearCart()
+         GeneXus.Common.UI.Progress.Hide()
+         ConfirmationPanel()
+      else
+         SetSaleStatus.Call(&amp;PaymentResult.OrderNumber, PaymentStatus.Error)
+         Msg(&amp;PaymentResult.ErrorDescription)
+      endif
+   EndComposite
+EndEvent</pre>
+
+<h3><a id="6+-+Asynchronous+payment+notification+service" class="HashLink" href="#6+-+Asynchronous+payment+notification+service">6 - Asynchronous payment notification service</a></h3>
+
+<p>The last step is executed by WeChat Pay servers, which call a payment notification service provided by the application developer. This service URL is what we indicate in the configuration using the CallbackURL parameter. By default, this URL refers to a procedure called <em>CallbackService</em> that is included in the <a href="37322.html">WeChat Pay API</a>. This procedure receives the HTTP data and converts it to an SDT structure (<em>PaymentNotificationInfo</em>); next, it calls another procedure called <em>CallbackHandler</em> to process that SDT with the notification information.</p>
+
+<h3><a id="In+sum" class="HashLink" href="#In+sum">In sum</a></h3>
+
+<p>Having registered the application, the GeneXus developer only needs to modify the following objects to integrate WeChat Pay into the application:</p>
+
+<ul>
+	<li>Set configurations in <em>WeChatPay_Config.xml</em> file.</li>
+	<li>Code the process of the payment data just before sending it to WeChat Pay in the <em>OnAboutToPay</em> procedure.</li>
+	<li>Set payment data, call <em>GetPaymentInformation</em> procedure and call Pay method of the <em>WeChatPayProvider</em> EO in the Smart Device object.</li>
+	<li>Code the WeChatPayProvider EO <em>OnPaymentFinished</em> event in the Smart Device object.</li>
+	<li>Code the notification service processing in the <em>CallbackHandler</em> procedure.</li>
+</ul>
+
+<h2><a id="Sample" class="HashLink" href="#Sample">Sample</a></h2>
+
+<p>A complete sample can be downloaded from <a href="https://wiki.genexus.com/commwiki/wiki?37202,," target="_blank">here</a>.</p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="37001.html">Application Id property (WeChat Pay)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

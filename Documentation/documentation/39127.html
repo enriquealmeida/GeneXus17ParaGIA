@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>PayPal one-time payments</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39127,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">PayPal one-time payments</h1>
+<!--PayPal one-time payments--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Steps:</p>
+
+<ol>
+	<li>Create payment on Paypal</li>
+	<li>Authenticate user on Paypal’s website</li>
+	<li>Execute payment</li>
+</ol>
+
+<p>First, you need to create a payment on PayPal.</p>
+
+<p>You must set up the payment options using CreatePayment SDT: you will setup amount, return URLs (success and cancel), etc.</p>
+
+<p>Then use CreatePaymentAPI procedure, using previously filled SDT to make the API call and create the payment on Paypal. If successful, it will return some information about the payment (which should be loaded to CreatePaymentResponse SDT to be handled).</p>
+
+<p>You will need to get the redirect link, to which you should redirect the payer. This is Paypal’s website, where the payer will authenticate itself (with Paypal account) , and confirm payment.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;transaction.amount.currency = &quot;USD&quot;
+&amp;transaction.amount.total = &quot;150&quot;
+
+&amp;CreatePayment.intent = &quot;sale&quot;
+&amp;CreatePayment.payer.payment_method = &quot;Paypal&quot;
+&amp;CreatePayment.redirect_urls.cancel_url = &quot;http://apps5.genexus.com/Idb8236469be2101e927a28340ad5eaaad/executeagreement.aspx&quot;
+&amp;CreatePayment.redirect_urls.return_url= &quot;http://apps5.genexus.com/Idb8236469be2101e927a28340ad5eaaad/executepayment.aspx&quot;
+&amp;CreatePayment.note_to_payer = &quot;NOTEEEEE&quot;
+&amp;CreatePayment.transactions.Add(&amp;transaction)
+
+CreatePaymentAPI(&amp;CreatePayment.ToJson(),&amp;APIResponse,&amp;ErrorCode)
+
+if &amp;ErrorCode = 0
+    &amp;CreatePaymentResponse.FromJson(&amp;APIResponse)
+    for &amp;i = 1 to &amp;CreatePaymentResponse.links.Count
+        if &amp;CreatePaymentResponse.links.Item(&amp;i).method.ToLower() = &quot;redirect&quot;
+            &amp;redirectLink = &amp;CreatePaymentResponse.links.Item(&amp;i).href
+        endif
+    endfor
+endif
+</pre>
+
+<p>Once the user confirms the payment, the success URL will be called, with a payerId and paymentId as parameters. Those are later used to confirm payment. You should parse them on the start event, execute the payment and show a message to the user.</p>
+
+<p>On the Success WebPanel:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    Do 'ParseString'    
+    ExecutePaymentAPI(&amp;paymentId,&amp;payerId,&amp;APIResponse,&amp;ErrorCode)
+    if &amp;ErrorCode = 0
+        Msg(&quot;Payment Success&quot;)
+    endif
+EndEvent
+
+Sub 'ParseString'
+    &amp;Regex = &quot;=&quot;
+    &amp;Parms = &amp;httpRequest.QueryString
+    &amp;Matches = &amp;Parms.SplitRegEx(&amp;Regex)
+    &amp;paymentId = &amp;Matches.Item(2).Replace(&quot;&amp;token&quot;,&quot;&quot;)
+    &amp;token = &amp;Matches.Item(3).Replace(&quot;&amp;PayerID&quot;,&quot;&quot;)
+    &amp;payerId = &amp;Matches.Item(4)
+EndSub</pre>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="39115.html">Toc:GeneXus SDK for PayPal</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

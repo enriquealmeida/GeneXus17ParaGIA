@@ -1,0 +1,55 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Append transaction redirection" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Mode" Type="System.String" %>
+<%@ Property Name="Option" Type="System.String" %>
+<%@ Property Name="RedirectAdded" Type="System.Boolean[]" %>
+
+<%
+	SelectionElement element;
+	ViewElement element2;
+	RedirectAdded[0] = false;
+	if (Option == "Go to Selection" && TransactionUtilities.CanRedirectToSelection(Instance, out element))
+	{
+		RedirectAdded[0] = true;
+%>
+If (&Mode = TrnMode.<%= Mode %>)
+	<%= element.ObjectName %>.Call(<%= element.Parameters.List() %>)
+Endif
+<%
+	}
+	else if (Option == "Go to View" && TransactionUtilities.CanRedirectToView(Instance, out element2))
+	{
+		RedirectAdded[0] = true;
+%>
+If (&Mode = TrnMode.<%= Mode %>)
+	<%= element2.ObjectName %>.Call(<%= element2.Parameters.List() %>, '')
+Endif
+<%
+	}
+    else if (Option == "Stay in Transaction")
+    {
+		RedirectAdded[0] = true;
+%>
+If (&Mode = TrnMode.<%= Mode %>)
+<%
+		if (Mode == "Insert")
+		{
+%>
+	&WebSession.Set(!'<%= Instance.Transaction.Transaction.Name %>_ReturnURL', &HttpRequest.Referrer)
+<%
+		}
+		else if (Instance.AfterInsert == "Stay in Transaction")
+		{
+%>
+	&WebSession.Set(!'<%= Instance.Transaction.Transaction.Name %>_ReturnURL', &ReturnURL)
+<%
+		}
+%>
+	<%= Instance.Transaction.Transaction.Name %>.Call(<%= Instance.Transaction.GetUpdateParmList() %>)
+Endif
+<%
+    }
+%>

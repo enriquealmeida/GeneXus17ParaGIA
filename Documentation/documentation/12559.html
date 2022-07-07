@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Patterns MSBuild Tasks</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?12559,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Patterns MSBuild Tasks</h1>
+<!--Patterns MSBuild Tasks--><div class="TableWikiBody" id="tblwikibody"><p>A <a href="2814.html">Pattern</a> can be applied from the User Interface or batch using the <a href="3908.html">MSBuild Tasks</a>. The tasks related to <a href="2814.html">Patterns</a> are the following:</p>
+
+<ul>
+	<li><b>ApplyPatternOnParent</b>: applies a <a href="2814.html">Pattern</a> to an object.</li>
+</ul>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ApplyPatternOnParent
+  ParentName=&quot;Object Name&quot;
+  ParentType=&quot;GeneXus ObjectType, for example Transaction&quot;
+  Pattern=&quot;Pattern Name to be applied for example WorkWith&quot; 
+/&gt;</pre>
+
+<p><i>ParentName</i>: the associated <a href="1866.html">GeneXus Object name</a> to be applied a pattern.</p>
+
+<p><i>ParentType</i>: the <a href="1866.html">GeneXus Object type</a> for example Transaction, WebPanel, Procedure, etc...</p>
+
+<p><i>Pattern</i>: Name of the pattern to be applied; for example <i><a href="5636.html">WorkWith</a></i>, etc... If you don't know the exact pattern name, check the <i>Name</i> attribute in the Pattern definition file. Locate the &lt;X&gt;.Pattern object under &lt;GX&gt;\Packages\Patterns\X; for example for the <i>Work With</i> one you will notice the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Pattern xmlns=&quot;http://schemas.genexus.com/Patterns/Definition/v1.0&quot; 
+    Publisher=&quot;Artech&quot; 
+    Id=&quot;78CECEFE-BE7D-4980-86CE-8D6E91FBA04B&quot; 
+    Name=&quot;WorkWith&quot; &lt;---
+    ...
+</pre>
+
+<h4><a id="Sample" class="HashLink" href="#Sample">Sample</a></h4>
+
+<p>Suppose you have the following target in a <i>test.build</i> file located under <i>C:\temp\MSBuild</i>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Target Name=&quot;ApplyPatternOnParent&quot;&gt;
+  &lt;ApplyPatternOnParent
+    Pattern=&quot;$(Pattern)&quot;
+    ParentType=&quot;$(ParentType)&quot;
+    ParentName=&quot;$(ParentName)&quot;
+  /&gt;
+&lt;/Target&gt;
+</pre>
+
+<p>To create the <a href="5636.html">Work With Pattern</a> on a <i>Customer</i> <a href="1908.html">Transaction</a> you should open the Knowledge base and run the msbuild task as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild.exe /t:OpenKnowledgeBase;ApplyPatternOnParent /p:
+KBPath=c:\Models\myKnowledgeBase;
+Pattern=&quot;WorkWith&quot;;
+ParentType=&quot;Transaction&quot;;
+ParentName=&quot;Customer&quot;
+ /nologo &quot;c:\temp\MSBuild\test.msbuild&quot;
+ </pre>
+
+<ul>
+	<li><b>ApplyPattern</b>: Reaplies a <a href="2814.html">pattern</a> to an object using the pattern instance.</li>
+</ul>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ApplyPattern
+  Pattern=&quot;Pattern Name&quot;
+  InstanceName=&quot;Pattern instance name&quot;
+  ForceApply=&quot;True|False&quot; (only in GX X Evolution2 version) 
+  /&gt;</pre>
+
+<p><i>Pattern</i>: Name of the pattern to be reapplied; valid options are WorkWith, Category etc...</p>
+
+<p><i>InstanceName</i>: Pattern instance name, for example <i>WorkWithCustomer</i> (assuming you applied the <i>WorkWith</i> pattern to the <i>Customer</i> Transaction). <br />
+If the InstanceName is empty, the pattern is applied to all instances (only in GX X Evolution2 version).</p>
+
+<p><em>ForceApply</em>: Refresh all the instances. This flag is ignored when you specify an specific instance to apply (only in GX X Evolution2 version).</p>
+
+<h4><a id="Sample" class="HashLink" href="#Sample">Sample</a></h4>
+
+<p>Suppose you have the following target in a <i>test.build</i> file located under <i>C:\temp\MSBuild</i>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Target Name=&quot;ApplyPattern&quot;&gt;
+  &lt;ApplyPattern
+    Pattern=&quot;$(Pattern)&quot;
+    InstanceName=&quot;$(InstanceName)&quot;
+  /&gt;
+&lt;/Target&gt;
+</pre>
+
+<p>To reapply the <a href="5636.html">Work With Pattern</a> on a <i>WorkWithCustomer</i> pattern instance you should run something like the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild.exe /t:OpenKnowledgeBase;ApplyPattern /p:
+KBPath=c:\Models\myKnowledgeBase;
+Pattern=&quot;WorkWith&quot;;
+InstanceName=&quot;WorkWithCustomer&quot;
+ /nologo &quot;c:\temp\MSBuild\test.msbuild&quot;
+
+</pre>
+
+<h4><a id="Comments" class="HashLink" href="#Comments">Comments</a></h4>
+
+<ul>
+	<li>The <i>msbuild.exe</i> file is located in the Microsoft .net 2.0 folder, generally <i>C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727\</i></li>
+	<li>
+	<p>Your msbuild file should add a reference to the <i>Genexus.Tasks.Patterns.targets</i> file located under the GeneXus installation using the <i>Import</i> keyword, for example</p>
+	</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Import Project=&quot;c:\GeneXusInstallationDirectory\Genexus.Tasks.Patterns.targets&quot;/&gt;
+</pre>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/09/21 12:29 PM</em></font></td></TR></table></font>

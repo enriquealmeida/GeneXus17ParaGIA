@@ -1,0 +1,48 @@
+
+delimiters "$", "$"
+
+init(transaction, lower, variables, foreigns, event, level, action, regExp, enums, pk, lk, responses, trnCheck)::=<<
+$if(variables)$
+	$updateLevelContent()$
+$else$
+$updateLevelContentt()$
+$endif$	
+>>
+
+updateLevelContent()::=<<
+$variables:{variable|$imageVariables(variable)$};separator="\n"$
+&$level$ = new()
+$foreigns:{foreign|$foreignValidation(foreign, transaction, lower, level)$};separator="\n"$
+$regExp:{variable|$regExpValidation(variable)$};separator="\n"$
+$shouldCheckIf(trnCheck, foreigns, regExp, enums)$
+$if(trnCheck.ShouldCheck)$
+	$performUpdateLevel()$
+$shouldCheckEndIf(trnCheck)$
+$else$
+$performUpdateLevel()$
+$endif$
+>>
+
+performUpdateLevel()::=<<
+&$transaction$.Load(&ContextIn.Context.$pk$)	
+$variables:{variable|$renderParameters(level, variable)$};separator="\n"$
+$enums:{variable|$enumParameters(transaction, variable)$};separator="\n"$
+&$transaction$.$level$.Add(&$level$)
+&$transaction$.Update()
+if &$transaction$.success()
+	commit
+	&speechOut = !"$level$ updated!"
+	&ContextOut.Context.GXAction = ""
+	&ContextOut.Context.$pk$ = &ContextIn.Context.$pk$
+else
+	&ContextOut.FromJson(&ContextPrevMsg.ToJson())
+	&Messages = &$transaction$.GetMessages()
+	for &Message in &Messages
+		&speechOut+= &Message.Description
+   	endfor
+endif
+>>
+
+enumParameters(transaction, parameter)::=<<
+&$transaction$.$parameter.Name$.FromString(&ContextIn.Context.$parameter$)
+>>

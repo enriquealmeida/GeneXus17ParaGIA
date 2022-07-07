@@ -1,0 +1,134 @@
+﻿group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities,  dpfunctions, apis, sdts, gx)::=<<
+$header(hostinfo, entities,  dpfunctions, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities,  dpfunctions, apis, sdts, gx)::=<<
+
+package $hostinfo.package$;
+
+import java.io.InputStream;
+import java.net.*;
+import java.util.*;
+
+import com.genexus.internet.*;
+import com.genexus.*;
+
+import org.apache.olingo.commons.api.data.*;
+import org.apache.olingo.commons.api.edm.EdmEntitySet;
+import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.ex.ODataRuntimeException;
+import org.apache.olingo.commons.api.format.ContentType;
+import org.apache.olingo.server.api.*;
+import org.apache.olingo.server.api.processor.EntityCollectionProcessor;
+import org.apache.olingo.server.api.serializer.*;
+import org.apache.olingo.server.api.uri.*;
+import org.apache.olingo.server.api.uri.queryoption.*;
+import org.apache.olingo.commons.api.http.*;
+import org.apache.olingo.server.api.uri.queryoption.expression.*;
+
+public class GxEntityCP implements EntityCollectionProcessor {
+
+	private OData odata;
+	private ServiceMetadata serviceMetadata;
+	private com.genexus.internet.HttpContext context;
+	private GxODataLayer dataLayer;
+
+  	public GxEntityCP(GxODataLayer dataLayer) {
+        this.dataLayer = dataLayer;
+    }
+
+	public void init(OData odata, ServiceMetadata serviceMetadata) {
+		  this.odata = odata;
+		  this.serviceMetadata = serviceMetadata;
+	}
+
+	public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) 
+		throws ODataApplicationException, SerializerException {
+		
+		final UriResource firstResourceSegment = uriInfo.getUriResourceParts().get(0);
+		if(firstResourceSegment instanceof UriResourceEntitySet) {
+			readEntityCollectionBusinessComponents(request, response, uriInfo, responseFormat);
+		} 
+		else if(firstResourceSegment instanceof UriResourceFunction) {
+			readFunctionImportCollection(request, response, uriInfo, responseFormat);
+		} 
+		else {
+			throw new ODataApplicationException("Not implemented", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		}
+	}
+
+	public void readEntityCollectionBusinessComponents(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
+		throws ODataApplicationException, SerializerException {
+
+		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
+		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0); // in our example, the first segment is the EntitySet
+		EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
+		FilterOption filterOption = uriInfo.getFilterOption();
+		EntityCollection entitySet = null;  
+
+		// SKIP option
+		int skipNumber = 0;
+		SkipOption skipOption = uriInfo.getSkipOption();
+		if (skipOption != null) {
+			skipNumber = skipOption.getValue();
+			if (skipNumber < 0) {
+				throw new ODataApplicationException("Invalid value for \$skip", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
+			}
+		}
+
+		// TOP option
+		int topNumber = 0;
+		TopOption topOption = uriInfo.getTopOption();
+		if (topOption != null) {
+			topNumber = topOption.getValue();
+			if (topNumber < 0) {				
+				throw new ODataApplicationException("Invalid value for \$top", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
+			}
+		}
+		
+		entitySet = this.dataLayer.readEntitySetData(edmEntitySet, skipNumber, topNumber, filterOption);
+
+		ODataSerializer serializer = odata.createSerializer(responseFormat);
+
+		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+		ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
+
+		final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
+		EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with().id(id).contextURL(contextUrl).build();
+		SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entitySet, opts);
+		InputStream serializedContent = serializerResult.getContent();
+
+		response.setContent(serializedContent);
+		response.setStatusCode(HttpStatusCode.OK.getStatusCode());
+		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+	}	
+
+
+	private void readFunctionImportCollection(final ODataRequest request, final ODataResponse response, final UriInfo uriInfo, final ContentType responseFormat) 
+			throws ODataApplicationException, SerializerException {
+		
+		final UriResource firstSegment = uriInfo.getUriResourceParts().get(0);
+		if(!(firstSegment instanceof UriResourceFunction)) {
+			throw new ODataApplicationException("Not implemented",
+			HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		}
+		
+		final UriResourceFunction uriResourceFunction = (UriResourceFunction) firstSegment;
+		final EntityCollection entityCol = this.dataLayer.readFunctionImportCollection(uriResourceFunction, serviceMetadata);
+		final EdmEntityType edmEntityType = (EdmEntityType) uriResourceFunction.getFunction().getReturnType().getType();
+		final ContextURL contextURL = ContextURL.with().asCollection().type(edmEntityType).build();
+		EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with().contextURL(contextURL).build();
+		final ODataSerializer serializer = odata.createSerializer(responseFormat);
+		final SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCol, opts);
+
+		response.setContent(serializerResult.getContent());
+		response.setStatusCode(HttpStatusCode.OK.getStatusCode());
+		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+	}
+}
+
+>>

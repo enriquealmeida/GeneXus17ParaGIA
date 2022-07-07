@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Database Reverse Engineering Wizard</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6627,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Database Reverse Engineering Wizard</h1>
+<!--Database Reverse Engineering Wizard--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As you may already know, GeneXus allows you to apply a Database Reverse Engineering process, making your GeneXus application able to access data stores defined in other databases.</p>
+
+<p>But how and where do you define this process?  By using the Database Reverse Engineering tool (DBRET).</p>
+
+<p>In order to start this tool, follow the steps shown below:</p>
+
+<p>     <img src="./images/6636.JPG" id="6636" class="WikiImage"/></p>
+
+<h3><a id="Database+Reverse+Engineering+Wizard%3A+Step+by+Step" class="HashLink" href="#Database+Reverse+Engineering+Wizard%3A+Step+by+Step">Database Reverse Engineering Wizard: Step by Step</a></h3>
+
+<p>The Database Reverse Engineering process is completely defined by a three step wizard.  Let's go through those steps with a simple example.</p>
+
+<p>Suppose you have an Agency KB (Airlines, Flights, etc.), and you want your application to access some tables (Customers and Countries) in another database. This database has the following tables:</p>
+
+<p>     <img src="./images/6658.jpg" id="6658" class="WikiImage"/>     <img src="./images/6659.jpg" id="6659" class="WikiImage"/>    </p>
+
+<h4><a id="1.+Start+Options" class="HashLink" href="#1.+Start+Options">1. Start Options</a></h4>
+
+<p>Once you have selected the Database Reverse Engineering option (see image above), you will reach the first step window, where all the necessary information to connect to the external database is requested.<br />
+In this dialog, all connection information to access the DBMS must be filled out, such as DBMS, connection method, database name, user and password.</p>
+
+<p>          <img src="./images/6637.jpg" id="6637" class="WikiImage"/></p>
+
+<p>Once this step is completed, all information about tables, indexes and relationships between tables is retrieved from the DBMS and saved in a metadata file.</p>
+
+<h4><a id="2.+Database+Objects+Selection" class="HashLink" href="#2.+Database+Objects+Selection">2. Database Objects Selection</a></h4>
+
+<p>In this step you must select the tables you want to consolidate in this instance.</p>
+
+<ul>
+	<li>Use the &quot;Add Related&quot; button to automatically add all referenced tables (N-1 relations) to those already selected.</li>
+	<li>The &quot;Save Selection&quot; button enables you to save all selected tables to be easily retrieved in a further execution through the &quot;Load Selection&quot; button.</li>
+</ul>
+
+<p>        <img src="./images/6639.jpg" id="6639" class="WikiImage"/></p>
+
+<p>Following the example, if you select the <em>Customer</em> table and then press the <em>Add Related</em> button, you will be selecting Customer table and Country table, as it is shown in the image below:</p>
+
+<p>        <img src="./images/6660.jpg" id="6660" class="WikiImage"/></p>
+
+<p>After this step, the <a href='http://wiki.gxtechnical.com/commwiki/servlet/hwiki?Reverse+Engineering+Process'>Reverse Engineering Process</a> itself takes place, where the DBRET (Database Reverse Engineering tool)  evaluates all relationships between selected tables and defines the necessary GeneXus objects.</p>
+
+<h4><a id="3.+Reverse+Engineering+Report" class="HashLink" href="#3.+Reverse+Engineering+Report">3. Reverse Engineering Report</a></h4>
+
+<p>In this step you will see three tags:</p>
+
+<ul>
+	<li>Report</li>
+	<li>Settings</li>
+	<li>Rules</li>
+</ul>
+
+<h5><a id="Report" class="HashLink" href="#Report">Report</a></h5>
+
+<p>This report shows all defined objects created during the reverse engineering process and, if it finds any problems, the corresponding warning will be displayed.<br />
+These are some special warnings that could appear:</p>
+
+<ul>
+	<li>&quot;&lt;Attribute&gt; is a FK to &lt;Table&gt; but it's not selected.&quot; In this case there is an option -Add Table- to select this table and automatically reprocess the objects.</li>
+	<li>&quot;The table doesn't have a primary key.&quot; When the external table doesn't have a primary key, the DBRET creates a Data View but not the Transaction. If you want to create it anyway, select some table's attributes as a primary key by means of the<br />
+	 &quot;Choose Primary Key&quot; link.</li>
+	<li>&quot;The attribute &lt;Attribute&gt; is auto number and was chosen as primary key.&quot; This warning appears when the table does not have a primary key but contains an auto numbered attribute.</li>
+	<li>&quot;The type &lt;data_type&gt; is not supported.&quot; This message is triggered when the table contains an attribute with a data type that cannot be automatically matched with GeneXus ones. Use the &quot;Change Type&quot; option to select one of the GeneXus data types that adjusts best.</li>
+</ul>
+
+<p><br />
+        <img src="./images/6642.jpg" id="6642" class="WikiImage"/><br />
+<br />
+You can change some settings or define new rules in this step before finishing (reprocessing could be performed).</p>
+
+<p>Now analyze the <em>Settings</em> and <em>Rules</em> options:</p>
+
+<h5><a id="Settings" class="HashLink" href="#Settings">Settings</a></h5>
+
+<p>As you may see in the image below, the group of settings is:</p>
+
+<p>         <img src="./images/6662.jpg" id="6662" class="WikiImage"/></p>
+
+<ul>
+	<li><strong>Generate Transactions:</strong>
+
+	<ul>
+		<li><em><strong>True:</strong></em>  A Transaction will be generated with the structure of each table to be imported.</li>
+		<li><em><strong>False:</strong></em> Only Data View will be consolidated.</li>
+	</ul>
+	</li>
+	<li><strong>Identify Multilevel Transactions:</strong>
+	<ul>
+		<li><em><strong>False:</strong></em> By default each table to be imported will define a Transaction and different Data View. The generated transactions will then be of only one level.</li>
+		<li><em><strong>True:</strong></em> Certain subordination patterns are looked for to define transactions of more than one level. For example, if there is a table for OrderSalesHeader and another for OrderSalesLines, only one Transaction will be created with the two levels.</li>
+	</ul>
+	</li>
+	<li><strong>Generate Schema:</strong> When this option is True, the table schema information is stored in the data view schema property.</li>
+	<li><strong>Naming Rule:</strong>
+	<ul>
+		<li><em><strong>Prefix only when needed:</strong></em>  Based on the referential integrity definition in the database, the tool automatically prefixes those attributes that need to be changed to avoid conflict and preserve the tables relations based on URA. This is the default option.</li>
+		<li><em><strong>Prefix always:</strong></em> Always prefixes attributes with the table name and defines the corresponding subtypes groups to preserve tables relationships.</li>
+		<li><strong><em>Same name-same thing:</em></strong> This option applies to databases created with GeneXus or others based on URA definition. If two tables have the same attribute but no referential integrity control is defined between them, they will be considered as related tables.</li>
+	</ul>
+	</li>
+	<li><strong>Names separator: </strong> If an attribute needs to be prefixed with the table name, this separator will be used.</li>
+	<li><strong>Datastore:</strong> By default, all Data Views will belong to the default data store. With this property you can choose another data store or define a new one.</li>
+	<li><strong>Folder:</strong> Specify the folder name where the new objects will be consolidating in the GeneXus KB.</li>
+	<li><strong>Use Database description:</strong>
+	<ul>
+		<li><strong><em>True:</em></strong>  The attributes description will be loaded from the database to set the &quot;Description Attribute&quot; property.</li>
+		<li><strong><em>False:</em></strong> The attribute's description will be the same as the attribute's name.</li>
+	</ul>
+	</li>
+	<li><strong>Generate Views as Transactions:</strong>  Activating this property the user will be able to select a &quot;key&quot; attribute for the View in order to create a Transaction object associated with it.</li>
+	<li><strong>Backup model before consolidate:</strong>  If it is activated, a model backup is created before the consolidation takes place.</li>
+	<li><strong>Maximum length of table prefix</strong><sup>1</sup><strong>:</strong> In some cases DBRET could prefix the attributes with their table's name (see Naming Rule above). With this property you can set the maximum length to be considered for the prefix. (Default: 200)</li>
+	<li><strong>Apply replace rules to attributes prefix</strong><sup>1</sup><strong>:</strong> True | False (default: False). In some cases DBRET could prefix the attributes with their table's name (see Naming Rule above). With this property you can change the scope of 'Raplace Rules' to be applied after the attributes were prefixed (True) and not before (False).<br />
+	Use this property with caution, as the name of the renamed attribute might match to an existing one ( DBRET only controls the uniqueness of the name when it applies the prefix).</li>
+</ul>
+
+<p>Note: <sup>1</sup> These properties are available since GeneXus 15 Upgrade 5.</p>
+
+<h5><a id="Rules" class="HashLink" href="#Rules">Rules</a></h5>
+
+<p>There are four types of rules:</p>
+
+<ul>
+	<li>Rename</li>
+	<li>Replace</li>
+	<li>Change Type</li>
+	<li>Add Relation</li>
+</ul>
+
+<p>For the first three rules you have to specify the old information, the new information and the scope.<br />
+<br />
+Once the rule is defined, you have to press the &quot;Add Rule&quot; button to add it to the rules list. The rules will be automatically applied when you back to the Report tab dialog.<br />
+ </p>
+
+<ul>
+	<li><strong>Rename:</strong>  Rename everything referred to a Table, Attribute or Index &quot;Name&quot; with the &quot;New name.&quot; The rule will be applied only for the &quot;Object type&quot; scope. If the Table Name scope is specified, the rule only applies to this table.</li>
+	<li><strong>Replace:</strong>  Replace all the occurrences of the string &quot;To replace&quot; with &quot;Replace with&quot; in the names of &quot;Object type&quot; scope. If the &quot;Table name&quot; parameter is specified, the rule only applies to this table. Besides, if the &quot;Object Name&quot; parameter is specified, the rule only applies to this table/index or table/attribute.  If the property 'Apply replace rules to attributes prefix' is True, then this rules applies for those prefix.</li>
+	<li><strong>Change Type:</strong> This rule allows changing the attribute data type. With the &quot;Table name&quot; and &quot;Attribute name&quot; parameters you specify the scope of the rule.</li>
+	<li><strong>Add Relation:</strong>  Use this rule to establish a relationship between two tables that DBRET could not determine. This information will be taken to create the Knowledge Base model (it does not affect the real database).</li>
+</ul>
+
+<p>In the example, you want to rename any &quot;Customer&quot; sequence as &quot;FlightCustomer.&quot; So, define the corresponding Rename rule, as you may see:</p>
+
+<p>         <img src="./images/6663.jpg" id="6663" class="WikiImage"/></p>
+
+<p><strong>Save / Load Rules:  </strong>Use the Save and Load button to backup or retrieve previously saved rules.  </p>
+
+<p>And that's all!! You've reached the end of the Database Reverse Engineering Wizard. Press the <em>Finish</em> button. What happened afterwards in the example? Look and compare both <em>Folder View</em> images below.</p>
+
+<p>        <img src="./images/6665.jpg" id="6665" class="WikiImage"/>             <img src="./images/6668.jpg" id="6668" class="WikiImage"/><br />
+<br />
+In the first one, you can see the original objects in the Agency KB.  In the other one you see the same Agency KB but with some more GeneXus objects automatically created to represent the corresponding schema. Note that as a result of the Rename rule applied, there are no &quot;Customer&quot; objects,  but &quot;FlightCustomer&quot; objects:</p>
+
+<ul>
+	<li>FlightCustomer Transaction</li>
+	<li>Country Transaction</li>
+	<li>FlightCustomer Data View</li>
+	<li>Country Data View</li>
+	<li>Country table</li>
+	<li>FlightCustomer table</li>
+</ul>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="2414.html">Reverse Engineering Process</a><br />
+<a href="28414.html">Reverse Engineering Checkings when executed integrated to GeneXus</a></p>
+
+<p><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="2414.html">Reverse Engineering Process</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/15/21 02:13 PM</em></font></td></TR></table></font>

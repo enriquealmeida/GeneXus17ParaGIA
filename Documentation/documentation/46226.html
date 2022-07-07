@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM MSBuild Tasks</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46226,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM MSBuild Tasks</h1>
+<!--GAM MSBuild Tasks--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Here is the list of <a href="3908.html">GeneXus MSBuild Tasks</a> related to <a href="24746.html">GeneXus Access Manager (GAM)</a>.</p>
+
+<p>When <a href="3908.html">MSBuild Tasks</a> are used, the <strong>GeneXus.Tasks.targets</strong> and <strong>Genexus.GAM.Tasks.targets</strong> files have to be imported in the basic script file, adding the following line:</p>
+
+<pre>
+&lt;Import Project=&quot;$(GX_PROGRAM_DIR)\Genexus.Tasks.targets&quot; /&gt;
+&lt;Import Project=&quot;$(GX_PROGRAM_DIR)\Genexus.GAM.Tasks.targets&quot; /&gt;
+</pre>
+
+<h2><a id="Task+List" class="HashLink" href="#Task+List">Task List</a></h2>
+
+<h3><a id="SetGAMOptions" class="HashLink" href="#SetGAMOptions">SetGAMOptions</a></h3>
+
+<p>This task can be used when you open or create a new Knowledge Base and set the GAM Options.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetGAMOptions 
+          IncludeFrontendObjects=&quot;true|false&quot; 
+          IncludeSDSamples=&quot;true|false&quot; 
+          UpdateMode=&quot;never|always|prompt&quot; 
+          /&gt;</pre>
+
+<h4><a id="Options" class="HashLink" href="#Options">Options</a></h4>
+
+<p><em>IncludeFrontendObjects</em>: set this to True to import panels for login, change password, user registration form, etc. for your web application; otherwise, set it to False.</p>
+
+<p><em>IncludeSDSamples</em>: set this to True to import the mobile panels for login, change password, user registration form, etc. for your native mobile application; otherwise, set it to False.</p>
+
+<p><em>UpdateMode</em>: this property specifies how the GAM objects that were imported will be updated when you change your GeneXus version. The possible values are:</p>
+
+<p style="margin-left: 40.0px;">never: the GAM objects will not be imported when you change the GeneXus version.</p>
+
+<p style="margin-left: 40.0px;">always: the GAM objects will always be imported when you change the GeneXus version.</p>
+
+<p style="margin-left: 40.0px;">prompt: the GeneXus IDE will ask you if you want to update the GAM objects when you change the GeneXus version.</p>
+
+<h4><a id="Samples" class="HashLink" href="#Samples">Samples</a></h4>
+
+<p>Suppose you have the following target in a <i>test.build</i> file located under <i>C:\temp</i>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project DefaultTargets=&quot;Open&quot; xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+
+  &lt;Import Project=&quot;$(GX_PROGRAM_DIR)\Genexus.Tasks.targets&quot; /&gt;
+
+  &lt;Import Project=&quot;$(GX_PROGRAM_DIR)\Genexus.GAM.Tasks.targets&quot; /&gt;
+
+  &lt;PropertyGroup&gt; &lt;!--Input Parameters--&gt;
+
+      &lt;WorkingDirectory&gt;&lt;/WorkingDirectory&gt;
+
+  &lt;/PropertyGroup&gt;
+
+  &lt;Target Name=&quot;Open&quot;&gt;
+
+    &lt;OpenKnowledgeBase Directory=&quot;$(WorkingDirectory)&quot; /&gt;
+
+  &lt;/Target&gt;
+
+
+  &lt;Target Name=&quot;CheckSetGetGAMOptions&quot; DependsOnTargets=&quot;SetGAMProperties;CheckGAMOptions&quot;/&gt;
+
+
+  &lt;Target Name=&quot;SetGAMProperties&quot; DependsOnTargets=&quot;Open&quot; &gt;
+
+  &lt;SetGAMOptions 
+
+          IncludeFrontendObjects=&quot;$(IncludeFrontEnd)&quot; 
+
+          IncludeSDSamples=&quot;$(IncludeSDSamples)&quot; 
+
+          UpdateMode=&quot;$(UpdateMode)&quot; 
+
+          /&gt;
+
+  &lt;/Target&gt;
+
+&lt;/Project&gt;</pre>
+
+<p>This script opens a Knowledge Base and sets the GAM options; you can run this by command line:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild &quot;c:\temp\test.msbuild&quot; /t:CheckSetGetGAMOptions /p:WorkingDirectory=&quot;&lt;KB directory&gt;&quot; /p:IncludeFrontEnd=true /p:IncludeSDSamples=true /p:UpdateMode=never /p:GX_PROGRAM_DIR=&lt;GeneXus installation directory&gt;
+
+</pre>
+
+<h3><a id="GetGAMOptions" class="HashLink" href="#GetGAMOptions">GetGAMOptions</a></h3>
+
+<p>This task can be used when you open a new Knowledge Base and get the values for the GAM Options described in the previous task.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;GetGAMOptions&gt;
+              &lt;Output TaskParameter=&quot;IncludeFrontendObjects&quot; PropertyName=&quot;GAMIncludeFrontend&quot;/&gt;
+              &lt;Output TaskParameter=&quot;IncludeSDSamples&quot; PropertyName=&quot;GAMIncludeSD&quot;/&gt;
+              &lt;Output TaskParameter=&quot;UpdateMode&quot; PropertyName=&quot;GAMUpdateMode&quot;/&gt;
+          &lt;/GetGAMOptions&gt;</pre>
+
+<h4><a id="Sample" class="HashLink" href="#Sample">Sample</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Target Name=&quot;CheckGAMOptions&quot; DependsOnTargets=&quot;Open&quot; &gt;
+          &lt;GetGAMOptions&gt;
+              &lt;Output TaskParameter=&quot;IncludeFrontendObjects&quot; PropertyName=&quot;GAMIncludeFrontend&quot;/&gt;
+              &lt;Output TaskParameter=&quot;IncludeSDSamples&quot; PropertyName=&quot;GAMIncludeSD&quot;/&gt;
+              &lt;Output TaskParameter=&quot;UpdateMode&quot; PropertyName=&quot;GAMUpdateMode&quot;/&gt;
+          &lt;/GetGAMOptions&gt;
+
+          &lt;Message Text=&quot;GAM option IncludeFrontendObjects: '$(GAMIncludeFrontend)'&quot; /&gt;
+          &lt;Message Text=&quot;GAM option IncludeSDSamples: '$(GAMIncludeSD)'&quot; /&gt;
+          &lt;Message Text=&quot;GAM option UpdateMode: '$(GAMUpdateMode)'&quot; /&gt;
+
+          &lt;Error Condition=&quot;$(GAMIncludeFrontend) != $(IncludeFrontEnd)&quot; Text=&quot;GAM option IncludeFrontendObjects should be $(IncludeFrontEnd), found '$(GAMIncludeFrontend)'&quot; /&gt;
+          &lt;Error Condition=&quot;$(GAMIncludeSD) != $(IncludeSDSamples)&quot; Text=&quot;GAM option IncludeSDSamples should be $(IncludeSDSamples), found '$(GAMIncludeSD)'&quot; /&gt;
+          &lt;Error Condition=&quot;'$(GAMUpdateMode)' != $(UpdateMode)&quot; Text=&quot;GAM option UpdateMode should be $(UpdateMode), found '$(GAMUpdateMode)'&quot; /&gt;
+  &lt;/Target&gt;</pre>
+
+<h3><br />
+Availability</h3>
+
+<p>This feature is available since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a>.</p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="3908.html">MSBuild Tasks</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/11/20 12:21 AM</em></font></td></TR></table></font>

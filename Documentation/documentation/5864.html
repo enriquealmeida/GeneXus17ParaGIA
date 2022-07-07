@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Horizontal Formulas</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5864,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Horizontal Formulas</h1>
+<!--Horizontal Formulas--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Horizontal <a href="5861.html">Formulas</a> allow defining expressions (either arithmetic or any other kind).</p>
+
+<p>What determines a formula is <strong>horizontal</strong> (as opposite to <a href="5868.html">aggregate</a>) is the fact that attributes involved belong to one <a href="6029.html">extended table</a>.</p>
+
+<p><img src="./images/25299.jpg" id="25299" class="WikiImage"/></p>
+
+<p>For example: &quot;<em>FlightInstancePrice</em> = <em>FlightPrice </em>* 0.9&quot; being <em>FlightInstancePrice</em> an attribute virtually in FLIGHTINSTANCE table (table A in diagram) and <em>FlightPrice</em> in FLIGHT table (table B in diagram) where for each flight instance there is one and only one associated Flight (that is: FLIGHT belongs to the FLIGHTINSTANCE extended table). </p>
+
+<p>Horizontal formulas can be either <a href="6440.html">global</a> (assigned to attributes at transaction structure level, indicating those attributes always assume the result of a calculation) or <a href="6441.html">local</a> (or inline, assigned to attributes, variables, elements of Data Providers, SDTs, etc., or being part of conditions that are evaluated in runtime). That is:</p>
+
+<p><strong>Horizontal Global Formula</strong>: <em>&lt;attribute&gt;</em> <strong>=</strong> <em>&lt;horizontalConditionalFormula&gt;</em><br />
+<strong>Horizontal Inline Formula</strong>: {{<em>&lt;variable&gt;|&lt;attribute&gt;</em>} <strong>=</strong> <em>&lt;horizontalUnconditionalFormula&gt;</em>} | <em>&lt;horizontalUnconditionalFormula&gt;</em></p>
+
+<p>The main difference between global and inline, is while an inline horizontal formula is simply an expression, global horizontal formula may consist of <strong>several conditional expressions</strong>. In addition, as in any inline formula, variables could be involved in the expression (because the formula does only exists in this local piece of code, where the variable is known. Whereas you really don't know all the places where a global formula is going to be triggered. This is the meaning of &quot;global&quot;. It can be used everywhere an attribute of the corresponding base table is allowed)</p>
+
+<p>Saying &quot;horizontal inline formula&quot; is the same as saying: expression. Wherever you can write an expression, you are particularly writing an horizontal formula. That's why the concept of &quot;<strong>inline</strong> <strong>horizontal</strong> formula&quot; is not very productive. Not so for &quot;global horizontal formula&quot;, that let's say that an attribute will always be calculated in this way.</p>
+
+<p>Meanwhile, an <a href="5868.html">Aggregate formula</a> does not need a context to be evaluated, a horizontal does. It will be understood below by means of two examples.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><em>&lt;horizontalConditionalFormula&gt;</em>::= &lt;<em>exp&gt;<sub>1 </sub></em>[ <strong>if</strong> &lt;<em>cond&gt;<sub>1 </sub></em>] [ <strong>;</strong>&lt;<em>exp&gt;<sub>2 </sub></em>[ <strong>if</strong> <em>&lt;cond&gt;<sub>2 </sub></em>]] [ <strong>;</strong>&lt;<em>exp&gt;<sub>n </sub></em>[<strong>otherwise</strong> | <strong>if</strong> &lt;<em>cond&gt;<sub>n </sub></em>]]</p>
+
+<p><em>&lt;horizontalUnconditionalFormula&gt;</em>::= <em>&lt;exp&gt;</em></p>
+
+<p><strong>Where:</strong></p>
+
+<p><em>&lt;exp&gt;<sub>n  </sub></em>may be any valid expression. It can include the following:</p>
+
+<ul>
+	<li>Attributes (from the formula navigation table and its extended table. They could also be formula attributes themselves)</li>
+	<li>Variables (only system variables for global, and both kind -system and user- for inline formulas, as long as they are already defined on the object)</li>
+	<li>Constants</li>
+	<li>Functions, methods and properties</li>
+	<li>Arithmetical operators (+, -, *, /, ^)</li>
+	<li>String operators (+)</li>
+	<li>Date operators (+, -)</li>
+	<li>Comparative operators (&lt;,&lt;=, =, &gt;, &gt;=, &gt;, like) when the expression is of boolean data type</li>
+	<li>Logical operators (and, or, not) when the expression is of boolean data type</li>
+</ul>
+
+<p><em>&lt;cond&gt;<sub>n  </sub></em>may be any valid triggering condition. It can include the following:</p>
+
+<ul>
+	<li>Attributes (from the formula navigation table and its extended table)</li>
+	<li>Constants</li>
+	<li>Functions, methods and properties</li>
+	<li>Logical operators (and, or, not)</li>
+	<li>Comparative operators (&gt;, &lt;, =, &gt;=, &lt;=, like)</li>
+</ul>
+
+<p>The result returned by a horizontal formula will be the expression related to the first condition returning True. The others will not be evaluated.</p>
+
+<p><em>&lt;otherwise&gt;:</em><span style="line-height: 1.6em;"> when none of the evaluated triggering conditions return True, if there is an Otherwise clause in the formula definition, the returned result will be the expression associated with this clause.</span></p>
+
+<h4><a id="Consideration+when+used+in+Smart+Devices" class="HashLink" href="#Consideration+when+used+in+Smart+Devices"><span style="line-height: 1.6em;">Consideration when used in Smart Devices</span></a></h4>
+
+<p>The <a href="24332.html">client-side Events</a> grammar in Smart Devices is limited regarding the events executed on the server. That's why allowed inline expressions not only are horizontal (aggregate are not allowed), but also are a reduced set of what you have seen above. </p>
+
+<p> </p>
+
+<h3><a id="Example%3A+global+formula" class="HashLink" href="#Example%3A+global+formula">Example: global formula</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Flight
+{
+   FlightId*
+   FlightDescription
+   FlightPrice
+}
+
+FlightInstance
+{
+  FlightInstanceNumber*
+  FlightId
+  FlightDescription
+  FlightPrice
+  FlightInstanceNumberOfPassengers
+  FlightInstancePrice = <strong>FlightPrice if FlightInstanceNumberOfPassengers &lt;= 100;
+                        FlightPrice * 0.9 if FlightInstanceNumberOfPassengers &gt; 100 and FlightInstanceNumberOfPassengers &lt; 200;
+                        FlightPrice * 0.8 otherwise;</strong>
+  FlightInstanceTotal = <strong>FlightInstanceNumberOfPassengers * FlightInstancePrice;</strong>
+}</pre>
+
+<p>The <em>FlightInstancePrice</em> and <em>FlightInstanceTotal</em> attributes are both <strong>horizontal formulas</strong> (in the above example the associated calculations are shown). They are all <a href="6440.html">global formulas</a>. </p>
+
+<p>Look at <em>FlightInstancePrice</em> definition. Its associated table is FLIGHTINSTANCE (the table the attribute would be if it were physically stored). The formula attributes belong to the FLIGHTINSTANCE extended table (that is to say, FLIGHTINSTANCE and FLIGHT tables). Note it is defined as three conditional expressions. In the example below, the same definition but inline will be explained.</p>
+
+<p><em style="line-height: 1.6em;">FlightInstanceTotal</em><span style="line-height: 1.6em;"> also has FLIGHTINSTANCE as its base table (involve attributes that belong to the FLIGHTINSTANCE extended table), but the definition is unconditional.</span></p>
+
+<p><span style="line-height: 1.6em;">In both cases, the formulas have a context: the FlightInstance first level transaction. They are not defined in isolation. </span></p>
+
+<p>The following image shows the &quot;FlightInstance&quot; transaction being edited with the GeneXus transaction editor, and the <em>FlightInstancePrice </em>horizontal formula attribute being edited with the GeneXus formula editor:</p>
+
+<p><img src="./images/5867.jpg" id="5867" class="WikiImage"/></p>
+
+<h3><a id="Example%3A+local%2Finline+formula" class="HashLink" href="#Example%3A+local%2Finline+formula">Example: local/inline formula</a></h3>
+
+<p>If you did not have the flight instance price calculated as a formula <strong>attribute</strong>, and you need it inside a procedure code, you would write:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Do case
+    case FlightInstanceNumberOfPassengers &lt;= 100
+       &amp;price = FlightPrice
+   case FlightInstanceNumberOfPassengers &gt; 100 and FlightInstanceNumberOfPassengers &lt; 200
+      &amp;price = FlightPrice*0.9
+   otherwise
+       &amp;price = FlightPrice*0.8
+endcase</pre>
+
+<p>Strictly speaking, here you have three expressions, that is, three inline formulas. Observe this code only makes sense in a <strong>context</strong> where you are positioned in the FlightInstance table. Thus, this code block must be within that appropriate context. </p>
+
+<p>You would still have an inline formula when assigning it to an attribute outside the attribute definition level. That is: if you have in a procedure source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each order FlightInstanceNumber
+   Do case
+       case FlightInstanceNumberOfPassengers &lt;= 100
+          FlightInstancePrice = FlightPrice
+       case FlightInstanceNumberOfPassengers &gt; 100 and FlightInstanceNumberOfPassengers &lt; 200
+         FlightInstancePrice = FlightPrice*0.9
+       otherwise
+         FlightInstancePrice = FlightPrice*0.8
+   endcase
+endfor</pre>
+
+<p>Here you are locally assigning the result of the formula evaluation to the attribute FlightInstancePrice, which is not itself a formula, but a normal attribute (like any other). Only here, inside this code, it is calculated in such a way.</p>
+
+<h3><a id="Contextual+table" class="HashLink" href="#Contextual+table">Contextual table</a></h3>
+
+<p>You have seen that for the formula to be meaningful, it must be in a context where you are positioned on a table that reaches all the formula attributes by means of its extended. That is why the presence of the same formula will affect this contextual table determination as well. </p>
+
+<p>For example, having a for each as context:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each order FlighPrice
+   &amp;total = &amp;total + FlightInstanceNumberOfPassengers * FlightInstancePrice
+endfor</pre>
+
+<p>The for each base table is not FLIGHT but FLIGHTINSTANCE, because of the attributes of the expression (formula).</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5868.html">Aggregate Formulas</a></TD><TD><a href="6490.html">Attributes and Tables that can be Involved in Formulas</a></TD><TD><a href="5879.html">Compound Formulas</a></TD></TR><TR><TD><a href="25103.html">Data provider Element statement</a></TD><TD><a href="25082.html">Data provider Group statement</a></TD><TD><a href="5882.html">Examples of Using Formulas</a></TD><TD><a href="5861.html">Category:Formulas</a></TD></TR><TR><TD><a href="25327.html">Toc:Formulas</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="6440.html">Global Formulas</a></TD><TD><a href="6441.html">Inline Formulas</a></TD></TR><TR><TD><a href="6426.html">Inline Formulas within a contextual table</a></TD><TD><a href="24592.html">Unique Clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/04/21 05:17 PM</em></font></td></TR></table></font>

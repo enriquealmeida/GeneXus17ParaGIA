@@ -1,0 +1,170 @@
+delimiters "$", "$"
+
+gridTypeToTemplateMap ::= [
+  "SDHorizontalGrid":		"g_grid_horizontal_paged",
+  "SDPagedGrid":		    "g_grid_horizontal_paged",
+  "SDSmartGrid":			"g_grid_smart",
+  "SDFlexGrid":			    "g_grid_flex",
+  "SDMagazineViewer":		"g_grid_smart",
+  "SD ImageGallery":		"g_grid_imagegallery",
+  "SD Maps":				"g_grid_map",
+  "SD Charts":				"g_grid_chart",
+  default:					"g_grid_smart"
+]
+
+g_cell_grid(cell) ::= <<
+$(gridTypeToTemplateMap.(cell.Grid.ControlType))(cell.Grid)$
+>>
+
+g_grid_smart(grid) ::= <<
+$grid_smart(grid)$
+>>
+
+g_grid_flex(grid) ::= <<
+<gx-grid-flex
+   flex-direction="--gx-grid-flex-direction:$grid.FlexGridInfo.Direction$"
+   style="--gx-grid-flex-wrap:$grid.FlexGridInfo.Wrap$;--gx-grid-flex-justify-content:$grid.FlexGridInfo.JustifyContent$; 
+        --gx-grid-flex-align-items:$grid.FlexGridInfo.AlignItems$;--gx-grid-flex-justify-content:$grid.FlexGridInfo.JustifyContent$;--gx-grid-flex-align-content:$grid.FlexGridInfo.AlignContent$;"
+   $g_grid_component_atts_common(grid)$
+  >
+  $g_grid_template_smart(grid)$
+  $g_grid_initial_loading_feedback_layout(grid)$
+  $g_empty_grid_layout(grid)$
+</gx-grid-flex>
+$grid.Filter:g_filters()$
+>>
+
+
+g_grid_component_atts_common(grid) ::= <%
+  $grid_component_atts_common(grid)$
+%>
+
+g_grid_draw_data(grid) ::= <<
+$grid_draw_data(grid)$
+>>
+
+g_grid_template_smart(grid) ::= <<
+$grid_template_smart(grid)$
+>>
+
+g_grid_horizontal_paged(grid) ::= <<
+<gx-grid-horizontal 
+    $g_assign_html_property_or_default("rows", grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, grid.UIModelInfo.RowsPerPagePortraitProperty, {'}, grid.PagedGridInfo.RowsPerPagePortrait)$
+    $g_assign_html_property_or_default("rows-landscape", grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, grid.UIModelInfo.RowsPerPageLandscapeProperty, {'}, grid.PagedGridInfo.RowsPerPageLandscape)$
+    $g_assign_html_property_or_default({items-per-group}, grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, grid.UIModelInfo.ColumnsPerPagePortraitProperty, {'}, grid.PagedGridInfo.ColumnsPerPagePortrait)$
+    $g_assign_html_property_or_default({columns}, grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, grid.UIModelInfo.ColumnsPerPagePortraitProperty, {'}, grid.PagedGridInfo.ColumnsPerPagePortrait)$
+    direction="$grid.Direction$" 
+    snap-to-grid="true" 
+    pager="$grid.PagedGridInfo.ShowPageController$"
+    $g_assign_html_property({currentPage}, grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, {currentPage})$
+    $grid.UIActionsInfo.PageChangedAction:g_event_binding( {gxGridDidChange}, grid )$
+    $g_grid_component_atts_common(grid)$
+   $if(grid.DataProvider)$
+    (gxInfiniteThresholdReached)="this.fetchNextPage$grid.ControlName$(\$event)"
+   $endif$
+  >
+  <div slot="grid-content">
+   $g_grid_draw_data(grid)$
+  </div>  
+  $g_grid_initial_loading_feedback_layout(grid)$
+  $g_empty_grid_layout(grid)$
+</gx-grid-horizontal>
+$grid.Filter:g_filters()$
+>>
+
+
+g_grid_chart(grid) ::= <<
+/*TODO: GridChart not implemented*/
+$g_empty_grid_layout(grid)$
+>>
+
+g_grid_imagegallery(grid) ::=<<
+<div 
+  style="display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;"
+  $g_grid_iterator(grid)$>
+    $grid:g_template()$
+</div>
+$g_empty_grid_layout(grid)$
+>>
+
+g_grid_iterator(grid) ::= <%
+$grid_iterator(grid)$
+%>
+
+g_template(grid) ::= <<
+$grid:g_groupseparator_template()$
+$grid.Table: { table | $g_grid_layout_template(grid, table)$ }$
+>>
+
+g_grid_layout_template(grid, table) ::= <%
+$grid_layout_template(grid, table)$
+%>
+
+g_grid_table_extras( grid, table) ::= <<
+$g_grid_selection_condition( grid, table)$
+$g_grid_multilayout_condition( grid, table)$
+$grid:g_grid_click()$>>
+
+g_grid_multilayout_condition( grid, table) ::= <%
+$if(grid.LayoutsAndSelection.MultipleLayouts)$
+  *ngIf="
+    $if(grid.LayoutsAndSelection.HasSelection && table.IsDefaultLayout)$ ! $grid.BindingInfo.UIEntityIndexedExpression:g_expression()$.Selected && $endif$
+    $if(grid.LayoutsAndSelection.HasSelection && table.IsSelectedLayout)$ $grid.BindingInfo.UIEntityIndexedExpression:g_expression()$.Selected || $endif$
+    (
+    $grid.BindingInfo.UIEntityIndexedExpression:g_expression()$.Itemlayout == '$table.layoutName$' 
+    $if(table.IsDefaultLayout)$|| ! $grid.BindingInfo.UIEntityIndexedExpression:g_expression()$.Itemlayout $endif$
+    )
+  "
+$endif$
+%>
+
+g_grid_selection_condition( grid, table) ::= <%
+$if(grid.LayoutsAndSelection.HasSelection)$
+  $if(grid.LayoutsAndSelection.DefaultSelection)$
+   [attr.data-gx-grid-highlighted]="$grid.BindingInfo.UIEntityIndexedExpression:g_expression()$.Selected ? 'enabled' : null"
+  $endif$
+$endif$
+%>
+
+g_grid_click(grid) ::= <<
+$grid_click(grid)$
+>>
+
+g_grid_click_action(defaultAction) ::= <%
+$if(defaultAction)$
+this.$defaultAction$
+$else$
+null
+$endif$
+%>
+
+g_set_actioncontext(grid) ::= <%
+  $grid.CurrentContextInfo.actionContext:g_event_set_action_context()$ this.$grid.ControlName$SetContext($grid.BindingInfo.DataBindingIx$);
+%>
+
+g_groupseparator_template(grid) ::= <<
+$if (grid.BreakBy.DescriptionAttribute)$
+ <gx-textblock class="gx-group-separator" *ngIf="$grid.BindingInfo.UIEntityIndexedExpression:g_expression()$.Break">
+   {{ $g_convert_to( grid.BreakBy.DescriptionAttributeExpression.ExprDataType, {VarChar}, {$grid.BindingInfo.DataBindingItem:g_expression()$.$grid.BreakBy.DescriptionAttribute$})$ }} 
+ </gx-textblock>
+$endif$
+>>
+
+g_filters(filter) ::=<<
+>>
+
+g_empty_grid_layout(grid) ::= <<
+$empty_grid_layout(grid)$
+>>
+
+g_grid_initial_loading_feedback_layout(grid) ::= <<
+$grid_initial_loading_feedback_layout(grid)$
+>>
+
+g_grid_inifinite_loading_feedback_layout(grid) ::= <<
+$grid_inifinite_loading_feedback_layout(grid)$
+>>
+
+g_grid_map(grid) ::= <<
+$grid_map(grid)$
+>>

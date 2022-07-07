@@ -1,0 +1,68 @@
+ ************************************************************** 
+C           GXNTOD    BEGSR
+ ************************************************************** 
+ *
+ * DATE CONVERSION (FROM JULIAN NUMBER)
+ *
+C                     MOVE *ZEROS    $GXDTE
+C           $GXJUL    IFGT *ZEROS
+C                     MOVE $GXJUL    $F5200 150
+C           $F5200    MULT 100       $F5201 309
+C                     SUB  20        $F5201
+C           $F5201    DIV  3652425   $F5202  70
+C           $F5202    DIV  4         $F5203  70
+C           $F5200    ADD  $F5202    $F5201
+C           $F5201    SUB  $F5203    $F5200
+C           $F5200    MULT 100       $F5201
+C                     SUB  20        $F5201
+C           $F5201    DIV  36525     $F5204  40
+C           $F5204    MULT 36525     $F5201
+C           $F5201    DIV  100       $F5203
+C                     SUB  $F5203    $F5200
+C           $F5200    MULT 10        $F5201
+C                     SUB  5         $F5201
+C           $F5201    DIV  306       $F5205  20
+C           $F5200    MULT 10        $F5201
+C           $F5205    MULT 306       $F5207 309
+C                     SUB  $F5207    $F5201
+C                     ADD  5         $F5201
+C           $F5201    DIV  10        $F5206  20
+C           $F5205    IFLT 10
+C                     ADD  3         $F5205
+C                     ELSE
+C                     SUB  9         $F5205
+C                     ADD  1         $F5204
+C                     END
+C                     MOVE $F5204    $GXDYY
+C                     MOVE $F5205    $GXDMM
+C                     MOVE $F5206    $GXDDD
+C                     ENDIF
+C                     ENDSR
+ ************************************************************** 
+C           GXDTON    BEGSR
+ ************************************************************** 
+ *
+ * DATE CONVERSION (TO JULIAN NUMBER)
+ *
+C                     MOVE *ZEROS    $GXJUL
+C           $GXDTE    IFNE *ZEROS
+C           $GXDMM    IFGT 2
+C                     SUB  3         $GXDMM
+C                     ELSE
+C                     ADD  9         $GXDMM
+C                     SUB  1         $GXDYY
+C                     END
+C           $GXDMM    MULT 153       $F5209  70
+C                     ADD  2         $F5209
+C                     DIV  5         $F5209
+C           $GXDYY    DIV  4         $F5208  70
+C           $GXDYY    DIV  100       $F5202  70
+C           $GXDYY    DIV  400       $F5203  70
+C           $GXDYY    MULT 365       $GXJUL
+C                     ADD  $F5208    $GXJUL
+C                     SUB  $F5202    $GXJUL
+C                     ADD  $F5203    $GXJUL
+C                     ADD  $F5209    $GXJUL
+C                     ADD  $GXDDD    $GXJUL
+C                     ENDIF
+C                     ENDSR

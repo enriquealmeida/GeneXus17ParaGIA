@@ -1,0 +1,32 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Sub Extra Grids Event Calculate Totalizers" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="grids" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="hasAnSDTItemTotalizer" Type="System.Boolean" %>
+<%
+	foreach (IGrid grid in grids)
+	{
+		if (grid.HasTotalizers())
+		{
+			if (grid is WPGridElement && !string.IsNullOrEmpty(((WPGridElement)grid).SDTCollection) && hasAnSDTItemTotalizer)
+			{
+					List<IAttributesItem> attsAndVarsWithTotalizers = grid.GetAttributesAndVariablessWithTotalizer();
+%>
+<%= TotalizersHelper.InitializeTotalizers(wwInstance, attsAndVarsWithTotalizers, grid) %>
+
+Sub 'CalculateTotalizers<%= grid.GetControlName() %>'
+
+<%= Indentation.Indent(TotalizersHelper.GetTotalizersSDTCode(wwInstance, attsAndVarsWithTotalizers, grid), 1) %>
+<%= Indentation.Indent(TotalizersHelper.GetTableTotalizersCode(wwInstance, false, attsAndVarsWithTotalizers, grid, settings), 1) %>			
+
+EndSub
+<%
+			}
+		}
+	}
+%>

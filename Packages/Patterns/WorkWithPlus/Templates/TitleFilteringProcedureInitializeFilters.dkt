@@ -1,0 +1,81 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Audit Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Property Name="gridItem" Type="DVelop.Patterns.WorkWithPlus.IFilterableByTitle" %>
+<%@ Property Name="filterMultiple" Type="DVelop.Patterns.WorkWithPlus.FilterAttributeMultipleGeneralElement" %>
+<%@ Property Name="name" Type="System.String" %>
+<%
+			if (gridItem != null && TitleFilterProcedureHelper.ConsiderFilterCondition(gridItem)
+				|| filterMultiple != null && TitleFilterProcedureHelper.ConsiderFilterCondition(filterMultiple))
+			{
+				string searchBoxType;
+				if (gridItem != null)
+				{
+					searchBoxType = TitleFilterProcedureHelper.GetSearchBoxType(gridItem);
+				}
+				else
+				{
+					searchBoxType = TitleFilterProcedureHelper.GetSearchBoxType(filterMultiple);
+				}
+				if (searchBoxType != "Character")
+				{
+%>
+	&<%= filterMultiple != null ? "" : "TF" %><%= name %>.FromString(&SearchTxt)
+<%
+					if (gridItem != null && gridItem.IsSearchBoxRange())
+					{
+%>
+	&TF<%= name %>_To.FromString(&SearchTxtTo)
+<%
+					}
+				}
+				else
+				{
+%>
+	&<%= filterMultiple != null ? "" : "TF" %><%= name %> = &SearchTxt
+<%
+					if (gridItem != null && gridItem.IsSearchBoxRange())
+					{
+%>
+	&TF<%= name %>_To = &SearchTxtTo
+<%
+					}
+				}
+			}
+			if (gridItem != null && gridItem.PredefinedOperators != null)
+			{
+%>
+	&TF<%= name %>Operator = 0
+<%
+			}
+			if (filterMultiple != null)
+			{
+				if (filterMultiple.IsDynamicFilter())
+				{
+					int maxFilters = ((DynamicFilterAttributesElement)filterMultiple.Parent).MaxFilters;
+					for (int i = 1; i <= maxFilters; i++)
+					{
+%>
+	&<%= name + i %>Values = new()
+<%
+					}
+				}
+				else
+				{
+%>
+	&<%= name %>Values = new()
+<%
+				}
+			}
+			else if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(gridItem))
+			{
+%>
+	&TF<%= name %>_Sel<%= gridItem.AllowMultipleSelection ? "s = new()" : ".SetEmpty()" %>
+<%
+			}
+%>

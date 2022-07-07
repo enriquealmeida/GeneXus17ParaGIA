@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Pattern Publisher="Concepto"
+				 Id="64040CC3-A8B0-467C-B3BE-D279FFD989BA"
+				 Name="TrnAPI"
+				 Description="TrnAPI"
+				 Version="0.2"
+				 Icon="Icons\PatternCategory.ico"
+				 >
+	<Definition>
+		<InstanceName>TrnAPI_{0}</InstanceName>
+		<InstanceSpecification>TrnAPIInstance.xml</InstanceSpecification>
+		<SettingsSpecification>TrnAPISettings.xml</SettingsSpecification>
+		<Implementation>Concepto.Patterns.TrnAPI.dll</Implementation>
+		<AutoUpdate>true</AutoUpdate>
+		<DefaultSettings>Resources\DefaultSettings.xml</DefaultSettings>
+		<ParentObjects>
+			<ParentObject Type="Transaction">
+			</ParentObject>
+		</ParentObjects>
+	</Definition>
+
+
+	<Resources>
+		<Resource Id="Resources" Version="0.6" Import="Apply" File="Resources\Resources.xml"/>
+	</Resources>
+
+	<Objects>
+		<Object Type="Attribute" Id="CategoryId" Name="{Element.categoryId}" Description="{Element.categoryId}" Element="instance/attributesName" Template="Templates\AttributeCategoryId.dkt" >
+		</Object>
+		<Object Type="Attribute" Id="CategoryName" Name="{Element.categoryName}" Description="{Element.categoryName}" Element="instance/attributesName" Template="Templates\AttributeCategoryName.dkt">
+		</Object>
+		<Object Type="Attribute" Id="CategoryParentId" Name="{Element.categoryParentId}" Description="{Element.categoryParentId}" Element="instance/attributesName" Template="Templates\AttributeCategoryParentId.dkt">
+		</Object>
+		<Object Type="Attribute" Id="CategoryParentName" Name="{Element.categoryParentName}" Description="{Element.categoryParentName}" Element="instance/attributesName" Template="Templates\AttributeCategoryParentName.dkt">
+		</Object>
+
+		<Object Type="Transaction" Id="CategoryTrn" Name="{Element.category}" Description="{Element.category}" Element="instance/transactionsName" >
+			<Part Type="Structure" Template="Templates\CategoryStructure.dkt" />
+			<Part Type="WebForm" Template="Templates\CategoryWebForm.dkt" />
+		</Object>
+
+		<Object Type="Transaction" Id="CategoryRelationTrn" Name="{Element.categoryItem}" Description="{Element.categoryItem}" Element="instance/transactionsName" >
+			<Part Type="Structure" Template="Templates\CategoryRelationStructure.dkt" />
+			<Part Type="WebForm" Template="Templates\CategoryRelationWebForm.dkt" />
+			<Part Type="Rules" Template="Templates\CategoryRelationRules.dkt" />
+			<Part Type="Variables" Template="Templates\CategoryRelationVariables.dkt" />
+		</Object>
+
+		<Object Type="Group" Id="CategoryParent" Name="Group{Element.categoryParentId}" Description="Group {Element.categoryParentId}" Element="instance/attributesName" >
+			<Part Type="GroupStructure" Template="Templates\GroupStructure.dkt" />
+		</Object>
+
+		<!--
+    <Object Type="SDT" Id="TreeNode" Name="TreeNode" Element="instance/baseTransaction" >
+      <Part Type="SDTStructure" Template="Templates\TreeNodeSdtStructure.dkt" />
+    </Object>
+    -->
+		<!--
+    <Object Type="DataProvider" Id="SubCatalog" Name="{Parent.Name}SubCatalog" Element="instance/baseTransaction" Template="Templates\SubCatalog.dkt">
+      <Part Type="DataProviderSource" Template="Templates\SubCatalogSource.dkt" />
+      <Part Type="Variables" Template="Templates\SubCatalogVariables.dkt" />
+      <Part Type="Rules" Template="Templates\SubCatalogRules.dkt" />
+    </Object>
+    -->
+		<Object Type="DataProvider" Id="Catalog" Name="{Parent.Name}Catalog" Template="Templates\Catalog.dkt" >
+			<Part Type="DataProviderSource" Template="Templates\CatalogSource.dkt" />
+			<Part Type="Variables" Template="Templates\CatalogVariables.dkt" />
+			<Part Type="Rules" Template="Templates\CatalogRules.dkt" />
+		</Object>
+
+		<Object Type="Procedure" Id="AddItem" Name="Add{Parent.Name}"  >
+			<Part Type="Procedure" Template="Templates\AddItemSource.dkt" />
+			<Part Type="Variables" Template="Templates\AddItemVariables.dkt" />
+			<Part Type="Rules" Template="Templates\AddItemRules.dkt" />
+		</Object>
+
+		<Object Type="Procedure" Id="DeleteItem" Name="Delete{Parent.Name}" >
+			<Part Type="Procedure" Template="Templates\DeleteItemSource.dkt" />
+			<Part Type="Variables" Template="Templates\DeleteItemVariables.dkt" />
+			<Part Type="Rules" Template="Templates\DeleteItemRules.dkt" />
+		</Object>
+
+		<Object Type="WebPanel" Id="TreeView" Name="TreeView{Element.categoryItem}" Element="instance/transactionsName">
+			<Part Type="WebForm" Template="Templates\TreeViewItemWebForm.dkt" />
+			<Part Type="Variables" Template="Templates\TreeViewItemVariables.dkt" />
+			<Part Type="Events" Template="Templates\TreeViewItemEvents.dkt" />
+		</Object>
+
+		<Object Type="WebComponent" Id="CategoryItemWC" Name="{Element.categoryItem}WC" Element="instance/transactionsName">
+			<Part Type="WebForm" Template="Templates\CategoryItemWCWebForm.dkt" />
+			<Part Type="Variables" Template="Templates\CategoryItemWCVariables.dkt" />
+			<Part Type="Events" Template="Templates\CategoryItemWCEvents.dkt" />
+			<Part Type="Rules" Template="Templates\CategoryItemWCRules.dkt" />
+		</Object>
+
+		<Object Type="WebComponent" Id="ItemsByCategoryWC" Name="{Parent.Name}By{Element.category}WC" Element="instance/transactionsName">
+			<Part Type="WebForm" Template="Templates\ItemByCategoryWCWebForm.dkt" />
+			<Part Type="Variables" Template="Templates\ItemByCategoryWCVariables.dkt" />
+			<Part Type="Events" Template="Templates\ItemByCategoryWCEvents.dkt" />
+			<Part Type="Rules" Template="Templates\ItemByCategoryWCRules.dkt" />
+		</Object>
+	</Objects>
+	<References>
+		<SameInstance>Hard</SameInstance>
+		<DifferentInstance>Weak</DifferentInstance>
+		<External>Hard</External>
+	</References>
+</Pattern>

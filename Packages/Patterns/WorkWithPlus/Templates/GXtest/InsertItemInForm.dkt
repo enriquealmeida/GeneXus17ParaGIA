@@ -1,0 +1,94 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Insert Item in Form" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Assembly Name="Artech.Architecture.Language" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="controlGXName" Type="System.String" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="value" Type="System.String" %>
+<%@ Property Name="variable" Type="System.String" %>
+<%@ Property Name="dataPoolName" Type="System.String" %>
+<%@ Property Name="dataPoolColumnName" Type="System.String" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="level" Type="System.String" %>
+<%@ Property Name="gridLevelName" Type="System.String" %>
+<%@ SubTemplate Name="ObjectGXTag" File="ObjectGXTag.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="FillInput" File="FillInput.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="FillInputTable" File="FillInputTable.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ChooseAction" File="ChooseAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SelectComboAction" File="SelectComboAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SelectComboInTableAction" File="SelectComboInTableAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="CheckAction" File="CheckAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="CheckTableAction" File="CheckTableAction.dkt" MergeProperties="True"%>
+<%
+	// Get Control Type First to use the correct GXtest command
+	Artech.Genexus.Common.Types.RuntimeControlType type = TransactionHelper.GetControlType(null, model, Object, controlGXName);
+	bool isBlobType = false;
+    Artech.Genexus.Common.Objects.Attribute att = Artech.Genexus.Common.Objects.Attribute.Get(model, controlGXName);
+    isBlobType = TransactionHelper.GetAttributeType(att) == Artech.Genexus.Common.eDBType.BINARY;
+    
+    if(!isBlobType)
+    {
+		if (type==Artech.Genexus.Common.Types.RuntimeControlType.CTRL_EDIT||type==Artech.Genexus.Common.Types.RuntimeControlType.CTRL_COLUMN)
+		{
+			if (!TransactionHelper.IsGridLevel(level))
+			{
+ %>
+<%@ CallSubTemplate FillInput Object='Object' controlGXName='controlGXName' model='model' value='value' variable='variable' dataPoolName='dataPoolName' dataPoolColumnName='dataPoolColumnName' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+%>
+<%@ CallSubTemplate FillInputTable Object='Object' controlGXName='gridLevelName' returnControl='controlGXName' model='model' value1='""' variable1='variable' dataPoolName1='dataPoolName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' dataPoolName2='dataPoolName' dataPoolColumnName2='dataPoolColumnName' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+			}
+		}
+		else if (type==Artech.Genexus.Common.Types.RuntimeControlType.CTRL_CHECK)
+		{
+			if (!TransactionHelper.IsGridLevel(level))
+			{
+%>
+<%@ CallSubTemplate CheckAction Object='Object' controlGXName='controlGXName' model='model' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+%>
+<%@ CallSubTemplate CheckTableAction Object='Object' controlGXName='gridLevelName' returnControl='controlGXName' model='model' value1='""' variable1='variable' dataPoolName1='dataPoolName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+			}
+		}
+		else if (WebFormHelper.IsControlComboListBox(type))
+		{
+			if (!TransactionHelper.IsGridLevel(level))
+			{
+%>
+<%@ CallSubTemplate SelectComboAction Object='Object' controlGXName='controlGXName' model='model' dataPoolName='dataPoolName' dataPoolColumnName='dataPoolColumnName' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+%>
+<%@ CallSubTemplate SelectComboInTableAction Object='Object' controlGXName='gridLevelName' returnControl='controlGXName' model='model' value1='""' variable1='variable' dataPoolName1='dataPoolName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' value2='value' variable2='variable' dataPoolName2='dataPoolName' dataPoolColumnName2='dataPoolColumnName' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+			}
+		}
+		else if (type==Artech.Genexus.Common.Types.RuntimeControlType.CTRL_RADIO)
+		{
+%>
+<%@ CallSubTemplate ChooseAction Object='Object' controlGXName='controlGXName' model='model' dataPoolName='dataPoolName' dataPoolColumnName='dataPoolColumnName' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+		}
+		else if (type==Artech.Genexus.Common.Types.RuntimeControlType.CTRL_UNKNOWN)
+		{
+			DVelop.Patterns.WorkWithPlus.Helpers.LogHelper.WriteWarningLog(string.Format(GXTestElement.Resources_Action_GenerateGXTestCase_UnknownControlType, controlGXName));
+%>
+	<!--Unknown Control Type:<%=type%> for ControlName:<%=controlGXName%>, cannot be automated -->
+<%
+		}
+	}
+%>

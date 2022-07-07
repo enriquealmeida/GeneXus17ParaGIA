@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Auto-Registration in SD: What to do when a certain action requires the user to log in</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19835,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Auto-Registration in SD: What to do when a certain action requires the user to log in</h1>
+<!--Auto-Registration in SD: What to do when a certain action requires the user to log in--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	Using <a href="14960.html">GAM</a> when <a href="19395.html">Auto-Register Anonymous User property</a> has been set to True for a main SD object, the first thing it does for the first object called from this main object that requires authentication (the first object which has <a href="15214.html">Integrated Security Level Property</a> = Authentication or Authorization) is to try to authenticate as an anonymous user.</p>
+<p>
+	Thus, all the options included in the dashboard menu that require authentication give application users access as anonymous users.</p>
+<p>
+	The problem we want to solve here is what to do when a certain action requires the user to log in with a user account registered with GAM (different than the anonymous user).</p>
+<h3>
+	Example of this scenario</h3>
+<h4>
+	The problem to solve</h4>
+<p>
+	Below is a basic example that allows viewing the latest novels, authors and their published books, and literary styles of a certain bookshop.</p>
+<p>
+	To this end, a Main Dashboard is provided to define various Action Items that call each one of the objects that display the above information.</p>
+<p>
+	The purpose is that the application has security features, so the version settings include: <a href="14706.html">Enable Integrated Security Property</a> = True. </p>
+<p>
+	At the Main Dashboard level, the setting is as follows: <a href="19395.html">Auto-Register Anonymous User property</a> = True.</p>
+<h5>
+	<img src="./images/19397.png" id="19397" class="WikiImage"/><br />
+	Figure 1.</h5>
+<p>
+	With this option, authentication will be required to execute the dashboard, but since Auto-Register Anonymous User has been set to True the first thing it does is try to authenticate as an anonymous user.<br />
+	Thus, all the options included in the dashboard menu that require authentication give application users access as anonymous users.</p>
+<p>
+	Suppose now that a certain action in the application requires users to be authenticated with a user account other than anonymous. In the example, suppose that the user wants to buy a book.</p>
+<p>
+	Note also that the login option can be added to the dashboard for those users who want to access the application by entering their credentials. The code associated with the GAMSDLogin action of the dashboard is as follows:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'GAMSDLogin'
+    GAMSDLogin2()
+EndEvent</pre>
+<h4>
+	Solutions</h4>
+<p>
+	Let’s see two possible solutions for the same problem.</p>
+<p>
+	1. One solution may be to use <a href="15912.html">Permissions</a>.</p>
+<p>
+	The auto-registered user in Smart Devices applications is automatically given the following <a href="17569.html">Roles</a> (in the precedence explained below):</p>
+<ul>
+	<li>
+		All the Roles given to &quot;Anonymous&quot; user. See Figure 2.</li>
+</ul>
+<h5>
+	<img src="./images/19824.png" id="19824" class="WikiImage"/><br />
+	Figure 2. Roles given to Anonymous user.</h5>
+<p>
+	Note that the &quot;Anonymous&quot; user is the same for web and SD applications.</p>
+<ul>
+	<li>
+		If no role is given to Anonymous user, the Default Role of the Repository is given to him. See Figure 3.</li>
+</ul>
+<h5>
+	<img src="./images/19840.png" id="19840" class="WikiImage"/><br />
+	Figure 3. Setting the Repository Default Role using <a href="15935.html">GAM Web Backoffice</a></h5>
+<p>
+	As a consequence, if the application handles <a href="15912.html">Permissions</a> (<a href="15214.html">Integrated Security Level Property</a> = Authorization), and the <a href="15910.html">GAM Application</a> is configured to check permissions (the <a href="18512.html">Require Access Permissions Application Property</a> of the Application is checked using <a href="15935.html">GAM Web Backoffice</a>) the actions allowed for the anonymous user can be differentiated from those that are forbidden by assigning permissions to the roles explained above.</p>
+<p>
+	For example, for the user to be able to subscribe or order a book, he must be identified so we will give him a permission limited to the action &quot;Buy a book&quot;.<br />
+	Note that in our example this action is associated with the permission of a <a href="14573.html">REST Web Services</a> that performs the operation. Below is the code of the action “Buy a book”.</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'PurchaseBook'
+    PurchaseBook.Call(&amp;sdtLiteraryStyle.CurrentItem.NovelId)
+EndEvent</pre>
+<h5>
+	<img src="./images/19398.png" id="19398" class="WikiImage"/><br />
+	Figure 4. PurchaseBook procedure requires &quot;PurchaseBook&quot; permission to be executed.</h5>
+<p>
+	In this example, the &quot;PurchaseBook&quot; permission must be restricted to the role given to the Anonymous user, as shown in figure 5. If the role given to Anonymous User is &quot;Role1&quot;, the &quot;PurchaseBook&quot; permission is restricted in that role. See <a href="17963.html">HowTo: Adding a Permission to a Role</a> for details.</p>
+<h5>
+	<img src="./images/19845.png" id="19845" class="WikiImage"/><br />
+	Figure 5. Permissions given to Anonymous User role.</h5>
+<p>
+	2. Another option that can be used if you don’t want to handle permissions is to program redirecting users to the login page in this way:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'PurchaseBook'
+    Composite
+        &amp;objectInfo = CheckPermissionUser(&amp;sdtLiteraryStyle.CurrentItem.NovelId)
+        call(&amp;objectInfo)
+    EndComposite
+EndEvent</pre>
+<p>
+	The CheckPermissionUser Procedure checks if the user is Anonymous or not, and loads a variable with the name of the program to be called accordingly. If the user is Anonymous, the login will be called, otherwise the PurchaseBook procedure will be called. In this example we perform a dynamic call.</p>
+<p>
+	CheckPermissionUser Procedure:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+if not &amp;GAMSession.IsAnonymous
+    &amp;objectInfo = &quot;prc:PurchaseBook?&quot;+&amp;NovelId.ToString().Trim()
+else
+    &amp;objectInfo = &quot;sd:Gamsdlogin2&quot;
+endif</pre>
+<p>
+	An alternative code:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'PurchaseBook'
+    Composite
+        &amp;isAnonymous = IsAnonymous() //call a procedure which returns a boolean variable 
+        if &amp;isAnonymous
+           GAMSDLogin2.Call()
+           &amp;isAnonymous = IsAnonymous()
+           if not &amp;isAnonymous
+              MySDPanel.Call()
+           endif
+        else
+           MySDPanel.Call()
+        endif       
+    EndComposite
+EndEvent</pre>
+<p>
+	See <a href="17411.html">Dynamic Calls in Smart Devices</a> for details of the CheckPermissionUser procedure logic.</p>
+<h3>
+	See also</h3>
+<p>
+	<a href="19395.html">Auto-Register Anonymous User property</a></p>
+<p>
+	</p>
+<p>
+	</p>
+<br />   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="19395.html">Auto-Register Anonymous Users</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

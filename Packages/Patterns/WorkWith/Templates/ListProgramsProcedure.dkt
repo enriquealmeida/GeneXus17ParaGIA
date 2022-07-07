@@ -1,0 +1,58 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="List Programs Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Procedure %>">
+	<Source><![CDATA[
+<%
+	WorkWithSettings settings = WorkWithSettings.Get(Object.Model);
+%>
+&ProgramNames = new()
+<%@ CallSubTemplate SubLoadContext Settings='settings' %>
+<%
+	// For performance reasons it is unfeasible to actually read the updated versions here.
+	List<WorkWithInstance> allInstances = WorkWithCache.AllInstances(Object.Model);
+	allInstances.Sort(delegate (WorkWithInstance instance1, WorkWithInstance instance2) { return instance1.Name.CompareTo(instance2.Name); });
+	
+	foreach (WorkWithInstance wwInstance in allInstances)
+	{
+		foreach (LevelElement level in wwInstance.Levels)
+		{
+			if (level.Selection != null && 
+				level.Selection.Parameters.Count == 0)
+			{
+				QualifiedName objName = new QualifiedName(wwInstance.Module, level.Selection.ObjectName);
+				if (Object.Model.Objects.GetKey(ObjClass.WebPanel, objName) != null)
+				{
+%>
+
+&name = !"<%= objName %>"
+&description = "<%= level.Selection.Description %>"
+&link = <%= objName %>.Link()
+Do 'AddProgram'
+<%
+				}
+			}
+		}
+	}
+%>
+
+Sub 'AddProgram'
+	&IsAuthorized = True
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' ProgramNameVariable='"name"' DoNotRedirect='true' IndentLevel='1' IndentLevelChar='"\t"' %>
+	If (&IsAuthorized)
+		&ProgramName = new ProgramNames.ProgramName()
+		&ProgramName.Name = &name
+		&ProgramName.Description = &description
+		&ProgramName.Link = &link
+		&ProgramNames.Add(&ProgramName)
+	Endif
+EndSub
+]]>
+	</Source>
+</Part>

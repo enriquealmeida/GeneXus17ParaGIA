@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Filtering Data by User Using the GAM API</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15387,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Filtering Data by User Using the GAM API</h1>
+<!--HowTo: Filtering Data by User Using the GAM API--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The following is a basic example of <a href="19888.html">GAM</a> API use.</p>
+
+<p>Imagine a scenario where distributors of an &quot;X&quot; company enter purchase orders in their smart devices.<br />
+<br />
+As there's only one &quot;Purchase Orders&quot; table in the system, the &quot;X&quot; company wants to identify the salesman who entered the order. So the User Identification (UserId attribute) of the salesman is also stored in the &quot;Purchase Orders&quot; Table (see image 2).</p>
+
+<p>The security information (Users, User information, <a href="17569.html">GAM Roles</a>, <a href="18521.html">GAM Security Policies</a>, etc) is stored in the <a href="19888.html">GAM</a> Repository.</p>
+
+<p>A system requirement is that when the user navigates within the &quot;Work With Smart Devices Purchase Orders&quot;, he has to access only the information entered by him and not the information entered by others. So we need to get the data of a specific user (the user who is logged in).</p>
+
+<h3><a id="How+to+solve+it%3A" class="HashLink" href="#How+to+solve+it%3A">How to solve it:</a></h3>
+
+<p>1.      Set <a href="14706.html">Enable Integrated Security property</a> = TRUE</p>
+
+<p><img src="./images/15651.png" id="15651" class="WikiImage"/></p>
+
+<h5><a id="image+1." class="HashLink" href="#image+1.">image 1.</a></h5>
+
+<p>2.      The following is the transaction for our example:</p>
+
+<p><img src="./images/15653.png" id="15653" class="WikiImage"/></p>
+
+<h5><a id="image+2." class="HashLink" href="#image+2.">image 2.</a></h5>
+
+<p>The Transaction has an attribute named UserId, which is under the domain GAMUserLogin. This attribute is going to store the identification of the user who entered the purchase order to the System. There are several ways to reference the user id in GAM database : <a href="16534.html">GAM API: How to reference GAM users</a>. In this example, we are using the GETLogin method of GAMUser external object.</p>
+
+<p>In order to go on with the example, apply the &quot;Work with for Smart Devices&quot; Pattern to the transaction, create a <a href="https://wiki.genexus.com/commwiki/wiki?46149,," target="_blank">Menu for Smart Devices object (GeneXus 16)</a> and add the Work With &quot;Purchase Orders&quot; Smart Device instance as an element of it.</p>
+
+<p>3. The salesman are requested their credentials when they enter the application in their Smart Devices. Check in the Dashboard object that <a href="15214.html">Integrated Security Level Property</a> = Authentication.</p>
+
+<p>4. The user credentials have to be captured automatically when the user enters the information (the &quot;Purchase Order&quot;), so the User Identification can be saved. This is solved by programming the <strong>Equal rule</strong> in the <strong>PurchaseOrder</strong> transaction:</p>
+
+<p><img src="./images/15654.png" id="15654" class="WikiImage"/></p>
+
+<h5><a id="image+3." class="HashLink" href="#image+3.">image 3.</a></h5>
+
+<p><strong>GetUser</strong> is a procedure. It has the following:                 </p>
+
+<h5><a id="Source%3A" class="HashLink" href="#Source%3A">Source:</a></h5>
+
+<p><img src="./images/15655.png" id="15655" class="WikiImage"/></p>
+
+<h5><a id="image+4%2C%E2%80%8B" class="HashLink" href="#image+4%2C%E2%80%8B">image 4,​</a></h5>
+
+<h5><a id="Rules%3A" class="HashLink" href="#Rules%3A">Rules:</a></h5>
+
+<p><img src="./images/15656.png" id="15656" class="WikiImage"/></p>
+
+<h5><a id="image+5.%E2%80%8B" class="HashLink" href="#image+5.%E2%80%8B">image 5.​</a></h5>
+
+<h5><a id="Variables%3A" class="HashLink" href="#Variables%3A">Variables:</a></h5>
+
+<p><img src="./images/15657.png" id="15657" class="WikiImage"/></p>
+
+<h5><a id="image+6.%E2%80%8B" class="HashLink" href="#image+6.%E2%80%8B">image 6.​</a></h5>
+
+<h5><a id="Notes%3A" class="HashLink" href="#Notes%3A">Notes:</a></h5>
+
+<ul>
+	<li>As &quot;GAMUser&quot; is a &quot;static variable&quot; that instantiates the current user information, you can use static methods to obtain the desired information (GetLogin, GetName, GetEmail, GetId...).</li>
+	<li>GetLogin method returns a string of the form &lt;namespace&gt;\&lt;Authentication method&gt;\&lt;username&gt;, e.g: testgam.testgam2\local\admin</li>
+</ul>
+
+<p>After following the previous steps, the User current information will be retrieved and saved in the table when the user confirms the Purchase Order transaction.</p>
+
+<p>5.  When the user navigates within the &quot;Work With Purchase Orders&quot;, he has to see only the information entered on his own. In order to achieve this behavior, one solution is to:</p>
+
+<p style="margin-left: 40.0px;">a. Create a <a href="5271.html">Data Selector object</a> with the following code (note that &quot;GetUser&quot; is the procedure defined above):</p>
+
+<p><img src="./images/15391.png" id="15391" class="WikiImage"/></p>
+
+<h5><a id="image+7.%E2%80%8B" class="HashLink" href="#image+7.%E2%80%8B">image 7.​</a></h5>
+
+<p style="margin-left: 40.0px;">b. Edit WorkWithDevicesPurchaseOrders object and configure the Data Selector filter, editing the grid Data Selector property in the section detail:</p>
+
+<p><img src="./images/15649.png" id="15649" class="WikiImage"/></p>
+
+<h5><a id="image+8.%E2%80%8B" class="HashLink" href="#image+8.%E2%80%8B">image 8.​</a></h5>
+
+<h4><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h4>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?15265,," target="_blank">MyCowBook KB</a></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22082.html">GAM Users</a></TD><TD><a href="16552.html">HowTo: Mapping Application Users to GAM Users</a></TD></TR><TR><TD><a href="16565.html">HowTo: Mapping Application Users to GAM Users - Using ExternalID GAMUser property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

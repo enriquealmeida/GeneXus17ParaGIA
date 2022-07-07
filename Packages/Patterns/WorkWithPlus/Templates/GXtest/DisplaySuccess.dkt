@@ -1,0 +1,110 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Display Success Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="wwObject" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ SubTemplate Name="ClickEvent" File="ClickEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ClickTableEvent" File="ClickTableEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="AppearTextValidation" File="AppearTextValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ConcatenationAction" File="ConcatenationAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DummyEvent" File="DummyEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPNextAction" File="DPNextAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="FillInput" File="FillInput.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="GetValueAction" File="GetValueAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SelectComboAction" File="SelectComboAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SelectRowAction" File="SelectRowAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="GoEvent" File="GoEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextValidation" File="VerifyControlTextValidation.dkt" MergeProperties="True"%>
+<%
+	bool hacerView = false;
+	
+	if (myInstance.Level.View != null)
+	{
+		foreach (DVelop.Patterns.WorkWithPlus.AttributeElement item in selection.Table.GetAllAttributesAndVariables(true, false))
+		{
+			if (item.Autolink && item.Name.Equals(myInstance.Level.DescriptionAttribute.AttributeName))
+			{
+				//Se puede linkear view
+				hacerView = true;
+				break;
+			}
+		}
+	}
+	if (hacerView)
+	{
+		foreach (DVelop.Patterns.WorkWithPlus.TabularTabElement tab in myInstance.Level.View.Tabs.TabularTabs)
+        {
+			//Eventos de verificacion de view
+			if (tab.Transaction == null)
+			{
+%>
+<%@ CallSubTemplate ClickTableEvent Object='wwObject' byRow='false' gridName='GXTestConstants.GridName' controlGXName='basicElements.DescriptionAttribute' dataPoolName='""' dataPoolColumnName='""' value='""' variable='basicElements.DescriptionAttribute' returnControl='basicElements.DescriptionAttribute' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+	<!--Display Success-->
+	</Node>
+	<Node Object="<%=myInstance.Level.View.ObjectName%>" ObjectType="WebPanel" title="View">
+		<DummyEvent Type="Event"></DummyEvent>
+<%			
+				List<DVelop.Patterns.WorkWithPlus.IAttributesItem> atts = tab.Table.GetAllAttributesAndVariables(true, false);
+				foreach (DVelop.Patterns.WorkWithPlus.IAttributesItem att in atts)
+				{
+					GenericElement ge = basicElements.ResolveBind(att.Name);
+					Artech.Genexus.Common.eDBType attType = DVelop.Patterns.WorkWithPlus.GXtest.WebFormHelper.IsControlComboListRadioBox(ge.RuntimeControlType)?Artech.Genexus.Common.eDBType.CHARACTER:ge.AtributeType;
+					string tName = att.Name;
+					
+					bool include = false;
+					foreach (Artech.Genexus.Common.Parts.TransactionLevel level in myInstance.Transaction.Transaction.Structure.GetLevels())
+					{
+						foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in level.Attributes)
+						{				
+							include = att.Name.Equals(trnAtt.Name);
+							if (include)
+							{
+								if (
+									TransactionHelper.IsAttributeVisibleInWebForm(trnAtt,basicElements) && 
+									!(TransactionHelper.IsAttributeAutonumber(trnAtt) && trnAtt.IsKey ) && 
+									!(basicElements.IsAttributeUsedInRules(tName)) &&
+									!(basicElements.IsAttributeUsedInEvents(tName)) &&
+									!(basicElements.IsAttributeUsingDateFunctionsInRules(trnAtt)) &&
+									!(ge.IsPassword) &&
+									!(ge.AtributeType == Artech.Genexus.Common.eDBType.BINARY || ge.AtributeType == Artech.Genexus.Common.eDBType.BITMAP)
+									)
+								{
+									include = true;
+									break;	
+								}
+							}	
+						}
+						break;
+					}
+	                
+					if (include)
+					{					
+						KBObject viewObject = DVelop.Patterns.WorkWithPlus.GXtest.WebFormHelper.GetWWObject(model, myInstance.Transaction.Transaction, tab.ObjectName);
+						
+						if (!att.Name.Equals(myInstance.Level.DescriptionAttribute.AttributeName))
+						{
+%>
+<%@ CallSubTemplate VerifyControlTextValidation Object='viewObject' model='model' ControlGXName='att.Name' variable='""' value='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='att.Name' AttType='attType' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+						}
+						else
+						{
+%>
+<%@ CallSubTemplate VerifyControlTextValidation Object='viewObject' model='model' ControlGXName='att.Name' variable='att.Name' value='""' dataPoolName='""' dataPoolColumnName='""' AttType='attType' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+						}
+					}
+				}
+%>
+<%@ CallSubTemplate GoEvent value='basicElements.WWBaseURL' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+			}
+			break;
+        }
+	}
+%>

@@ -1,0 +1,4 @@
+01  GX-MB-EXIT-FLAG  PIC X.
+    88 GX-MB-EXIT         VALUE '1'.
+    88 GX-NO-MB-EXIT      VALUE '0'.
+

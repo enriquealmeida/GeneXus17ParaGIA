@@ -1,0 +1,27 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Search Success Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="wwObject" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="wwName" Type="System.String" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="filtervalue" Type="System.String" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ SubTemplate Name="IncludedTestCase" File="IncludedTestCase.dkt" MergeProperties="True"%>
+<%
+	string emptyValue = basicElements.GetDescriptionAttributeEmptyValue();
+	// Generate Success TC
+	string levelOutput = FileHelper.GenerateSearchTestCase(wwObject,Part,model,myInstance,wwObject,wwName,selection,filtervalue,basicElements,GXTestConstants.WWSearchTC);			
+	string completeLevelOutput = FileHelper.GenerateCompleteTestCase(wwObject,Part,model,levelOutput);
+	string levelNameDefault = string.Format("{0}_{1}",selection.ObjectName,GXTestConstants.WWSearchPostfixName);
+	
+	FileHelper.GenerateTestCaseInFile(Object,model,myInstance,completeLevelOutput,levelNameDefault);
+%>
+</Node>
+<%
+	string nameDefault = FileHelper.GetTestCaseName(selection.ObjectName,GXTestConstants.WWSearchPostfixName);
+%>
+<%@ CallSubTemplate IncludedTestCase repetionNumber='"1"' testCaseName='nameDefault' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>

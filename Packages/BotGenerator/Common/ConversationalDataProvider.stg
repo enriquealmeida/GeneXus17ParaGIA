@@ -1,0 +1,23 @@
+group CommonChatbots;
+delimiters "$", "$"
+
+init(dataProvider, variables, kbObject, action, outSlots, isCollection, parent, responses)::=<<
+$if(variables)$
+	$dpContent()$
+$else$
+$dpContent()$
+$endif$
+>>
+
+dpContent()::=<<
+$if(isCollection)$&$kbObject$ = $dataProvider$($variables:{variable|$callingParameters(variable)$};separator=", "$)
+&speechOut += &ContextIn.Context.GXOutput
+for &$kbObject$Line in &$kbObject$	
+	$outSlots:{parameter|$parametersReplaceCol(kbObject, parameter)$};separator="\n"$  
+endfor
+$else$
+	&$kbObject$ = $dataProvider$($variables:{variable|$callingParameters(variable)$};separator=", "$)
+	&speechOut += &ContextIn.Context.GXOutput
+	$outSlots:{parameter|$parametersReplace(kbObject, parameter)$};separator="\n"$
+$endif$
+>>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Inline Formulas</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6441,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Inline Formulas</h1>
+<!--Inline Formulas--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>An Inline <a href="5861.html">Formula</a> is a local formula defined within an object code (for example in the middle of a procedure source, in an object subroutine, in a Data Provider statement, etc.).</p>
+
+<p>In other words, a formula can be locally assigned to an attribute or variable, as a sentence or statement in the middle of the code, or in a where clause, etc.</p>
+
+<p>{{<em>&lt;variable&gt;|&lt;attribute&gt;</em>} <strong>=</strong> <em>&lt;UnconditionalFormula&gt;</em>} | <em>&lt;UnconditionalFormula&gt;</em></p>
+
+<p>An inline formula, <em>&lt;UnconditionalFormula&gt;,</em> can be either <a href="5864.html">horizontal</a> or <a href="5868.html">aggregate</a>. The main difference regarding <a href="6440.html">Global Formulas</a> is that inline may not consist of several <strong>conditional</strong> expressions, not even a single conditional one. In addition, as in any inline formula, variables could be involved in the expression (because the formula does only exists in this local piece of code, where the variable is known. Whereas you really don't know all the places where a global formula is going to be triggered. This is the meaning of &quot;global&quot;. It can be used everywhere an attribute of the corresponding base table is allowed)</p>
+
+<p>While a <a href="6440.html">global formula</a> always has a table in its context (the table where the formula attribute would be stored if it were not virtual), an inline formula does not have to. For what kind of formulas? Those that don't need context to be evaluated: <a href="5868.html">Aggregate Formulas</a>.</p>
+
+<h3><a id="Why+the+context+is+meaningful%3F" class="HashLink" href="#Why+the+context+is+meaningful%3F">Why the context is meaningful?</a></h3>
+
+<p>Because it will affect the calculation result, allowing to add filtering conditions to the data considered.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Assume you have a FlightInstance transaction to store a real flight from one country/city to another, with a second level, FlighInstanceSeat, to store the passengers of the flight. Suppose a procedure needs to know at the beginning if there already are more than 100 seats assigned to passengers in the corresponding table.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   &amp;success = <strong>Count( FlightInstancePassengerSeatNumber ) &gt; 100</strong></pre>
+
+<p>Here there is not a context table for the formula. It is triggered isolated, counting all the records of its base table, FlightInstanceSeat. It will count all the passengers for all the flight instances stored.</p>
+
+<p>On the other hand, if the above code were inside a for each command, such as:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   for each FlightInstance
+   where <strong>Count( FlightInstancePassengerSeatNumber) &gt; 100</strong>
+      print flightInstanceInfo //FlightInstanceNumber, FlightInstanceDate
+   endfor</pre>
+
+<p>The formula does have a context: the FlightInstance table, the base table of the For each. Thus, not all the passenger seats were going to be counted, but only those corresponding to each FlightInstance record considered in each &quot;for each&quot; iteration. So, only the flights with more than one hundred passengers will be printed in the output.</p>
+
+<p>If you had defined a global formula attribute <em>FlightInstanceNumberOfPassengers</em> at FlightInstance transaction level, you could have defined equivalently as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   for each FlightInstance
+   where FlightInstanceNumberOfPassengers &gt; 100
+      print flightInstanceInfo //FlightInstanceNumber, FlightInstanceDate
+   endfor</pre>
+
+<p>Furthermore, if there is a contextual table, all the attributes of its extended table could be used inside the formula, as known. For example, having a variable &amp;fromDate previously loaded:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   for each FlightInstance
+   where Count( FlightInstancePassengerSeatNumber, <strong>FlightDate</strong> &gt;= &amp;fromDate) &gt; 100
+      ...
+   endfor</pre>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>Inline formulas that are <a href="5864.html">horizontal</a> <strong>always have a context table</strong>: at least its own base table. It is exactly the same as horizontal global formulas. Thus, they can not be specified without a context where the attributes could assume value.</p>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   &amp;age = &amp;today.Year() - PassengerBirthDate.Year()</pre>
+
+<p>this assignment isolated makes no sense. What passenger birth date are you talking about? The situation would be different if this assignment were:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each FlightInstanceSeat
+    &amp;age = &amp;today.Year() - PassengerBirthDate.Year()
+   ...
+endfor</pre>
+
+<p>Here GeneXus infers the passenger is that of each &quot;for each&quot; iteration, that is, that associated with the for each base table record where you are positioned each time. The &quot;for each&quot; navigates the table that stores the passengers assigned to seats: FlightInstanceSeat. Note in this case the context table, FlightInstanceSeat, is not exactly the base table of the formula, Passenger, but the former contains in its <a href="6029.html">extended</a> the latter.</p>
+
+<p>So, inline formulas can be defined according to their context:</p>
+
+<ul>
+	<li><a href="6426.html">Within a contextual table</a></li>
+	<li><a href="6442.html">Outside a contextual table</a></li>
+</ul>
+
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus/genexus-16-course-analyst/inline-formulas-gx15?p=5253'>Inline Formulas</a></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5868.html">Aggregate Formulas</a></TD><TD><a href="8215.html">Assignment Command for attributes</a></TD><TD><a href="8217.html">Assignment Command for variables</a></TD></TR><TR><TD><a href="25096.html">Data provider Element</a></TD><TD><a href="25103.html">Data provider Element statement</a></TD><TD><a href="6547.html">Find Formula</a></TD><TD><a href="5861.html">Category:Formulas</a></TD></TR><TR><TD><a href="25327.html">Toc:Formulas</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="5864.html">Horizontal Formulas</a></TD><TD><a href="6442.html">Inline Formulas outside a contextual table</a></TD></TR><TR><TD><a href="6426.html">Inline Formulas within a contextual table</a></TD><TD><a href="6502.html">Max, Min Formulas</a></TD><TD><a href="6500.html">Sum, Count, Average formulas</a></TD><TD><a href="24593.html">Unique clause in For Each command</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/07/21 02:27 PM</em></font></td></TR></table></font>

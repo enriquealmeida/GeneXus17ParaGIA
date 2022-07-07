@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Office 365 Authentication</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39166,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Office 365 Authentication</h1>
+<!--GAM - Office 365 Authentication--><div class="TableWikiBody" id="tblwikibody"><p>Since the introduction of <a href="39484.html">OAuth 2.0 Authentication</a> in <a href="19888.html">GeneXus Access Manager</a>, it is possible to authenticate to a broader set of providers. This article explains what to do in GAM backend, to authenticate to Office 365. For more information on how to configure Azure, see <a href="42055.html">Application Registration in Azure Active Directory</a>.</p>
+
+<h3><a id="Authentication+Type" class="HashLink" href="#Authentication+Type">Authentication Type</a></h3>
+
+<p>Add a new OAuth 2.0 authentication type in the <a href="15935.html">GAM - Web Backoffice</a> and set the associated basic parameters:</p>
+
+<ul>
+	<li>Name (you will use this name later in the code to log in)</li>
+	<li>Function (Only Authentication is supported)</li>
+	<li>Enabled (Yes|No)</li>
+	<li>Description: friendly description</li>
+	<li>Small image name</li>
+	<li>Big image name</li>
+	<li>Impersonate</li>
+</ul>
+
+<p>You need to fill in detailed information in the following tabs:</p>
+
+<ul>
+	<li>General: to identify the OAuth 2.0 application.</li>
+	<li>Authorization: headers associated with the authorization request and response.</li>
+	<li>Token: service URL to handle token information.</li>
+	<li>User Information: service URL to handle user data.</li>
+</ul>
+
+<h3><a id="General" class="HashLink" href="#General">General</a></h3>
+
+<p>Enter Cliend Id, Client Secret and Redirect URL. Notice the URL is the base URL for your application.</p>
+
+<ul>
+	<li>Client Id
+	<ul>
+		<li>Tag: client_id, Value: &lt;your value here&gt;</li>
+	</ul>
+	</li>
+	<li>Client Secret
+	<ul>
+		<li>Tag: client_secret, Value: &lt;your value here&gt;</li>
+	</ul>
+	</li>
+	<li>Redirect URL
+	<ul>
+		<li>Tag: redirect_uri, Value: &lt;your application URL&gt;. E.g.: http://&lt;server&gt;/&lt;VirtualDirectory&gt;</li>
+	</ul>
+	</li>
+</ul>
+
+<h3><a id="Authorization" class="HashLink" href="#Authorization">Authorization</a></h3>
+
+<p>Set the following parameters:</p>
+
+<ul>
+	<li>URL: https://login.windows.net/common/oauth2/authorize</li>
+	<li>ResponseType: enabled
+	<ul>
+		<li>Tag: response_type, Value: code</li>
+	</ul>
+	</li>
+	<li>Scope: enabled
+	<ul>
+		<li>Tag: scope, Value: https://graph.microsoft.com/user.read</li>
+	</ul>
+	</li>
+	<li>State: enabled
+	<ul>
+		<li>Tag: state</li>
+	</ul>
+	</li>
+	<li>Include Client Id: enabled</li>
+	<li>Include Redirect URL: enabled</li>
+</ul>
+
+<h4><a id="Response%3A" class="HashLink" href="#Response%3A">Response:</a></h4>
+
+<ul>
+	<li>Access Code Tag: code</li>
+	<li>Error Descriprion Tag: error_description</li>
+</ul>
+
+<h3><a id="Token" class="HashLink" href="#Token">Token</a></h3>
+
+<ul>
+	<li>URL: https://login.windows.net/common/oauth2/token</li>
+	<li>Token Method: POST</li>
+	<li>Header
+	<ul>
+		<li>Tag: Content-type, Value: application/x-www-form-urlencoded</li>
+	</ul>
+	</li>
+	<li>Grant Type: enabled
+	<ul>
+		<li>Tag: grant_type, Value: authorization_code</li>
+	</ul>
+	</li>
+	<li>Include Access Code: enabled</li>
+	<li>Include Client Id: enabled</li>
+	<li>Include Client Secret: enabled</li>
+	<li>Include Redirect URL: enabled</li>
+	<li>Additional Parameters: resource=https://graph.microsoft.com</li>
+</ul>
+
+<h4><a id="Response%3A" class="HashLink" href="#Response%3A">Response:</a></h4>
+
+<ul>
+	<li>Access Token Tag: access_token</li>
+	<li>Token Type Tag: token_type</li>
+	<li>Expires In Tag: expires_in</li>
+	<li>Scope Tag: scope</li>
+	<li>Error Descriprion Tag: error</li>
+</ul>
+
+<h3><a id="User+Information" class="HashLink" href="#User+Information">User Information</a></h3>
+
+<ul>
+	<li>URL: https://graph.microsoft.com/v1.0/me</li>
+	<li>User Info Method: GET</li>
+	<li>Header
+	<ul>
+		<li>Tag: Content-type, Value: application/json;charset=utf-8</li>
+	</ul>
+	</li>
+	<li>Include Access Token: disabled
+	<ul>
+		<li>Tag: access_token</li>
+	</ul>
+	</li>
+	<li>Include Client Id: disabled
+	<ul>
+		<li>Tag: client_id</li>
+	</ul>
+	</li>
+	<li>Include Client Secret: disabled
+	<ul>
+		<li>Tag: client_secret</li>
+	</ul>
+	</li>
+</ul>
+
+<h4><a id="Response%3A" class="HashLink" href="#Response%3A">Response:</a></h4>
+
+<ul>
+	<li>User Email Tag: mail</li>
+	<li>User External Id Tag: id</li>
+	<li>User Name Tag: userPrincipalName</li>
+	<li>User First Name
+	<ul>
+		<li>Tag: givenName, Generate automatic Last Name: False</li>
+	</ul>
+	</li>
+	<li>User Last Name
+	<ul>
+		<li>Tag: surname</li>
+	</ul>
+	</li>
+	<li>User Language Tag: preferredLanguage</li>
+	<li>Error Description Tag: error_description</li>
+</ul>
+
+<h3><a id="How+to+use+it+from+the+code" class="HashLink" href="#How+to+use+it+from+the+code">How to use it from the code</a></h3>
+
+<p>Use the LoginOauth20 method from the GAM Repository external object, detailing your OAuth 2.0 configuration name. For example, if you set 'Office365' for the previous configuration:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Login'
+  GAMRepository.LoginOauth20(!&quot;Office365&quot;) // Authentication Type Name must match the backend definition
+EndEvent
+</pre>
+
+<h3><a id="Logout" class="HashLink" href="#Logout">Logout</a></h3>
+
+<p>If you want to force a logout from the Identity provider you will need to invoke the following URL with your desired callback url:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+https://login.windows.net/common/oauth2/logout?post_logout_redirect_uri=&lt;my_callback_URL&gt;
+</pre>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>In case of any error, enable the <a href="https://wiki.genexus.com/commwiki/wiki?25395,," target="_blank">GAM trace</a> to get more information on the error.</p>
+
+<h3><a id="AADSTS90002" class="HashLink" href="#AADSTS90002">AADSTS90002</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+AADSTS90002: Tenant organizations not found. This may happen if there are no active subscriptions for the tenant. Check with your subscription administrator.</pre>
+
+<p>Check your Azure server-side configuration as it seems the URL configured in GAM are wrong.</p>
+
+<h3><a id="AADSTS50011" class="HashLink" href="#AADSTS50011">AADSTS50011</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+AADSTS50011: The reply url specified in the request does not match the reply urls configured for the application: 'GUID'.</pre>
+
+<p>Verify your Endpoint URLs are correctly configured and match the location of your GAM application. Go to the Azure portal \ Azure Active Directory application; select your application and check the associated endpoints.</p>
+
+<p><img src="./images/42057.png" id="42057" class="WikiImage"/></p>
+
+<h3><a id="AADSTS70001" class="HashLink" href="#AADSTS70001">AADSTS70001</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+AADSTS70001: Application 'GUID' is disabled.</pre>
+
+<p>Check your Azure application is correctly configured.</p>
+
+<h3><a id="AADSTS70002" class="HashLink" href="#AADSTS70002">AADSTS70002</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+AADSTS70002: Error validating credentials. AADSTS50012: Invalid client secret is provided</pre>
+
+<p>Review the password settings on the Azure application configuration site and update your GAM configuration.</p>
+
+<h3><a id="AADSTS50020" class="HashLink" href="#AADSTS50020">AADSTS50020</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Message: AADSTS50020: We are unable to issue tokens from this api version for a Microsoft account. Please contact the application vendor as they need to use version 2.0 of the protocol to support this.</pre>
+
+<p>Review the following Azure registered Application endpoint and the associated configuration within GAM.</p>
+
+<ul>
+	<li>Oauth 2.0 token endpoint</li>
+	<li>Oauth 2.0 authorization endpoint</li>
+</ul>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>Oauth 2.0 authentication is available in <a href="19888.html">GeneXus Access Manager</a> since <a href="https://wiki.genexus.com/commwiki/wiki?38845,," target="_blank">GeneXus 15 Upgrade 11</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="42055.html">Application Registration in Azure Active Directory</a></p>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?48906,," target="_blank">HowTo: Authenticate to Azure Active Directory using GAM</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="42055.html">Application Registration in Azure Active Directory</a></TD><TD><a href="39484.html">GAM - Oauth 2.0 Authentication Type</a></TD><TD><a href="48575.html">GAM Oauth 2.0 Authentication Type (GeneXus 17 upgrade 4 or prior)</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/31/22 01:46 PM</em></font></td></TR></table></font>

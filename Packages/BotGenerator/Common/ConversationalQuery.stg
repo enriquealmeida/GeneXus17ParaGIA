@@ -1,0 +1,24 @@
+group CommonChatbots;
+delimiters "$", "$"
+
+init(query, variables, action)::=<<
+$if(variables)$
+	$queryContent()$
+$else$
+$queryContent()$
+$endif$	
+>>
+
+queryContent()::=<<
+&ContextOut.Context.GXQuery = "$query$"
+&ContextOut.Context.GXQueryParameters.Clear()
+$variables:{variable|$queryParameters(variable)$};separator="\r\n"$
+$if(variables)$&ContextOut.Context.$action$_OK = ""$else$$endif$
+>>
+
+queryParameters(parameter)::=<<
+&ChatbotParameter = new()
+&ChatbotParameter.Name = !"$parameter.Name$"
+&ChatbotParameter.Value = &ContextOut.Context.$parameter.WCastedSlot$
+&ContextOut.Context.GXQueryParameters.Add(&ChatbotParameter)
+>>

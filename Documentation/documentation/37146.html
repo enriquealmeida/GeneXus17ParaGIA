@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Pay using Alipay in GeneXus applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37146,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Pay using Alipay in GeneXus applications</h1>
+<!--HowTo: Pay using Alipay in GeneXus applications--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="What+is+Alipay%3F" class="HashLink" href="#What+is+Alipay%3F">What is Alipay?</a></h2>
+
+<p><a href='https://intl.alipay.com/open/index.htm'>Alipay</a> is a Chinese mobile payment platform. It was created by <a href='http://www.alibabagroup.com/en/global/home'>Alibaba Group</a> (e-commerce company) and currently has more than 500 million active users and a daily rate of more than 175 million payment transactions. It is widely used in China for any business and, as a result, integration with Alipay is a common requirement for mobile applications. For that purpose, the platform offers a complete integration <a href='https://open.alipay.com/developmentAccess/developmentAccess.htm'>API</a>.</p>
+
+<h2><a id="Architecture" class="HashLink" href="#Architecture">Architecture</a></h2>
+
+<p>A basic architecture schema of Alipay integration is described in the following picture:</p>
+
+<p><img src="./images/37147.jpg" id="37147" class="WikiImage"/></p>
+
+<p>Details:</p>
+
+<ol>
+	<li>A payment order is created from a third-party mobile application</li>
+	<li>Application Server processes the order and returns the information needed to perform the payment with Alipay</li>
+	<li>Mobile Application starts the payment process by calling the Alipay Application</li>
+	<li>Alipay Application makes the payment using Alipay servers</li>
+	<li>Alipay server returns the payment result to the Alipay Application</li>
+	<li>Alipay Application returns the payment result to the mobile application</li>
+	<li>Alipay server sends an asynchronous payment notification to the Application Server.</li>
+</ol>
+
+<h2><a id="Integration+with+GeneXus" class="HashLink" href="#Integration+with+GeneXus">Integration with GeneXus</a></h2>
+
+<p>From Upgrade 8 of GeneXus 15, payment functions with Alipay can be integrated into the generated Android and iOS applications using an <a href="33545.html">Extension Library</a> included in the GeneXus installation and importing the <a href="37152.html">Payment API</a>. </p>
+
+<h2><a id="Step-by-step+instructions" class="HashLink" href="#Step-by-step+instructions">Step-by-step instructions</a></h2>
+
+<h3><a id="1+-+Register+the+application+in+the+Alipay+developer+site" class="HashLink" href="#1+-+Register+the+application+in+the+Alipay+developer+site">1 - Register the application in the Alipay developer site</a></h3>
+
+<p>Developers need to be registered in the Alipay developer site and need to register all the applications that will integrate the payment functions. In this process, developers get the application credentials and signing information that is required to integrate with Alipay. Check <a href="https://wiki.genexus.com/commwiki/wiki?37154,," target="_blank">this document</a> for detailed information about the registration process.</p>
+
+<h3><a id="2+-+Create+a+PFX+file" class="HashLink" href="#2+-+Create+a+PFX+file">2 - Create a PFX file</a></h3>
+
+<p>Alipay requires signing the payment information in each transaction with the credentials obtained when the application was registered in the Alipay developer site. For every application,<span style="background-color: rgb(245,246,245);"> </span>Alipay creates public and private keys in plain text. In order to use those credentials in the integration with GeneXus using the <a href="22980.html">Cryptography data types</a>, we need to create a PFX file (Personal Information Exchange). This can be done executing a set of <a href='https://www.openssl.org/'>OpenSSL</a> commands. <a href="https://wiki.genexus.com/commwiki/wiki?37155,," target="_blank">Here</a> is a detailed list of those commands and a utility file that can be downloaded to simplify this process. This is a one-time process; once we have the PFX file for an application, we do not need to generate it again in future builds.</p>
+
+<h3><a id="3+-+Set+configuration+information" class="HashLink" href="#3+-+Set+configuration+information">3 - Set configuration information</a></h3>
+
+<p>The first &quot;programming&quot; step is to set the configuration information. By default, the Alipay API loads the configuration information from an XML file named Alipay_Config, using the procedure LoadConfig. Just modifying this file is enough to set all the configurations needed to integrate the application with Alipay. Following is a description of the Alipay_Config.xml file structure.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Configuration&gt;     
+    &lt;AppId /&gt;
+    &lt;Environment /&gt;
+    &lt;CertificateFilename /&gt;
+    &lt;CertificatePassword /&gt;
+    &lt;CallbackURL /&gt;     
+    &lt;Timeout /&gt; 
+    &lt;AdditionalConfig /&gt;
+&lt;/Configuration&gt;
+
+</pre>
+
+<ul>
+	<li><strong>AppId:</strong> Identifier obtained when the application was registered in Alipay</li>
+	<li><strong>Environment:</strong> Possible values are <em>Production / Sandbox</em>. Execution environment where the payment transactions will be placed. The sandbox environment is only available for Android; in iOS, only the Production environment can be used.</li>
+	<li><strong>CertificateFilename:</strong> Name of the PFX file created in the previous step</li>
+	<li><strong>CertificatePassword:</strong> Password of the PFX file created in the previous step</li>
+	<li><strong>CallbackURL: </strong>URL of the payment notification service that Alipay will call to complete the payment transaction (point 7 in architecture listing above). By default, the URL of the procedure CallbackService included in the <a href="37152.html">Alipay API</a> is used.</li>
+	<li><strong>Timeout:</strong> Timeout in minutes for the payment transactions</li>
+	<li><strong>AdditionalConfig :</strong> List of additional information </li>
+</ul>
+
+<h3><a id="4+-+Prepare+payment+data" class="HashLink" href="#4+-+Prepare+payment+data">4 - Prepare payment data</a></h3>
+
+<p>The next step is to prepare the payment data to send it to Alipay. First, the user needs to set some values in a variable based on <em>PaymentApplicationData</em> SDT from the <a href="37152.html">Alipay API</a> (product code, subject, body and amount). This variable will be the input of the procedure <em>GetPaymentInformation</em> which returns the processed information ready to be sent to Alipay.</p>
+
+<p>There is an intermediate step performed by the <em>GetPaymentInformation</em> procedure; it allows processing the ready-to-send payment information (which includes the generated order number) by the user, for example, to store it in the application database tables. These actions can be edited in the procedure <em>OnAboutToPay</em> from the <a href="37152.html">Alipay API</a>.</p>
+
+<h3><a id="5+-+Send+payment+information+to+Alipay" class="HashLink" href="#5+-+Send+payment+information+to+Alipay">5 - Send payment information to Alipay</a></h3>
+
+<p>Now the user is ready to send the payment information to Alipay, using the Pay method from the External Object <em>AlipayProvider</em> included in the <a href="37152.html">Alipay API</a>. This method receives the processed payment information returned by the procedure <em>GetPaymentInformation</em> in the previous step in a variable based on the <em>PaymentInformation</em> SDT.</p>
+
+<p>The following is an example code in a GeneXus Smart Devices object event with the actions from steps 4 and 5:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Pay with Alipay'
+   Composite
+      &amp;PaymentApplicationData.ProductCode = 'Product name'
+      &amp;PaymentApplicationData.TotalAmount = 1000
+      &amp;PaymentApplicationData.Subject = 'Subject'
+      &amp;PaymentApplicationData.Body = 'Purchase information'
+      GeneXus.Common.UI.Progress.ShowWithTitleAndDescription(&quot;Please Wait...&quot;,&quot;Preparing payment information...&quot;)
+      Alipay.GetPaymentInformation(&amp;PaymentApplicationData, &amp;PaymentInformation)
+      GeneXus.Common.UI.Progress.Hide()
+      if &amp;PaymentInformation.ErrorCode &gt; 0
+          Msg(&quot;Error: &quot; + &amp;PaymentInformation.ErrorDescription)
+      else
+          AlipayProvider.Pay(&amp;PaymentInformation)
+      endif
+   EndComposite
+Endevent</pre>
+
+<h3><a id="6+-+Process+payment+result" class="HashLink" href="#6+-+Process+payment+result">6 - Process payment result</a></h3>
+
+<p>The user needs to code two actions to process an Alipay payment result. The first one is the <em>AlipayProvider</em> External Object event called <em>OnPaymentFinished</em>. This event receives a variable based on the <em>PaymentResult</em> SDT which contains an ErrorCode, ErrorDescription, and OrderNumber of the completed payment. Check detailed information about the <a href="37152.html">Alipay API here</a>.</p>
+
+<p>The following is an example code of this event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event AlipayProvider.OnPaymentFinished(&amp;PaymentResult)
+   Composite
+      if &amp;PaymentResult.ErrorCode = 0
+         GeneXus.Common.UI.Progress.ShowWithTitleAndDescription(&quot;Please Wait...&quot;,&quot;Finishing transaction...&quot;)
+         SetSaleStatus(&amp;PaymentResult.OrderNumber, PaymentStatus.Paid)
+         ClearCart()
+         GeneXus.Common.UI.Progress.Hide()
+         ConfirmationPanel()
+      else
+         SetSaleStatus.Call(&amp;PaymentResult.OrderNumber, PaymentStatus.Error)
+         Msg(&amp;PaymentResult.ErrorDescription)
+      endif
+   EndComposite
+EndEvent</pre>
+
+<h3><a id="7+-+Asynchronous+payment+notification+service" class="HashLink" href="#7+-+Asynchronous+payment+notification+service">7 - Asynchronous payment notification service</a></h3>
+
+<p>The last step is executed by Alipay servers, which call a payment notification service provided by the application developer. This service URL is what we indicate in the configuration using the CallbackURL parameter. By default this URL refers to a procedure named <em>CallbackService</em> included in the <a href="37152.html">Alipay API</a>. This procedure receives the HTTP data and converts it to an SDT structure (<em>PaymentNotificationInfo</em>); next, it calls another procedure named <em>CallbackHandler</em> to process that SDT with the notification information.</p>
+
+<h3><a id="In+sum" class="HashLink" href="#In+sum">In sum</a></h3>
+
+<p>Having registered the application and created the PFX file, the GeneXus developer only needs to modify the following objects to integrate Alipay into his application:</p>
+
+<ul>
+	<li>Set configurations in <em>Alipay_Config.xml</em> file</li>
+	<li>Code the process of the payment data just before sending it to Alipay in the <em>OnAboutToPay</em> procedure.</li>
+	<li>Set payment data, call <em>GetPaymentInformation</em> procedure and call Pay method of the <em>AlipayProvider</em> EO in the Smart Device object.</li>
+	<li>Code the AlipayProvider EO <em>OnPaymentFinished</em> event in the Smart Device object.</li>
+	<li>Code the notification service processing in the <em>CallbackHandler</em> procedure</li>
+</ul>
+
+<h2><a id="Sample" class="HashLink" href="#Sample">Sample</a></h2>
+
+<p>A complete sample can be downloaded from <a href="https://wiki.genexus.com/commwiki/wiki?37202,," target="_blank">here</a>.</p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

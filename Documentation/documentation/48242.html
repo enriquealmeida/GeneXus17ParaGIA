@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Security improvements in upload mechanisms</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48242,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Security improvements in upload mechanisms</h1>
+<!--Security improvements in upload mechanisms--><div class="TableWikiBody" id="tblwikibody"><p>This article briefly describes important changes to the upload mechanism included in <a href="47936.html">GeneXus 17 upgrade 4</a>.</p>
+
+<p>They are important because some of these changes affect the compatibility of the GeneXus code and interfaces of the generated solutions.</p>
+
+<p>In GeneXus, the ways to upload a file to the server are as follows:</p>
+
+<ol>
+	<li>In a Web Panel, using the ‘FileUpload’ User Control or another one that allows file uploads.</li>
+	<li>In a Web Panel, using a Blob variable on the screen.</li>
+	<li>In a Transaction, with an attribute of Blob, Multimedia type (Audio, Video, Image, BlobFile).</li>
+	<li>In the Layout of a Work With for Smart Devices that is associated with a Transaction, and having an attribute of Blob, Multimedia type.</li>
+	<li>A Procedure, Business Component, or API with REST interface that receives a parameter of Blob or Multimedia type (in a variable, attribute, or as an SDT field). </li>
+	<li>In a Panel, by placing a Blob variable on the screen.</li>
+</ol>
+
+<h3><a id="Background" class="HashLink" href="#Background">Background</a></h3>
+
+<p>In general, this upload is automatically handled by GeneXus, especially when the client-side and server-side were developed in objects of the KB itself.<br />
+In other cases, as in point 4, which mentions the existing mechanism for integration with external systems, development of other User Controls, and so on, there is a mechanism documented in the wiki with the details.</p>
+
+<p>Internally, for points 1, 4, 5, and 6 the file upload was done by calling the ‘/gxobject’ URL, and for points 2 and 3 a multipart POST is still done that is served by the object where the upload control is located.</p>
+
+<h2><a id="Improvements+made+in+GeneXus+17+Upgrade+4" class="HashLink" href="#Improvements+made+in+GeneXus+17+Upgrade+4">Improvements made in GeneXus 17 Upgrade 4</a></h2>
+
+<p>Changes have been made to all upload mechanisms in order to improve security aspects. It is mainly an internal modification, but it affects compatibility in some scenarios, especially, but not exclusively, in point 5.</p>
+
+<p>The new mechanism includes three main changes, as follows:</p>
+
+<ul>
+	<li>To entry points invoked when uploading a file,</li>
+	<li>To the physical file name once uploaded to the server,</li>
+	<li>To the internal mechanism for handling the uploaded file.</li>
+</ul>
+
+<h3><a id="Changes+to+entry+points" class="HashLink" href="#Changes+to+entry+points">Changes to entry points</a></h3>
+
+<p>They affect points 1, 4, 5, and 6 mentioned above.<br />
+At a conceptual level, the entry point is no longer generic for the entire webapp and is now one per object. In this way, the security aspects also become controlled by the object, like any of the other entry points that objects have.</p>
+
+<p>More specifically, the service is no longer below ‘/gxobject’ and is now below ‘/&lt;Object Name&gt;/gxobject’, where ‘Object Name’ is the name by which the object is invoked via URL.<br />
+Example: If the URL is https://example.com/MyWebPanel.aspx, the service URL for the upload is https://example.com/MyWebPanel.aspx/gxobject. <br />
+Authentication and Authorization are also controlled by the GAM configuration of that object; and if authorization is not obtained, HTTP status code 403 is returned.</p>
+
+<p>Those who need to maintain the previous, less secure mechanism, can apply what is documented <a href="https://wiki.genexus.com/commwiki/wiki?48243,," target="_blank">here</a>.</p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  For points 2 and 3, a multipart POST to a service associated with the object is still made as before, and the GAM configuration of the object itself is still taken as before. There are no changes in this regard.</div>
+</p>
+
+<h3><a id="Changes+to+file+names+on+the+server" class="HashLink" href="#Changes+to+file+names+on+the+server">Changes to file names on the server</a></h3>
+
+<p>The file that is physically uploaded to the server is given a GUID name and a tmp extension. In order not to lose data and to be able to handle it properly, a reference to the file is also stored, as well as the original file name and extension, in a cache with a key that is another GUID.  <br />
+This cache reference is only valid for 10 minutes. </p>
+
+<h3><a id="Changes+to+mechanisms+for+handling+the+uploaded+file" class="HashLink" href="#Changes+to+mechanisms+for+handling+the+uploaded+file">Changes to mechanisms for handling the uploaded file</a></h3>
+
+<p>Two cases can be identified:</p>
+
+<h4><a id="In+any+object+except+for+Transactions" class="HashLink" href="#In+any+object+except+for+Transactions">In any object except for Transactions</a></h4>
+
+<p>If the file was uploaded in an object other than a Transaction, the client side gets as a POST response the string gxupload:&lt;GUID&gt;; i.e. the reference to the uploaded file, as well as the name and extension of the originally uploaded file.</p>
+
+<p>In a server-side event, that reference can be assigned to the Source property of a GeneXus File type variable. That variable of File type then points to the file, but when querying for its name and extension, the original ones are obtained (not the &lt;GUID&gt;.tmp) which allows, for example, validating if the file is of the expected type, as well as opening it, copying it or manipulating it in some way. </p>
+
+<h4><a id="In+Transactions" class="HashLink" href="#In+Transactions">In Transactions</a></h4>
+
+<p>If the file was uploaded in a Transaction, what happens depends on whether the attribute is of Blob or Multimedia type. In addition, if it is a Blob it changes when the FileType Attribute and FileName Attribute properties are configured.</p>
+
+<h4><a id="Blobs" class="HashLink" href="#Blobs">Blobs</a></h4>
+
+<p>If it is an attribute of Blob type and the FileType Attribute and FileName Attribute properties are configured, the name and original extension of the file that was uploaded are stored in those attributes. Therefore, it is possible to control that they are a valid name and extension and in case they are not, an error can be displayed before saving the transaction. <br />
+If the record is saved, this file will be downloaded with the name and extension with which it was uploaded (adding a GUID in the middle to avoid name collision).</p>
+
+<p>If it is a Blob type attribute and the FileType Attribute and FileName Attribute properties are not configured, the file is uploaded without keeping the original name and extension; also, when downloaded it will have a name with GUID and tmp extension.</p>
+
+<h4><a id="Multimedia+%28Audio%2C+Video%2C+Image%2C+BlobFile%29" class="HashLink" href="#Multimedia+%28Audio%2C+Video%2C+Image%2C+BlobFile%29">Multimedia (Audio, Video, Image, BlobFile)</a></h4>
+
+<p>If the attribute is of Multimedia type, before modifying the data, extension, and name of the uploaded file the user can check – by asking for the ImageType or ImageName properties of the attribute – if it is of Image type, and analogous properties exist for the Video, Audio, and BlobFile data types.</p>
+
+<h3><a id="Compatibility" class="HashLink" href="#Compatibility">Compatibility</a></h3>
+
+<p>The internal changes mentioned above do not affect compatibility, except in these situations.</p>
+
+<h4><a id="Integration+with+external+systems" class="HashLink" href="#Integration+with+external+systems">Integration with external systems</a></h4>
+
+<p>When other systems are used to upload files to a solution developed with GeneXus, the changes in the entry points mentioned above must be taken into account.</p>
+
+<h4><a id="User+Controls+in+Web+Objects" class="HashLink" href="#User+Controls+in+Web+Objects">User Controls in Web Objects</a></h4>
+
+<p>User controls that upload files to Web Panels must provide their own server-side mechanism to receive the files. The entry point for receiving files is only generated if there is a File Upload control in the layout.</p>
+
+<h4><a id="File+Upload+Control" class="HashLink" href="#File+Upload+Control">File Upload Control</a></h4>
+
+<p>After uploading a file, the File property of the variable pointing to the uploaded file (typically &amp;FileUploadData) no longer returns the path to the file, but a reference to it. </p>
+
+<p>If &amp;Client is a Business Component, and ClientImage is a field of Image type, the following lines have <b>no</b> compatibility issues: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Client.ClientImage = &amp;FileUploadData.File
+&amp;Client.Save()</pre>
+
+<p>But, in the case that the uploaded file needs to be processed by an external program, the following is an example that may have issues:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+EXO.ProcessFile(&amp;FileUploadData.File)</pre>
+
+<p>The solution is to assign the reference to the uploaded file to an auxiliary variable of <a href="6915.html">File data type</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;File.Source = &amp;FileUploadData.File
+EXO.ProcessFile(&amp;File.GetURI())
+</pre>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  To get the original name and extension, you can read the fields FullName, Name or Extension of the &amp;FileUploadData .</div>
+</p>
+
+<h4><a id="Blob+in+Layout+" class="HashLink" href="#Blob+in+Layout+">Blob in Layout </a></h4>
+
+<p>If you have a variable of type Blob (&amp;MyBlob) in the layout and you need to get its path for another program:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ProcessBlob'
+    Process(&amp;MyBlob) 
+EndEvent</pre>
+
+<p>New code</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ProcessBlob'
+    &amp;File.Source = &amp;MyBlob
+    Process(&amp;File.GetUri())
+EndEvent</pre>
+
+<h4><a id="KBN" class="HashLink" href="#KBN">KBN</a></h4>
+
+<p>When using the <a href="14974.html">Knowledge Base Navigator</a> make sure it is coordinated with your GeneXus version, otherwise an error could appear when uploading files such as:</p>
+
+<pre>
+There was an error executing action
+not found
+</pre>
+
+<p>In this case the KBN is using an environment older that v17u4 which is not supported.</p>
+
+<h2><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h2>
+
+<ul>
+	<li><a href='https://www.genexus.com/developers/websac?data=49852;;'>SAC 49852 - GetURI does not return the expected path</a></li>
+</ul>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="47936.html">GeneXus 17 upgrade 4</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/18/22 12:46 PM</em></font></td></TR></table></font>

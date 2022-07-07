@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Application Deployment MSBuild tasks</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42073,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Application Deployment MSBuild tasks</h1>
+<!--Application Deployment MSBuild tasks--><div class="TableWikiBody" id="tblwikibody"><p>The  <a href="32092.html">Application Deployment tool</a> is based on MSBuild tasks, which allow you to easily extend and/or customize your deployments. Using those tasks, you can automate deployment.</p>
+
+<p>The following document lists those tasks and details how to use them in order to either extend what GeneXus does or automate your deployments.</p>
+
+<h3><a id="CreateDeployProject" class="HashLink" href="#CreateDeployProject">CreateDeployProject</a></h3>
+
+<p>The CreateDeployProject task will analyze what GeneXus objects must be included in the deployment based on the call tree of every selected object (or every main object if none). The output of this task is an MSBuild script with the extension .gxdproj that will hold every environment property and object (with its properties) needed for a successful deployment.</p>
+
+<p>GeneXus provides a script called Deploy.msbuild (located at the root of GeneXus installation) which is used by GeneXus itself and it's a great starting point for automating your calls. Use the following command to create a deployment project of every main in your <a href="1836.html">Knowledge Base</a>.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild.exe &lt;GX Installation directory&gt;\deploy.msbuild /p:KBPath=&lt;Path to your Knowledge Base&gt;</pre>
+
+<p>This will create the deploy project (.gxdproj) file for the trunk version of the mentioned Knowledge Base for every main object in that version. There are a few properties you can add to change this behavior.</p>
+
+<p><strong>KBVersion: </strong>The name of the version to set as active</p>
+
+<p><strong>KBEnvironment: </strong>The name of the environment in that version</p>
+
+<p><strong>ProjectName:</strong> It will be the name of the generated .gxdproj file</p>
+
+<p><strong>ObjectNames:</strong> The names (with their types) of the objects to deploy (deployment units can also be selected) (ref.: <a href="44328.html">How to specify an object list in a MSBuild task</a>)</p>
+
+<p><strong>APPLICATION_KEY: </strong>The new encryption key to set for your deployed application</p>
+
+<p><strong>ApplicationServer</strong></p>
+
+<p><strong>TARGET_JRE:</strong> (Java only) the version of the Java runtime where the deployed app will run. (Default is 9)</p>
+
+<p><strong>PACKAGE_FORMAT:</strong> (Java only) whether the engine must create a WAR or an EAR. (Default is 'Automatic', the engine decides based on the selected objects)</p>
+
+<p><strong>SelectedObjectsOnly</strong>: When set to True the deploy engine will not calculate the call tree of selected objects. Only the selected ones will be deployed.</p>
+
+<p><strong>TargetId</strong>: Default will be &quot;Local&quot;, but you can set any of the supported Deploy Application Targets.</p>
+
+<p><strong>SourcePath:</strong> Defaults to the KB directory\model. The gxdproj file is saved under &lt;<strong>SourcePath</strong>&gt;\web if Outputpath is not defined.</p>
+
+<p><strong>Outputpath</strong>: Where the .gxdproj is saved. </p>
+
+<p>You can also use the <strong>CallTreeLogFile</strong> property to get a log of the objects call tree.</p>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSbuild.exe /nologo /verbosity:minimal /ToolsVersion:14.0 &quot;c:\GeneXus\deploy.msbuild&quot; 
+/p:KBPath=&quot;c:\fullgx\kbaux&quot; 
+/p:KBEnvironment=NetEnvironment 
+/p:KBVersion=kbaux 
+/p:ProjectName=DeployNet16 
+/p:ObjectNames=&quot;TestDeployUnit1&quot; 
+/p:GX_PROGRAM_DIR=&quot;c:\fullgx\gxsaltostable&quot; 
+/p:TimeStamp=DeployNet16 
+/p:Application_Key=863B7BE7A26B4276942E2C50FA1E0EAC 
+/p:ApplicationServer=&quot;IIS8&quot; /p:TargetId=&quot;Local&quot; 
+/p:SourcePath=&quot;c:\fullgx\kbaux\CSharpModel&quot; 
+/p:AppName=&quot;DeployNet16&quot; 
+/p:SelectedObjectsOnly=&quot;false&quot; 
+/l:FileLogger,Microsoft.Build.Engine;logfile=c:\fullgx\temp\CreateDeploy.log
+/p:CallTreeLogFile=c:\temp\CallTree.log
+/t:CreateDeploy 
+</pre>
+
+<p>The generated .gxdproj file is another MSBuild script which contains the needed info to create the packaged application.</p>
+
+<h3><a id="CreatePackage" class="HashLink" href="#CreatePackage">CreatePackage</a></h3>
+
+<p>To generate the package (it can be a zip file in case of C# and .NET Core or a war/jar/ear in case of Java), you need to execute the generated script as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild.exe &lt;Full path&gt;\MSBuildDeployment_20190123103151.gxdproj</pre>
+
+<p>In this case, you can also set properties to tell the engine where the generated package will be deployed.</p>
+
+<p><strong>DeployFullPath</strong>: Full path to which a copy of packaged files will be copied to. You can use this path to compare different deployments.</p>
+
+<h3><a id="Deploy+to+external+targets" class="HashLink" href="#Deploy+to+external+targets">Deploy to external targets</a></h3>
+
+<p>GeneXus can also help you deploy to any of the supported cloud providers (deployment targets).</p>
+
+<p>Every supported target is listed under the DeploymentTargets folder under the GeneXus installation. All of these targets have a<strong> deploy.msbuild </strong>file with a default task called <strong>Deploy</strong>. </p>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSBuild.exe /nologo /verbosity:minimal /ToolsVersion:4.0 &quot;c:\GeneXus\DeploymentTargets\Docker\deploy.msbuild&quot; 
+/p:DOCKER_BASE_IMAGE=&quot;tomcat:9-jdk11&quot; 
+/p:DOCKER_MAINTAINER=&quot;seba &lt;seba@example.com&gt;&quot; 
+/p:DOCKER_WEBAPPLOCATION=&quot;/usr/local/tomcat/webapps/&quot; 
+/p:DOCKER_IMAGE_NAME=&quot;k8sdeployjavaenvironment&quot; 
+/p:DOCKER_ENVVARS=&quot;&quot;
+/p:GENERATOR=&quot;Java&quot; 
+/p:APPLICATION_NAME=&quot;DeploymentUnit2_20200130131103&quot; 
+/p:DEPLOY_PATH=&quot;C:\GXmodels\junk\K8SDeploy\JavaModel\Deploy\DOCKER\DeploymentUnit2\20200130131103&quot; 
+/t:Deploy</pre>
+
+<p><br />
+In sum, when the target is not local, the execution is in the following order.<br />
+Now, take AWSECS as an example.</p>
+
+<p>1. The task CreateDeploy of the script deploy.msbuild of the GeneXus root is executed by msbuild, to which the <strong>Target Id</strong> and the <strong>deploy targets</strong> must be passed as properties, eg:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSbuild.exe /nologo /verbosity:minimal /ToolsVersion:14.0 &quot;c:\GeneXus\deploy.msbuild&quot;
+/p:KBPath=&quot;c:\fullgx\kbaux&quot;
+/p:KBEnvironment=NetEnvironment
+/p:KBVersion=kbaux
+/p:ProjectName=DeployNet16
+<strong>/p:TargetId=&quot;AWSECS&quot; 
+/p:DEPLOY_TARGETS=&quot;C:\Genexus\DeploymentTargets\AWSECS\aws.targets&quot;</strong>
+/p:SourcePath=&quot;c:\fullgx\kbaux\CSharpModel&quot;
+/p:AppName=&quot;DeployNet16&quot; /t:CreateDeploy</pre>
+
+<p>As a result, the gxdproj file is obtained, where you will see the <strong>DeployTarget </strong>(TargetId information)<strong> </strong>and <strong>DeployTargetTask </strong>(DEPLOY_TARGETS information)<strong> </strong>properties.</p>
+
+<p>2. The task CreatePackage of the gxdproj generated scripted is executed via msbuild. As a result you get a package on the local machine.</p>
+
+<p>3. The Deploy task of the deploy.msbuild (located under &lt;GX&gt;\DeploymentTargets\AWSECS) is executed to deploy to the Paas.</p>
+
+<h3><a id="Tip" class="HashLink" href="#Tip">Tip</a></h3>
+
+<p>Generate the <a href="23257.html">GeneXus Log</a> when you deploy using the Application deployment tool inside de GeneXus IDE, in order to see in the log, the msbuild tasks that are executed.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="3908.html">MSBuild Tasks</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?24612,," target="_blank">Team Development MSBuild Tasks</a><br />
+<a href="32092.html">Application Deployment tool</a><br />
+<a href="44328.html">How to specify an object list in a MSBuild task</a></p>
+
+<p> </p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD></TR><TR><TD><a href="48662.html">Toc:Application Deployment tool (Genexus 17 Upgrade 4)</a></TD><TD><a href="45672.html">Customize GeneXus Deployment capabilities</a></TD><TD><a href="50142.html">Deploy static files to Azure Storage in Serverless deploy</a></TD><TD><a href="47839.html">Deploy to Docker MSBuild task</a></TD></TR><TR><TD><a href="49911.html">Deploy to Docker MSBuild task (GeneXus 17 Upgrade 7)</a></TD><TD><a href="50271.html">Deploy to Docker MSBuild task (GeneXus 17 upgrade 8)</a></TD><TD><a href="36951.html">How to Deploy an Application to Docker</a></TD><TD><a href="44328.html">How to specify an object list in a MSBuild task</a></TD></TR><TR><TD><a href="49176.html">HowTo: Create a deployment pipeline for an application using GXflow</a></TD><TD><a href="3908.html">MSBuild Tasks</a></TD></TR><TR><TD><a href="50205.html">MSBuild Tasks (GeneXus 17 upgrade 8)</a></TD><TD><a href="42568.html">Reorganization Deployment MSBuild Tasks</a></TD><TD><a href="50867.html">Reorganization Deployment MSBuild Tasks (GeneXus 17 upgrade 9)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/02/22 07:36 PM</em></font></td></TR></table></font>

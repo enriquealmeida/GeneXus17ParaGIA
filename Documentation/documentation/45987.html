@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to sign an XML</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45987,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to sign an XML</h1>
+<!--How to sign an XML--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;pathToKeys = !&quot;C:\Temp\keys\&quot; //-&gt;put your path here
+
+//--Loading Private Key--
+&amp;PrivateKey.Load(&amp;pathToKeys+!&quot;public_key.pem&quot;) //-&gt;put your public key name file here
+if &amp;PrivateKey.HasError()
+    msg(&quot;Error loading private key. Code: &quot; + &amp;PrivateKey.GetErrorCode() + &quot; Description: &quot; + &amp;PrivateKey.GetErrorDescription(), status)
+else
+    msg(&quot;Private key correctly loaded&quot;, status)
+endif
+
+//--Loading Public Key--
+&amp;Certificate.Load(&amp;pathToKeys+!&quot;certificate.crt&quot;) //-&gt;put your certificate name file here
+
+if &amp;Certificate.HasError()
+    msg(&quot;Error loading public key. Code: &quot; + &amp;Certificate.GetErrorCode() + &quot; Description: &quot; + &amp;Certificate.GetErrorDescription(), status)
+else
+    msg(&quot;Public key correctly loaded&quot;, status)
+endif
+
+//Load methods are for base64 keys and DER certificates
+//If you are using a PKCS12 type of file (.pfx .jks .pkcs12) use LoadPKCS12 method
+//More information: https://wiki.genexus.com/commwiki/servlet/wiki?43918,Asymmetric+Key+Management
+
+//This example will use the default and most used configuration for XML DSig Signature
+//therefore will use the default values of DSigOptions without using a XMLSchemma for validation 
+//and without selecting any particular element to sign. It will sign the hole document at once
+//More information about options and its defaults values: https://wiki.genexus.com/commwiki/servlet/wiki?43578,Optional+data
+//More information about the signer object: https://wiki.genexus.com/commwiki/servlet/wiki?43579,XML+DSig+Signer
+
+
+//--Signing---
+if not &amp;PrivateKey.HasError() and not &amp;Certificate.HasError()
+    &amp;pathXmlFileToSign = !&quot;C:\Temp\toSign.xml&quot; //-&gt;put your path here
+    &amp;pathXmlFileSigned = !&quot;C:\Temp\signedXML.xml&quot; //-&gt;put your path here
+    
+    &amp;XmlDSigSigner.DoSignFile(&amp;pathXmlFileToSign, &amp;PrivateKey, &amp;Certificate, &amp;pathXmlFileSigned, &amp;DSigOptions)
+    
+    if &amp;XmlDSigSigner.HasError()
+        msg(&quot;Error signing document. Code: &quot; + &amp;XmlDSigSigner.GetErrorCode() + &quot; Description: &quot; + &amp;XmlDSigSigner.GetErrorDescription(), status)
+    else
+        msg(&quot;Correctly signed&quot;, status)
+    endif
+endif
+
+//--Verifying--
+if not &amp;XmlDSigSigner.HasError()
+    &amp;verification = &amp;XmlDSigSigner.DoVerifyFile(&amp;pathXmlFileSigned, &amp;DSigOptions)
+    
+    if &amp;verification = true
+        msg(&quot;It verifies OK&quot; , status)
+    else
+        if &amp;XmlDSigSigner.HasError()
+            msg(&quot;Error verifying document. Code: &quot; + &amp;XmlDSigSigner.GetErrorCode() + &quot; Description: &quot; + &amp;XmlDSigSigner.GetErrorDescription(), status)
+        endif
+    endif
+endif
+
+</pre>
+
+<p>Download SampleXmlSignature</p>
+
+<p><br />
+</p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

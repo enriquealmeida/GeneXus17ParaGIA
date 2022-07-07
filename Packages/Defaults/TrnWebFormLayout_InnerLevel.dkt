@@ -1,0 +1,78 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template for Inner Levels" %>
+<%@ SubTemplate Name="WebFormInnerLevel" File="TrnWebFormLayout_InnerLevel.dkt" MergeProperties="True"  %>
+<%@ SubTemplate Name="WebFormLeafLevel" File="TrnWebFormLayout_LeafLevel.dkt" MergeProperties="True"  %>
+<%@ SubTemplate Name="WebFormOneAttribute" File="TrnWebFormLayout_OneAttribute.dkt" MergeProperties="True"  %>
+<%@ Property Name="TransactionLevel" Type="TransactionLevel" %>
+<%@ Property Name="Counters" Type="System.Collections.Generic.Dictionary<string,int>"%>
+<tr>
+	<td>
+		<%= WebForm.BeginTable("Table" + (Counters["TableCounter"]++).ToString(), "Container") %>
+<%
+	IDictionary<TransactionAttribute, Artech.Genexus.Common.Objects.Attribute> descAttNames;
+	IList<int> toExclude = DefaultFormHelper.CalculateExcluded(TransactionLevel, out descAttNames);
+	TransactionAttribute getButtonAtt = (TransactionLevel.Parent == null && TransactionLevel.PrimaryKey.Count != 0 ? TransactionLevel.PrimaryKey[TransactionLevel.PrimaryKey.Count - 1] : null);
+
+	foreach (IStructureItem structureItem in TransactionLevel.Items)
+	{
+		if (structureItem is TransactionAttribute)
+		{
+			TransactionAttribute trnAttribute = structureItem as TransactionAttribute;
+
+			if (DefaultFormHelper.CanIncludeAttributeInDefaultForm(toExclude, trnAttribute))
+			{
+				bool getButton = (trnAttribute == getButtonAtt);
+%>
+<%@ CallSubTemplate WebFormOneAttribute att='trnAttribute' Counters='Counters' getButton='getButton' descAttNames='descAttNames' %>
+<%
+			}
+		}
+		else if (structureItem is TransactionLevel)
+		{
+%>
+			<tr>
+				<td colspan="2">
+<%
+			TransactionLevel subLevel = structureItem as TransactionLevel;
+			bool hasMoreLevels = (subLevel.Levels.Count > 0);
+			if (hasMoreLevels)
+			{
+%>							
+					<br/>
+					<%= WebForm.BeginTable("Table" + (Counters["TableCounter"]++).ToString(), "Table95") %>
+                         <tr>
+                            <td class="SubTitle">
+							<%= WebForm.TextBlock("Title" + subLevel.Name, "", subLevel.Description) %>							
+							</td>
+                         </tr>
+                    <%= WebForm.EndTable() %>
+					<hr class="HRDefault" />
+					<gxFreeStyle border="1" freestyle="1" gxProp="ControlName=Grid<%= (Counters["GridCounter"]++).ToString() %>;class=FreeStyleGrid">
+<%@ CallSubTemplate WebFormInnerLevel TransactionLevel='subLevel' Counters='Counters' %>
+				    </gxFreeStyle>
+<%
+			}
+			else
+			{
+%>
+					<br/>
+					<%= WebForm.BeginTable("Table" + (Counters["TableCounter"]++).ToString(), "Table95") %>
+                         <tr>
+                            <td class="SubTitle">
+							<%= WebForm.TextBlock("Title" + subLevel.Name, "", subLevel.Description) %>							
+							</td>
+                         </tr>
+                    <%= WebForm.EndTable() %>
+                    <hr class="HRDefault" />
+<%@ CallSubTemplate WebFormLeafLevel TransactionLevel='subLevel' Counters='Counters' %>
+<%
+			}
+%>
+				</td>
+			</tr>
+<%
+		}
+	}
+%>
+      <%= WebForm.EndTable() %>
+	</td>
+</tr>

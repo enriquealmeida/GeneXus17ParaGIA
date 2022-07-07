@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Join Type and Join Location Specification</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19547,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Join Type and Join Location Specification</h1>
+<!--Join Type and Join Location Specification--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When there is a <a href="24744.html">For Each command</a> (or grid, etc.) that involves a join between several tables, GeneXus automatically determines the Join Type, that is to say, how this Join will be implemented between them (<a href='http://en.wikipedia.org/wiki/Join_%28SQL%29#Natural_join'>natural</a> or <a href='http://en.wikipedia.org/wiki/Join_%28SQL%29#Outer_joins'>outer</a>). In addition, it indicates if it can be solved in the database server or the application server (Join Location).</p>
+
+<h3><a id="Join+Type" class="HashLink" href="#Join+Type">Join Type</a></h3>
+
+<p>The type of join is set based on the <a href="7642.html">nullability of the attributes</a> that make up a Foreign Key. If the foreign key can be null, an outer (or left) join will be made; otherwise, a natural (or inner) join will be used.</p>
+
+<p>Navigation reports show the &quot;=&quot; symbol for natural joins and the &quot;&quot; symbol for outer joins (see examples below).</p>
+
+<h4><a id="Notes" class="HashLink" href="#Notes">Notes</a></h4>
+
+<ul>
+	<li>If the Join Location is solved in the application server, the Join Type will always be Outer.</li>
+	<li>For compatibility reasons, exists the <a href="https://wiki.genexus.com/commwiki/wiki?8984,," target="_blank">Join Type property</a>.</li>
+</ul>
+
+<h3><a id="Join+Location" class="HashLink" href="#Join+Location">Join Location</a></h3>
+
+<p>Joins involved in a For Each command (or grid, etc.) can be &quot;solved&quot; in the database server (DBMS) or in the client (Application Server) according to the logic of the generated object. This is what we see in the navigation report as <strong>Join Location: client | server</strong>.</p>
+
+<p>In general, it tries to solve it in the server for performance reasons but there are some exceptions, for instance:</p>
+
+<ul>
+	<li>When the tables that take part in the navigation belong to different Data Stores</li>
+	<li>When there is a For Each command that performs an update of an attribute that belongs to the extended table, the join is done on the client-side for all DBMS except SQLserver.</li>
+</ul>
+
+<p>In case multiple tables are joined, Join location will be server if at least two tables are joined in the database server.</p>
+
+<p>Example</p>
+
+<p>Considering the following Transactions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+City
+{
+    CityId*
+    CityName
+}</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+    CustomerId*
+    CustomerName
+    CityId  (Nullable = No)
+}</pre>
+
+<p>If we have a For Each that joins the two tables:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each CustomerName  CityName
+
+...
+
+Endfor</pre>
+
+<p>The detailed navigation will be as follows: </p>
+
+<p><span style="text-align: center;"><img src="./images/19549.png" id="19549" class="WikiImage"/></span></p>
+
+<p>Note the icon when reading the City table (natural join).</p>
+
+<p>If, instead, it has been set that a Client may not have an assigned city (the CityId foreign key in Customer has the Nullable property set to Yes), the join between the tables will be an outer join:</p>
+
+<p><span style="text-align: center;"><img src="./images/19550.png" id="19550" class="WikiImage"/></span></p>
+
+<p>As we can see, in both cases the join is performed in the server.</p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25418.html">Base Transaction clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/30/21 07:54 PM</em></font></td></TR></table></font>

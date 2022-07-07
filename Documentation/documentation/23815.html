@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Looking for offline database files</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?23815,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Looking for offline database files</h1>
+<!--HowTo: Looking for offline database files--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Getting your devices offline database files will help you significantly on testing and debugging the synchronization processes of your application.<br />
+In this document is explained how to take access to this files wheter using <a href="14917.html">iOS</a> or <a href="14453.html">Android</a> platform, and even if you are using real devices or simulators.</p>
+
+<h3><a id="Using+iOS+Simulator%3A" class="HashLink" href="#Using+iOS+Simulator%3A">Using iOS Simulator:</a></h3>
+
+<p>Every time you run a new application in the iOS emulator it is going to be created a new folder with a random name in<em> /Users/&lt;your_user&gt;/Library/Application Support/iPhone Simulator/&lt;iOS target version&gt;/Applications/</em><br />
+Next step is to find the folder that contains the application we have recently run:</p>
+
+<p><img src="./images/23820.png" id="23820" class="WikiImage"/></p>
+
+<p><strong>Tip: </strong>It could be useful to order folders by Date Modified.<br />
+<strong>Tip: </strong>As from Mac OSX Lion, Library folder is hidden by default, anyway, it is possible to access that folder by using the &quot;Go to folder...&quot; action in the &quot;Go&quot; menu of Finder application. </p>
+
+<p> Once you have found that folder, in the <em>Documents </em>folder you will find the <em>.sqlite</em> file you were looking for. It is named as <em>&lt;AppName&gt;.sqlite</em>, where <em>&lt;AppName&gt;</em> is the name of the main object associated with the offline database. If needed, the <em>&lt;AppName&gt;_hashes.json</em> file is in the same folder.</p>
+
+<p><img src="./images/23821.png" id="23821" class="WikiImage"/></p>
+
+<h3><a id="Using+iOS+Devices%3A" class="HashLink" href="#Using+iOS+Devices%3A">Using iOS Devices:</a></h3>
+
+<p>If you are using your iOS device to test your application, once you have run the application in Xcode, open the Organizer by going to Window/Organizer ( Or press Command+Shift+O )</p>
+
+<p>Find your application selecting the Applications section under your device in the left panel.<br />
+Once you have found the application, you can download its content as a Xcode Application Data Package file (.xcappdata)</p>
+
+<p><img src="./images/23822.png" id="23822" class="WikiImage"/></p>
+
+<p>To open that package just right-click on it and select <em>“Show package content”</em>.<br />
+After that, a Finder folder will pop up, and finally if you go to the <em>Documents</em> folder you will find the <em>&lt;AppName&gt;.sqlite</em> file you are looking for:</p>
+
+<p><img src="./images/23823.png" id="23823" class="WikiImage"/></p>
+
+<p>If needed, the <em>&lt;AppName&gt;_hashes.json</em> file is in the same folder.</p>
+
+<h3><a id="Using+Android+Virtual+Devices%3A" class="HashLink" href="#Using+Android+Virtual+Devices%3A">Using Android Virtual Devices:</a></h3>
+
+<p>As said in the <a href="23816.html">HowTo: Storing Android offline database files in the device card</a>  document, we can decide whether to choose local storage, or choose the external storage (sdcard) to place the offline database files.</p>
+
+<p>If local storage is selected, then the offline database files will be stored in the AVD at the following directory: <em>/data/data/&lt;Android Package Name&gt;/files/db/</em><br />
+Otherwise it is going to be stored in the following directory:<em> &lt;External Storage&gt;/Android/data/&lt;Android Package Name&gt;/files/db/</em><br />
+Where the <em>&lt;Android Package Name&gt;</em> is the value of the Main object <a href="17814.html">Android Package Name property</a> and <em>&lt;External Storage&gt;</em> is the path to the device external storage disk (it may vary on different devices), for example: &quot;<em style="line-height: 20.8px;">/storage/sdcard/&quot;, &quot;</em>/mnt/shell/emulated/sdcard/&quot;, among others.</p>
+
+<p>Finally we need to know the name of the offline database files, and this files are named like: <em>&lt;appName&gt;.sqlite</em> where <em>&lt;appName&gt;</em> is the name <strong>in lower case</strong> of the Main offline object. If needed, the <em>&lt;AppName&gt;_hashes.json</em> file is in the same folder.</p>
+
+<h4><a id="Summarizing%3A" class="HashLink" href="#Summarizing%3A">Summarizing:</a></h4>
+
+<ul>
+	<li>If using local storage, the full path will be:<em> /data/data/&lt;Android Package Name&gt;/files/db/&lt;appName&gt;.sqlite</em></li>
+	<li>Otherwise,  the full path will be: &lt;External Storage&gt;<em>/Android/data/&lt;Android Package Name&gt;/files/db/&lt;appName&gt;.sqlite</em></li>
+</ul>
+
+<p>Now that we have the full path of the file, we can get that file using the <em>adb push</em> command.</p>
+
+<p>We open the cmd console and navigate towards <em>&lt;AndroidSDKDirectory&gt;/platform-tools</em><br />
+After that, execute the following command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+adb pull &lt;fullDatabaseFilePath&gt; &lt;localPath&gt;</pre>
+
+<p>Where <em>&lt;localPath&gt;</em> is the destination where we want the <em>.sqlite</em> file to be placed in your computer.</p>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+adb pull /data/data/com.artech.abcoffline.abcoffinetest/files/db/abcoffinetest.sqlite C:/temp/MyOfflineDatabaseFiles
+adb pull /data/data/com.artech.abcoffline.abcoffinetest/files/db/abcoffinetest_hashes.json C:/temp/MyOfflineDatabaseFiles</pre>
+
+<h3><a id="Using+Android+Devices%3A" class="HashLink" href="#Using+Android+Devices%3A">Using Android Devices:</a></h3>
+
+<p>If offline database files are going to be stored in the SD card, as explained in the <a href="23816.html">HowTo: Storing Android offline database files in the device card</a> document, once you plug as a store device your Android device, go to the following path in the sdcard device: <em>&lt;sdcard path&gt;\Android\data\&lt;Android Package Name&gt;\files\db</em></p>
+
+<p>Where the <em>&lt;Android Package Name&gt;</em> is the value of the Main object <a href="17814.html">Android Package Name property</a>.<br />
+The <em>&lt;appName&gt;.sqlite</em> file will be placed in that folder.</p>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Computer\GT-P5110\Tablet\Android\data\com.artech.abcoffline.abcoffinetest\files\db\abcoffinetest.sqlite
+Computer\GT-P5110\Tablet\Android\data\com.artech.abcoffline.abcoffinetest\files\db\abcoffinetest_hashes.json</pre>
+
+<h4><a id="Android+Considerations" class="HashLink" href="#Android+Considerations">Android Considerations</a></h4>
+
+<p>All images referenced by the offline database are visible even if the device is offline, and you can find those images in the <em>files\blobs</em> folders.</p>
+
+<h3><a id="How+to+open+the+SQLite+DB%3F" class="HashLink" href="#How+to+open+the+SQLite+DB%3F">How to open the SQLite DB?</a></h3>
+
+<p>Once you copy the SQLite file to your PC you can use any Application to open it like <a href='http://www.yunqa.de/delphi/doku.php/products/sqlitespy/index'>SQLSpy</a> </p>
+
+<p> </p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="22298.html">HowTo: Create offline mobile applications with a preloaded database</a></li>
+	<li><a href="23816.html">HowTo: Storing Android offline database files in the device card</a></li>
+	<li><a href="22509.html">Offline Database object</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22298.html">HowTo: Create offline mobile applications with a preloaded database</a></TD><TD><a href="23816.html">HowTo: Storing Android offline database files in the device card</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

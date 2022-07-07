@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Design System Tokens (GeneXus 17 Upgrade 9)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50939,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Design System Tokens (GeneXus 17 Upgrade 9)</h1>
+<!--Design System Tokens (GeneXus 17 Upgrade 9)--><div class="TableWikiBody" id="tblwikibody"><p>A Token is the most basic element of a <a href="40108.html">Design System</a> that allows you to capture an option for visual or interaction design. A Token allows you to model a platform-agnostic choice of color, typography, spacing, time, media, zindex, border, opacity, or size.</p>
+
+<p>In this way, you can give options for low-level values of your digital product. </p>
+
+<p>Having a Token set for your Design System will allow your product to be more maintainable and consistent in terms of design.</p>
+
+<h3><a id="How+to+define+tokens+in+GeneXus%3F" class="HashLink" href="#How+to+define+tokens+in+GeneXus%3F">How to define tokens in GeneXus?</a></h3>
+
+<p>GeneXus incorporates the possibility of defining token sets for a Design System, in a <a href="47375.html">Design System Object</a><b> </b></p>
+
+<p>The language is declarative and allows to define Tokens in different groups or categories.</p>
+
+<p>GeneXus provides a textual and a visual representation for the tokens.</p>
+
+<p>The textual representation provides an easy way to edit/share/compare and on the other side, the visual representation allows to understand visually the details of the options given by the tokens.</p>
+
+<p>Both editors are synchronized: what is done in one has an immediate impact on the other.</p>
+
+<p><img src="./images/49366.gif" id="49366" class="WikiImage"/></p>
+
+<h3><a id="Textual+Editor%3A+Tokens+Language" class="HashLink" href="#Textual+Editor%3A+Tokens+Language">Textual Editor: Tokens Language</a></h3>
+
+<p>Setting Tokens to specific values is the core function of the Design System Tokens language.</p>
+
+<p>A Token is defined by two required elements (Name and Value). </p>
+
+<p>The syntax for the Token Name follows the same rules as CSS properties names. There are different values allowed and each Token Group defines which are the valid values.</p>
+
+<p>Each Token is defined within the larger structure that is the set of tokens, and always within a group:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>tokens</strong> <em>TokensSetName </em>[<strong>(</strong> <em>option<sub>1</sub> </em>[<strong>,</strong><em> option</em><sub>2</sub>]...<strong>)</strong>]
+
+‘<strong>{</strong>’
+      [<em>option_condition</em>
+
+      ‘<strong>{</strong>’]
+             [<strong>#</strong><em>token_group</em>
+            ‘<strong>{</strong>’
+                     [<em>token_name</em><strong>:</strong> { <em>value</em>[ <em>unit </em>]<strong>;</strong> | <em>valuewithData</em><strong>; </strong>| <em>token_reference</em><strong>;</strong> } ] ...
+            ‘<strong>}</strong>’]…
+
+      [‘<strong>}</strong>’]
+
+‘<strong>}</strong>’</pre>
+
+<p style="text-align: right;"><a href="49363.html">View Syntax conventions</a>.</p>
+
+<p>Where:</p>
+
+<p><em>TokensSetName: </em>Name given by the developer to the set of token declarations it contains. Currently, only one set of token declarations can be defined in a DSO, but more may be available in the future.</p>
+
+<p><em>option<sub>i</sub></em>: (Optional) Parameter called &quot;option&quot; and its possible values, according to which the definition of some or all of the tokens can be varied.</p>
+
+<p><em>option_condition:</em> (Optional) If this condition is met, the definitions of the tokens it contains will be applicable. The condition refers to the parameters (options). </p>
+
+<p><em>token_group:</em> Name of valid token group. The set of possible groups or types of tokens is predefined:<br />
+<strong>colors</strong> | <strong>radius</strong> | <strong>spacing</strong> | <strong>borders</strong> | <strong>shadows</strong> | <strong>fontSizes</strong> | <strong>fonts</strong> | <strong>opacity</strong> | <strong>zindex</strong> | <strong>mediaqueries</strong> | <strong>times</strong> | <strong>timingfunction</strong><br />
+For exceptional cases, the <strong>custom</strong> group can be used, within which tokens of any type can be defined. It should be used with caution, as the value of a token in this group must match in type with the properties of the classes in which it is used.</p>
+
+<p><em>token_name:</em> Name of the token that the developer is defining. It is recommended that it have a strong semantic load. It is case insensitive.</p>
+
+<p><em>value:</em> Value that the token will take if the <em>option_condition</em> is met. It is case insensitive. The value depends on the group. For example, if it is &quot;colors,&quot; the value will be hexadecimal or will have RGBA format, or will have the name of a color recognizable by CSS or a Native platform, such as &quot;red,&quot; &quot;blue,&quot; etc. If it is &quot;<strong>mediaQueries</strong>&quot; it will be a specific boolean condition: that of the <a href="49344.html">@media rule</a>.</p>
+
+<p><em>unit:</em> Valid unit of measurement according to the <em>token_group</em> (for &quot;spacing&quot; it could be <strong>px, dip, em, %</strong>). </p>
+
+<p><em>valueWithData:</em> Value that the token will take if the <em>option_condition</em> is met and with additional information, such as a description, provided to give more semantics to the definition. It has the format of a JSON Object that only supports the value, description, and info keys at the first level. The info is a JSON object that supports any kind of structure.</p>
+
+<p><em>token_reference</em>: Reference to a token whose value is taken as de value of the token that is being defined. As explained above, the syntax to reference a token is: <strong>$</strong><em>token_group</em><strong>.</strong><em>token_name.</em></p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Tokens MyTokensSet
+{
+       #colors
+       {
+              OnSurface: #191819;
+              Surface:{
+                           value: #FFFFFF;
+                           description: “Represents the background color of the pages”; 
+                           Info: 
+                           {
+                                 Version: 1,0
+                           }
+                       };
+               Highlight: rgba(216, 40, 34, 1);
+               Primary: $colors.OnSurface;
+        }
+
+        #fontSizes
+        {
+                H1: 95px;
+                H2: 60px;
+                Body-regular: 16dip;
+         }
+    
+        #fonts
+        {
+               Title1: AbhayaLibre-Bold;
+               Subtitle: Graphik-Semibold;
+               Body-regular: Arial;
+        }
+
+        #mediaQueries
+        {
+               Xs: screen and (max-widht: 767px);
+               S: screen and (min-width: 768px) and (max-width: 991px);
+               M: screen and (min-width: 992px) and (max-width: 1199px);
+               L: screen and (min-width: 1200px);
+        }
+
+        #custom
+        {
+              Linear_Gradient_Background: linear-gradient(90deg, #000000 0%, #00FF007E 50%, #D7D7D700 100%);
+              MobileTransformation: translateX(50px) rotate(45deg);
+        }
+}
+</pre>
+
+<p>If the Design System Object is to be used for a native platform, an automatic conversion from px to dip will be made for the Token units.</p>
+
+<p>The #custom group allows to add more complex values for tokens. The tokens of this group are later referenced in the classes just like any other (ie: $custom.Linear_Gradient_Background).</p>
+
+<p>For information on parameter usage, see <a href="49381.html">Design System Tokens Options</a>.</p>
+
+<h3><a id="Characteristics" class="HashLink" href="#Characteristics">Characteristics</a></h3>
+
+<p>Token groups (or Token types) allow giving a clear meaning to the kind of tokens being created.</p>
+
+<p>Readers can clearly understand the context in which these Tokens can be used. In addition, tools provide different ways to edit or show these Tokens. For example, tokens within the &quot;times&quot; group will represent time constants, to be used, for example, for the length of animations.</p>
+
+<p>For this reason, a Token is not referenced only by its name; it also requires you to indicate which Token group it belongs to. For this reason, the same Token name can be repeated in different Token groups, and it is understood they are different Tokens. In the above example, note that there are two Tokens with the name Body-regular. One is from the fontSizes group, and the other from the fonts group. </p>
+
+<p>If a Token appears more than once with the same group (and for the same condition), the last value in the file is the one considered. </p>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Tokens MyDesignSystemTokens
+{
+       #colors
+       {
+              Primary: green;
+              Secondary: #D82822;
+              Primary: #43624B;
+        }
+}
+</pre>
+
+<p>The value to be taken by the Token named Primary will be #43624B.</p>
+
+<h3><a id="Where+are+Tokens+used%3F" class="HashLink" href="#Where+are+Tokens+used%3F">Where are Tokens used?</a></h3>
+
+<p>Tokens are used in <a href="47379.html">Design System Styles</a>, as &quot;values&quot; of <a href="49323.html">class properties</a>, and for some rules.</p>
+
+<p>The reference syntax is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>$</strong><em>token_group</em><strong>.</strong><em>token_name</em></pre>
+
+<p>By referencing Tokens instead of their values in class properties, a higher level of abstraction is achieved. Then, if the value of a Token needs to be changed, the change is made in a single place and will automatically impact all the classes that are using it.</p>
+
+<h3><a id="Import+Tokens" class="HashLink" href="#Import+Tokens">Import Tokens</a></h3>
+
+<p>A set of Tokens can be imported into another Design System Object by using the <a href="49346.html">Import rule</a> in the Styles section, specifying that only the Tokens are to be imported.  </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+@import OtherDesignSystem.tokens;   
+</pre>
+
+<h3><a id="Imported+Tokens+and+precedence" class="HashLink" href="#Imported+Tokens+and+precedence">Imported Tokens and precedence</a></h3>
+
+<p>If from a DSO B another DSO A (or only its Tokens) are imported, the Tokens of the imported DSO A are available to be used in the classes of DSO B.</p>
+
+<p>In case of overlap: if a Token is defined in DSO A and also in DSO B, the Token defined in the importing DSO —that is, DSO B— will apply. </p>
+
+<p>If a class or rule coming from DSO A uses a Token defined there, and the value of the Token is modified in DSO B, the modified value will be taken at runtime with no need to rewrite either the class or the property that uses it. </p>
+
+<h3><a id="What+do+Tokens+mean+for+Web+Development%3F" class="HashLink" href="#What+do+Tokens+mean+for+Web+Development%3F">What do Tokens mean for Web Development?</a></h3>
+
+<p>When the generation target is Web, GeneXus generates CSS Custom Properties for each of the defined Tokens.</p>
+
+<p>When performing this conversion, the Tokens lose the semantics of their category (group); therefore, a conversion from CSS Custom Properties to Tokens is not possible.</p>
+
+<h3><a id="What+is+the+relationship+with+Palette+Colors%3F" class="HashLink" href="#What+is+the+relationship+with+Palette+Colors%3F">What is the relationship with Palette Colors?</a></h3>
+
+<p>Actually, a <a href="31262.html">Color Palette object</a> is just a Token Set with only color Tokens. A Token set is a superset of a Color Palette Color.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<p><br />
+</p>
+
+<p></p>
+   <br /></div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/27/22 02:43 PM</em></font></td></TR></table></font>

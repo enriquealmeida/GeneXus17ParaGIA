@@ -1,0 +1,7 @@
+        DCL             &CMD2           *CHAR   LEN(512)
+        DCL             &PMTCMD         *CHAR   LEN(512)
+        DCL             &MSGCMD         *CHAR   LEN(512)
+        DCL             &CMDSTACK       *CHAR   LEN(400)
+        DCL             &LONGCMD        *CHAR   LEN(001)
+        DCL             &SX             *DEC    LEN(5 0)
+        DCL             &CMDLLEN        *DEC    LEN(5 0)

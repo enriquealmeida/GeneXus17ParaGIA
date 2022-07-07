@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Blocking Data Updates</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5572,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Blocking Data Updates</h1>
+<!--Category:Blocking Data Updates--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><div style="display: none;"> </div>
+
+<div style="display: none;"> </div>
+
+<div style="display: none;"> </div>
+
+<p>When throughput is an issue and you need to <strong>update</strong>, <strong>insert</strong> or <strong>delete</strong> a large number of records, reducing the number of roundtrips to the DBMS may be the answer.<br />
+<br />
+Blocking database update operations (generic for insert/update/delete) entails storing them in memory and sending them in groups to the DBMS. Instead of interacting with the DBMS on every database update operation, interaction takes place only every N update operations, where N is a number specified by you.</p>
+
+<p>Say, for example, that you have to print all the invoices that have not yet been printed, and that the InvoicePrintedFlag is used to store printing status. The corresponding code should look something like the one shown below. This code reads matching records and updates them one at a time. Every time the EndFor is reached (one iteration) a record is sent to the DBMS to be updated.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+     where InvoicePrintedFlag = 'N'
+       PrintInvoice.Call( InvoiceNumber )
+       InvoicePrinterFlag = 'Y'
+EndFor</pre>
+
+<p>Adding the <strong>Blocking clause</strong>, like in the code below, reduces the number of roundtrips to the server. In this case, a set of database updates are sent to the DBMS only every 100 times the EndFor is reached. This is usually faster than the previous code.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+     where InvoicePrintedFlag = 'N'
+     <strong>Blocking 100</strong>
+         PrintInvoice.Call(InvoiceNumber )
+         InvoicePrinterFlag = 'Y'
+EndFor</pre>
+
+<p>The same happens when inserting a large number of records in a repetitive code such as the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;i = 1 to &amp;j
+       ...
+       New Blocking 100
+             Att1 = ...
+             Att2 = ...
+       EndNew
+EndFor</pre>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p>This clause is not supported by the following platforms:  </p>
+
+<ul>
+	<li>Java - Db2 udb</li>
+	<li>Net - MySql</li>
+	<li>Net - Informix</li>
+	<li>Net - Postgresql</li>
+	<li>NetCore - Postgresql</li>
+</ul>
+
+<p></p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Pages</b></TD></TR><TR><TD><a href="5573.html">Block Insert Performance</a></TD><TD><a href="4538.html">Blocking Clause in 'New' Command</a></TD><TD><a href="4837.html">Blocking clause in a 'For each' command</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/25/20 01:42 PM</em></font></td></TR></table></font>

@@ -1,0 +1,73 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Web Form Layout" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="System.Diagnostics" %>
+<%@ Import Namespace="System.Drawing" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+<%@ SubTemplate Name="WinFormLayout" File="PromptWinFormLayout.dkt" %>
+<%
+	Artech.Genexus.Common.Helpers.TemplateHelper helper;
+	WorkPanel workPanel = Object as WorkPanel;
+	if (workPanel == null)
+		throw new ArgumentNullException("Object");
+%>
+
+<Part type="<%= PartType.WinForm.ToString() %>">
+	<Document>
+	<%-- Windows Form --%>
+	<%	helper = new Artech.Genexus.Common.Helpers.TemplateHelper(); %>
+		<Form>
+			<Type>Windows</Type>
+			<SizeUnit>px</SizeUnit>
+			<Canvas>
+				<Elements>
+<%@ CallSubTemplate WinFormLayout Model="Model" Definition="Definition" helper="helper" GenerateButtons="true" %>
+				</Elements>
+				<%= WinForm.FormProperties(new Size(helper.CurrentPoint.X, helper.CurrentPoint.Y), Definition.Info.Name, null) %>
+			</Canvas>
+		</Form>
+	<%-- Mobile Form --%>
+	<%	helper = new Artech.Genexus.Common.Helpers.TemplateHelper();
+		helper.UISettings.ChangeConstantsForMobile(); %>
+		<Form>
+			<Type>Mobile</Type>
+			<SizeUnit>px</SizeUnit>
+			<Canvas>
+				<Elements>
+<%@ CallSubTemplate WinFormLayout Model="Model" Definition="Definition" helper="helper" GenerateButtons="true" %>
+				</Elements>
+				<%= WinForm.FormProperties(new Size(helper.CurrentPoint.X, helper.CurrentPoint.Y), Definition.Info.Name, null) %>
+			</Canvas>
+		</Form>
+	<%-- Text Form --%>
+<%		helper = new Artech.Genexus.Common.Helpers.TemplateHelper();
+		helper.UISettings.ChangeConstantsForText(); %>
+		<Form>
+			<Type>Text</Type>
+			<SizeUnit>ch</SizeUnit>
+			<Canvas>
+				<Elements>
+					<% helper.CurrentPoint.X = 1; %>
+					<% Artech.Genexus.Common.Variable pgmdescVar = workPanel.Variables.GetVariable("Pgmdesc"); %>
+					<%= WinForm.Variable(pgmdescVar.Name, null, helper.CurrentPoint) %>
+<%@ CallSubTemplate WinFormLayout Model="Model" Definition="Definition" helper="helper" GenerateButtons="false" %>
+				</Elements>
+				<%= WinForm.FormProperties(new Size(helper.CurrentPoint.X, helper.CurrentPoint.Y), Definition.Info.Name, null) %>
+			</Canvas>
+		</Form>
+	</Document>
+</Part>

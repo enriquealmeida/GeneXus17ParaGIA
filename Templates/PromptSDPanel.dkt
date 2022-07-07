@@ -1,0 +1,107 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Web Form" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Include Name="PromptSDScripts.cs"%>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="System.Diagnostics" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+
+<%@ Property Name="Variables" Type="System.String" %>
+<%@ Property Name="Events" Type="System.String" %>
+<%@ Property Name="Rules" Type="System.String" %>
+<%@ Property Name="Conditions" Type="System.String" %>
+
+<Part type="<%= PartType.SDPanel %>">
+	<PatternPart type="a51ced48-7bee-0001-ab12-04e9e32123d1">
+		<Data Pattern="<%= ObjClass.WorkWithDevices %>" Version="0.16.5"><![CDATA[<?xml version="1.0" encoding="utf-16"?>
+<instance>
+  <notifications />
+  <level id="<%= Guid.NewGuid() %>" name="Level">
+    <detail variables="<%= EscapeXml(Variables) %>" events="<%= EscapeXml(Events) %>" rules="<%= EscapeXml(Rules) %>">
+      <layout id="<%= Guid.NewGuid() %>" Type="View">
+        <table id="<%= Guid.NewGuid() %>" controlName="MainTable">
+          <row id="<%= Guid.NewGuid() %>">
+            <cell id="<%= Guid.NewGuid() %>">
+              <grid id="<%= Guid.NewGuid() %>" controlName="Grid1" defaultAction="'<%= SELECTION_EVENT %>'">
+                <table id="<%= Guid.NewGuid() %>" controlName="Grid1Table">
+                  <row id="<%= Guid.NewGuid() %>">
+<%
+	for (int i = 0; i < Definition.SubFile.Length; i++)
+	{
+		Artech.Genexus.Common.Objects.Attribute att = GetAttribute(Definition.SubFile[i]);
+%>
+		
+                    <cell id="<%= Guid.NewGuid() %>">
+                      <data attribute="<%= att.Name %>" labelPosition="None" />
+                    </cell>
+<%
+	}
+%>
+                  </row>
+                </table>
+              </grid>
+            </cell>
+          </row>
+        </table>
+      </layout>
+      <gridData name="Grid1" conditions="<%= EscapeXml(Conditions) %>">
+        <orders>
+<%
+	if (Definition.Order.Length > 0)
+	{
+%>
+          <order name="Default">
+            <%= GetSDAttributeElements("attribute", Definition.Order) %>
+          </order>
+<%
+	}
+%>
+        </orders>
+        <search>
+<%
+	List<PromptAttribute> advancedFilterAttributes = new List<PromptAttribute>();
+	foreach (PromptAttribute fixedAtt in Definition.Fixed)
+	{
+		if (fixedAtt.FixType == "c")
+		{
+			if (FilterAttributeIsSearch(fixedAtt.AttriId))
+			{
+%>
+          <%= GetSDAttributeElement("attribute", fixedAtt.AttriId) %>
+<%
+			}
+			else
+				advancedFilterAttributes.Add(fixedAtt);
+		}
+	}
+%>
+        </search>
+        <advanced>
+<%
+	foreach (PromptAttribute fixedAtt in advancedFilterAttributes)
+	{
+%>
+          <%= GetSDAttributeElement("filterAttribute", fixedAtt.AttriId) %>
+<%
+	}
+%>
+        </advanced>
+      </gridData>
+    </detail>
+  </level>
+</instance>]]>
+		</Data>
+	</PatternPart>
+</Part>

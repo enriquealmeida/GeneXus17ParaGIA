@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM: Use the current repository as the authentication master repository</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46228,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM: Use the current repository as the authentication master repository</h1>
+<!--GAM: Use the current repository as the authentication master repository--><div class="TableWikiBody" id="tblwikibody"><p>This property indicates that the current repository will be used as the centralized authentication location; that is, any repository created with this property enabled must authenticate against the master repository. </p>
+
+<p>This property only works for web apps.</p>
+
+<p>Sample code to create a repository with this property:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &amp;GUID = GUID.NewGuid().ToString()
+    &amp;RepositoryCreate.GUID                      = &amp;GUID 
+    &amp;RepositoryCreate.Name                      = &amp;RepName 
+    &amp;RepositoryCreate.NameSpace                 = &amp;NameSpace 
+    &amp;RepositoryCreate.Description               = &amp;Description 
+    &amp;RepositoryCreate.AdministratorUserName     = &amp;AdministratorUserName 
+    &amp;RepositoryCreate.AdministratorUserPassword = &amp;AdministratorUserPassword 
+    &amp;RepositoryCreate.AllowOauthAccess          = &amp;AllowOauthAccess
+    &amp;RepositoryCreate.ConnectionUserName        = &amp;ConnectionUserName 
+    &amp;RepositoryCreate.ConnectionUserPassword    = &amp;ConnectionUserPassword 
+    &amp;RepositoryCreate.GenerateSessionStatistics = &amp;GenerateSessionStatistics
+    &amp;RepositoryCreate.GiveAnonymousSession      = True 
+    &amp;RepositoryCreate.AllowOauthAccess          = True
+                    
+    If &amp;UseCurrentRepositorAsMasterAuthentication
+        &amp;GAMRepository = GAMRepository.Get()
+        RepositoryCreate.AuthenticationMasterRepositoryId    = &amp;GAMRepository.Id
+        &amp;RepositoryCreate.AuthenticationMasterAuthTypeName    = &amp;AuthenticationMasterAuthTypeName
+    Endif
+    &amp;isOK = GeneXusSecurity.GAM.CreateRepository(&amp;RepositoryCreate, &amp;UpdateConnectionFile, &amp;Errors)
+</pre>
+
+<p><br />
+Once the new repository is created, the authenticated user must select the repository to work with, using the following method:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &amp;OK= GeneXusSecurity.GAM.SetConnection(&amp;RepName, &amp;Errors)</pre>
+
+<p>When using this method, the user’s context changes, taking the Roles and Permissions of the user in the selected repository.<br />
+If users try to access a repository to which they don't have access, they will lose authentication (they will be logged out).</p>
+
+<p>From the GAM backend it can be created as follows:</p>
+
+<p><img src="./images/48614.png" id="48614" class="WikiImage"/></p>
+
+<h2><a id="How+to+give+a+user+access+to+the+new+repository" class="HashLink" href="#How+to+give+a+user+access+to+the+new+repository">How to give a user access to the new repository</a></h2>
+
+<p>There are 3 ways to add a user to a repository:</p>
+
+<ol>
+	<li>From the GAMManager repository:<br />
+	<br />
+	<span style="font-family: courier new;">GAM.RepositoryUserEnable(&amp;RepositoryId, &amp;GAMUser, &amp;GAMErrorCollection) : boolean</span><br />
+	 </li>
+	<li>From the master authentication repository, if it is a GAMManager Repository<br />
+	(<span style="font-family: courier new;">&amp;Repository.EnableWorkingAsGAMManagerRepository = True</span>):<br />
+	<br />
+	<span style="font-family: courier new;">GAM.RepositoryUserEnable(&amp;RepositoryId, &amp;GAMUser, &amp;GAMErrorCollection) : Boolean</span><br />
+	 </li>
+	<li>From the new repository, using this method:<br />
+	<br />
+	<span style="font-family: courier new;">&amp;GAMUser.RepositoryEnable(&amp;GAMErrorCollection): Boolean</span></li>
+</ol>
+
+<p>     </p>
+
+<p>To remove access to a user, it is similar to the following methods:<br />
+<br />
+<span style="font-family: courier new;">GAM.RepositoryUserDisable(&amp;RepositoryId, &amp;GAMUser, &amp;GAMErrorCollection) : Boolean</span><br />
+<br />
+<span style="font-family: courier new;">&amp;GAMUser.RepositoryDisable(&amp;GAMErrorCollection): Boolean</span></p>
+
+<h2><a id="Use+case" class="HashLink" href="#Use+case">Use case</a></h2>
+
+<p>One of the most common use cases is the need to have all users centralized, where their roles vary depending on the repository where they are located.<br />
+The use of this property is not supported for a system operating as an Identity Provider (IDP), but can be used by IDP Clients.</p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>A common example is a company with several branches, where each user can have different roles in each branch.<br />
+An analogy can be made indicating that the master repository is the company's head office, or this master repository can be used only as an authentication hub and the only thing that can be done is to select the branch to work in. Each branch would be one of the different repositories that are children of the Master.<br />
+Each branch will have different users enabled, and will not give access to other users; those who have access will be able to specify which Roles they have per branch.</p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18642.html">HowTo: Creating New Repositories</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/23/21 01:22 PM</em></font></td></TR></table></font>

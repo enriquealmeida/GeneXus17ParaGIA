@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: LDAP Authentication using GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?29474,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: LDAP Authentication using GAM</h1>
+<!--HowTo: LDAP Authentication using GAM--><div class="TableWikiBody" id="tblwikibody"><p>When you need your application to use <a href='https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol'>LDAP</a> authentication, and you also need the advantages of <a href="24746.html">GeneXus Access Manager (GAM)</a>, you can use an external program or web service to make a bridge between the GAM application and your LDAP.</p>
+
+<p>LDAP offers so many options in terms of vendors and solutions, there isn't an "LDAP GAM Authentication Type", because there should be one for each implementation. Anyway, you can authenticate using your LDAP as a third party authenticator or identity provider, while GAM is enabled in your KB.</p>
+
+<p>Here you will find how to configure GAM to authenticate using LDAP.</p>
+
+<p>The solution consists of using any of these authentication types:</p>
+
+<ul>
+	<li><a href="16512.html">GAM - External Web Services Authentication Type</a></li>
+	<li><a href="21751.html">GAM - Custom Authentication Type</a></li>
+</ul>
+
+<p>When any of these types of authentication is used, GeneXus Access Manager is not the owner of the user credentials; only the user name and other information that depends on the external program output will be stored in GAM Repository. Information on roles can also be incorporated in GAM Repository if the external program returns this information.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>The following is an example where an <a href='https://en.wikipedia.org/wiki/Active_Directory'>Active Directory</a> it is used, works as an identity provider to authenticate the users of the application. The <a href="21751.html">Custom Authentication Type</a> was chosen to implement the solution.</p>
+
+<p>Using GAM Custom Authentication Type, GAM delegates the authentication to an external program (which can be developed using GeneXus). In this example, the external program will make the communication to LDAP.</p>
+
+<p>Remember that in most cases, sending some additional parameters to the external program is necessary (besides the obvious ones such as username and password). In addition, the external program that communicates with LDAP will return additional data, not only the basic data of the user. That's the reason why need to use <a href="https://wiki.genexus.com/commwiki/wiki?21555,," target="_blank">GAM - External Authentication: version 2.0</a>.</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  This is an example, each LDAP can be different and the code to login and get data from it shall be different.</div>
+</p>
+
+<h3><a id="1.+Configure+the+Custom+Authentication+Type" class="HashLink" href="#1.+Configure+the+Custom+Authentication+Type">1. Configure the Custom Authentication Type</a></h3>
+
+<p>Following the steps explained in <a href="21751.html">GAM - Custom Authentication Type</a>, configure the external program that is going to communicate with LDAP.</p>
+
+<p>In the example, the authentication is delegated to an external program called "gamwsloginLDAP".</p>
+
+<p><img src="./images/29482.png" id="29482" class="WikiImage"/></p>
+
+<h3><a id="2.+Implementing+the+external+program+%22gamwsloginLDAP%22" class="HashLink" href="#2.+Implementing+the+external+program+%22gamwsloginLDAP%22">2. Implementing the external program "gamwsloginLDAP"</a></h3>
+
+<p>The data types used in this program are explained in <a href="https://wiki.genexus.com/commwiki/wiki?21555,," target="_blank">External Authentication: version 2.0</a>, and are basically: GAMWSLoginInSDT Type and GAMWSLoginOutSDT data type.<br />
+The parameters are sent to the program as strings in JSON format (although the structure is based on the SDTs mentioned above).</p>
+
+<h5><img src="./images/29479.png" id="29479" class="WikiImage"/><br />
+#1 In parameters</h5>
+
+<h5><img src="./images/29480.png" id="29480" class="WikiImage"/><br />
+#2 Out parameters</h5>
+
+<h3><a id="Definition+of+variables+for+the+external+program+%22gamwsloginLDAP%22" class="HashLink" href="#Definition+of+variables+for+the+external+program+%22gamwsloginLDAP%22">Definition of variables for the external program "gamwsloginLDAP"</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Variable name</strong></td>
+			<td><strong>Data Type</strong></td>
+		</tr>
+		<tr>
+			<td>GAMWSLoginIn</td>
+			<td>GAMWSLoginInSDT</td>
+		</tr>
+		<tr>
+			<td>GAMWSLoginOut </td>
+			<td>GAMWSLoginOutSDT</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+As explained before, when the Authentication Type is custom, the parameters have to be strings (in JSON format following the structure of the GAMWSLoginInSDT Type and GAMWSLoginOutSDT data type).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:&amp;StrInput, out:&amp;StrOutput);</pre>
+
+<p>The Procedure that makes the communication to LDAP - "gamwsloginLDAP"- looks as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+//Private key to decrypt parametrers
+&amp;Key = 'DCA3132624CF204E0399DF5011AC91D2'
+
+//////Get the &amp;GAMWSLoginIn data fron the input///////////
+
+&amp;GAMWSLoginIn.FromJson(&amp;StrInput)
+
+//////Get the Login information entered by the end user/////
+
+&amp;UserLogin      = Decrypt64( &amp;GAMWSLoginIn.Login, &amp;Key ) 
+&amp;UserPassword   = Decrypt64( &amp;GAMWSLoginIn.Password, &amp;Key )
+
+//////Build the output parameter/////////////////////////////////////
+
+&amp;GAMWSLoginOut = new()
+&amp;GAMWSLoginOut.WSVersion = GAMAutExtWebServiceVersions.GAM20
+
+do "validate user"    
+&amp;StrOutput = &amp;GAMWSLoginOut.ToJson()
+
+sub "validate user"
+    <span style="background-color: rgb(255,255,0);">   &amp;Input_Parameters = &amp;GAMWSLoginIn.CustomParameters</span>
+    For &amp;ParameterIN in &amp;Input_Parameters
+        if &amp;ParameterIN.Id = 'LDAPpath'    
+            &amp;strpath = &amp;ParameterIN.Value
+        else
+            if &amp;ParameterIN.Id = 'LDAPFilter'
+                &amp;filter = &amp;ParameterIN.Value
+            endif
+        endif
+    endfor
+    &amp;UserName =  GetUserName(&amp;UserLogin) //Ex:  "CN=" + &amp;UserLogin +",OU=Promotions,OU=Marketing,DC=sampledomain,DC=local"
+<span style="background-color: rgb(0,255,0);">    connectLDAP.Call(&amp;strpath,&amp;UserName,&amp;UserPassword,&amp;filter,&amp;GAMLDAPParametersRet,&amp;result)</span>
+    
+    if &amp;result = 0
+        &amp;GAMWSLoginOut.WSStatus            = 1
+        &amp;GAMWSLoginOut.User.Code        = &amp;GAMLDAPParametersRet.UserCode
+        &amp;GAMWSLoginOut.User.FirstName    = &amp;GAMLDAPParametersRet.FirstName
+        &amp;GAMWSLoginOut.User.LastName    = &amp;GAMLDAPParametersRet.LastName
+        &amp;GAMWSLoginOut.User.EMail        = &amp;GAMLDAPParametersRet.mail
+        &amp;GAMWSLoginOut.ApplicationData = &amp;GAMLDAPParametersRet.ToJson()
+  else
+        if &amp;result = 2
+            &amp;GAMWSLoginOut.WSStatus            = 5
+            &amp;GAMWSLoginOut.WSMessage = "Invalid user or password."
+        else
+            &amp;GAMWSLoginOut.WSStatus            = 6
+            &amp;GAMWSLoginOut.WSMessage = "User unknown."
+        endif
+endif
+endsub
+
+</pre>
+
+<p><span style="background-color: rgb(0,255,0);">ConnectLDAP</span> is a Procedure that tries to connect to LDAP given some parameters. The parameters in this example are &amp;username, &amp;userpassword, &amp;strpath of the LDAP (eg: LDAP://server1.sampledomain.local/ou=promotions, ou=marketing,dc=sampledomain,dc=local), and a &amp;filter (eg: sn=Smith). The additional parameters &amp;strpath and &amp;filter are received through the <span style="background-color: rgb(255,255,0);">CustomParameters</span> of the GAMWSLoginInSDT data type (See #1 above).<br />
+<br />
+Depending on the parameters required to perform the authentication, you will need to vary the code shown in the example above.<br />
+<br />
+The Procedure ConnectLDAP returns the user information in the <em>&amp;GAMLDAPParametersRet</em> out parameter. The information returned depends on the application's needs.</p>
+
+<p>In this particular example, it returned the following: First Name, Last Name, Email, User Code, and UserAccountControl.</p>
+
+<p><img src="./images/29481.png" id="29481" class="WikiImage"/></p>
+
+<h5><a id="%233+Parameters+returned+by+the+ConnectLDAP+Procedure" class="HashLink" href="#%233+Parameters+returned+by+the+ConnectLDAP+Procedure">#3 Parameters returned by the ConnectLDAP Procedure</a></h5>
+
+<h3><a id="3.+Implement+the+login+Web+Panel" class="HashLink" href="#3.+Implement+the+login+Web+Panel">3. Implement the login Web Panel</a></h3>
+
+<p>In the GAMExampleLogin Web Panel, you need to set the input parameters of the external program that performs the authentication.</p>
+
+<h3><a id="Definition+of+variables+" class="HashLink" href="#Definition+of+variables+">Definition of variables </a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Variable name</strong></td>
+			<td><strong>Data Type</strong></td>
+		</tr>
+		<tr>
+			<td>&amp;CustomProperty</td>
+			<td>GAMProperty (predefined data type)</td>
+		</tr>
+		<tr>
+			<td>&amp;GAMLDAPParametersRet</td>
+			<td>GAMLDAPParametersRet SDT Data Type (see #3)</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p>The login code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+/////////////Load the input data to pass to the external authentication program/////////
+CustomProperty = new()
+
+&amp;CustomProperty.Id    = "LDAPpath"
+
+&amp;CustomProperty.Token    = "LDAPpath"
+
+&amp;CustomProperty.Value    = "LDAP://server1.sampledomain.local/ou=promotions, ou=marketing,dc=sampledomain,dc=local"
+
+&amp;AdditionalParameter.Properties.Add(&amp;CustomProperty)
+
+&amp;CustomProperty = new()
+
+&amp;CustomProperty.Id    = "LDAPFilter"
+
+&amp;CustomProperty.Token    = "LDAPFilter"
+
+&amp;CustomProperty.Value    = "sn=" + &amp;surname
+
+&amp;AdditionalParameter.Properties.Add(&amp;CustomProperty)
+
+&amp;AdditionalParameter.AuthenticationTypeName = &amp;LogOnTo
+
+/////////////////////////////////////////////Login User //////////////////////////////////////////////////////////////
+
+ &amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors )
+
+ If &amp;LoginOK
+
+
+///////////////////////////Get my custom application data in json format ////////////
+    
+       &amp;ApplicationData = GAMSession.GetApplicationData()
+            If not &amp;ApplicationData.IsEmpty()
+                 &amp;GAMLDAPParametersRet.FromJson(&amp;ApplicationData)
+                 <span style="background-color: rgb(64,224,208);"> &amp;UserAccountControl = &amp;GAMLDAPParametersRet.useraccountcontrol</span>
+            Endif
+else
+  //Process Errors
+Endif
+</pre>
+
+<p> </p>
+
+<p>The external program gamwsloginLDAP is <span style="line-height: 20.8px;">automatically </span>called when the login is invoked, and the parameters are automatically sent.</p>
+
+<p>Note that the UserAccountControl —which is an additional parameter returned— is retrieved using the <a href="https://wiki.genexus.com/commwiki/wiki?21575,," target="_blank">GetApplicationData method of GAMSession object</a>.</p>
+
+<p>Consider that this is an example adapted to one scenario (an Active Directory). Depending on the LDAP used (the parameters required for login, and the desired parameters to get from the LDAP), the code will vary.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="16929.html">Managing Roles through external authentication programs</a></p>
+
+<h3><a id="Download+Sample+" class="HashLink" href="#Download+Sample+">Download Sample </a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?29485,," target="_blank">LDAPAuthSample Active Directory</a><br />
+<br />
+   </p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/07/22 06:05 PM</em></font></td></TR></table></font>

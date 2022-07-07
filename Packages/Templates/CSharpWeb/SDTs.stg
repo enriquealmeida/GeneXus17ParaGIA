@@ -1,0 +1,237 @@
+group StructureDataTypeCSharpWeb;
+
+delimiters "$", "$"
+
+dataTypes ::= [
+	"string":		"string",
+	"decimal":		"decimal",
+	"int":			"int",
+	"smallint":		"short",
+	"byte":			"short",
+	"bigint":		"long",
+	"datetime":		"DateTime",
+	"bool":			"bool",
+	"bytearray":	"byte[]",
+	"guid":			"Guid",
+	"geospatial":	"Geospatial",
+	default:		key
+]
+
+generator()::=<<
+C#$if(IsNetCore)$ (.NET)$endif$
+>>
+
+class_name(level)::=<<
+Sdt$level.NormalizedFullItemName$
+>>
+
+namespace(namespace)::=<<
+namespace $namespace$
+{
+>>
+
+usings()::=<<
+$hard_usings()$
+$DynUsings:{u|using $u$;};separator="\r\n"$
+>>
+
+serialization_atts(level)::=<<
+$if (!IsNetCore)$
+[XmlSerializerFormat]
+$endif$
+[XmlRoot(ElementName="$level.ExposedName$")]
+[XmlType(TypeName="$level.ExposedName$" , Namespace="$level.ExposedNamespace$" )]
+$if (level.HasJsonName)$
+[GxJsonName("$level.JsonName$")]
+$endif$
+[Serializable]
+>>
+
+class_definition(level, namespace)::=<<
+$serialization_atts(level)$
+public class $class_name(level)$ : GxUserType
+{
+	$constructors(level)$
+
+	#region Json
+	$json_map()$
+
+	$to_json(level)$
+	#endregion
+
+	#region Properties
+	
+	$level_properties(level,dataTypes)$
+	
+	#endregion
+	
+	#region Initialization
+	
+	$initialize(level)$
+	
+	#endregion
+	
+	#region Declaration
+	
+	$variables_declaration(level)$
+	
+	#endregion
+}
+>>
+
+constructors(level)::=<<
+public $class_name(level)$( )
+{
+	/* Constructor for serialization */
+$level.OrderedMapping:{item|$if (!item.IsLevel && !item.IsCollection)$$minor_initilization(level,item)$$endif$};separator=""$
+}
+
+public $class_name(level)$(IGxContext context)
+{
+	this.context = context;	
+	initialize();
+}
+>>
+
+minor_initilization(level,item)::=<<
+$if (item.IsChar)$
+	gxTv_$class_name(level)$_$item.NormalizedName$ = "";
+$elseif (item.IsDateTime)$
+	gxTv_$class_name(level)$_$item.NormalizedName$ = (DateTime)(DateTime.MinValue);
+$elseif (item.IsGeospatial)$
+	gxTv_$class_name(level)$_$item.NormalizedName$ = new Geospatial("");
+$endif$
+	$includeGXI(level,item)$
+>>
+
+rest_definition(level)::=<<
+$rest_interface(level,dataTypes)$
+>>
+
+variables_declaration(level)::=<<
+$if (level.HasDateTime || level.HasDate)$
+protected string sDateCnv ;
+protected string sNumToPad ;
+$endif$
+$if (level.HasDateTime)$
+protected DateTime datetime_STZ ;
+$endif$
+
+$level.OrderedMapping:{item| $declare_lvel_items(level, item)$};separator="\r\n"$
+
+>>
+
+declare_lvel_items(level, item)::=<%
+$if(item.IsLevel)$
+	$declare_level(level, item)$
+$else$
+	$declare_item(level, item)$
+$endif$
+%>
+
+declare_level(level, lvl)::=<<
+$declare_null_variable(level,lvl)$
+$if (lvl.IsCollection)$
+protected GXBaseCollection<$class_name(level)$_$lvl.NameOrCollectionItem$> gxTv_$class_name(level)$_$lvl.NormalizedName$ = null; 
+$else$
+protected $class_name(level)$_$lvl.Name$ gxTv_$class_name(level)$_$lvl.NormalizedName$ = null; 
+$endif$
+>>
+
+declare_null_variable(level,lvl)::=<<
+$if (lvl.HasNullVariable || lvl.AvoidNullSerialization || level.IsJsonNullValueWhenNull)$protected bool gxTv_$class_name(level)$_$lvl.NormalizedName$_N;$endif$
+>>
+
+declare_item(level, lvl)::=<%
+$if (item.IsCollection)$
+$declare_collection_item(level,item)$ 
+$else$
+$declare_item_variable(item,level)$ 
+$endif$
+%>
+
+declare_collection_item(level,item)::=<<
+$declare_null_coll_variable(level,item)$
+protected $item_collection(item)$<$if (item.SerializationType)$$dataTypes.(item.SerializationType)$$else$$item.CustomType$$endif$> gxTv_$class_name(level)$_$item.NormalizedName$ = null; 
+>>
+
+declare_null_coll_variable(level,item)::=<%
+$if (lvl.HasNullVariable || item.AvoidNullSerialization || level.IsJsonNullValueWhenNull)$
+protected bool gxTv_$class_name(level)$_$item.NormalizedName$_N;
+$endif$
+%>
+
+declare_item_variable(item, level)::=<<
+$if (item.IncludeGXI)$protected $dataTypes.(item.SerializationType)$ gxTv_$class_name(level)$_$item.NormalizedName$_gxi;$endif$
+protected $if (item.CustomType)$$item.CustomType$$else$$dataTypes.(item.SerializationType)$$endif$ gxTv_$class_name(level)$_$item.NormalizedName$$if (item.CustomType)$ = null$endif$;
+$if ( level.IsJsonNullValueWhenNull|| item.AvoidNullSerialization || (item.IsNullableXmlElement && !item.IsDateTime && !item.IsDate))$
+protected bool gxTv_$class_name(level)$_$item.NormalizedName$_N;
+$endif$
+>>
+
+initialize(level)::=<<
+public void initialize( )
+{
+	$level.OrderedMapping:{item| $initialize_item(level,item)$};separator="\r\n"$
+$if (level.HasDateTime)$
+	datetime_STZ = (DateTime)(DateTime.MinValue);
+$endif$
+$if (level.HasDateTime || level.HasDate)$
+	sDateCnv = "";
+	sNumToPad = "";
+$endif$
+	return  ;
+}
+
+$initialize_complex_items(level)$
+>>
+
+initialize_item(level,item)::=<%
+$if (!item.IsLevel)$
+	$if (!item.IsCollection)$
+		$if (item.HasInitialValue)$
+			$if (item.HasValuePrologue)$
+				init_$item.NormalizedName$();
+			$else$
+				gxTv_$class_name(level)$_$item.NormalizedName$ = $item.InitialValueAssign$;
+			$endif$
+		$else$
+			$if (item.IsChar)$
+				gxTv_$class_name(level)$_$item.NormalizedName$ = "";
+			$elseif (item.IsDateTime)$
+				gxTv_$class_name(level)$_$item.NormalizedName$ = (DateTime)(DateTime.MinValue);
+			$elseif (item.IsGeospatial)$
+				gxTv_$class_name(level)$_$item.NormalizedName$ = new Geospatial("");
+			$endif$
+		$endif$
+	$endif$
+	$includeGXI(level, item)$
+$endif$
+$includeNullvar(level, item)$
+%>
+
+
+initialize_complex_items(level)::=<<
+$level.Items:{item| 
+$if (item.HasValuePrologue)$
+private void init_$item.NormalizedName$()
+{
+	$item.InitialValuePrologue$
+	gxTv_$class_name(level)$_$item.NormalizedName$ = $item.InitialValueAssign$;
+\}
+
+$endif$
+}$
+>>
+
+includeGXI(level, item)::=<%
+$if (item.IncludeGXI)$
+gxTv_$class_name(level)$_$item.NormalizedName$_gxi = "";
+$endif$
+%>
+
+includeNullvar(level, item)::=<<
+$if (level.IsJsonNullValueWhenNull || item.AvoidNullSerialization || (item.HasNullVariable && !item.IsCollection))$
+gxTv_$class_name(level)$_$item.NormalizedName$_N = true;
+$endif$
+>>

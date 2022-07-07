@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Create offline mobile applications with a preloaded database</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22298,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Create offline mobile applications with a preloaded database</h1>
+<!--HowTo: Create offline mobile applications with a preloaded database--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>There are many scenarios where the Offline Mobile Apps will need to be installed with some data already loaded into the local database. Furthermore, the first synchronization may take a long time, or initial data may not vary in the future. So there are reasons to have a preloaded database mechanism in developing time.</p>
+
+<p>This tutorial is a simple and quick guide for developers that want to create offline applications for Smart Devices with a preloaded database.</p>
+
+<p>As an example, this document is based on the Offline branch from <a href="https://wiki.genexus.com/commwiki/wiki?22550,," target="_blank">EventDay</a> sample.</p>
+
+<h3><a id="Before+you+begin..." class="HashLink" href="#Before+you+begin...">Before you begin...</a></h3>
+
+<p><strong>Important</strong>: To preload the application's database, you will be using a simulator or a device. <strong>You cannot use the same simulator/device to synchronize again!</strong></p>
+
+<p>See the section titled <em>Preloaded Hashes</em> bellow for further information.</p>
+
+<h2><a id="iOS+Applications" class="HashLink" href="#iOS+Applications">iOS Applications</a></h2>
+
+<h3><a id="Step+1%3A+Creating+the+database" class="HashLink" href="#Step+1%3A+Creating+the+database">Step 1: Creating the database</a></h3>
+
+<p>The first step to have preloaded data is to create the database</p>
+
+<p><strong>1.</strong> Op<span style="font-family: arial;">en the project in Xcode.</span></p>
+
+<p><strong>2.</strong> Run the application in the<strong> </strong>iOS Simulator and let it execute the data synchronization process.</p>
+
+<p><strong>3.</strong> Once the synchronization is complete, the<strong> </strong>Xcode console shows us a message similar to this (Look at <a href="https://wiki.genexus.com/commwiki/wiki?22339,," target="_blank">this document</a> for further information about the debug on Xcode):</p>
+
+<blockquote>
+<p>---------------------------------------<br />
+-- DATABASE SYNCHRONIZATION FINISHED --<br />
+<br />
+Database file: /Users/%USERNAME%/Library/Application Support/iPhone Simulator/%IOS_TARGET%/Applications/%APP_RANDOM_ID%/Documents/EventDay.sqlite<br />
+<br />
+Hashes file: /Users/%USERNAME%/Library/Application Support/iPhone Simulator/%IOS_TARGET%/Applications/%APP_RANDOM_ID%/Documents/EventDay_hashes.json<br />
+<br />
+BLOB data zip file: /Users/%USERNAME%/Library/Application Support/iPhone Simulator/%IOS_TARGET%/Applications/%APP_RANDOM_ID%/Documents/GXBlobData.zip<br />
+---------------------------------------</p>
+</blockquote>
+
+<p>Where %USERNAME% is your username, %IOS_TARGET% is the target of the iPhone Simulator, for example &quot;7.0.3&quot;.</p>
+
+<p><strong>4.</strong> Copy this three files to include them in the Xcode project. This filenames are<em> %</em><em>APP_NAME</em><em>%.sqlite,</em> <em>%</em><em>APP_NAME</em><em>%_hashes.json</em> and GXBlobData.zip where <em>%</em><em>APP_NAME</em><em>%</em> is the name of the application.</p>
+
+<p><strong>Note: </strong>If you have trouble finding this files, please check out the <a href="23815.html">HowTo: Looking for offline database files</a> document.</p>
+
+<h3><a id="Step+2%3A+Add+the+preloaded+database+to+the+project" class="HashLink" href="#Step+2%3A+Add+the+preloaded+database+to+the+project">Step 2: Add the preloaded database to the project</a></h3>
+
+<p><strong>1.</strong> In Xcode go to <em>Build Phases</em> and expand the section<em> Copy Bundle Resources.</em></p>
+
+<p><img src="./images/23756.jpg" id="23756" class="WikiImage"/></p>
+
+<p><strong>2.</strong> Include the copied files to the project.</p>
+
+<p><img src="./images/23758.jpg" id="23758" class="WikiImage"/></p>
+
+<p><strong>Important: </strong>The file names must be respected because otherwise they will not be found by the application.</p>
+
+<p><strong>3.</strong> Build the project on Xcode. Now, when you run the application, the synchronizer process will not bring any data.</p>
+
+<h2><a id="Android+Applications" class="HashLink" href="#Android+Applications">Android Applications</a></h2>
+
+<h3><a id="Step+1%3A+Creating+the+database" class="HashLink" href="#Step+1%3A+Creating+the+database">Step 1: Creating the database</a></h3>
+
+<p>The first step to have preloaded data is to create the database</p>
+
+<p><strong>1.</strong> If you do not have a rooted phone, you have no access to the database unless you change the template to generate the database in sd card. To do that, follow the instructions mentioned in the <a href="23816.html">HowTo: Storing Android offline database files in the device card</a> document.</p>
+
+<p><strong>2.</strong> With the device connected to your PC and USB debugging enabled, open logcat and then run the application and let it execute the data synchronization process.</p>
+
+<p><strong>3.</strong> Once the synchronization is complete, <em>logcat</em> will show a message similar to this one:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GeneXusApplication: DATABASE SYNCHRONIZATION FINISHED
+
+GeneXusApplication: Database file: /mnt/sdcard0/Android/data/com.artech.eventdayoffline.eventday/EventDay.sqlite
+
+GeneXusApplication: Hashes file: /mnt/sdcard0/Android/data/com.artech.eventdayoffline.eventday/EventDay_hashes.json</pre>
+
+<p><strong>4.</strong> Copy both files to include them in the Android project. These filenames are<em> %APPNAME%.sqlite</em> and <em>%APPNAME%_hashes.json</em> where <em>%APPNAME% </em>is the name of the application.<br />
+If the application has blobs (images, videos) must also be copied the directory <em>/mnt/sdcard0/Android/data/com.artech.eventdayoffline.eventday/files/blobs</em></p>
+
+<p><strong>Note:</strong> If you have trouble finding these files, please check out the <a href="23815.html">HowTo: Looking for offline database files</a> document.</p>
+
+<h3><a id="Step+2%3A+Add+the+preloaded+database+to+the+project" class="HashLink" href="#Step+2%3A+Add+the+preloaded+database+to+the+project">Step 2: Add the preloaded database to the project</a></h3>
+
+<p><strong>1.</strong> Rename the copied file <em>EventDay.sqlite</em> to e<em>ventday_sqlite </em>(change &quot;.&quot; to &quot;_&quot; and lowercase) and rename <span style="line-height: 20.8px;">EventDay_hashes.json to eventday_hashes (remove the extension and lowercase). In addition, replace the dot </span>&quot;.&quot; present after the module name (if used) to an underscore &quot;_&quot; (the names will be something like <em>modulename_eventday_sqlite</em> and <em>modulename_eventday_hashes</em>)</p>
+
+<p><strong>2.</strong> Add the files <em>EventDay_sqlite</em> and <em>EventDay_hashes</em> in the directory <em>raw </em>of the project generated (<em>\mobile\Android\Main&gt;\src\main\res\raw</em>) and the directory blobs in the directory assets (<em>\mobile\Android\&lt;Main&gt;\assets)</em></p>
+
+<p><strong>Important:</strong> The file names must be respected because otherwise they will not be found by the application.</p>
+
+<p><strong>3.</strong> For security, revert the change made in step 1.1</p>
+
+<p><strong>4.</strong> Build the app on Genexus. Now, when you run the application, all the data and images are going to be in the device without synchronizing them.</p>
+
+<h2><a id="Advanced+concepts" class="HashLink" href="#Advanced+concepts">Advanced concepts</a></h2>
+
+<h3><a id="Preloaded+Hashes" class="HashLink" href="#Preloaded+Hashes">Preloaded Hashes</a></h3>
+
+<p>The application's backend (server-side) keeps track of the synchronization hashes by {device, application}. When you preload a database, the DeviceId of the simulator or device used is stored with the hashes that correspond to the preloaded data.</p>
+
+<p>If you synchronize again using the same simulator or device, then the original hashes will be removed from the server database, and no other device will be able to synchronize.</p>
+
+<p>That's why you <strong>must not</strong> use the simulator or device used to generate the preloaded database to synchronize again.</p>
+
+<h4><a id="A+possible+workaround+is+to+identify+the+preloaded+hashes+in+the+database%2C+by+changing+the+GXDeviceId+in+the+GXDEVICERESULT+table." class="HashLink" href="#A+possible+workaround+is+to+identify+the+preloaded+hashes+in+the+database%2C+by+changing+the+GXDeviceId+in+the+GXDEVICERESULT+table.">A possible workaround is to identify the preloaded hashes in the database, by changing the GXDeviceId in the GXDEVICERESULT table.</a></h4>
+
+<p>To do that, after executing the first synchronization in the process described above, you may run the following SQL query:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+UPDATE [GXDEVICERESULT] SET [GXDeviceId] = &quot;Preloaded Data&quot;;</pre>
+
+<p><strong>Notes</strong>:</p>
+
+<ul>
+	<li>Device identifiers are UUIDs because that's what the devices send, but the GXDeviceId field is defined as Character(127).</li>
+	<li>The update sentence updates <strong>all</strong> records in the GXDEVICERESULT table. If the database already has production data, you will want to filter by the GXDeviceId. To do that, you'll need to find the identifier used by the simulator or device, for example by looking at the headers in the synchronization HTTP request.</li>
+</ul>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22267.html">Automatic Offline Data Synchronization</a></TD><TD><a href="22269.html">Data Synchronization</a></TD><TD><a href="23775.html">Events App scenario</a></TD></TR><TR><TD><a href="24591.html">HowTo: Converting online applications into offline applications</a></TD><TD><a href="23815.html">HowTo: Looking for offline database files</a></TD><TD><a href="23816.html">HowTo: Storing Android offline database files in the device card</a></TD><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR><TR><TD><a href="23602.html">Synchronization API</a></TD><TD><a href="29785.html">Synchronization.ResetOfflineDatabase method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/14/20 05:28 PM</em></font></td></TR></table></font>

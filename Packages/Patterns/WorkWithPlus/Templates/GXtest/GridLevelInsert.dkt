@@ -1,0 +1,66 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Level Insert" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="level" Type="Artech.Genexus.Common.Parts.TransactionLevel" %>
+<%@ Property Name="levelName" Type="System.String" %>
+<%@ Property Name="gridLevelName" Type="System.String" %>
+<%@ Property Name="index" Type="System.String" %>
+<%@ Property Name="firstLevelAttributeName" Type="System.String" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ SubTemplate Name="InsertItemInForm" File="InsertItemInForm.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPNextAction" File="DPNextAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="PressKeyAction" File="PressKeyAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextValidation" File="VerifyControlTextValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextTableValidation" File="VerifyControlTextTableValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="InsertPrompt" File="InsertPrompt.dkt" MergeProperties="True"%>
+<%
+	// Used to Generate Level TestCases
+%>
+	<!-- Level <%=levelName%>  -->
+<%@ CallSubTemplate DPNextAction dataPoolName='levelName' level='level' dataPoolColumnName='firstLevelAttributeName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+foreach (TransactionAttribute trnAtt in level.Attributes )
+{
+	string tName = trnAtt.Name;
+	if (TransactionHelper.IsEditableControl(trnAtt,basicElements))
+	{		
+		GenericElement ge = basicElements.ResolveBind(tName);
+		if (trnAtt.IsForeignKey && basicElements.UsePrompt && !(ge.IsInputTypeDescription) /*&& basicElements.getAttribute(trnAtt.Name).UsePrompt*/)
+		{			
+%>
+<%@ CallSubTemplate InsertPrompt levelName='levelName' trnAtt='trnAtt' controlGXName='tName' level='index' gridLevelName='gridLevelName' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+		}
+		else
+		{	
+%>
+<%@ CallSubTemplate InsertItemInForm gridLevelName='gridLevelName' level='index' Object='Object' controlGXName='tName' value='""' variable='""' dataPoolName='levelName' dataPoolColumnName='tName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+	}
+	if (basicElements.CheckFormulas) // Check pattern property
+	{
+		if (TransactionHelper.IsFormula(trnAtt) && basicElements.IsAttributeUsedInWebForm(tName))
+		{
+			if (TransactionHelper.IsGridLevel(index))
+			{
+				// Inline formula, check its value
+				Artech.Genexus.Common.eDBType attType = TransactionHelper.GetAttributeType(trnAtt);
+%>
+<%@ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate VerifyControlTextTableValidation Object='Object' model='model' byRow='true' gridName='gridLevelName' ControlGXName='tName' variable1='""' value1='""' dataPoolName1='levelName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' variable2='""' value2='""' dataPoolName2='levelName' dataPoolColumnName2='tName' AttType='attType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+				basicElements.AddFormula(tName,levelName);
+			}
+		}
+	}
+}
+basicElements.ForeignKeyTables = new List<string>(); // Reset List
+%>

@@ -1,0 +1,295 @@
+delimiters "$", "$"
+import "PanelUIModel.stg"
+import "Types.stg"
+import "actions.stg"
+import "expressions.stg"
+import "PanelComponent_Load.stg"
+import "PanelComponent_Controllers.stg"
+
+panelTypeToActionsTemplate ::= [
+	"list":			"g_list_panel_actions",
+	"detail":		"g_detail_panel_actions",
+	"section":		"g_section_panel_actions",
+	default:		"g_panel_actions"
+]
+
+g_component(page, gx)::=<<
+import { Component, Input$if (page.PanelUserControls)$, ViewChild$endif$ } from '@angular/core';
+import { Routes, ActivatedRoute } from '@angular/router';
+import { AppContainer } from 'app/gx/base/app-container';
+import { CompositeNavigation } from 'app/gx/navigation/composite-navigation';
+import { PanelComponent } from 'app/gx/base/panel.component';
+import { BcPanelComponent} from 'app/gx/base/bc-panel.component';
+import { LoginService} from "app/gx/auth/login.service";
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { AppBarService } from "app/gx/base/app-bar.service";
+import { NavigationStyle } from "app/gx/base/view-manager";
+
+import { $page.FullName$Service $page.Data:g_dataprovider_reference()$ } from './$gx.ToLower.(page.ComponentName)$.service';
+$page.Imports:g_imports();separator="\r\n"$
+
+@Component({
+  selector: '$page.FullName$',
+  templateUrl: './$gx.ToLower.(page.ComponentName)$.component.html',
+  providers: [
+    $page.LocalProviders:{comp|$comp.GeneratorType:g_type_name()$,}$
+    $page.FullName$Service,
+  ],
+  styles: [":host { display: flex; flex: 1; }"]
+})
+export class $page.FullName$Component extends $g_panel_superclass(page)$ {
+
+  $page.PanelUsedVars:g_properties_definitions()$
+
+  stateMembers = [
+    $page.StateMembers:{v|"$v.Name$"};separator=", "$
+  ];
+
+  _routingPath = '$page.RoutingPath$';
+  views = [
+    $page.PanelLayoutVariants:g_panel_layout_variant();separator=","$
+  ];
+
+
+  $page.PanelUserControls:{uc|@ViewChild('$uc.ControlName$', {static: false\}) $uc.ControlName$;};separator="\r\n"$
+  
+  constructor(
+      private panelService: $page.FullName$Service,
+      $page.LocalProviders:{comp|private $g_declare_parameter(comp)$,}$
+      $page.GlobalProviders:{comp|private $g_declare_parameter(comp)$,};separator="\r\n"$
+      protected gam: LoginService,
+      public app:AppContainer,
+      protected nvg:CompositeNavigation,
+      protected activatedRoute: ActivatedRoute,
+      private appBarService: AppBarService
+  ) {
+    super( app, nvg, activatedRoute);
+    $page.PanelUsedVars:g_init_component_item()$
+    this.canControlAppBar = activatedRoute.component === $page.FullName$Component;
+    this.showAsCard = !this.canControlAppBar;
+    this.initState(null);
+  }
+
+  initState(params) {
+    $page.PanelUsedVars:g_init_state_item()$
+    this.loadParams(params);
+    $page.GridControllers:g_component_init_controller()$
+    this.panelService.start();
+  }
+
+  $page.Layout: { layout | $g_init_appbar(layout, layout.ActionBar)$ };separator="\r\n"$
+
+  // Actions
+  $page.Actions.Action:{ action | $g_action(action)$ };separator="\r\n"$
+
+  $page.rules.prompt:g_prompt_action()$
+
+  $(panelTypeToActionsTemplate.(page.PanelType))(page)$
+
+  $g_component_init(page)$
+
+  $g_component_refresh(page)$
+
+  $g_component_load_methods(page)$
+
+  $g_component_controllers_methods(page)$
+
+  $g_subscriptions(page)$
+}
+
+$g_uimodel( page)$
+$g_uiactions( page)$
+>>
+
+g_init_appbar(layout, actionBar) ::= <<
+initAppBar_$layout.LayoutId$(navigationStyle: NavigationStyle) {
+  if (this.canControlAppBar) {
+    this.appBarService.setNavigation({
+      className: "$actionBar.ApplicationBarsClass$",
+      visible: $actionBar.ShowApplicationBars$,
+      navigationStyle,
+      showBackButton: false,
+    });
+
+    if (!this.showAsCard) {
+      $actionBar.Action:{actionItem| $g_init_appbar_item(actionItem)$};separator="\r\n"$
+      this.appBarService.setActions([
+        $actionBar.Action:{actionItem| $actionItem.UIElementControlName$};separator=",\r\n"$
+      ]);
+    }
+  }
+
+  if (this.showAsCard) {
+    this.appBarService.setNavigation({
+      showBackButton: true,
+      onBackButtonClick: () => this.callAction(this.__Cancel),
+    });
+  }
+}
+
+resetAppBar_$layout.LayoutId$() {
+  if (this.showAsCard) {
+    this.appBarService.setNavigation({
+      showBackButton: false,
+      onBackButtonClick: null,
+    });
+  }
+
+  this.appBarService.setActions([]);
+}
+
+>>
+
+g_init_appbar_item(actionItem) ::= <<
+const $actionItem.UIElementControlName$ = $g_appbar_item(actionItem)$;
+$actionItem.UIElementControlName$.id = "$actionItem.ControlName$";
+$actionItem.UIElementControlName$.caption = this.translate("$actionItem.Caption$");
+$actionItem.UIElementControlName$.class = "$actionItem.Class$";
+$actionItem.UIElementControlName$.visible = $actionItem.Visible$;
+$actionItem.UIElementControlName$.enabled = $actionItem.Enabled$;
+$actionItem.UIElementControlName$.priority = "$actionItem.Priority$";
+$if (actionItem.HasImage)$
+$actionItem.UIElementControlName$.iconSrc = this.getImageSource('$actionItem.image$');
+$endif$
+$if (actionItem.ActionElement)$
+$actionItem.UIElementControlName$.onClick = () => this.callAction(this.$actionItem.ActionElement$);
+$endif$
+$if (actionItem.InlineExecuteExpression.ExprType)$
+$actionItem.UIElementControlName$.onClick = () => $actionItem.InlineExecuteExpression:g_expression()$;
+$endif$
+
+>>
+
+g_appbar_item(actionItem) ::= <%
+$actionItem.UIElementContextExpression:g_expression()$.$actionItem.UIElementControlName$
+%>
+
+g_dataprovider_reference(data) ::= <%
+$if (data.GenerateDataStructure)$
+, $g_dataprovider_type_name(data)$
+$endif$
+%>
+
+g_list_panel_actions(page) ::= <%
+%>
+
+g_panel_layout_variant(variant) ::= <<
+{
+  name: "$variant.Id$",
+  type: "$variant.Type$",
+  minShortestBound: $variant.MinShortestBound$,
+  maxShortestBound: $variant.MaxShortestBound$,
+  minLongestBound: $variant.MinLongestBound$,
+  maxLongestBound: $variant.MaxLongestBound$,
+  appBarInitFn: this.initAppBar_$variant.Id$.bind(this),
+  appBarResetFn: this.resetAppBar_$variant.Id$.bind(this)
+}
+
+>>
+
+g_detail_panel_actions(page) ::= <<
+  $page.sections.section:g_detail_panel_actions_navigate();separator="\r\n"$
+>>
+
+g_detail_panel_actions_navigate(section) ::=
+<<
+$if(section.NavigateAction)$
+navigateTo$section.FullName$() {
+  const __aSt = this.startAction();
+  this.nvg.navigate(['$section.RoutingPath$' $g_route_parameters(section)$], __aSt);
+  this.endAction(__aSt);
+}
+$endif$
+>>
+
+g_section_panel_actions(page) ::= <%
+%>
+
+g_panel_actions(page) ::= <%
+%>
+
+g_prompt_action(prompt) ::= <<
+$if (prompt.Name)$
+async $prompt.Name$() : Promise<any> {
+  const __aSt = this.startAction();
+  let result = await this.nvg.navigate(['$prompt.TargetRoute$' $g_route_parameters(prompt)$], __aSt);
+  $prompt.OutputParameters.Parameter:{p|$p.Expression:g_expression()$ = result.$p.Name$;}$
+  $g_prompt_action_result(prompt.AfterService)$ 
+  this.endAction(__aSt);
+}
+$endif$
+>>
+
+g_prompt_action_result(afterService) ::= <<
+let afterResult = await this.panelService.get$afterService.Name$($afterService.Inputs.parameter:{p|$p.Expression:g_expression()$};separator=", "$);
+$afterService.Outputs.parameter: {p|$p.Expression:g_expression()$ = afterResult[$i0$]};separator="\r\n"$;
+>>
+
+g_panel_superclass( page) ::= <%
+$if (page.BcDataType)$
+BcPanelComponent<$g_type_name(page.BcDataType)$, $g_type_name(page.BcServiceType)$>
+$else$
+PanelComponent
+$endif$
+%>
+
+g_component_init( page) ::= <<
+loadParams(params) {
+  if (params) {
+    $g_component_init_start( page)$
+  }
+}
+
+$if(page.InitializationStatements)$
+initPanel() {
+  $page.InitializationStatements:{stmt|$stmt:g_one_statement()$};separator="\r\n"$
+}
+$endif$
+
+async loadPanel() {
+  $page:g_component_load_data()$
+  $page:g_component_load_bc()$
+  $page.NavigationStyle:g_navigationstyle_event()$
+}
+>>
+
+g_component_refresh( page) ::= <<
+async Refresh(type?: string) {
+  $page:g_component_load_data()$
+  $page:g_component_load_bc()$
+  $page.ContainedLayoutComponents:g_layoutcomponent_refresh();separator="\r\n"$
+}
+>>
+
+g_component_init_start( page) ::= <%
+$if(page.Parameters)$
+$page.Parameters.Parameter:g_param_tovar();separator="\r\n"$
+$endif$
+%>
+
+g_component_init_statements( page) ::= <%
+%>
+
+g_component_load_bc(data) ::= <%
+$if (data.BcDataType)$
+this.initBC(this.nvg.getAppExtras('bc'), $data:g_call_parameters()$);
+$endif$
+$data.BcsInDataprovider:g_init_bcinstance()$
+%>
+
+g_param_tovar(parameter) ::= <<
+$parameter.expression:g_expression()$ = $g_convert_to( {VarChar}, parameter.GeneratorType, {this.nvg.getParam('$gx.ToLower.(parameter.Name)$', params, $parameter.Position$)})$ || $g_type_ctor(parameter.GeneratorType)$;
+>>
+
+g_init_bcinstance( bcToInitialize) ::= <<
+$bcToInitialize.BcInstanceExpression:g_expression()$ = $bcToInitialize.EntityBcExpression:g_expression()$;
+>>
+
+g_navigationstyle_event(nvgStyle) ::= <<
+$if (nvgStyle.StartEvent)$
+if (this.activatedRoute.snapshot.url.length === 0) {
+  this._globalevents.publish('$nvgStyle.StartEvent$');
+}
+$endif$
+>>

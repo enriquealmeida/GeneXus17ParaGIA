@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Azure Http-triggered functions</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49266,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Azure Http-triggered functions</h1>
+<!--Azure Http-triggered functions--><div class="TableWikiBody" id="tblwikibody"><p>They are <a href='https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=csharp'>Http Functions</a>. The HTTP trigger lets you invoke a function with an HTTP request. You can use an HTTP trigger to build serverless APIs.</p>
+
+<p><strong>Summary</strong></p>
+
+<p><ul><li><a class="HashLink" href="#GeneXus+objects+that+can+be+deployed+as+Http+Functions">GeneXus objects that can be deployed as Http Functions</a></li><ul><li><a class="HashLink" href="#1.+Rest+services+of+the+KB">1. Rest services of the KB</a></li><li><a class="HashLink" href="#2.+Mobile+Backend+services">2. Mobile Backend services</a></li></ul></li><li><a class="HashLink" href="#Function+configuration">Function configuration</a></li><ul><li><a class="HashLink" href="#1.+Deploying+rest+services+of+the+KB+as+Http+Azure+functions">1. Deploying rest services of the KB as Http Azure functions</a></li><li><a class="HashLink" href="#2.+Deploying+mobile+backend+services">2. Deploying mobile backend services</a></li></ul></li><li><a class="HashLink" href="#Availability+">Availability </a></li><li><a class="HashLink" href="#See+also">See also</a></li></ul></ul></p>
+
+<h2><a id="GeneXus+objects+that+can+be+deployed+as+Http+Functions" class="HashLink" href="#GeneXus+objects+that+can+be+deployed+as+Http+Functions">GeneXus objects that can be deployed as Http Functions</a></h2>
+
+<h3><a id="1.+Rest+services+of+the+KB" class="HashLink" href="#1.+Rest+services+of+the+KB">1. Rest services of the KB</a></h3>
+
+<p>For deploying rest services as Http Azure functions, select the &quot;<strong>Microsoft Azure Functions</strong>&quot; deployment target.</p>
+
+<p>You can add these types of objects to the <a href="38886.html">Deployment Unit object</a>:</p>
+
+<ul>
+	<li>Procedures, Business Components, DataProviders exposed as <a href="28213.html">Rest services</a>.</li>
+	<li><a href="46151.html">API object</a></li>
+</ul>
+
+<h3><a id="2.+Mobile+Backend+services" class="HashLink" href="#2.+Mobile+Backend+services">2. Mobile Backend services</a></h3>
+
+<p>For deploying the backend services of a mobile app (or Angular) as Http Azure functions, add the main objects of the app to the <a href="38886.html">Deployment Unit object</a> and select the &quot;<strong>Microsoft Azure serverless (backend services)</strong>&quot; deployment target.<br />
+All the objects of the Deployment unit must have <a href="31859.html">Generate OpenAPI interface property</a> set to Yes.  Alternatevely, set to Yes the property at the generator level, and do a rebuild all.</p>
+
+<p>We recommend reading this first: <a href="49351.html">Deploy to Azure Functions</a>.</p>
+
+<h2><a id="Function+configuration" class="HashLink" href="#Function+configuration">Function configuration</a></h2>
+
+<h3><a id="1.+Deploying+rest+services+of+the+KB+as+Http+Azure+functions" class="HashLink" href="#1.+Deploying+rest+services+of+the+KB+as+Http+Azure+functions">1. Deploying rest services of the KB as Http Azure functions</a></h3>
+
+<p>The <a href="49351.html">Trigger Type property</a> at the deployment unit should be &quot;Http.&quot;</p>
+
+<p>It is optional to deploy in <a href='https://azure.microsoft.com/en-us/services/api-management/'>API Management</a> (APIM) as well.</p>
+
+<p>If you deploy to APIM, first you have to configure the following:</p>
+
+<ul>
+	<li><strong>APIM service name:</strong> Name of the API Management service instance.</li>
+	<li><strong>APIM resource group:</strong> Azure API Management resource group.</li>
+	<li><strong>API Identification:</strong> API revision identifier. It must be unique in the current API Management service instance.</li>
+	<li><strong>API display name:</strong> Display name of this API.</li>
+	<li><strong>API backend service URL: </strong>Absolute URL of the backend service implementing this API. You should take this value from the settings of the Function App where you deployed the application, concatenated with the value of the Route Prefix property.</li>
+	<li><strong>API path:</strong> Relative URL uniquely identifying this API and all of its resource paths within the API Management service instance.</li>
+	<li><strong>API subscription required (*):</strong> If true, the API requires a subscription key on requests. When virtualizing your APIs behind an Azure API Management (APIM) service, you may need to provide the subscription key in your calls. Typically, this is done via the header key Ocp-Apim-Subscription-Key. Your subscription key is always linked to an APIM product. See the documentation of Azure about <a href='https://docs.microsoft.com/en-us/azure/api-management/api-management-subscriptions'>Subscriptions</a>.</li>
+	<li><strong>API Version: </strong>Describes the Version of the API. If you add a version to a non-versioned API, an Original version will be automatically created and will respond on the default URL. The versioning scheme used is Path based (&quot;Segment&quot;). See <a href='https://docs.microsoft.com/en-us/azure/api-management/api-management-versions'>versions in APIM</a>.</li>
+	<li><strong>API Version Set Id: </strong>A resource identifier for the related API Version Set. If an existing API Version Set Id is configured and an API Version display name is not indicated, then the version is updated in that version set.</li>
+	<li><strong>API Version Display Name: </strong>Name of API Version Set. <br />
+	 </li>
+</ul>
+
+<p><img src="./images/49267.png" id="49267" class="WikiImage"/></p>
+
+<p><strong>(*) </strong>In order to get the Subscription Key to consume the API, go through the Subscriptions option as shown below:</p>
+
+<p><img src="./images/49514.png" id="49514" class="WikiImage"/></p>
+
+<h3><a id="2.+Deploying+mobile+backend+services" class="HashLink" href="#2.+Deploying+mobile+backend+services">2. Deploying mobile backend services</a></h3>
+
+<p>See <a href="49107.html">Deploy mobile services to Azure Serverless using API Management</a>.</p>
+
+<h2><a id="Availability+" class="HashLink" href="#Availability+">Availability </a></h2>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<p>The API objects can be deployed to APIM since <a href="49301.html">GeneXus 17 upgrade 7</a>.</p>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<p><a href="47430.html">Azure Functions</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD><TD><a href="47430.html">Azure Functions</a></TD><TD><a href="49107.html">Deploy mobile services to Azure Serverless using API Management</a></TD></TR><TR><TD><a href="49957.html">Deploy mobile services to Azure Serverless using API Management (GeneXus 17 upgrade 8)</a></TD><TD><a href="49351.html">Deploy to Azure Functions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/22/22 03:59 PM</em></font></td></TR></table></font>

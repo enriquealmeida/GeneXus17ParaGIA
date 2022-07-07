@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How are partially qualified object names resolved</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22438,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How are partially qualified object names resolved</h1>
+<!--How are partially qualified object names resolved--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When writing code you may reference an object without fully qualifying it (i.e type its name but not the full <a href="22437.html">Module path</a> it is in). How references to partially qualified objects are resolved is called Automatic qualification rules.</p>
+
+<h2><a id="Automatic+qualification+rules" class="HashLink" href="#Automatic+qualification+rules">Automatic qualification rules</a></h2>
+
+<p>Automatic qualification rules apply to partially qualified object names references in, for example, a referencing object source code. That is, the rules that GeneXus follows to identify, for example, what ObjectB (see picture below) you are talking about if you do not fully qualify it.</p>
+
+<p>The basic concept behind automatic qualification is to free developers working in a Module from having to be aware of other Modules in a Knowledge Base unless they have to (i.e. they have to interact with other Modules).</p>
+
+<p>To achieve the above objective, automatic qualification takes into account where the unqualified references are made, meaning that it does not solve in the same way a reference made to ObjectC from ModuleA.ObjectE and from ModuleB.ObjectB, for example (see picture below).</p>
+
+<p>Modules are organized in a tree structure. Every Module has a “parent” Module (except the <a href="22439.html">Root module</a>) and may also have “children” Modules. A “Module branch” is the set of Modules comprised by any given Module and its ancestors. A “Module tree” is the set of Modules comprised by any given Module and its successors. It is important to remember these concepts as they are used to explain how automatic qualification works.</p>
+
+<p><img src="./images/22436.png" id="22436" class="WikiImage"/></p>
+
+<p>Vertical lines are intended for helping you identify duplicated names.</p>
+
+<p>Automatic qualification algorithm works as follows.</p>
+
+<ol>
+	<li>If the name of the object is unique in the Knowledge Base, the call is resolved to that object.</li>
+	<li>If the name of the object is not unique, the partially qualified object is searched in the caller's <a href="22411.html">Module object</a> and resolved to that object.</li>
+	<li>If no object is found, the search continues over the sub-modules of the caller's <a href="22411.html">Module object</a> and resolved to that object.<sup>1</sup></li>
+	<li>If no object is found, the parent <a href="22411.html">Module object</a> of the caller's <a href="22411.html">Module object</a> is used to repeat steps 2 and 3.<sup>1</sup><br />
+	This process goes on until an object can be found.</li>
+</ol>
+
+<p><strong>Note</strong><sup>1</sup>: if two objects are found and no other object with the same partially qualified name exists, the call is ambiguous and the algorithm stops displaying an error. Then the developer must qualify the object in order to break the ambiguity.</p>
+
+<p>This can be explained using the following rules which are explained later:</p>
+
+<ul>
+	<li>Referenced object name is unique in a referencing object container Module tree.</li>
+	<li>Referenced object name exists in the referencing object container Module branch.</li>
+	<li>Ambiguous call.</li>
+</ul>
+
+<h3><a id="Referenced+object+name+is+unique+in+a+referencing+object+container+Module+tree" class="HashLink" href="#Referenced+object+name+is+unique+in+a+referencing+object+container+Module+tree">Referenced object name is unique in a referencing object container Module tree</a></h3>
+
+<p>The rule may sound pretty complex to read but, with a few examples, it is easy to understand.</p>
+
+<h4><a id="Example+1" class="HashLink" href="#Example+1">Example 1</a></h4>
+
+<p>Say you are referencing ObjectA from any other object in any Module. As there is no other object named ObjectA in the Knowledge Base (the <a href="22439.html">root module</a>), the reference will be automatically qualified as ModuleA.ObjectA.</p>
+
+<h4><a id="Example+2" class="HashLink" href="#Example+2">Example 2</a></h4>
+
+<p>Unqualified references to ObjectB from objects in ModuleA, ModuleC, ModuleD, ModuleE and ModuleF are automatically qualified as ModuleA.ObjectB. ObjectB is unique in ModuleA's Module tree that is a container module of any of the mentioned modules.</p>
+
+<h4><a id="Example+3" class="HashLink" href="#Example+3">Example 3</a></h4>
+
+<p>There are two objects named ObjectC in ModuleA's Module tree but only one in either ModuleC, ModuleD and ModuleB. Unqualified references to ObjectC from objects in any of the last named Modules will be automatically qualified to ModuleC.ObjectC, ModuleD.ObjectC and ModuleB.ObjectC.</p>
+
+<h3><a id="Referenced+object+name+exists+in+the+referencing+object+container+Module+branch" class="HashLink" href="#Referenced+object+name+exists+in+the+referencing+object+container+Module+branch">Referenced object name exists in the referencing object container Module branch</a></h3>
+
+<p>When the referenced object name is not unique in a referencing object container Module tree, but there is an object with the same name (the referenced object) in the referencing object container Module branch, the unqualified reference is resolved for that object. Let's take a look at a few examples that will make things clearer.</p>
+
+<h4><a id="Example+1" class="HashLink" href="#Example+1">Example 1</a></h4>
+
+<p>Say you are referencing ObjectE from an object in Module ModuleC. The name ObjectE is _not_ unique in any of ModuleC's container Module trees. There is, however, one object named ObjectE in ModuleC branch. The reference is qualified as ModuleC.ObjectE.</p>
+
+<h3><a id="Ambiguous+calls" class="HashLink" href="#Ambiguous+calls">Ambiguous calls</a></h3>
+
+<p>In some cases, the Automatic qualification rules cannot solve partially qualified object names references. In those cases the following error is displayed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error: '{ObjectQualifiedName}' is ambiguous, there are more than one object with this name. Use the full qualified name to resolve the ambiguity.
+Conflicting objects: {ObjectType_1} '{FullyQualifiedName_1}', {ObjectType_2} '{FullyQualifiedName_2}', ...[{ObjectType_N} '{FullyQualifiedName_N}']</pre>
+
+<p>Example 1</p>
+
+<p><img src="./images/25680.png" id="25680" class="WikiImage"/></p>
+
+<p>If a call to ObjectH is made from ObjectG—see image above, the call cannot be resolved automatically and the following error will be diplayed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error: 'ObjectH' is ambiguous, there are more than one object with this name. Use the full qualified name to resolve the ambiguity.
+Conflicting objects: Web Panel 'ModuleG.ModuleH.ObjectH', Web Panel 'ModuleG.ModuleI.ObjectH' (ModuleG.ObjectG Events, Line: Y, Char: XXX)</pre>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22414.html">Toc:Modules</a></TD></TR><TR><TD><a href="25609.html">Modules - Grammar</a></TD><TD><a href="22483.html">Modules - Object names</a></TD><TD><a href="23850.html">Which objects can be defined in a module?</a></TD></TR><TR><TD><a href="25607.html">Working with Modules</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/02/20 01:58 PM</em></font></td></TR></table></font>

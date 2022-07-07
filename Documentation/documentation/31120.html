@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>External Storage for Multimedia</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31120,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">External Storage for Multimedia</h1>
+<!--External Storage for Multimedia--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Companies are putting more and more apps in the cloud because the cloud model keeps business agility during the app's lifetime; relevant benefits include high-performance access to data, data safety, and scalability.</p>
+
+<p>Regarding multimedia storage (for videos, audios, or images), there are several compelling reasons to use external storage rather than storing data in the database, which are detailed below:</p>
+
+<h3><a id="Scalability" class="HashLink" href="#Scalability">Scalability</a></h3>
+
+<p>To ensure the scalability of a clustered application, the server file system cannot be used to store the multimedia, because it cannot be guaranteed that the same server will serve the client in the next HTTP request.<br />
+ <br />
+The traditional way of saving images is in the database. When requested, they are downloaded to the file system of the same server where the application runs (related to the <a href="6979.html">Blob Local Storage</a> and <a href="7628.html">Temp media directory property</a> properties). This is a drawback for applications that run on a cluster with no server affinity, where different nodes can serve the images regardless if the web session remains the same.</p>
+
+<h3><a id="Security" class="HashLink" href="#Security">Security</a></h3>
+
+<p>Data should be guarded against access by non-authorized users. </p>
+
+<p>The disadvantage of saving multimedia files in the database is that when they are retrieved to display an image, for example, it is temporarily stored in the server's file system in a location accessible from the web app (the Temp Media Directory). In addition, the file that is automatically downloaded to the file system when an image is retrieved to be displayed can harm the application or the server's stability.</p>
+
+<p>With external storage, you can prevent data from being dangerously exposed to unauthorized users and protect the server from malicious attacks.</p>
+
+<h3><a id="Performance" class="HashLink" href="#Performance">Performance</a></h3>
+
+<p>Temporarily storing data in the server's file system implies an I/O penalty. This can be avoided by using the external storage mechanism.</p>
+
+<h2><a id="External+Storage+for+Multimedia+in+GeneXus+applications" class="HashLink" href="#External+Storage+for+Multimedia+in+GeneXus+applications">External Storage for Multimedia in GeneXus applications</a></h2>
+
+<p>When an external storage system is used, multimedia files aren't stored in the database and the storage file location URL is saved in the &quot;_GXI&quot; column of the table. </p>
+
+<p>In other words, every insert or update from any source (they can be procedures, <a href="5846.html">Business Component</a>, or Transactions) automatically manages the data in the external storage. In addition, the external storage is automatically retrieved. The user doesn't need to program anything or change its logic.</p>
+
+<p>For versions previous to  <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a>, it is available for <a href="15204.html">Image data type</a>, <a href="16529.html">Audio data type</a>, and <a href="16608.html">Video data type</a>. Blobs are not included, and they are stored in the database as usual.</p>
+
+<p>As since  <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a>, the <a href="40420.html">BlobFile data type</a> supports the implementation also.</p>
+
+<h3><a id="External+storage+providers+supported" class="HashLink" href="#External+storage+providers+supported">External storage providers supported</a></h3>
+
+<p>There are several external storage providers to choose from:</p>
+
+<p><a href='https://aws.amazon.com/s3/'>Amazon S3</a><br />
+<a href='https://www.ibm.com/cloud/object-storage'>IBM Cloud Object Storage</a> <br />
+<a href='https://azure.microsoft.com/en-us/services/storage/'>Windows Azure Storage</a><br />
+<a href='https://cloud.google.com/storage/'>Google Cloud Storage</a></p>
+
+<h3><a id="How+to+use+External+storage+for+multimedia+files+" class="HashLink" href="#How+to+use+External+storage+for+multimedia+files+">How to use External storage for multimedia files </a></h3>
+
+<p>After having decided which is the most convenient provider for you, and setting all the necessary configurations in the cloud, you just need to configure the <a href="31121.html">Storage Provider property</a> or use the <a href="32087.html">Storage Provider API</a> <span style="background-color: rgb(245,246,245);">in GeneXus</span>.</p>
+
+<p>This is valid for Web and mobile apps as well.  </p>
+
+<h2><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h2>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" /> The CloudServices.config file includes the information for connecting to the external storage, so this file has to be taken to production. It's located in the WEB-INF folder for Java applications, and under the virtual directory for NET applications.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<ul>
+	<li>When using external storage, data will always be automatically stored in an external manner as it is updated from the application. For this reason, you can start with data stored in the DB and end up with the data externally stored if it is updated using the application. The other way round, if you use external storage and change to database storage, you won't get any errors because the external storage remains accessible while the data isn't updated again. When the data is updated, it is stored in the database.</li>
+	<li>When you delete a record, multimedia files aren't deleted from the external storage.</li>
+	<li>If you change the bucket name or folder along the way when you retrieve the data the application won't throw any errors unless you remove the old bucket or folder. From then on, the application will store the files in the new bucket or folder.</li>
+	<li>When using Amazon S3, the Bucket name must have &quot;Public Access&quot;. This means that to access the file no authentication is performed; so, having the URL to it, it is accessible. If this solution is not suitable for you, we recommend using the <a href="32087.html">Storage Provider API</a>.</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="32087.html">Storage Provider API</a></p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="45731.html">Access Key property</a></TD><TD><a href="6704.html">Blob data type</a></TD><TD><a href="40420.html">BlobFile data type</a></TD></TR><TR><TD><a href="45733.html">Bucket Name property</a></TD><TD><a href="40907.html">Download content in Offline applications property</a></TD><TD><a href="45734.html">Folder Name property</a></TD></TR><TR></TR><TR><TD><a href="45732.html">Secret Key property</a></TD><TD><a href="45736.html">Storage Endpoint property</a></TD></TR><TR><TD><a href="45735.html">Storage Location property</a></TD><TD><a href="31121.html">Storage Provider property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/21 06:51 PM</em></font></td></TR></table></font>

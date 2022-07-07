@@ -1,0 +1,584 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tabs Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="SearchButton.cs" %>
+<%@ Assembly Name="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Concepto.Patterns.EntityProvider.EntityProviderInstance" %>
+<%@ Property Name="GridObject" Type="Concepto.Patterns.EntityProvider.IGridObject" %>
+<%@ Property Name="GenerateForSmartDevices" Type="System.Boolean" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubPrepareTransaction" File="SubPrepareTransaction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Events %>">
+	<Source><![CDATA[<%
+	EntityProviderSettings settings = Instance.Settings;
+	
+	bool needGridState = (settings.Grid.SaveGridState && (GridObject is SelectionElement));
+	bool hasFilters = GridObject.Filter != null && GridObject.Filter.Attributes.Count > 0;
+	bool hasAdvancedBar = (hasFilters && GridObject.Filter.Attributes.Count > 1) || GridObject.Orders.NeedsChoice;
+	ActionElement search = SearchButton.Prepare(Object, GridObject);
+	bool isSelection = GridObject is SelectionElement;
+
+	List<ActionElement> standaloneActionsWithSecurityCheck = new List<ActionElement>();
+	foreach (ActionElement action in GridObject.Actions.StandaloneActions)
+	{
+		if (action.Condition != String.Empty)
+			standaloneActionsWithSecurityCheck.Add(action);
+	}
+	
+	bool showCurrentPage = settings.Grid.ShowCurrentPage;
+	if (isSelection)
+	{
+		string showCurrentPageInstance = ((SelectionElement)GridObject).ShowCurrentPage;
+		if (showCurrentPageInstance == "true")
+			showCurrentPage = true;
+		else
+		{
+			if (showCurrentPageInstance == "false")
+				showCurrentPage = false;
+		}
+	}
+
+%>
+Event Start
+<%  
+	if (GenerateForSmartDevices)
+	{
+		string sd = "SD";
+%>
+	Form.Meta.AddItem("viewport", "width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=1")
+
+<%
+		if (GridObject is TabElement && GridObject.Parent  != null)
+		{
+			TabElement tab = (TabElement)GridObject;
+			string parameters = "";
+			foreach (ParameterElement parameter in tab.Parameters)
+			{
+				if (parameter.IsAttribute)
+					parameters += "&" + parameter.Name + " ,";
+			}
+%>
+	ViewAll.Link = <%= tab.Parent.ObjectName %><%= sd %>.Link(<%= parameters.Substring(0,parameters.Length-1) %>)
+<%		
+		}
+	}
+%>
+<%@ CallSubTemplate SubLoadContext Settings='settings' %>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+<%
+	if (GridObject.Page != String.Empty)
+	{
+		if (GenerateForSmartDevices)
+		{
+%>
+	<%= Constants.GridName %>.Rows = 4
+<%
+		}
+		else
+		{
+%>
+	<%= Constants.GridName %>.Rows = <%= GridObject.Page %>
+<%
+		}
+	}
+
+	if (GridObject.Actions.Insert != null && GridObject.Actions.Insert.InitializationCode() != String.Empty)
+	{
+		// TODO: apparently not needed.
+%>
+<%= Indentation.Indent(GridObject.Actions.Insert.InitializationCode(), 1) %>
+<%
+	}
+
+	foreach (ActionElement action in GridObject.Actions.GridActions)
+	{
+		if (action.InitializationCode() != String.Empty)
+		{
+%>
+<%= Indentation.Indent(action.InitializationCode(), 1) %>
+<%
+		}
+	}
+
+	if (GridObject.Orders.NeedsChoice)
+	{
+%>
+	<%= OrdersElement.OrderVariableName %> = <%= OrdersElement.DefaultOrderValue %>
+<%
+	}
+
+	if (GridObject.Filter != null)
+	{
+		int i = 0;
+		foreach (FilterAttributeElement filterVar in GridObject.Filter.Attributes)
+		{
+		if (Instance.UseAbstractForm && i > 0 && !filterVar.IsDateType)
+			{
+%>
+	<%= filterVar.VariableName %>.Visible = false
+<%
+			}
+			// Initialize to "no value" if no default is provided.
+			if (filterVar.AllValue && String.IsNullOrEmpty(filterVar.Default))
+			{
+				Domain enumeratedDomain = filterVar.EnumeratedDomain;
+				if (enumeratedDomain != null)
+				{
+%>
+	<%= filterVar.VariableName %> = <%= enumeratedDomain.Name %>.Convert(nullvalue(<%= filterVar.VariableName %>))
+<%
+				}
+				else
+				{
+%>
+	<%= filterVar.VariableName %> = nullvalue(<%= filterVar.VariableName %>)
+<%
+				}
+			}
+			
+			if (filterVar.Default != String.Empty)
+			{
+%>
+	<%= filterVar.VariableName %> = <%= filterVar.Default %>
+<%
+			}
+			i++;
+			if (GenerateForSmartDevices)
+			{
+				break;
+			}
+		}
+	}
+
+	if (GridObject is SelectionElement)
+	{
+		string formCaption = ((SelectionElement)GridObject).Caption;
+		if (formCaption == "")
+			formCaption = "'" + ((SelectionElement)GridObject).Description + "'";
+%>
+	Form.Caption = <%= formCaption %>
+<%
+	}
+
+	// "Hidden" attributes - sometimes necessary for GX to infer the correct navigation scheme.
+	foreach (ParameterElement parameter in GridObject.Parameters)
+	{
+		if (parameter.IsAttribute && GridObject.Attributes != null && GridObject.Attributes.FindAttribute(parameter.Name) == null)
+		{
+%>
+	<%= parameter.Name %>.Visible = False
+<%
+		}
+	}
+	
+	// Constants required for advanced bar items in abstract forms
+	if (Instance.UseAbstractForm && hasAdvancedBar)
+	{
+%>
+	&<%= Constants.AdvancedLabelTemplateVariable %> = "%1 <strong>%2</strong>"
+<%
+	}
+	
+	if (GridObject.CallsTransaction && settings.Template.UseTransactionContext)
+	{
+%>
+
+	Do 'PrepareTransaction'
+<%
+	}
+	if (needGridState) 
+	{
+%>
+	<%= Constants.GridName %>.LoadSessionState()
+<%
+	}
+%>
+EndEvent
+
+<%
+	if (Instance.UseAbstractForm)
+	{
+		if (hasAdvancedBar)
+		{
+			Transaction transaction = Instance.Transaction.Transaction;
+			if (transaction == null)
+				throw new ArgumentNullException("Object");
+			var layout = Concepto.Patterns.EntityProvider.Helpers.TemplateManagment.CalculateTemplate(transaction);
+			switch (layout)
+			{
+				case DefaultFormHelper.FormTemplate.Flat:
+%>
+Event 'Toggle'
+	if <%= Constants.AdvancedContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerClass %>
+		<%= Constants.AdvancedContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerClass %> + !" " + ThemeClass:<%= Constants.AdvancedBarContainerVisibleClass %>
+		<%= Constants.ToggleButton %>.Class += !" " + ThemeClass:<%= Constants.BtnToggleActiveClass %>
+	else
+		<%= Constants.AdvancedContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerClass %>
+		<%= Constants.ToggleButton %>.Class = ThemeClass:<%= Constants.BtnToggleClass %>
+	endif
+EndEvent
+
+<%
+					break;
+				case DefaultFormHelper.FormTemplate.Carmine:
+				case DefaultFormHelper.FormTemplate.Unanimo:
+%>			
+Event 'Toggle'
+	if <%= (isSelection) ? Constants.AdvancedContainerTable : Constants.ViewAdvancedContainerTable %>.Class = ThemeClass:<%= (isSelection) ? Constants.AdvancedBarContainerClass : Constants.ViewAdvancedBarContainerClass %>
+		<%= (isSelection) ? Constants.AdvancedContainerTable : Constants.ViewAdvancedContainerTable %>.Class = ThemeClass:<%= (isSelection) ? Constants.AdvancedBarContainerClass : Constants.ViewAdvancedBarContainerClass %> + !" " + ThemeClass:<%= (isSelection) ? Constants.AdvancedBarContainerVisibleClass : Constants.ViewAdvancedBarContainerVisibleClass %>
+		<%= Constants.GridCellName %>.Class = ThemeClass:WWGridCell
+		<%= Constants.ToggleButton %>.Class = ThemeClass:HideFiltersButton
+		<%= Constants.ToggleButton %>.Caption = "Hide Filters"
+		<%= Constants.ToggleButton %>.TooltipText = "Hide Filters"
+	else
+		<%= (isSelection) ? Constants.AdvancedContainerTable : Constants.ViewAdvancedContainerTable %>.Class = ThemeClass:<%= (isSelection) ? Constants.AdvancedBarContainerClass : Constants.ViewAdvancedBarContainerClass %>
+		<%= Constants.GridCellName %>.Class = ThemeClass:WWGridCellExpanded
+		<%= Constants.ToggleButton %>.Class = ThemeClass:ShowFiltersButton
+		<%= Constants.ToggleButton %>.Caption = "Show Filters"
+		<%= Constants.ToggleButton %>.TooltipText = "Show Filters"
+	endif
+EndEvent
+<%			
+					break;
+				case DefaultFormHelper.FormTemplate.Fiori:
+%>
+Event 'Toggle'
+	if <%= Constants.AdvancedContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerClass %>
+		<%= Constants.AdvancedContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerClass %> + !" " + ThemeClass:<%= Constants.AdvancedBarContainerVisibleClass %>
+		<%= Constants.ToggleButton %>.Class = ThemeClass:HideFiltersButton
+		<%= Constants.ToggleButton %>.Caption = "Hide Filters"
+		<%= Constants.ToggleButton %>.TooltipText = "Hide Filters"
+	else
+		<%= Constants.AdvancedContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerClass %>
+		<%= Constants.ToggleButton %>.Class = ThemeClass:ShowFiltersButton
+		<%= Constants.ToggleButton %>.Caption = "Show Filters"
+		<%= Constants.ToggleButton %>.TooltipText = "Show Filters"
+	endif
+EndEvent
+
+<%
+					break;
+				default:
+					throw new InvalidOperationException(string.Format("Missing sub-template for {0}", layout));
+			}
+		}	
+
+		// Event for collapsed/expanded toggling of order by option
+		if (GridObject.Orders.NeedsChoice)
+		{
+%>
+Event LblOrderBy.Click
+	if <%= Constants.OrderByContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerItemClass %>
+		<%= Constants.OrderByContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerItemClass %> + !" " + ThemeClass:<%= Constants.AdvancedBarContainerItemExpandedClass %>
+	else
+		<%= Constants.OrderByContainerTable %>.Class = ThemeClass:<%= Constants.AdvancedBarContainerItemClass %>
+	endif
+EndEvent
+
+<%
+			// Events for setting the order for each order
+			int i = 1;
+			foreach (OrderElement orderEl in GridObject.Orders)
+			{
+%>
+Event OrderBy<%= i.ToString() %>.Click
+	&OrderedBy = <%= i.ToString() %>
+<%
+				for (int j = 1; j <= GridObject.Orders.Count; j++)
+				{
+%>
+	OrderBy<%= j.ToString() %>.Class = <%= (i == j) ? "ThemeClass:WWOrderItem + !\" \" + ThemeClass:WWOrderItemSelected" : "ThemeClass:WWOrderItem" %>
+<%
+				}
+%>
+	<%= Constants.GridName %>.Refresh()
+EndEvent
+
+<%
+				i++;
+			}
+		}
+
+		// Event for collapsed/expanded toggling of each filter
+		if (hasFilters && GridObject.Filter.Attributes.Count > 1)
+		{
+			for (int i = 1; i < GridObject.Filter.Attributes.Count; i++)
+			{
+				FilterAttributeElement filterVar = GridObject.Filter.Attributes[i];
+%>
+Event Lbl<%= filterVar.Name %>Filter.Click
+	if <%= filterVar.Name %>FilterContainer.Class = ThemeClass:AdvancedContainerItem
+		<%= filterVar.Name %>FilterContainer.Class = ThemeClass:AdvancedContainerItem + !" " + ThemeClass:AdvancedContainerItemExpanded
+<%
+				if (!filterVar.IsDateType)
+				{
+%>
+		<%= filterVar.VariableName %>.Visible = true
+<%
+				}
+%>
+	else
+		<%= filterVar.Name %>FilterContainer.Class = ThemeClass:AdvancedContainerItem
+<%
+				if (!filterVar.IsDateType)
+				{
+%>
+		<%= filterVar.VariableName %>.Visible = false
+<%
+				}
+%>
+	endif
+EndEvent
+
+<%
+			}
+		}
+	}
+	if (needGridState || standaloneActionsWithSecurityCheck.Count > 0 || hasAdvancedBar)
+	{
+%>
+Event Refresh
+<%
+		if (standaloneActionsWithSecurityCheck.Count > 0)
+		{
+%>
+	Do 'CheckSecurityForActions'
+<%
+		}
+	if (needGridState) 
+		{
+%>
+	<%= Constants.GridName %>.SaveSessionState()
+<%
+		}		
+
+		if (Instance.UseAbstractForm)
+		{
+			if (GridObject.Orders.NeedsChoice)
+			{
+%>
+
+	do case
+<%
+				int i = 1;
+				foreach (OrderElement orderEl in GridObject.Orders)
+				{
+%>
+		case &OrderedBy = <%= i.ToString() %>
+			LblOrderBy.Caption = format(&<%= Constants.AdvancedLabelTemplateVariable %>, "<%= settings.Labels.OrderedBy %>", "<%= orderEl.Name %>")
+<%
+					i++;
+				}
+%>
+	endcase
+<%
+			}
+			
+			if (hasFilters && GridObject.Filter.Attributes.Count > 1)
+			{
+				for (int i = 1; i < GridObject.Filter.Attributes.Count; i++)
+				{
+					FilterAttributeElement filterVar = GridObject.Filter.Attributes[i];
+%>
+
+	If <%= filterVar.VariableName %>.IsEmpty()
+		Lbl<%= filterVar.Name %>Filter.Caption = "<%= filterVar.Description %>"
+	Else
+<%
+					Domain enumDomain = filterVar.EnumeratedDomain;
+					string filterValueCaption = filterVar.VariableName;
+					if (enumDomain != null)
+						filterValueCaption = string.Format("{0}.EnumerationDescription()", filterValueCaption);
+					else if (filterVar.IsComboType)
+						filterValueCaption = string.Format("{0}.Text", filterValueCaption);
+%>
+		Lbl<%= filterVar.Name %>Filter.Caption = format(&<%= Constants.AdvancedLabelTemplateVariable %>, "<%= filterVar.Description %>", <%= filterValueCaption %>)
+	Endif
+<%
+				}
+			}
+		}
+		 
+		if (isSelection && showCurrentPage)
+		{
+%>
+	If <%= Constants.GridName %>.PageCount > 0
+		GridPageCount.Caption = "Page " + str(<%= Constants.GridName %>.CurrentPage) + " of " + str(<%= Constants.GridName %>.PageCount)
+	Else
+		GridPageCount.Caption = "Page 0 of 0"
+	EndIf
+<%
+		}
+%>
+EndEvent
+
+<%
+	}
+
+	if (standaloneActionsWithSecurityCheck.Count > 0)
+	{
+%>
+Sub 'CheckSecurityForActions'
+<%
+		int indentation = 1;
+		bool hasForEach = false;
+
+		if (GridObject is TabElement)
+		{
+			ViewElement view = ((TabElement)GridObject).Parent;
+			indentation = 2;
+			hasForEach = true;
+%>
+	For each
+	where <%= view.Parameters.WhereCondition() %>
+
+<%
+		}
+
+		foreach (ActionElement action in standaloneActionsWithSecurityCheck)
+		{
+%>
+<%= Indentation.Indent(action.EnableDisableCode(), indentation) %> 
+<%
+		}
+		
+		if (hasForEach)
+		{
+%>
+	Endfor
+<%
+		}
+%>
+EndSub
+
+<%
+	}
+%>
+Event <%= Constants.GridName %>.Load
+<%
+	foreach (ActionElement action in GridObject.Actions.GridActions)
+	{
+		string actionCode = action.EnableDisableCode();
+		if (actionCode != String.Empty)
+		{
+%>
+<%= Indentation.Indent(actionCode, 1) %>
+<%
+		}
+	}
+
+	if (GridObject.Attributes != null)
+	{	
+%>
+<%@ CallSubTemplate SubLinkAttributes Level='GridObject.Level' Element='GridObject' Attributes='GridObject.Attributes' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+		// Load code for variables.
+		foreach (VariableElement var in GridObject.Attributes.Variables)
+		{
+			if (var.LoadCode != String.Empty)
+			{
+%>
+
+	// Load variable '<%= var.VariableName %>'
+<%= Indentation.Indent(var.VariableLoadCode(), 1) %>
+<%
+			}
+		}
+	}
+%>
+EndEvent
+
+<%
+	foreach (ActionElement action in GridObject.Actions)
+	{
+		if (action.Event() != String.Empty)
+		{
+%>
+<%= action.Event() %>
+
+<%
+		}
+	}
+
+	if (GridObject.Actions.MultiRowActions.Count > 0)
+	{
+%>
+Sub 'LoadSelectedRows'
+	&SelectedRows = new()
+	For Each Line
+		If (&Selected)
+			&SelectedRow = new()
+
+<%
+		if (GridObject.Attributes != null)
+		{
+			int count = 0;
+			foreach (IAttributesItem attItem in GridObject.Attributes)
+			{
+%>
+			&SelectedRow.<%= attItem.Id %> = <%= attItem.Name %>
+<%
+				count++;
+				if (count == 3 && GenerateForSmartDevices)
+					break;
+			}
+		}
+%>
+
+			&SelectedRows.Add(&SelectedRow)
+		Endif
+	Endfor
+EndSub
+
+<%
+	}
+
+	if (search != null)
+	{
+%>
+<%= search.Event() %>
+
+<%
+	}
+
+	if (GridObject.CallsTransaction && settings.Template.UseTransactionContext)
+	{
+%>
+Sub 'PrepareTransaction'
+<%@ CallSubTemplate SubPrepareTransaction Transaction='GridObject.Transaction' CallerIsRecord='false' Parameters='GridObject.Parameters' %>
+EndSub
+
+<%
+	}
+
+	if (GridObject.Actions.Export != null && !GenerateForSmartDevices)
+	{
+		string gridParameters = GridObject.Actions.Export.Parameters.List();
+		string exportParameters = (gridParameters != String.Empty ? gridParameters + ", " : String.Empty);
+		exportParameters += "&ExcelFilename, &ErrorMessage";
+%>
+Event '<%= Constants.EventExport %>'
+	// Generate Excel spreadsheet and download it.
+	<%= settings.Objects.ExportProcedureName(GridObject) %>(<%= exportParameters %>)
+	If (&ExcelFilename <> "")
+		Link(&ExcelFilename)
+	Else
+		msg(&ErrorMessage)
+	Endif
+EndEvent
+
+<%
+	}
+%>
+]]>
+	</Source>
+</Part>

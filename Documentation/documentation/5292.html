@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Full Text Search Data Types</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5292,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Full Text Search Data Types</h1>
+<!--Full Text Search Data Types--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In this paper we explain in detail the GeneXus data types provided for making your database and files full text searchable.</p>
+
+<h3><a id="1.+TextSearch.Find+Function" class="HashLink" href="#1.+TextSearch.Find+Function">1. TextSearch.Find Function</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+TextSearch.Find(Character Content, (optional) Numeric ItemsPerPage, (optional) Numeric PageNumber): SearchResult</pre>
+
+<h4><a id="SearchResult+Data+Type" class="HashLink" href="#SearchResult+Data+Type">SearchResult Data Type</a></h4>
+
+<table border="1" cellpadding="1" cellspacing="1" width="800">
+	<tbody>
+		<tr>
+			<td><span style="font-size: small;"><strong><span style="font-family: Arial;">MaxItems</span></strong></span></td>
+			<td><span style="font-size: small;"><strong>Total number of items returned by the search</strong></span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;"><strong><span style="font-family: Arial;">ElapsedTime</span></strong></span></td>
+			<td><span style="font-size: small;"><strong>Time elapsed by the search</strong></span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;"><strong>Items</strong></span></td>
+			<td><span style="font-size: small;"><strong>SearchResultItem Collection</strong></span></td>
+		</tr>
+	</tbody>
+</table>
+
+<h4><a id="SearchResultItem+Data+Type+Properties" class="HashLink" href="#SearchResultItem+Data+Type+Properties"><strong>SearchResultItem Data Type Properties</strong></a></h4>
+
+<table border="1" cellpadding="1" cellspacing="1" width="800">
+	<tbody>
+		<tr>
+			<td><span style="font-size: small;">Title:character</span></td>
+			<td><span style="font-size: small;">Content title </span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Viewer:character</span></td>
+			<td><span style="font-size: small;">Url used to display a retrieval result</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Id: character</span></td>
+			<td><span style="font-size: small;">document Id used to retrieve the object from the original source</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Score:numeric</span></td>
+			<td><span style="font-size: small;">Relevance for the item, given a query. It is greater than 0 and less than or equal to 1, it indicates how closely the document matched the query. Search results are ordered by their score by default.</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">TimeStamp:DateTime</span></td>
+			<td><span style="font-size: small;">TimeStamp of the last document indexing </span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Type:character</span></td>
+			<td><span style="font-size: small;">Type identifier (the same value assigned to ContentInfo Type, see below)</span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Note: SearchResultItem can be passed as parameter of the load method of a Business Component. So, if the result of the search is of <em>Type </em>any BC Transaction (e.g Customer), you can program: &amp;Customer.load(&amp;SearchResultItem)<br />
+<br />
+<a href="6701.html">Full Text Search Examples</a></p>
+
+<h3><a id="2.+Index+Function" class="HashLink" href="#2.+Index+Function">2. Index Function</a></h3>
+
+<p>As you can search data stored in your database, in files, or in memory, you can index all of them. Data stored in memory (variables), as well as the other types of data, will be indexed in index files in order to make it searchable.<br />
+<br />
+Indexes have an optimized structure to search keywords.<br />
+<br />
+<strong>Data stored in the database:</strong><br />
+<br />
+It indexes all attributes in the transaction structure (a searchable transaction). It indexes also inferred attributes and formulas if they are in the transaction structure. <br />
+<br />
+Indexing operations are performed automatically when working with the transaction in an asynchronous way, so application performance is not affected. It means that you won't see the new data immediately updated in your searches.<br />
+<br />
+<em>When does the indexing take place?</em><br />
+<br />
+1. When inserting/deleting/updating data from the Business Component transaction form.<br />
+2. When inserting/deleting/updating data using the Business Components methods.<br />
+<br />
+In the other cases (procedure updates for example), you should index the data by using the functions provided for this purpose. Their syntax and use will be explained later in this document.<br />
+<br />
+<strong>Data stored in files or in memory:</strong><br />
+<br />
+In the case of files, the supported extensions are .Net: txt, html, pdf; Java: txt, doc, html, pdf</p>
+
+<h3><a id="Index+Functions" class="HashLink" href="#Index+Functions">Index Functions</a></h3>
+
+<table border="1" cellpadding="1" cellspacing="1" width="1000">
+	<tbody>
+		<tr>
+			<td><span style="font-size: small;">TextSearch.Add( Variable (BC | File | string) [, ContentInfo info]):Boolean</span></td>
+			<td><span style="font-size: small;">Inserts content on the index, it saves duplicated entries if the content already exists.</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">TextSearch.Update(Variable (BC | File | string) [, ContentInfo info]):Boolean</span></td>
+			<td><span style="font-size: small;"> Deletes the content of the index if it already exists, and then inserts the content.</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">TextSearch.Delete(Variable (BC | File | string)):Boolean</span></td>
+			<td><span style="font-size: small;"> Deletes the content from the index.<br />
+			TextSearch.Delete(String) : The String must be the Id by which the information was indexed; check the <i>ContentInfo</i> Id property used with the <i>Add</i> and <i>Update</i> operations.<br />
+			TexSearch.Delete(BC) : It´s calculated the Id (Transaction name plus transaction keys ) and the index information associated to that Id is deleted.<br />
+			TextSearch.Delete(File) : It´s calculated the Id (Full file name) and the index information associated to that Id is deleted.</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">TextSearch.Reindexall():Numeric</span></td>
+			<td><span style="font-size: small;"> Indexes all the content of tables defined in GeneXus as Searchable Business Components.</span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+<strong>ContentInfo Properties</strong></p>
+
+<table border="1" cellpadding="1" cellspacing="1" width="800">
+	<tbody>
+		<tr>
+			<td> </td>
+			<td> </td>
+			<td colspan="2"><span style="font-size: small;"><strong>Default Value</strong></span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;"> <strong>Property</strong></span></td>
+			<td><span style="font-size: small;"> <strong>Definition</strong></span></td>
+			<td><span style="font-size: small;"><strong>Business Components</strong></span></td>
+			<td><span style="font-size: small;"><strong>Files</strong></span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Id:character</span></td>
+			<td><span style="font-size: small;">Document key used to retrieve the object from the original source</span></td>
+			<td><span style="font-size: small;">Transaction name plus transaction keys </span></td>
+			<td><span style="font-size: small;">Full file name</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Viewer:character</span></td>
+			<td><span style="font-size: small;">Url used to display a retrieval result</span></td>
+			<td><span style="font-size: small;">Viewer property associated with the transaction (if it is none, the transaction in display mode is used).</span></td>
+			<td><span style="font-size: small;">File path</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Type:character</span></td>
+			<td><span style="font-size: small;">Type identifier</span></td>
+			<td><span style="font-size: small;">Transaction name</span></td>
+			<td><span style="font-size: small;">&quot;GxFile&quot;</span></td>
+		</tr>
+		<tr>
+			<td><span style="font-size: small;">Title:character</span></td>
+			<td><span style="font-size: small;">Content title</span></td>
+			<td><span style="font-size: small;">Description attribute of the transaction for the Business Component</span></td>
+			<td><span style="font-size: small;">File name</span></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+See examples of Indexing <a href="6036.html">here</a><br />
+<br />
+<font size="1"><strong>Note: How can I peek into the index?</strong><br />
+<br />
+There is a Lucene index browser at <font color="#003366"><strong><a href='http://www.getopt.org/luke/'>Luke</a></strong></font> which can be used to navigate the index.</font></p>
+
+<h3><a id="Other+Full+Text+Search+Functions" class="HashLink" href="#Other+Full+Text+Search+Functions">Other Full Text Search Functions</a></h3>
+
+<p>There are two functions related to the spell checking of search queries. The first one, BuildDictionary() should be called after indexing some data. BuildDictionary creates a dictionary from the index dictionary that can be used to check the spelling of a query. The more content the index has when calling BuildDictionary(), the better the spell check with CheckSpell function will be.</p>
+
+<table border="1" cellpadding="1" cellspacing="1" width="1200">
+	<tbody>
+		<tr>
+			<td><font size="1">TextSearch.BuildDictionary(): Boolean</font></td>
+			<td><font size="1">Build a dictionary to check spelling using the indexed content</font></td>
+		</tr>
+		<tr>
+			<td><font size="1">TextSearch.CheckSpell(Character query):Character </font></td>
+			<td><font size="1">Suggest alternate spelling for words in the query. The suggested words are restricted to the words present in the dictionary built with BuildDictionary() function.</font></td>
+		</tr>
+		<tr>
+			<td><font size="1">TextSearch.HTMLPreview(Variable (BC | string | File), Character Query, (optional) Character TextType, (optional) Character PreTag, (optional) Character PostTag, (optional) Numeric FragmentSize, (optional) Numeric MaxNumFragments); </font></td>
+			<td>
+			<p><font size="1">Breaks the text into the best fragments highlighting the words in the query.</font></p>
+
+			<table border="1" cellpadding="1" cellspacing="1" width="300">
+				<tbody>
+					<tr>
+						<td> </td>
+						<td><font size="1">Meaning</font></td>
+						<td><font size="1">Possible Values</font></td>
+						<td><font size="1">Default Value</font></td>
+					</tr>
+					<tr>
+						<td><font size="1">TextType<sub><sup>(1)</sup></sub></font></td>
+						<td><font size="1">The text is HTML or Text format?</font></td>
+						<td><font size="1">Text, HTML</font></td>
+						<td><font size="1">HTML</font></td>
+					</tr>
+					<tr>
+						<td><font size="1">PreTag</font></td>
+						<td><font size="1">Tag used to highlight the Query text. This is the left tag of the text.</font></td>
+						<td><font size="1">Any HTML Tag</font></td>
+						<td><font size="1">&lt;B&gt;</font></td>
+					</tr>
+					<tr>
+						<td><font size="1">PostTag</font></td>
+						<td><font size="1">Tag used to highlight the Query text. This is the right tag of the text.</font></td>
+						<td><font size="1">Any HTML Tag</font></td>
+						<td><font size="1">&lt;/B&gt;</font></td>
+					</tr>
+					<tr>
+						<td><font size="1">FragmentSize</font></td>
+						<td><font size="1">size in bytes of each fragment</font></td>
+						<td><font size="1"> </font></td>
+						<td><font size="1"> </font></td>
+					</tr>
+					<tr>
+						<td><font size="1">MaxNumFragments</font></td>
+						<td><font size="1">maximum number of fragments</font></td>
+						<td><font size="1"> </font></td>
+						<td><font size="1"> </font></td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<h5><a id="Note+%281%29%3A" class="HashLink" href="#Note+%281%29%3A">Note <sup>(1)</sup>:</a></h5>
+
+<p>In order to use HTMLPreview function in .NET generator, the msvcp71.dll has to be copied to Windows\system32 of the server.<br />
+That dll belongs to MS Visual C++ 7.1 Runtime Library (distributed by .NET 2003).<br />
+This is necessary only when the TextType (third parameter of HTMLPreview function) is &quot;HTML&quot;. You could install it from <a href='https://support.microsoft.com/en-nz/help/2977003/the-latest-supported-visual-c-downloads'>here</a>.</p>
+
+<h3><a id="FAQ" class="HashLink" href="#FAQ">FAQ</a></h3>
+
+<p>Q. What is indexed?<br />
+A. It indexes all attributes in the transaction (a searchable transaction) structure. The text which is built and indexed has the following format: Attribute&lt;1&gt; Title + &quot; &quot; + Attribute&lt;1&gt; Value + .... + Attribute&lt;n&gt; Value.</p>
+
+<p>Q. What happens with the index information for the Invoice Transaction, if I change the customer name in the Customer Transaction?<br />
+A. You have to run the Reindex process in order to update the Invoice Transaction index information.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="5277.html">Full-Text Search</a><br />
+<a href="6701.html">Full Text Search Examples</a><br />
+<a href="6036.html">Full Text Search Examples - Indexing</a></p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="15671.html">External utilities used by GeneXus generated web applications</a></TD><TD><a href="6024.html">Full Text Search example 1</a></TD></TR><TR><TD><a href="6666.html">Full Text Search example 2</a></TD><TD><a href="6682.html">Full Text Search example 3</a></TD><TD><a href="6709.html">Full Text Search example 4</a></TD><TD><a href="6036.html">Full Text Search Examples - Indexing</a></TD></TR><TR><TD><a href="5726.html">Category:Full Text Search in Knowledge Base</a></TD><TD><a href="5278.html">Category:Full-Text Search in Applications</a></TD><TD><a href="6468.html">HowTo: Configuring Full Text Search in Your Application</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

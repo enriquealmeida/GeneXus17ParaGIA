@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Configure GAM to use Security Token Service</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?43206,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Configure GAM to use Security Token Service</h1>
+<!--HowTo: Configure GAM to use Security Token Service--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This guide shows how to configure GAM to use Security Token Service (STS).</p>
+
+<p>In this scenario, a client application (AppA) requests access to another application (AppB) - for example, to execute a service of this application. Application A redirects to a Security Token Service, which in turn authenticates the client and grants it a security token. <br />
+Client A then presents the token to application B to gain access to the resources provided by the application. This application validates the token against the STS server before executing the service requested by A and checks if A has permissions to access those resources.</p>
+
+<p>For more information on this topic, see <a href="43202.html">Security Token Service Client Authorization using GAM</a>.</p>
+
+<p><ul><li><a class="HashLink" href="#STS+server+configuration">STS server configuration</a></li><li><a class="HashLink" href="#Configuring+GAM+in+%22AppA%22">Configuring GAM in &quot;AppA&quot;</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li></ul></li><li><a class="HashLink" href="#Configuring+GAM+in+%22AppB%22">Configuring GAM in &quot;AppB&quot;</a></li></ul></ul></p>
+
+<h3><a id="STS+server+configuration" class="HashLink" href="#STS+server+configuration">STS server configuration</a></h3>
+
+<p>1. In the GAM Identity Provider STS, each application that can request an STS Token (e.g.: AppA) must be configured.</p>
+
+<p><img src="./images/43207.png" id="43207" class="WikiImage"/></p>
+
+<p>In each <a href="15910.html">GAM Application</a> you must configure a Client ID (Client Application Identifier). You must enable the STS protocol and configure STS Mode = Server (Token Server).</p>
+
+<p><img src="./images/43208.png" id="43208" class="WikiImage"/></p>
+
+<p>A user must be created for each application, which may be exclusively a local user; in this case, a user named &quot;user1&quot; was created and assigned to AppA application.<br />
+This user will be used to validate scopes received when requesting a token. All token requests must have a valid scope (it can be more than one), and all must be valid for a token to be returned.</p>
+
+<p>2. In the GAM STS Identity Provider, you must also configure the application for which you want to request a Token, in our scheme &quot;AppB.&quot;</p>
+
+<p>Note that you have to set <a href="18512.html">Require Access Permissions Application Property</a> to TRUE. On the other hand, the STS server will only authenticate and will return a token regardless of the Application rights to be accessed.</p>
+
+<p><img src="./images/43211.png" id="43211" class="WikiImage"/></p>
+
+<p>AppB must have defined the Permissions that AppA will use to call it.</p>
+
+<p><img src="./images/43222.png" id="43222" class="WikiImage"/></p>
+
+<p>The user defined (&quot;user1&quot;) has to have those permissions (it can be through roles or directly assigned to the user):</p>
+
+<p><img src="./images/43213.png" id="43213" class="WikiImage"/></p>
+
+<h3><a id="Configuring+GAM+in+%22AppA%22" class="HashLink" href="#Configuring+GAM+in+%22AppA%22">Configuring GAM in &quot;AppA&quot;</a></h3>
+
+<p>This is to configure GAM where the request of a service will be executed.</p>
+
+<p>In the Client KB, named in the example as &quot;AppA,&quot; that application must exist. It must be defined as &quot;AppA&quot; with the same Client ID as in the IP Server STS.</p>
+
+<p><img src="./images/43214.png" id="43214" class="WikiImage"/></p>
+
+<p>In addition, it must have enabled the STS protocol and configure STS Mode = Get token.<br />
+The Client Password is the password of the user of this App in the STS Identity Provider (in the example, it is the password of &quot;user1&quot;). Finally, configure the URL of the STS server.</p>
+
+<p><img src="./images/43215.png" id="43215" class="WikiImage"/></p>
+
+<p>To call the service in AppB from AppA, you should use the <a href="43218.html">GetSTSAuthorizationAccessToken method</a> to get the correct authorization header, and the <a href="43221.html">GetAgentServiceHeader method</a> to get the appropriate headers to call the service.</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;client_id = !&quot;8e2ec1ea4058491c93c1bfe3bc90a5ad&quot;
+&amp;scope = !&quot;AppB.Prm1+AppB.Prm2&quot;
+&amp;GAMSTSAuthorizationToken = GAMRepository.GetSTSAuthorizationAccessToken(&amp;client_id, &amp;scope, &amp;GAMErrors)
+If &amp;Errors.Count = 0
+    &amp;access_token = &amp;GAMSTSAuthorizationToken.access_token
+    GAM.GetAgentServiceHeader(GAMServiceTypesHeader.STSOauth, &amp;HeaderName, &amp;HeaderValue)
+    &amp;StrCall = &quot;http://localhost/ClientSTS2.NetEnvironment/rest/ProcRest_testSTS&quot;
+    &amp;httpClient.AddHeader(&amp;HeaderName, &amp;HeaderValue)
+    &amp;httpClient.AddHeader(!&quot;Content-Type&quot;,!&quot;application/x-www-form-urlencoded&quot;)
+    &amp;httpClient.AddHeader(!&quot;Authorization&quot;, &amp;access_token)
+    &amp;httpClient.AddVariable(!&quot;client_id&quot;, &amp;client_id) //Note that the &amp;client_id is passed as a variable in the body of the request.
+    &amp;httpClient.Execute(!&quot;POST&quot;, &amp;StrCall)
+
+    msg(format(!&quot;ErroCode %1 (%2)&quot;,&amp;httpClient.ErrCode.ToString() + !&quot; &quot; + &amp;httpClient.ErrDescription))
+    msg (&quot;Service Result:&quot; + &amp;httpClient.ToString())
+
+   if &amp;httpClient.ErrCode &lt;&gt; 0
+     //Process Error
+   Endif
+
+Else
+    msg(format(!&quot;%1 (%2)&quot;,&amp;Errors.Item(1).Message,&amp;Errors.Item(1).code))
+Endif
+</pre>
+You should check if there is an <a href="https://wiki.genexus.com/commwiki/wiki?27734,," target="_blank">error</a>, and take action.
+
+<p>For example, consider that you execute the code above and have the following error:</p>
+
+<p><em>ErrCode 1 (The remote server returned an error: (401) Unauthorized.)<br />
+Service Result: {&quot;error&quot;:{&quot;code&quot;:&quot;280&quot;,&quot;message&quot;:&quot;http:\/\/localhost\/ServerSTS.NetEnvironment\/oauth\/QueryAccessToken access error (expired_token). Please contact the application administrator.&quot;}}{}</em></p>
+
+<p>The first error line is thrown by the code : msg(format(!&quot;ErroCode %1 (%2)&quot;,&amp;httpClient.ErrCode + !&quot; &quot; + &amp;httpClient.ErrDescription))<br />
+The second one is thrown by : msg (&quot;Service Result:&quot; + &amp;httpClient.ToString())</p>
+
+<p>This error means that you have to ask for a new token, because the one that you are using has expired. </p>
+
+<h3><a id="Configuring+GAM+in+%22AppB%22" class="HashLink" href="#Configuring+GAM+in+%22AppB%22">Configuring GAM in &quot;AppB&quot;</a></h3>
+
+<p>This is to configure GAM in the KB where the service that will be called by AppA runs. <br />
+The service to be invoked has to have <a href="15214.html">Integrated Security Level property</a> = Authentication (or Authorization).<br />
+In this KB, the <a href="https://wiki.genexus.com/commwiki/wiki?18667,," target="_blank">Application Id property</a> is set to the value of the client ID of AppB. So, the application.gam file (which contains the web <a href="15910.html">GAM Application</a>) references the AppB.</p>
+
+<p>In GAM, the same &quot;AppA&quot; must be defined <strong>with the same Client ID as defined before </strong>(in the<strong> </strong>IP Server STS), in order to enable this application to consume services using an STS Token.<br />
+You must have the STS protocol enabled and configure STS Mode = Check token.<br />
+Define a local user for the local sessions of GAM to be generated (in the example we call it &quot;user1&quot; but it can be any).<br />
+In addition, configure the URL of the server where AppA requests the tokens (STS sever).</p>
+
+<p><img src="./images/43217.png" id="43217" class="WikiImage"/></p>
+
+<p>AppB in GAM of App B, must have defined the Permissions that AppA will use to call it.</p>
+
+<p>Notes:</p>
+
+<p id="tw-target-text">When it throws the error 60 (Missing required data (scope)), it is that the SCOPE sent is not mapped with the WEB application of that KB. This mapping is done by application name. If the App is called AppB, the received scope must be AppB.Prm1.<br />
+When it throws the error 153 (Permission not found), it is that the Prm1 permission is not defined in the web app.</p>
+
+<p>The local user in this GAM is used when a Service of AppB is called by AppA. If the STS token is correct, a local session related to this user and AppA will be generated, to have registered in the database that the service was executed by a remote application. This will allow the service to know who is running it (the user of AppA) using the GAM methods in the same way it is used if the service is executed using a local token of this KB (for example you could use GAMUser.GetId method).</p>
+
+<p><strong><span style="font-size: larger;">Summary</span></strong></p>
+
+<p>Note that you only need to configure the environment, and consider some aspects to call the resources provided by AppB.<br />
+When you call the Rest service in AppB, the invocation to RequestTokenService is executed automatically by GAM when you use the <a href="43218.html">GetSTSAuthorizationAccessToken method</a>.</p>
+
+<p>Then, GAM executes the invocation to QueryAccessToken <span style="letter-spacing: 0.0px;">automatically </span><span style="letter-spacing: 0.0px;">and continues with the execution of the service in AppB, if there is no security error. On the other hand, it throws an error which is received by the consumer in AppA.</span></p>
+
+<p><span style="font-size: larger;"><strong><span style="letter-spacing: 0.0px;">Availability</span></strong></span></p>
+
+<p><span style="letter-spacing: 0.0px;">Since </span><a href="https://wiki.genexus.com/commwiki/wiki?42755,," target="_blank">GeneXus 16 upgrade 4</a></p>
+
+<p><span style="font-size: larger;"><strong>Troubleshooting</strong></span></p>
+
+<p>In case any error occurs, you can <a href="25395.html">generate a GAM trace</a>, and the information is shown in the logs.</p>
+
+<p>As the information of GAM is thrown in the generator's trace, in the case of NET the ASP Net trace (<a href="39568.html">Log output property</a> = ASP.NET trace) is very useful to see the headers and the variables sent in the body of the HTTP requests.</p>
+
+<p>Note that depending on the error displayed, you may need to generate the trace in some or all the components (STS server, &quot;AppA&quot; server, and &quot;AppB&quot; server).<br />
+For example, the RequestTokenService is executed against the STS server, so in the server you can see the details of the invocation.</p>
+
+<p><img src="./images/43241.png" id="43241" class="WikiImage"/></p>
+
+<p>There's a section of the trace where you can see:</p>
+
+<p><img src="./images/43242.png" id="43242" class="WikiImage"/></p>
+
+<p>In the &quot;AppA&quot; side (where the invocation has been done), you can see in the trace (this information is written by GAM):</p>
+
+<table border="1" cellpadding="0" cellspacing="0">
+	<tbody>
+		<tr>
+			<td>2019-05-21 13:06:55,954 <a href='35'>35</a> DEBUG GeneXus.Http.Client.GxHttpClient - Start HTTPClient buildRequest: requestUrl: method:POST name:http://localhost/ServerSTS.NetEnvironment/oauth/RequestTokenService</td>
+			<td>0.017558</td>
+		</tr>
+		<tr>
+			<td>GeneXus.Http.Client.GxHttpClient</td>
+			<td>2019-05-21 13:06:55,954 <a href='35'>35</a> DEBUG GeneXus.Http.Client.GxHttpClient - Start SendStream.Read: BytesRead 0</td>
+		</tr>
+		<tr>
+			<td>GeneXus.Http.Client.GxHttpClient</td>
+			<td>2019-05-21 13:06:57,102 <a href='35'>35</a> DEBUG GeneXus.Http.Client.GxHttpClient - Reading response...</td>
+		</tr>
+		<tr>
+			<td>GeneXus.Http.Client.GxHttpClient</td>
+			<td>2019-05-21 13:06:57,102 <a href='35'>35</a> DEBUG GeneXus.Http.Client.GxHttpClient - BytesRead 192</td>
+		</tr>
+		<tr>
+			<td>GeneXus.Http.Client.GxHttpClient</td>
+			<td>2019-05-21 13:06:57,102 <a href='35'>35</a> DEBUG GeneXus.Http.Client.GxHttpClient - BytesRead 0</td>
+		</tr>
+		<tr>
+			<td>GeneXus.Http.Client.GxHttpClient</td>
+			<td>2019-05-21 13:06:57,102 <a href='35'>35</a> DEBUG GeneXus.Http.Client.GxHttpClient - _responseString {&quot;access_token&quot;:&quot;2819262c-cdfd-4389-a1b3-b6548ec96add!2cb084f437f88ea7ec0d2c6b7c420fd2ff877447e7b7392f876cbaed9bdf54b6a1e0383b63cddb&quot;,&quot;token_type&quot;:&quot;Bearer&quot;,&quot;expires_in&quot;:60,&quot;scope&quot;:&quot;AppB.Prm1&quot;}</td>
+		</tr>
+		<tr>
+			<td>Artech.Security.API.repositorygetstsauthorizationaccesstoken</td>
+			<td>2019-05-21 13:06:57,102 <a href='35'>35</a> INFO  Artech.Security.API.repositorygetstsauthorizationaccesstoken - GAMTrace-RepositoryGetClientAuthorizationAccessToken URL:http://localhost/ServerSTS.NetEnvironment/oauth/RequestTokenService</td>
+		</tr>
+		<tr>
+			<td>Artech.Security.API.repositorygetstsauthorizationaccesstoken</td>
+			<td>2019-05-21 13:06:57,102 <a href='35'>35</a> INFO  Artech.Security.API.repositorygetstsauthorizationaccesstoken - GAMTrace-RepositoryGetClientAuthorizationAccessToken Response:{&quot;access_token&quot;:&quot;2819262c-cdfd-4389-a1b3-b6548ec96add!2cb084f437f88ea7ec0d2c6b7c420fd2ff877447e7b7392f876cbaed9bdf54b6a1e0383b63cddb&quot;,&quot;token_type&quot;:&quot;Bearer&quot;,&quot;expires_in&quot;:60,&quot;scope&quot;:&quot;AppB.Prm1&quot;}</td>
+		</tr>
+		<tr>
+			<td>Artech.Security.API.repositorygetstsauthorizationaccesstoken</td>
+			<td>2019-05-21 13:06:57,102 <a href='35'>35</a> INFO  Artech.Security.API.repositorygetstsauthorizationaccesstoken - &amp;Errors....................:[]</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+Any tool which allows you to analyze the network traffic should also be useful to see the HTTP requests, and the HTTP responses. </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43218.html">GetSTSAuthorizationAccessToken method of GAMRepository Object</a></TD><TD><a href="43202.html">Security Token Service Client Authorization using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/12/20 11:00 PM</em></font></td></TR></table></font>

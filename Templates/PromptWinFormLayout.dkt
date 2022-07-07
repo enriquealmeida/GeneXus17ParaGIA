@@ -1,0 +1,117 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Web Form" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="System.Diagnostics" %>
+<%@ Import Namespace="System.Drawing" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+<%@ Property Name="helper" Type="Artech.Genexus.Common.Helpers.TemplateHelper" %>
+<%@ Property Name="GenerateButtons" Type="System.Boolean" %>
+<%
+	Table table = Table.Get(Model, Definition.Info.Table.TableId);
+
+	Transaction trn = null;
+	TransactionLevel trnLevel = null;
+	if (table.AssociatedTransactions.Count > 0)
+	{
+		trn = table.AssociatedTransactions[0];
+		trnLevel = trn.Structure.GetLevelOfTable(table);
+	}
+
+	List<Artech.Genexus.Common.Objects.Attribute> attributes = new List<Artech.Genexus.Common.Objects.Attribute>();
+	foreach (PromptAttribute fixedAtt in Definition.Fixed)
+	{
+		if (fixedAtt.FixType == "c")
+		{
+			Artech.Genexus.Common.Objects.Attribute att = GetAttribute(fixedAtt.AttriId);
+			attributes.Add(att);
+		}
+	}
+
+	Point filterLabelStart = new Point(helper.UISettings.FormInsets.Left,helper.UISettings.FormInsets.Top);
+	int filterLabelSpace = helper.UISettings.GetFontHeight(helper.UISettings.LabelFont) + helper.UISettings.FilterLineMargin;
+
+	// Place the labels for the filter attributes.
+	int maxFilterLabelWidth = 0;
+	for (int i = 0; i < attributes.Count; i++)
+	{
+		Artech.Genexus.Common.Objects.Attribute att = attributes[i];
+		Point labelPosition = new Point(filterLabelStart.X, filterLabelStart.Y + i * filterLabelSpace);
+		Size labelSize = helper.UISettings.GetControlSize(att.Title.Length);
+%>
+					<%= WinForm.Label("Label" + att.Name, null, labelPosition, labelSize, att.Title) %>
+<%
+		maxFilterLabelWidth	= Math.Max(maxFilterLabelWidth, labelSize.Width);
+	}
+	
+	Point filterVarStart = new Point(filterLabelStart.X + maxFilterLabelWidth + helper.UISettings.FilterColumnMargin, filterLabelStart.Y);
+	int maxFilterVarWidth = 0;
+	
+	// Place the filter attributes (knowing max width of labels).
+	for (int i = 0; i < attributes.Count; i++)
+	{
+		Artech.Genexus.Common.Objects.Attribute att = attributes[i];
+		Point varPosition = new Point(filterVarStart.X, filterVarStart.Y + i * filterLabelSpace);
+		Size varSize = helper.UISettings.GetControlSize(att); // Only for maxFilterVarWidth.
+%>
+					<%= WinForm.Variable("&" + GetConditionVarName(att.Name), null, varPosition) %>
+<%
+		maxFilterVarWidth = Math.Max(maxFilterVarWidth, varSize.Width);
+	}
+	
+	// Place the grid.
+	Point gridPosition = new Point(Math.Max(filterLabelStart.X,helper.UISettings.MinimumGridLeft), filterLabelStart.Y + attributes.Count * filterLabelSpace + helper.UISettings.FilterLineMargin);
+	Size gridSize = new Size(0, helper.UISettings.PromptGridHeight);
+	
+%>
+					<%= WinForm.BeginGrid("Grid1", null, gridPosition, gridSize) %>
+<%
+	IList<Artech.Genexus.Common.ITypedObject> gridAtts = new List<Artech.Genexus.Common.ITypedObject>();
+	for (int i = 0; i < Definition.SubFile.Length; i++)
+	{
+		Artech.Genexus.Common.Objects.Attribute att = GetAttribute(Definition.SubFile[i]);
+		gridAtts.Add(att);
+
+		string columnTitle = att.ColumnTitle;
+		if (trnLevel != null)
+		{
+			// TrnAttribute can be null (especially for prompts for transaction sublevels).
+			TransactionAttribute trnAttribute = trnLevel.GetAttribute(att.Id);
+			if (trnAttribute != null && trnAttribute.IsLocal)
+				columnTitle = att.ContextualTitleProperty;
+		}
+%>
+						<%= WinForm.GridAttribute(att.Name, null, null, columnTitle) %>
+<%		
+	}
+	gridSize = helper.UISettings.GetGridSize(gridAtts, null, helper.UISettings.PromptGridHeight);
+%>
+					<%= WinForm.EndGrid() %>
+<%
+	Point buttonStart = new Point(Math.Max(filterVarStart.X + maxFilterVarWidth, gridPosition.X + gridSize.Width) + helper.UISettings.ButtonLeftMargin, filterVarStart.Y);
+	if (GenerateButtons)
+	{
+		// Place the prompt buttons.
+%>
+					<%= WinForm.Button("btn_Enter",   null, new Point(buttonStart.X, buttonStart.Y + 0 * helper.UISettings.ButtonLineDistance), helper.UISettings.ButtonSize, null, "Enter") %>
+					<%= WinForm.Button("btn_Cancel",  null, new Point(buttonStart.X, buttonStart.Y + 1 * helper.UISettings.ButtonLineDistance), helper.UISettings.ButtonSize, null, "Cancel") %>
+					<%= WinForm.Button("btn_Refresh", null, new Point(buttonStart.X, buttonStart.Y + 2 * helper.UISettings.ButtonLineDistance), helper.UISettings.ButtonSize, null, "Refresh") %>
+					<%= WinForm.Button("btn_Help",    null, new Point(buttonStart.X, buttonStart.Y + 3 * helper.UISettings.ButtonLineDistance), helper.UISettings.ButtonSize, null, "Help") %>
+<%	} 
+
+	// Calculate the overall form size.
+	helper.CurrentPoint.X = buttonStart.X + (GenerateButtons ? helper.UISettings.ButtonSize.Width : 0) + helper.UISettings.RightMargin + helper.UISettings.FormAddedWidth;
+	helper.CurrentPoint.Y = gridPosition.Y + gridSize.Height + helper.UISettings.BottomMargin + helper.UISettings.FormAddedHeight;
+%>	

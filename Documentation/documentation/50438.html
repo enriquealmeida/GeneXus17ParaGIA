@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>OAuth Module</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50438,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">OAuth Module</h1>
+<!--OAuth Module--><div class="TableWikiBody" id="tblwikibody"><p>The OAuth <a href="22414.html">module</a> is distributed as part of the <a href="31268.html">GeneXus Core module</a> to let you work with the OAuth protocol. This first version of the module is based on the Authorization Code flow.</p>
+
+<p>There are two steps to be carried out by different roles:</p>
+
+<ul>
+	<li><strong>Step 1:</strong> <a href="50408.html">Initial configuration and data collection by an administrator</a></li>
+	<li><strong>Step 2: </strong>With the data given by the administrator you (developer) can work with the OAuth module.</li>
+</ul>
+
+<p><br />
+As a developer, you must ask the administrator for three pieces of information (client ID, client secret, and refresh token) to pass them as parameters to the module in order to receive a valid access token.</p>
+
+<p>As shown in the Sample section below, these parameters must be passed specifically to the RefreshToken method. This method executes the API call to refresh the access token.</p>
+
+<p>The RefreshToken Procedure <a href="6862.html">Parm rule</a> contains the following parameters:</p>
+
+<ol>
+	<li>(in) OAuthAuthorizationConfig: SDT</li>
+	<li>(in) RefreshToken: String</li>
+	<li>(out) OAuthAccessToken: Oauth20AccessTokenSDT</li>
+	<li>(out) DateTimeTokenExpire: Datetime</li>
+	<li>(out) OutMessages: Messages</li>
+	<li>(out) Success: Boolean</li>
+</ol>
+
+<p><br />
+1. The OAuthAuthorizationConfig SDT structure is as follows:</p>
+
+<p><img src="./images/50449.png" id="50449" class="WikiImage"/></p>
+
+<p>where the first member refers to the Identity Provider (IdP); for example, Google, Microsoft, GAM. To fill this field, an <a href="2207.html">Enumerated Domain</a> named &quot;AccessTokenProvider&quot; is offered within the module containing some of the most common IdPs.</p>
+
+<p>The second and third members must be filled with the client ID and client secret data given by the administrator.</p>
+
+<p>2. The RefreshToken parameter must be the refresh token given by the administrator.</p>
+
+<p>3. The OAuthAccessToken SDT will be returned containing the access token requested. The following image shows its structure:</p>
+
+<p><img src="./images/50450.png" id="50450" class="WikiImage"/></p>
+
+<p>4. The DateTimeTokenExpire parameter will be returned containing the date and time the received access token expires.</p>
+
+<p>5. The OutMessages parameter will return an empty string if the Success parameter is true. On the other hand, it will contain a description of the issue.</p>
+
+<p>6. The out Success parameter will inform whether the request was successful or not.<br />
+ </p>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;OAuthAuthorizationConfig.AccessTokenUrl  = OAuth.v2.AccessTokenProvider.Google  //https://oauth2.googleapis.com/token
+&amp;OAuthAuthorizationConfig.ClientId        = &quot;ClientId&quot;
+&amp;OAuthAuthorizationConfig.ClientSecret    = &quot;SecretKey&quot;
+
+&amp;Success = OAuth.v2.RefreshToken(&amp;OAuthAuthorizationConfig, <em>REFRESH_TOKEN</em>, &amp;OAuthAccessToken, &amp;DateTimeTokenExpire, &amp;Messages)
+
+if (&amp;Success)
+    &amp;AccessTokenString = &amp;OAuthAccessToken.access_token
+else
+    Log.Error(&amp;Messages)
+endif</pre>
+
+<p> </p>
+
+<p>How does the above relate to sending Messages with Gmail using Oauth?</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;OAuthAuthorizationConfig.AccessTokenUrl  = OAuth.v2.AccessTokenProvider.Google  //https://oauth2.googleapis.com/token
+&amp;OAuthAuthorizationConfig.ClientId        = &quot;ClientId&quot;
+&amp;OAuthAuthorizationConfig.ClientSecret    = &quot;SecretKey&quot;
+
+for each User
+   where UserID = &amp;UserId
+   
+   &amp;OAuthAccessToken.FromJSON(UserAccessToken)  //This is optional. For Token reuse
+   &amp;Success = OAuth.v2.RefreshToken(&amp;OAuthAuthorizationConfig, <em>REFRESH_TOKEN</em>, &amp;OAuthAccessToken, &amp;DateTimeTokenExpire, &amp;Messages)
+
+   if (NOT &amp;Success)
+      Log.Error(&amp;Messages)
+      return
+   endif
+   
+   UpdateAccessToken(UserId, &amp;OAuthAccessToken)   //This is optional. For Token reuse
+
+   &amp;AccessTokenString = &amp;OAuthAccessToken.access_token
+   &amp;SMTPSession.Host = 'smtp.gmail.com' 
+   &amp;SMTPSession.Port = 465 
+   &amp;SMTPSession.Timeout = 20 
+   &amp;SMTPSession.Secure = 1 
+   &amp;SMTPSession.Authentication = 1
+   &amp;SMTPSession.UserName = 'Info@gmail.com'
+   &amp;SMTPSession.Password = &amp;AccessTokenString
+   &amp;SMTPSession.AuthenticationMethod = &quot;XOAUTH2&quot;  
+   &amp;SMTPSession.Login()
+
+   &amp;MailMessage.Subject=&quot;Email Subject XXX&quot;    //&amp;MailMessage is based on the MailMessage Data Type
+   &amp;MailMessage.Text=&quot;Message body&quot; 
+   &amp;MailRecipient.Address = &quot;xxx@gmail.com&quot;   //&amp;MailRecipient is based on the MailRecipient Data Type
+   &amp;MailRecipient.Name = &quot;xxx&quot;    
+   &amp;MailMessage.To.Add(&amp;MailRecipient)
+   
+   &amp;SMTPSession.Send(&amp;MailMessage)
+endfor</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="49956.html">GeneXus 17 Upgrade 9</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="50396.html">Microsoft Exchange OAuth 2.0 for emails: Generation and data collection from the Administrator</a><br />
+<a href="50408.html">Google OAuth 2.0 process for emails: Generation and data collection by the Administrator</a></p>
+
+<p> </p>
+
+<p>  </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49956.html">GeneXus 17 Upgrade 9</a></TD><TD><a href="50408.html">Google OAuth 2.0 process for emails: Generation and data collection by the Administrator</a></TD></TR><TR><TD><a href="50396.html">Microsoft Exchange OAuth 2.0 for emails: Generation and data collection from the Administrator</a></TD><TD><a href="50227.html">Special considerations for SMTPSession or Pop3Session with Google Accounts</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/26/22 06:37 PM</em></font></td></TR></table></font>

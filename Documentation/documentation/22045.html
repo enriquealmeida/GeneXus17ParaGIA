@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Changing the value of DateTime Storage property at application installation/upgrade time</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22045,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Changing the value of DateTime Storage property at application installation/upgrade time</h1>
+<!--Changing the value of DateTime Storage property at application installation/upgrade time--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document describes the scenarios that a GeneXus developer may face when installing or upgrading an application with <a href="21988.html">TimeZone Support</a>.</p>
+
+<h3><a id="Installing+an+application+for+the+first+time" class="HashLink" href="#Installing+an+application+for+the+first+time">Installing an application for the first time</a></h3>
+
+<p>In a brand new installation there is no data in the Database. If you have to convert data from legacy systems, follow the steps described in &quot;Upgrading an application&quot; below.</p>
+
+<p>If the application was generated using the Undefined value for <a href="17218.html">DateTime storage timezone property</a>, you cannot change it at installation time (see <a href="22022.html">Changing the value of DateTime Storage property</a> for exceptions).</p>
+
+<p>If the application was generated using either UTC or Application server values for DateTime storage timezone property, you may change it if you need to. To do so, change the <a href="https://wiki.genexus.com/commwiki/wiki?22044,," target="_blank">Application configuration file</a>.</p>
+
+<h3><a id="Upgrading+an+application" class="HashLink" href="#Upgrading+an+application">Upgrading an application</a></h3>
+
+<p>When upgrading an application, the main consideration is about Database data. Does it have to be converted or not? Is there a way to convert it?</p>
+
+<p>The following table describes possible scenarios and the actions that may be required.</p>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td colspan="2" rowspan="2" style="text-align: center;vertical-align: middle;"><em><span style="font-size: medium;">Current Database Scenario</span></em></td>
+			<td rowspan="6" style="background-color: rgb(255,255,204);text-align: center;vertical-align: middle;"> </td>
+			<td colspan="3" style="text-align: center;"><em><span style="font-size: medium;">Value of DateTime Storage TimeZone property in the new application</span></em></td>
+		</tr>
+		<tr>
+			<td>Undefined</td>
+			<td>UTC</td>
+			<td>Application server</td>
+		</tr>
+		<tr>
+			<td colspan="1" rowspan="3">All DateTime attributes are stored in the same Time Zone</td>
+			<td>UTC</td>
+			<td colspan="1" rowspan="3">No conversion required.</td>
+			<td>No conversion required</td>
+			<td>You may either change the Application configuration file to match current data (UTC) or write and run a data conversion program (see below).</td>
+		</tr>
+		<tr>
+			<td>Application Server</td>
+			<td>You may either change the Application configuration file to match current data (Application Server) or write and run a data conversion program (see below).</td>
+			<td>No conversion required</td>
+		</tr>
+		<tr>
+			<td>Other</td>
+			<td>Write and run a data conversion program (see below) that converts DateTime values from their TimeZone to UTC.</td>
+			<td>
+			<p>You can either:</p>
+
+			<ul>
+				<li>Write and run a data conversion program (see below) that converts DateTime values from their TimeZone to Application Server.</li>
+				<li>Or change your server's TimeZone to match your existing data.</li>
+			</ul>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" rowspan="1">The TimeZone of DateTime attributes is known but it may be different from attribute to attribute</td>
+			<td colspan="3" rowspan="1">Write and run a data conversion program (see below) that converts DateTime values from their TimeZone to Application Server.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Conversion+program+skeleton" class="HashLink" href="#Conversion+program+skeleton">Conversion program skeleton</a></h3>
+
+<p>When upgrading your application from previous GeneXus versions or when changing the value of <a href="17218.html">DateTime storage timezone property</a>, you may need to write and run a conversion program to make all DateTime attributes of the database  share a unique TimeZone (either UTC or Application Server).</p>
+
+<p>Below is a program skeleton that guides you to write that conversion program. Just in case, remember to backup your database _before_ running the conversion program.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Set the default timezone to UTC.
+// If you need it to be a different one just change the parameter
+DateTime.SetTimeZone( Timezones.UTC)
+for each
+   ...
+   // DateTimeAttribute is known to be in Timezones.New_York time zone.
+   // The following statement converts its value from New_York to UTC (value set by previous SetTimeZone command)
+   DateTimeAttribute = DateTimeAttribute.FromTimeZone( Timezones.New_York)
+   ...
+endfor
+Commit</pre>
+
+<h3><a id="Notes" class="HashLink" href="#Notes"><strong>Note</strong>s</a></h3>
+
+<ul>
+	<li>Conversion programs MUST be generated and run when <a href="17218.html">DateTime storage timezone property</a> is set to Undefined.</li>
+	<li>Change the value of <a href="17218.html">DateTime storage timezone property</a> _after_ running the conversion programs</li>
+</ul>
+
+<p>To improve update performance, you may want to take a look at <a href="5572.html">Blocking Data Updates</a>.</p>
+
+<p><span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span></p>
+<br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22022.html">Changing the value of DateTime Storage property</a></TD><TD><a href="21988.html">Toc:TimeZone Support</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

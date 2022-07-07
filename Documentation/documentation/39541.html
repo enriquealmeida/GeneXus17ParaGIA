@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>User Control Object - Definition of properties</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39541,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">User Control Object - Definition of properties</h1>
+<!--User Control Object - Definition of properties--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>You have to identify the properties you want to define for your <a href="39356.html">User Control object</a> with {{ }} inside the <strong>Screen Template </strong>tab. Even though in general, GeneXus infers all the correct definition for the properties directly from the <strong>Screen Template</strong>, since ambiguities may exist, they can be modified in the Properties section of the object.</p>
+
+<h2><a id="Properties" class="HashLink" href="#Properties">Properties</a></h2>
+
+<p>As detailed previously, the most basic tag type is the property. A {{name}} tag in a basic template will try to find the <em>name</em> key in the current context. If there is no name key, the parent contexts will be checked recursively. If the top context is reached and the name key is still not found, nothing will be rendered.</p>
+
+<p>All properties are HTML escaped by default. If you want to return unescaped HTML, use the triple mustache.</p>
+
+<p>A property &quot;miss&quot; returns an empty string.</p>
+
+<h2><a id="Types+of+properties" class="HashLink" href="#Types+of+properties">Types of properties</a></h2>
+
+<p>The types of properties available are the following:</p>
+
+<ul>
+	<li><a href="6777.html">Character</a></li>
+	<li><a href="6793.html">Numeric</a></li>
+	<li>Decimal</li>
+	<li><a href="2207.html">Enumerated Domain</a></li>
+	<li><a href="4374.html">Boolean</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?1878,," target="_blank">Structured Data Type</a></li>
+</ul>
+
+<h2><a id="How+to+define+properties" class="HashLink" href="#How+to+define+properties">How to define properties</a></h2>
+
+<p>By default, GeneXus uses the following conventions when interpreting the <strong>Screen Template </strong>section:</p>
+
+<ul>
+	<li>{{Test}} --&gt; Defines the Test property as a string.</li>
+	<li>{{Test:one|two|three}} --&gt; Defines the Test property as an enumerated value and defines its possible values as one, two, three.</li>
+	<li>{{#Test}} --&gt; Defines the Test property as custom; basically, any SDT is accepted.</li>
+	<li> --&gt; Defines the Test property as a string with the specific purpose of assigning raw HTML code to it.</li>
+</ul>
+
+<h3><a id="Defining+a+property" class="HashLink" href="#Defining+a+property">Defining a property</a></h3>
+
+<p>To define a property, this syntax {{ }} is used. For example, to add a property called &quot;Make,&quot; the syntax is as follows:</p>
+
+<p>{{Make}}</p>
+
+<p>GeneXus will assume it is a property of string type because its type hasn't been explicitly declared.</p>
+
+<h3><a id="Defining+a+property+of+declared+type" class="HashLink" href="#Defining+a+property+of+declared+type">Defining a property of declared type</a></h3>
+
+<p>Continuing with the previous example, to define a type for the &quot;Make&quot; property, the syntax is as follows:</p>
+
+<p>{{Make:&lt;data type&gt;}}</p>
+
+<p>Where &lt;data type&gt; must be one of the data types available.</p>
+
+<p>The mappings between GeneXus data types and User Control's &lt;data type&gt; are the following:</p>
+
+<ul>
+	<li>Character --&gt; string</li>
+	<li>Numeric --&gt; numeric</li>
+	<li>Decimal --&gt; numeric with decimals</li>
+	<li>Boolean --&gt; boolean</li>
+	<li>SDT --&gt; sdt</li>
+</ul>
+
+<p>In addition, to define enumerated values of Make, the declaration must be:</p>
+
+<p>{{Make:Fiat|Volkswagen|Toyota|Peugeot|Renault}}</p>
+
+<h3><a id="Defining+a+property+with+default+value" class="HashLink" href="#Defining+a+property+with+default+value">Defining a property with default value</a></h3>
+
+<p>An initial value can be assigned to a Property; to do so, the operator = (equals) must be used. The definition looks as follows:</p>
+
+<ul>
+	<li>{{Test=&quot;HELLO&quot;}} --&gt; the Test property takes the default value &quot;HELLO&quot;</li>
+	<li>{{Test:one|two|three=one}} --&gt; the Test property, within the enumerated values that have been declared, takes the default value &quot;one&quot;</li>
+	<li>{{IsActive=true}} --&gt; the IsActive property takes the default value &quot;true&quot;</li>
+</ul>
+
+<h3><a id="Defining+a+collection+property" class="HashLink" href="#Defining+a+collection+property">Defining a collection property</a></h3>
+
+<p>To define elements in iterative blocks, it is possible to set a property as a Collection.<br />
+So, to define for example a list of category values, the declaration would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &lt;UL&gt;
+ {{#Categories}}
+    &lt;LI&gt;{{Name}}&lt;/LI&gt;
+ {{/Categories}}
+ &lt;/UL&gt;
+</pre>
+
+<p>The Categories property preceded by the # (sharp) character allows indicating that it is an element that can be iterated (and within this iterative element the items with their corresponding names are defined using the {{Name}} property).</p>
+
+<p>If you are using a Collection of Basic types such as Character, Numeric, Date (and so on) use the syntax {{.}} to reference the element within the simple collection, for example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{{#SimpleCollection}}
+{{.}}
+{{/SimpleCollection}}
+</pre>
+
+<p> </p>
+
+<ul>
+</ul>
+
+<h3><a id="Defining+a+property+to+which+be+able+to+assign+Raw+HTML" class="HashLink" href="#Defining+a+property+to+which+be+able+to+assign+Raw+HTML">Defining a property to which be able to assign Raw HTML</a></h3>
+
+<p>You can define a property with triple mustache syntax  to include raw HTML to the object.</p>
+
+<p>For example, if you want to create an HTML button that contains a title, you can define the  property in the Screen Template of the User Control. After that, you can assign the value of the property with the HTML code in some GeneXus event:</p>
+
+<p>myButton.customData = '&lt;h2&gt; The Button Element &lt;/ h2&gt; &lt;button type = &quot;button&quot;&gt; I'm a button! &lt;/ button&gt;'</p>
+
+<p>The result in execution will be a Header with the title and a button with a text.</p>
+
+<h3><a id="Applying+a+condition+to+the+value+of+a+property" class="HashLink" href="#Applying+a+condition+to+the+value+of+a+property">Applying a condition to the value of a property</a></h3>
+
+<p>If for some reason you want to omit a certain output if a certain property has no value, a condition must be applied to the property to achieve this behavior. Properties accept the use of conditionals to achieve the above behavior. Conditionals are represented with a question mark (?).</p>
+
+<p>For example:</p>
+
+<pre>
+{{AdditionalComments?}} text to include {{/AdditionalComments}}</pre>
+
+<p>In this case, the AdditionalComments property can be empty; therefore, it is conditioned so that if it is empty, it is not shown.</p>
+
+<h2><a id="Example+1+-+applying+condition+in+a+property" class="HashLink" href="#Example+1+-+applying+condition+in+a+property">Example 1 - applying condition in a property</a></h2>
+
+<p>The following Alert control is to be implemented:</p>
+
+<p><img src="./images/39545.png" id="39545" class="WikiImage"/></p>
+
+<p>Its variations simply differ in the class (CSS style); it is, therefore, reasonable to think of creating a single control with an enumerated property that indicates the desired type of Alert: warning, info, success or danger. This is modeled as shown below in the Screen Template of the control:</p>
+
+<pre>
+  &lt;div {{OnClick}} class=&quot;Alert Alert--{{Type:info|warning|success|danger}}&quot;&gt;
+  {{Text}} 
+  &lt;/div&gt; 
+</pre>
+
+<p>Then, when you place the control on the screen, you can choose the type of Alert to use.</p>
+
+<p><img src="./images/39546.png" id="39546" class="WikiImage"/></p>
+
+<p>If you pay attention to the image above, you can see that there are 5 types of Alerts. However, 4 values have been defined. The reason is that the empty value is also a possible value, and in this case, the Alert-- class doesn't have to be concatenated.<br />
+To achieve this, a condition has to be applied to the Type property value:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+  &lt;div {{OnClick}} class=&quot;Alert {{Type?}}Alert--{{Type:info|warning|success|danger}}{{/Type}}&quot;&gt;
+  {{Text}} 
+  &lt;/div&gt; </pre>
+
+<p>As a result of applying a condition to this property, the Alert--{{Type}} class will be ignored, with only the Alert class remaining in the control.</p>
+
+<h2><a id="Example+2+-+iterating+a+multi-level+SDT" class="HashLink" href="#Example+2+-+iterating+a+multi-level+SDT">Example 2 - iterating a multi-level SDT</a></h2>
+
+<p>Let's suppose you need to iterate the following SDT in the User Control:</p>
+
+<p><img src="./images/46537.png" id="46537" class="WikiImage"/></p>
+
+<p>As you see, the SDT has a collection of Rooms and each Room has a collection of Speakers and Tracks.<br />
+To achieve this, the following properties definition template should be used:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{{#SDTConferences}} 
+    {{#Rooms}}
+        &lt;!-- properties of room --&gt;
+           
+        {{#Speakers}}
+            &lt;!-- properties of speaker --&gt;
+        {{/Speakers}}
+                
+        {{#Tracks}}            
+            &lt;!-- properties of track --&gt;                
+        {{/Tracks}}
+    {{/Rooms}}
+{{/SDTConferences}}</pre>
+
+<p> </p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="40108.html">Toc:Design Systems</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/05/21 04:01 PM</em></font></td></TR></table></font>

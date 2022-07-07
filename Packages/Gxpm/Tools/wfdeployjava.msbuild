@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Deploy">
+	<PropertyGroup>
+		<UnzipExe>$(MSBuildProjectDirectory)\Unzip.exe</UnzipExe>
+		<LibDir>$(BinDir)</LibDir>
+		<StaticDir>$(ModelDir)</StaticDir>
+		<SharedDir>Shared</SharedDir>
+		<UserPkgDir></UserPkgDir>
+		<GXflowPkgDir>com\gxflow</GXflowPkgDir>
+		<VersionFile>B01.WFVer</VersionFile>
+		<RuntimeTranslation>false</RuntimeTranslation>
+		<GXRootDir>$(MSBuildProjectDirectory)\..\..\..</GXRootDir>
+		<GXJavaDir>$(GXRootDir)\gxjava</GXJavaDir>
+		<GXModuleDir>$(GXRootDir)\Modules</GXModuleDir>
+		<GAMVersion></GAMVersion>
+	</PropertyGroup>
+
+	<Target Name="CreateDirectories" >
+		<MakeDir Directories="$(ModelDir);$(ModelDir)\drivers;$(ModelDir)\$(GXflowPkgDir);$(BinDir);$(StaticDir);$(StaticDir)\$(SharedDir);$(BinDir)\$(GXflowPkgDir)" />
+		<MakeDir Directories="$(LibDir)" Condition="'$(LibDir)' != ''" />
+	</Target>
+
+	<Target Name="CopyApi" DependsOnTargets="CreateDirectories">
+		<Copy SourceFiles="$(MSBuildProjectDirectory)\..\WFApi\wapi.jar" DestinationFolder="$(ModelDir)\drivers" SkipUnchangedFiles="true" />		
+	</Target>
+
+	<ItemGroup>
+		<VersionFilePath Include="$(ModelDir)\$(VersionFile)" />
+		<VersionFileContent Include="." />
+		<VersionFiles Include="$(ModelDir)\*.WFVer" />
+	</ItemGroup>
+	
+	<Target Name="CopyQueryFiles" DependsOnTargets="CreateDirectories" Condition="'$(PlatformDir)' != ''">
+		<CreateItem Include="$(MSBuildProjectDirectory)\..\..\..\gxjava\QueryViewer\classes\*.class">
+			<Output TaskParameter="Include" ItemName="gxpl_classes"/>		  
+		</CreateItem>
+		<Copy SourceFiles="@(gxpl_classes)" DestinationFolder="$(ModelDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(gxpl_classes)" DestinationFolder="$(BinDir)" SkipUnchangedFiles="true" />
+		
+		<CreateItem Include="$(GXJavaDir)\QueryViewer\classes\xpertpivotservices\*.class">
+			<Output TaskParameter="Include" ItemName="xpert_classes"/>		  
+		</CreateItem>
+		<Copy SourceFiles="@(xpert_classes)" DestinationFolder="$(ModelDir)\xpertpivotservices" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(xpert_classes)" DestinationFolder="$(BinDir)\xpertpivotservices" SkipUnchangedFiles="true" />
+				
+		<CreateItem Include="$(GXJavaDir)\QueryViewer\libs\*.jar">
+			<Output TaskParameter="Include" ItemName="gxpl_libs"/>		  
+		</CreateItem>
+		<Copy SourceFiles="@(gxpl_libs)" DestinationFolder="$(ModelDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(gxpl_libs)" DestinationFolder="$(LibDir)" SkipUnchangedFiles="true" />		
+	</Target>
+	
+	<Target Name="CopyGAMModuleFiles" DependsOnTargets="CreateDirectories" Condition="'$(PlatformDir)' != ''">
+		<CreateItem Include="$(GXModuleDir)\GeneXusSecurity_$(GAMVersion).opc">
+			<Output TaskParameter="Include" ItemName="GAMModule"/>	  
+		</CreateItem>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "@(GAMModule)" Platforms\JavaWeb\*.jar -d "$(ModelDir)\modules"'/>
+	</Target>		
+
+	<Target Name="CopyClientFiles" DependsOnTargets="CopyQueryFiles" Condition="'$(PlatformDir)' != ''">
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" GXFlowWARDeployment.xml -d "$(ModelDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" bin\$(GXflowPkgDir)\*.* -d "$(ModelDir)\$(GXflowPkgDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" resources\*.* -d "$(ModelDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -o "$(PlatformDir)\WFRuntime.zip" private\*.* -d "$(ModelDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\GXflowResources.zip" -x *.db -d "$(ModelDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\gxflowui.zip" -x *.db -d "$(ModelDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\DynamicForm.zip" -x *.db -d "$(ModelDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\CKEditor.zip" -d "$(ModelDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\ext.zip"  -x *.db -d "$(ModelDir)\$(SharedDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Protection\JavaProt.zip" *.jar -d "$(ModelDir)"' Condition="'$(LibDir)' != ''" />
+		
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" bin\$(GXflowPkgDir)\*.* -d "$(BinDir)\$(GXflowPkgDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" resources\*.* -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -o "$(PlatformDir)\WFRuntime.zip" private\*.* -d "$(StaticDir)"'/>		
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\GXflowResources.zip" -x *.db -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\gxflowui.zip" -x *.db -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\DynamicForm.zip" -x *.db -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\CKEditor.zip" -d "$(StaticDir)"'/>		
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\ext.zip"  -x *.db -d "$(StaticDir)\$(SharedDir)"'/>				
+		
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Protection\JavaProt.zip" *.jar -d "$(LibDir)"' Condition="'$(LibDir)' != ''" />		
+		
+		<CreateItem Include="$(MSBuildProjectDirectory)\..\Documents\Java\FullTextSearch\*.jar">
+			<Output TaskParameter="Include" ItemName="FullTextLibs"/>		  
+		</CreateItem>
+		<Copy SourceFiles='@(FullTextLibs)' DestinationFolder='$(LibDir)'/>
+		<Copy SourceFiles='@(FullTextLibs)' DestinationFolder='$(ModelDir)'/>
+		
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\Documents\Java\PKI\com.gxflow.pki.server.jar' DestinationFolder='$(LibDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\Documents\Java\PKI\com.gxflow.pki.server.jar' DestinationFolder='$(ModelDir)' />
+		
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\Java\com.gxflow.rules.jar' DestinationFolder='$(LibDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\Java\com.gxflow.rules.jar' DestinationFolder='$(ModelDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\Java\antlr-runtime-4.7.2.jar' DestinationFolder='$(LibDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\Java\antlr-runtime-4.7.2.jar' DestinationFolder='$(ModelDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\Java\com.genexus.iso8601.jar' DestinationFolder='$(LibDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\Java\com.genexus.iso8601.jar' DestinationFolder='$(ModelDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\WFCache\Java\wfcache.jar' DestinationFolder='$(LibDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\WFCache\Java\wfcache.jar' DestinationFolder='$(ModelDir)' />
+
+		<CreateItem Include='$(MSBuildProjectDirectory)\..\Documents\Java\Upload\$(GXflowPkgDir)\*.*'>
+			<Output TaskParameter="Include" ItemName="UploadClasses"/>
+		</CreateItem>
+		<Copy SourceFiles="@(UploadClasses)" DestinationFolder="$(ModelDir)\$(GXflowPkgDir)"/>
+		<Copy SourceFiles="@(UploadClasses)" DestinationFolder="$(BinDir)\$(GXflowPkgDir)"/>
+		
+		<Delete Files="@(VersionFiles)" />
+		<WriteLinesToFile File="@(VersionFilePath)" Lines="@(VersionFileContent)" Overwrite="true" Condition="'$(VersionFile)' != ''" />
+	</Target>
+
+	<ItemGroup>
+		<MessageFiles Include="$(ModelDir)\messages.*.txt" />
+	</ItemGroup>
+
+	<Target Name="CopyMessages" DependsOnTargets="CreateDirectories">
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.js -d "$(StaticDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.* -x *.js -d "$(BinDir)/$(UserPkgDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.* -x *.js -d "$(BinDir)/$(GXflowPkgDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.js -d "$(ModelDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.* -x *.js -d "$(ModelDir)/$(UserPkgDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.* -x *.js -d "$(ModelDir)/$(GXflowPkgDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+		
+		<Copy SourceFiles="@(MessageFiles)" DestinationFolder="$(BinDir)\$(UserPkgDir)" SkipUnchangedFiles="true" Condition="'$(RuntimeTranslation)'=='true'" ContinueOnError="true" />
+		<Copy SourceFiles="@(MessageFiles)" DestinationFolder="$(BinDir)\$(GXflowPkgDir)" SkipUnchangedFiles="true" Condition="'$(RuntimeTranslation)'=='true'" ContinueOnError="true" />
+		
+		<Copy SourceFiles="@(MessageFiles)" DestinationFolder="$(ModelDir)\$(UserPkgDir)" SkipUnchangedFiles="true" Condition="'$(RuntimeTranslation)'=='true'" ContinueOnError="true" />
+		<Copy SourceFiles="@(MessageFiles)" DestinationFolder="$(ModelDir)\$(GXflowPkgDir)" SkipUnchangedFiles="true" Condition="'$(RuntimeTranslation)'=='true'" ContinueOnError="true" />
+	</Target>
+
+	<Target Name="Deploy">
+		<CallTarget Targets="CopyApi" />
+		<CallTarget Targets="CopyGAMModuleFiles" />			
+		<CallTarget Targets="CopyClientFiles" />
+		<Copy SourceFiles="$(ModelDir)\client.cfg;$(ModelDir)\Images.txt" DestinationFolder="$(BinDir)\$(GXflowPkgDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
+		<Copy SourceFiles="$(ModelDir)\client.cfg;$(ModelDir)\Images.txt" DestinationFolder="$(ModelDir)\$(GXflowPkgDir)" SkipUnchangedFiles="true" ContinueOnError="true" />		
+		<Copy SourceFiles="$(ModelDir)\$(GXflowPkgDir)\GXflowImages.txt" DestinationFolder="$(ModelDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
+	</Target>
+</Project>

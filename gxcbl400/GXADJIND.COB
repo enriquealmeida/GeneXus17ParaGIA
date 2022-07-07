@@ -1,0 +1,15 @@
+GX-ADJUST-INPUT-DATE.
+
+    IF GX-INT-FMT-DATE NOT EQUAL ZEROES
+       IF YY OF GX-INT-FMT-DATE LESS #1
+          ADD 2000 TO YY OF GX-INT-FMT-DATE
+       ELSE
+          IF YY OF GX-INT-FMT-DATE LESS 100
+             ADD 1900 TO YY OF GX-INT-FMT-DATE
+          ELSE
+             IF YY OF GX-INT-FMT-DATE LESS 1000
+                ADD 1000 TO YY OF GX-INT-FMT-DATE
+             END-IF
+          END-IF
+       END-IF
+    END-IF.

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Logout options for Single Sign On using GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?32336,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Logout options for Single Sign On using GAM</h1>
+<!--Logout options for Single Sign On using GAM--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Regarding <a href="25385.html">Single Sign On in applications using GAM</a>, there are three different ways to implement a Logout.</p>
+
+<p>First, the following has to be taken into account:</p>
+
+<div style="background-color: rgb(255,255,230);border-left: 6.0px solid rgb(230,230,0);">
+<p>       </p>
+
+<ol>
+	<li>The Single Sign On feature behaves as explained in <a href="https://wiki.genexus.com/commwiki/wiki?28106,," target="_blank">GAM SSO flow of execution</a>. Note that in this architecture there are n client applications (*) and an Identity Provider. All of them have their own <a href="24746.html">GAM</a>.<br />
+	 </li>
+	<li>Internally, when the user logs in using the Identity Provider, a user session is created locally (on the local GAM), and two sessions are created on the Identity Provider's GAM. The sessions created on the server IP (from now on, Identity Provider) are the following:</li>
+</ol>
+
+<ul style="margin-left: 40.0px;">
+	<li>The session associated with the pair User - Client. Killing this session removes the user's Identity Provider connection.</li>
+	<li>The user session on the server IP. Killing this session removes the possibility of establishing a new connection to the Identity Provider without performing a new login.</li>
+</ul>
+
+<p>        3. Performing <em>GAMsession.logout</em> on the client without considering any of the options below, does not perform the server logout.</p>
+
+<p> (*) &quot;client application&quot; means an applications running in a browser/device.</p>
+
+<p>  Examples:  </p>
+
+<ul>
+	<li>   one browser with three tabs opened with App1, App1, App2 means two &quot;client applications&quot; (i.e. App1 and App2).</li>
+	<li>   one browser with three tabs opened with App1, App1, App2 and another browser in the same device (or not) with App1 and App3 opened means four &quot;client applications&quot; (i.e. App1 and App2 for one side and App1 and App3 for the other side)</li>
+</ul>
+</div>
+
+<p>Basically, the Logout can be <strong>Client-Side exclusively</strong> (so the server's user session is kept alive), <strong>Identity Provider &amp; Client </strong>(the user session on the server IP is killed), and <strong>Identity Provider &amp; All Clients </strong>(all the client application's sessions are killed for the user, as well as the user session on the server IP).</p>
+
+<h2><a id="Client-Side+Only" class="HashLink" href="#Client-Side+Only">Client-Side Only</a></h2>
+
+<p>In this scenario, the session associated with the pair User - Client application is killed. Killing this session removes the user's Identity Provider connection. The next time he wants to log in from this client application, the server's Identity Provider session will be used if it remains alive (if it hasn't timed out).</p>
+
+<p>The flow is as follows:</p>
+
+<ol>
+	<li>Logout is performed on the client and the user session on the client's GAM database is killed.</li>
+	<li>The session associated with the pair User - Client application is killed. However, the user's session is kept alive on the server.</li>
+</ol>
+
+<p>Finally, a redirect is done to the <a href="32354.html">GAM Application logout object</a> of the client application where the log out was executed.</p>
+
+<p><img src="./images/32374.png" id="32374" class="WikiImage"/></p>
+
+<h2><a id="Identity+Provider+%26+Client" class="HashLink" href="#Identity+Provider+%26+Client">Identity Provider &amp; Client</a></h2>
+
+<ol>
+	<li>Logout is done on the client and the user session on the client's GAM database is killed.</li>
+	<li>The session associated with the pair User - Client application is killed.</li>
+	<li>The user session on the server Identity Provider is killed. Then, if the user tries to log in, since the server session doesn't exist, he will be asked to enter his credentials again to log in to the Identity Provider. The user remains logged into the other applications while the local session in those applications is alive. </li>
+</ol>
+
+<p>Finally, a redirect is done to the <a href="32354.html">GAM Application logout object</a> of the client application where the log out was executed.</p>
+
+<p><img src="./images/32373.png" id="32373" class="WikiImage"/></p>
+
+<h2><a id="Identity+Provider+%26+All+Clients" class="HashLink" href="#Identity+Provider+%26+All+Clients">Identity Provider &amp; All Clients</a></h2>
+
+<ol>
+	<li>Logout is performed on the client and the user session on the client's GAM database is killed.</li>
+	<li>For all the client applications, the session associated with the pair User - Client application is killed.</li>
+	<li>The user session is killed on the server.</li>
+	<li>For each application, the user session on the client application's GAM database is killed.</li>
+</ol>
+
+<p>Finally, a redirect is done to the <a href="32354.html">GAM Application logout object</a> of the client application where the log out was executed.</p>
+
+<p><img src="./images/32372.png" id="32372" class="WikiImage"/></p>
+
+<p>Using the Identity Provider &amp; All clients options, since <a href="https://wiki.genexus.com/commwiki/wiki?38845,," target="_blank">GeneXus 15 Upgrade 11</a> if the final users logsout from the Identity Provider, the client sessions (who run in the same browser instance) are also finished.</p>
+
+<h2><a id="How+to+configure+the+Logout+options+for+SSO" class="HashLink" href="#How+to+configure+the+Logout+options+for+SSO">How to configure the Logout options for SSO</a></h2>
+
+<p>The option is configured using the <a href="15935.html">GAM Web Backoffice</a> under the Identity Provider's Repository Configuration (or programmatically, using the <a href="16535.html">GAM API</a>).</p>
+
+<p><img src="./images/32371.png" id="32371" class="WikiImage"/></p>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<p> </p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32354.html">GAM Application logout object</a></TD><TD><a href="25355.html">GAM Remote Authentication Type</a></TD></TR><TR><TD><a href="25385.html">Single Sign On in applications using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

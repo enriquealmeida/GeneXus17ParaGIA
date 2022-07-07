@@ -1,0 +1,1 @@
+import{b as e}from"./p-2678b594.js";import{p as o}from"./p-de1c09c3.js";o().then(o=>e([["p-470bd11e",[[0,"gx-dso-styles-editor",{monaco:[1032],usePlatformConfiguration:[4,"use-platform-configuration"],value:[1],configuration:[16],readonlymessage:[1025],readonly:[1028],dispose:[64],getTextEditor:[64]},[[0,"editorValueChanged","editorValueChangedListener"]]]]]],o));

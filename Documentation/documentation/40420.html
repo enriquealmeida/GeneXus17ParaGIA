@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>BlobFile data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?40420,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">BlobFile data type</h1>
+<!--BlobFile data type--><div class="TableWikiBody" id="tblwikibody"><p>The purpose of the BlobFile data type is to store or reference any kind of files (image, audio, video, pdf, excel, etc.), regardless of their format. The data can be stored locally or by using any <a href="31120.html">external storage</a> media.</p>
+
+<h2><a id="Properties+and+Methods" class="HashLink" href="#Properties+and+Methods">Properties and Methods</a></h2>
+
+<p>The properties and methods are similar to those available for <a href="15204.html">Image data type</a>, <a href="16529.html">Audio data type</a> and <a href="16608.html">Video data type</a>.</p>
+
+<h3><a id="Properties" class="HashLink" href="#Properties">Properties</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 1000.0px;">
+	<tbody>
+		<tr>
+			<td>FileName</td>
+			<td>Gets the file name (Character).</td>
+		</tr>
+		<tr>
+			<td>FileType</td>
+			<td>Gets the file Type. </td>
+		</tr>
+		<tr>
+			<td>FileURI</td>
+			<td>
+			<p>Sets/Gets the FileURI</p>
+
+			<p><strong>Set</strong>:<br />
+			You can set a relative path. It will be resolved within the current host.<br />
+			You can set a local path by using file:// protocol<br />
+			When you set the URI property, the internal binary file stored in the DB will be set to empty.</p>
+
+			<p>Example:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Blobfile.FromURL(myFileWillbeErasedInNextLine)
+&amp;Blobfile.FileURI = &quot;http://www.myfiles/file.pdf&quot;
+</pre>
+
+			<p class="Code">In this case, the .pdf file will be the file in the data.</p>
+
+			<p><strong>Get</strong>:</p>
+
+			<p>It always returns the absolute URI to the file</p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="Methods" class="HashLink" href="#Methods">Methods</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 1000.0px;">
+	<tbody>
+		<tr>
+			<td>FromURL(<i>FileURL</i>)</td>
+			<td>
+			<p>Loads the current instance with the file given in the parameter FileURL.<br />
+			The internal binary holding the file is loaded from the FileURL indicated.</p>
+
+			<p>After calling this method, the URI property has the filename and the extension of the FileURL specified.</p>
+
+			<p class="Code">For example:<br />
+			 </p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Blobfile.FromURL('www.myfiles.com/myfile.pdf')
+msg(&amp;Blobfile.FileURI) // will print myfile.pdf</pre>
+
+			<p> </p>
+			</td>
+		</tr>
+		<tr>
+			<td>SetEmpty/IsEmpty</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="How+does+it+work%3F" class="HashLink" href="#How+does+it+work%3F">How does it work?</a></h2>
+
+<p>The File can be loaded from a URI (local or remote) using FromURL method. If the value passed to FromURL is a remote URL, the file is downloaded (and saved to the DB if it's necessary).</p>
+
+<p>If what you want is simply to have a reference to the file that is somewhere remote or local, you just need to assign the URI property.</p>
+
+<h2><a id="How+is+it+stored+in+the+DB%3F" class="HashLink" href="#How+is+it+stored+in+the+DB%3F">How is it stored in the DB?</a></h2>
+
+<p>The BlobFile data type is automatically stored as more than one field in the DB (similar to the way <a href="15204.html">Image data type</a>, <a href="16529.html">Audio data type</a> and <a href="16608.html">Video data type</a> are stored).<br />
+<br />
+The structure saved in the DB is the following:</p>
+
+<ul>
+	<li>Attribute_Name (Binary is stored here)</li>
+	<li>Attribute_Name_GXI (where the URI is stored) (GXI = GeneXus Identifier)</li>
+</ul>
+
+<p>When the URI is assigned, Attribute_Name_GXI is assumed to be an external file (in this case the full URI is stored). If the file was loaded using FromURL method, the relative path is saved there (so the file name and type are known).</p>
+
+<p>When a file is stored, the file name is stored in the GXI field, as follows:</p>
+
+<p>gxdbfile: &lt;file name&gt; _ &lt;token&gt;. &lt;file extension&gt;</p>
+
+<p>The prefix &quot;gxdbfile:&quot;  indicates to GeneXus that it is a file and not a relative URL.<br />
+The token allows to identify univocally the file. GeneXus generates a GUID.</p>
+
+<h2><a id="What+is+the+difference+beetwen+Blob+data+type+and+BlobFile+data+type%3F" class="HashLink" href="#What+is+the+difference+beetwen+Blob+data+type+and+BlobFile+data+type%3F">What is the difference beetwen Blob data type and BlobFile data type?</a></h2>
+
+<p>The difference between Blob and BlobFile data type is the way they are stored in the database. As a result, BlobFile can be stored in any <a href="31120.html">external storage</a> whereas Blob data type cannot.</p>
+
+<h2><a id="Reorganizations" class="HashLink" href="#Reorganizations">Reorganizations</a></h2>
+
+<p>The following reorganizations are supported:</p>
+
+<ul>
+	<li>From Blob to BlobFile  -&gt; The binary file is copied, and the GXI_Attribute_Name is obtained through the name of the original blob file.</li>
+	<li>From Character to BlobFile -&gt; The GXI_Attribute_Name is set from the character attribute</li>
+	<li>From BlobFile to Blob -&gt; The GXI_Attribute_Name field is removed</li>
+	<li>From BlobFile to Character -&gt; The field is assigned, if possible, using the GXI_Attribute_Name value. Otherwise, it's left empty.</li>
+</ul>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<ul>
+	<li>Since <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a> in Java and .NET and iOS</li>
+	<li>Since <a href="https://wiki.genexus.com/commwiki/wiki?35351,," target="_blank">GeneXus 16</a> in .NET Core</li>
+	<li>Since <a href="https://wiki.genexus.com/commwiki/wiki?45275,," target="_blank">GeneXus 16 upgrade 9</a> in Android</li>
+</ul>
+
+<p> </p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6704.html">Blob data type</a></TD><TD><a href="31120.html">External Storage for Multimedia</a></TD><TD><a href="44917.html">Files external object</a></TD></TR><TR><TD><a href="50048.html">Files external object (GeneXus 17 Upgrade 7)</a></TD><TD><a href="39979.html">FileURI property</a></TD><TD><a href="9644.html">FromURL method</a></TD></TR><TR><TD><a href="45291.html">Load balancing considerations</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/10/22 05:52 PM</em></font></td></TR></table></font>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Application Deployment tool</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?32092,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Application Deployment tool</h1>
+<!--Toc:Application Deployment tool--><div class="TableWikiBody" id="tblwikibody"><p>By selecting <strong>Build &gt; Deploy Application </strong>in the GeneXus main menu, you can access the <strong>Application Deployment tool</strong> which provides the following features:</p>
+
+<ul>
+	<li>Local Deployment; it lets you package web applications. That is to say, you package Web objects and Services and get a .zip, .war, .ear, etc. with the corresponding classes, libraries, and resources to be installed in Tomcat, Websphere, JBOSS, IIS, or any Web Server of your favorite Infrastructure as a Service or Hosting providers.</li>
+	<li>Docker Containers Deployment; it lets you build Docker images with your application.</li>
+	<li>Cloud Deployment; it lets you deploy those packages to the most popular Platform as a Service (<a href="https://wiki.genexus.com/commwiki/wiki?32096,," target="_blank">PaaS</a>) Cloud Providers (i.e., AWS Elastic Beanstalk, Google App Engine, IBM Bluemix, Microsoft Azure, SAP Cloud Platform) or to Serverless Platforms (i.e., AWS Lambda &amp; API Gateway).</li>
+	<li>Package batch processes. That is to say, you package command line Procedures and get .zip or .jar files with the corresponding classes, libraries, and resources. Command line procedures can also be deployed to Serverless Platforms (as AWS Lambda Functions).</li>
+</ul>
+
+<p>The Application Deployment tool is extensible and customizable. The options available through the UI are just a part of all those available through <a href="42073.html">Application Deployment MSBuild tasks</a>.</p>
+
+<p>The following steps guide you through the basics. There may be additional considerations, specific to the platforms and clouds which may be covered in the related documents.</p>
+
+<h3><a id="Page+contents" class="HashLink" href="#Page+contents">Page contents</a></h3>
+
+<p><ul><li><a class="HashLink" href="#Page+contents">Page contents</a></li><li><a class="HashLink" href="#Step+1%3A+Select+what+you+want+to+deploy">Step 1: Select what you want to deploy</a></li><li><a class="HashLink" href="#Security">Security</a></li><ul><li><a class="HashLink" href="#GAM">GAM</a></li></ul></li><li><a class="HashLink" href="#Deployment+of+a+Java+application+to+Tomcat%2C+Websphere%2C+JBoss%2C+etc.">Deployment of a Java application to Tomcat, Websphere, JBoss, etc.</a></li><li><a class="HashLink" href="#Deployment+of+a+.NET+application+to+IIS">Deployment of a .NET application to IIS</a></li><li><a class="HashLink" href="#Deployment+of+applications+to+Docker+Containers">Deployment of applications to Docker Containers</a></li><li><a class="HashLink" href="#Deployment+of+applications+to+the+Cloud+%2832096%29">Deployment of applications to the Cloud (<a href="https://wiki.genexus.com/commwiki/wiki?32096,," target="_blank">PaaS</a>)</a></li><li><a class="HashLink" href="#Deployment+of+Batch+processes">Deployment of Batch processes</a></li><li><a class="HashLink" href="#EAR+Deployment">EAR Deployment</a></li><li><a class="HashLink" href="#Deployment+of+additional+files+and+directories">Deployment of additional files and directories</a></li><li><a class="HashLink" href="#How+to+exclude+objects+from+the+Deployment+unit">How to exclude objects from the Deployment unit</a></li><li><a class="HashLink" href="#FAQ">FAQ</a></li></ul></ul></p>
+
+<h3><a id="Step+1%3A+Select+what+you+want+to+deploy" class="HashLink" href="#Step+1%3A+Select+what+you+want+to+deploy">Step 1: Select what you want to deploy</a></h3>
+
+<p>The 'Add' / 'Clear' buttons let you add or remove objects.<br />
+By just selecting the main object, all the called ones will be included automatically (those that don't appear in the list).<br />
+Only the objects available for selection in a <a href="38886.html">Deployment Unit object</a> can be selected.</p>
+
+<p><img src="./images/36798.PNG" id="36798" class="WikiImage"/></p>
+
+<p>In case of selecting one or more Native Mobile main objects to be deployed, the deployment will include all the server-side components that the application requires, including all the necessary REST services and also the application metadata files as indicated in the <a href="46540.html">App Update</a> and <a href="46541.html">Enable KBN</a> properties. It doesn't deploy the Android or Apple application binaries (.apk or .ipa files), and there is no connection with the application stores. </p>
+
+<p><strong>Notes</strong>:</p>
+
+<ul>
+	<li>This only deploys the Web or Application Server components; it doesn't deploy the Database. See <a href="34476.html">Export Reorganization</a> or the FAQ below for more information and other options.</li>
+	<li>If you want to deploy the GXflow Inbox and its API the <a href="49569.html">Include GXflow backoffice property</a> must be True and a Business Process Diagram must be included in the deployment. See <a href="19848.html">HowTo: Deploying a Workflow-based Application</a> for more information.</li>
+</ul>
+
+<h3><a id="Security" class="HashLink" href="#Security">Security</a></h3>
+
+<p>For additional security, you may change the <a href="36909.html">Application Encryption Key property</a>.</p>
+
+<h4><a id="GAM" class="HashLink" href="#GAM">GAM</a></h4>
+
+<p>When the <a href="14706.html">Enable Integrated Security property</a> is set to TRUE, the <a href="44996.html">Include GAM Backend property</a> will be shown. If the Include GAM Backend property is set to TRUE, the GAM Backend files will be included in the package. Otherwise, they will not be included.</p>
+
+<p>You can save your selection into a <a href="38886.html">Deployment Unit object</a> or select an existing one. If you don't choose any Deployment Unit, a default one will be created containing the objects you chose to deploy.</p>
+
+<h3><a id="Deployment+of+a+Java+application+to+Tomcat%2C+Websphere%2C+JBoss%2C+etc." class="HashLink" href="#Deployment+of+a+Java+application+to+Tomcat%2C+Websphere%2C+JBoss%2C+etc.">Deployment of a Java application to Tomcat, Websphere, JBoss, etc.</a></h3>
+
+<p>Provided you selected Web or Smart Devices objects to deploy, the Deploy button creates a .war package with the required binaries and resources configuring it, so that you can deploy it to the Web Application Servers that support the following:</p>
+
+<ul>
+	<li>Generic Servlets 3.0 (i.e. Apache Tomcat 7, WAS 8.x)</li>
+	<li>Generic Servlets 3.1</li>
+	<li>Generic Servlets 5.0 (i.e. Tomcat 10)</li>
+	<li>JBOSS (Enterprise Java Beans)</li>
+	<li>Tomcat 8.x</li>
+	<li>Tomcat 10.x (it adds support to <a href="46523.html">URL Rewrite</a> rules)</li>
+	<li>WebSphere (Enterprise Java Beans)</li>
+</ul>
+
+<p><strong>Notes</strong></p>
+
+<ul>
+	<li>Tomcat 8.x uses Generic servlets Specification 3.1. Choose Tomcat 8.x target when your application supports file download. Ref.: <a href='https://www.genexus.com/developers/websac?,,,41714'>SAC 41714</a>, <a href='https://tomcat.apache.org/whichversion.html'>Apache Tomcat Versions</a></li>
+	<li>In Jboss, when restarting it, it will delete and redeploy the war files, so if there were some changes made in the files of the deployed application they will be lost (unless updating the .war file with the new changes or reconfiguring Jboss to not redeploy the war files).</li>
+</ul>
+
+<p>Select Target Local and choose one of the available application servers of the list, then click on 'Deploy.'</p>
+
+<h3><a id="Deployment+of+a+.NET+application+to+IIS" class="HashLink" href="#Deployment+of+a+.NET+application+to+IIS">Deployment of a .NET application to IIS</a></h3>
+
+<p>Provided you selected Web or Smart Devices objects to deploy, the Deploy button creates a .zip package with the required binaries and resources configuring it so that you can deploy it to the following Web Application Servers:</p>
+
+<ul>
+	<li>IIS 7</li>
+	<li>IIS8 (or higher)</li>
+</ul>
+
+<p>Select Target Local and choose one of the available application servers of the list, then click on 'Deploy.'</p>
+
+<h3><a id="Deployment+of+applications+to+Docker+Containers" class="HashLink" href="#Deployment+of+applications+to+Docker+Containers">Deployment of applications to Docker Containers</a></h3>
+
+<p>When you select the Target 'Docker Image,' GeneXus creates a Docker image with your application so that you can deploy it. More information in <a href="36951.html">How to Deploy an Application to Docker</a>.</p>
+
+<h3><a id="Deployment+of+applications+to+the+Cloud+%28wiki%3F32096%2CPaaS+PaaS%29" class="HashLink" href="#Deployment+of+applications+to+the+Cloud+%28wiki%3F32096%2CPaaS+PaaS%29">Deployment of applications to the Cloud (<a href="https://wiki.genexus.com/commwiki/wiki?32096,," target="_blank">PaaS</a>)</a></h3>
+
+<p>Provided you selected Web or Smart Devices objects to deploy, and Target other than 'Local' or 'Docker Image,' the 'Deploy' button creates a package with the required binaries and resources so that it can be deployed to the Cloud. Finally, it deploys the package to the cloud with the credentials and options you set in the Deployment Properties.</p>
+
+<p><img src="./images/32099.png" id="32099" class="WikiImage"/></p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  To just create the package, select the 'Only package' checkbox.</div>
+</p>
+
+<p>Available Cloud Targets for .NET: AWS Elastic Beanstalk, Microsoft Azure WebApp</p>
+
+<p>Available Cloud Targets for Java: AWS Elastic Beanstalk, Google App Engine, IBM Bluemix, SAP Cloud Platform, AWS Serverless, AWS Lambda Function, Microsoft Azure WebApp</p>
+
+<p>Available Cloud Targets for .Net Core: Microsoft Azure WebApp</p>
+
+<p>Note: If you need deployment management, traceability of deployments, and assistance for creating production-ready cloud environments, the answer is <a href="https://wiki.genexus.com/commwiki/wiki?28935,," target="_blank">GeneXus Cloud Deployment Services</a>.</p>
+
+<h3><a id="Deployment+of+Batch+processes" class="HashLink" href="#Deployment+of+Batch+processes">Deployment of Batch processes</a></h3>
+
+<p>Provided you select only one or multiple procedures (Main Object = True, Call Protocol = Command Line or Internal, Expose as Web service = False) and Target = Local, the 'Deploy' button creates a package (.zip or .jar) with the required binaries and resources to run it.</p>
+
+<h3><a id="EAR+Deployment" class="HashLink" href="#EAR+Deployment">EAR Deployment</a></h3>
+
+<p>If some selected object (or a called one) is an <a href="1818.html">EJB</a>, the Deployment tool creates an .ear (Enterprise Archive Resource) file.<br />
+The generated EAR has one web application with all the servlets and static contents, one EJB application with all the EJB defined, and all the JAR files required by the application.</p>
+
+<h3><a id="Deployment+of+additional+files+and+directories" class="HashLink" href="#Deployment+of+additional+files+and+directories">Deployment of additional files and directories</a></h3>
+
+<p>To include extra files in the deployment package, you can</p>
+
+<ul>
+	<li>Select a <a href="5852.html">File object</a>. Note that <a href="13280.html">Extract property</a> has to be set for that File so that the deployment tool can take it from the path set in the 'Extract to path' property and include it in the deployment package.</li>
+	<li>Create or Change the &lt;KB Directory&gt;\&lt;Environment Target path&gt;\web\&lt;Deployment Unit Object Name&gt;_user.gxdproj setting the Files or Directories to include. (*). See <a href="45672.html">Customize GeneXus Deployment capabilities</a> for more information.</li>
+</ul>
+
+<p>If you need to modify the configuration files of the deploying packages (web.xml in Java and web.config in .Net) but you do not want to create a new configuration file, you can modify the templates in the Genexus directory under ApplicationServers\Template (JavaWeb\Generic_Servlet_Base.stg for Java and \CsharpWeb\IIS_base.stg for .Net).</p>
+
+<p>(*) The name of the file user.gxdproj changed to &lt;Deployment Unit Object Name&gt;_user.gxdproj in <a href="https://wiki.genexus.com/commwiki/wiki?44913,," target="_blank">GeneXus 16 upgrade 8</a> in order to be able to deploy different files and directories to each Deployment Unit.</p>
+
+<h3><a id="How+to+exclude+objects+from+the+Deployment+unit" class="HashLink" href="#How+to+exclude+objects+from+the+Deployment+unit">How to exclude objects from the Deployment unit</a></h3>
+
+<ul>
+	<li>Create or Change the &lt;KB Directory&gt;\&lt;Environment Target path&gt;\web\&lt;Deployment Unit Object Name&gt;_user.gxdproj setting the Files or Directories to exclude. See <a href="45672.html">Customize GeneXus Deployment capabilities</a> for more information.</li>
+</ul>
+
+<h3><a id="FAQ" class="HashLink" href="#FAQ">FAQ</a></h3>
+
+<p><strong>Q: Where are the packages created?</strong><br />
+A: Look at the details in the output window. The packages are typically created under the following path: '&lt;KB Directory&gt;\&lt;Environment Directory&gt;\Deploy\&lt;Target&gt;\&lt;Deployment Unit Name&gt;\&lt;TimeStamp&gt;\'.Use Tools / Explore Target Environment Directory and go to the parent folder, you will see the Deploy folder there.<br />
+<br />
+<strong>Q: How intelligent is it? I mean, will it package every file or directory set in the classpath property?</strong><br />
+A: No, GeneXus + <a href="32092.html">Application Deployment tool</a> make up a smart team ;-). It only takes the drivers corresponding to your Environment and the libraries that your application uses (i.e. if it doesn't create Excel files, it doesn't include the POI library, etc.). That said, if you have additional files (like jars) that need to be deployed with your app, you'll have to add them as <a href="5852.html">files</a> in the <a href="1836.html">Knowledge Base</a> and add those files to the Deploy Dialog, just as you would with a regular main object. For more information about this, read <a href="35361.html">Adding additional files to an application package</a><br />
+<br />
+<strong>Q: My app uses Query Viewer, doesn't it?</strong><br />
+A: Yes, if the selected objects use the Query Viewer Control, it takes the corresponding binaries and resources for the Query Viewer User Control and the referenced Query objects.<br />
+<br />
+<strong>Q: What about GAM?</strong><br />
+A: If the <a href="14706.html">Enable Integrated Security property</a> is set to True, it takes the corresponding binaries and resources for the GAM API. If you need to package the GAM Example Web Objects, add the GAMHome to your list. It doesn't initialize or populate GAM's tables with the required permissions, roles, etc. Read <a href="21219.html">GAM - Applications deployment</a> for information about that.<br />
+<br />
+<strong>Q: Does it deploy the GeneXus Flow Inbox and its API? </strong><br />
+A: Yes. If the KB Version has a BPM Diagram and at least one BPM Diagram is included in the deployment, it takes the corresponding binaries and resources.<br />
+<br />
+<strong>Q: How do I deploy the objects referenced by </strong><strong>my business processes?</strong><br />
+A: Select a Business Diagram and the objects it uses will be deployed! Note: It doesn't impact workflow tables! Read <a href="19848.html">HowTo: Deploying a Workflow-based Application</a> to do that.<br />
+<br />
+<strong>Q: How do I create a deployment package for the Reorganization?</strong><br />
+A: This option is available in Build / Export Reorganization. More Information at <a href="34476.html">Export Reorganization</a>.<br />
+<br />
+<strong>Q: What about traceability, deployment Management?</strong><br />
+A: The answer is <a href="https://wiki.genexus.com/commwiki/wiki?28935,," target="_blank">GeneXus Cloud Deployment Services</a>. A free playground is ready for you: <a href="https://wiki.genexus.com/commwiki/wiki?29606,," target="_blank">GeneXus Cloud Sandbox</a>.<br />
+<br />
+<strong>Q: Does GeneXus provide some spaces in the Cloud for prototyping?</strong><br />
+A: Oh, you didn't know? Yes, since 2012 there are <a href="https://wiki.genexus.com/commwiki/wiki?26157,," target="_blank">Servers available for Cloud prototyping</a>! Use <a href="15041.html">Deploy to cloud property</a>, press F5 and you're prototyping on the cloud for free.</p>
+
+<hr />
+<ul>
+	<li>Deploy to PaaS
+	<ul>
+		<li><a href="32150.html">IBM Cloud</a></li>
+		<li><a href="31457.html">Azure Web App</a></li>
+		<li><a href="32059.html">SAP Cloud Platform</a></li>
+		<li><a href="32104.html">AWS Elastic Beanstalk</a></li>
+		<li><a href="32211.html">Google App Engine</a></li>
+		<li><a href="35355.html">Deploy mobile services to AWS Serverless using AWS Lambda and AWS API Gateway</a></li>
+		<li><a href="40803.html">AWS Lambda as a Function</a></li>
+		<li><a href="47430.html">Azure Functions</a>
+		<ul>
+			<li><a href="49351.html">Deploy to Azure Functions</a></li>
+			<li><a href="49264.html">Azure timer triggered functions</a></li>
+			<li><a href="49266.html">Azure Http-triggered functions</a></li>
+			<li><a href="49355.html">Service Bus and Queue Storage triggered Azure functions</a></li>
+			<li><a href="49107.html">Deploy mobile services to Azure Serverless using API Management</a></li>
+			<li><a href="50142.html">Deploy static files to Azure Storage in Serverless deploy</a></li>
+			<li><a href="49260.html">HowTo: Monitoring Azure Functions</a></li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+	<li>Containerization
+	<ul>
+		<li><a href="36951.html">Deploy to Docker</a>
+		<ul>
+			<li>Deploy to Docker MSBuild task</li>
+		</ul>
+		</li>
+		<li><a href="45416.html">Deploy to a Kubernetes cluster</a>
+		<ul>
+			<li><a href="46730.html">Deploy to AKS</a></li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+	<li>Deploy Front end applications
+	<ul>
+		<li><a href="51105.html">Front-end applications deploy</a>
+		<ul>
+			<li><a href="https://wiki.genexus.com/commwiki/wiki?51104,," target="_blank">Deploy Front-end applications to docker containers</a></li>
+			<li><a href="49877.html">Deploy to Cloud Provider Object Storage</a>
+			<ul>
+				<li><a href="49878.html">Deploy Front-end applications to Azure Blob Storage</a></li>
+			</ul>
+			</li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+	<li>MSBuild tasks
+	<ul>
+		<li><a href="42073.html">Application Deployment MSBuild tasks</a></li>
+	</ul>
+	</li>
+</ul>
+
+<p></p>
+
+<p></p>
+</div>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/20/22 04:47 PM</em></font></td></TR></table></font>

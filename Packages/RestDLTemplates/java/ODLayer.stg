@@ -1,0 +1,474 @@
+group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities,  dpfunctions, apis, sdts, gx)::=<<
+$header(hostinfo, entities,  dpfunctions, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities,  dpfunctions, apis, sdts, gx)::=<<
+
+package $hostinfo.package$;
+
+import $hostinfo.package$.*;
+$entities:{item|$if (item.HasModule)$import  $hostinfo.package$.$gx.ToLower.(item.Module)$.*$endif$};separator=";\n"$
+
+import java.io.InputStream;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+
+import com.genexus.webpanels.*;
+import com.genexus.internet.*;
+import com.genexus.*;
+
+import org.apache.olingo.commons.api.data.*;
+import org.apache.olingo.commons.api.edm.EdmEntitySet;
+import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.ex.ODataRuntimeException;
+import org.apache.olingo.server.api.etag.PreconditionException;
+import org.apache.olingo.commons.api.format.ContentType;
+import org.apache.olingo.server.api.*;
+import org.apache.olingo.server.api.processor.EntityCollectionProcessor;
+import org.apache.olingo.server.api.serializer.*;
+import org.apache.olingo.server.api.uri.*;
+import org.apache.olingo.commons.api.http.*;
+import org.apache.olingo.server.api.uri.queryoption.*;
+import org.apache.olingo.server.api.uri.queryoption.expression.*;
+
+public class GxODataLayer extends GXWebObjectBase {
+
+	private com.genexus.internet.HttpContext httpContext = null;
+
+	public GxODataLayer(com.genexus.internet.HttpContext httpContext)
+	{	
+		super(httpContext);
+		this.httpContext = httpContext;
+	}
+
+	public EntityCollection readEntitySetData(EdmEntitySet edmEntitySet, int skipNumber, int topNumber, FilterOption filterOption) throws ODataApplicationException {
+		$entities:{item|$entity_list_condition(item, gx)$};separator="\n"$
+		return null;
+	}
+	
+	public Entity readEntityData(EdmEntitySet edmEntitySet, List<UriParameter> keyParams) throws ODataApplicationException {
+		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+		$entities:{item|$entity_condition(item, gx)$};separator="\n"$
+		return null;
+	}
+	
+	public Entity createEntityData(EdmEntitySet edmEntitySet, Entity requestEntity) throws ODataApplicationException {
+		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+		$entities:{item|$entity_ins_condition(item, gx)$};separator="\n"$
+        return null;
+	}
+
+	public void updateEntityData(EdmEntitySet edmEntitySet,  List<UriParameter> keyParams, Entity requestEntity, HttpMethod httpMethod, Collection<String> ifMatchHeaders) 
+		throws ODataApplicationException, PreconditionException {
+		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+		$entities:{item|$entity_upd_condition(item, gx)$};separator="\n"$
+	}
+
+	public void deleteEntityData(EdmEntitySet edmEntitySet, List<UriParameter> keyParams, Collection<String> ifMatchHeaders) throws ODataApplicationException, PreconditionException {
+		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+		$entities:{item|$entity_del_condition(item, gx)$};separator="\n"$
+	}
+
+	public EntityCollection readFunctionImportCollection(final UriResourceFunction uriResourceFunction, final ServiceMetadata serviceMetadata) 
+		throws ODataApplicationException {
+		$dpfunctions:{func|$function_condition(func, gx)$};separator="\n"$		
+		throw new ODataApplicationException("Function not implemented", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+	}
+
+	public Entity readFunctionImportEntity(final UriResourceFunction uriResourceFunction, final ServiceMetadata serviceMetadata) 
+		throws ODataApplicationException {
+		final EntityCollection entityCollection = readFunctionImportCollection(uriResourceFunction, serviceMetadata);
+		final EdmEntityType edmEntityType = (EdmEntityType) uriResourceFunction.getFunction().getReturnType().getType();
+		List<Entity> entityList = entityCollection.getEntities();
+		if (entityList.size() == 1) {
+			Entity retEntity = entityList.get(0);
+			return retEntity;
+		}				
+		return null;		
+	}
+
+	$sdts:{item|$function_sdt_instance(hostinfo, item, gx)$};separator="\n"$
+
+	$entities:{item|$entity_init_function(hostinfo, item, gx)$};separator="\n"$
+
+	$entities:{item|$entity_read_function(hostinfo, item, gx)$};separator="\n"$
+
+	$entities:{item|$entity_list_function(hostinfo, item, gx)$};separator="\n"$
+
+	$entities:{item|$entity_get_function(hostinfo, item, gx)$};separator="\n"$
+
+	$entities:{item|$entity_ins_function(hostinfo, item, gx)$};separator="\n"$
+
+	$entities:{item|$entity_upd_function(hostinfo, item, gx)$};separator="\n"$
+
+	$entities:{item|$entity_del_function(hostinfo, item, gx)$};separator="\n"$
+
+	private boolean parseFilter(FilterOption filterOption, List<String> filterParts) {
+		if(filterOption != null) {
+			Expression exp = filterOption.getExpression();
+			if (exp instanceof Binary) {
+				Binary bexp = (Binary)exp;
+				if (bexp.getLeftOperand() instanceof Member && bexp.getRightOperand() instanceof Literal) {
+					Member lt = (Member) bexp.getLeftOperand();
+					Literal rt = (Literal) bexp.getRightOperand();
+					filterParts.add(bexp.getOperator().toString());
+					filterParts.add(lt.getResourcePath().getUriResourceParts().get(0).getSegmentValue());
+					filterParts.add(rt.getText());
+					return true;
+				}
+			}
+			else if  (exp instanceof Method) {
+				Method mth = (Method)exp;
+				filterParts.add(mth.getMethod().toString());
+				List<Expression> mthParameters = mth.getParameters();
+				if (mthParameters.get(0) instanceof Member && mthParameters.get(1) instanceof Literal) {				
+					Member lt = (Member) mthParameters.get(0);
+					Literal rt = (Literal) mthParameters.get(1);
+					filterParts.add(lt.getResourcePath().getUriResourceParts().get(0).getSegmentValue());
+					filterParts.add(rt.getText());
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private void checkPreconditions(final String eTag, final Collection<String> headers) throws PreconditionException {
+		if (eTag != null) {
+			for (String headerString : headers) {
+				if (! headerString.equals(eTag) ) {
+					throw new PreconditionException("The preconditions are not fulfilled.", PreconditionException.MessageKeys.FAILED);
+				}
+			}
+		}
+	}
+ 
+	private URI createId(String entitySetName, String[] ids) {
+		try {
+			String stringId = "";
+			String stringSep = "";
+			for(int i = 0; i < ids.length; i++)
+			{
+				stringId += stringSep + ids[i];
+				stringSep = ",";
+			}		    
+			return new URI(entitySetName + "(" + stringId + ")");
+		} 
+		catch (URISyntaxException e) {
+            throw new ODataRuntimeException("Unable to create id for entity: " + entitySetName, e);
+		}
+	}
+
+	public void webExecute( )
+	{
+	}
+	
+	public boolean isMasterPage()
+	{
+		return false;
+	}
+}
+>>
+	
+entity_list_condition(item, gx)::=<<	
+if(GxEdmProvider.ES_$gx.ToUpper.(item.Name)$_LIST_NAME.equals(edmEntitySet.getName())) {
+	return get$item.Name$List(skipNumber, topNumber, filterOption);
+}
+>>
+
+entity_condition(item, gx)::=<<	
+if(GxEdmProvider.ET_$gx.ToUpper.(item.Name)$_NAME.equals(edmEntityType.getName())) {
+	return get$item.Name$(keyParams);
+}
+>>
+
+entity_ins_condition(item, gx)::=<<	
+if(GxEdmProvider.ET_$gx.ToUpper.(item.Name)$_NAME.equals(edmEntityType.getName())) {
+	return insert$item.Name$(requestEntity);
+}
+>>
+
+entity_upd_condition(item, gx)::=<<	
+if(GxEdmProvider.ET_$gx.ToUpper.(item.Name)$_NAME.equals(edmEntityType.getName())) {
+	update$item.Name$(keyParams, requestEntity, httpMethod, ifMatchHeaders);
+}
+>>
+
+entity_del_condition(item, gx)::=<<	
+if(GxEdmProvider.ET_$gx.ToUpper.(item.Name)$_NAME.equals(edmEntityType.getName())) {
+	delete$item.Name$(keyParams, ifMatchHeaders);
+}
+>>
+
+function_condition(func, gx)::=<<
+if(GxEdmProvider.FUNCTION_$gx.ToUpper.(func.Name)$.equals(uriResourceFunction.getFunctionImport().getName())) {
+	$first(func.InParameters):{ inpar | $function_parameters_read(func.InParameters, gx)$}$
+	$first(func.OutParameters):{ outpar | $if (outpar.IsCollection)$$function_collection_result(func, outpar, gx)$$else$$function_simple_result(func, outpar, gx)$$endif$ }$
+	final EntityCollection resultCollection = new EntityCollection();
+	resultCollection.getEntities().addAll(resultEntityList);
+	return resultCollection;
+}
+>>
+
+function_simple_result(func, outpar, gx)::=<<
+Sdt$outpar.SDTType$ sdt_$outpar.Name$ = new $gx.ToLower.(func.Name)$(remoteHandle, context).executeUdp($function_inpars_list(func,gx)$);
+final List<Entity> resultEntityList = new ArrayList<Entity>();	
+Entity ret_item = entity$outpar.SDTType$Instance(sdt_$outpar.Name$, null);
+resultEntityList.add(ret_item);
+>>
+
+function_collection_result(func, outpar, gx)::=<<
+GXBaseCollection<Sdt$outpar.SDTType$$if (outpar.HasCollectionItemName)$_$endif$$if (outpar.IsCollection)$$outpar.CollectionItemName$$endif$> sdt_$outpar.Name$ = new $gx.ToLower.(func.Name)$(remoteHandle, context).executeUdp($function_inpars_list(func,gx)$);
+final List<Entity> resultEntityList = new ArrayList<Entity>();
+for (int pos = 0; pos < sdt_$outpar.Name$.size(); pos++) {
+	Entity ret_item = entity$outpar.SDTType$Instance(sdt_$outpar.Name$.elementAt(pos), null);
+	resultEntityList.add(ret_item);
+}
+>>
+
+function_parameters_read(parms, gx)::=<<
+$parms:{parameter|$parameter_def_var(parameter,i, gx)$};separator="\n"$
+try {
+	$parms:{parameter|$parameter_read_value(parameter,i, gx)$};separator="\n"$
+} catch(NumberFormatException e) {
+	throw new ODataApplicationException("Type of parameter Amount must be Edm.Int32", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+}
+>>
+
+parameter_def_var(parameter,i, gx)::=<<
+$parameter.JavaType$ p_$gx.ToLower.(parameter.Name)$;
+>>
+
+parameter_read_value(parameter,i, gx)::=<<
+final UriParameter parameter$parameter.Name$ = uriResourceFunction.getParameters().get($gx.Decrement.(i)$);
+p_$gx.ToLower.(parameter.Name)$ = $parameter.ConvertStrStartJava$parameter$parameter.Name$.getText()$parameter.ConvertStrEndJava$;
+>>
+
+function_inpars_list(function,gx)::=<<
+$function.InParameters:{ par| p_$gx.ToLower.(par.Name)$};separator=","$
+>>
+
+
+function_sdt_instance(hostinfo, struct, gx)::=<<
+private Entity entity$struct.Name$Instance($print_module(hostinfo, struct)$.Sdt$struct.Name$$if (struct.SDT.IsCollection)$_$struct.SDT.CollectionItemName$$endif$ $gx.Tolower.(struct.SDT.Name)$_item, $print_module(hostinfo,struct)$.Sdt$struct.Name$$if (struct.SDT.IsCollection)$_$struct.SDT.CollectionItemName$$endif$_RESTInterface $gx.Tolower.(struct.SDT.Name)$_interface) {
+	final Entity item_entity = new Entity()
+		$add_item_properties(struct, struct.SDT)$;
+	return item_entity;
+}
+>>
+
+print_module(hostinfo, item)::=<<$hostinfo.package$$if (item.HasModule)$.$gx.ToLower.(item.Module)$$endif$>>
+
+entity_init_function(hostinfo, item, gx)::=<<
+private Entity entity$item.Name$Instance($print_module(hostinfo,item)$.Sdt$item.Name$ $gx.Tolower.(item.SDT.Name)$_item, $print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface $gx.Tolower.(item.SDT.Name)$_interface) {
+	final Entity item_entity = new Entity()
+		$add_item_properties(item, item.SDT)$;
+	$item.SDT.SubLevels:{sublevel|$sublevel_init_instance(hostinfo, item, sublevel, gx)$}$
+	if ($gx.Tolower.(item.SDT.Name)$_interface != null) {
+		$set_uri_keys(item, item.SDT)$;
+		item_entity.setId(createId("$item.Name$", objIds));
+		item_entity.setETag( $gx.Tolower.(item.SDT.Name)$_interface.getHash());
+	}
+	return item_entity;
+}
+>>
+
+add_item_properties(entity , level)::=<<
+$level.Attributes:{item| $add_value_property(entity, level, item)$};separator="\n"$
+>>
+
+add_value_property(entity, level, item)::=<<
+.addProperty(new Property(null, "$item.Name$", ValueType.PRIMITIVE, $if (item.IsTrimmableType)$GXutil.rtrim($endif$$gx.Tolower.(level.Name)$_item.getgxTv_Sdt$entity.Name$$if(level.IsCollection)$_$level.CollectionItemName$$endif$_$gx.ToProper.(item.Name)$()$if (item.IsTrimmableType)$)$endif$))
+>>
+
+set_uri_keys(entity, level)::=<<
+String[]  objIds = new String[] { $level.KeyAttributes:{keyitem| $set_uri_key_property(entity, level, keyitem)$};separator=","$}
+>>
+
+set_uri_key_property(entity, level, keyitem)::=<<
+
+$gx.Tolower.(level.Name)$_interface.getgxTv_Sdt$entity.Name$_$gx.ToProper.(keyitem.Name)$()$if (keyitem.IsNotStringType)$.toString()$endif$
+>>
+
+sublevel_init_instance(hostinfo, entity, sublevel, gx)::=<<
+List<ComplexValue> $gx.Tolower.(sublevel.Name)$Properties = new ArrayList<>();
+GXBCLevelCollection<$print_module(hostinfo,entity)$.Sdt$entity.Name$_$sublevel.Name$>  $gx.ToLower.(sublevel.Name)$_level_list = $gx.Tolower.(entity.SDT.Name)$_item.getgxTv_Sdt$entity.Name$_$gx.ToProper.(sublevel.Name)$();
+for( $print_module(hostinfo,entity)$.Sdt$entity.Name$_$sublevel.Name$  $gx.ToLower.(sublevel.Name)$_level_item :  $gx.ToLower.(sublevel.Name)$_level_list ) {
+	$sublevel_add_property(hostinfo, entity, sublevel, gx)$
+}
+item_entity.addProperty(new Property(null, "$sublevel.Name$", ValueType.COLLECTION_COMPLEX, $gx.Tolower.(sublevel.Name)$Properties));
+>>
+
+sublevel_add_property(hostinfo, entity, sublevel, gx)::=<<
+ComplexValue complexValue = new ComplexValue();
+$sublevel.Attributes:{ att | complexValue.getValue().add(new Property(null, "$att.Name$", ValueType.PRIMITIVE, $if (att.IsTrimmableType)$GXutil.rtrim($endif$$gx.Tolower.(sublevel.Name)$_level_item.getgxTv_Sdt$entity.Name$_$sublevel.Name$_$gx.ToProper.(att.Name)$()$if (att.IsTrimmableType)$)$endif$));};separator="\n"$
+$gx.Tolower.(sublevel.Name)$Properties.add(complexValue);
+>>
+
+entity_read_function(hostinfo, item, gx)::=<<
+private $print_module(hostinfo,item)$.Sdt$item.Name$ entity$item.Name$Read($print_module(hostinfo,item)$.Sdt$item.Name$ sdt_item, Entity $item.Name$Entity) {
+	$level_read_properties(item, item.SDT)$
+	return sdt_item;
+}
+>>
+
+level_read_properties(entity, level)::=<<
+$level.Attributes:{item| $read_value_property(entity, level, item)$};separator="\n"$
+>>
+
+read_value_property(entity, level, item)::=<<
+if ($entity.Name$Entity.getProperty("$item.Name$") != null)
+	sdt_item.setgxTv_Sdt$entity.Name$_$gx.ToProper.(item.Name)$($item.ConvertStartJava$ $entity.Name$Entity.getProperty("$item.Name$").getValue()$item.ConvertEndJava$);
+>>
+
+entity_list_function(hostinfo, item, gx)::=<<
+private EntityCollection get$item.Name$List(int skipNumber, int topNumber, FilterOption filterOption) throws ODataApplicationException {
+
+	EntityCollection $item.Name$Collection = new EntityCollection();
+	List<Entity> $item.Name$List = $item.Name$Collection.getEntities();
+	$gx.ToLower.(item.Name)$_bc $gx.ToLower.(item.Name)$ST  = new $gx.ToLower.(item.Name)$_bc(remoteHandle, context);
+	List<String> condition = new ArrayList<String>();
+	GXBCCollection<$print_module(hostinfo,item)$.Sdt$item.Name$> $gx.ToLower.(item.Name)$STList = new GXBCCollection<$print_module(hostinfo,item)$.Sdt$item.Name$>() ;
+	if (parseFilter( filterOption, condition)) {
+		$entity_list_by_filter(item, item.SDT, gx)$
+	}
+	else {
+		$gx.ToLower.(item.Name)$STList = $gx.ToLower.(item.Name)$ST.GetAll(skipNumber, topNumber);
+	}
+	for($print_module(hostinfo,item)$.Sdt$item.Name$ $gx.Tolower.(item.Name)$_item : $gx.ToLower.(item.Name)$STList ) {
+		$print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface $gx.Tolower.(item.Name)$_interface = new $print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface($gx.Tolower.(item.Name)$_item);
+		$item.Name$List.add(entity$item.Name$Instance($gx.Tolower.(item.SDT.Name)$_item, $gx.Tolower.(item.Name)$_interface));
+	}    
+	return  $item.Name$Collection;
+}
+>>
+
+entity_list_by_filter(item, level, gx)::=<<
+$level.Attributes:{attitem|$if (attitem.IsFilterAtt)$$entity_list_by_condition(item, attitem, gx)$$endif$}$
+$first(level.KeyAttributes):{attkey|$entity_key_move(item, attkey,gx)$}$
+{
+	throw new ODataApplicationException("Condition not implemented", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+}
+>>
+
+entity_list_by_condition(item, attitem, gx)::=<<
+$if (attitem.IsStringType)$$entity_string_condition_by(item, attitem,gx)$$else$$entity_condition_by(item, attitem,gx)$$endif$>>
+
+entity_string_condition_by(item, attitem,gx)::=<<
+if (condition.get(0).equals("eq") && condition.get(1).equals("$attitem.Name$")) {
+	$gx.ToLower.(item.Name)$STList = $gx.ToLower.(item.Name)$ST.GetBy$attitem.Name$(condition.get(2).substring(1, condition.get(2).length() - 1), skipNumber, topNumber);
+}
+else if (condition.get(0).equals("contains") && condition.get(1).equals("$attitem.Name$")) {
+	$gx.ToLower.(item.Name)$STList = $gx.ToLower.(item.Name)$ST.GetBy$attitem.Name$("%" + condition.get(2).substring(1, condition.get(2).length() - 1), skipNumber, topNumber);
+}
+else >>
+
+entity_key_move(item, attitem, gx)::=<<
+if (condition.get(0).equals("gt") && condition.get(1).equals("$attitem.Name$")) {
+	$gx.ToLower.(item.Name)$STList = $gx.ToLower.(item.Name)$ST.GetNext($attitem.ConvertStartJava$ condition.get(2) $attitem.ConvertEndJava$, skipNumber, topNumber);
+}
+else if (condition.get(0).equals("lt") && condition.get(1).equals("$attitem.Name$")) {
+	$gx.ToLower.(item.Name)$STList = $gx.ToLower.(item.Name)$ST.GetPrev($attitem.ConvertStartJava$ condition.get(2) $attitem.ConvertEndJava$, skipNumber, topNumber);
+}
+else >>
+
+entity_condition_by(item, attitem,gx)::=<<
+if (condition.get(0).equals("eq") && condition.get(1).equals("$attitem.Name$")) {
+	$gx.ToLower.(item.Name)$STList = $gx.ToLower.(item.Name)$ST.GetBy$attitem.Name$($attitem.ConvertStrStartJava$condition.get(2)$attitem.ConvertStrEndJava$, skipNumber, topNumber);
+} 
+else
+>>
+
+load_item_keys(level,gx)::=<<  
+$level.KeyAttributes:{keyitem|String s$keyitem.Name$ = keyParams.get($gx.Decrement.(i)$).getText();};separator="\n"$ 
+$level.KeyAttributes:{keyitem|$if (keyitem.IsStringType)$s$keyitem.Name$ = s$keyitem.Name$.substring(1, s$keyitem.Name$.length() - 1);$endif$};separator="\n"$
+
+sdt_item.LoadStrParms($level.KeyAttributes:{keyitem|s$keyitem.Name$};separator=","$)
+>>
+
+
+entity_ins_function(hostinfo, item, gx)::=<<
+private Entity insert$item.Name$( Entity newEntity) throws ODataApplicationException {
+	$print_module(hostinfo,item)$.Sdt$item.Name$ sdt_item = new $print_module(hostinfo,item)$.Sdt$item.Name$(remoteHandle, context);
+	$print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface sdt_item_interface = new $print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface(sdt_item);
+		
+	sdt_item = entity$item.Name$Read(sdt_item, newEntity );
+	sdt_item.Save();
+	if (sdt_item.Success()) {
+		Application.commit(context, remoteHandle, "DEFAULT", null, "$gx.Tolower.(item.Name)$_bc");
+		return entity$item.Name$Instance(sdt_item, sdt_item_interface);
+	}
+	else {
+		throw new ODataApplicationException("Entity for requested key already exists",
+                                       HttpStatusCode.CONFLICT.getStatusCode(), Locale.ENGLISH);
+	}
+}
+>>
+
+entity_upd_function(hostinfo, item, gx)::=<<
+private void update$item.Name$( List<UriParameter> keyParams, Entity updatedEntity, HttpMethod httpMethod, Collection<String> ifMatchHeaders) 
+	throws ODataApplicationException, PreconditionException {
+	
+	$print_module(hostinfo,item)$.Sdt$item.Name$ sdt_item = new $print_module(hostinfo,item)$.Sdt$item.Name$(remoteHandle, context);
+	$print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface sdt_interface = new $print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface(sdt_item);
+	$load_item_keys(item.SDT,gx)$;
+	if (sdt_item.Success()) {
+		checkPreconditions(sdt_interface.getHash(), ifMatchHeaders);
+		sdt_item = entity$item.Name$Read( sdt_item, updatedEntity);
+		sdt_item.Save();
+		if (sdt_item.Success()) {
+			Application.commit(context, remoteHandle, "DEFAULT", null, "$gx.Tolower.(item.Name)$_bc");			
+		}
+		else {
+			throw new ODataApplicationException("Update Error", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+		}
+	}
+	else {
+		throw new ODataApplicationException("Entity not found", HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
+	}
+}
+>>
+
+entity_del_function(hostinfo, item, gx)::=<<
+private void delete$item.Name$(List<UriParameter> keyParams, Collection<String> ifMatchHeaders) throws ODataApplicationException, PreconditionException {
+
+	$print_module(hostinfo,item)$.Sdt$item.Name$ sdt_item = new $print_module(hostinfo,item)$.Sdt$item.Name$(remoteHandle, context);
+	$print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface sdt_interface = new $print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface(sdt_item);
+	$load_item_keys(item.SDT,gx)$;
+	checkPreconditions(sdt_interface.getHash(), ifMatchHeaders);
+	
+	sdt_item.Delete();
+	if (sdt_item.Success()) {
+		Application.commit(context, remoteHandle, "DEFAULT", null, "$gx.Tolower.(item.Name)$_bc");
+	}
+	else {
+		throw new ODataApplicationException("Entity for requested key doesn't exist [" + keyParams.get(0).getText() + "]",
+                                       HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
+	}
+}
+>>
+
+entity_get_function(hostinfo, item, gx)::=<<
+private Entity get$item.Name$(List<UriParameter> keyParams) throws ODataApplicationException {
+
+	$print_module(hostinfo,item)$.Sdt$item.Name$ sdt_item = new $print_module(hostinfo,item)$.Sdt$item.Name$(remoteHandle, context);
+	$print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface sdt_item_interface = new $print_module(hostinfo,item)$.Sdt$item.Name$_RESTInterface(sdt_item);
+	$load_item_keys(item.SDT,gx)$;
+
+	if (sdt_item.Success()) {
+		return entity$item.Name$Instance(sdt_item, sdt_item_interface);
+	}
+	else {
+		throw new ODataApplicationException("Entity for requested key doesn't exist [" + keyParams.get(0).getText() + "]",
+                                       HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
+		}
+}
+>>

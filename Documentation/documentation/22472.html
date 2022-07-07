@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Event Execution Scheme</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22472,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Event Execution Scheme</h1>
+<!--Event Execution Scheme--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document describes event trigger behavior in web applications when the <a href="22449.html">Web User Experience property</a> is set to &quot;Smooth&quot;.</p>
+
+<p>The main aspects of event handling that should be taken into account by the GeneXus user are as follows:</p>
+
+<ul>
+	<li>The Refresh event is not triggered automatically after a user event.</li>
+	<li>The Start event is only triggered once when the object is executed.</li>
+	<li>Web components are refreshed independently from its container. The application gives feedback for the refresh in each <a href="1864.html">web component</a>.</li>
+</ul>
+
+<h2><a id="User+events+do+not+automatically+trigger+the+Refresh+Event" class="HashLink" href="#User+events+do+not+automatically+trigger+the+Refresh+Event">User events do not automatically trigger the Refresh Event</a></h2>
+
+<p>User events do not automatically trigger the refresh event on exit.</p>
+
+<p>When a <a href="8044.html">User defined event</a> is executed and <a href="22449.html">Web User Experience property</a> is set to &quot;Smooth&quot;, the following happens:</p>
+
+<ul>
+	<li>Variables on the screen are read</li>
+	<li>User event is executed</li>
+</ul>
+
+<p>Remember that form variables and <span style="line-height: 20.800001px;">web panel</span><span style="line-height: 20.800001px;"> </span><span style="line-height: 1.6em;">parameters are in the scope of the user event. That means that whenever the event is triggered, it has the form variables and parameters available.</span></p>
+
+<p>As for the Refresh operation, t<span style="line-height: 1.6em;">he user can force its execution using the </span><a href="25069.html">Refresh command</a><span style="line-height: 1.6em;"> or the <a href="22578.html">Grid Refresh method</a> when needed. </span></p>
+
+<h3><a id="Automatic+Refresh+of+a+grid+row" class="HashLink" href="#Automatic+Refresh+of+a+grid+row">Automatic Refresh of a grid row</a></h3>
+
+<p>As a result of the behavior explained above, when a user event is triggered for a row of the grid, only the row is affected because the grid is not reloaded implicitly.</p>
+
+<p>For example, consider a grid with &amp;ProductId and &amp;ProductPrice columns. The code below is associated with a control included in the <span style="line-height: 20.800001px;">grid </span><span style="line-height: 1.6em;">columns and calls a procedure that returns the new &amp;ProductPrice given the &amp;ProductId.</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &quot;Update Price of Line&quot;
+      &amp;ProductNewPrice = CalculatePrice(&amp;ProductId)
+      &amp;ProductPrice = &amp;ProductNewPrice
+EndEvent</pre>
+
+<p>In this case, even if the &quot;CalculatePrice&quot; procedure is executed, the refresh is not implicitly executed. So, the &amp;ProductPrice column of the grid is updated, and the other rows of the grid remain unchanged, without being reloaded.</p>
+
+<p>As a general rule, the grid row is automatically refreshed when <span style="line-height: 20.800001px;">a </span><span style="line-height: 20.800001px;">grid</span><span style="line-height: 20.800001px;"> </span><span style="line-height: 1.6em;">variable is assigned </span><span style="line-height: 1.6em;">in a user event of the row</span><span style="line-height: 1.6em;">:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &quot;X&quot;
+
+&amp;Var=expression //or
+&amp;Var=Procedure.call(InParams) //&amp;Var is the output of the procedure - out, or inout parameter.
+
+EndEvent</pre>
+
+<h2><a id="Start+Event+behavior" class="HashLink" href="#Start+Event+behavior">Start Event behavior</a></h2>
+
+<p>It is triggered only when the object is executed for the first time using the GET HTTP method. It is not triggered when executed with the POST HTTP method.</p>
+
+<p>Note that if web panel X calls web panel Y, and web panel Y returns to X (or calls X), the start event of X is triggered.</p>
+
+<h2><a id="Web+component+events+are+local+to+the+web+component" class="HashLink" href="#Web+component+events+are+local+to+the+web+component">Web component events are local to the web component</a></h2>
+
+<p>The refresh inside a web component only affects the web component where it is executed and the web components nested in it.</p>
+
+<h3><a id="How+to+refresh+other+web+components" class="HashLink" href="#How+to+refresh+other+web+components">How to refresh other web components</a></h3>
+
+<p>Methods are available to explicitly refresh a web component. Consider the following scenarios:</p>
+
+<p><span style="line-height: 1.6em;">1. If you need to refresh a web component that is descendant of the web component where the event is triggered:</span></p>
+
+<p>For example, suppose you have a web page that loads web component A (besides, A loads web component B). Web Component A has the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &quot;GetBalance&quot;
+   &amp;UserBalance = GetUserBalance(&amp;UserId)
+   &amp;websession.set(&quot;UserBalance&quot;,&amp;UserBalance)
+EndEvent</pre>
+
+<p>Web Component B uses &amp;UserBalance to display information in the form. It won't get the information from &amp;UserBalance unless the previous code includes an explicit refresh that causes the web component B to reload.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &quot;GetBalance&quot;
+   &amp;UserBalance = GetUserBalance(&amp;UserId)
+   &amp;websession.set(&quot;UserBalance&quot;,&amp;UserBalance)
+   WebComponentB.refresh()
+EndEvent</pre>
+
+<p>This causes web component B to execute the Start, Refresh, and Load events so that &amp;UserBalance can be read from the web session in the Refresh event.</p>
+
+<p>Note: The scope of the <a href="22579.html">WebComponent.Refresh command</a> includes the web component and the components it contains.</p>
+
+<p><span style="line-height: 1.6em;">2. If you need to refresh the parent web component or the parent web page:</span></p>
+
+<p>To refresh the entire page, use <a href="25287.html">Form.Refresh command</a>. </p>
+
+<p><span style="line-height: 1.6em;">In order to refresh the parent web component take a look at </span><a href="31164.html">Global Events</a> solution.</p>
+
+<p><span style="line-height: 1.6em;">3. If you need to refresh all the descendants of a web component, use </span><a href="25286.html">Refresh command</a>.</p>
+
+<p>4. In order to refresh web components individually, use the <a href="31164.html">Global Events</a> solution. The same for refreshing a parent web component or a sibling web component.</p>
+
+<p>See <a href="31167.html">HowTo: Using Global Events in Web Objects</a>.</p>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>For compatibility reasons, when <a href="22449.html">Web User Experience property</a> is set to &quot;Previous Versions Compatible&quot; the user event execution triggers the following actions:</p>
+
+<ul>
+	<li>Start Event</li>
+	<li>Variables on the screen are read</li>
+	<li>User event is executed</li>
+	<li>Refresh</li>
+	<li>Load</li>
+</ul>
+
+<p>See <a href="25296.html">Event Execution comparison between Smooth and compatible models</a></p>
+
+<p>Objects with different values of the <a href="22449.html">Web User Experience property</a> can't be on the same web page.</p>
+
+<h3><br />
+</h3>
+
+<p><br />
+ </p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25296.html">Event Execution comparison between Smooth and compatible models</a></TD></TR><TR><TD><a href="25286.html">Refresh command in web</a></TD><TD><a href="22579.html">Refresh Web Component command</a></TD><TD><a href="25356.html">Security concerns in Smooth models</a></TD></TR><TR><TD><a href="22449.html">Web User Experience property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

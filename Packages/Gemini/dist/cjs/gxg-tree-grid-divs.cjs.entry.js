@@ -1,0 +1,226 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const index = require('./index-1115561c.js');
+
+const gxgTreeGridDivsCss = ":host{display:block}:host .table{display:table;background-color:var(--color-background);font-family:var(--font-family-primary);font-size:8.5px}:host .tr{display:table-row;cursor:pointer}:host .tr:hover{background-color:var(--color-secondary-enabled)}:host .tr.selected{background-color:var(--color-secondary-active)}:host .tbody{display:table-row-group}:host .td,:host .th{display:table-cell}:host .th:hover{background-color:var(--gray-03)}:host .td{padding:5px 8px;border-bottom:1px solid var(--color-on-disabled);border-left:1px solid var(--color-on-disabled);border-right:1px solid var(--color-on-disabled);color:var(--color-on-background)}:host .th{padding:10px var(--spacing-comp-02);text-transform:uppercase;font-weight:bold;background-color:var(--gray-02);color:var(--color-on-background);letter-spacing:var(--letter-spacing-sm)}:host .icon-text-container{position:relative;padding-left:12px}:host .icon-text-container gxg-icon{position:absolute;left:-6px;top:-4px;cursor:pointer}";
+
+const GxgTreeGridDivs = class {
+    constructor(hostRef) {
+        index.registerInstance(this, hostRef);
+        this.selectedRows = index.createEvent(this, "selectedRows", 7);
+        this.addRow = index.createEvent(this, "addRow", 7);
+        this.removeRow = index.createEvent(this, "removeRow", 7);
+        this.width = "100%";
+        this.displayChildren = "all";
+        this.rowsBuffer = [];
+        this.thInPixels = false;
+        this.displayRowChildrenIds = [];
+    }
+    componentWillLoad() {
+        //Check if th width is in percentages or pixels
+        this.checkThWidthUnit();
+        //Table width - if th widths are in pixels, table width should be auto.
+        if (this.thInPixels) {
+            this.width = "auto";
+        }
+        //Set th width leftover (only if th widhts are in percentages)
+        if (!this.thInPixels) {
+            this.calculateThWitdhLeftover();
+        }
+        //Display children rows
+        if (this.displayChildren === "all") {
+            this.displayChildrenRows(this.rows);
+        }
+        //Parse rows
+        this.rows.map((row, i) => {
+            this.parseRows(row, 0, i);
+        });
+    }
+    displayChildrenRows(rows) {
+        rows.map((row) => {
+            if (row.hasOwnProperty("children")) {
+                this.displayRowChildrenIds.push(row["id"]);
+                this.displayChildrenRows(row["children"]);
+            }
+            else {
+                return;
+            }
+        });
+    }
+    componentDidLoad() {
+        //Spliter
+        // var name = this.el.shadowRoot.getElementById("name");
+        // var type = this.el.shadowRoot.getElementById("type");
+        // var telephone = this.el.shadowRoot.getElementById("telephone");
+        // Split([name, type, telephone], {
+        //   gutterSize: 2,
+        //   cursor: "col-resize",
+        // });
+    }
+    checkThWidthUnit() {
+        for (let i = 0; i < this.columns.length; i++) {
+            if (this.columns[i].hasOwnProperty("width")) {
+                if (this.columns[i]["width"].includes("px")) {
+                    this.thInPixels = true;
+                    break;
+                }
+            }
+        }
+    }
+    parseRows(row, level, i) {
+        let hasChildren = false;
+        if (row.hasOwnProperty("children")) {
+            hasChildren = true;
+        }
+        this.rowsBuffer.push(index.h("div", { class: { tr: true }, onClick: (e) => this.trClick(e, row), id: row.id }, Object.keys(row["cells"]).map((td, i) => (index.h("div", { class: { td: true }, style: {
+                paddingLeft: this.tdPaddingLeft(i, level),
+            }, "data-value-type": td }, hasChildren && i === 0 ? (index.h("div", { class: { "icon-text-container": true } }, this.arrowIcon(i, hasChildren, row), 
+        //row["cells"][td]
+        this.renderTd(row.id, td, row["cells"][td], i))) : (
+        //row["cells"][td]
+        this.renderTd(row.id, td, row["cells"][td], i)))))));
+        const displayRowIdFound = this.displayRowChildrenIds.find((id) => id === row["id"]);
+        if (row.hasOwnProperty("children") && displayRowIdFound !== undefined) {
+            row["children"].map((row) => {
+                this.parseRows(row, level + 1, i);
+            });
+        }
+        else {
+            return;
+        }
+    }
+    renderTd(rowId, columnName, value, columnNumber) {
+        //si esta definido y es una funcion
+        if (this.columns[columnNumber]["render"]) {
+            return this.columns[columnNumber]["render"](rowId, columnName, value);
+        }
+        else {
+            return value;
+        }
+    }
+    trClick(e, row) {
+        //if ctrl key was not pressed
+        if (!e.ctrlKey && !e.shiftKey) {
+            //remove previously added classses
+            const rows = this.el.shadowRoot.querySelectorAll(".tbody .tr");
+            rows.forEach((row) => {
+                row.classList.remove("selected");
+            });
+        }
+        //Add 'selected' class to the currently clicked tr
+        const rowClicked = this.el.shadowRoot.getElementById(row.id);
+        //if ctrl key was pressed
+        if (e.ctrlKey) {
+            if (rowClicked.classList.contains("selected")) {
+                rowClicked.classList.remove("selected");
+            }
+            else {
+                rowClicked.classList.add("selected");
+            }
+        }
+        else {
+            rowClicked.classList.add("selected");
+        }
+        //if shift key was pressed
+        if (e.shiftKey) {
+            const itemsSelected = this.el.shadowRoot.querySelectorAll(".tbody .tr.selected");
+            const firstRowSelectedId = itemsSelected[0].getAttribute("id");
+            const lastRowSelectedId = itemsSelected[1].getAttribute("id");
+            const allRows = this.el.shadowRoot.querySelectorAll(".tbody .tr");
+            allRows.forEach((row) => {
+                const rowId = row.getAttribute("id");
+                if (rowId > firstRowSelectedId && rowId < lastRowSelectedId) {
+                    row.classList.add("selected");
+                }
+            });
+        }
+        //Emmit event with the table rows that are selected
+        const selectedRows = this.el.shadowRoot.querySelectorAll(".tbody .tr.selected");
+        const dataArray = [];
+        selectedRows.forEach((row) => {
+            const rowData = {};
+            const tds = row.querySelectorAll(".td");
+            tds.forEach((td) => {
+                rowData["id"] = row.getAttribute("id");
+                const dataValueType = td.getAttribute("data-value-type");
+                const dataValue = td.innerHTML;
+                rowData[dataValueType] = dataValue;
+            });
+            dataArray.push(rowData);
+        });
+        this.selectedRows.emit(dataArray);
+    }
+    arrowIcon(i, hasChildren, row) {
+        if (i === 0 && hasChildren) {
+            const rowId = row["id"];
+            const rowIdFoundOndisplayRowChildrenIds = this.displayRowChildrenIds.find((id) => id === rowId);
+            let iconType;
+            if (rowIdFoundOndisplayRowChildrenIds !== undefined) {
+                iconType = "navigation/chevron-down";
+            }
+            else {
+                iconType = "navigation/chevron-right";
+            }
+            return (index.h("gxg-icon", { type: iconType, onClick: this.toggleRow.bind(this) }));
+        }
+    }
+    toggleRow(e) {
+        const trId = e.target.closest(".tr").getAttribute("id");
+        const trIdFoundOndisplayRowChildrenIds = this.displayRowChildrenIds.find((id) => id === trId);
+        if (trIdFoundOndisplayRowChildrenIds !== undefined) {
+            const index = this.displayRowChildrenIds.indexOf(trId);
+            if (index > -1) {
+                this.displayRowChildrenIds.splice(index, 1);
+            }
+        }
+        else {
+            this.displayRowChildrenIds.push(trId);
+        }
+        this.rowsBuffer = [];
+        this.rows.map((row, i) => {
+            this.parseRows(row, 0, i);
+        });
+    }
+    tdPaddingLeft(i, level) {
+        if (i === 0 && level !== 0) {
+            return level * 20 + "px";
+        }
+    }
+    calculateThWitdhLeftover() {
+        let totalThWidthDefined = 0;
+        let numberOfThWithoutWidthDefined = 0;
+        this.columns.forEach((th) => {
+            if (th["width"] !== undefined) {
+                totalThWidthDefined += parseInt(th["width"].substring(0, th["width"].length - 1));
+            }
+            else {
+                numberOfThWithoutWidthDefined++;
+            }
+        });
+        this.thWidthLeftover =
+            (100 - totalThWidthDefined) / numberOfThWithoutWidthDefined + "%";
+    }
+    thWidth(th) {
+        if (th["width"] !== undefined) {
+            return th["width"];
+        }
+        else {
+            return this.thWidthLeftover;
+        }
+    }
+    render() {
+        return (index.h(index.Host, null, index.h("div", { class: { table: true }, style: { width: this.width } }, index.h("div", { class: { tr: true } }, this.columns.map((th) => {
+            return (index.h("div", { class: { th: true }, style: {
+                    width: this.thWidth(th),
+                }, id: th["name"] }, th["displayName"]));
+        })), index.h("div", { class: {
+                tbody: true,
+            } }, this.rowsBuffer))));
+    }
+    get el() { return index.getElement(this); }
+};
+GxgTreeGridDivs.style = gxgTreeGridDivsCss;
+
+exports.gxg_tree_grid_divs = GxgTreeGridDivs;

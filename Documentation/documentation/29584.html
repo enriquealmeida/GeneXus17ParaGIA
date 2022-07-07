@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Used to property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?29584,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Used to property</h1>
+<!--Used to property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td> Defines the purpose of the Data Provider associated with the Transaction (it is offered only if the Data Provider property is set to True for the Transaction).  <h3><a id="Values" class="HashLink" href="#Values">Values</a></h3>
+
+<p> <table style="border-style: none;border-collapse: collapse;"><tbody><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Populate data                                               </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">The Data Provider is executed to store content in the physical table(s) associated with the Transaction.</td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Retrieve data                                               </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">The Data Provider is executed to retrieve data. No physical tables are created associated with this Transaction. The Transaction is Dynamic.</td></tr></tbody></table></p>
+ <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Objects:</strong> Transaction<br /></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>This property is offered under the 'Data' properties group available for <a href="1908.html">Transactions</a>, only if the <a href="29597.html">Data Provider property</a> (which is under the same group) is set to True.</p>
+
+<p>It allows defining the <a href="29597.html">Data Provider associated with the Transaction</a> purpose.</p>
+
+<p>The possible values of this property are:</p>
+
+<p><strong>1. Populate Data</strong></p>
+
+<p>If you set this value, the Data Provider is executed to store the content in the physical table(s) associated with the Transaction. To carry out the data storage, GeneXus sets automatically the transaction Business Component property = True. It is important to know that the operation that will be performed -through the transaction executed as a business component- is an “upsert”. In other words, an insertion will be tried, but if it fails because a duplicated key is found, an update will be performed.</p>
+
+<p>The Data Provider may be executed several times, automatically:- every time a modification is detected in the physical table(s) it loads.<br />
+- every time the Data Provider is specified/generated/compiled again as a result of changes made to it or to some of his direct dependencies.</p>
+
+<p>The Data Provider execution is independent of the database creation/reorganization process. On the one hand, the tables are created/reorganized, and later, after each success build (F5), if it is necessary, the Data Provider is executed in order to populate. This is shown as &quot;========== Populate Data started ========== &quot; in the output.</p>
+
+<p>This automatic behavior can be avoided by setting <a href="46340.html">Populate Data property</a> to False.</p>
+
+<p>Because the Data Provider can be run several times, you have to define an idempotent behavior (regardless of the times the Data Provider is run, the result should be the same as if executed once).</p>
+
+<p>For instance, the following example shows a case in which content will always be loaded once no matter how many times the Data Provider is executed:</p>
+
+<p><img src="./images/29593.png" id="29593" class="WikiImage"/></p>
+
+<p><img src="./images/29602.png" id="29602" class="WikiImage"/></p>
+
+<p>That is because the identificatory values (MaritalStatusId) were explicitly filled. If MaritalStatusId were an autonumber key, a Unique Index on a Candidate Key (for example, for MaritalStatusName) should be defined, to avoid storing several records with the same content.</p>
+
+<p>Besides being automatically executed whenever GeneXus detects it has to run it, you can also execute explicitly the MaritalStatus_DataProvider as shown:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Initialize'
+   &amp;MaritalStatusCollection=MaritalStatus_DataProvider()
+   if &amp;MaritalStatusCollection.InsertOrUpdate()
+     msg(&quot;Initialization SUCCESSFUL&quot;)
+     commit
+   else
+     msg(&quot;Initialization ERROR&quot;)
+   endif
+Endevent</pre>
+
+<p>Note: Whenever you set the <strong>Used To</strong> property of a Transaction to Populate Data, GeneXus automatically sets the <a href="7407.html">Main program property</a> of the Data Provider associated with the Transaction to True.</p>
+
+<p><br />
+<strong>2. Retrieve Data</strong></p>
+
+<p>If you set this value, no physical tables are created associated with this Transaction and we say it is a <a href="28062.html">Dynamic Transaction</a>. </p></p>
+ <h3><a id="Run-time%2FDesign-time" class="HashLink" href="#Run-time%2FDesign-time">Run-time/Design-time</a></h3>
+
+<p> This property applies only at design-time.</p>
+ <h3><a id="Compatibility" class="HashLink" href="#Compatibility">Compatibility</a></h3>
+
+<p> The Retrieve Data option is available as of GeneXus 15. 
+The Populate Data option is available as of GeneXus 15 Upgrade 1.</p>
+ <h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This property is available since  <a href="https://wiki.genexus.com/commwiki/wiki?27605,," target="_blank">GeneXus 15</a>.</p>
+ </td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31018.html">Automatic data population associated to transactions - FAQ</a></TD><TD><a href="29597.html">Data Provider property</a></TD></TR><TR><TD><a href="18292.html">Deploy to GeneXus Prototyping Cloud: under the hood</a></TD><TD><a href="28062.html">Toc:Dynamic Transactions</a></TD><TD><a href="36273.html">Dynamic Transactions Samples</a></TD><TD><a href="36732.html">Dynamic Transactions that receive parameters</a></TD></TR><TR><TD><a href="28656.html">Dynamic Transactions that update data</a></TD><TD><a href="46340.html">Populate Data property</a></TD><TD><a href="6774.html">Specification Codes from spc0150 onwards</a></TD><TD><a href="29599.html">Update Policy property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/21/20 11:40 AM</em></font></td></TR></table></font>

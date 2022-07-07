@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Howto: Chatbots using Facebook Messenger</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44358,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Howto: Chatbots using Facebook Messenger</h1>
+<!--Howto: Chatbots using Facebook Messenger--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document explains the steps to be followed in order to integrate your chatbot with Facebook Messenger.</p>
+
+<p><ul><li><a class="HashLink" href="#How+does+it+work%3F">How does it work?</a></li><li><a class="HashLink" href="#Facebook+configuration">Facebook configuration</a></li><li><a class="HashLink" href="#Webhook+implementation">Webhook implementation</a></li><li><a class="HashLink" href="#Sending+messages+to+the+user">Sending messages to the user</a></li><li><a class="HashLink" href="#Availability">Availability</a></li></ul></ul></p>
+
+<h3><a id="How+does+it+work%3F" class="HashLink" href="#How+does+it+work%3F">How does it work?</a></h3>
+
+<p>Basically, there are three points: the service that will consume the API and send the message, the Facebook Page, and finally the Facebook User.<br />
+The message is going to be sent through the Facebook Page to the Facebook User, so you need to tell which page and to which user the message is directed to.<br />
+To specify the page, the <strong>Page Access Token</strong> is used.<br />
+To specify the user, consider that the user is identified by a <a href='https://developers.facebook.com/docs/pages/access-tokens'>Page-Scoped ID</a>. So the user's ID depends on the page he/she is interacting with.<br />
+You can get the <strong>Page-Scoped ID</strong> (also known as PSID or Recipient ID) through the <strong>webhook</strong>, which will be &quot;listening&quot; to the different events that occur while the user interacts with the chat.</p>
+
+<h3><a id="Facebook+configuration" class="HashLink" href="#Facebook+configuration">Facebook configuration</a></h3>
+
+<p>To use Facebook Messenger as a channel, the user needs to do some configuration, as explained in <a href="44073.html">Facebook Messenger configuration</a>.</p>
+
+<h3><a id="Webhook+implementation" class="HashLink" href="#Webhook+implementation">Webhook implementation</a></h3>
+
+<p>See at the <a href="44586.html">Chatbots sample using Facebook Messenger</a> the procedure &quot;<em>FacebookWebhook</em>&quot;. This is an example, where you may note the following:</p>
+
+<ul>
+	<li><em>FacebookWebhook </em>is a main object with <a href="7947.html">Call protocol property</a> set to HTTP.</li>
+	<li>It uses an SDT &quot;ChannelConfiguration&quot; where the information of the channel is stored, including the Page Access Token, the Channel (Channel.FacebookMessenger) and the Recipients ID.</li>
+</ul>
+
+<p><img src="./images/44595.png" id="44595" class="WikiImage"/><br />
+<br />
+The code of <em>FacebookWebhook </em>looks for the ChannelConfiguration using the <em>GetWebhookConfiguration </em>procedure. Note that before running the sample, you have to give a value to the &amp;AccessToken variable (the <strong>Page Access Token</strong>) in the <em>GetWebhookConfiguration </em>procedure.</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+&amp;ChannelConfiguration.Channel = Channel.FacebookMessenger
+&amp;AccessToken = !&quot;34567899999999999999999999999&quot; //Set a valid value here.
+for &amp;ChannelConfigurationProperty in &amp;ChannelConfiguration.Properties
+    if &amp;ChannelConfigurationProperty.Key = FacebookProperties.AccessToken
+        &amp;ChannelConfigurationProperty.Value = &amp;AccessToken
+        return
+    endif
+endfor
+
+&amp;ChannelConfigurationProperty = new()
+&amp;ChannelConfigurationProperty.Key = FacebookProperties.AccessToken
+&amp;ChannelConfigurationProperty.Value = &amp;AccessToken
+&amp;ChannelConfiguration.Properties.Add(&amp;ChannelConfigurationProperty)
+
+</pre>
+
+<p style="margin-left: 40.0px;">Then, in the <em>FacebookWebhook </em>procedure, the <strong>Recipient ID</strong> is obtained from the HTTP request, and added to the Channel configuration, calling the <em>SetUserIdInConfiguration </em>procedure.</p>
+
+<ul>
+	<li>Next, the message is sent to the chatbot using the <em>CommonChatbots.SendMessageFromChannel</em> procedure.</li>
+	<li>In the end, the <em>GeneXusChannels.Message.SendMessage</em> service is used to send the response to Messenger.<br />
+	The code of <em>FacebookWebhook </em>that sends the message to Messenger is as follows. Note that the message payload is set, according to the type of message:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+       CommonChatbots.SendMessageFromChannel(&amp;FromFacebookMessage.entry.Item(1).messaging.Item(1).message.text, &amp;RecipientId, !&quot;TestChannels&quot;, &amp;AnalyzeResponse) (*)
+       for &amp;Response in &amp;AnalyzeResponse.GXOutputCollection
+           &amp;Message.Text = &amp;Response
+           if &amp;AnalyzeResponse.Context.GXSetImageResponse
+              &amp;MediaMessage.URL = &amp;AnalyzeResponse.Context.GXResponseImage.ImageURI
+              &amp;MediaMessage.Type = MediaTypes.Image
+              &amp;Message.Payload.Type = PayloadTypes.Media
+              &amp;Message.Payload.Body = &amp;MediaMessage.ToJson()
+           endif
+       //Send the response using the SendMessage service.
+       GeneXusChannels.Message.SendMessage(&amp;ChannelConfiguration, &amp;Message, &amp;Messages)
+   endfor    </pre>
+
+<p>(*) Note that you have to set the name of your <a href="37113.html">Conversational Flows object</a> as the third parameter for the <em>SendMessageFromChannel </em>call. In this example, the instance name is &quot;TestChannels.&quot;</p>
+
+<h3><a id="Sending+messages+to+the+user" class="HashLink" href="#Sending+messages+to+the+user">Sending messages to the user</a></h3>
+
+<p>If the user has talked once to your page (and you have his Recipient ID), you can send messages to him or her (without using the chatbot instance), using the <strong>GeneXusChannels.Message.SendMessage</strong>(&amp;ChannelConfiguration, &amp;Message, &amp;Messages) service.</p>
+
+<p>Take a look at the <em>SendMessagesFb </em>object in the <a href="44586.html">example</a>, where several messages are sent to the user to show the different types of messages that can be sent. The <em>SendMessagesFb </em>procedure calls the <em>GetConfiguration </em>data provider.</p>
+
+<p>Note that to make this example work, you must first complete the <em>GetConfiguration </em>data provider with valid values for the Page Access Token and the Recipient.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ChannelConfiguration
+{
+    Channel = Channel.FacebookMessenger
+    Properties
+    {
+        PropertiesItem
+        {
+            Key = FacebookProperties.AccessToken
+            Value = !&quot;34567899999999999999999999999&quot; //Set a valid value here.
+        }
+        PropertiesItem
+        {
+            Key = FacebookProperties.Recipient
+            Value = !&quot;11111111111111&quot; //Set a valid value here.
+        }
+    }
+}</pre>
+
+<p>You can run the <em>SendMessagesFb</em> procedure and see how it works:</p>
+
+<p><img src="./images/44598.png" id="44598" class="WikiImage"/></p>
+
+<h3 class="Code"><br />
+Message Types</h3>
+
+<p>You can send all types supported by the Channels API. For more information, see <a href="44599.html">Message types supported for Facebook Messenger Channels API</a>.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?43978,," target="_blank">GeneXus 16 upgrade 6</a></p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38520.html">Toc:Chatbots in GeneXus</a></TD><TD><a href="44586.html">KB:Chatbots sample using Facebook Messenger</a></TD><TD><a href="44073.html">Facebook Messenger configuration</a></TD></TR><TR><TD><a href="44599.html">Message types supported for Facebook Messenger Channels API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/28/21 08:06 PM</em></font></td></TR></table></font>

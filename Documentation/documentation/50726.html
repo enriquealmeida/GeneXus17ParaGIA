@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Two factor Authentication for mobile</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50726,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Two factor Authentication for mobile</h1>
+<!--GAM - Two factor Authentication for mobile--><div class="TableWikiBody" id="tblwikibody"><p>In this article, you will find the steps to use Two Factor Authentication (2FA) for mobile:</p>
+
+<p>First, you must configure an authentication type to allow using <a href="48254.html">Two Factor Authentication</a>.</p>
+
+<p>Also, you need to consider the following:</p>
+
+<p>All the Events described below are in the same <a href="24829.html">Panel</a>.</p>
+
+<p><img src="./images/50727.png" id="50727" class="WikiImage"/></p>
+
+<h2><a id="First+factor+authentication" class="HashLink" href="#First+factor+authentication">First factor authentication</a></h2>
+
+<p>The logic inside this event will include a call to a method of the <a href="31350.html">Actions external object</a> named LoginExternal.</p>
+
+<p>The first parameter is based on the GAMAuthenticationTypes domain, and its value should be GAMLocal.</p>
+
+<p>If the LoginExternal method returns True, the event GeneXusSecurity.GAMLoginEvents.TwoFactorAuthenticationRequested is triggered.</p>
+
+<p>This event calls the &quot;Display2FAStep2&quot; subroutine to change the Panel, so it is prepared to display the second factor authentication inputs. In addition, this event also warns the user to validate the second factor authentication.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'BtnNext'
+    Composite
+        GeneXus.Common.UI.Progress.ShowWithTitle(&quot;Connecting...&quot;)
+        &amp;isLoginOK = GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.GAMLocal, &amp;UserName, &amp;UserPassword, &amp;LoginExternalAdditionalParameters)
+        GeneXus.Common.UI.Progress.Hide()
+        If &amp;isLoginOK
+            //OK
+        Else
+            GAMSDGetLastErrors(&amp;Messages)
+        Endif
+    EndComposite
+Endevent
+
+Event GeneXusSecurity.GAMLoginEvents.TwoFactorAuthenticationRequested
+    Msg(&quot;validate second factor authentication&quot;)
+    
+    Do &quot;Display2FAStep2&quot;
+    &amp;Login2FAStep = 2
+    GeneXus.Client.ClientStorage.Set(!'Login2FA-Step', &amp;Login2FAStep.ToString())
+      GeneXus.Client.ClientStorage.Set(!'Login2FA-UserName', &amp;UserName.Trim())
+EndEvent
+</pre>
+
+<h2><a id="Second+factor+authentication" class="HashLink" href="#Second+factor+authentication">Second factor authentication</a></h2>
+
+<p>In this event, the external object method LoginExternal is used to validate the second factor authentication. Therefore, the &amp;LoginExternalAdditionalParameters.OTPStep property is defined as &quot;2&quot;  because the event is validating the OTP code of the second factor authentication. </p>
+
+<p>Besides, the &amp;password parameter is changed to &amp;OTPCode in the LoginExternal method.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'BtnValidCode'
+    Composite
+        GeneXus.Common.UI.Progress.ShowWithTitle(&quot;Connecting...&quot;)
+        &amp;LoginExternalAdditionalParameters = new()
+        &amp;LoginExternalAdditionalParameters.AuthenticationTypeName         = !&quot;OTP-2FA&quot;
+        &amp;LoginExternalAdditionalParameters.OTPStep                        = 2
+        &amp;LoginExternalAdditionalParameters.UseTwoFactorAuthentication    = True
+        GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.OTP, &amp;UserName, &amp;OTPCode, &amp;LoginExternalAdditionalParameters)
+        GeneXus.Common.UI.Progress.Hide()
+        Do &quot;Set2FAStep1&quot;
+        Return
+    EndComposite
+Endevent</pre>
+
+<h2><a id="Event+start" class="HashLink" href="#Event+start">Event start</a></h2>
+
+<p>In cases where the app is running in the background, it is important to keep the state of the login process. This means that when users have been validated in the first authentication factor, they must be able to open another app (if required) to complete the second factor authentication without losing the validation that has already been done in the first factor authentication.</p>
+
+<p>To solve this problem, the &quot;ClientStorage&quot; external object is used. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event ClientStart
+    &amp;UserName.Enabled        = True
+    &amp;UserPassword.Visible    = True
+    BtnNext.Visible            = True
+    TblCode.Visible            = False
+    &amp;Login2FAStep.FromString(GeneXus.Client.ClientStorage.Get(!'Login2FA-Step'))
+    If &amp;Login2FAStep = 2
+        Do &quot;Display2FAStep2&quot;
+        &amp;UserName = GeneXus.Client.ClientStorage.Get(!'Login2FA-UserName')
+    Endif
+Endevent
+</pre>
+
+<h2><a id="Go+Back+event" class="HashLink" href="#Go+Back+event">Go Back event</a></h2>
+
+<p>This event calls the subroutine &quot;Set2FAStep1&quot; to cancel the login process.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'BtnBack'
+    Composite
+        Do &quot;Set2FAStep1&quot;
+        Return
+    EndComposite
+Endevent
+</pre>
+
+<h2><a id="Subroutines" class="HashLink" href="#Subroutines">Subroutines</a></h2>
+
+<p>The above events call two different subroutines. </p>
+
+<p>The &quot;Display2FAStep2&quot; subroutine makes changes in the elements of the Panel, so that the user can interact with both of the authentication factors. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub &quot;Display2FAStep2&quot;
+    &amp;UserName.Enabled        = False 
+    &amp;UserPassword.Visible    = False
+    BtnNext.Visible            = False
+    TblCode.Visible            = True
+EndSub</pre>
+
+<p class="Code">The &quot;Set2FAStep1&quot; subroutine reset the steps of the login process, leaving the Panel by default.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub &quot;Set2FAStep1&quot;
+    &amp;Login2FAStep = 1
+    GeneXus.Client.ClientStorage.Set(!'Login2FA-Step', &amp;Login2FAStep.ToString())
+    GeneXus.Client.ClientStorage.Set(!'LoginOTP-UserName', &quot;&quot;)
+EndSub</pre>
+
+<h2><br />
+Availability</h2>
+
+<p>This feature is available since GeneXus 17 Upgrade 9.</p>
+
+<p> </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="50664.html">GAM - One Time Password for mobile</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/11/22 03:17 PM</em></font></td></TR></table></font>

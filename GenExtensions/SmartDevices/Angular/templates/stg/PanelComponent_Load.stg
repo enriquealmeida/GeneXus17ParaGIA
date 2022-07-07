@@ -1,0 +1,115 @@
+delimiters "$", "$"
+
+// Dataprovider load by ControlType
+dataproviderLoadTemplate ::= [
+  "grid": "g_dataprovider_load_grid",
+  "Dynamic Combo Box" : "g_dataprovider_load_dyncombo",
+  "SDWheel-Attributes" : "g_dataprovider_load_dyncombo",
+  "SDWheel-DataProvider" : "g_dataprovider_load_dyncombo",
+  "HideCode" : "g_nothing",
+  "SuggestIncremental" : "g_nothing",
+  "SuggestOnRequest" : "g_nothing",
+  default: "g_dataprovider_load_entity"
+]
+
+g_component_load_data(page) ::= <%
+  $page.data:g_dataprovider_load()$
+  $page.GridControllers:g_controller_grid_load()$
+%>
+
+g_dataprovider_load( data) ::= <<
+$if (!data.IsAuxiliaryProvider)$
+$if (!data.OnlyDefinition)$
+$(dataproviderLoadTemplate.(data.ControlInfo.ControlType))(data)$
+$endif$
+$endif$
+>>
+
+g_dataprovider_load_grid(data) ::= <%  
+  $if(data.CacheEnabled)$
+  await this.$data.EntityUIControlName$Load().toPromise();
+  $else$
+  await this.$data.EntityUIControlName$Load();
+  $endif$
+%>
+
+g_dataprovider_load_dyncombo(data) ::= <<
+$data.EntityCollectionExpression:g_expression()$ = await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$);
+>>
+
+g_dataprovider_load_entity(data) ::= <<
+$if (data.EntityItemExpression.ExprType)$
+$data.EntityItemExpression:g_expression()$ = await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$);
+$if (page.MustLoadDynprops)$
+this.updateGxdynprops($data.EntityItemExpression:g_expression()$, this.uiModel);
+$endif$
+$endif$
+>>
+
+g_component_load_methods( page) ::= <<
+$page.data:g_dataprovider_load_methods()$
+>>
+
+g_dataprovider_load_methods(data) ::= <%
+$if (!data.IsAuxiliaryProvider)$
+$if (!data.OnlyDefinition)$
+$if (data.ControlInfo.IsGridControl)$
+  $g_grid_load_methods( data)$
+$endif$
+$endif$
+$endif$
+%>
+
+
+g_grid_load_methods( data) ::= <<
+$if(data.CacheEnabled)$
+$g_grid_load_observer_methods(data)$
+$else$
+async $data.EntityUIControlName$Load() {
+ $data.GridControllerExpression:g_expression()$.initPaging();
+  let data = await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$);
+  $data.EntityCollectionExpression:g_expression()$ = data;
+  $data.GridControllerExpression:g_expression()$.loadFromData($data.EntityCollectionExpression:g_expression()$, $data.UIEntityCollectionExpression:g_expression()$ $data.BreakBy:g_grid_load_breakby()$);
+  $data.GridControllerExpression:g_expression()$.updatePaging($data.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, null);    
+}
+
+async fetchNextPage$data.EntityUIControlName$(event) {
+  let data = await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$);
+  $data.EntityCollectionExpression:g_expression()$.push(...data);
+  $data.GridControllerExpression:g_expression()$.loadFromData($data.EntityCollectionExpression:g_expression()$, $data.UIEntityCollectionExpression:g_expression()$ $data.BreakBy:g_grid_load_breakby()$);
+  $data.GridControllerExpression:g_expression()$.updatePaging($data.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, event);
+}
+$endif$
+>>
+
+g_grid_load_observer_methods( data) ::= <<
+$data.EntityUIControlName$Load(): Observable<void> {
+  $data.GridControllerExpression:g_expression()$.initPaging();
+  return this.panelService.get$data.ProviderName$_Cacheable( $data:g_call_parameters()$)
+    .pipe(map((data) => {
+        $data.GridControllerExpression:g_expression()$.initPaging();
+        $data.EntityCollectionExpression:g_expression()$ = data;
+        $data.GridControllerExpression:g_expression()$.loadFromData($data.EntityCollectionExpression:g_expression()$, $data.UIEntityCollectionExpression:g_expression()$ $data.BreakBy:g_grid_load_breakby()$);
+        $data.GridControllerExpression:g_expression()$.updatePaging($data.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, null);
+     }
+  ));
+}
+
+async fetchNextPage$data.EntityUIControlName$(event) {
+  await this.panelService.get$data.ProviderName$( $data:g_call_parameters()$)
+    .pipe(map((data) => {
+        $data.EntityCollectionExpression:g_expression()$.push(...data);
+        $data.GridControllerExpression:g_expression()$.loadFromData($data.EntityCollectionExpression:g_expression()$, $data.UIEntityCollectionExpression:g_expression()$ $data.BreakBy:g_grid_load_breakby()$);
+        $data.GridControllerExpression:g_expression()$.updatePaging($data.EntityCollectionExpression:g_expression()$.length, $data.Count$, UIListLoadingState.loaded, event);
+    }
+  )).toPromise();
+}
+>>
+
+g_grid_load_breakby(groupby) ::= <%
+$if (groupby.attribute)$
+, [$groupby.attribute:{x|'$x.attribute$'};separator=","$]
+$endif$
+%>
+
+g_nothing(x) ::= <%%>

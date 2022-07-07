@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Structuring classes in Design System</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49292,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Structuring classes in Design System</h1>
+<!--Structuring classes in Design System--><div class="TableWikiBody" id="tblwikibody"><p>Can the properties of a class be defined according to the screen size? What happens if the same class is declared more than once? What properties prevail when <a href="49302.html">rendering a control</a>? </p>
+
+<h3><a id="Conditioning" class="HashLink" href="#Conditioning">Conditioning</a></h3>
+
+<p>A class can be conditioned so that its declaration is only valid when the condition is met. For the moment, the condition only refers to the output media (for example, screen size and orientation) and is set through the <a href="49344.html">@media rule</a>, which is equivalent to that of CSS. For the moment, it is only taken into account if the <a href="47375.html">Design System Object</a> is used for the Web. </p>
+
+<p>Example: In the example, the H1 class will take the pink color declaration when a control is being rendered with that class on a screen up to 767px wide.</p>
+
+<pre class="Code" style="color: red;">
+<span style="color: rgb(255,0,204);">@media</span><span style="color: rgb(0,0,0);"> screen and (</span><span style="color: rgb(51,102,255);">max-width:</span><span style="color: rgb(0,0,0);">767px)</span>
+<span style="color: rgb(0,0,0);">{</span>
+   <span style="color: rgb(102,51,51);"> .H1</span>
+    <span style="color: rgb(0,0,0);">{
+        </span><span style="color: rgb(51,102,255);">color:</span><span style="color: rgb(0,0,0);"> pink;
+    }
+}</span></pre>
+
+<p style="text-align: right;"><a href="49363.html">View Syntax conventions</a><span style="color: rgb(0,0,0);">.</span></p>
+
+<p>See more about this condition in <a href="47472.html">Design System Style Rules</a>.</p>
+
+<h3><a id="Duplication+of+classes" class="HashLink" href="#Duplication+of+classes">Duplication of classes</a></h3>
+
+<p>In a DSO you can declare a class that already exists among the Styles of an imported DSO (or in the &quot;extended&quot; one). The properties coming from the imported DSO will be taken and the properties of your DSO will be added. If there are matching properties, those of your DSO are applied. </p>
+
+<p>Example: a Text Block with class H1 in a <a href="6916.html">Web Panel</a> that has TravelAgencyExtended Style will be shown with pink color and font size 95px.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles TravelAgency
+{
+    .H1
+    {
+        color: green;
+        font-size: 95px;
+    }
+}
+
+styles TravelAgencyExtended
+{
+    @import TravelAgency;
+    
+    .H2
+    {
+        color: blue;
+    }
+
+    .H1
+    {
+          color: pink;
+    }
+}</pre>
+
+<p>Likewise, if a class is duplicated but in one case it is declared without conditions and in the other it is declared with conditions (through the @media rule), the same will be done as in the previous case. The properties are added when the rule condition is met. </p>
+
+<p>Example: If the screen size of the Web Panel is smaller than 768px, the Text Block of class H1 will be displayed with pink color and size 95px. If the screen size is larger or equal, then it will look green and with size 95px.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles TravelAgency
+{  
+    .H1
+    {
+        color: green;
+        font-size: 95px;
+    }
+    .H2
+    {
+        color: blue;
+    }
+
+    @media screen and (max-width:767px)
+    {
+        .H1
+        {
+            color: pink;
+        }
+    }
+}</pre>
+
+<p>This also applies if in one case it comes from an imported DSO.  </p>
+
+<p>Example: The Text Block has 95px size and pink color when the screen size is smaller than 768px. Otherwise, it is shown in green. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles TravelAgency
+{
+    .H1
+    {
+        color: green;
+        font-size: 95px;
+    }
+}
+
+styles TravelAgencyExtended
+{
+    @import TravelAgency;
+
+    .H2
+    {
+        color: blue;
+    }
+
+    @media screen and (max-width:767px)
+    {
+        .H1
+        {
+            color: pink;
+        }
+    }
+}</pre>
+
+<p>If the same class is declared more than once in the same DSO (not recommended), or for the same condition (@media), for the moment the first one will be taken. This behavior may change in future upgrades to match CSS behavior, which takes the last one.</p>
+
+<p>Example: Here the TextBlock with H1 class will be rendered with green color and default size (not 95px).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles TravelAgency
+{  
+    .H1
+    {
+        color: green;
+    }
+    .H2
+    {
+        color: blue;
+    }
+    .H1
+    {
+        color: pink;
+        font-size: 95px;
+    }
+}
+</pre>
+
+<p> </p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p>All considerations related to <a href="49302.html">How a control is rendered at runtime</a>. </p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49309.html">Design System Class</a></TD><TD><a href="40108.html">Toc:Design Systems</a></TD><TD><a href="49344.html">Media style rule</a></TD></TR><TR><TD><a href="49302.html">Rendering precedences for controls with Design System Object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/04/21 06:20 PM</em></font></td></TR></table></font>

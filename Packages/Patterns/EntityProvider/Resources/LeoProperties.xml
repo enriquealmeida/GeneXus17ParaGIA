@@ -1,0 +1,497 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ExportFile>
+  <KMW>
+    <MajorVersion>4</MajorVersion>
+    <MinorVersion>0</MinorVersion>
+    <Build>161416</Build>
+  </KMW>
+  <Source kb="7f063960-4a4e-401e-b10e-5fab9e0f4209" username="EALMEIDAMSI\ealmeida" UNCPath="\\EALMEIDAMSI\D$\Kbs\GX17\Countries">
+    <Version guid="f7a40858-81e2-4276-bf99-524e1065721a" name="Countries" />
+  </Source>
+  <Objects>
+    <Object parentGuid="afa47377-41d5-4ae8-9755-6f53150aa361" user="EALMEIDAMSI\ealmeida" versionDate="0001-01-01T00:00:00.0000000" lastUpdate="2022-06-30T13:02:52.0000000Z" checksum="a8109d318099bb7f74462f0ba3237271" fullyQualifiedName="LeoProperties" moduleGuid="afa47377-41d5-4ae8-9755-6f53150aa361" guid="e22adfed-46b4-4c17-af4e-9a7a625f89a6" name="LeoProperties" type="84a12160-f59b-4ad7-a683-ea4481ac23e9" description="Leo Properties">
+      <Part type="528d1c06-a9c2-420d-bd35-21dca83f12ff">
+        <Source><![CDATA[&File.Source='D:\KBs\GX16\LUCIAx_v18\LUCIAx_v18.xml'
+&ExportFile.FromXmlFile(&File)
+
+Msg(&ExportFile.ToJson(),status) 
+
+&Command = '<SetKnowledgeBaseProperty Name="%1" Value="%2" />'
+for &Property in &ExportFile.KnowledgeBase.Properties
+	&PropertyName = &Property.Name
+	&PropertyValue = &Property.Value
+    msg(format(&Command,&PropertyName,&PropertyValue),status)
+endfor
+
+&Command = '<SetVersionProperty Name="%1" Value="%2"/>'
+for &VersionProperty in &ExportFile.KnowledgeBase.Version.Properties
+	&PropertyName = &VersionProperty.Name
+	&PropertyValue = &VersionProperty.Value
+    msg(format(&Command,&PropertyName,&PropertyValue),status)
+endfor
+
+&Command = '<SetEnvironmentProperty Name="%1" Value="%2"/>'
+//&EnvironmentName = &ExportFile.KnowledgeBase.Environments.Environment.name
+for &EnvironmentProperty in &ExportFile.KnowledgeBase.Environments.Environment.Properties
+	&PropertyName = &EnvironmentProperty.Name
+	&PropertyValue = &EnvironmentProperty.Value
+    msg(format(&Command,&PropertyName,&PropertyValue),status)
+endfor
+
+&Command = '<SetGeneratorProperty Generator="%3" Name="%1" Value="%2" />'
+//&EnvironmentName = &ExportFile.KnowledgeBase.Environments.Environment.Parts
+for &Parts in &ExportFile.KnowledgeBase.Environments.Environment.Parts
+	Msg('Partes',status)
+	&Command = '<SetDataStoreProperty Datastore="%3" Name="%1" Value="%2" />'
+	&DataStoreName = &Parts.DataStores.CurrentItem.Name
+	for &DataStore in &Parts.DataStores
+		Msg('  DataStore',status)
+		for &DataStoreProperty in &Parts.DataStores.CurrentItem.Properties
+			Msg('     DataStoreProperties',status) 
+			&PropertyName = &DataStoreProperty.Name
+		    &PropertyValue = &DataStoreProperty.Name
+	        msg(format(&Command,&DataStoreName,&PropertyName,&PropertyValue),status)
+		endfor
+	
+	endfor
+//    for &GeneratorProperty in &Parts.Generator.Properties
+//	endfor
+
+    &Command = '<SetGeneratorProperty Generator="%3" Name="%1" Value="%2" />'
+//    for &GeneratorProperty in &Parts.Properties.
+//		&PropertyName = &EnvironmentProperty.Name
+//	    &PropertyValue = &EnvironmentProperty.Value
+//        msg(format(&Command,&PropertyName,&PropertyValue),status)
+//	endfor
+
+
+endfor
+
+return
+
+do while not &Xmlreader.EOF
+	if &Xmlreader.NodeType = &Xmlreader.ElementType
+		do case
+			case &Xmlreader.Name = 'KnowledgeBase' 
+			   &Command = '<SetKnowledgeBaseProperty Name="%1" Value="%2" />'
+			   do 'SetKnowledgeBaseProperty'
+			   
+			case &Xmlreader.Name = 'Version'
+				&Command = '<SetVersionProperty Name="%1" Value="%2"/>'
+			case &Xmlreader.Name = 'Environment'
+				&Command = '<SetEnvironmentProperty Name="%1" Value="%2"/>'
+			case &Xmlreader.Name = 'Generator'
+				&Command = '<SetGeneratorProperty Generator="%3" Name="%1" Value="%2" />'
+			case &Xmlreader.Name = 'DataStore'
+				&Command = '<SetDataStoreProperty Datastore="%3" Name="%1" Value="%2" />'
+		endCase
+    endif
+//    if &Xmlreader.Name='Properties'
+//		do 'ProcesoProperties'
+//	endif
+
+    //msg(format(&Command,&Xmlreader.Name,&Xmlreader.Value),status)
+	&Xmlreader.Read()
+enddo
+
+&Xmlreader.Close()
+
+Sub 'SetKnowledgeBaseProperty'
+	&Xmlreader.Read()
+	do while  &Xmlreader.Name = 'Property'
+		&Xmlreader.Read()
+		if &Xmlreader.Name = 'Name'
+			&PropertyName = &Xmlreader.Value
+		endif
+	    &Xmlreader.Read()
+	    if &Xmlreader.Name = 'Value'
+			&PropertyValue = &Xmlreader.Value
+			
+		endif
+	    msg(format(&Command,&PropertyName,&PropertyValue),status)
+		&Xmlreader.Read()
+	enddo
+
+EndSub
+
+]]></Source>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="c414ed00-8cc4-4f44-8820-4baf93547173">
+        <Properties />
+      </Part>
+      <Part type="9b0a32a3-de6d-4be1-a4dd-1b85d3741534">
+        <Properties />
+      </Part>
+      <Part type="763f0d8b-d8ac-4db4-8dd4-de8979f2b5b9">
+        <Properties />
+      </Part>
+      <Part type="e4c4ade7-53f0-4a56-bdfd-843735b66f47">
+        <Variable Name="Xmlreader">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>Xmlreader</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>ext:XMLReader</Value></Property></Properties>
+        </Variable>
+        <Variable Name="Command">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>Command</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>400</Value></Property><Property><Name>AttMaxLen</Name><Value>400</Value></Property></Properties>
+        </Variable>
+        <Variable Name="PropertyName">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>PropertyName</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>idBasedOn</Name><Value>Domain:Name</Value></Property></Properties>
+        </Variable>
+        <Variable Name="PropertyValue">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>PropertyValue</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>400</Value></Property><Property><Name>AttMaxLen</Name><Value>400</Value></Property></Properties>
+        </Variable>
+        <Variable Name="ExportFile">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>ExportFile</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>True</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile</Value></Property></Properties>
+        </Variable>
+        <Variable Name="File">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>File</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>True</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>ext:File</Value></Property></Properties>
+        </Variable>
+        <Variable Name="Property">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>Property</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile.KnowledgeBase.Property</Value></Property></Properties>
+        </Variable>
+        <Variable Name="VersionProperty">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>VersionProperty</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile.KnowledgeBase.Version.Property</Value></Property></Properties>
+        </Variable>
+        <Variable Name="EnvironmentProperty">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>EnvironmentProperty</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile.KnowledgeBase.Environments.Environment.Property</Value></Property></Properties>
+        </Variable>
+        <Variable Name="Parts">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>Parts</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile.KnowledgeBase.Environments.Environment.Part</Value></Property></Properties>
+        </Variable>
+        <Variable Name="DataStore">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>DataStore</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile.KnowledgeBase.Environments.Environment.Part.DataStore</Value></Property></Properties>
+        </Variable>
+        <Variable Name="GeneratorProperty">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>GeneratorProperty</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile.KnowledgeBase.Environments.Environment.Part</Value></Property></Properties>
+        </Variable>
+        <Variable Name="DataStoreName">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>DataStoreName</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>True</Value></Property><Property><Name>idBasedOn</Name><Value>Domain:Name</Value></Property></Properties>
+        </Variable>
+        <Variable Name="DataStoreProperty">
+          <Documentation />
+          <Properties><Property><Name>Name</Name><Value>DataStoreProperty</Value></Property><Property><Name>idIsAutoDefinedVariable</Name><Value>False</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:ExportFile.KnowledgeBase.Environments.Environment.Part.DataStore.Property</Value></Property></Properties>
+        </Variable>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="ad3ca970-19d0-44e1-a7b7-db05556e820c">
+        <Help>
+          <HelpItem>
+            <Language>88313f43-5eb2-0000-0028-e8d9f5bf9588-English</Language>
+            <Content />
+          </HelpItem>
+        </Help>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="babf62c5-0111-49e9-a1c3-cc004d90900a">
+        <InnerHtml><![CDATA[&lt;?xml version="1.0" encoding="utf-8"?&gt;<BR>&lt;ExportFile&gt;<BR>&nbsp;&lt;KMW&gt;<BR>&nbsp;&nbsp;&lt;MajorVersion&gt;4&lt;/MajorVersion&gt;<BR>&nbsp;&nbsp;&lt;MinorVersion&gt;0&lt;/MinorVersion&gt;<BR>&nbsp;&nbsp;&lt;Build&gt;150221&lt;/Build&gt;<BR>&nbsp;&lt;/KMW&gt;<BR>&nbsp;&lt;Source kb="d91a3c63-f35a-440c-8576-567f63c40b79" username="EALMEIDAMSI\ealmeida" UNCPath="\\EALMEIDAMSI\D$\KBs\GX16\LUCIAx_v18"&gt;<BR>&nbsp;&nbsp;&lt;Version guid="d9a79d39-ed91-467f-b0c4-8eadcd006c58" name="LUCIAx_v18"/&gt;<BR>&nbsp;&lt;/Source&gt;<BR>&nbsp;&lt;KnowledgeBase name="LUCIAx_v18" type="00000000-0000-0000-0000-000000000009" description="LUCIAx_v18" user="EALMEIDAMSI\ealmeida"&gt;<BR>&nbsp;&nbsp;&lt;Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;MAX_NUMERIC_LEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;18&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;STD_FUNC_SAVING&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Yes&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;AttWidthScale&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;1&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;IMAGE_PATH&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;y:\dna\lucia90&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;TranslateToLanguageId&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Spanish&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;AUTORESIZE_SIZE&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;CURRENT_TRANSLATION&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;GxFormat&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Text&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&lt;/Properties&gt;<BR>&nbsp;&nbsp;&lt;Version guid="d9a79d39-ed91-467f-b0c4-8eadcd006c58" versionDate="2021-05-09T22:08:42.0000000Z" checksum="79e60de487545ad36cb0cf0e8eff6ddb" server_checksum=""&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ATTNAME_LEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;31&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;TBLNAME_LEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;31&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;idMULTITENANT&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;False&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;TargetPath&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Data001&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;idNULLS_BEHAVIOR&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;idNB_Ver8AndPrior&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;idEMPTY_BEHAVIOR&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;idNB_Ver8AndPrior&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;Theme&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;c804fdbd-7c0b-440d-8527-4316c92649a6-LuciaX&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;WebUX&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;SMOOTH&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DefaultWebFormEditor&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;HTML&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;WebFormDefaults&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Previous versions compatible&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;idMASTER_PAGE&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;HLUCIAsMasterPageSmooth&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;STOP_ON_ERROR&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Yes&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;VALIDATION_MESSAGE_POSITION&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;top&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ADD_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;9fb193d9-64a4-4d30-b129-ff7c76830f7e-coConfirmar&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;UPD_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;9fb193d9-64a4-4d30-b129-ff7c76830f7e-coConfirmar&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CNF_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;9fb193d9-64a4-4d30-b129-ff7c76830f7e-coConfirmar&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DLT_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;9fb193d9-64a4-4d30-b129-ff7c76830f7e-COBorrar&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PromptDefaults&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;True&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ButtonpPrompt&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;False&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ColorPrompt&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;False&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PromptColor&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Blue&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DefaultReportOutput&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;ASK&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ExternalNamespace&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;LUCIAx&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;Name&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Design&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PWFProcessesNamespace&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;LUCIAx&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;QueryViewerVersion&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;5.1.21&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DynamicPattern:7060f06d-c463-43ab-a208-a9385e2a6895&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DynamicPattern:78cecefe-be7d-4980-86ce-8d6e91fba04b&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DynamicPattern:15cf49b5-fc38-4899-91b5-395d02d79889&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;Resources:WorkWith&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Resources=1.1;ResourcesSDTheme=0.5;ResourcesSD=0.3&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;Resources:WorkWithDevices&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;BaseResources=1.7.6&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Properties&gt;<BR>&nbsp;&nbsp;&lt;/Version&gt;<BR>&nbsp;&nbsp;&lt;Environments&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;Environment guid="dafe72e2-059b-45de-bc96-21a4c05134c8" user="EALMEIDAMSI\ealmeida" versionDate="2021-12-22T15:10:49.0000000Z" checksum="dc0a5e6772bd05cd138d1fc28a9c4743" server_checksum="" name="ProtDotNet" type="00000000-0000-0000-0000-000000000002" description=""&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Part type="eaa3cfa0-0001-0000-0000-b51c8ddab77d"&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Generator&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Generator&gt;15&lt;/Generator&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;Default&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;NameType&gt;ecececec-dfe0-4a57-ae8f-c6e31b0dcbc0&lt;/NameType&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Guid&gt;c17fb58f-c93a-487d-b9f3-28f38d22ba0b&lt;/Guid&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;IS_WEB_GEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;True&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DMENU_MAK&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;NO&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;threshold&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;ERROR&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;LOG_USER_LEVEL&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;ERROR&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;LOG_OUTPUT&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;RollingFile&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PROTOTYPE_BUILD&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;MSBUILD&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CSHARP_COMPILER_FLAGS&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;/r:bin\MessageInspector.dll /Nologo /r:bin\iTextSharp.dll&nbsp;&nbsp; /r:bin\Agesic.PGE.DLL /r:bin\log4net.dll /platform:x86&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CS_REORG&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ConfirmTransaction&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;None&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PRN_DLG&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;AutomaticPrompts&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;SPC_WARNINGS_DISABLED&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;spc0096 spc0107 spc0142 spc0038 spc0060 spc0087&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;SPC_WARNINGS_AS_ERRORS&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;spc0005 spc0008 spc0023 spc0024 spc0025 spc0043 spc0046 spc0047 spc0047 spc0051 spc0158&nbsp; spc0136 spc0208&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;EXPOSE_DESCRIPTIVE_METADATA&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Yes&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;JAVASCRIPT_DEBUG_MODE&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Yes&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ReorganizationOptions&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;-nogui&nbsp; -ignoreresume&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;TRACE_FILE&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;c6.log&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Generator&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Properties/&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Part&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Part type="dca3cfa0-0001-0000-0000-b51c8ddab77d"&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;DataStore&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Dbms&gt;7&lt;/Dbms&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;Default&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;NameType&gt;dcdcdcdc-dfe0-4a57-ae8f-c6e31b0dcbc0&lt;/NameType&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Guid&gt;c741d97d-79ae-4462-9657-42665c8e0822&lt;/Guid&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ACCESS_TECHNO&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;ADONET&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ADONET_DRIVER&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Oracle&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CS_USETOCONNECT&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Datasource&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CS_DSNAME&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;gx32&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CS_CONNECT&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Startup&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DS_DBMS_ADDINFO&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Pooling=false;Max Pool Size=1;Min Pool Size=1&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DCL_REF_INT_DB&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DFT_TMP_TBLSPACE&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;TEMP&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;COMMENT_ON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Yes&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ORACLE_VERSION&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;9&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;WAIT_RECORD&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;1&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;LOCK_RETRY&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;1&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/DataStore&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;DataStore&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Dbms&gt;7&lt;/Dbms&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;RESUMEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;NameType&gt;dcdcdcdc-dfe0-4a57-ae8f-c6e31b0dcbc0&lt;/NameType&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Guid&gt;8409690a-56fd-4910-ad7e-3dcd08af9eb3&lt;/Guid&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ADONET_DRIVER&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Oracle&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/DataStore&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;DataStore&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Dbms&gt;7&lt;/Dbms&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;GXFLOW&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;NameType&gt;dcdcdcdc-dfe0-4a57-ae8f-c6e31b0dcbc0&lt;/NameType&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Guid&gt;38f2659e-71ee-4410-9de9-28fb7fbf8d7c&lt;/Guid&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Properties/&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/DataStore&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Properties/&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Part&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ATTNAME_LEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;31&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;TBLNAME_LEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;31&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;OBJNAME_LEN&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;128&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;UserInterface&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Web&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;GeneratedLanguage&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;C#&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;idMULTITENANT&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;False&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DataSource&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Oracle&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;TargetPath&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;ProtDotNet&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PRESERVE_TABLE_CASING&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;False&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;StorageTimeZone&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;(Not set)&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CommitOnExit&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;USE_ENCRYPTION&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;SITE&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;HTTP_PROTOCOL&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;None&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;idNULLS_BEHAVIOR&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;idNB_Ver8AndPrior&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;idEMPTY_BEHAVIOR&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;idNB_Ver8AndPrior&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DocumentType&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;HTML5&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;ADD_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value/&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;UPD_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value/&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;CNF_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value/&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;DLT_BUTTON&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value/&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;Name&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;ProtDotNet&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PWFBPDeployOnBuild&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;Yes&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;PWFBPDeployCreatesNewVersion&lt;/Name&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Value&gt;No&lt;/Value&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Property&gt;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Properties&gt;<BR>&nbsp;&nbsp;&nbsp;&lt;/Environment&gt;<BR>&nbsp;&nbsp;&lt;/Environments&gt;<BR>&nbsp;&lt;/KnowledgeBase&gt;<BR>&lt;/ExportFile&gt;]]></InnerHtml>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Properties><Property><Name>Name</Name><Value>LeoProperties</Value></Property><Property><Name>IsMain</Name><Value>True</Value></Property><Property><Name>CALL_PROTOCOL</Name><Value>CLINE</Value></Property><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+    </Object>
+    <Object parentGuid="afa47377-41d5-4ae8-9755-6f53150aa361" user="EALMEIDAMSI\ealmeida" versionDate="0001-01-01T00:00:00.0000000" lastUpdate="2022-05-23T13:43:53.0000000Z" checksum="cd51c9610ea66737fb4f3f190b508fde" fullyQualifiedName="Name" moduleGuid="afa47377-41d5-4ae8-9755-6f53150aa361" guid="42d5771d-42a1-4fd4-8c46-d648ba7c032b" name="Name" type="00972a17-9975-449e-aab1-d26165d51393" description="Name">
+      <Part type="ad3ca970-19d0-44e1-a7b7-db05556e820c">
+        <Help>
+          <HelpItem>
+            <Language>88313f43-5eb2-0000-0028-e8d9f5bf9588-English</Language>
+            <Content />
+          </HelpItem>
+        </Help>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="babf62c5-0111-49e9-a1c3-cc004d90900a">
+        <Properties />
+      </Part>
+      <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property><Property><Name>Length</Name><Value>4000</Value></Property><Property><Name>AttMaxLen</Name><Value>4000</Value></Property><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+    </Object>
+    <Object parentGuid="afa47377-41d5-4ae8-9755-6f53150aa361" user="EALMEIDAMSI\ealmeida" versionDate="0001-01-01T00:00:00.0000000" lastUpdate="2022-06-30T13:09:21.0000000Z" checksum="0fccd9fda7f3a3c8a0cf37e017172247" fullyQualifiedName="ExportFile" moduleGuid="afa47377-41d5-4ae8-9755-6f53150aa361" guid="afc2669d-2a8f-4143-a78b-5ca9257c56ad" name="ExportFile" type="447527b5-9210-4523-898b-5dccb17be60a" description="Export File">
+      <Part type="5c2aa9da-8fc4-4b6b-ae02-8db4fa48976a">
+        <Level Name="ExportFile">
+          <LevelInfo guid="1a2e0828-c48f-4d0a-a0b2-d7791f979cfd" name="ExportFile" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Export File" user="EALMEIDAMSI\ealmeida">
+            <Properties><Property><Name>Name</Name><Value>ExportFile</Value></Property></Properties>
+          </LevelInfo>
+          <Level Name="KMW">
+            <LevelInfo guid="70d090e0-07ec-4672-a6ca-358b1f76e88b" name="KMW" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="KMW" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>KMW</Value></Property><Property><Name>idXmlName</Name><Value>KMW</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+            </LevelInfo>
+            <Item guid="3527e2cd-60fd-41b3-b69f-7756f84afb08" name="MajorVersion" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Major Version" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>MajorVersion</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>2</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>2</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>idXmlName</Name><Value>MajorVersion</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.unsignedByte</Value></Property></Properties>
+            </Item>
+            <Item guid="50588737-1295-44c8-9705-b42f8f00e836" name="MinorVersion" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Minor Version" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>MinorVersion</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>2</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>2</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>idXmlName</Name><Value>MinorVersion</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.unsignedByte</Value></Property></Properties>
+            </Item>
+            <Item guid="b424f7ac-8208-41fc-90c2-023f41e9049d" name="Build" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Build" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>Build</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>9</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>9</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>idXmlName</Name><Value>Build</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.unsignedInt</Value></Property></Properties>
+            </Item>
+          </Level>
+          <Level Name="Source">
+            <LevelInfo guid="0a15c9a1-5a9d-4bec-8e11-82cdd189a45c" name="Source" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Source" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>Source</Value></Property><Property><Name>idXmlName</Name><Value>Source</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+            </LevelInfo>
+            <Item guid="b0817b5b-de27-46e0-b4af-402b254a904b" name="kb" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="kb" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>kb</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>kb</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+            </Item>
+            <Item guid="a3a77ed7-6dd8-45fd-a936-956d66409932" name="username" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="username" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>username</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>username</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+            </Item>
+            <Item guid="db31e7c3-0560-45f3-a0be-ba63df384439" name="UNCPath" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="UNCPath" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>UNCPath</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>UNCPath</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+            </Item>
+            <Level Name="Version">
+              <LevelInfo guid="b414275b-a073-490d-bbf4-d4ca56e615b8" name="Version" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Version" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>Version</Value></Property><Property><Name>idXmlName</Name><Value>Version</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+              </LevelInfo>
+              <Item guid="9c613913-6020-4fd2-a341-77f819bd4af0" name="guid" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="guid" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>guid</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>guid</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+              </Item>
+              <Item guid="6375dc4d-1faa-4e07-9708-e410a89833d7" name="name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="name" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+              </Item>
+            </Level>
+          </Level>
+          <Level Name="KnowledgeBase">
+            <LevelInfo guid="a7636e62-471a-4087-a09e-e2d3a5038256" name="KnowledgeBase" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Knowledge Base" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>KnowledgeBase</Value></Property><Property><Name>idXmlName</Name><Value>KnowledgeBase</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+            </LevelInfo>
+            <Item guid="b4cbdb05-5241-4611-b82b-f109175803be" name="name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="name" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+            </Item>
+            <Item guid="0a6b1f06-713f-41cd-ba09-c701e0f27a92" name="type" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="type" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>type</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>type</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+            </Item>
+            <Item guid="adc23c27-a3c0-4df1-927c-a1f4dc244bed" name="description" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="description" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>description</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>description</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+            </Item>
+            <Item guid="4784a255-16b2-4534-bec1-d9765d6bd79f" name="user" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="user" user="EALMEIDAMSI\ealmeida">
+              <Properties><Property><Name>Name</Name><Value>user</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>user</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+            </Item>
+            <Level Name="Properties">
+              <LevelInfo guid="9cd67935-ede7-47de-97e2-9cad1b94e577" name="Properties" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Properties" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>Properties</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlName</Name><Value>Properties</Value></Property><Property><Name>idXmlCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+              </LevelInfo>
+              <Item guid="0747e146-4222-4273-8d7d-989f7a57e0e3" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+              </Item>
+              <Item guid="df3892f2-2d81-47a4-9021-be599946e1dc" name="Value" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Value" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>Value</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Value</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+              </Item>
+            </Level>
+            <Level Name="Version">
+              <LevelInfo guid="e0e04fd4-6b3e-47f5-94dd-be218e636c88" name="Version" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Version" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>Version</Value></Property><Property><Name>idXmlName</Name><Value>Version</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+              </LevelInfo>
+              <Item guid="6470d61b-fda7-4fdb-acad-13eb2a4bcbec" name="guid" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="guid" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>guid</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>guid</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+              </Item>
+              <Item guid="8a333a26-6259-4ec5-8d4f-58f3a6a88713" name="versionDate" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="version Date" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>versionDate</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:DateTime</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>versionDate</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.dateTime</Value></Property></Properties>
+              </Item>
+              <Item guid="089455bb-b2d0-425d-ac84-931bde138888" name="checksum" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="checksum" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>checksum</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>checksum</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+              </Item>
+              <Item guid="900fb9bd-6276-4c3f-a680-ada36e5ee6b4" name="server_checksum" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="server_checksum" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>server_checksum</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>server_checksum</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+              </Item>
+              <Level Name="Properties">
+                <LevelInfo guid="151a0861-ddff-44c9-8b52-c81ba72479d9" name="Properties" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Properties" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>Properties</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlName</Name><Value>Properties</Value></Property><Property><Name>idXmlCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+                </LevelInfo>
+                <Item guid="c49d4df5-0fde-47c6-ba77-f433208367a0" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Item guid="bd00b0ba-8686-4d3e-80ce-56f3bfd1de80" name="Value" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Value" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>Value</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Value</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+              </Level>
+            </Level>
+            <Level Name="Environments">
+              <LevelInfo guid="4eba45c3-0820-45fc-abdc-1dbc0e3f5663" name="Environments" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Environments" user="EALMEIDAMSI\ealmeida">
+                <Properties><Property><Name>Name</Name><Value>Environments</Value></Property><Property><Name>idXmlName</Name><Value>Environments</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+              </LevelInfo>
+              <Level Name="Environment">
+                <LevelInfo guid="916a3672-de56-43f9-8d33-852ef5e33167" name="Environment" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Environment" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>Environment</Value></Property><Property><Name>idXmlName</Name><Value>Environment</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+                </LevelInfo>
+                <Item guid="b22b4756-a007-43ba-b94a-0a4e232a214f" name="guid" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="guid" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>guid</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>guid</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Item guid="43053fa6-0ef1-4fd1-a5f8-0e8fde1c250a" name="user" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="user" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>user</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>user</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Item guid="9ffccf94-3330-4eaf-9f65-ed48777e8a68" name="versionDate" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="version Date" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>versionDate</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:DateTime</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>versionDate</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.dateTime</Value></Property></Properties>
+                </Item>
+                <Item guid="22c749e4-a344-42d8-b43f-aea3d8cae43c" name="checksum" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="checksum" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>checksum</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>checksum</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Item guid="1d07e336-4d2e-4f23-a791-ceb264f7ade1" name="server_checksum" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="server_checksum" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>server_checksum</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>server_checksum</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Item guid="593aa4b8-345f-499c-baed-fdcbd7cd6604" name="name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="name" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Item guid="e895dd01-25d7-475a-96ae-ba9b4bb2f1df" name="type" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="type" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>type</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>type</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Item guid="564b23a0-9803-45dd-90f2-ac64affa5e89" name="description" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="description" user="EALMEIDAMSI\ealmeida">
+                  <Properties><Property><Name>Name</Name><Value>description</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>description</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                </Item>
+                <Level Name="Parts">
+                  <LevelInfo guid="8faafd91-3062-450f-918f-01445c26a788" name="Parts" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Parts" user="EALMEIDAMSI\ealmeida">
+                    <Properties><Property><Name>Name</Name><Value>Parts</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>Part</Value></Property><Property><Name>idXmlCollectionItemName</Name><Value>Part</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>idWRAPPEDCOLLECTION</Name><Value>idXmlCollectionSequence</Value></Property></Properties>
+                  </LevelInfo>
+                  <Item guid="79e08d20-c647-4955-ba9d-17d2d94a78cc" name="type" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="type" user="EALMEIDAMSI\ealmeida">
+                    <Properties><Property><Name>Name</Name><Value>type</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>SdtItemXmlType</Name><Value>Attribute</Value></Property><Property><Name>idXmlName</Name><Value>type</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                  </Item>
+                  <Level Name="DataStores">
+                    <LevelInfo guid="c651335b-2902-4942-b22c-9d38bae0ae33" name="DataStores" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Data Stores" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>DataStores</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>DataStore</Value></Property><Property><Name>idXmlCollectionItemName</Name><Value>DataStore</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>idWRAPPEDCOLLECTION</Name><Value>idXmlCollectionSequence</Value></Property></Properties>
+                    </LevelInfo>
+                    <Item guid="0aa40abd-885d-4003-833e-c08db37e2247" name="Dbms" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Dbms" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Dbms</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>2</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>2</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>idXmlName</Name><Value>Dbms</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.unsignedByte</Value></Property></Properties>
+                    </Item>
+                    <Item guid="22825257-f232-4467-b721-8f0181e9a983" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                    </Item>
+                    <Item guid="a3cb1a50-bbaf-41da-9565-3da7646a5b49" name="NameType" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name Type" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>NameType</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>NameType</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                    </Item>
+                    <Item guid="0f9c3c60-4295-4bc7-8bc4-4a5e2db4e1b3" name="Guid" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Guid" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Guid</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Guid</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                    </Item>
+                    <Level Name="Properties">
+                      <LevelInfo guid="603eada8-aa1b-47fc-b343-0caa0c02141e" name="Properties" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Properties" user="EALMEIDAMSI\ealmeida">
+                        <Properties><Property><Name>Name</Name><Value>Properties</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlName</Name><Value>Properties</Value></Property><Property><Name>idXmlCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+                      </LevelInfo>
+                      <Item guid="f0bb9bd0-009e-4216-b5b1-9e015afa15e9" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                        <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                      </Item>
+                      <Item guid="6d57a1db-50fa-4d65-b563-1e2e5794dc02" name="Value" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Value" user="EALMEIDAMSI\ealmeida">
+                        <Properties><Property><Name>Name</Name><Value>Value</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Value</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                      </Item>
+                    </Level>
+                  </Level>
+                  <Level Name="Generator">
+                    <LevelInfo guid="2b7d6ea6-8e8b-4dfd-8a01-b77e94cbea83" name="Generator" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Generator" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Generator</Value></Property><Property><Name>idXmlName</Name><Value>Generator</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+                    </LevelInfo>
+                    <Item guid="16903b7a-54ae-4c34-80a8-fbe33ae01032" name="Generator" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Generator" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Generator</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Numeric</Value></Property><Property><Name>Length</Name><Value>2</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>2</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>idXmlName</Name><Value>Generator</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.unsignedByte</Value></Property></Properties>
+                    </Item>
+                    <Item guid="ef08a168-7177-43f2-b757-02835f914596" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                    </Item>
+                    <Item guid="bfd77500-20d3-49bc-91cd-625e25feea4c" name="NameType" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name Type" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>NameType</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>NameType</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                    </Item>
+                    <Item guid="3f495b44-479d-4e04-95ce-45f0ba7abeed" name="Guid" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Guid" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Guid</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Guid</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                    </Item>
+                    <Level Name="Properties">
+                      <LevelInfo guid="50035800-d00d-4dd1-9d17-22a106467b9e" name="Properties" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Properties" user="EALMEIDAMSI\ealmeida">
+                        <Properties><Property><Name>Name</Name><Value>Properties</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlName</Name><Value>Properties</Value></Property><Property><Name>idXmlCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+                      </LevelInfo>
+                      <Item guid="d3ee96e8-02d8-439b-962a-1ebcb2b251ec" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                        <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                      </Item>
+                      <Item guid="bd207fa5-7b47-4cc9-956d-3eb4c8272583" name="Value" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Value" user="EALMEIDAMSI\ealmeida">
+                        <Properties><Property><Name>Name</Name><Value>Value</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Value</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                      </Item>
+                    </Level>
+                  </Level>
+                  <Item guid="5f2258d1-c99a-40a4-8736-2ce4d823df50" name="Properties" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Properties" user="EALMEIDAMSI\ealmeida">
+                    <Properties><Property><Name>Name</Name><Value>Properties</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlName</Name><Value>Properties</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.anyType</Value></Property></Properties>
+                  </Item>
+                  <Level Name="Property">
+                    <LevelInfo guid="f1a00330-f2fe-4aeb-8567-e1480f44bf08" name="Property" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Property" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Property</Value></Property></Properties>
+                    </LevelInfo>
+                    <Item guid="8ab4cd67-57bc-4717-8ce9-305887a3a34e" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>EmptyAsNull</Name><Value>Yes</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>Decimals</Name><Value>0</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>AttAvgLen</Name><Value>0</Value></Property><Property><Name>AttCollection</Name><Value>False</Value></Property><Property><Name>idDATEFORMAT</Name><Value>idDATEFORMAT_SHORT</Value></Property><Property><Name>ControlType</Name><Value>Edit</Value></Property></Properties>
+                    </Item>
+                    <Item guid="7acd9b61-d58c-4329-a05f-73ce80984b83" name="Value" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Value" user="EALMEIDAMSI\ealmeida">
+                      <Properties><Property><Name>Name</Name><Value>Value</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property></Properties>
+                    </Item>
+                  </Level>
+                </Level>
+                <Level Name="Properties">
+                  <LevelInfo guid="03ddbb3f-bd64-4660-9aaf-0ea49b37ef83" name="Properties" type="a76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Properties" user="EALMEIDAMSI\ealmeida">
+                    <Properties><Property><Name>Name</Name><Value>Properties</Value></Property><Property><Name>AttCollection</Name><Value>True</Value></Property><Property><Name>idCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlName</Name><Value>Properties</Value></Property><Property><Name>idXmlCollectionItemName</Name><Value>Property</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property></Properties>
+                  </LevelInfo>
+                  <Item guid="8e36be81-c5da-4db8-81b4-43e347441215" name="Name" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Name" user="EALMEIDAMSI\ealmeida">
+                    <Properties><Property><Name>Name</Name><Value>Name</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Name</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                  </Item>
+                  <Item guid="59c82bce-21d6-4ea3-ae74-8e719a50fbb7" name="Value" type="f76e9340-bdb9-445d-8f81-cfd4ddd0b0f3" description="Value" user="EALMEIDAMSI\ealmeida">
+                    <Properties><Property><Name>Name</Name><Value>Value</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:Character</Value></Property><Property><Name>Length</Name><Value>9999</Value></Property><Property><Name>AttMaxLen</Name><Value>9999</Value></Property><Property><Name>idXmlName</Name><Value>Value</Value></Property><Property><Name>idXmlNamespace</Name><Value /></Property><Property><Name>soaptype</Name><Value>http://www.w3.org/2001/XMLSchema.string</Value></Property></Properties>
+                  </Item>
+                </Level>
+              </Level>
+            </Level>
+          </Level>
+        </Level>
+        <Properties><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+      </Part>
+      <Part type="babf62c5-0111-49e9-a1c3-cc004d90900a">
+        <Properties />
+      </Part>
+      <Properties><Property><Name>Name</Name><Value>ExportFile</Value></Property><Property><Name>ExternalName</Name><Value>ExportFile</Value></Property><Property><Name>ExternalNamespace</Name><Value /></Property><Property><Name>IsDefault</Name><Value>False</Value></Property></Properties>
+    </Object>
+  </Objects>
+  <Dependencies>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Object" Id="84a12160-f59b-4ad7-a683-ea4481ac23e9">
+      <Properties Name="Procedure" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="528d1c06-a9c2-420d-bd35-21dca83f12ff">
+      <Properties Name="Source" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="c414ed00-8cc4-4f44-8820-4baf93547173">
+      <Properties Name="Layout" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="9b0a32a3-de6d-4be1-a4dd-1b85d3741534">
+      <Properties Name="Rules" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="763f0d8b-d8ac-4db4-8dd4-de8979f2b5b9">
+      <Properties Name="Conditions" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="e4c4ade7-53f0-4a56-bdfd-843735b66f47">
+      <Properties Name="Variables" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="ad3ca970-19d0-44e1-a7b7-db05556e820c">
+      <Properties Name="Help" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="babf62c5-0111-49e9-a1c3-cc004d90900a">
+      <Properties Name="Documentation" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Object" Id="00972a17-9975-449e-aab1-d26165d51393">
+      <Properties Name="Domain" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Object" Id="447527b5-9210-4523-898b-5dccb17be60a">
+      <Properties Name="Structured Data Type" PackageName="GenexusBL" />
+    </Reference>
+    <Reference Package="3ea7e1c6-b849-4df9-931a-070171a8a2f0" Type="Part" Id="5c2aa9da-8fc4-4b6b-ae02-8db4fa48976a">
+      <Properties Name="Structure" PackageName="GenexusBL" />
+    </Reference>
+  </Dependencies>
+  <ObjectsIdentityMapping>
+    <ObjectIdentity Type="c88fffcd-b6f8-0000-8fec-00b5497e2117" Name="Root Module" parent="">
+      <Guid>afa47377-41d5-4ae8-9755-6f53150aa361</Guid>
+    </ObjectIdentity>
+    <ObjectIdentity Type="d4876646-98dd-419b-8c1c-896f83c48368" Name="Attribute" parent="">
+      <Guid>7f83da99-bc71-5230-bf17-0352ce27c129</Guid>
+    </ObjectIdentity>
+    <ObjectIdentity Type="ecececec-dfe0-4a57-ae8f-c6e31b0dcbc0" Name="Default" parent="">
+      <Guid>5d032ff1-ca4f-486d-a4d6-4ea76c51b1c8</Guid>
+    </ObjectIdentity>
+  </ObjectsIdentityMapping>
+</ExportFile>

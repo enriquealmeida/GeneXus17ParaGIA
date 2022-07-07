@@ -1,0 +1,23 @@
+group CommonChatbots;
+delimiters "$", "$"
+
+init(botGenerator)::=<<
+<?xml version="1.0" encoding="utf-16"?>
+<detail $events(botGenerator)$   
+	<layout Type="View" Platform="Any Platform">
+	    <table controlName="MainTable" />
+	</layout>
+</detail>
+>>
+
+events(botGenerator)::=<<
+events="Event ClientStart&#xA;&#x9;CommonChatbots.PanelChat$if(botGenerator.HasQuery)$Query$endif$(!&quot;$botGenerator.BaseSerialName$&quot;)&#xA;EndEvent$dEvent(botGenerator)$">
+>>
+
+dEvent(botGenerator)::=<<
+&#xA;&#xA;Event 'Dummy'&#xA;&#x9;Composite&#xA;&#x9;&#x9;$botGenerator.Name$.CallHandler()&#xA;$if(botGenerator.DummyPanels)$$botGenerator.DummyPanels:{panel|$dEventPanel(panel)$};separator="&#xA;"$&#xA;&#x9;$else$&#x9;$endif$EndComposite&#xA;EndEvent
+>>
+
+dEventPanel(panel)::=<<
+&#x9;&#x9;$panel$.Call()
+>>

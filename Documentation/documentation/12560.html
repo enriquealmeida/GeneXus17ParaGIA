@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HelpGenerator MSBuild Task</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?12560,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HelpGenerator MSBuild Task</h1>
+<!--HelpGenerator MSBuild Task--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The <i>HelpGenerator</i> <a href="3908.html">MSBuild Task</a> can be applied to generate the <a href="12152.html">application help</a>.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;HelpGenerator
+  AttRef=&quot;true|false&quot;
+  CHMCompilerPath=&quot;c:\...\hhc.exe&quot;
+  CHMCustomContentPath=&quot;c:\...\file.hhc&quot;
+  CHMCustomIndexPath=&quot;c:\...\file.hhk&quot;
+  CHMFullTextSearch=&quot;true|false&quot;
+  CHMMainPagePath=&quot;c:\...\main.htm&quot;
+  CSS=&quot;CssSampleFile&quot;
+  IncludeTitle=&quot;true|false&quot;
+  Language=&quot;KBLanguageName|*All&quot;
+  ObjectGeneration=&quot;All|Modified&quot;
+  ObjRef=&quot;true|false&quot;
+  OutputType=&quot;HTML|CHM&quot;
+  SeeAlsoColumns=&quot;[1..6]&quot;
+  SeeAlsoFormat=&quot;Table|List&quot;
+  SeeAlsoTitle=&quot;See Also Text&quot;
+  VarRef=&quot;true|false&quot;
+  /&gt;</pre>
+
+<p><i>Language </i>(string): associated language name to generate Help. The special value &quot;<i>*ALL</i>&quot; generates help for each language defined in the KB. By default it generates help using the selected KB language.</p>
+
+<p><i>ObjectGeneration</i> (string): valid values are:</p>
+
+<ul>
+	<li><i>*All</i>: forces the generation of help for all GeneXus objects (default value).</li>
+	<li><i>Modified</i>: generates help only for the objects modified since the last help generation.</li>
+</ul>
+
+<p><i>IncludeTitle</i> (boolean): valid values are:</p>
+
+<ul>
+	<li><i>true</i>: includes the object description as Page Title.</li>
+	<li><i>false</i>: (default value) No Title is set.</li>
+</ul>
+
+<p><i>CSS</i> (string): references a CSS file to be included in each generated help file.</p>
+
+<p><i>SeeAlsoTitle</i> (string): &quot;See Also&quot; customized Title. In this section all automatic references are generated.</p>
+
+<p><i>SeeAlsoFormat</i> (string): &quot;See Also&quot; Format type section: valid values are:</p>
+
+<ul>
+	<li><i>Table</i>: generates an Html table to group the links.</li>
+	<li><i>List</i>: generates a list of links separated by a colon.</li>
+</ul>
+
+<p><i>OutputType</i>(string): valid values are:</p>
+
+<ul>
+	<li><i>HTML</i>: generates help files using HTML format (default value).</li>
+	<li><i>CHM</i>: generates help files using CHM format.</li>
+</ul>
+
+<p><i>SeeAlsoColumns</i> (int): Number of columns when using the &quot;<i>See Also</i>&quot; section as <i>Table</i>; valid values are 1 (default value) to 6.</p>
+
+<p><i>VarRef</i> (boolean): includes variable help references.</p>
+
+<p><i>AttRef</i> (boolean): includes attribute help references.</p>
+
+<p><i>ObjRef</i> (boolean): includes object help references.</p>
+
+<p><i>CHMCompilerPath</i> (string):Complete path for the CHM compiler, generally located in &quot;<i>C:\Program Files\HTML Help Workshop\hhw.exe</i>&quot;.</p>
+
+<p><i>CHMCustomContentPath</i>(string):Complete path for a custom CHM content file (tree structure shown in the CHM Content tab), generally a file with <i>hhc </i>extension.</p>
+
+<p><i>CHMCustomIndexPath</i>(string):Complete path for a custom index file, generally a file with <i>hhk </i>extension.</p>
+
+<p><i>CHMFullTextSearch </i>(boolean): valid values are:</p>
+
+<ul>
+	<li><i>true</i>: configures the CHM compiler to define a text search.</li>
+	<li><i>false</i>: (default value) No Title is set.</li>
+</ul>
+
+<p><i>CHMMainPagePath </i>(string):Complete path for a customized Main Page; by default it generate a sample one.</p>
+
+<h4><a id="Sample" class="HashLink" href="#Sample">Sample</a></h4>
+
+<p>Suppose you have the following target in a <i>test.build</i> file located under <i>C:\temp\MSBuild</i>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Target Name=&quot;HelpGenerator&quot;&gt;
+  &lt;HelpGenerator
+    Language=&quot;$(Language)&quot;
+    ObjectGeneration=&quot;$(ObjectGeneration)&quot;
+    IncludeTitle=&quot;$(IncludeTitle)&quot;
+    CSS=&quot;$(CSS)&quot;
+    SeeAlsoTitle=&quot;$(SeeAlsoTitle)&quot;
+    SeeAlsoFormat=&quot;$(SeeAlsoFormat)&quot;
+    SeeAlsoColumns=&quot;$(SeeAlsoColumns)&quot;
+    VarRef=&quot;$(VarRef)&quot;
+    AttRef=&quot;$(AttRef)&quot;
+    ObjRef=&quot;$(ObjRef)&quot;
+  /&gt;
+&lt;/Target&gt;
+</pre>
+
+<p>To force the generation of the application help in all languages you need to open the Knowledge Base and run the msbuild task as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild.exe /t:OpenKnowledgeBase;HelpGenerator /p:
+KBPath=c:\Models\myKnowledgeBase;
+Language=&quot;*All&quot;
+ /nologo &quot;c:\temp\MSBuild\test.msbuild&quot;
+ 
+</pre>
+
+<h3><a id="Comments" class="HashLink" href="#Comments">Comments</a></h3>
+
+<ul>
+	<li>The <i>msbuild.exe</i> file is located in the Microsoft .net 2.0 folder, generally <i>C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727\</i></li>
+	<li>Your msbuild file should add a reference to the <i>Genexus.Tasks.targets</i> file located under the GeneXus installation using the <i>Import</i> keyword, for example</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Import Project=&quot;c:\GeneXusInstallationDirectory\Genexus.Tasks.targets&quot;/&gt;
+</pre>
+
+<p><br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

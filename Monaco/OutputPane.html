@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<style type="text/css">
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+	</style>
+	<style>
+		/* Force minimap border left even */
+		.minimap {
+			border-left: 1px solid #eee;
+		}
+
+		/* Hide overlay messages (eg. "Cannot edit" message)*/
+		.monaco-editor-overlaymessage {
+			visibility: hidden !important;
+		}
+	</style>
+	<meta charset="utf-8" />
+</head>
+<body>
+	<div id="container" style="width:100%;height:100%;"></div>
+	<script src="vs/loader.js"></script>
+	<script type="text/javascript">
+		require.config({ paths: { 'vs': 'vs' } });
+
+		// API
+		var GetText;
+		var AddText;
+		var InsertText;
+		var SetText;
+		var SetTheme;
+		var SetLanguage;
+		var SetScroll;
+		var ShowErr;
+		var Refresh;
+		var AddErrorLine;
+		var RegisterOutputMessagesToken;
+
+		// Enablers
+		var SwitchMinimap;
+		var SwitchReadonly;
+		var SwitchRenderWhitespace;
+		var SwitchLinks;
+		var SwitchLineHeight;
+		var SwitchFontSize;
+		var SwitchFolding;
+		var SwitchAutoIndent;
+		var SwitchFontFamily;
+		var SwitchFontLigatures;
+		var AddIntellisense;
+		var ToggleWordWrap;
+
+		// Variables
+		var editor;
+		var Links = [];
+
+		// Read culture name from browser
+
+		const SUPPORTED_LANGUAGES = ["ja", "zh-cn", "zh-tw", "ru", "ko", "ja", "it", "fr", "es", "de"];
+
+		var cultureName;
+		if (navigator.languages != undefined)
+			cultureName = navigator.languages[0];
+		else
+			cultureName = navigator.language;
+		cultureName = cultureName.toLowerCase();
+
+		var monaco_lang;
+
+		switch (cultureName) {
+			case 'zh-cn':
+			case 'zh-tw':
+				monaco_lang = cultureName;
+				break;
+			case 'ja-jp':
+			default:
+				monaco_lang = cultureName.substr(0, 2); // Keep first two letters of culture name.
+				break;
+		}
+
+		if (monaco_lang === "en" || !SUPPORTED_LANGUAGES.includes(monaco_lang))
+			monaco_lang = null;
+
+		if (monaco_lang != null) // Otherwise use default: en-US
+			require.config({ 'vs/nls': { availableLanguages: { '*': monaco_lang } } });
+
+		require(['vs/editor/editor.main'], function () {
+
+			// Register a new language
+			monaco.languages.register({ id: 'gxOutput' });
+
+			// Links to Positions
+			monaco.languages.registerLinkProvider("gxOutput", {
+				resolveLink(link, token) {
+					window.external.go(link.gxpos);
+				},
+				provideLinks(model, token) {
+					return {
+						links: Links
+					}
+				}
+			})
+
+			// Define a new theme that contains only rules that match gxOutput language
+			monaco.editor.defineTheme('outputTheme', {
+				base: 'vs',
+				inherit: false,
+				rules: [
+					{ token: 'custom-info', foreground: '808080' },
+					{ token: 'custom-error', foreground: 'ff0000', fontStyle: 'bold' },
+					{ token: 'custom-warning', foreground: 'FFA500' },
+					{ token: 'custom-infomsg', foreground: 'A5FF00' },
+					{ token: 'start-section', foreground: '008800' },
+				]
+			});
+
+			editor = monaco.editor.create(document.getElementById("container"), {
+				theme: 'outputTheme',
+				value: '',
+				language: 'gxOutput',
+				readOnly: true,
+				lineNumbers: false,
+				links: true,
+				contextmenu: false,
+				mouseWheelZoom: true,
+				folding: false,
+				scrollBeyondLastLine: false,
+				scrollBeyondLastColumn: false,
+				find: {
+					addExtraSpaceOnTop: false,
+				},
+			});
+
+			var selectedText = "";
+
+			editor.onDidChangeCursorSelection((e) => {
+				if (e) {
+					try {
+						selectedText = editor.getModel().getValueInRange(editor.getSelection()).toString();
+						window.external.SetSelection(selectedText);
+					}
+					catch
+					{
+					}
+				}
+				return "";
+			});
+
+			Selection = function () {
+				return selectedText;
+			}
+
+			SelectAll = function () {
+				const lineCount = editor.getModel().getLineCount();
+				const lastLineLength = editor.getModel().getLineMaxColumn(lineCount);
+				editor.setSelection(
+					{ startLineNumber: 0, endLineNumber: lineCount, startColumn: 0, endColumn: lastLineLength }
+				);
+			}
+
+			ToggleWordWrap = function (flag) {
+				editor.updateOptions({
+					wordWrap: flag
+				});
+			}
+
+			RegisterOutputMessagesToken = function (errorTokenRegex, warningTokenRegex, sectionTokenRegex, infoTokenRegex) {
+				// Register a tokens provider for the language
+				monaco.languages.setMonarchTokensProvider('gxOutput', {
+					tokenizer: {
+						root: [
+							[new RegExp(errorTokenRegex), "custom-error"],
+							[new RegExp(warningTokenRegex), "custom-warning"],
+							[new RegExp(sectionTokenRegex), "start-section"],
+							[new RegExp(infoTokenRegex), "custom-infomsg"],
+							[/\[Running.*/, "custom-info"],
+						]
+					}
+				});
+			}
+
+			// This function is called when users customize in GeneXus colors (There is a bug in Monaco, background is not working yet)
+			ChangeTheme = function (errorForeColor, errorBackColor, warningForeColor, warningBackColor, infoForeColor, infoBackColor) {
+				// Define a new theme that contains only rules that match this language
+				monaco.editor.defineTheme('outputTheme', {
+					base: 'vs',
+					inherit: false,
+					rules: [
+						{ token: 'custom-info', foreground: '808080' },
+						{ token: 'custom-error', foreground: errorForeColor, background: errorBackColor, fontStyle: 'bold' },
+						{ token: 'custom-warning', foreground: warningForeColor, background: warningBackColor },
+						{ token: 'custom-infomsg', foreground: infoForeColor, background: infoBackColor },
+						{ token: 'start-section', foreground: '008800' },
+					]
+				});
+			}
+
+			window.onresize = function () {
+				editor.layout();
+			};
+
+			GetText = function () {
+				return editor.getValue();
+			}
+
+			SetText = function (x) {
+				Links = [];
+				editor.setValue(x);
+			}
+
+			Search = function (text) {
+				if (!text || text.length == 0)
+					editor.getAction('actions.find').run();
+				else {
+					const model = editor.getModel();
+					const matches = model.findMatches(text);
+					if (matches && matches.length > 0) {
+						const range = matches[0].range;
+
+						editor.setSelection(range);
+						editor.getAction('actions.find').run();
+					}
+				}
+			}
+
+
+			SelectedText = function () {
+				if (editor.getSelection())
+					return editor.getModel().getValueInRange(editor.getSelection());
+				return "";
+			}
+
+			SelectionLength = function () {
+				return SelectedText.length;
+			}
+
+			// This function create a link with the given text.
+			AddPosition = function (text, posId) {
+				const lineCount = editor.getModel().getLineCount();
+				const lastLineLength = editor.getModel().getLineMaxColumn(lineCount);
+
+				Links.push({
+					range: { startLineNumber: lineCount, startColumn: lastLineLength, endLineNumber: lineCount, endColumn: lastLineLength + text.length },
+					gxpos: posId
+				});
+				AddText(text);
+			}
+
+			AppendPosition = function (text, posId, line) {
+				const lineCount = line + 1;
+				const lastLineLength = editor.getModel().getLineMaxColumn(lineCount);
+
+				Links.push({
+					range: { startLineNumber: lineCount, startColumn: lastLineLength, endLineNumber: lineCount, endColumn: lastLineLength + text.length },
+					gxpos: posId
+				});
+				AppendTextAtLine(text, line);
+			}
+
+			InsertText = function (x, line) {
+				AddTextAtLine(x, line + 1, 0, false);
+				Links.forEach((l) => {
+					if (l.range.startLineNumber > line) {
+						l.range.startLineNumber = l.range.startLineNumber + 1;
+						l.range.endLineNumber = l.range.endLineNumber + 1;
+					}
+				});
+			}
+
+			AppendTextAtLine = function (x, line) {
+				AddTextAtLine(x, line + 1, editor.getModel().getLineMaxColumn(line + 1), false);
+				Links.forEach((l) => {
+					if (l.range.startLineNumber > line) {
+						l.range.startLineNumber = l.range.startLineNumber + 1;
+						l.range.endLineNumber = l.range.endLineNumber + 1;
+					}
+				});
+			}
+
+			AddTextAtLine = function (x, line, column, autoScroll) {
+				const lastLineLength = column;
+
+
+				const range = new monaco.Range(
+					line,
+					lastLineLength,
+					line,
+					lastLineLength
+				);
+
+				// hack, it seems there is no way to have Monaco readonly from user interface so put readonly and restore after edit.
+				SwitchReadonly(false);
+				editor.executeEdits('', [
+					{ range: range, text: x }
+				]);
+				SwitchReadonly(true);
+
+				if (autoScroll) {
+					editor.revealRangeInCenterIfOutsideViewport({
+						startLineNumber: line,
+						startColumn: 1,
+						endLineNumber: line,
+						endColumn: 1
+					});
+				}
+
+			}
+
+
+			AddText = function (x, autoScroll) {
+				const lineCount = editor.getModel().getLineCount();
+				AddTextAtLine(x, lineCount, editor.getModel().getLineMaxColumn(lineCount), autoScroll);
+				if (lineCount <= 1)
+					editor.setSelection(new monaco.Selection(1, 1, 1, 1));
+
+			}
+
+			SetLanguage = function (x) {
+				monaco.editor.setModelLanguage(editor.getModel(), x);
+			}
+
+			// This function can be useful for GeneXus M
+			SetTheme = function (themeName) {
+				if (themeName == "Dark") {
+					monaco.editor.setTheme("vs-dark");
+				}
+				if (themeName == "Light") {
+					monaco.editor.setTheme("vs");
+				}
+				if (themeName == "Black") {
+					monaco.editor.setTheme("hc-black");
+				}
+			}
+
+			SwitchMinimap = function (flag) {
+				editor.updateOptions({
+					minimap: {
+						enabled: flag,
+					}
+				});
+			}
+
+			SwitchReadonly = function (flag) {
+				editor.updateOptions({
+					readOnly: flag,
+				});
+			}
+
+			SwitchRenderWhitespace = function (op) {
+				editor.updateOptions({
+					renderWhitespace: op,
+				});
+			}
+
+			SwitchLinks = function (flag) {
+				editor.updateOptions({
+					links: flag,
+				});
+			}
+
+			SwitchLineHeight = function (num) {
+				editor.updateOptions({
+					lineHeight: num,
+				});
+			}
+
+			SwitchFontSize = function (num) {
+				editor.updateOptions({
+					fontSize: num,
+				});
+			}
+
+			SwitchFolding = function (flag) {
+				editor.updateOptions({
+					folding: flag,
+				});
+			}
+
+			SwitchAutoIndent = function (flag) {
+				editor.updateOptions({
+					autoIndent: flag,
+				});
+			}
+
+			SwitchFontFamily = function (name) {
+				editor.updateOptions({
+					fontFamily: name,
+				});
+			}
+
+			SwitchFontLigatures = function (flag) {
+				editor.updateOptions({
+					fontLigatures: flag,
+				});
+			}
+
+			SetScroll = function (line) {
+				editor.revealLineInCenter({ lineNumber: line });
+			}
+
+			Refresh = function () {
+				var text = getText();
+				setText("");
+				editor.trigger('keyboard', 'type', { text: text });
+			}
+		});
+	</script>
+</body>
+</html>

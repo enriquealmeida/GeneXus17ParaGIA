@@ -1,0 +1,91 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ SubTemplate Name="AbstractFormInnerLevel" File="TrnAbstractFormLayout_InnerLevel_CarmineTemplate.dkt"  MergeProperties="True"  %>
+<%@ SubTemplate Name="WebFormLayoutButton" File="TrnWebFormLayout_Button.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="WebFormLayoutButtonToolbar" File="TrnWebFormLayout_ButtonToolbar.dkt"  MergeProperties="True" %>
+<%@ SubTemplate Name="AbstractFormLayoutToolbar" File="TrnAbstractFormLayout_Toolbar.dkt" MergeProperties="True" %>
+<%@ SubTemplate Name="AbstractFormLayoutFormButtons" File="TrnAbstractFormLayout_FormButtons.dkt" MergeProperties="True" %>
+<%@ Property Name="transaction" Type="Artech.Genexus.Common.Objects.Transaction" %>
+<%@ Property Name="GenerateToolbar" Type="System.Boolean" %>
+<%@ Property Name="GenerateDelete" Type="System.Boolean" %>
+<%@ Property Name="Counters" Type="System.Collections.Generic.Dictionary<string,int>"%>
+<%@ Property Name="Layout" Type="Artech.Genexus.Common.Parts.DefaultFormHelper.FormTemplate" %>
+
+<%
+	IDictionary<TransactionAttribute, Artech.Genexus.Common.Objects.Attribute> descAttNames;
+	IList<int> toExclude = DefaultFormHelper.CalculateExcluded(transaction.Structure.Root, out descAttNames);
+	ResponsiveSizes sizes = DefaultFormHelper.CalculateResponsiveSizes(transaction.Structure.Root, GenerateToolbar, false, false, false);
+	ResponsiveSizes MainTableSizes = DefaultFormHelper.CalculateContainerSizes(Layout);
+	ResponsiveSizes TableTopSizes = DefaultFormHelper.CalculateTableTopSizes();
+%>
+<%= WebLayout.BeginLayout() %>
+	<%= WebLayout.BeginResponsiveTable(MainTableSizes, "MainTable", "WWAdvancedContainer") %>
+		<%= WebLayout.BeginTableRow() %>
+			<%= WebLayout.BeginTableCell() %>
+				<%= WebLayout.BeginResponsiveTable(TableTopSizes, "TitleContainer", "TableTop") %>	
+					<%= WebLayout.BeginTableRow() %>
+						<%= WebLayout.BeginTableCell() %>
+							<%= WebLayout.TextBlock("Title", "Title", System.Security.SecurityElement.Escape(transaction.Description)) %>
+						<%= WebLayout.EndTableCell() %>
+					<%= WebLayout.EndTableRow() %>
+					<%= WebLayout.BeginTableRow() %>
+						<%= WebLayout.BeginTableCell() %>
+							<%= WebLayout.ErrorViewer("ErrorViewer") %>
+						<%= WebLayout.EndTableCell() %>
+					<%= WebLayout.EndTableRow() %>	
+				<%= WebLayout.EndResponsiveTable() %>		
+			<%= WebLayout.EndTableCell() %>	
+		<%= WebLayout.EndTableRow() %>	
+		<%= WebLayout.BeginTableRow() %>
+			<%= WebLayout.BeginTableCell() %>		
+				<%= WebLayout.BeginResponsiveTable(sizes, "FormContainer", "FormContainer") %>				
+	<%
+			if (GenerateToolbar) 
+			{
+	%>
+					<%= WebLayout.BeginTableRow() %>
+						<%= WebLayout.BeginTableCell("ToolbarCell", "ToolbarCellClass") %>
+							<%= WebLayout.BeginActionGroupBlock("Toolbar") %>
+							<%= WebLayout.EndActionGroupBlock() %>
+						<%= WebLayout.EndTableCell() %>
+					<%= WebLayout.EndTableRow() %>
+			<%
+					}
+			%>					
+			<%@ CallSubTemplate AbstractFormInnerLevel TransactionLevel='transaction.Structure.Root' Counters="Counters" %>					
+				<%= WebLayout.EndResponsiveTable() %>	
+			<%= WebLayout.EndTableCell() %>	
+		<%= WebLayout.EndTableRow() %>		
+		<%= WebLayout.BeginTableRow() %>
+			<%
+			switch (Layout)
+			{
+				case DefaultFormHelper.FormTemplate.Unanimo:
+				{
+			%>
+					<%= WebLayout.BeginTableCell(null, null, null, null, "Right", null) %>
+			<%
+					break;		
+				}
+				case DefaultFormHelper.FormTemplate.Carmine:
+				case DefaultFormHelper.FormTemplate.Flat:
+				{
+			%>
+					<%= WebLayout.BeginTableCell(null,null,null,null,"Center",null) %>
+			<%
+					break;
+				}
+				default:
+					throw new InvalidOperationException(string.Format("Missing sub-template for {0}", Layout));
+			}
+			%>
+			<%= WebLayout.BeginActionGroupBlock("FormButtons") %>
+			<%= WebLayout.EndActionGroupBlock() %>
+			<%= WebLayout.EndTableCell() %>
+		<%= WebLayout.EndTableRow() %>
+	<%= WebLayout.EndResponsiveTable() %>
+	<%= WebLayout.BeginActionGroups() %>
+	<%@ CallSubTemplate AbstractFormLayoutFormButtons%>
+	<%@ CallSubTemplate AbstractFormLayoutToolbar Layout='Layout' %>
+	<%= WebLayout.EndActionGroups() %>
+<%= WebLayout.EndLayout() %>

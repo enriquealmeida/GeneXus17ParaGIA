@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Developing Drag and Drop in Web Panels</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5579,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Developing Drag and Drop in Web Panels</h1>
+<!--Developing Drag and Drop in Web Panels--><div class="TableWikiBody" id="tblwikibody"><p>Drag and Drop in <a href="6916.html">Web Panels</a> lets the end-user drag the content associated with web controls from one place to another, in order to take some actions.</p>
+
+<p>End-users can, for example, drag a product from a products list to an invoice grid. Or drag products to a shopping cart image.</p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Important Note</b>: The content can be dragged from and to different <a href="31172.html">Web Components</a>. So, you can have a products Grid in a Web Component and a cart Image in another.</div>
+
+<p> </p>
+
+<h2><a id="Sample" class="HashLink" href="#Sample">Sample</a></h2>
+
+<p>Suppose that you want to define a shopping web layout where the user can drag the products he/she wants to buy to a cart image, in order to add them to the shopping list. </p>
+
+<p>To achieve this you only have to configure the <a href="9766.html">Allow Drag property</a> in a &quot;Products&quot; Grid and program the Drop event of the image where the product will be added to the list. That's all!</p>
+
+<p>1. Set the <a href="9766.html">Allow Drag property</a> of the &quot;Products&quot; Grid:</p>
+
+<p><img src="./images/50458.jpg" id="50458" class="WikiImage"/></p>
+
+<p><br />
+2. Code the following for the &quot;Cart&quot; image.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Cart.Drop(&amp;ProductId,&amp;ProductDsc)
+     //Here is the code to buy the product
+     msg('Buy ' + &amp;ProductDsc)
+EndEvent
+</pre>
+
+<p><br />
+3. At runtime, drag the selected Grid row to the image.</p>
+
+<p><img src="./images/50459.jpg" id="50459" class="WikiImage"/></p>
+
+<p>Download the example <a href="https://wiki.genexus.com/commwiki/wiki?50424,," target="_blank">here</a></p>
+
+<p> </p>
+
+<h2><a id="Implementation+Details" class="HashLink" href="#Implementation+Details">Implementation Details</a></h2>
+
+<h3><a id="Drag+%26+Drop+events" class="HashLink" href="#Drag+%26+Drop+events">Drag &amp; Drop events</a></h3>
+
+<p><br />
+Supported controls: Image, Text Block, <a href="6001.html">Table</a>, <a href="24817.html">Grid</a> and FreeStyle Grid, <a href="31172.html">Web Component</a>, <a href="6011.html">Button</a>.</p>
+
+<h4><a id="Drag+event" class="HashLink" href="#Drag+event"><strong>Drag event</strong></a></h4>
+
+<p>Syntax: &lt;control&gt;.Drag((out:)parameter)</p>
+
+<p>The parameter is only one and is always an out variable parameter. This parameter will be loaded with the data you want to drag. If you need to drag several elements, you have to load them into an SDT.</p>
+
+<h4><a id="Drop+event" class="HashLink" href="#Drop+event"><strong>Drop event</strong></a></h4>
+
+<p>Syntax: &lt;control&gt;.Drop(parameters)</p>
+
+<p>The parameters can only be variables. These parameters will be loaded with the corresponding values of the Drag event parameters.</p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: There is no difference between the navigation of any user event and the navigation of the Drop event (Drag event). The rules that apply for the former apply also for the latter.</div>
+
+<h4><a id="+" class="HashLink" href="#+"> </a></h4>
+
+<h3><a id="Drag+%26+Drop+between+different+Web+objects" class="HashLink" href="#Drag+%26+Drop+between+different+Web+objects">Drag &amp; Drop between different Web objects</a></h3>
+
+<p>Remember that the information can be dragged from and to different Web Components. So, there has to be a way to identify the information that is able to be dragged from a control and dropped into another one.</p>
+
+<p>The way of identifying that is the following:</p>
+
+<p>1. If you have the following source code in an object &quot;A&quot;:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+  Event &lt;control&gt;.Drop(&amp;P1,&amp;P2,..,&amp;Pn)
+
+  EndEvent</pre>
+
+<p>2. Any other object &quot;B&quot; which satisfies the following:</p>
+
+<p>Has a Grid with Allow Drag property set to &quot;Yes&quot;, and the columns of the Grid match exactly the parameters of the drop event, and has optionally others:</p>
+
+<p>&amp;P1,&amp;P2,..,&amp;Pn,..(Others)</p>
+
+<p>In this case, the user will be able to drag information from the Grid to the control. The same happens if the columns are attributes named P1, P2,.. Pn.</p>
+
+<p>Graphically:</p>
+
+<p>Drag(X,Y,Z,T) ------------&gt; Drop(X,Y)</p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: The same applies to Allow Drop property of Grids. In that case, the Grid which has Allow Drop property set to &quot;Yes&quot; needs to have a subset of the columns of the Grid which has Allow Drag property set to &quot;Yes&quot;. The order of columns is not relevant. If any of the variables is based on an SDT, it's matched by DataType only, not by name.</div>
+
+<h3><a id="Examples+links" class="HashLink" href="#Examples+links">Examples links</a></h3>
+
+<p><a href="6584.html">Drag and Drop in Applications Sample 1</a><br />
+<a href="6585.html">Drag and Drop in Applications Sample 2</a><br />
+<a href="6586.html">Drag and Drop in Applications Sample 3</a><br />
+<a href="6587.html">Drag and Drop in Applications Sample 4</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="9766.html">Allow Drag property</a><br />
+<a href="9765.html">Allow Drop property</a></p>
+
+<p><font color="#800080"><font color="#000000" size="2"></font></font></p>
+
+<p><font color="#800080"><font color="#000000" size="2"></font></font></p>
+
+<p><font color="#800080"><font color="#000000" size="2"><br />
+</font></font></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9766.html">Allow Drag property</a></TD><TD><a href="9765.html">Allow Drop property</a></TD></TR><TR><TD><a href="5730.html">Category:Drag and Drop</a></TD><TD><a href="6584.html">Drag and Drop in Applications Sample 1</a></TD><TD><a href="6585.html">Drag and Drop in Applications Sample 2</a></TD><TD><a href="6586.html">Drag and Drop in Applications Sample 3</a></TD></TR><TR><TD><a href="6587.html">Drag and Drop in Applications Sample 4</a></TD><TD><a href="9642.html">Drag event in Web</a></TD><TD><a href="9643.html">Drop event in Web</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/31/22 08:23 PM</em></font></td></TR></table></font>

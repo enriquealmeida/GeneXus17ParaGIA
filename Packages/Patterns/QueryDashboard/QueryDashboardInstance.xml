@@ -1,0 +1,1133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pattern xmlns="http://schemas.genexus.com/Patterns/InstanceSpecification/v1.0" Name="QueryDashboard" Version="17.0.1" RootElement="Dashboard" RootType="Dashboard">
+	<ElementTypes>
+
+		<ElementType Name="DOMElement" Caption="DOMElement" KeyAttribute="ElementId" Icon="ObjectQueryDashboard" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "ElementId"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.ElementIdResolver"
+						   Visible = "false"
+						   Description = "Element's Id." />
+			</Attributes>
+			<ChildrenElements/>
+			<Initialization/>
+		</ElementType>
+
+		<ElementType Name="Dashboard" Caption="Dashboard" Icon="ObjectQueryDashboard" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Title"
+						   Type = "string"
+ 						   Visible = "false"/>											<!-- Deprecated in version 16.0.3 -->
+				<Attribute Name = "RefreshPeriod"
+						   Type = "string"
+						   Visible = "false"/>											<!-- Deprecated in version 16.0.3 -->
+				<Attribute Name = "FiltersPosition"
+						   Type = "enum{Left;Right;Top}"
+						   Visible = "false"/>											<!-- Deprecated in version 16.0.3 -->
+				<Attribute Name = "MainTableLayout"
+						   Type = "custom(LayoutType)"
+						   Visible = "false"/>											<!-- Deprecated in version 16.0.3 -->
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="Parameters" ElementType="Parameters" Multiple="false" Optional="false" />
+				<ChildElement Name="Layout" ElementType="Layout" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+
+		<ElementType Name="Parameters" Caption="Parameters" Icon="Pattern_Parameters" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="Parameter" ElementType="Parameter" Multiple="true" />
+			</ChildrenElements>
+			<Initialization />
+		</ElementType>
+
+		<ElementType Name="Parameter" Caption="{0}" CaptionParameters="Name" KeyAttribute="Name" Icon="Pattern_Parameter" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Name"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Parameter.ParameterNameResolver"
+						   Description = "Parameter name." />
+				<Attribute Name = "ParameterType"
+						   PrettyName = "Type"
+						   Type = "enum{Value;Collection}"
+						   Description = "Parameter type." />
+				<Attribute Name = "DataType"
+						   PrettyName = "Data type"
+						   Type = "custom(ParameterDataType)"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.DataTypeResolver"
+						   Description = "Parameter data type." />
+			</Attributes>
+			<ChildrenElements />
+			<Initialization />
+		</ElementType>
+
+		<ElementType Name="Layout" BaseType="DOMElement" Caption="Layout" Icon="Layout" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Title" 
+						   Type = "string" 
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Layout.TitleResolver"
+						   Description = "Dashboard title." />
+				<Attribute Name = "RefreshPeriod"
+						   PrettyName = "Refresh period"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Layout.RefreshPeriodResolver"
+						   Description = "Amount of seconds to refresh the dashboard automatically (0 means no refresh)."
+						   DefaultValue = "0"/>
+				<Attribute Name = "FiltersPosition"
+						   PrettyName = "Filters position"
+						   DefaultValue = "Right"
+						   Type = "enum{Left;Right;Top}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Layout.FiltersPositionResolver"
+						   Description = "Filters position in the dashboard layout." />
+				<Attribute Name = "MainTableLayout"
+						   PrettyName = "Layout"
+						   Type = "custom(LayoutType)"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Layout.MainTableLayoutResolver"
+						   Description = "Layout used to arrange the widgets in the dashboard." />
+				<Attribute Name = "Parameters"
+						   Type = "custom(ValuesCollection)"
+						   Visible = "false"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.ParametersResolver"
+						   Description = "Layout's parameters." />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="MainTable" ElementType="MainTable" Multiple="false" Optional="false" />
+				<ChildElement Name="FiltersTable" ElementType="FiltersTable" Multiple="false" Optional="false" />
+			</ChildrenElements>
+			<Initialization />
+		</ElementType>
+
+		<ElementType Name="MainTable" BaseType="Table" Caption="MainTable" Icon="Table" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes/>
+			<ChildrenElements/>
+			<Initialization/>
+		</ElementType>
+
+		<ElementType Name="FiltersTable" BaseType="Table" Caption="Filters" Icon="Table" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes/>
+			<ChildrenElements/>
+			<Initialization/>
+		</ElementType>
+
+		<ElementType Name="Table" BaseType="DOMElement" Caption="{0}" CaptionParameters="ControlName" KeyAttribute="ControlName" Icon="Table" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "ControlName"
+						   PrettyName = "Control name"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.ControlNameResolver"
+						   Description = "Control name." />
+				<Attribute Name = "Class"
+   						   Category = "Appearance"
+						   Type = "custom(TableThemeClassReference)"
+						   Description = "Table class." />
+				<Attribute Name = "ResponsiveSizes"
+						   PrettyName = "Responsive sizes"
+						   Type = "custom(ResponsiveSizes)"
+						   Description = "Responsive sizes"/>
+				<Attribute Name = "TableType"
+						   Type = "string"
+						   Visible="false"
+						   DefaultValue ="Responsive"/>
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="Row" ElementType="Row" Multiple="true" />
+			</ChildrenElements>
+			<Initialization />
+		</ElementType>
+
+		<ElementType Name="Row" BaseType="DOMElement" Caption="Row" Icon="TableRow" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "RowClass"
+						   PrettyName = "Row class"
+   						   Category = "Row information"
+   						   Type = "custom(TableRowThemeClassReference)"
+						   Description = "Row class." />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="Cell" ElementType="Cell" Multiple="true" />
+			</ChildrenElements>
+			<Initialization />
+		</ElementType>
+
+		<ElementType Name="Cell" BaseType="DOMElement" Caption="Cell" ChildrenType="Choice" Icon="TableCell" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "CellClass"
+						   PrettyName = "Cell class"
+   						   Category = "Cell information"
+   						   Type = "custom(TableCellThemeClassReference)"
+						   Description = "Cell class." />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="Table" ElementType="Table" Multiple="false" Optional="true" />
+				<ChildElement Name="Object" ElementType="Object" Multiple="false" Optional="true" />
+				<ChildElement Name="Filter" ElementType="Filter" Multiple="false" Optional="true" />
+				<ChildElement Name="Button" ElementType="Button" Multiple="false" Optional="true" />
+				<ChildElement Name="Image" ElementType="Image" Multiple="false" Optional="true" />
+				<ChildElement Name="TextBlock" ElementType="TextBlock" Multiple="false" Optional="true" />
+			</ChildrenElements>
+			<Initialization />
+		</ElementType>
+		
+		<ElementType Name="Widget" BaseType="DOMElement" Caption="Widget" Icon="ObjectQueryDashboard" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "ControlName"
+						   PrettyName = "Control name"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.ControlNameResolver"
+						   Description = "Control name." />
+				<Attribute Name = "FrameVisible"
+						   PrettyName = "Visible"
+						   Category = "Frame"
+						   Type = "bool"
+						   VisibleIf = "self::*[@Visible = 'True']"
+						   Description = "True if the widget has a frame." />
+				<Attribute Name = "FrameTitle"
+						   Category = "Frame"
+						   PrettyName = "Title"
+						   Type = "string"
+						   VisibleIf = "self::*[@FrameVisible = 'True' and @Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Widget.FrameTitleResolver"
+						   Description = "Frame's title." />
+				<Attribute Name = "FrameAllowCollapsing"
+						   Category = "Frame"
+						   PrettyName = "Allow collapsing"
+						   Type = "bool"
+						   VisibleIf = "self::*[@FrameVisible = 'True' and @FrameTitle != '' and @Visible = 'True']"
+						   Description = "True for a collapsible frame." />
+				<Attribute Name = "FrameCollapsed"
+						   Category = "Frame"
+						   PrettyName = "Collapsed"
+						   Type = "bool"
+						   VisibleIf = "self::*[@FrameVisible = 'True' and @FrameTitle != '' and @FrameAllowCollapsing = 'True' and @Visible = 'True']"
+						   Description = "True for a collapsible frame." />
+				<Attribute Name = "Parameters"
+						   Type = "custom(ValuesCollection)"
+						   Visible = "false"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.ParametersResolver"
+						   Description = "Widget's parameters." />
+			</Attributes>
+			<ChildrenElements/>
+			<Initialization>
+			</Initialization>
+		</ElementType>
+
+		<ElementType Name="Object" BaseType="Widget" Caption="{0}" CaptionParameters="ControlName" KeyAttribute="ControlName" Icon="ObjectQuery" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Object"
+						   Type = "reference(Query;DataProvider)"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.ObjectResolver"
+						   Description = "Referenced query or data provider." />
+				<Attribute Name = "OutputType"
+						   PrettyName = "Type"
+   						   Category = "Output"
+						   Type = "enum{Card;Chart;Map;Pivot table;Table}"
+						   DefaultValue = "Chart"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.OutputTypeResolver"
+						   Description = "Output type." />
+				<Attribute Name = "Title"
+   						   Category = "Output"
+						   Type = "string"
+						   VisibleIf = "self::*[@OutputType != 'Card']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.TitleResolver"
+						   Description = "Title that will be displayed on top of the query." />
+				<Attribute Name = "ShowValues"
+   						   Category = "Output"
+						   PrettyName = "Show values"
+						   Type = "bool"
+						   VisibleIf = "self::*[@OutputType = 'Chart' or @OutputType = 'Map']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.ShowValuesResolver"
+						   Description = "Specifies whether to show the values for the data elements, or not." />
+				<Attribute Name = "ChartType"
+   						   Category = "Output\Chart options"
+						   PrettyName = "Chart type"
+						   Type = "enum{Column;Column 3D;Stacked column;Stacked column 3D;100% Stacked column;Bar;Stacked bar;100% stacked bar;Area;Stacked area;100% stacked area;Smooth area;Step area;Line;Stacked line;100% stacked line;Smooth line;Step line;Timeline;Smooth timeline;Step timeline;Sparkline;Pie;Pie 3D;Doughnut;Doughnut 3D;Linear gauge;Circular gauge;Radar;Filled radar;Polar area;Funnel;Pyramid;Column &amp; Line;Column 3D &amp; Line}"
+						   VisibleIf = "self::*[@OutputType = 'Chart']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.ChartTypeResolver"
+						   Description = "Chart type, when rendering as a chart." />
+				<Attribute Name = "PlotSeries"
+   						   Category = "Output\Chart options"
+						   PrettyName = "Plot series"
+						   Type = "enum{In the same chart;In separate charts}"
+						   VisibleIf = "self::*[@OutputType = 'Chart']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.PlotSeriesResolver"
+						   Description = "Specifies if the chart series are plotted together in the same chart or alone in separate charts." />
+				<Attribute Name = "XAxisLabels"
+   						   Category = "Output\Chart options"
+						   PrettyName = "X axis labels"
+						   Type = "enum{Horizontally;Rotated 30º;Rotated 45º;Rotated 60º;Vertically}"
+						   VisibleIf = "self::*[@OutputType = 'Chart']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.XAxisLabelsResolver"
+						   Description = "Specifies if the labels in the X axis of a chart are shown horizontally, vertically or rotated a certain angle." />
+				<Attribute Name = "XAxisIntersectionAtZero"
+   						   Category = "Output\Chart options"
+						   PrettyName = "X axis intersection at zero"
+						   Type = "bool"
+						   VisibleIf = "self::*[@OutputType = 'Chart']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.XAxisIntersectionAtZeroResolver"
+						   Description = "Specifies whether the X axis intersects the Y axis at zero or the intersection point is automatically calculated." />
+				<Attribute Name = "XAxisTitle"
+   						   Category = "Output\Chart options"
+						   PrettyName = "X axis title"
+						   Type = "string"
+						   VisibleIf = "self::*[@OutputType = 'Chart']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.XAxisTitleResolver"
+						   Description = "X axis title, if specified." />
+				<Attribute Name = "YAxisTitle"
+   						   Category = "Output\Chart options"
+						   PrettyName = "Y axis title"
+						   Type = "string"
+						   VisibleIf = "self::*[@OutputType = 'Chart']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.YAxisTitleResolver"
+						   Description = "Y axis title, if specified." />
+				<Attribute Name = "ShowDataAs"
+   						   Category = "Output\Card options"
+						   PrettyName = "Show data as"
+						   Type = "enum{Values;Percentages;Values and percentages}"
+						   VisibleIf = "self::*[@OutputType = 'Card']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.ShowDataAsResolver"
+						   Description = "Specifies whether to show the actual values, the values as a percentage of the target values, or both." />
+				<Attribute Name = "Orientation"
+   						   Category = "Output\Card options"
+						   PrettyName = "Orientation"
+						   Type = "enum{Horizontal;Vertical}"
+						   VisibleIf = "self::*[@OutputType = 'Card']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.OrientationResolver"
+						   Description = "Specifies whether to arrange the attributes horizontally or vertically when more than one data attribute is present." />
+				<Attribute Name = "IncludeTrend"
+   						   Category = "Output\Card options"
+						   PrettyName = "Include trend"
+						   Type = "bool"
+						   VisibleIf = "self::*[@OutputType = 'Card']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.IncludeTrendResolver"
+						   Description = "Specifies whether to include a trend mark for the values or not." />
+				<Attribute Name = "TrendPeriod"
+   						   Category = "Output\Card options"
+						   PrettyName = "Trend period"
+						   Type = "enum{Since the beginning;Last year;Last semester;Last quarter;Last month;Last week;Last day;Last hour;Last minute;Last second}"
+						   VisibleIf = "self::*[@OutputType = 'Card' and @IncludeTrend = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.TrendPeriodResolver"
+						   Description = "Specifies the period of time to calculate the trend." />
+				<Attribute Name = "IncludeSparkline"
+   						   Category = "Output\Card options"
+						   PrettyName = "Include sparkline"
+						   Type = "bool"
+						   VisibleIf = "self::*[@OutputType = 'Card']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.IncludeSparklineResolver"
+						   Description = "Specifies whether to include a sparkline chart for the values or not." />
+				<Attribute Name = "IncludeMaxAndMin"
+   						   Category = "Output\Card options"
+						   PrettyName = "Include max and min"
+						   Type = "bool"
+						   VisibleIf = "self::*[@OutputType = 'Card']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.IncludeMaxAndMinResolver"
+						   Description = "Specifies whether to include the maximum and minimum values in the series." />
+				<Attribute Name = "Paging"
+   						   Category = "Output\PivotTable and Table options"
+						   PrettyName = "Paging"
+						   Type = "bool"
+						   VisibleIf = "self::*[@OutputType = 'Pivot table' or @OutputType = 'Table']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.PagingResolver"
+						   Description = "True to specify if the table or pivot table uses paging; False otherwise." />
+				<Attribute Name = "PageSize"
+   						   Category = "Output\PivotTable and Table options"
+						   PrettyName = "Page size"
+						   Type = "string"
+						   VisibleIf = "self::*[(@OutputType = 'Pivot table' or @OutputType = 'Table') and @Paging = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.PageSizeResolver"
+						   Description = "Page size, when Paging is set to True." />
+				<Attribute Name = "ShowDataLabelsIn"
+   						   Category = "Output\PivotTable and Table options"
+						   PrettyName = "Show data labels in"
+						   Type = "enum{Columns area;Rows area}"
+						   VisibleIf = "self::*[@OutputType = 'Pivot table']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.ShowDataLabelsInResolver"
+						   Description = "Specifies whether the data labels for the data elements in a pivot table are shown in the Columns or Rows area. Only meaningful for two or more data elements." />
+				<Attribute Name = "TotalForRows"
+   						   Category = "Output\PivotTable and Table options"
+						   PrettyName = "Total for rows"
+						   Type = "enum{Yes;No}"
+						   VisibleIf = "self::*[@OutputType = 'Pivot table']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.TotalForRowsResolver"
+						   Description = "Determines whether to show a total for the values in the rows of the pivot table. If you set Yes a total will be shown. If you set No the total won't appear at all." />
+				<Attribute Name = "TotalForColumns"
+   						   Category = "Output\PivotTable and Table options"
+						   PrettyName = "Total for columns"
+						   Type = "enum{Yes;No}"
+						   VisibleIf = "self::*[@OutputType = 'Pivot table']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.TotalForColumnsResolver"
+						   Description = "Determines whether to show a total for the values in the columns of the pivot table. If you set Yes a total will be shown. If you set No the total won't appear at all." />
+				<Attribute Name = "MapType"
+   						   Category = "Output\Map options"
+						   PrettyName = "Map type"
+						   Type = "enum{Choropleth;Bubble}"
+						   VisibleIf = "self::*[@OutputType = 'Map']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.MapTypeResolver"
+						   Description = "Map type, when rendering as a map." />
+				<Attribute Name = "Region"
+   						   Category = "Output\Map options"
+						   Type = "enum{World;Continent;Country}"
+						   VisibleIf = "self::*[@OutputType = 'Map']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.RegionResolver"
+						   Description = "Specifies whether to display a country, a continent or the entire world map." />
+				<Attribute Name = "Continent"
+   						   Category = "Output\Map options"
+						   Type = "enum{Africa;Antarctica;Asia;Europe;North America;Oceania;South America}"
+						   VisibleIf = "self::*[@OutputType = 'Map' and @Region = 'Continent']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.ContinentResolver"
+						   Description = "The continent map that will be displayed." />
+				<Attribute Name = "Country"
+   						   Category = "Output\Map options"
+						   Type = "namedEnum{Afghanistan=AF;Albania=AL;Algeria=DZ;Andorra=AD;Angola=AO;Anguilla=AI;Antigua and Barbuda=AG;Argentina=AR;Armenia=AM;Australia=AU;Austria=AT;Azerbaijan=AZ;Bahrain=BH;Bangladesh=BD;Barbados=BB;Belarus=BY;Belgium=BE;Belize=BZ;Benin=BJ;Bermuda=BM;Bhutan=BT;Bolivia=BO;Bosnia and Herzegovina=BA;Botswana=BW;Brazil=BR;British Virgin Islands=VG;Brunei=BN;Bulgaria=BG;Burkina Faso=BF;Burundi=BI;Cambodia=KH;Cameroon=CM;Canada=CA;Cape Verde=CV;Central African Republic=CF;Chad=TD;Chile=CL;China=CN;Colombia=CO;Comoros=KM;Cook Islands=CK;Costa Rica=CR;Croatia=HR;Cuba=CU;Cyprus=CY;Czech Republic=CZ;Democratic Republic of the Congo=CD;Denmark=DK;Djibouti=DJ;Dominica=DM;Dominican Republic=DO;East Timor=TL;Ecuador=EC;Egypt=EG;El Salvador=SV;Equatorial Guinea=GQ;Eritrea=ER;Estonia=EE;Eswatini=SZ;Ethiopia=ET;Faroe Islands=FO;Fiji=FJ;Finland=FI;France=FR;Gabon=GA;Gambia=GM;Georgia=GE;Germany=DE;Ghana=GH;Greece=GR;Greenland=GL;Grenada=GD;Guatemala=GT;Guinea=GN;Guinea Bissau=GW;Guyana=GY;Haiti=HT;Honduras=HN;Hungary=HU;Iceland=IS;India=IN;Indonesia=ID;Iran=IR;Iraq=IQ;Ireland=IE;Israel=IL;Italy=IT;Ivory Coast=CI;Jamaica=JM;Japan=JP;Jordan=JO;Kazakhstan=KZ;Kenya=KE;Kiribati=KI;Kosovo=XK;Kuwait=KW;Kyrgyzstan=KG;Laos=LA;Latvia=LV;Lebanon=LB;Lesotho=LS;Liberia=LR;Libya=LY;Liechtenstein=LI;Lithuania=LT;Luxembourg=LU;Madagascar=MG;Malawi=MW;Malaysia=MY;Maldives=MV;Mali=ML;Malta=MT;Marshall Islands=MH;Mauritania=MR;Mauritius=MU;Mexico=MX;Micronesia=FM;Moldova=MD;Monaco=MC;Mongolia=MN;Montenegro=ME;Morocco=MA;Mozambique=MZ;Myanmar=MM;Namibia=NA;Nauru=NR;Nepal=NP;Netherlands=NL;New Zealand=NZ;Nicaragua=NI;Niger=NE;Nigeria=NG;North Korea=KP;North Macedonia=MK;Norway=NO;Oman=OM;Pakistan=PK;Palau=PW;Panama=PA;Palestine=PS;Papua New Guinea=PG;Paraguay=PY;Peru=PE;Philippines=PH;Poland=PL;Portugal=PT;Puerto Rico=PR;Qatar=QA;Republic of the Congo=CG;Romania=RO;Russia=RU;Rwanda=RW;Saint Kitts and Nevis=KN;Saint Lucia=LC;Saint Vincent and the Grenadines=VC;Samoa=WS;San Marino=SM;São Tomé and Príncipe=ST;Saudi Arabia=SA;Senegal=SN;Serbia=RS;Seychelles=SC;Sierra Leone=SL;Singapore=SG;Slovakia=SK;Slovenia=SI;Solomon Islands=SB;Somalia=SO;South Africa=ZA;South Korea=KR;South Sudan=SS;Spain=ES;Sri Lanka=LK;Sudan=SD;Suriname=SR;Sweden=SE;Switzerland=CH;Syria=SY;Taiwan=TW;Tajikistan=TJ;Tanzania=TZ;Thailand=TH;The Bahamas=BS;Togo=TG;Tokelau=TK;Tonga=TO;Trinidad and Tobago=TT;Tunisia=TN;Turkey=TR;Turkmenistan=TM;Tuvalu=TV;Uganda=UG;Ukraine=UA;United Arab Emirates=AE;United Kingdom=GB;United States of America=US;Uruguay=UY;Uzbekistan=UZ;Vanuatu=VU;Vatican City=VA;Venezuela=VE;Vietnam=VN;Western Sahara=EH;Yemen=YE;Zambia=ZM;Zimbabwe=ZW}"
+						   VisibleIf = "self::*[@OutputType = 'Map' and @Region = 'Country']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.CountryResolver"
+						   Description = "The country map that will be displayed." />
+				<Attribute Name = "OnItemClick"
+   						   Category = "Events"
+						   PrettyName = "On item click"
+						   Type = "enum{Do nothing;Raise ItemClick event;Apply filters;Highlight values}"
+						   DefaultValue = "Do nothing"
+						   Description = "Action to be executed when clicking an item." />
+				<Attribute Name = "Class"
+   						   PrettyName = "Object class"
+   						   Category = "Appearance"
+						   Type = "custom(GenericThemeClassReference)"
+						   Flag = "BaseClass=QueryViewer"
+						   Description = "Object class." />
+				<!-- Container class se define a nivel de cada widget porque si no te manda la categoria Appearance al inicio -->
+				<Attribute Name = "ContainerClass"
+						   PrettyName = "Container class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   Description = "Widget container class." />
+				<Attribute Name = "FrameClass"
+						   PrettyName = "Frame class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame class." />
+				<Attribute Name = "FrameTitleClass"
+						   PrettyName = "Frame title class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame title class." />
+				<Attribute Name = "FrameBodyClass"
+						   PrettyName = "Frame body class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame body class." />
+				<Attribute Name = "Visible"
+						   Type = "bool"
+						   DefaultValue = "true"
+						   Visible = "false" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="ObjectElement" ElementType="ObjectElement" Multiple="true" />
+			</ChildrenElements>
+			<Initialization>
+			</Initialization>
+		</ElementType>
+
+		<ElementType Name="Filter" BaseType="Widget" Caption="{0}" CaptionParameters="ControlName" KeyAttribute="ControlName" Icon="Condition" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "FilterType"
+						   PrettyName = "Type"
+						   Type = "enum{Value;Range;Collection}"
+						   Description = "Filter type." />
+				<Attribute Name = "DataType"
+						   PrettyName = "Data type"
+						   Type = "custom(FilterDataType)" 
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.DataTypeResolver"
+						   Description = "Filter data type." />
+				<Attribute Name = "Name"
+						   Type = "string"
+						   VisibleIf = "self::*[@FilterType != 'Range']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.FilterNameResolver"
+						   Description = "Filter name." />
+				<Attribute Name = "NameLowerValue"
+						   PrettyName = "Name (lower value)"
+						   Type = "string"
+						   VisibleIf = "self::*[@FilterType = 'Range']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.FilterNameResolver"
+						   Description = "Filter name for the lower value." />
+				<Attribute Name = "NameUpperValue"
+						   PrettyName = "Name (upper value)"
+						   Type = "string"
+						   VisibleIf = "self::*[@FilterType = 'Range']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.FilterNameResolver"
+						   Description = "Filter name for the upper value." />
+				<Attribute Name = "Value" 
+						   Type = "string" 
+						   VisibleIf = "self::*[@FilterType = 'Value' and @DataType != 'Date' and @DataType != 'DateTime']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.ValueResolver"
+						   Description = "Filter value." />
+				<Attribute Name = "ValueDate"
+						   PrettyName = "Value"
+						   Type = "custom(ValueDate)"
+						   VisibleIf = "self::*[@FilterType = 'Value' and (@DataType = 'Date' or @DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.ValueDateResolver"
+						   Description = "Filter value." />
+				<Attribute Name = "Values"
+						   Type = "custom(ValuesCollection)"
+						   VisibleIf = "self::*[@FilterType = 'Collection']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.ValuesResolver"
+						   Description = "Filter values." />
+				<Attribute Name = "LowerValue"
+						   PrettyName = "Lower value"
+						   Type = "string"
+						   VisibleIf = "self::*[@FilterType = 'Range' and @DataType != 'Date' and @DataType != 'DateTime']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.LowerValueResolver"
+						   Description = "Filter lower value." />
+				<Attribute Name = "LowerValueDate"
+						   PrettyName = "Lower value"
+						   Type = "custom(ValueDate)"
+						   VisibleIf = "self::*[@FilterType = 'Range' and (@DataType = 'Date' or @DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.LowerValueDateResolver"
+						   Description = "Filter lower value." />
+				<Attribute Name = "UpperValue"
+						   PrettyName = "Upper value"
+						   Type = "string"
+						   VisibleIf = "self::*[@FilterType = 'Range' and @DataType != 'Date' and @DataType != 'DateTime']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.UpperValueResolver"
+						   Description = "Filter upper value." />
+				<Attribute Name = "UpperValueDate"
+						   PrettyName = "Upper value"
+						   Type = "custom(ValueDate)"
+						   VisibleIf = "self::*[@FilterType = 'Range' and (@DataType = 'Date' or @DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.UpperValueDateResolver"
+						   Description = "Filter upper value." />
+				<Attribute Name = "MinValue"
+						   PrettyName = "Minimum value"
+						   Type = "string"
+						   VisibleIf = "self::*[@DataType != 'Boolean' and @DataType != 'GeoPoint' and @DataType != 'Date' and @DataType != 'DateTime' and (@ControlType = 'Edit' or @ControlType = 'Slider') and @FilterType != 'Collection' and @Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.MinValueResolver"
+						   Description = "Minimum value." />
+				<Attribute Name = "MaxValue"
+						   PrettyName = "Maximum value"
+						   Type = "string"
+						   VisibleIf = "self::*[@DataType != 'Boolean' and @DataType != 'GeoPoint' and @DataType != 'Date' and @DataType != 'DateTime' and (@ControlType = 'Edit' or @ControlType = 'Slider') and @FilterType != 'Collection' and @Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.MaxValueResolver"
+						   Description = "Maximum value." />
+				<Attribute Name = "MinValueDate"
+						   PrettyName = "Minimum value"
+						   Type = "custom(ValueDate)"
+						   VisibleIf = "self::*[(@DataType = 'Date' or @DataType = 'DateTime') and (@ControlType = 'Edit' or @ControlType = 'Slider') and @FilterType != 'Collection' and @Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.MinValueDateResolver"
+						   Description = "Minimum value." />
+				<Attribute Name = "MaxValueDate"
+						   PrettyName = "Maximum value"
+						   Type = "custom(ValueDate)"
+						   VisibleIf = "self::*[(@DataType = 'Date' or @DataType = 'DateTime') and (@ControlType = 'Edit' or @ControlType = 'Slider') and @FilterType != 'Collection' and @Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.MaxValueDateResolver"
+						   Description = "Maximum value." />
+				<Attribute Name = "Visible"
+						   Type = "bool"
+						   DefaultValue = "true"
+						   Description = "False to hide the filter in the dashboard so its value cannot be modified." />
+				<Attribute Name = "Caption"
+						   Type = "string"
+						   Description = "Filter caption."
+						   VisibleIf = "self::*[@Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.CaptionResolver"
+						   DefaultValueFrom = "@Name" />
+				<Attribute Name = "Picture"
+						   Type = "string"
+						   VisibleIf = "self::*[@DataType != 'Boolean' and @Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.PictureResolver"
+						   Description = "Filter picture." />
+				<Attribute Name = "ControlType" 
+						   Category = "Control"
+						   PrettyName = "Type"
+						   DefaultValue = "Edit"
+						   Type = "custom(ControlType)" 
+						   VisibleIf = "self::*[@Visible = 'True']"
+						   Description = "Control type." />
+				<Attribute Name = "ControlDynamic"
+						   Category = "Control"
+						   PrettyName = "Dynamic"
+						   Type = "bool"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and @Visible = 'True']"
+						   Description = "True if the control's values are calculated dinamically." />
+				<Attribute Name = "ControlValues"
+						   Category = "Control"
+						   PrettyName = "Values"
+						   Type = "custom(CT_GXTXVAL_type)"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and (@ControlDynamic = 'False') and @Visible = 'True']"
+   						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.ControlValuesResolver"
+						   Description = "List of possible values for the filter." />
+				<!-- La siguiente es una propiedad falsa que sirve solamente para poder usar el diálogo de seleccionar valor y descripción en un ComboBox -->
+				<Attribute Name = "CONTROL_BASED_ON_TYPE"
+						   Category = "Control"
+   						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.ControlBasedOnResolver"
+						   Visible = "false"
+						   Type = "custom(Variable)" />
+				<Attribute Name = "ControlItemValues"
+						   Category = "Control"
+						   PrettyName = "Item values"
+						   Type = "custom(AttributeVariableReference)"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and (@ControlDynamic = 'True') and @Visible = 'True']"
+						   NotNullIf = "self::*[@ControlDynamic = 'True']"
+						   Description = "Attribute that returns the control's item values." />
+				<Attribute Name = "ControlItemDescriptions"
+						   Category = "Control"
+						   PrettyName = "Item descriptions"
+						   Type = "custom(AttributeVariableReference)"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and (@ControlDynamic = 'True') and @Visible = 'True']"
+						   NotNullIf = "self::*[@ControlDynamic = 'True']"
+						   Description = "Attribute that returns the control's item descriptions." />
+				<Attribute Name = "ControlSortDescriptions"
+						   Category = "Control"
+						   PrettyName = "Sort descriptions"
+						   Type = "bool"
+						   DefaultValue = "true"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and (@ControlDynamic = 'True') and @Visible = 'True']"
+						   Description = "True to sort alphabetically the values descriptions in the control." />
+				<Attribute Name = "ControlEmptyItem"
+						   Category = "Control"
+						   PrettyName = "Empty item"
+						   Type = "bool"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and @Visible = 'True']"
+						   Description = "Adds an item for 'none/all' selection." />
+				<Attribute Name = "ControlEmptyItemText"
+						   Category = "Control"
+						   PrettyName = "Empty item text"
+						   Type = "string"
+						   DefaultValue = "GX_EmptyItemText"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and (@ControlEmptyItem = 'True') and @Visible = 'True']"
+						   Description = "Text associated with the empty item." />
+				<Attribute Name = "ControlConditions"
+						   Type = "string"
+						   Visible = "false" />						<!-- Deprecated in version 16.0.11 -->
+				<Attribute Name = "ControlConditionsTokens"
+						   Category = "Control"
+						   PrettyName = "Conditions"
+						   Type = "custom(TokensList)"
+						   VisibleIf = "self::*[(@DataType != 'Boolean') and (@ControlType = 'Check box' or @ControlType = 'Radio button' or @ControlType = 'Combo box' or @ControlType = 'Drop-down list') and (@ControlDynamic = 'True') and @Visible = 'True']"
+						   Description = "Filter conditions." />
+				<Attribute Name = "ControlOrientation"
+						   Category = "Control"
+						   PrettyName = "Orientation"
+						   Type = "enum{Horizontal;Vertical}"
+						   VisibleIf = "self::*[((@ControlType = 'Check box' and @FilterType = 'Collection') or @ControlType = 'Radio button') and @Visible = 'True']"
+						   Flag = "FlagNoCacheDefault,FlagNoCacheValue"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.ControlOrientationResolver"
+						   Description = "Specifies whether to arrange the attributes horizontally or vertically." />
+				<Attribute Name = "ControlInviteMessage"
+						   Category = "Control"
+						   PrettyName = "Invite message"
+						   Type = "string"
+						   VisibleIf = "self::*[@ControlType = 'Edit' and @Visible = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Filter.ControlInviteMessageResolver"
+						   Description = "Text to invite the user to interact with the control." />
+				<Attribute Name = "CaptionClass"
+						   PrettyName = "Caption class"
+   						   Category = "Appearance"
+						   Type = "custom(TextBlockThemeClassReference)"
+						   VisibleIf = "self::*[@Visible = 'True']"
+						   Description = "Filter caption class." />
+				<Attribute Name = "ValueClass"
+						   PrettyName = "Value class"
+   						   Category = "Appearance"
+						   Type = "custom(AttributeThemeClassReference)"
+						   VisibleIf = "self::*[@Visible = 'True']"
+						   Description = "Filter value class." />
+				<!-- Container class se define a nivel de cada widget porque si no te manda la categoria Appearance al inicio -->
+				<Attribute Name = "ContainerClass"
+						   PrettyName = "Container class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf = "self::*[@Visible = 'True']"
+						   Description = "Widget container class." />
+				<Attribute Name = "FrameClass"
+						   PrettyName = "Frame class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf = "self::*[@FrameVisible = 'True' and @Visible = 'True']"
+						   Description = "Widget frame class." />
+				<Attribute Name = "FrameTitleClass"
+						   PrettyName = "Frame title class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf = "self::*[@FrameVisible = 'True' and @Visible = 'True']"
+						   Description = "Widget frame title class." />
+				<Attribute Name = "FrameBodyClass"
+						   PrettyName = "Frame body class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf = "self::*[@FrameVisible = 'True' and @Visible = 'True']"
+						   Description = "Widget frame body class." />
+				<Attribute Name = "Modified"
+						   Type = "bool"
+						   Visible = "false"
+						   Description = "True if the filter was modified after it was created." />
+			</Attributes>
+			<ChildrenElements/>
+			<Initialization>
+			</Initialization>
+		</ElementType>
+
+		<ElementType Name="Image" BaseType="Widget" Caption="{0}" CaptionParameters="ControlName" KeyAttribute="ControlName" Icon="Image" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Image"
+						   Type = "reference(Image)"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Image.ImageResolver"
+						   Description = "Referenced image." />
+				<Attribute Name = "LanguageDependant"
+						   Type = "bool"
+						   Visible = "false"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Image.ImageLanguageDependantResolver"
+						   Description = "Image's Language dependency." />
+				<Attribute Name = "ThemeDependant"
+						   Type = "bool"
+						   Visible = "false"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Image.ImageThemeDependantResolver"
+						   Description = "Image's Theme dependency." />
+				<Attribute Name = "Sources"
+						   Type = "string"
+						   Visible = "false"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Image.ImageSourcesResolver"
+						   Description = "Image's sources." />
+				<Attribute Name = "AlternateText"
+						   PrettyName = "Alternate text"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Image.AlternateTextResolver"
+						   Description = "Optional text as an alternative to the graphic for rendering in nongraphical environments." />
+				<Attribute Name = "Class"
+   						   PrettyName = "Image class"
+   						   Category = "Appearance"
+						   Type = "custom(ImageThemeClassReference)"
+						   Description = "Image class." />
+				<!-- Container class se define a nivel de cada widget porque si no te manda la categoria Appearance al inicio -->
+				<Attribute Name = "ContainerClass"
+						   PrettyName = "Container class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   Description = "Widget container class." />
+				<Attribute Name = "FrameClass"
+						   PrettyName = "Frame class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame class." />
+				<Attribute Name = "FrameTitleClass"
+						   PrettyName = "Frame title class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame title class." />
+				<Attribute Name = "FrameBodyClass"
+						   PrettyName = "Frame body class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame body class." />
+				<Attribute Name = "Visible"
+						   Type = "bool"
+						   DefaultValue = "true"
+						   Visible = "false" />
+			</Attributes>
+			<ChildrenElements/>
+			<Initialization>
+			</Initialization>
+		</ElementType>
+
+		<ElementType Name="Button" BaseType="Widget" Caption="{0}" CaptionParameters="ControlName" KeyAttribute="ControlName" Icon="Button" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Caption"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Button.CaptionResolver"
+						   Description = "Button caption." />
+				<Attribute Name = "Class"
+   						   PrettyName = "Button class"
+   						   Category = "Appearance"
+						   Type = "custom(ButtonThemeClassReference)"
+						   Description = "Button class." />
+				<!-- Container class se define a nivel de cada widget porque si no te manda la categoria Appearance al inicio -->
+				<Attribute Name = "ContainerClass"
+						   PrettyName = "Container class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   Description = "Widget container class." />
+				<Attribute Name = "FrameClass"
+						   PrettyName = "Frame class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame class." />
+				<Attribute Name = "FrameTitleClass"
+						   PrettyName = "Frame title class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame title class." />
+				<Attribute Name = "FrameBodyClass"
+						   PrettyName = "Frame body class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame body class." />
+				<Attribute Name = "Visible"
+						   Type = "bool"
+						   DefaultValue = "true"
+						   Visible = "false" />
+			</Attributes>
+			<ChildrenElements/>
+			<Initialization>
+			</Initialization>
+		</ElementType>
+
+		<ElementType Name="TextBlock" BaseType="Widget" Caption="{0}" CaptionParameters="ControlName" KeyAttribute="ControlName" Icon="TextBlock" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Caption" 
+						   Type = "string" 
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.TextBlock.CaptionResolver"
+						   Description = "Text block caption." />
+				<Attribute Name = "Class"
+   						   PrettyName = "Text block class"
+   						   Category = "Appearance"
+						   Type = "custom(TextBlockThemeClassReference)"
+						   Description = "Text block class." />
+				<!-- Container class se define a nivel de cada widget porque si no te manda la categoria Appearance al inicio -->
+				<Attribute Name = "ContainerClass"
+						   PrettyName = "Container class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   Description = "Widget container class." />
+				<Attribute Name = "FrameClass"
+						   PrettyName = "Frame class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame class." />
+				<Attribute Name = "FrameTitleClass"
+						   PrettyName = "Frame title class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame title class." />
+				<Attribute Name = "FrameBodyClass"
+						   PrettyName = "Frame body class"
+   						   Category = "Appearance"
+						   Type = "custom(SectionThemeClassReference)"
+						   VisibleIf="self::*[@FrameVisible = 'True']"
+						   Description = "Widget frame body class." />
+				<Attribute Name = "Visible"
+						   Type = "bool"
+						   DefaultValue = "true"
+						   Visible = "false" />
+			</Attributes>
+			<ChildrenElements/>
+			<Initialization>
+			</Initialization>
+		</ElementType>
+
+		<ElementType Name="ObjectElement" Caption="{0}" CaptionParameters="Name" KeyAttribute="Name" Icon="ObjectPartIndexes" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name = "Name"
+						   Type = "string"
+						   Visible = "false"
+						   Description = "Element's name." />
+				<Attribute Name = "Type"
+						   Type = "enum{Axis;Datum}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.TypeResolver"
+						   Description = "Data elements contain the relevant information provided by the query, while Axes elements slice and dice that information." />
+				<Attribute Name = "DataType"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.DataTypeResolver"
+						   Visible = "false"
+						   Description = "Element's data type." />
+				
+				<!-- Deprecated in version 17.0.1 -->
+				<Attribute Name = "Visible"
+						   Type = "bool"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.VisibleResolver"
+						   Visible = "false" />
+				
+				<Attribute Name = "Visibility"
+						   PrettyName = "Visible"
+   						   Category = "Format"
+						   Type = "enum{Yes;No;Never}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.VisibilityResolver"
+						   Description = "Yes, if the element appears in the selected output (Card, Chart, Map, Pivot Table or Table). No, if the element doesn't appear in the selected output but it can be displayed by selecting it. Never, if the element never appears (invisible elements are still accessible through code, i.e. in the ItemClick event)." />
+				<Attribute Name = "Title"
+   						   Category = "Format"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.TitleResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never']"
+						   Description = "Element's title." />
+				<Attribute Name = "Axis"
+   						   Category = "Format\PivotTable options"
+						   Type = "enum{Rows;Columns;Pages}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.AxisResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never']"
+						   Description = "Element's axis." />
+				<Attribute Name = "Aggregation"
+   						   Category = "Format"
+						   Type = "enum{Sum;Count;Average;Max;Min}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.AggregationResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum']"
+						   Description = "Element's aggregation." />
+				<Attribute Name = "CanDragToPages"
+   						   Category = "Format\PivotTable options"
+						   PrettyName = "Can drag to pages"
+						   Type = "bool"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.CanDragToPagesResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages']"
+						   Description = "Determines whether the element can be placed in the Pages axis or not." />
+				<Attribute Name = "Subtotals"
+   						   Category = "Format\PivotTable options"
+						   Type = "enum{Yes;Hidden;No}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.SubtotalsResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages']"
+						   Description = "Determines whether the element can have subtotals or not." />
+				<Attribute Name = "ShowValuesAs"
+						   PrettyName = "Show values as"
+   						   Category = "Analytics"
+						   Type = "namedEnum{No calculation=NoCalculation;Running total=RunningTotal;Rolling average=RollingAverage;Difference=Difference}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.ShowValuesAsResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum']"
+						   Description = "Displays the values according to the selected calculation." />
+				<Attribute Name = "RollingAverageType"
+						   PrettyName = "Type"
+   						   Category = "Analytics"
+						   Type = "enum{Simple;Central;Cumulative;Weighted;Exponential}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.RollingAverageTypeResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum' and @ShowValuesAs = 'RollingAverage']"
+						   Description = "Type of rolling average to be applied." />
+				<Attribute Name = "RollingAverageTerms"
+						   PrettyName = "Number of terms"
+   						   Category = "Analytics"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.RollingAverageTermsResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum' and @ShowValuesAs = 'RollingAverage' and @RollingAverageType != 'Cumulative']"
+						   Description = "Number of terms considered in a rolling average calculation." />
+				<Attribute Name = "DifferenceFrom"
+						   PrettyName = "From"
+   						   Category = "Analytics"
+						   Type = "namedEnum{Previous value=PreviousValue;First value=FirstValue}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.DifferenceFromResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum' and @ShowValuesAs = 'Difference']"
+						   Description = "Value from which the difference is calculated." />
+				<Attribute Name = "ShowAsPercentage"
+						   PrettyName = "As percentage"
+   						   Category = "Analytics"
+						   Type = "enum{No;Yes}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.ShowAsPercentageResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum' and (@ShowValuesAs = 'RunningTotal' or @ShowValuesAs = 'Difference')]"
+						   Description = "Specifies whether the values are expressed as percentages or not." />
+				<Attribute Name = "Font"
+   						   Category = "Appearance"
+						   Type = "custom(Font)"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.FontResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and ((@Type = 'Axis' and @Axis != 'Pages') or @Type = 'Datum')]"
+						   Description = "Font." />
+				<Attribute Name = "ForeColor"
+						   PrettyName = "Foreground color"
+   						   Category = "Appearance"
+						   Type = "custom(Color)"
+						   DefaultValue = "0"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.ForeColorResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and ((@Type = 'Axis' and @Axis != 'Pages') or @Type = 'Datum')]"
+						   Description = "Foreground color." />
+				<Attribute Name = "BackColor"
+						   PrettyName = "Background color"
+   						   Category = "Appearance"
+						   Type = "custom(Color)"
+						   DefaultValue = "0"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.BackColorResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and ((@Type = 'Axis' and @Axis != 'Pages') or @Type = 'Datum')]"
+						   Description = "Background color." />
+				<Attribute Name = "BorderWidth"
+						   PrettyName = "Border width"
+   						   Category = "Appearance"
+						   Type = "int"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.BorderWidthResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and ((@Type = 'Axis' and @Axis != 'Pages') or @Type = 'Datum')]"
+						   Description = "Border width." />
+				<Attribute Name = "BorderColor"
+						   PrettyName = "Border color"
+   						   Category = "Appearance"
+						   Type = "custom(Color)"
+						   DefaultValue = "0"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.BorderColorResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and ((@Type = 'Axis' and @Axis != 'Pages') or @Type = 'Datum')]"
+						   Description = "Border color." />
+				<Attribute Name = "BorderStyle"
+						   PrettyName = "Border style"
+   						   Category = "Appearance"
+						   Type = "enum{None;Solid}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.BorderStyleResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and ((@Type = 'Axis' and @Axis != 'Pages') or @Type = 'Datum')]"
+						   Description = "Border style." />
+				<Attribute Name = "OrderType"
+						   PrettyName = "Order"
+   						   Category = "Format"
+						   Type = "enum{None;Ascending;Descending;Custom}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.OrderTypeResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages']"
+						   Description = "It allows you to set the order in which the values of the element are displayed." />
+				<Attribute Name = "OrderValues"
+						   PrettyName = "Custom order"
+   						   Category = "Format"
+						   Type = "custom(ValuesCollection)"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and @OrderType = 'Custom']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.OrderValuesResolver"
+						   Description = "Custom order." />
+				<Attribute Name = "FilterType"
+						   PrettyName = "Filter"
+   						   Category = "Format"
+						   Type = "enum{Show all values;Hide all values;Show some values}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.FilterTypeResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages']"
+						   Description = "It allows you to configure what element's values will be displayed." />
+				<Attribute Name = "FilterValues"
+						   PrettyName = "Showed values"
+   						   Category = "Format"
+						   Type = "custom(ValuesCollection)"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and @FilterType = 'Show some values']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.FilterValuesResolver"
+						   Description = "Filter values." />
+				<Attribute Name = "TargetValue"
+						   PrettyName = "Target value"
+   						   Category = "Format"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.TargetValueResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum']"
+						   Description = "Element's target value for a Gauge chart." />
+				<Attribute Name = "MaximumValue"
+						   PrettyName = "Maximum value"
+   						   Category = "Format"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.MaximumValueResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum']"
+						   Description = "Element's maximum value for a Gauge chart." />
+				<Attribute Name = "ValuesStyles"
+						   PrettyName = "Values styles"
+   						   Category = "Format"
+						   Type = "custom(StylesCollection)"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.ValuesStylesResolver"
+						   Description = "Values styles." />
+				<Attribute Name = "ConditionalStyles"
+						   PrettyName = "Conditional styles"
+   						   Category = "Format"
+						   Type = "custom(StylesCollection)"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Datum']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.ConditionalStylesResolver"
+						   Description = "Conditional styles." />
+				<Attribute Name = "Picture"
+   						   Category = "Format"
+						   Type = "string"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.PictureResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never']"
+						   Description = "Element's picture." />
+				<Attribute Name = "ExpandCollapseType"
+						   PrettyName = "Expand/collapse"
+   						   Category = "Format\PivotTable options"
+						   Type = "enum{Expand all values;Collapse all values;Expand some values}"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.ExpandCollapseTypeResolver"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages']"
+						   Description = "It allows you to configure if the values will be displayed expanded or collapsed." />
+				<Attribute Name = "ExpandCollapseValues"
+						   PrettyName = "Expanded values"
+   						   Category = "Format\PivotTable options"
+						   Type = "custom(ValuesCollection)"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and @ExpandCollapseType = 'Expand some values']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.ExpandCollapseValuesResolver"
+						   Description = "Expanded values." />
+				<Attribute Name = "GroupByYear"
+						   PrettyName = "Group by year"
+						   Category = "Grouping"
+						   Type = "bool"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.GroupByYearResolver"
+						   Description = "Group by year." />
+				<Attribute Name = "YearTitle"
+						   PrettyName = "Year title"
+						   Category = "Grouping"
+						   Type = "string"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime') and @GroupByYear = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.YearTitleResolver"
+						   Description = "Year title." />
+				<Attribute Name = "GroupBySemester"
+						   PrettyName = "Group by semester"
+						   Category = "Grouping"
+						   Type = "bool"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.GroupBySemesterResolver"
+						   Description = "Group by semester." />
+				<Attribute Name = "SemesterTitle"
+						   PrettyName = "Semester title"
+						   Category = "Grouping"
+						   Type = "string"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime') and @GroupBySemester = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.SemesterTitleResolver"
+						   Description = "Semester title." />
+				<Attribute Name = "GroupByQuarter"
+						   PrettyName = "Group by quarter"
+						   Category = "Grouping"
+						   Type = "bool"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.GroupByQuarterResolver"
+						   Description = "Group by quarter." />
+				<Attribute Name = "QuarterTitle"
+						   PrettyName = "Quarter title"
+						   Category = "Grouping"
+						   Type = "string"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime') and @GroupByQuarter = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.QuarterTitleResolver"
+						   Description = "Quarter title." />
+				<Attribute Name = "GroupByMonth"
+						   PrettyName = "Group by month"
+						   Category = "Grouping"
+						   Type = "bool"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.GroupByMonthResolver"
+						   Description = "Group by month." />
+				<Attribute Name = "MonthTitle"
+						   PrettyName = "Month title"
+						   Category = "Grouping"
+						   Type = "string"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime') and @GroupByMonth = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.MonthTitleResolver"
+						   Description = "Month title." />
+				<Attribute Name = "GroupByDayOfWeek"
+						   PrettyName = "Group by day of week"
+						   Category = "Grouping"
+						   Type = "bool"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.GroupByDayOfWeekResolver"
+						   Description = "Group by day of week." />
+				<Attribute Name = "DayOfWeekTitle"
+						   PrettyName = "Day of week title"
+						   Category = "Grouping"
+						   Type = "string"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime') and @GroupByDayOfWeek = 'True']"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.DayOfWeekTitleResolver"
+						   Description = "Day of week title." />
+				<Attribute Name = "HideValue"
+						   PrettyName = "Hide value"
+						   Category = "Grouping"
+						   Type = "bool"
+						   VisibleIf = "self::*[@Visibility != 'Never' and @Type = 'Axis' and @Axis != 'Pages' and (@DataType = 'Date' or DataType = 'DateTime') and (@GroupByYear = 'True' or @GroupBySemester = 'True' or @GroupByQuarter = 'True' or @GroupByMonth = 'True' or @GroupByDayOfWeek = 'True')]"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.HideValueResolver"
+						   Description = "Hide value." />
+				<Attribute Name = "RaiseItemClick"
+						   PrettyName = "Raise ItemClick event"
+						   Category = "Actions"
+						   Type = "bool"
+						   Resolver = "Artech.Patterns.QueryDashboard.Resolvers.Object.Element.RaiseItemClickResolver"
+						   DefaultValue = "true"
+						   VisibleIf = "self::*[@Visibility != 'Never' and ((@Type = 'Axis' and @Axis != 'Pages') or @Type = 'Datum')]"
+						   Description = "True if the item raises the ItemClick event when clicked." />
+			</Attributes>
+			<ChildrenElements/>
+			<Initialization/>
+		</ElementType>
+		
+	</ElementTypes>
+</Pattern>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Creating Angular controls in GeneXus</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46711,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Creating Angular controls in GeneXus</h1>
+<!--Creating Angular controls in GeneXus--><div class="TableWikiBody" id="tblwikibody"><p>This document is intended for developers who already know the <a href="39356.html">User Control object</a> and its basic concepts, and want to create User Controls for <a href="42539.html">Angular</a>.</p>
+
+<p>In GeneXus v17, In addition to keeping the Java, .NET, and .NET Core generators to develop the front-end, a new generator has been added exclusively for front-end generation: Angular.</p>
+
+<p>Due to the diversity of structural frameworks that currently exist (React, Vue, etc.), and to extend the power of GeneXus in terms of generating user interfaces, it is necessary to use User Control objects to integrate third-party controls in the applications generated with this generator. </p>
+
+<h2><a id="Types+of+possible+integrations" class="HashLink" href="#Types+of+possible+integrations">Types of possible integrations</a></h2>
+
+<p>The User Control in Angular allows integrating a wide range of third party controls, which can be divided into two types:</p>
+
+<ul>
+	<li>Native components of the framework (for example, <a href='https://material.angular.io/guide/getting-started'>Angular Material</a> or <a href='https://material-ui.com/'>Material-UI</a>)</li>
+	<li>Vanilla HTML+CSS+JavaScript (for example, a Bootstrap control)</li>
+</ul>
+
+<h2><a id="Compatibility+with+Java%2C+.NET%2C+or+.NET+Core+front-ends" class="HashLink" href="#Compatibility+with+Java%2C+.NET%2C+or+.NET+Core+front-ends">Compatibility with Java, .NET, or .NET Core front-ends</a></h2>
+
+<p>To indicate that a UC Object is built for a particular framework, the “target” attribute in the “Definition” tag must be used. This same attribute is used in Java, .NET, or .NET Core front-ends to declare that the UC Object is for <a href="45691.html">SAPUI5</a>.<br />
+For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<code>&lt;Definition target=&quot;Angular&quot;&gt;
+...
+&lt;/Definition&gt;
+</code></pre>
+
+<p>If the attribute is not specified, it will be assumed that the UC Object can be consumed in web layouts (e.g.: <a href="6916.html">Web Panel object</a>) in Java, .NET or .NET Core generators.</p>
+
+<h2><a id="References+to+external+resources" class="HashLink" href="#References+to+external+resources">References to external resources</a></h2>
+
+<p>Front-end generators such as Angular add more advanced ways to include external resources, using the JavaScript import statement. This statement can be used both to include JavaScript modules and to include, through a bundler such as webpack, other types of resources such as images, SVG files, or style sheets.</p>
+
+<p>In order to include native components, the syntax supports these methods to import resources:</p>
+
+<ul>
+	<li><code>import { Component } from &quot;package-name&quot;;</code></li>
+	<li><code>import Component from &quot;package-name&quot;;</code></li>
+	<li><code>import &quot;package-name&quot;;</code></li>
+</ul>
+
+<p>They are indicated through a <code>&lt;script&gt;</code> block, where through the <code>&quot;When='import'&quot;</code> attribute, it can be indicated that the code contained there must be inserted at the beginning of the JavaScript module of the component to be generated, or, specifically in the case of the Angular generator, in the <code>app.module.ts</code> and <code>main.ts</code> files.</p>
+
+<p>The import options available are as follows:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td>
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;script When=&quot;import&quot;&gt;
+   import { ViewChild } from &quot;@angular/core&quot;;       
+   import { UIChart } from &quot;primeng/chart&quot;;
+&lt;/script&gt;</pre>
+			</td>
+			<td>The import code is placed at the beginning of the JavaScript module of the generated User Control.</td>
+		</tr>
+		<tr>
+			<td>
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;script When=&quot;import&quot; ng-location=&quot;Module&quot;&gt;
+   import &quot;chart.js&quot;;
+&lt;/script&gt;</pre>
+			</td>
+			<td>
+			<p>Since the &lt;script&gt; tag has the ng-location attribute set to Module, the import code is placed in the Angular module that contains the component. Currently, two modules are generated (app.module.ts and shared.module.ts), so the code is placed in both locations.</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;script When=&quot;import&quot; ng-location=&quot;Module&quot; ng-module-imports=&quot;ChartModule&quot;&gt;
+   import {ChartModule} from 'primeng/chart';
+   import &quot;chart.js&quot;;
+&lt;/script&gt;</pre>
+			</td>
+			<td>
+			<p>Since the &lt;script&gt; tag has the ng-location attribute set to Module, the import code is placed in the Angular module that contains the component. Currently, two modules are generated (app.module.ts and shared.module.ts), so the code is placed in both locations.</p>
+
+			<p>Also, since the ng-module-imports attribute was specified, ChartModule is added to the imports list of the module. The ng-module-imports attribute supports a list of modules to be imported, separated by commas.</p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+In turn, it is possible to declare which packages should be installed as dependencies. This is achieved by adding the &lt;dependency&gt; block in the control definition.<br />
+For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+  &lt;Dependency name=&quot;primeng&quot; version=&quot;^9.1.0&quot;/&gt;
+  &lt;Dependency name=&quot;primeicons&quot; version=&quot;^4.0.0&quot; /&gt;
+  &lt;Dependency name=&quot;chart.js&quot; version=&quot;^2.7.0&quot; /&gt;
+</pre>
+
+<p>Both the package name and version must be specified, using the name and version attributes, respectively. The value of the version attribute must be compatible with <a href='https://github.com/npm/node-semver'>node-semver</a>.</p>
+
+<h3><a id="Angular+Schematics" class="HashLink" href="#Angular+Schematics">Angular Schematics</a></h3>
+
+<p>In the case of the Angular generator, there are packages that require the execution of schematics in order to be correctly included (the ng add command must be used to add them).<br />
+To specify that Angular Schematics should be used to import the dependency, the ng-schematics attribute should be set to true:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<code>&lt;dependency name=&quot;@angular/material&quot; ng-schematics=&quot;true&quot;&gt;</code></pre>
+
+<h3><a id="Style+sheets" class="HashLink" href="#Style+sheets">Style sheets</a></h3>
+
+<p>The possibility to declare style sheets to be included is added, using the &lt;style&gt; tag and the path attribute:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+  &lt;style path=&quot;node_modules/primeicons/primeicons.css&quot; /&gt;
+  &lt;style path=&quot;node_modules/primeng/resources/themes/nova-light/theme.css&quot; /&gt;
+  &lt;style path=&quot;node_modules/primeng/resources/primeng.min.css&quot; /&gt;</pre>
+
+<p>The Angular generator incorporates these styles in <a href='https://angular.io/guide/workspace-config#style-script-config'>the style property of the angular.json file</a>.</p>
+
+<h2><a id="Screen+Template" class="HashLink" href="#Screen+Template">Screen Template</a></h2>
+
+<p>In the Angular generator, a new concept has been added in the language of screen templates that allows you to specify whether to use <a href='https://angular.io/guide/template-syntax#interpolation-'>Angular Interpolation</a> or not. When you assign a value to an attribute or to the content of a tag, you can use the classic syntax of User Control Objects, with double curly brackets. However, when you want to set an Angular binding with a property (using square brackets in the property name) you cannot use Interpolation. To instruct the template not to use Interpolation, square brackets should be added to the double curly brackets.</p>
+
+<p>For example:</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td>
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ion-button color=&quot;{{Color}}&quot; {{OnClick}}&gt;{{Caption}}&lt;/ion-button&gt;</pre>
+			</td>
+			<td>The value of the Color attribute is made using Interpolation. This is possible because the attribute value is not strongly typed. The same applies to the content, using the Caption property.</td>
+		</tr>
+		<tr>
+			<td>
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;p-breadcrumb [model]=&quot;{{[Items]}}&quot;&gt;&lt;/p-breadcrumb&gt;</pre>
+			</td>
+			<td>
+			<p>The value of the model property is strongly typed (it is a JavaScript object). For this reason, it is necessary to use square brackets around the property name (model). Otherwise, Angular will serialize the value of the property to a string. Since the model property has square brackets, the value cannot use Interpolation (it gives a syntax error).</p>
+
+			<p>For that reason, to pass the value of the Items property, instead of using only double curly brackets ( {{Items}} ), square brackets are added ( {{[Items]}} ).</p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="Events" class="HashLink" href="#Events">Events</a></h2>
+
+<p>The declaration of events of UC Objects is fully supported. Now it is also possible to declare parameters, using the Parameters attribute in the Event tag:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Event Name=&quot;OnActiveIndexChange&quot; Parameters=&quot;Numeric&quot; /&gt;</pre>
+
+<p>The value of the Parameters attribute must be a comma-separated list with the list of data types of the parameters received by the event.</p>
+
+<h2><a id="Scripts+and+methods" class="HashLink" href="#Scripts+and+methods">Scripts and methods</a></h2>
+
+<p>The inclusion of scripts and methods is also fully supported, and an additional attribute called ng-location has also been included. When you want a script to be incorporated into the body of the class generated for the User Control component, it is assigned the ClassBody value. For example, to add a member to the component class you can do the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;script Name=&quot;ViewChild&quot; When=&quot;BeforeShow&quot; ng-location=&quot;ClassBody&quot;&gt;
+   @ViewChild(&quot;chart&quot;, { static: false }) chart: UIChart;
+&lt;/script&gt;</pre>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="42539.html">Toc:Angular applications development</a></TD><TD><a href="46592.html">Multi-experience with GeneXus 17</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/29/22 06:00 PM</em></font></td></TR></table></font>

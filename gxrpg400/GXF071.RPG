@@ -1,0 +1,77 @@
+ ************************************************************** 
+C           GXSTR     BEGSR
+ ************************************************************** 
+C                     Z-ADD0         $F7100  10
+C                     Z-ADD0         $F7101  10
+C                     MOVE *BLANKS   $GXSTR
+C                     MOVEA*BLANKS   #1
+C           $GXNUM    IFLT 0
+C                     Z-ADD1         $F7100
+C                     ENDIF
+C           $GXNUD    IFGT 0
+C                     Z-ADD1         $F7101
+C                     ENDIF
+C           $GXNUD    ADD  $F7101    $F7102  30
+C           $GXNUE    SUB  $F7102    $F7102
+C           $F7102    IFLT 0
+C                     GOTO $GXSTO
+C                     ENDIF
+C           $GXNUM    IFGT 0
+C                     Z-ADD$GXNUM    $F7103 300
+C                     ELSE
+C                     Z-SUB$GXNUM    $F7103 
+C                     ENDIF
+C           $F7102    IFGT 0
+C                     Z-ADD$F7102    @       40
+C                     MOVE '0'       #2
+C                     ENDIF
+C           $F7102    DOWGE1
+C           $F7103    ANDGT0
+C           $F7103    DIV  10        $F7103
+C                     MVR            $F7104  10
+C                     Z-ADD$F7102    @       40
+C                     MOVE $F7104    #2
+C                     SUB  1         $F7102
+C                     ENDDO
+C           $F7103    IFGT 0
+C           $F7102    ORLT 1
+C           $GXNUM    ANDLT0
+C                     GOTO $GXSTO
+C                     ENDIF
+C           $GXNUM    IFLT 0
+C                     Z-ADD$F7102    @       40
+C                     MOVE '-'       #2
+C                     Z-SUB$GXNUM    $GXNUM
+C                     ENDIF
+C*           $GXNUM    IFGT 0
+C                     Z-ADD$GXNUM    $F7103 300
+C*                     ELSE
+C*                     Z-SUB$GXNUM    $F7103 
+C*                     ENDIF
+C           $GXNUD    IFGT 0
+C           $GXNUM    SUB  $F7103    $F7105 109
+C           $GXNUD    ADD  $F7101    $F7102  
+C           $GXNUE    SUB  $F7102    $F7102
+C           $F7102    ADD  1         $F7102
+C                     Z-ADD$F7102    @       40
+C                     MOVE '.'       #2     
+C*           $F7102    ADD  1         $F7102
+C           $F7102    DOWLT$GXNUE
+C                     ADD  1         $F7102
+C                     MULT 10        $F7105
+C                     Z-ADD$F7105    $F7104
+C                     Z-ADD$F7102    @       40
+C                     MOVE $F7104    #2
+C                     ENDDO
+C                     ENDIF
+C                     GOTO $GXSTE
+C           $GXSTO    TAG
+C                     Z-ADD1         $F7102
+C           $F7102    DOWLE$GXNUE
+C                     Z-ADD$F7102    @       40
+C                     MOVE '*'       #2     
+C                     ADD  1         $F7102
+C                     ENDDO
+C           $GXSTE    TAG
+C                     MOVEA#1        $GXSTR
+C                     ENDSR

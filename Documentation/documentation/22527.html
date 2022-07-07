@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo:Develop a messaging web page</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22527,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo:Develop a messaging web page</h1>
+<!--HowTo:Develop a messaging web page--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Using <a href="https://wiki.genexus.com/commwiki/wiki?22451,," target="_blank">GeneXus Tilo's web features</a> you can implement a web page which shows user comments on a given topic, and gives the user the possibility to add new comments as they are updated in real time, very similar to the Facebook wall.</p>
+
+<h3><a id="Basics" class="HashLink" href="#Basics">Basics</a></h3>
+
+<p>When a user adds a new comment to a post (or adds a post to the &quot;wall&quot;), the following needs to be fulfilled:</p>
+
+<ol>
+	<li>Other users who are in the same page receive the new comment in their screens without the need to do a refresh of the web page.</li>
+	<li>If any other user is also editing a new comment he will receive the comment of the first user without losing what he is typing.</li>
+</ol>
+
+<p>To achieve the above, the following is needed:</p>
+
+<ol>
+	<li>Use  <a href="22442.html">Server.Socket external object</a> so the notification is sent to the clients without the need for making a request to the server.</li>
+	<li>Configure <a href="22449.html">Web User Experience property</a> to &quot;Smooth&quot; so each time you execute a <a href="8044.html">User defined event</a> the refresh will be local to the object and a full page refresh will not take place.</li>
+	<li>Technically, we need to be able to make a refresh of a single grid line. In this case we leverage the advantages of <a href="22529.html">Event execution on the client side in X Evolution 3</a> and <a href="22555.html">Load Command and Load Method in User Events</a>.</li>
+</ol>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>This can be achieved with the design and sample code explained below.</p>
+
+<p>We have the following structure (very simplified):</p>
+
+<h5><img src="./images/22528.png" id="22528" class="WikiImage"/><br />
+Figure 1.</h5>
+
+<h3><a id="Step+1" class="HashLink" href="#Step+1">Step 1</a></h3>
+
+<p>The web panel which displays the forum messages is named &quot;MessagingSample&quot;, and it includes:</p>
+
+<ol>
+	<li>A &amp;newComment string variable and a &quot;Comment&quot; button to add a new post.</li>
+	<li>A free style grid which loads a web component named &quot;PostComment&quot;. The free style grid also includes a variable &amp;PostId where the post identifier of the line is persisted.</li>
+</ol>
+
+<h5><img src="./images/22530.png" id="22530" class="WikiImage"/><br />
+Figure 2.</h5>
+
+<p>As shown in the figure, the code to load the free style grid is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Load
+  for each  //loop through the &quot;post&quot; table and load the post and its comments in a web component
+   WEbComp1.Object = PostComment.Create(PostId)
+   WEbComp1.Visible=true
+   &amp;postid=PostId  //&amp;PostId is a variable included in the free style
+   load
+  endfor
+Endevent</pre>
+
+<p>The &quot;Comment&quot; button is associated to the &quot;Comment&quot; event whose code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'comment'
+InsertNewpost.Call(&amp;newcomment)
+Endevent</pre>
+
+<p>The insertNewpost procedure will be explained below in this page.</p>
+
+<h3><a id="Step+2" class="HashLink" href="#Step+2">Step 2</a></h3>
+
+<p>The 'PostComment' web component has a free style grid which loads the posts and its comments. </p>
+
+<h5><img src="./images/22531.png" id="22531" class="WikiImage"/><br />
+Figure 3.</h5>
+
+<p>The &quot;PostComment&quot; button is associated to the 'Postcomment' event where the user can add a new comment to this post.</p>
+
+<p>Code of PostComment event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Postcomment'
+InsertNewComment.Call(PostId, &amp;newcomment)
+&amp;newcomment=&quot;&quot;
+Grid1.Refresh()
+Endevent</pre>
+
+<p><br />
+Note the <a href="22578.html">Grid1.Refresh()</a> command inside the 'PostComment' event. The idea is to make a grid refresh after having added a new comment and not a refresh of the whole page and its container. This is achieved because <a href="22449.html">Web User Experience property</a> is set to &quot;Smooth&quot;.</p>
+
+<p>The 'InsertNewComment' procedure inserts the comment in the database, and afterwards it should call a procedure that sends a notification. The procedure call can be as follows, passing the &amp;PostId as parameter:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+call(NewCommentNotification, &amp;PostId)</pre>
+
+<p>The procedure NewCommentNotification should send a broadcast notification using <a href="22442.html">Server.Socket external object</a>. Its code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;PostId);
+
+&amp;NotificationInfo.Id=&amp;PostId.ToString() //&amp;NotificationInfo is NotificationInfo data type. Store the PostId in the NotificationInfo Id field.
+&amp;NotificationInfo.Message='Comment'
+&amp;webnotification.Broadcast(&amp;NotificationInfo)</pre>
+
+<p>When this code is executed, it automatically triggers a notification to all the clients, using <a href='http://en.wikipedia.org/wiki/WebSocket'>Web Sockets</a>.</p>
+
+<p>In particular, the InsertNewpost procedure used above is similar to InsertNewComment. It inserts a new post in the database and calls a procedure that sends a notification of a new post. The procedure that sends the notification of a new post could be similar to the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;NotificationInfo.Id=&amp;PostId.ToString() //&amp;NotificationInfo is NotificationInfo data type. Store the PostId in the NotificationInfo Id field.
+&amp;NotificationInfo.Message='Post'
+&amp;webnotification.Broadcast(&amp;NotificationInfo)</pre>
+
+<h3><a id="Step+3" class="HashLink" href="#Step+3">Step 3</a></h3>
+
+<p>If the client web panel has the OnMessage event programmed, the notification is captured and an action can be executed as a result.</p>
+
+<p>In our example, we need to automatically refresh the grid line each time a new comment arrives.</p>
+
+<p>So in the &quot;MessagingSample&quot; panel we program:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event OnMessage(&amp;NotificationInfo)
+if &amp;NotificationInfo.Message = &quot;Comment&quot;
+for each line
+  if (&amp;NotificationInfo.Id=&amp;postid.ToString())
+   WebComp1.refresh() 
+  endif
+endfor
+else
+&amp;postid = &amp;notificationInfo.Id.Trim().ToNumeric()
+webcomp1.Object = PostComment.Create(&amp;PostId)
+load
+endif
+Endevent</pre>
+
+<p>Remember that the &amp;postId variable is on the form, in the grid line. </p>
+
+<p>Note that we execute the WebComp1.refresh() event only for the line of the grid which loads the post corresponding to the PostId of the Notification which has arrived. Only this line is refreshed so the user does not lose any editing he may have been doing when the notification arrived. The For Each line command is executed client-side for a successful result; see <a href="22529.html">Event execution on the client side in X Evolution 3</a>.</p>
+
+<p>The load event adds a new line without refreshing the grid, as explained in <a href="22555.html">Load Command and Load Method in User Events</a>.</p>
+
+<p>Download sample <a href="https://wiki.genexus.com/commwiki/wiki?22731,," target="_blank">here</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="27740.html">Web Notifications and Progress UC requirements</a></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22578.html">Grid Refresh method</a></TD></TR><TR><TD><a href="22555.html">Load Command and Load Method in User Events</a></TD><TD><a href="22442.html">Server.Socket external object</a></TD><TD><a href="22449.html">Web User Experience property</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

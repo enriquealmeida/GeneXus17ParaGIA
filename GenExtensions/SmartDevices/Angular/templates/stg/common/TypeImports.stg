@@ -1,0 +1,63 @@
+delimiters "$", "$"
+
+importBaseTemplate ::= [
+    "STD_TYPE" : "g_import_std_type",
+    "EXT_TYPE" : "g_import_ext_type",
+    "BC_SERVICE" : "g_import_bc_service_type",
+    "BC_DATA" : "g_import_bc_data_type",
+    "BC_COMMON" : "g_import_bc_common_type",
+    "SDT_DATA" : "g_import_sdt_data_type",
+    "UC" : "g_import_uc_type",
+    default : "g_import_default"
+]
+
+g_imports(v) ::= <%
+$(importBaseTemplate.(gx.GetTypeBase.(v.GeneratorType)))(v)$
+%>
+
+g_import_std_type(v) ::= <%
+  import { $gx.GetTypeComponent.(v.GeneratorType)$ } from '$g_import_location(v)$';
+%>
+
+g_import_ext_type(v) ::= <%
+  import { $g_import_comp_with_alias(v)$ } from '$g_import_location(v)$';
+%>
+
+g_import_bc_service_type(v) ::= <%
+  import { $gx.GetTypeComponent.(v.GeneratorType)$ } from 'app/$v.GeneratorType:g_type_location()$.service';
+%>
+
+g_import_bc_data_type(v) ::= <%
+  import { $gx.GetTypeComponent.(v.GeneratorType)$ } from 'app/$v.GeneratorType:g_type_location()$.dt';
+%>
+
+g_import_bc_common_type(v) ::= <%
+  import { $gx.GetTypeComponent.(v.GeneratorType)$ } from 'app/$v.GeneratorType:g_type_location()$';
+%>
+
+g_import_sdt_data_type(v) ::= <%
+  import { $gx.GetTypeComponent.(v.GeneratorType)$ } from 'app/$v.GeneratorType:g_type_location()$.dt';
+%>
+
+g_import_uc_type(v) ::= <%
+  import { $gx.GetTypeComponent.(v.GeneratorType)$ } from '$v.GeneratorType:g_type_location()$';
+%>
+
+g_import_default(v) ::= <%
+  import { $gx.GetTypeComponent.(v.GeneratorType)$ } from '$v.GeneratorType:g_type_location()$';
+%>
+
+g_import_comp_with_alias(v) ::= <%
+  $strip([gx.GetTypeComponent.(v.GeneratorType), gx.GetTypeAlias.(v.GeneratorType)]);separator=" as "$
+%>
+
+g_import_location(v) ::= <%
+  $import_location(v)$
+%>
+
+g_import_from(type_to_import) ::= <%
+  $import_from(type_to_import)$
+%>
+
+
+

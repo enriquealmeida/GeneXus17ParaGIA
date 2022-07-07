@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - WeChat Authentication type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45037,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - WeChat Authentication type</h1>
+<!--GAM - WeChat Authentication type--><div class="TableWikiBody" id="tblwikibody"><p><a href="19888.html">GeneXus Access Manager</a> allows you to authenticate using <a href='https://www.wechat.com/en'>Wechat</a>.</p>
+
+<p>The WeChat Authentication type is supported for Web<sup>1</sup> and SD<sup>2,3</sup> platforms. You need to create one Authentication Type for each platform (Web and\or Native Mobile) because the provider side treats each platform differently.</p>
+
+<p>The configuration is done in two parts:</p>
+
+<ol>
+	<li>WeChat backend configuration for Web and\or Native Mobile</li>
+	<li>GAM backend configuration for Web and\or Native Mobile environments</li>
+	<li>Install the <a href='https://www.wechat.com/en'>Wechat application</a> on the Native Mobile application and log in.</li>
+</ol>
+
+<p><ul><li><a class="HashLink" href="#WeChat+backend">WeChat backend</a></li><li><a class="HashLink" href="#GAM+backend">GAM backend</a></li><li><a class="HashLink" href="#Use+Case">Use Case</a></li><li><a class="HashLink" href="#Considerations">Considerations</a></li><li><a class="HashLink" href="#Troubleshooting">Troubleshooting</a></li><li><a class="HashLink" href="#Availability">Availability</a></li></ul></ul></p>
+
+<h3><a id="WeChat+backend" class="HashLink" href="#WeChat+backend">WeChat backend</a></h3>
+
+<p>Log in or create an account in <a href='https://open.weixin.qq.com/'>https://open.weixin.qq.com/</a> and follow the registration process.</p>
+
+<h4><a id="Web+Application+Registration" class="HashLink" href="#Web+Application+Registration">Web Application Registration</a></h4>
+
+<p>Go to the &quot;Management Center,&quot; click &quot;Create Mobile App&quot; or &quot;Create Website App,&quot; and fill in the relevant information. Then, submit this app for review. Development can start after the app is approved.</p>
+
+<p><img src="./images/45039.png" id="45039" class="WikiImage"/></p>
+
+<p>The review will be completed within seven business days. Once the app is approved, the Open Platform will allocate a globally unique <a href="45383.html">App Id</a> and <em>AppSecret</em>.</p>
+
+<h4><a id="Set+the+Authorization+callback+domain" class="HashLink" href="#Set+the+Authorization+callback+domain">Set the Authorization callback domain</a></h4>
+
+<p>Fill in a valid domain name required for the development process. Users can only call back to pages under this domain name after logging in with a WeChat account.</p>
+
+<p><img src="./images/45040.png" id="45040" class="WikiImage"/></p>
+
+<h4><a id="Mobile+configuration" class="HashLink" href="#Mobile+configuration">Mobile configuration</a></h4>
+
+<p>Go to the &quot;Management Center,&quot; click &quot;Create Mobile App,&quot; and fill in the relevant information. Then, submit this app for review. Development can start after the app is approved.</p>
+
+<p><img src="./images/45336.png" id="45336" class="WikiImage"/></p>
+
+<p>Check the following properties depending on the desired platform:</p>
+
+<h5><a id="iOS+and+iPad" class="HashLink" href="#iOS+and+iPad">iOS and iPad</a></h5>
+
+<p>The <em>Bundle Id</em> property must match the <a href="37617.html">Apple Bundle Identifier property</a>.<br />
+The <em>Universal Links</em> property must match the <a href="36161.html">Deep Link Base URL property</a>.</p>
+
+<p>The other properties can be discarded.</p>
+
+<h5><a id="Android" class="HashLink" href="#Android">Android</a></h5>
+
+<p>The <em>App Signature</em> must be calculated with the following <a href='https://open.weixin.qq.com/zh_CN/htmledition/res/dev/download/sdk/Gen_Signature_Android.apk'>application</a> (<a href='https://developers.weixin.qq.com/doc/oplatform/en/Mobile_App/FAQ/Android.html'>more information</a>) using the Package Name property.<br />
+The <em>Package Name property</em> must match the <a href="17814.html">Android Package Name property</a>.</p>
+
+<h3><a id="GAM+backend" class="HashLink" href="#GAM+backend">GAM backend</a></h3>
+
+<h4><a id="Web" class="HashLink" href="#Web">Web</a></h4>
+
+<p>Add a new WeChat <a href="41262.html">Authentication Type</a> and complete all parameters. The following must match the WeChat configuration already validated by the provider:</p>
+
+<ul>
+	<li><em>Client ID</em>: the <a href="45383.html">App Id</a> value assigned by WeChat.</li>
+	<li><em>Client Secret</em>: the <em>AppSecret</em> generated (do not forget this value as it is generated only once).</li>
+	<li><em>Local site URL</em>: complete URL to return to, for example:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+http://sampleURL/appname
+</pre>
+
+<h4><a id="Native+Mobile" class="HashLink" href="#Native+Mobile">Native Mobile</a></h4>
+
+<p>Add a new WeChat <a href="41262.html">Authentication Type</a> and complete all parameters; the following must match the WeChat configuration (Mobile Application):</p>
+
+<ul>
+	<li><em>Client ID</em>: the <a href="45383.html">App Id</a> value assigned by WeChat.</li>
+	<li><em>Client Secret</em>: the <em>AppSecret</em> generated (do not forget this value as it is generated only once).</li>
+	<li><em>Local site URL</em>: complete URL to return to.</li>
+</ul>
+
+<p>If you have two Wechat Authentication types (one for Web and one for Native Mobile), make sure the secondary authentication Type impersonates the first one using the same property value. Suppose you have <em>wechat </em>and <em>wechatsd</em> authentication types for Web and for Native Mobile, respectively. On the secondary <em>wechatsd</em> configuration, set the <a href="https://wiki.genexus.com/commwiki/wiki?24441,," target="_blank">Impersonate</a> property as <em>wechat</em>.</p>
+
+<h3><a id="Use+Case" class="HashLink" href="#Use+Case">Use Case</a></h3>
+
+<p>Once all the configuration is done, the normal flow of execution is the following:</p>
+
+<h4><a id="Web" class="HashLink" href="#Web">Web</a></h4>
+
+<p>The user executes an object with security, so it is redirected to the GAM Login.</p>
+
+<p>Select the &quot;sign in with WeChat&quot; option.</p>
+
+<p>The site is redirected to WeChat; use the WeChat application and scan the associated QRCode.</p>
+
+<p><img src="./images/45038.png" id="45038" class="WikiImage"/></p>
+
+<p>Confirm on your cell phone, as you will get redirected to the GeneXus object.</p>
+
+<h4><a id="Native+Mobile" class="HashLink" href="#Native+Mobile">Native Mobile</a></h4>
+
+<p>You need to add an event in the login object to authenticate using Wechat. The logic inside the event associated will include a call to a method of Actions external object, named &quot;LoginExternal,&quot; for example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Composite
+ &amp;LoginExternalAdditionalParameters.AuthenticationTypeName = &amp;name
+ &amp;LoginOK = GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.WeChat, &amp;User, &amp;Password, &amp;LoginExternalAdditionalParameters)
+EndComposite</pre>
+
+<p>Note that the <em>&amp;name</em> variable must match the Authentication Type created for Native Mobile environments. If you only have one Wechat authentication you can use the method:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.WeChat, &amp;User, &amp;Password)</pre>
+
+<p>In any case, the <em>&amp;User</em> and <em>&amp;Password</em> parameters are ignored.</p>
+
+<p>The application is redirected to the Wechat application to confirm the login operation. Confirm the following message:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Log in to the below app using your WeChat profile?
+[Cancel][OK]
+</pre>
+
+<p><img src="./images/45352.png" id="45352" class="WikiImage"/></p>
+
+<p>Once your login is validated by Wechat, the flow goes back to the GeneXus application.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>The GAM UserName assigned as key in the GAM database is related to the <a href='https://developers.weixin.qq.com/doc/oplatform/en/Website_App/WeChat_Login/Authorized_Interface_Calling_UnionID.html'>WeChat UnionId element</a> as no UserName is returned. If you want to use the <em>openid</em> parameter, it is stored on the GAM URLProfile property as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+openid=SomeCodeHere
+</pre>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<h4><a id="Access+token+error.+Contact+the+application+administrator." class="HashLink" href="#Access+token+error.+Contact+the+application+administrator.">Access token error. Contact the application administrator.</a></h4>
+
+<p>Running a Native Mobile application, it cannot be authenticated with Wechat. The following error appears on the GAM log:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Start Execute: method 'POST', name 'https://api.weixin.qq.com/sns/oauth2/access_token'
+_responseString {&quot;errcode&quot;:40029,&quot;errmsg&quot;:&quot;invalid code, hints: [ req_id: dbnAHFyFe-E60YAa ]&quot;}
+...
+&amp;Errors.:[{&quot;Code&quot;:204,&quot;Message&quot;:&quot;appname 访问令牌错误。请与应用程序管理员联系。&quot;}]
+Access token error. Contact the application administrator</pre>
+
+<p>Review the configuration for the Authentication type for Native Mobile and Wechat. If the correct Authentication Type is not set, the first Wechat Authentication is used.</p>
+
+<h4><a id="Invalid+Signature+using+Android" class="HashLink" href="#Invalid+Signature+using+Android">Invalid Signature using Android</a></h4>
+
+<p>Running a Native Mobile application with Android, the following error occurs: Invalid Signature using Android; the Logcat details:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+com.artech.samplekb.menusample D/MicroMsg.SDK.WXMsgImplComm: check signature:SampleSignature
+com.artech.samplekb.menusample D/MicroMsg.SDK.WXMsgImplComm: pass
+com.artech.samplekb.menusample D/MicroMsg.SDK.WXApiImplV10: registerApp, appId = SampleAppId
+com.artech.samplekb.menusample W/MicroMsg.SDK.WXApiImplV10: context is not instanceof Activity or Service, disable WXStat
+com.artech.samplekb.menusample D/MicroMsg.SDK.WXApiImplV10: registerApp, appId = SampleAppId
+com.artech.samplekb.menusample D/MicroMsg.SDK.WXApiImplV10: register app com.artech.samplekb.menusample
+com.artech.samplekb.menusample D/MicroMsg.SDK.MMessage: send mm message, intent=Intent { act=com.tencent.mm.plugin.openapi.Intent.ACTION_HANDLE_APP_REGISTER (has extras) }, perm=com.tencent.mm.permission.MM_MESSAGE
+com.artech.samplekb.menusample D/MicroMsg.SDK.WXMsgImplComm: check signature:SampleSignature
+com.artech.samplekb.menusample D/MicroMsg.SDK.WXMsgImplComm: pass
+com.artech.samplekb.menusample I/MicroMsg.SDK.WXApiImplV10: sendReq, req type = 1
+com.artech.samplekb.menusample D/MicroMsg.SDK.MMessageAct: send, targetPkgName = com.tencent.mm, targetClassName = com.tencent.mm.plugin.base.stub.WXEntryActivity
+com.artech.samplekb.menusample D/ZrHung.AppEyeUiProbe: stop checker.
+com.artech.samplekb.menusample D/MicroMsg.SDK.MMessageAct: send mm message, intent=Intent { flg=0x18000000 cmp=com.tencent.mm/.plugin.base.stub.WXEntryActivity (has extras) }
+com.artech.samplekb.menusample V/InputMethodManager: Reporting focus gain, without startInput
+com.artech.samplekb.menusample D/ZrHung.AppEyeUiProbe: notify runnable to start.
+</pre>
+
+<p>Review the configuration for the Android Signature and rebuild the APK.</p>
+
+<h4><a id="Incorrect+state+after+response" class="HashLink" href="#Incorrect+state+after+response">Incorrect state after response</a></h4>
+
+<p>Running an Android application, it cannot be authenticated with Wechat. The following error appears on the Logcat:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Datetime/com.artech.testwechat.testwechat V/ActivityThread: callActivityOnCreate
+Datetime/com.artech.testwechat.testwechat I/MicroMsg.SDK.WXApiImplV10: handleIntent, cmd = 1
+Datetime/com.artech.testwechat.testwechat E/WeChat: Incorrect state after response
+Datetime/com.artech.testwechat.testwechat D/ActionExecution: onEndEvent  , Wechat</pre>
+
+<p>Generate a new Signature key for the Android application and reconfigure the main Native Mobile object and the GAM configuration.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p><sup>1</sup> - Since <a href="https://wiki.genexus.com/commwiki/wiki?44913,," target="_blank">GeneXus 16 upgrade 8</a> for Web generators.</p>
+
+<p><sup>2</sup> - Since <a href="https://wiki.genexus.com/commwiki/wiki?45275,," target="_blank">GeneXus 16 upgrade 9</a> for Android.</p>
+
+<p><sup>3</sup> - Since <a href="https://wiki.genexus.com/commwiki/wiki?45624,," target="_blank">GeneXus 16 upgrade 10</a> for iOS.</p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="45383.html">App Id property</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="46593.html">Integration and Evolution with GeneXus 17</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/27/22 06:50 PM</em></font></td></TR></table></font>

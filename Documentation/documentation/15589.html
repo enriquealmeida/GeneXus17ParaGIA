@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Server Paging</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15589,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Server Paging</h1>
+<!--Server Paging--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In an effort to achieve more efficient applications, the issue of slow response time in database queries that return large volumes of data has been addressed. So far, and with a feature known as data paging, all DBMS have implemented mechanisms to solve this. Paging basically consists of dividing the information that results from a query into smaller, easier to read blocks, and significantly reduces the quantity of data sent from server to client.</p>
+
+<p>GeneXus provides this feature from the client, both in the User Interface (through grids with paging) and in <a href="4417.html">Data Provider</a>. However, in the <a href="https://wiki.genexus.com/commwiki/wiki?15152,," target="_blank">GeneXus X Evolution 2</a> version, the DBMS feature is leveraged to achieve more efficiency on the server side when generating Data Providers.<br />
+ <br />
+The Data Providers’ syntax makes it possible to indicate if paging is to be applied to the results of a group using the Count and Skip attributes. So, in such cases, paging is solved by the DBMS. That is to say, the sentence is generated to use the paging options provided by the DBMS. This allows for less information travelling from the server to the client.</p>
+
+<p>In the navigation of those Data Providers, this improvement will be indicated as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Optimization: Server Paging</pre>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>This improvement may be explained with a simple example.</p>
+
+<p>Given the following Clients transaction:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Clients
+{
+    CustomerId*
+    CustomerDescription
+}</pre>
+
+<p>If we write the following Data Provider:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CustomerCollection
+{
+   CustomerCollectionItem [skip=5] [count=5]
+   {
+      CustomerId
+      CustomerName
+   }
+}
+</pre>
+
+<p>In versions older than <a href="https://wiki.genexus.com/commwiki/wiki?15152,," target="_blank">GeneXus X Evolution 2</a>, the paging optimization in the server was not indicated, and the SQL sentence generated was (in MSSQL Server):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT [CustomerId], [CustomerName] FROM [Customer] WITH (NOLOCK) ORDER BY [CustomerId]</pre>
+
+<p>In <a href="https://wiki.genexus.com/commwiki/wiki?15152,," target="_blank">GeneXus X Evolution 2</a>, when navigating the same object the display is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Optimizations: Server Paging</pre>
+
+<p>And the generated SQL sentence (in MSSQL server) is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT * FROM (SELECT  [CustomerId], [CustomerName], ROW_NUMBER() OVER ( ORDER BY [CustomerId] ) AS GX_ROW_NUMBER FROM [Customer] WITH (NOLOCK)) AS GX_CTE
+         WHERE GX_ROW_NUMBER BETWEEN @GXPagingFrom2 AND @GXPagingTo2 OR @GXPagingTo2 &lt; @GXPagingFrom2 AND GX_ROW_NUMBER &gt;= @GXPagingFrom2</pre>
+
+<p>Likewise, in the case of a <a href="6064.html">Grid with paging</a>, this feature will also be provided by the DBMS. Setting a value other than 0 in the &quot;Rows&quot; property of the Grid will be enough to indicate that the Grid to be used must include paging. This will cause GeneXus to generate automatic paging (using manual paging through the FirstPage, PreviousPage, NextPage or LastPage events is also a possibility). Both cases have been optimized in GX X Ev2.</p>
+
+<p>In older versions, similarly to what was explained for Data Providers, the SQL sentence generated did not include paging; in <a href="https://wiki.genexus.com/commwiki/wiki?15152,," target="_blank">GeneXus X Evolution 2</a>, these cases are solved by the DBMS because the generated SELECT also includes paging.</p>
+
+<p>One more aspect to considerin in generating optimization is that we need the presence of an Order in the structure. Therefore, if a conditional order exists (order...when) and there is no default order, then GeneXus will automatically consider the primary key of the base associated to the level as a default order for optimization.</p>
+
+<p>Consider the Data Provider below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CustomerCollection order CustomerName when &amp;CustomerId.IsEmpty()
+{
+      CustomerCollectionItem [Count = 5] [Skip = 5]
+      {
+           CustomerId
+           CustomerName
+      }
+}</pre>
+
+<p>this is shown in the navigation as we can see in the following image:</p>
+
+<p><img src="./images/16193.PNG" id="16193" class="WikiImage"/></p>
+
+<h3><a id="Exceptions" class="HashLink" href="#Exceptions">Exceptions</a></h3>
+
+<p>When one of the conditions used to navigate the Data Provider/Grid (Where conditions) is evaluated in the client, even when it has paging clauses, the paging optimization is not performed in the server. In this case, paging is solved in the client.</p>
+
+<p>To be evaluated in the server, the conditions must involve UPD or functions depending of the DBMS. Further information on GeneXus functions evaluated in the server by the DBMS for each one of them, may be found by clicking <a href="11572.html">here</a>.</p>
+
+<p>In such a situation, GeneXus will not know how many records to select from the server (because the records would be filtered again in the client), so it will not be able to generate the optimization.</p>
+
+<p>The SQL sentence should be able to be mapped entirely with a for each...endfor structure, meaning that control breaks will be out of the optimization. Normally, this applies more to paging in a DP.<br />
+These restrictions also imply that the select cannot be solved in more than one SQL sentence (for the select involve tables from different data stores).</p>
+
+<p>Another restriction for grids with paging applies to load events with an explicit load command, in which cases the optimization is not generated. In cases of a load event without a load command, GeneXus will try to optimize.</p>
+
+<p>The optimization was made in all dbms except Informix. When not supported by the dbms, the optimization message will not be shown in the navigation.<br />
+<a href="https://wiki.genexus.com/commwiki/wiki?18795,," target="_blank">See more</a>.</p>
+
+<h3><a id="Note" class="HashLink" href="#Note"><strong>Note</strong></a></h3>
+
+<p>In this document when we refer to 'Server', we refer to Data Base Server and when refer to 'Client' we are refer to Application Server (seeing it as Client of the DB Server)<br />
+For DB2, this feature is available as of <a href="https://wiki.genexus.com/commwiki/wiki?22626,," target="_blank">GeneXus X Evolution 2 Upgrade 4</a>. (<a href='http://www2.gxtechnical.com/portal/hgxppredirect.aspx?15,26,0,,,34709'>SAC 34709</a>)</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="26285.html">Database performance from the GeneXus perspective</a></TD></TR><TR><TD><a href="6064.html">Grid paging on the Web</a></TD></TR><TR><TD><a href="5100.html">Order Clause Specification</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

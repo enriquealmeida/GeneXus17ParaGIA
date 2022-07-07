@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Process procedure</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?41042,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Process procedure</h1>
+<!--Process procedure--><div class="TableWikiBody" id="tblwikibody"><p>Sends a video to be processed in order to be analyzed later by <a href="41041.html">Analyze procedure</a>. This task is performed asynchronously due to the processing latency.</p>
+
+<h2><a id="Parameters" class="HashLink" href="#Parameters">Parameters</a></h2>
+
+<ul>
+	<li>
+	<p><strong>in</strong>:&amp;video :: <a href="16608.html">Video data type</a><br />
+	The video to be processed.</p>
+	</li>
+	<li>
+	<p><strong>in</strong>:&amp;locale :: <a href="40450.html">Locale, GeneXusAI</a><br />
+	The language locale of the input speech.</p>
+	</li>
+	<li>
+	<p><strong>in</strong>:&amp;callbackObject :: ObjectName, GeneXus<br />
+	Optional object name to be called after the video has been processed (e.g. a Procedure object).</p>
+	</li>
+	<li>
+	<p><strong>in</strong>:&amp;provider :: <a href="40197.html">Provider, GeneXusAI.Configuration</a><br />
+	A provider setting.</p>
+	</li>
+	<li>
+	<p><strong>inout</strong>:&amp;Messages :: <a href="40335.html">Messages, GeneXus.Common</a><br />
+	A collection of warning and error messages returned by the task. You should check in your code if an error was returned. Refer to <a href="40188.html">error codes and descriptions</a> for more information.</p>
+	</li>
+	<li>
+	<p><strong>out</strong>:&amp;videoId :: <a href="41109.html">VideoId, GeneXusAI.Video</a><br />
+	A video identifier to call <a href="41041.html">Analyze procedure</a> after the video has been processed.</p>
+	</li>
+</ul>
+
+<h2><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h2>
+
+<p>The following table resumes the configuration properties (access credentials) you must set in order to use this AI task.</p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td> </td>
+			<td colspan="3" rowspan="1" style="border-bottom: 1.0px solid black;text-align: center;"><strong><a href="40196.html">PropertyKey</a></strong></td>
+		</tr>
+		<tr style="border-bottom: 1.0px solid black;">
+			<td><strong><a href="40195.html">ProviderType</a></strong></td>
+			<td style="text-align: right;"><strong>Key</strong></td>
+			<td style="text-align: right;"><strong>KeySecret</strong></td>
+			<td style="text-align: right;"><strong>Account</strong></td>
+		</tr>
+		<tr>
+			<td><strong>Alibaba</strong></td>
+			<td style="text-align: right;">内容安全 app-key</td>
+			<td style="text-align: right;">用户AccessKey</td>
+			<td style="text-align: right;">用户AccessKey</td>
+		</tr>
+		<tr>
+			<td><strong>Amazon </strong></td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+		</tr>
+		<tr>
+			<td><strong>Baidu </strong></td>
+			<td style="text-align: right;">视频内容分析</td>
+			<td style="text-align: right;">视频内容分析</td>
+			<td style="text-align: right;"> </td>
+		</tr>
+		<tr>
+			<td><strong>Google </strong></td>
+			<td style="text-align: right;">Video Intelligence API</td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+		</tr>
+		<tr>
+			<td><strong>IBM </strong></td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+		</tr>
+		<tr>
+			<td><strong>Microsoft </strong></td>
+			<td style="text-align: right;">Video Indexer</td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">Azure Connect</td>
+		</tr>
+		<tr>
+			<td><strong>SAP </strong></td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+		</tr>
+		<tr>
+			<td><strong>Tencent </strong></td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+			<td style="text-align: right;">-</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="Sample" class="HashLink" href="#Sample">Sample</a></h2>
+
+<p>This section describes two alternatives for processing a video: synchronously or asynchronously. Once processed, you can get the analysis made by the provider. In other words, you need to use both Process and Analyze tasks.</p>
+
+<h3><a id="Synchronous+processing" class="HashLink" href="#Synchronous+processing">Synchronous processing</a></h3>
+
+<p>The way you process a video synchronously is by polling for the processing status. The example below shows how you can do it.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;callbackObject = &quot;&quot; // It's not necessary to indicate a callback object for this strategy
+&amp;VideoId = GeneXusAI.Video.Process(&amp;video,&amp;locale,&amp;callbackObject,&amp;provider,&amp;Messages) 
+if &amp;Messages.Count &gt; 0 
+  &lt;process_errors&gt;
+else
+   do while True
+      &amp;outputAnalysis = GeneXusAI.Video.Analyze(&amp;videoId,&amp;provider,&amp;Messages) // Polling
+      if &amp;outputAnalysis.Completed OR &amp;Messages.Count &gt; 0 
+         exit // Exit from the loop
+      endIf
+     &amp;x = Sleep(30) // Wait 30 seconds until poll again
+   endDo
+   if &amp;Messages.Count &gt; 0
+       &lt;process_errors&gt; 
+   else
+       &lt;analyze_result&gt;
+   endIf
+endIf</pre>
+
+<p>Note that for large video files this strategy may take a long time. Consider using asynchronous strategy in these cases.</p>
+
+<h3><a id="Asynchronous+processing" class="HashLink" href="#Asynchronous+processing">Asynchronous processing</a></h3>
+
+<p>The way you process a video asynchronously is by indicating a callback-object to this task.</p>
+
+<p>For example, you can write a code as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;callbackObject = Link(VideoHandler) // It gets the object name mantaining a reference to it
+&amp;VideoId = GeneXusAI.Video.Process(&amp;video,&amp;locale,&amp;callbackObject,&amp;provider,&amp;Messages)
+if &amp;Messages.Count &gt; 0
+   &lt;process_errors&gt;
+endIf</pre>
+
+<p>Where <span style="font-family: courier new;">VideoHandler</span> is a <a href="6293.html">Procedure object</a> with <a href="36480.html">Expose as Web Service property</a> = True, and defined as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Rules:
+   parm(in:&amp;videoId); // Mandatory :: video identifier
+Source:
+   &amp;OutputAnalysis = GeneXusAI.Video.Analyze(&amp;videoId,&amp;provider,&amp;Messages)
+   if &amp;Messages.Count &gt; 0
+       &lt;process_errors&gt;
+   else
+       &lt;analyze_result&gt;
+   endIf
+</pre>
+
+<p>Alternatively, instead of getting the analysis in this object, you can send a notification and call the <a href="41041.html">Analyze procedure</a> on a Panel for Web or Smart Devices. This can be done by using <a href="22442.html">Server.Socket external object</a> for Web, or <a href="33687.html">Notification Provider API</a> for Smart Devices.</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  For testing your asynchronous solution, your application must be accessible for the external provider (e.g. your IP must be remotely accessible, or you can host your application on a real server -- Deploy To Cloud option can be a good alternative).</div>
+</p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>For the asynchronous strategy, the <strong>callback-object</strong> must include a Parm rule with the incoming video identifier.
+
+	<div>
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;videoId);</pre>
+	</div>
+	</li>
+	<li>Special considerations
+	<ul>
+		<li>For Microsoft:
+		<ul>
+			<li>To get the Key/Account, please refer to <a href="40204.html">this document</a>.</li>
+			<li>Despite no region is filled up on the 'Faces' field items (top, left, width, height fields are zero -- or empty), you will have a property with '<em>thumbnail</em>' key whose value is a cropped image of the identified face.</li>
+		</ul>
+		</li>
+		<li>For Baidu:
+		<ul>
+			<li>Only supports synchronous mode (not callback-url is available).</li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>Platforms </strong></td>
+			<td style="vertical-align: top;">Web(.NET,.NETCore,Java), SmartDevices(Android,iOS)</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Connectivity </strong></td>
+			<td style="vertical-align: top;">Online</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This procedure is available as of <a href="https://wiki.genexus.com/commwiki/wiki?40782,," target="_blank">GeneXus 16 upgrade 1</a>.</p>
+
+<ul>
+	<li>As of <a href="https://wiki.genexus.com/commwiki/wiki?42129,," target="_blank">GeneXus 16 upgrade 3</a>:<br />
+	- Baidu AI is available.</li>
+	<li>As of <a href="https://wiki.genexus.com/commwiki/wiki?42755,," target="_blank">GeneXus 16 upgrade 4</a>:<br />
+	- Alibaba AI is available.</li>
+</ul>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li><a href="41041.html">Analyze procedure</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="41041.html">Analyze procedure</a></TD><TD><a href="40167.html">Toc:GeneXus Artificial Intelligence</a></TD></TR><TR><TD><a href="40315.html">GeneXusAI Overview</a></TD><TD><a href="40204.html">HowTo: Get credentials from a cloud provider for GeneXusAI</a></TD><TD><a href="46593.html">Integration and Evolution with GeneXus 17</a></TD><TD><a href="40450.html">Locale domain</a></TD></TR><TR><TD><a href="41274.html">Percentage domain</a></TD><TD><a href="41109.html">VideoId domain</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/11/22 06:14 PM</em></font></td></TR></table></font>

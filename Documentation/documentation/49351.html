@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy to Azure Functions</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49351,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy to Azure Functions</h1>
+<!--Deploy to Azure Functions--><div class="TableWikiBody" id="tblwikibody"><p>This document explains how to deploy a GeneXus application as <a href="47430.html">Azure Functions</a>.</p>
+
+<h3><a id="Installing+requirements" class="HashLink" href="#Installing+requirements">Installing requirements</a></h3>
+
+<p>Install the requirements in the machine where you will run the deployment —you only need <a href='https://docs.microsoft.com/en-us/cli/azure/install-azure-cli'>Azure CLI</a> (<a href='https://github.com/Azure/azure-cli/releases/tag/azure-cli-2.27.1'>version 2.27.1</a>).<br />
+Otherwise, the deployment throws the error: 'az' is not recognized as an internal or external command, operable program, or batch file.</p>
+
+<p>Note: Azure CLI 2.29 throws an error ('str' object has no attribute 'value').</p>
+
+<h3><a id="Setting+up+the+cloud" class="HashLink" href="#Setting+up+the+cloud">Setting up the cloud</a></h3>
+
+<p>The basic steps in the <a href='http://portal.azure.com'>cloud</a> are as follows:</p>
+
+<ul>
+	<li>Create the resources in Azure. See <a href="https://wiki.genexus.com/commwiki/wiki?47419,," target="_blank">HowTo: Create an Azure function app</a></li>
+	<li>To authenticate, configure a <a href="https://wiki.genexus.com/commwiki/wiki?47427,," target="_blank">Service Principal</a>.</li>
+</ul>
+
+<h3><a id="Modeling+in+GeneXus" class="HashLink" href="#Modeling+in+GeneXus">Modeling in GeneXus</a></h3>
+
+<p>The basic steps in GeneXus are as follows:</p>
+
+<ul>
+	<li>Create a <a href="38886.html">Deployment Unit object</a> and select the objects to deploy.<br />
+	 </li>
+	<li>Use the <a href="32092.html">Application Deployment tool</a> to select the target &quot;<strong>Microsoft Azure Functions</strong>.&quot; <br />
+	To deploy the backend services of an app, select the<strong> </strong>target &quot;<strong>Microsoft Azure serverless (backend services)</strong>.<strong>&quot;</strong> In this case, the Functions are deployed as Http-triggered functions.<br />
+	 </li>
+	<li>Configure the properties in the property grid.<br />
+	 </li>
+	<li>Click the deployment button to deploy to Azure.</li>
+</ul>
+
+<h2><a id="Functions+Trigger+type" class="HashLink" href="#Functions+Trigger+type">Functions Trigger type</a></h2>
+
+<p>Azure functions have Trigger Types (Trigger Type property at the deployment unit). </p>
+
+<p><img src="./images/49354.png" id="49354" class="WikiImage"/></p>
+
+<p>Depending on the trigger type of the functions, you have to consider different aspects when deploying.<br />
+To consider those aspects, you may group the functions that have a trigger other than Http, and those that have Http trigger.</p>
+
+<h3><a id="Non-Http-triggered+functions" class="HashLink" href="#Non-Http-triggered+functions">Non-Http-triggered functions</a></h3>
+
+<p>For all the functions except those that have Http trigger, consider the following to deploy the application.</p>
+
+<ul>
+	<li>Add only one main procedure to the <a href="38886.html">Deployment Unit object</a>. </li>
+	<li>Procedures have nothing particular in their logic, except for considering the parameters they receive according to the function trigger.<br />
+	See <a href="47729.html">How to: create a GeneXus procedure to be deployed as an Azure Function</a>.</li>
+</ul>
+
+<h6 style="margin-left: 40.0px;"><img src="./images/47446.png" id="47446" class="WikiImage"/><br />
+Example of a timer triggered function.</h6>
+
+<h3><a id="Http-triggered+functions" class="HashLink" href="#Http-triggered+functions">Http-triggered functions</a></h3>
+
+<p>See <a href="49266.html">Azure Http-triggered functions</a></p>
+
+<h2><a id="Common+aspects+of+functions" class="HashLink" href="#Common+aspects+of+functions">Common aspects of functions</a></h2>
+
+<p>First, take into account that when the function is published on an existing function app, the function is updated.</p>
+
+<h3><a id="Function+settings" class="HashLink" href="#Function+settings">Function settings</a></h3>
+
+<p>Depending on the function, it is preferable to be able to change some settings in the cloud. Those settings are configured at deployment time, and you can set the deployment engine to create an <a href='https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings?tabs=portal#settings'>application setting</a> in the cloud with the name and value you specify.</p>
+
+<p>For example, for timer functions, you can specify a cron time, or an application setting (to be created in the cloud with the name and value that you wish).</p>
+
+<p><img src="./images/47810.png" id="47810" class="WikiImage"/></p>
+
+<p>For the last option, the advantage is that all changes can be made in the cloud (you don't need to deploy again for those changes).</p>
+
+<p><img src="./images/49725.png" id="49725" class="WikiImage"/></p>
+
+<p>The same happens with other function types like Queue or Service Bus, where the connection data is defined as an app setting.</p>
+
+<h3><a id="Global+configuration+of+functions" class="HashLink" href="#Global+configuration+of+functions">Global configuration of functions</a></h3>
+
+<p>The behavior of all functions within the function app can be configured globally. This is done in the <a href='https://docs.microsoft.com/en-us/azure/azure-functions/functions-host-json'>host.json</a> file. For example, in that file, you can configure the trace level for the app, Health Monitor, etc.<br />
+Azure functions have a default timeout, which can also be changed at the host.json file.<br />
+<br />
+<strong>Important: </strong>The GeneXus user has to manage this file.</p>
+
+<p>The Application Deployment Tool uploads one with the basic settings, but if you want to use another you can edit it and add it to the deployment unit (see <a href="32092.html">here</a>).</p>
+
+<h4><a id="Sample+host.json+file+to+generate+trace+information%3A" class="HashLink" href="#Sample+host.json+file+to+generate+trace+information%3A">Sample host.json file to generate trace information:</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{
+    &quot;version&quot;: &quot;2.0&quot;,
+    &quot;logging&quot;: {
+        &quot;fileLoggingMode&quot;: &quot;always&quot;,
+        &quot;logLevel&quot;: {
+            &quot;default&quot;: &quot;Trace&quot;,
+            &quot;Host.Results&quot;: &quot;Trace&quot;,
+            &quot;Function&quot;: &quot;Trace&quot;,
+            &quot;Host.Aggregator&quot;: &quot;Trace&quot;
+        },
+        &quot;applicationInsights&quot;: {
+            &quot;samplingExcludedTypes&quot;: &quot;Request&quot;,
+            &quot;samplingSettings&quot;: {
+                &quot;isEnabled&quot;: true
+            }
+        }
+    }
+}
+</pre>
+
+<h3><a id="Architecture+considerations" class="HashLink" href="#Architecture+considerations">Architecture considerations</a></h3>
+
+<p>If the function app uses Image, Audio, Video, or BlobFile data types, you have to configure the <a href="31121.html">Storage Provider property</a> because all multimedia must be served from an external URL, such as Microsoft Azure.</p>
+
+<p>For the same reason, it's not supported to use the file system to serve content; that is, to have read/write access to files (such as Blob data type, Excel, or PDF reports). </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD><TD><a href="47430.html">Azure Functions</a></TD><TD><a href="49266.html">Azure Http-triggered functions</a></TD></TR><TR><TD><a href="49264.html">Azure timer triggered functions</a></TD><TD><a href="47729.html">How to: create a GeneXus procedure to be deployed as an Azure Function</a></TD><TD><a href="49355.html">Service Bus and Queue Storage triggered Azure functions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/23/22 03:22 PM</em></font></td></TR></table></font>

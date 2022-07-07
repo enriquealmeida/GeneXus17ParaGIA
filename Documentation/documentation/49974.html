@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Time Based One Time Password (TOTP)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49974,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Time Based One Time Password (TOTP)</h1>
+<!--GAM - Time Based One Time Password (TOTP)--><div class="TableWikiBody" id="tblwikibody"><p>Using Time Based One Time Passwords (TOTP) as a method of authenticating users to the system offers the advantage that they do not need to remember a password, since a new code is generated every time they want to log in. In addition, it adds another level of security because the code is valid for a short period of time.</p>
+
+<p>When you add to this the fact that users need an application on their smartphone to obtain these codes—depending on the security of the users’ smartphones—it also adds another level of difficulty in case someone tries to authenticate with a username that doesn’t belong to them.</p>
+
+<p>Time Based One Time Password (TOTP) is an algorithm that generates <a href="48197.html">One Time Password (OTP)</a> keys that use the current time as a source of uniqueness. Therefore, in the <a href="19888.html">GeneXus Access Manager(GAM)</a> TOTP is found as a <a href="48197.html">One Time Password (OTP)</a> Code generation type.</p>
+
+<p><img src="./images/49975.png" id="49975" class="WikiImage"/></p>
+
+<p>Once this code generation method has been chosen, the following parameters can be configured (the image shows their default values):</p>
+
+<p><br />
+<img src="./images/49989.jpg" id="49989" class="WikiImage"/></p>
+
+<ul>
+	<li><strong>Code expiration timeout: </strong>This is the maximum time (in seconds) the user has to enter a code.</li>
+	<li><strong>Maximum daily number of codes:</strong> Number of times per day that a code can be entered (after clicking on the NEXT button).</li>
+	<li><strong>Number of unsuccessful retries to lock the OTP: </strong>Number of unsuccessful retries to block access.</li>
+	<li><strong>Automatic OTP unlock time: </strong>Time for automatic unlocking of OTP codes.</li>
+	<li><strong>Number of unsuccessful retries to block user based on number of OTP locks:</strong> Number of times OTP codes can be locked before blocking the User.</li>
+</ul>
+
+<h3><a id="Configuration+of+a+User%27s+Authenticator+app" class="HashLink" href="#Configuration+of+a+User%27s+Authenticator+app">Configuration of a User's Authenticator app</a></h3>
+
+<p>With this type of authentication, it is necessary for each user to configure an Authenticator (pairing of the user's account with the Authenticator application). To do so, follow the steps below:</p>
+
+<ol>
+	<li>Go to the profile of the user whose Authenticator you want to configure. In the menu on the right, you will find the <strong>Enable authenticator</strong> button. <img src="./images/49990.png" id="49990" class="WikiImage"/><strong>Note: </strong>This button will be visible in user profiles once an authentication type <a href="48197.html">OTP</a> has been created with TOTP Authenticator as Code generation type.</li>
+	<li>By clicking on the above button you will be directed to a window similar to the following:<img src="./images/49991.PNG" id="49991" class="WikiImage"/></li>
+	<li>The selected Authenticator must be used to scan the QR code or use the Secret Key provided to synchronize the Authenticator code generation with the application.</li>
+	<li>Lastly, you need to enter a code provided by the Authenticator (on time) in the <strong>Type a code</strong> field and click on the <strong>Enable</strong> button. Below is what the screen looks like once this operation has been successfully performed:<img src="./images/49992.PNG" id="49992" class="WikiImage"/></li>
+</ol>
+
+<h3><a id="Configuration+of+TOTP+as+first+and+second+factor" class="HashLink" href="#Configuration+of+TOTP+as+first+and+second+factor">Configuration of TOTP as first and second factor</a></h3>
+
+<p>Since <a href="48197.html">One Time Password (OTP)</a> can be used as either first or second authentication factor, TOTP inherits this property. Remember that to define whether you want to use the authentication type as first or second factor, you must take into account the property <strong>Use For First Factor Authentication? </strong>inside it.</p>
+
+<p><img src="./images/49993.PNG" id="49993" class="WikiImage"/></p>
+
+<p>This property is cleared by default; if left unchanged, it generates an authentication type that can be used as a second factor. On the other hand, when this property is selected, it generates an authentication type that can be used as a first factor.</p>
+
+<h3><a id="Additional+steps%3A+how+to+configure+TOTP+as+a+second+factor" class="HashLink" href="#Additional+steps%3A+how+to+configure+TOTP+as+a+second+factor">Additional steps: how to configure TOTP as a second factor</a></h3>
+
+<p>Once the TOTP authentication type has been created, another authentication type must be configured that will use the newly configured authentication as a second factor. In this case, for example, Local authentication is set to use TOTP as a second factor.</p>
+
+<p>Once in edit mode, within the authentication type, select the <strong>Enable Two Factor Authentication?</strong> Property. In <strong>Authentication Type Name</strong>, select the second factor authentication type previously created.</p>
+
+<p><img src="./images/49994.PNG" id="49994" class="WikiImage"/></p>
+
+<p>In addition, two more properties can be modified (in the image, they have their default values):</p>
+
+<ul>
+	<li><strong>First factor authentication expiration: </strong>Maximum time the user will have to confirm the second factor, after passing the first factor.</li>
+	<li><strong>Force 2FA for all users?: </strong>Allows forcing all users to use two authentication factors.</li>
+</ul>
+
+<p>The last step for a user to authenticate using this two factor configuration is to go to the user's profile in edit mode and select the option <strong>Enable two factor authentication?</strong></p>
+
+<p><strong><img src="./images/49995.PNG" id="49995" class="WikiImage"/></strong></p>
+
+<p><strong>Note: </strong>This step is NOT necessary if the <strong>Force 2FA for all users?</strong> property mentioned in the previous step is selected. Additionally, it should be clarified that if all users are forced, any user who doesn’t have an Authenticator configured will not be able to log in.</p>
+
+<h3><a id="Length+of+the+secret+key+to+be+generated" class="HashLink" href="#Length+of+the+secret+key+to+be+generated"><strong>Length of the secret key to be generated</strong></a></h3>
+
+<p>The length of the secret key generated by GeneXus for each user can be modified by going to the menu <em>Repository Configuration &gt; Users Tab &gt; TOTP secret key length</em>, as shown in the image below.</p>
+
+<p><img src="./images/49986.png" id="49986" class="WikiImage"/></p>
+
+<ul>
+	<li><strong>TOTP secret key length</strong>: Property indicating the maximum length of the secret key generated for Authenticator applications (16 is the default value).</li>
+</ul>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>On the iPhone—in particular, for the Google Authenticator application—the password length cannot exceed 16 characters. (<a href='https://github.com/google/google-authenticator/issues/332'>ref</a>)</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="49616.html">GeneXus 17 Upgrade 8</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="48197.html">GAM - One Time Password (OTP)</a><br />
+<a href="50708.html">GAM - Time Based One Time Password for mobile</a></p>
+
+<p><br />
+</p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="50664.html">GAM - One Time Password for mobile</a></TD><TD><a href="50708.html">GAM - Time Based One Time Password for mobile</a></TD><TD><a href="49616.html">GeneXus 17 Upgrade 8</a></TD></TR><TR><TD><a href="49956.html">GeneXus 17 Upgrade 9</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/13/22 03:02 PM</em></font></td></TR></table></font>

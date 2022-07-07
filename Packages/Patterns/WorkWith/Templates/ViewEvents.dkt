@@ -1,0 +1,237 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="View Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Events %>">
+	<Source><![CDATA[<%
+
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	ViewElement view = wwInstance.GetElement<ViewElement>(Element);
+	WorkWithSettings settings = wwInstance.Settings;
+	Transaction transaction = wwInstance.Transaction.Transaction;
+	if (transaction == null)
+		throw new ArgumentNullException("Object");
+	var layout = Artech.Patterns.WorkWith.Helpers.TemplateManagment.CalculateTemplate(transaction);
+%>
+Event Start
+<%@ CallSubTemplate SubLoadContext Settings='settings' %>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	if (true /*viewParms.IncludesAttributes()*/)
+	{
+%>
+
+	For each
+		Where <%= view.Parameters.WhereCondition() %>
+<%
+		if (view.Caption != String.Empty)
+		{
+%>
+		Form.Caption = <%= view.Caption %>
+<%
+		}
+		
+		bool hasBackToSelection = (view.BackToSelection && view.Parent.Selection != null);
+		if (hasBackToSelection)
+		{
+			if (layout != DefaultFormHelper.FormTemplate.Fiori)
+			{
+%>		
+		ViewAll.Link = <%= view.Parent.Selection.ObjectName %>.Link(<%= view.Parent.Selection.Parameters.List() %>)
+<%
+			}
+		}
+%>
+		&Exists = True
+<%
+		if (view.FixedData != null && view.FixedData.Attributes != null)
+		{
+%>
+<%@  CallSubTemplate SubLinkAttributes Level='view.Parent' Element='view' Attributes='view.FixedData.Attributes' IndentLevel='2' IndentLevelChar='"\t"' %>
+
+<%
+		}
+%>
+	When none
+		Form.Caption = "Record not found"
+<%
+		if (hasBackToSelection && layout != DefaultFormHelper.FormTemplate.Fiori)
+		{
+%>		
+		ViewAll.Visible = false
+<%
+		}
+%>
+		&Exists = False
+	Endfor
+<%
+	}
+	else /* !viewParms.IncludesAttributes() -> cannot use for each */
+	{
+		if (view.Caption != String.Empty)
+		{
+%>
+	Form.Caption = <%= view.Caption %>
+<%
+		}
+%>
+	&Exists = True
+<%		
+	}
+
+	if (wwInstance.UseAbstractForm)
+	{
+%>
+	&LoadAllTabs = false
+<%
+	}
+%>
+
+	If &Exists
+<%
+	if (wwInstance.UseAbstractForm)
+	{
+%>
+		&SelectedTabCode = &TabCode
+		<%= Constants.TabName %>.ActivePageControlName = &SelectedTabCode
+		Do 'Load Tab'
+<%
+		int i = 1;
+		foreach (TabElement tab in view.Tabs)
+		{
+			if (tab.IsConditional())
+			{
+%>
+	If not <%= tab.Condition %>
+		<%= Constants.TabName %>.HideTab(<%= i %>)
+	Endif
+<%
+			}
+			i++;
+		}
+	}
+	else
+	{
+%>
+		Do 'LoadTabs'
+<%
+		if (view.HasConditionalTabs())
+		{
+%>
+		Do 'CheckTabConditions'
+<%
+		}
+%>
+		TabbedView.Object = <%= Constants.TabbedViewName %>.Create(&Tabs, &TabCode)
+<%
+	}
+%>
+	Endif
+EndEvent
+<%	
+	if (wwInstance.UseAbstractForm)
+	{
+%>
+
+Event <%= Constants.TabName %>.TabChanged
+	&SelectedTabCode = <%= Constants.TabName %>.ActivePageControlName
+	&LoadAllTabs = false
+	Do 'Load Tab'
+EndEvent
+
+Sub 'Load Tab'
+<%
+		int i = 1;
+		foreach (TabElement tab in view.Tabs)
+		{
+%>
+	if &LoadAllTabs or <%= (i == 1) ? "&SelectedTabCode = '' or" : "" %>&SelectedTabCode = "<%= tab.Code %>"
+		<%= tab.Code %>WC.Object = <%= tab.Wcname %>.Create(<%= tab.TabLinkArguments() %>)
+	endif
+<%
+			i++;
+		}
+%>
+EndSub
+<%
+	}
+	else
+	{
+%>
+
+Sub 'LoadTabs'
+	// Prepares the list of tabs of this view.
+	&Tabs = new()
+<%
+		foreach (TabElement tab in view.Tabs)
+		{ 
+%>
+
+	&Tab = new()
+	&Tab.Code = "<%= tab.Code %>"
+	&Tab.Description = "<%= tab.Name %>"
+	&Tab.WebComponent = <%= tab.Wcname %>.Link(<%= tab.TabLinkArguments() %>)
+	&Tab.Link = <%= Object.Name %>.Link(<%= view.Parameters.ListWithVariables() %>, &Tab.Code)
+	&Tabs.Add(&Tab)
+<%
+		}	
+%>
+EndSub
+<%
+
+		if (view.HasConditionalTabs())
+		{
+%>
+
+Sub 'CheckTabConditions'
+	// Check condition for conditional tabs.
+	For Each
+<%
+			if (true /*view.Parameters.IncludesAttributes()*/)
+			{
+%>
+		where <%= view.Parameters.WhereCondition() %>
+		
+<%
+			}
+%>
+		&Index = 1
+		Do While (&Index <= &Tabs.Count)
+			&Tab = &Tabs.Item(&Index)
+			&Increment = 1
+			Do Case
+<%
+			foreach (TabElement tab in view.Tabs)
+			{
+				if (tab.IsConditional())
+				{
+%>
+				Case &Tab.Code = "<%= tab.Code %>"
+					If not (<%= tab.Condition %>)
+						&Tabs.Remove(&Index)
+						&Increment = 0
+					Endif
+<%
+				}
+			}
+%>
+			Endcase
+			&Index = &Index + &Increment
+		EndDo
+	EndFor
+EndSub
+<%
+		}
+	}
+%>
+]]>
+	</Source>
+</Part>

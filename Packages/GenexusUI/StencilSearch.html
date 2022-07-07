@@ -1,0 +1,99 @@
+﻿<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content ="IE=edge; charset=UTF-8">
+	<link href="StencilSearchFiles/styles.css" rel="stylesheet">
+	<link href="StencilSearchFiles/css.css" rel="stylesheet">
+	<script language="javascript" type="text/javascript">
+		var jasonString = "[]";
+		var jasonObjs = JSON.parse(jasonString);
+		var allowSwap = false;
+		var currentKb = false;
+		var openLabel = "Open";
+		var insertLabel = "Insert";
+		var swapLabel = "Swap";
+		var	openLabel = window.external.OpenLabel();
+		var insertLabel = window.external.InsertLabel();
+		var swapLabel = window.external.SwapLabel();
+		var noStencilsFoundLabel = window.external.NoStencilsWereFoundLabel();
+		var knowledgeBaseLabel = window.external.KBLabel();
+		var serverLabel = window.external.ServerLabel();
+		var searchStencilsLabel = window.external.SearchStencilsLabel();
+		window.ondragstart = function() { return false; }; //to avoid loss of focus when dragging image
+		function DoSearch(){
+			inputvalue = document.getElementById('searchInput').value;
+			window.external.DoSearch(inputvalue);
+			LoadResult();
+			return false;
+		}
+		function LoadResult(){
+			allowSwap = window.external.AllowSwap();
+			jasonString = window.external.GetJasonedResults();
+			jasonObjs =  JSON.parse(jasonString);
+			var nuevoStencilContainer = "";
+			//currentKb = selectServer.selectedIndex;
+			if(jasonObjs.length == 0){
+				noresults.innerHTML = "</br>"+noStencilsFoundLabel;
+			}else{
+				noresults.innerHTML = "";
+				for (var i = 0; i < jasonObjs.length; i++) { 
+						nuevoStencilContainer += ShowStencil(jasonObjs[i]);
+				}
+			}
+			stencilContainer.innerHTML = nuevoStencilContainer;
+		}
+		function ShowStencil(stencil){
+			var newdiv = "";
+			newdiv += "<div class=\'stencil\'>";
+			if(stencil.image == "" || stencil.image == null ) 
+				stencil.image = "StencilSearchFiles/screenshot_placeholder.gif"; 
+			newdiv += "<div class=\'stencilTitle\' onmousedown=\"javascript:window.external.DragStencil(\'"+stencil.guid+"\');\">"+stencil.name+"</div>";
+			newdiv += "<div class=\'stencilImage\'><img id=\'"+stencil.guid+"\' src=\'"+stencil.image+"\' alt=\'Picture\' onmousedown=\"javascript:window.external.DragStencil(\'"+stencil.guid+"\');\">";
+			if(!currentKb)
+				newdiv += "<div class=\'edit\'><img src=\'StencilSearchFiles/edit.png\' alt=\'Change screenshot\' onmousedown=\"javascript:ChangeScreenshot.call(this, \'"+stencil.guid+"\');\"></div>";
+			newdiv += "</div>";
+			newdiv += "<div class=\'stencilButtons\'>";
+			if(allowSwap)
+				newdiv += "<button class=\'button\' type=\'button\' onclick=\'javascript:window.external.SwapStencil(\""+stencil.guid+"\");\'><span>"+swapLabel+"</span></button>";
+			newdiv += "<button class=\'button\' type=\'button\' onclick=\'javascript:window.external.InsertStencil(\""+stencil.guid+"\");\'><span>"+insertLabel+"</span></button>";
+			newdiv += "<button class=\'button\' type=\'button\' onclick=\'javascript:window.external.OpenStencil(\""+stencil.guid+"\");\'><span>"+openLabel+"</span></button>";
+			newdiv += "</div>";
+			newdiv += "</div>";
+
+			return newdiv;
+		}
+		function ClearSearchField(){
+			document.getElementById('searchInput').value = "";
+		}
+		function GetSelectedServer(){
+			return null;
+		}
+		function GetSelectedKB(){
+			return null;
+		}
+		function ChangeScreenshot(guid){
+			var src = window.external.ChangeScreenshot(guid);
+			if(src)
+				document.getElementById(guid).src = src;
+		}
+		window.onload = function(){ 
+			document.getElementById('searchInput').placeholder = searchStencilsLabel;
+		} 
+		function ReloadPage(){ 
+			window.external.LoadSearchPageFromFile();
+		}
+	</script>
+</head>
+<body>
+	<div class="container">
+		<div class="search">
+			<form onsubmit="return DoSearch()" method="GET">
+				<div class="searchBox"><input class="searchInput" id="searchInput" type="text">
+					<div class="lupa"><input type="image"  src='StencilSearchFiles/lupa.png' onmousedown=""></div>
+			</form>
+		</div>
+		<div align="center" class="noresults" id="noresults"></div>
+		<div class="stencilContainer" id="stencilContainer"/> 
+		<div class="footer"><img src="StencilSearchFiles/footer.png" alt="stencil" width="0" height="60"></div>
+		</div>
+</body>
+</html>

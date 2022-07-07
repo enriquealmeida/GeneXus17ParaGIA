@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Layers in Maps</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?40763,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Layers in Maps</h1>
+<!--Layers in Maps--><div class="TableWikiBody" id="tblwikibody"><p>To create Native applications of the Uber or Easy taxi style, there is a set of properties associated with the <strong>Grid control whose <a href="9550.html">Control Type property</a></strong><strong> = Maps</strong>.</p>
+
+<p>The values that are configured for these properties will be presented as Layers, allowing you to change the map’s behavior.</p>
+
+<p>The Layers are as follows:</p>
+
+<ol>
+	<li><strong>Selection Layer:</strong> Allows you to change the navigation mode to select a location.</li>
+	<li><strong>Direction Layer:</strong> Allows the map information to be displayed as routes between points.</li>
+	<li><strong>Animation Layer:</strong> Allows you to draw animations between points on the map.</li>
+</ol>
+
+<p>Below are more detailed descriptions of the Layers, use scenarios, the possibilities they offer, and the properties that allow you to achieve these objectives.</p>
+
+<p><strong>1. Selection Layer (Navigation to select a location)</strong></p>
+
+<p>In Maps (Grid with <a href="15309.html">Control Type property = Maps</a>) it is possible to enable a navigation mode that allows you to select a location (<a href="32408.html">GeoPoint</a>). In this navigation, in the center there is an icon that remains fixed and you can move the map to select a position (and get its coordinates). This is handled with the <a href="42223.html">Selection Layer property</a>. </p>
+
+<p>When the <a href="42223.html">Selection Layer property</a> = True, at runtime it will be possible to move on the map, having a fixed icon in the center that obtains the position and triggers an event.</p>
+
+<p>The navigation is similar to what is achieved using the <a href="36729.html">PickLocation Method</a>.</p>
+
+<p align="center"><img src="./images/40805.gif" id="40805" class="WikiImage"/></p>
+
+<p>The icon can be configured using the <a href="42224.html">Location Selection Target Image property</a>.<strong> </strong>Also, for having configured the <a href="42223.html">Selection Layer property</a> = True, the <a href="40670.html">Selection Target Image Class property</a> is enabled to associate a class to that image (by default there is a class created under the name: SDMapPinImage).</p>
+
+<p>In addition, for having configured the <a href="42223.html">Selection Layer property</a> = True, two events are available: ControlValueChanging and ControlValueChanged.</p>
+
+<p style="margin-left: 30.0pt;"><strong>ControlValueChanging(GeoPoint) event</strong></p>
+
+<p style="margin-left: 40.0px;">This event is triggered while the map is moving. For example:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Grid1.ControlValueChanging(&amp;geoPoint)
+       composite
+            msg(&amp;geoPoint.Tostring())
+      endcomposite
+Endevent</pre>
+
+<p style="margin-left: 40.0px;"><strong>ControlValueChanged(GeoPoint) event</strong></p>
+
+<p style="margin-left: 40.0px;">This event is triggered when you stop moving the map. For example:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Grid1.ControlValueChanged(&amp;geoPoint)
+       composite
+            msg(&amp;geoPoint.Tostring())
+       endcomposite
+Endevent</pre>
+
+<p style="margin-left: 30.0pt;">In the GeoPoint type parameter you get the position to which the map was moved.</p>
+
+<p style="margin-left: 30.0pt;">The code in the example shows the string corresponding to the position to which the map was moved (i.e.: POINT(Long Lat)).<br />
+<br />
+The event ControlValueChanged is overloaded with values, therefore the parameter could be Character type (instead of GeoPoint).</p>
+
+<p><br />
+<strong>2. Direction Layer (Directions between Locations)</strong></p>
+
+<p>In Maps (Grid with <a href="15309.html">Control Type property = Maps</a>), it is possible to view the best way between one or more locations (GeoPoints). To this end, the <a href="42225.html">Directions Layer property</a> is available.</p>
+
+<p>When you set the <a href="42225.html">Directions Layer property</a> to True, it is possible to draw the route between the points of the Grid. Each point or position in the Grid will be given by the attribute or variable configured in the <a href="42209.html">Location Attribute property</a>.</p>
+
+<p align="center"> <img src="./images/40806.gif" id="40806" class="WikiImage"/></p>
+
+<p>Also, when setting the <a href="42225.html">Directions Layer property</a> to True, two more properties are enabled to be configured: <a href="42226.html">Transport Type property</a> and <a href="40671.html">Default Route Class property</a>.</p>
+
+<p><br />
+<strong>Another way to show the route between Locations (without using the Direction Layer property)</strong></p>
+
+<p>In certain cases, you don't want to draw the route beforehand because you don't have the Locations in advance, but you need them to be provided to you on the spot. For this, the <a href="44309.html">Maps External Object</a> provides Geography functionalities and is the evolution of the Geolocation External Object.</p>
+
+<p>The <a href="44309.html">Maps External Object</a> provides the following to show the route between Locations:</p>
+
+<ul>
+	<li><strong>CalculateDirections method</strong></li>
+</ul>
+
+<p style="margin-left: 30.0pt;"><strong>This method allows calculating the direction between two GeoPoints.</strong></p>
+
+<p style="margin-left: 30.0pt;">Syntax: Maps.CalculateDirections(&amp;InitialGeoPoint,&amp;FinalGeoPoint)</p>
+
+<p style="margin-left: 30.0pt;">After invoking the method, the route(s) are provided asynchronously in an SDT from the event DirectionsCalculated.</p>
+
+<ul>
+	<li><strong>DirectionsCalculated event</strong></li>
+</ul>
+
+<p style="margin-left: 30.0pt;">This event returns the direction between two GeoPoints after calling the method CalculateDirections.</p>
+
+<p style="margin-left: 30.0pt;">Syntax: DirectionsCalculated(SDT Collection Route, Genexus.Common.Messages)</p>
+
+<h4 style="margin-left: 40.0px;"><a id="Example" class="HashLink" href="#Example"><strong>Example</strong></a></h4 style="margin-left: 40.0px;">
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Maps.DirectionsCalculated(&amp;routes, &amp;messages)
+    composite
+         if &amp;messages.Count = 0 
+           &amp;i = 1
+           do While &amp;routes.Count &gt;= &amp;i 
+             &amp;geoline = &amp;Routes.Item(&amp;i).geoline
+             Grid1.DrawGeoLine(&amp;geoline,&quot;8&quot;)
+             &amp;i+=1
+           enddo
+        endif
+    endcomposite
+endevent 
+
+&amp;routes is a collection variable of the Route Structure Data Type.
+</pre>
+
+<p style="margin-left: 30.0pt;">To draw on a map the direction between two or more locations obtained with the <a href="44309.html">Maps External Object</a>, there is a set of methods offered by the Grid of Control Type = Maps.</p>
+
+<ul>
+	<li><strong><a href="https://wiki.genexus.com/commwiki/wiki?47026,," target="_blank">Draw Geoline mehod</a></strong></li>
+</ul>
+
+<p style="margin-left: 60.0pt;">This method allows you to draw a <a href="32408.html">GeoLine</a> in the Grid control whose Control Type property = Maps.</p>
+
+<p style="margin-left: 60.0pt;"><strong>Syntax: </strong>DrawGeoLine(Geoline, Theme Class Name)</p>
+
+<p style="margin-left: 60.0pt;">Theme Class Name is based on the Character data type.</p>
+
+<ul>
+	<li><strong>SetZoomLevel method</strong></li>
+</ul>
+
+<p style="margin-left: 60.0pt;">This method allows you to specify the Zoom level in the Grid control whose property control Type = Maps.</p>
+
+<p style="margin-left: 60.0pt;"><strong>Syntax:</strong> SetZoomLevel(Numeric)</p>
+
+<p style="margin-left: 60.0pt;">Numeric is a value between 1 and 23</p>
+
+<ul>
+	<li><strong>SetMapCenter method</strong></li>
+</ul>
+
+<p style="margin-left: 60.0pt;">This method allows you to specify the center of the Map in the Grid control whose property control Type = Maps.</p>
+
+<p style="margin-left: 60.0pt;"><strong>Syntax:</strong> SetMapCenter(GeolPoint, Numeric)</p>
+
+<p style="margin-left: 60.0pt;">GeoPoint Indicates the coordinate where the map will be centered.<br />
+Numeric Indicates the Zoom level (optional).</p>
+
+<p style="margin-left: 80.0px;">Example: </p>
+
+<pre class="Code" style="margin-left: 80.0px;">
+    composite
+        &amp;geoPoint.FromString(&quot;POINT( -56.1701774597168 -34.91676309400329)&quot;)
+        Grid1.SetMapCenter(&amp;geoPoint,8)
+    endcomposite</pre>
+
+<p class="Code" style="margin-left: 40.0px;"> </p>
+
+<h2><a id="3.+Animation+Layer" class="HashLink" href="#3.+Animation+Layer">3. Animation Layer</a></h2>
+
+<p>In Maps (Grid with <a href="15309.html">Control Type property = Maps</a>), it is possible to view the animation of one or more locations (GeoPoints). This allows you to show, for example, the fleet of units in a typical mobility application such as Uber, Cabify, etc. </p>
+
+<p>To solve something like this you need to configure the <a href="43487.html">Animations Layer property</a> = True. This will make it possible to view at runtime the animation of the records specified in the grid given by an attribute or variable that indicates its location (GeoPoint or Geolocation Domain).</p>
+
+<p>More information: <a href="43487.html">Animations Layer property</a></p>
+
+<h3><br />
+Scope:</h3>
+
+<p><strong>Objects: </strong><a href="24829.html">Panels</a>.<br />
+<strong>Generators:  </strong>Android, Apple, Angular</p>
+
+<p><span style="font-size: 13.0px;"></span></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46337.html">Editable Geographies property</a></TD><TD><a href="44747.html">Google API Key property (at Environment level)</a></TD></TR><TR><TD><a href="15309.html">Maps Control Type</a></TD><TD><a href="46592.html">Multi-experience with GeneXus 17</a></TD><TD><a href="42223.html">Selection Layer property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/03/22 06:07 AM</em></font></td></TR></table></font>

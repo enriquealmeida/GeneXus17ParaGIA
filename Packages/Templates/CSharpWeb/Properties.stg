@@ -1,0 +1,626 @@
+﻿group PropertiesCSharpWeb;
+
+delimiters "$", "$"
+
+emptyValue ::= [
+	"string":		"\"\"",
+	"decimal":		"0M",
+	"int":			"0",
+	"smallint":		"0",
+	"byte":			"0",
+	"bigint":		"0",
+	"datetime":		"DateTime.MinValue",
+	"bool":			"false",
+	"guid":			"Guid.Empty",
+	default:		"null"
+]
+
+xmlElements ::= [
+	"CData":	"Element",
+	default:	key
+]
+
+level_properties(level,dataTypes)::=<<
+$level.OrderedMapping:{item| $ordered_property(level, dataTypes, item)$};separator="\r\n"$
+$level_should_serialize(level, dataTypes)$
+>>
+
+level_should_serialize(level, dataTypes)::=<<
+public override bool ShouldSerializeSdtJson()
+{
+$if (level.HasAllJSonNoProp)$
+	return (
+		$level.OrderedMapping:{item| $should_serialize_cond(level, item)$};separator="\r\n"$ 
+		false);
+$else$
+	return true;
+$endif$
+}
+
+$if (level.IsJsonNullValueWhenNull)$
+public override bool SdtSerializeAsNull()
+{
+  return ( 
+  $level.OrderedMapping:{item| $serialize_as_null_cond(level, item)$};separator=" "$ 
+  true);
+}
+$endif$
+>>
+
+ordered_property(level,dataTypes,item)::=<%
+$if (item.IsLevel)$
+	$level_property(level,dataTypes,item)$
+$else$
+	$item_property(level,dataTypes,item)$
+$endif$
+%>
+
+
+item_property(level, dataTypes, item)::=<%
+$if (item.IsCollection)$
+$add_collection_item_property(level,item, dataTypes)$
+$else$
+$add_item_property(level,item, dataTypes)$
+$endif$
+%>
+
+level_property(level, dataTypes, lvl)::=<%
+$if (lvl.IsCollection)$
+	$collection_level(level, dataTypes, lvl)$
+$else$
+	$plain_level(level, dataTypes, lvl)$
+$endif$
+%>
+
+collection_level(level, dataTypes, lvl)::=<<
+$if (lvl.IsWrappedSerialized)$
+[SoapElement(ElementName="$lvl.XmlName$" )]
+[XmlArray(ElementName="$lvl.XmlName$" $xml_namespace(lvl)$ )]
+[XmlArrayItemAttribute(ElementName="$lvl.XmlCollectionItemName$" $xml_collectionitem_namespace(lvl)$, IsNullable=false )]
+$else$
+[SoapElement(ElementName = "$lvl.XmlCollectionItemName$" )]
+[XmlElement(ElementName = "$lvl.XmlCollectionItemName$" $xml_collectionitem_namespace(lvl)$)]
+$endif$
+public GXBaseCollection<$class_name(level)$_$lvl.NameOrCollectionItem$> gxTpr_$lvl.NormalizedName$
+{
+	get {
+		if ( gxTv_$class_name(level)$_$lvl.NormalizedName$ == null )
+		{
+			gxTv_$class_name(level)$_$lvl.NormalizedName$ = new GXBaseCollection<$class_name(level)$_$lvl.NameOrCollectionItem$>( context, "$level.FullItemName$.$lvl.CollectionItemName$", "$lvl.XmlNamespace$");
+		\}
+		return gxTv_$class_name(level)$_$lvl.NormalizedName$;
+	\}
+	set {
+		$assign_null_variable(level, lvl, "false")$
+		gxTv_$class_name(level)$_$lvl.NormalizedName$ = value;
+		SetDirty("$lvl.NormalizedName$");
+	\}
+\}
+
+$if (lvl.IsWrappedSerialized || lvl.AvoidNullSerialization || level.IsJsonNullValueWhenNull)$
+$set_is_null(level,lvl)$
+$endif$
+
+>>
+
+plain_level(level, dataTypes, lvl)::=<<
+[SoapElement(ElementName="$lvl.XmlName$" )]
+[XmlElement(ElementName="$lvl.XmlName$" $xml_namespace(lvl)$)]
+public $class_name(level)$_$lvl.Name$ gxTpr_$lvl.NormalizedName$
+{
+	get {
+		if ( gxTv_$class_name(level)$_$lvl.NormalizedName$ == null )
+		{
+			gxTv_$class_name(level)$_$lvl.NormalizedName$ = new $class_name(level)$_$lvl.Name$(context);
+		\}
+		$assign_null_variable(level, lvl, "false")$
+		return gxTv_$class_name(level)$_$lvl.NormalizedName$;
+	\}
+	set {
+		$assign_null_variable(level, lvl, "false")$
+		gxTv_$class_name(level)$_$lvl.NormalizedName$ = value;
+		SetDirty("$lvl.NormalizedName$");
+	\}
+
+\}
+
+$set_is_null(level,lvl)$
+
+>>
+
+
+add_item_property(level,item, dataTypes)::=<%
+$if (item.IsDecimal)$
+$add_decimal_property(level,item, dataTypes)$
+$elseif (item.IsDateTime || item.IsDate)$
+$add_datetime_property(level,item, dataTypes)$
+$else$
+$add_other_property(level,item, dataTypes)$
+$endif$
+%>
+
+
+add_other_property(level,item, dataTypes)::=<%
+$if(item.IsUnknownContent)$
+$add_unknown_property(level,item, dataTypes)$
+$do_not_serialize()$
+$elseif (item.IsBlob)$
+$add_blob_property(level,item, dataTypes)$
+$do_not_serialize()$
+$elseif (item.IsXMLCData)$
+$add_cdata_property(level,item, dataTypes)$
+$do_not_serialize()$
+$endif$
+
+$if (item.CustomType)$
+$add_custom_property(level,item, dataTypes)$
+$else$
+$add_default_property(level,item, dataTypes)$
+$endif$
+$if (item.IncludeGXI)$
+$add_gxi_property(level, item, dataTypes)$
+$endif$
+%>
+
+
+do_not_serialize()::=<<
+$if (!IsNetCore)$
+[SoapIgnore]
+$endif$
+[XmlIgnore]
+>>
+
+serialize(item, nullable)::=<%
+$if (item.IsXMLValue)$
+[XmlText]
+$else$
+	$if(!item.IsXMLCData)$
+[Soap$xmlElements.(item.XmlType)$($xmlElements.(item.XmlType)$Name="$item.XmlName$")]$\n$
+	$endif$
+[Xml$xmlElements.(item.XmlType)$($xmlElements.(item.XmlType)$Name="$item.XmlName$"$if(item.IsNullableXmlElement && !item.IsXMLNoTagWhenNull)$ , IsNullable=true$endif$$xml_namespace(item)$)]
+$endif$
+%>
+
+get_context()::=<<
+IGxContext context = this.context == null ? new GxContext() : this.context;
+>>
+
+item_collection(item)::=<<
+$if (item.IsEO)$GXExternalCollection$else$$if (item.CustomType)$GXBaseCollection$else$GxSimpleCollection$endif$$endif$
+>>
+
+item_collection_type(item)::=<<
+$if (item.SerializationType)$$dataTypes.(item.SerializationType)$$else$$item.CustomType$$endif$
+>>
+
+add_collection_item_property(level,item, dataTypes)::=<<
+$if (item.IsWrappedSerialized)$
+[SoapElement(ElementName="$item.XmlName$" )]
+[XmlArray(ElementName="$item.XmlName$" $xml_namespace(item)$ )]
+[XmlArrayItemAttribute(ElementName="$item.XmlCollectionItemName$" $xml_collectionitem_namespace(item)$, IsNullable=false )]
+$else$
+[SoapElement(ElementName="$item.XmlCollectionItemName$" )]
+[XmlElement(ElementName="$item.XmlCollectionItemName$" $xml_collectionitem_namespace(item)$ )]
+$endif$
+public $item_collection(item)$<$item_collection_type(item)$> $public_property(item)$_$item_collection(item)$
+{
+	get {
+		if ( gxTv_$class_name(level)$_$item.NormalizedName$ == null )
+		{
+			gxTv_$class_name(level)$_$item.NormalizedName$ = new $item_collection(item)$<$item_collection_type(item)$>( $if (item.CustomType)$context, "$item.ExposedName$", "$item.XmlNamespace$"$endif$);
+		}
+		return gxTv_$class_name(level)$_$item.NormalizedName$;
+	}
+	set {
+		$assign_null_variable(level, item, "false")$
+		gxTv_$class_name(level)$_$item.NormalizedName$ = value;
+	}
+}
+
+$if (!IsNetCore)$
+[SoapIgnore]
+$endif$
+[XmlIgnore]
+public $item_collection(item)$<$item_collection_type(item)$> $public_property(item)$
+{
+	get {
+		if ( gxTv_$class_name(level)$_$item.NormalizedName$ == null )
+		{
+			gxTv_$class_name(level)$_$item.NormalizedName$ = new $item_collection(item)$<$item_collection_type(item)$>($if (item.CustomType)$ context, "$item.ExposedName$", "$item.XmlNamespace$"$endif$);
+		}
+		$assign_null_variable(level, item, "false")$
+		return gxTv_$class_name(level)$_$item.NormalizedName$ ;
+	}
+	set {
+		$assign_null_variable(level, item, "false")$
+		gxTv_$class_name(level)$_$item.NormalizedName$ = value;
+		SetDirty("$item.NormalizedName$");
+	}
+}
+
+$set_is_null(level,item)$
+>>
+
+add_unknown_property(level,item, dataTypes)::=<<
+[XmlAnyElement]
+public System.Xml.XmlElement[] $public_property(item)$_UnknownContent
+{
+	get {
+		return XmlToElements( gxTv_$class_name(level)$_$item.NormalizedName$);
+	}
+	set {
+		gxTv_$class_name(level)$_$item.NormalizedName$ = "";
+		if (value != null)
+		{
+			foreach (System.Xml.XmlElement unknownItem in value)
+				gxTv_$class_name(level)$_$item.NormalizedName$ += unknownItem.OuterXml;
+		}
+	}
+}
+>>
+
+add_cdata_property(level,item, dataTypes)::=<<
+$serialize(item, false)$
+public GXCData $public_property(item)$_GXCData
+{
+	get {
+		return new GXCData(gxTv_$class_name(level)$_$item.NormalizedName$) ;
+	}
+	set {
+		gxTv_$class_name(level)$_$item.NormalizedName$ = ($dataTypes.(item.SerializationType)$)(value.content);
+	}
+}
+>>
+
+add_blob_property(level,item, dataTypes)::=<<
+$serialize(item, false)$
+$gx_upload()$
+public $dataTypes.(item.Type)$ $public_property(item)$_Blob
+{
+	get{
+		$get_context()$
+		return context.FileToByteArray(gxTv_$class_name(level)$_$item.NormalizedName$) ;
+	}
+	set {
+		$get_context()$
+		gxTv_$class_name(level)$_$item.NormalizedName$=context.FileFromByteArray( value) ;
+	}
+}
+>>
+
+add_gxi_property(level, item, dataTypes)::=<<
+[SoapElement(ElementName="$item.Name$_GXI" )]
+[XmlElement(ElementName="$item.Name$_GXI" )]
+public string $public_property(item)$_gxi
+{
+	get {
+		return gxTv_$class_name(level)$_$item.NormalizedName$_gxi ;
+	}
+	set {
+		gxTv_$class_name(level)$_$item.NormalizedName$_gxi = value;
+		SetDirty("$item.NormalizedName$_gxi");
+	}
+}
+>>
+
+add_datetime_property(level,item, dataTypes)::=<<
+$serialize(item, false)$
+public string $public_property(item)$_Nullable
+{
+	get {
+		if ( gxTv_$class_name(level)$_$item.NormalizedName$ == DateTime.MinValue)
+			return null;
+		return new $item_converter(item)$(gxTv_$class_name(level)$_$item.NormalizedName$$if (item.DateSerializationWithTimezone)$, DateTimeUtil.CurrentOffset(context)$if (item.DateSerializationWithMilliseconds)$, true$else$, false$endif$$endif$).value ;
+	}
+	set {
+		gxTv_$class_name(level)$_$item.NormalizedName$ = DateTimeUtil.CToD2(value);
+	}
+}
+
+$do_not_serialize()$
+$add_default_property_object(level,item,dataTypes)$
+>>
+
+item_converter(item)::=<<
+$if (item.IsDateTime)$GxDatetimeString$else$GxDateString$endif$
+>>
+
+
+add_decimal_property(level,item, dataTypes)::=<<
+$serialize(item, false)$
+$if(item.IsXMLNoTagWhenNull)$
+$add_default_property_notag(level,item, dataTypes)$
+$elseif(item.IsNullableXmlElement)$
+$add_default_property_nilable(level,item,dataTypes)$
+$else$
+public string $public_property(item)$_double
+{
+	get {
+		return Convert.ToString(gxTv_$class_name(level)$_$item.NormalizedName$, System.Globalization.CultureInfo.InvariantCulture);
+	}
+	set {
+		gxTv_$class_name(level)$_$item.NormalizedName$ = (decimal)(Convert.ToDecimal(value, System.Globalization.CultureInfo.InvariantCulture));
+	}
+}
+$do_not_serialize()$
+$add_default_property_object(level,item,dataTypes)$
+$endif$
+>>
+
+should_serialize(level, item)::=<<
+$if (item.IsXMLNoTagWhenNull)$
+$should_serialize_signature(level,item)$
+{
+	$should_serialize_return(level,item)$
+}
+$endif$
+$if (item.IsJsonNoPropertyWhenNull || item.IsJsonNullValueWhenNull)$
+$should_serialize_signature_for_json(level,item)$
+{
+$should_serialize_return(level,item)$
+}
+$endif$
+>>
+
+should_serialize_signature(level, item)::=<<
+$if(item.IsCollection && !item.IsLevel)$
+public bool ShouldSerialize$public_property(item)$_$item_collection(item)$()
+$else$
+public bool ShouldSerialize$public_property(item)$()
+$endif$
+>>
+
+should_serialize_signature_for_json(level, item)::=<<
+public bool ShouldSerialize$public_property(item)$$if(item.IsCollection)$_$item_collection(item)$$endif$_Json()
+>>
+
+
+should_serialize_cond(level, item)::=<<
+$if (item.IsLevel)$$should_serialize_object_condition_part(level,item)$ ||$else$ $should_serialize_object_condition_part(level,item)$|| $endif$
+>>
+
+should_serialize_object_condition_part(level, item)::=<<
+$if(item.IsJsonNoPropertyWhenNull)$ShouldSerialize$public_property(item)$$if(item.IsCollection)$_$item_collection(item)$$endif$_Json()$else$true$endif$
+>>
+
+serialize_as_null_cond(level, item)::=<< $if(item.IsLevel)$$serialize_as_null_object_condition_part(level,item)$ && $else$ $serialize_as_null_object_condition_part(level,item)$ && $endif$ 
+>>
+
+serialize_as_null_object_condition_part(level, item)::=<< $if(item.IsJsonNullValueWhenNull || item.isJsonNoPropertyWhenNull)$ ! ShouldSerialize$public_property(item)$$if(item.IsCollection)$_$item_collection(item)$$endif$_Json()$else$$should_serialize_asnull_item (level,item)$$endif$
+>>
+
+should_serialize_asnull_item(level, item)::=<<
+$if (item.IsCollection)$
+	$internal_property(level,item)$ == null || $internal_property(level,item)$.Count < 0
+$else$ 
+$if (item.IsLevel)$
+	($internal_property(level,item)$ == null || ! $internal_property(level,item)$.ShouldSerializeSdtJson())
+$else$
+$if (item.IsDate || item.IsDateTime)$
+	$internal_property(level,item)$ == DateTime.MinValue
+$elseif (item.CustomType)$
+	$internal_property(level,item)$ == null
+$else$
+	$internal_property(level,item)$_N
+$endif$ 
+$endif$
+$endif$
+>>
+
+should_serialize_return(level, item)::=<<
+$if (item.IsCollection)$
+	return $internal_property(level,item)$ != null && $internal_property(level,item)$.Count > 0;
+$else$
+	$if (item.IsLevel)$
+		return ($internal_property(level,item)$ != null && $internal_property(level,item)$.ShouldSerializeSdtJson());
+	$else$
+		$if (item.IsDate || item.IsDateTime)$
+	return $internal_property(level,item)$ != DateTime.MinValue;
+		$elseif (item.CustomType)$
+	return $internal_property(level,item)$ != null;
+		$else$
+	return !$internal_property(level,item)$_N;
+		$endif$
+	$endif$
+$endif$
+>>
+
+add_custom_property(level,item, dataTypes)::=<<
+$serialize(item, false)$
+$if(item.IsNullableXmlElement)$
+public $item.CustomType$ $public_property(item)$
+{
+	get {
+		if (gxTv_$class_name(level)$_$item.NormalizedName$_N)
+			return null;
+		return gxTv_$class_name(level)$_$item.NormalizedName$; 
+	}
+	set {
+		if (value == null) {
+			$assign_null_variable(level, item, "true")$
+			gxTv_$class_name(level)$_$item.NormalizedName$ = null;
+		} else {
+			$assign_null_variable(level, item, "false")$
+			gxTv_$class_name(level)$_$item.NormalizedName$ = value;
+		}
+		SetDirty("$item.NormalizedName$");
+	}
+}
+$else$
+public $item.CustomType$ $public_property(item)$
+{
+	get {
+		if ( gxTv_$class_name(level)$_$item.NormalizedName$ == null )
+		{
+			gxTv_$class_name(level)$_$item.NormalizedName$ = new $item.CustomType$(context);
+		}
+		return gxTv_$class_name(level)$_$item.NormalizedName$; 
+	}
+	set {
+		gxTv_$class_name(level)$_$item.NormalizedName$ = value;
+		SetDirty("$item.NormalizedName$");
+	}
+}
+$endif$
+$set_is_null(level, item)$
+>>
+
+
+add_default_property(level,item, dataTypes)::=<<
+$if (item.IsSimple && !item.IsXMLCData && !item.IsUnknownContent)$
+$serialize(item, false)$
+$endif$
+$if (item.IncludeGXI)$
+$gx_upload()$
+$endif$
+
+$if(item.IsXMLNoTagWhenNull)$
+$add_default_property_notag(level,item, dataTypes)$
+$elseif(item.IsNullableXmlElement)$
+$add_default_property_nilable(level,item,dataTypes)$
+$else$
+$add_default_property_object(level,item,dataTypes)$
+$endif$
+>>
+
+add_default_property_notag(level,item, dataTypes)::=<<
+public $dataTypes.(item.SerializationType)$ $public_property(item)$
+{
+	get {
+		return gxTv_$class_name(level)$_$item.NormalizedName$; 
+	}
+	set {
+		$assign_null_variable(level, item, "false")$
+		gxTv_$class_name(level)$_$item.NormalizedName$ = value;
+		SetDirty("$item.NormalizedName$");
+	}
+}
+
+$should_serialize(level,item)$
+>>
+
+add_default_property_nilable(level,item, dataTypes)::=<<
+$if (item.IsNumber || item.IsBoolean)$
+public Nullable<$dataTypes.(item.SerializationType)$> $public_property(item)$_Nullable
+{
+	get {
+		if (gxTv_$class_name(level)$_$item.NormalizedName$_N)
+			return null;
+		return gxTv_$class_name(level)$_$item.NormalizedName$; 
+	}
+	set {
+		if (value == null) {
+			$assign_null_variable(level, item, "true")$
+			gxTv_$class_name(level)$_$item.NormalizedName$ = $emptyValue.(item.SerializationType)$;
+		} else {
+			$assign_null_variable(level, item, "false")$
+			gxTv_$class_name(level)$_$item.NormalizedName$ = value.Value; 
+		}
+		SetDirty("$item.NormalizedName$");
+	}
+}
+$do_not_serialize()$
+public $dataTypes.(item.SerializationType)$ $public_property(item)$
+{
+	get {
+		return gxTv_$class_name(level)$_$item.NormalizedName$; 
+	}
+	set {
+		$assign_null_variable(level, item, "false")$
+		gxTv_$class_name(level)$_$item.NormalizedName$ = value; 
+		SetDirty("$item.NormalizedName$");
+	}
+}
+
+$else$
+public $dataTypes.(item.SerializationType)$ $public_property(item)$
+{
+	get {
+		if (gxTv_$class_name(level)$_$item.NormalizedName$_N)
+			return null;
+		return gxTv_$class_name(level)$_$item.NormalizedName$; 
+	}
+	set {
+		if (value == null) {
+			$assign_null_variable(level, item, "true")$
+			gxTv_$class_name(level)$_$item.NormalizedName$ = $emptyValue.(item.SerializationType)$;
+		} else {
+			$assign_null_variable(level, item, "false")$
+			gxTv_$class_name(level)$_$item.NormalizedName$ = value; 
+		}
+		SetDirty("$item.NormalizedName$");
+	}
+}
+$endif$
+
+$should_serialize(level,item)$
+
+>>
+
+add_default_property_object(level,item, dataTypes)::=<<
+public $dataTypes.(item.SerializationType)$ $public_property(item)$
+{
+	get {
+		return gxTv_$class_name(level)$_$item.NormalizedName$; 
+	}
+	set {
+		$assign_null_variable(level, item, "false")$
+		gxTv_$class_name(level)$_$item.NormalizedName$ = value;
+		SetDirty("$item.NormalizedName$");
+	}
+}
+
+$should_serialize(level,item)$
+>>
+
+gx_upload()::=<<
+[GxUpload()]
+>>
+
+xml_namespace(itemorlvl)::=<%
+$if (!itemorlvl.XmlInheritsNamespace)$
+$if (itemorlvl.XmlElementIsUnqualified)$
+, Form = System.Xml.Schema.XmlSchemaForm.Unqualified
+$else$ 
+, Namespace="$itemorlvl.XmlNamespace$"
+$endif$
+$endif$
+%>
+
+xml_collectionitem_namespace(itemorlvl)::=<%
+$if (!itemorlvl.CollectionItemInheritsNamespace)$
+$if (itemorlvl.CollectionItemElementIsUnqualified)$
+, Form = System.Xml.Schema.XmlSchemaForm.Unqualified
+$else$ 
+, Namespace="$itemorlvl.XmlCollectionItemNamespace$"
+$endif$
+$endif$
+%>
+
+set_is_null(level, item)::=<<
+
+public void gxTv_$class_name(level)$_$item.NormalizedName$_SetNull()
+{
+	$assign_null_variable(level, item, "true")$
+	gxTv_$class_name(level)$_$item.NormalizedName$ = null;
+}
+
+public bool gxTv_$class_name(level)$_$item.NormalizedName$_IsNull()
+{
+	return gxTv_$class_name(level)$_$item.NormalizedName$ == null;
+}
+$should_serialize(level,item)$
+>>
+
+assign_null_variable(level, item, value)::=<<
+$if (level.IsJsonNullValueWhenNull||  item.AvoidNullSerialization || item.HasNullVariable)$
+gxTv_$class_name(level)$_$item.NormalizedName$_N = $value$;$endif$
+>>
+
+public_property(item)::=<%
+gxTpr_$item.NormalizedName$
+%>
+
+internal_property(level,item)::=<%
+gxTv_$class_name(level)$_$item.NormalizedName$
+%>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Dynamic Calls in Smart Devices</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17411,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Dynamic Calls in Smart Devices</h1>
+<!--Dynamic Calls in Smart Devices--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><a href="8260.html">Call command</a> is supported in <a href="17042.html">Native Mobile Applications Events</a>. The objects to be called can be defined at design time or in execution time. We call the latter dynamic or variable calls.</p>
+
+<p>The supported syntax is:</p>
+
+<p><b>Call(</b> {<a href='''>'</a><i>pgm </i><a href='''>'</a> | <i>&amp;var</i> | ATT:att} [ {,<i>parm</i>} …]<b>)</b></p>
+
+<p>Other supported ways are stated in <a href="17160.html">Calls to Elements in Work Withs from Native Mobile Applications Events</a>.</p>
+
+<h3><a id="Dynamic+Calls" class="HashLink" href="#Dynamic+Calls">Dynamic Calls</a></h3>
+
+<p><strong>Syntax</strong></p>
+
+<p><b>Call(</b> {<i>&amp;var</i> | ATT:att}[ {, <i>parm</i>} …]<b>)</b></p>
+
+<p>The format of <em>&amp;var</em> or <em>att</em> is &lt;type&gt;:&lt;name&gt;[?&lt;parameter&gt;[{, <i>parm</i>} …]</p>
+
+<p>The supported types are:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 550.0px;">
+	<tbody>
+		<tr>
+			<td>sd</td>
+			<td>Dashboard, WorkWith for Smart Devices pattern instance, Panel for Smart Devices</td>
+		</tr>
+		<tr>
+			<td>prc</td>
+			<td>REST Procedure</td>
+		</tr>
+		<tr>
+			<td>wbp</td>
+			<td>Web Object</td>
+		</tr>
+		<tr>
+			<td>eo</td>
+			<td>External Object</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>&lt;name&gt;</td>
+			<td>Stands for the object name</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Note:<br />
+Since <a href="https://wiki.genexus.com/commwiki/wiki?20247,," target="_blank">GeneXus X Evolution 3</a> adds optimizations in build mechanisms, only the necessary metadata is generated for each main object and therefore you must also include dummy calls to the objects that are called dynamically and are not in the call tree of the main.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p>1. A dispatcher with fixed parameter</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ViewPerson'
+    Composite
+        &amp;Object = GetPersonDetailLayout(PersonType)
+        call(&amp;Object,PersonId)
+    EndComposite
+EndEvent</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+procedure: GetPersonDetailLayout
+
+Parm(in:&amp;PersonType,out:&amp;Object);
+
+if &amp;PersonType = Type.Person
+   &amp;Object = &quot;sd:WorkWithDevicesPerson.Person.Detail&quot;
+else
+   &amp;Object = &quot;sd:WorkWithDevicesDean.Dean.Detail&quot;
+endif</pre>
+
+<div>
+<div>2. A dispatcher with dynamic parameter assignment</div>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ViewPerson'
+    Composite
+        &amp;Object = GetPersonDetailLayout(PersonType,PersonId)
+        call(&amp;Object)
+    EndComposite
+EndEvent</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+procedure: GetPersonDetailLayout
+
+Parm(in:&amp;PersonType,in:&amp;PersonId,out:&amp;Object);
+
+if &amp;PersonType = Type.Person
+   &amp;Object = &quot;sd:WorkWithDevicesPerson.Person.Detail?&quot;+&amp;PersonId.ToString().Trim()
+else
+   &amp;Object = &quot;sd:WorkWithDevicesDean.Dean.Detail?&quot;+&amp;PersonId.ToString().Trim()
+endif
+//and in some place of your main or object included in the main's call tree:
+if 1 = 0
+   WorkWithDevicesPerson.Person.Detail(&quot;1&quot;)
+   WorkWithDevicesDean.Dean.Detail(&quot;1&quot;)
+endif
+</pre>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<h4><a id="Could+not+execute+dyncall" class="HashLink" href="#Could+not+execute+dyncall">Could not execute dyncall</a></h4>
+
+<p>The following error appears trying to execute a dynamic call.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Could not execute dyncall to /webapp/sd:objectname. The referenced object does not exist or is not included in the application call tree; check documentation for more information
+</pre>
+
+<p>Make sure you include a static code reference to the object to force its compilation and metadata generation.</p>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>If the variable &amp;Object is empty, the dynamic call ignores it.</p>
+
+<p></p>
+</div>
+</div>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="19835.html">Auto-Registration in SD: What to do when a certain action requires the user to log in</a></TD><TD><a href="23561.html">Offline Database Object Table selection</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/24/21 01:17 PM</em></font></td></TR></table></font>

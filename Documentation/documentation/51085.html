@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - How to revoke tokens from external IDPs</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?51085,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - How to revoke tokens from external IDPs</h1>
+<!--GAM - How to revoke tokens from external IDPs--><div class="TableWikiBody" id="tblwikibody"><p>When a user <a href="22082.html">is removed from a GAM application</a>, the user's tokens should be revoked from external IDPs.</p>
+
+<p>To achieve this requirement, the different Identity Providers have endpoints.</p>
+
+<p>The following Procedures solve the need for some external IDPs. These<span style=""> Procedures and their invocations must be defined by the GeneXus developer.</span></p>
+
+<p>It is necessary to pass the &amp;UserGUID variable as input to the Procedures containing the user whose token should be revoked. This makes it possible to make the invocation for the same logged-in user or as an administrator passing the GUID of the user to be deleted.</p>
+
+<h3 class="Code"><a id="Apple" class="HashLink" href="#Apple">Apple</a></h3 class="Code">
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AuthenticationTypeName = "apple"
+//Get the Apple tokens for the user and fetch the last one
+&amp;GAMSessionLogFilter.UserGUID = &amp;UserGUID
+&amp;GAMSessionLogFilter.AuthenticationTypeName = &amp;AuthenticationTypeName
+&amp;GAMSessionLogCollection = GAMRepository.GetSessionLogsOrderBy(&amp;GAMSessionLogFilter, GAMSessionLogListOrder.Date_Desc, &amp;Errors)
+//Load of the authentication type is performed to obtain the client id and secret
+&amp;GAMAuthenticationTypeApple.Load(&amp;AuthenticationTypeName)
+For &amp;GAMSessionLog in &amp;GAMSessionLogCollection
+    If not &amp;GAMSessionLog.ExternalToken.IsEmpty()
+        Do "AppleRevoke"
+        Exit
+    EndIf
+EndFor
+
+Sub "AppleRevoke"
+    //DOC: https://developer.apple.com/documentation/sign_in_with_apple/revoke_tokens
+    &amp;HttpClient.Host = !"appleid.apple.com"
+    &amp;httpClient.Secure    = 1
+    &amp;httpClient.AddHeader(!"Content-Type", !"application/x-www-form-urlencoded")
+    &amp;HttpClient.AddVariable(!"client_id", &amp;GAMAuthenticationTypeApple.Apple.ClientId.ToString())
+    &amp;HttpClient.AddVariable(!"client_secret", &amp;GAMAuthenticationTypeApple.Apple.ClientSecret.ToString())
+    &amp;HttpClient.AddVariable(!"token",&amp;GAMSessionLog.ExternalToken)
+    &amp;HttpClient.AddVariable(!"token_type_hint",!"access_token")
+    &amp;HttpClient.Execute(HttpMethod.Post, !"/auth/revoke")
+    If &amp;httpClient.StatusCode = 200
+        //OK
+    Else
+        Msg(Format("Error when trying to revoke %1 token %2:%3 - %4 ", &amp;AuthenticationTypeName, &amp;httpClient.StatusCode, &amp;httpClient.ErrDescription, &amp;httpClient.ToString()), status)
+    EndIf
+EndSub</pre>
+
+<p> </p>
+
+<h3 class="Code"><a id="Google" class="HashLink" href="#Google">Google</a></h3 class="Code">
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AuthenticationTypeName = "google"
+//Get the Google tokens for the user and fetch the last one
+&amp;GAMSessionLogFilter.UserGUID = &amp;UserGUID
+&amp;GAMSessionLogFilter.AuthenticationTypeName = &amp;AuthenticationTypeName
+&amp;GAMSessionLogCollection = GAMRepository.GetSessionLogsOrderBy(&amp;GAMSessionLogFilter, GAMSessionLogListOrder.Date_Desc, &amp;Errors)
+For &amp;GAMSessionLog in &amp;GAMSessionLogCollection
+    If not &amp;GAMSessionLog.ExternalToken.IsEmpty()
+        Do "GoogleRevoke"
+        Exit
+    EndIf
+EndFor
+
+Sub "GoogleRevoke"
+    //DOC: https://developers.google.com/identity/protocols/oauth2/web-server#tokenrevoke
+    &amp;HttpClient.Host = !"oauth2.googleapis.com"
+    &amp;httpClient.Secure    = 1
+    &amp;httpClient.AddHeader(!"Content-Type", !"application/x-www-form-urlencoded")
+    &amp;HttpClient.Execute(HttpMethod.Post, !"/revoke?token=" + &amp;GAMSessionLog.ExternalToken)
+    If &amp;httpClient.StatusCode = 200
+        //OK
+    Else
+        Msg(Format("Error when trying to revoke %1 token %2:%3 - %4 ", &amp;AuthenticationTypeName, &amp;httpClient.StatusCode, &amp;httpClient.ErrDescription, &amp;httpClient.ToString()), status)
+    EndIf
+EndSub</pre>
+
+<h3><a id="Azure" class="HashLink" href="#Azure">Azure</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AuthenticationTypeName = "azure"
+//Get the Azure tokens for the user and fetch the last one
+&amp;GAMSessionLogFilter.UserGUID = &amp;UserGUID
+&amp;GAMSessionLogFilter.AuthenticationTypeName = &amp;AuthenticationTypeName
+&amp;GAMSessionLogCollection = GAMRepository.GetSessionLogsOrderBy(&amp;GAMSessionLogFilter, GAMSessionLogListOrder.Date_Desc, &amp;Errors)
+&amp;GAMAuthenticationTypeOauth20.Load(&amp;AuthenticationTypeName)
+For &amp;GAMSessionLog in &amp;GAMSessionLogCollection
+    If not &amp;GAMSessionLog.ExternalToken.IsEmpty()
+        Do "AzureRevoke"
+        Exit
+    EndIf
+EndFor
+
+Sub "AzureRevoke"
+    //DOC: https://docs.microsoft.com/en-us/graph/api/user-revokesigninsessions?view=graph-rest-1.0&amp;tabs=http
+    &amp;HttpClient.Host = !"graph.microsoft.com"
+    &amp;httpClient.Secure    = 1
+    &amp;httpClient.AddHeader(!"Content-Type", !"application/json")
+    &amp;httpClient.AddHeader(!"Authorization", &amp;GAMSessionLog.ExternalToken)
+    &amp;GAMUser = GAMUser.GetByGUID(&amp;UserGUID,&amp;GAMErrorCollection)
+    If not &amp;GAMUser.GetExternalId().IsEmpty()
+        &amp;HttpClient.Execute(HttpMethod.Post, !"/v1.0/users/" + &amp;GAMUser.GetExternalId() + !"/revokeSignInSessions")
+        If &amp;httpClient.StatusCode = 200
+            //OK
+        Else
+            Msg(Format("Error when trying to revoke %1 token %2:%3 - %4 ", &amp;AuthenticationTypeName, &amp;httpClient.StatusCode, &amp;httpClient.ErrDescription, &amp;httpClient.ToString()), status)
+        EndIf
+    EndIf
+EndSub</pre>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?51086,," target="_blank">Download the .xpz file that contains the Procedures</a></p>
+
+<h3 class="Code"><a id="IDPs+Documentation" class="HashLink" href="#IDPs+Documentation">IDPs Documentation</a></h3 class="Code">
+
+<ul>
+	<li><strong>Apple:</strong><a href='https://developer.apple.com/documentation/sign_in_with_apple/revoke_tokens'>https://developer.apple.com/documentation/sign_in_with_apple/revoke_tokens</a></li>
+	<li><strong>Azure:</strong> <a href='https://docs.microsoft.com/en-us/graph/api/user-revokesigninsessions?view=graph-rest-1.0&amp;tabs=http'>https://docs.microsoft.com/en-us/graph/api/user-revokesigninsessions?view=graph-rest-1.0&amp;tabs=http</a></li>
+	<li><strong>Google:</strong><a href='https://developers.google.com/identity/protocols/oauth2/web-server#tokenrevoke'>https://developers.google.com/identity/protocols/oauth2/web-server#tokenrevoke</a> </li>
+	<li><strong>Facebook:</strong> (search invalidate a token) <a href='https://developers.facebook.com/docs/pages/access-tokens/?locale=es_LA#get-a-short-lived-user-access-token'>https://developers.facebook.com/docs/pages/access-tokens/?locale=es_LA#get-a-short-lived-user-access-token</a></li>
+	<li><strong>Twitter: </strong><a href='https://developer.twitter.com/en/docs/authentication/api-reference/invalidate_bearer_token'>https://developer.twitter.com/en/docs/authentication/api-reference/invalidate_bearer_token</a></li>
+</ul>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="22082.html">Users Deletions in GAM</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22082.html">GAM - Users</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/16/22 09:33 PM</em></font></td></TR></table></font>

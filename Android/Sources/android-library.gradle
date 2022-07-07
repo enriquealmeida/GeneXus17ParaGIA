@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.dokka'
+
+android {
+    compileSdkVersion android_build.compile_sdk
+
+    defaultConfig {
+        minSdkVersion android_build.min_sdk
+        targetSdkVersion android_build.target_sdk
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    compileOptions {
+        sourceCompatibility android_build.java_version
+        targetCompatibility android_build.java_version
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            all {
+                jvmArgs '-noverify'
+            }
+        }
+    }
+
+    lintOptions {
+        disable 'ResourceType', 'Orientation', 'WrongConstant', 'LongLogTag', 'MissingPermission'
+    }
+}
+
+dokkaJavadoc.configure {
+	dokkaSourceSets {
+		configureEach {
+			noAndroidSdkLink.set(false)
+		}
+	}
+}
+
+apply from: rootProject.file('code-quality.gradle')
+apply from: rootProject.file('mvn-push.gradle')
+if (hasProperty('isCI')) {
+    apply from: rootProject.file('ci.gradle')
+}

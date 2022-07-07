@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Parm rule</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6862,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Parm rule</h1>
+<!--Parm rule--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Declares the list of parameters that a <a href="1866.html">GeneXus Object</a> receives from the object(s) which invoke(s) it. </p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><strong>Parm(</strong>[<em>in</em>:|<em>out</em>:|<em>inout</em>:] <em>parm1, </em><em></em>[<em>in</em>:|<em>out</em>:|<em>inout</em>:] <em>parm2</em>, [<em>in</em>:|<em>out</em>:|<em>inout</em>:] <em>parm3</em>,…<strong>);</strong></p>
+
+<p>Where:</p>
+
+<p><em>in: | out: | inout: </em><br />
+    Are operators which allow defining for each parameter, how it is going to be used in the called object <a href="8220.html">(in, out, inout)</a>.</p>
+
+<p><em>parm1, parm2, parm3, ... :</em><br />
+   Are variables -defined in the called object- or attributes. You can decide for each parameter received, whether you declare an attribute or a variable, regardless of how it was sent.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>When an object is called from another object with parameters, the set of parameters received must be declared inside the Parm rule in the called object, respecting the order and the data type as they were sent, each one separated by a comma.</p>
+
+<p>Besides, it is optional to point out for each parameter, how it is going to be used  <a href="8220.html">Definition of type of parameters received (in, out, inout)</a>.</p>
+
+<p>If the object was invoked with <a href="16224.html">Call</a>, and N parameters were transferred, the N parameters must be declared in the parm rule. However, if the object was invoked with <a href="3964.html">Udp</a>, (unless in the particular case of invoking a <a href="5270.html">Data Provider)</a>:</p>
+
+<ul>
+	<li>N + 1 parameters must be declared in the parm rule of the called object.</li>
+	<li>The last parameter declared in the parm rule corresponds to the value which is returned (in other words, corresponds to the value received in the caller object).</li>
+	<li>In somewhere of the called object, a value must be assigned to the returned (the last) parameter.</li>
+</ul>
+
+<p><strong>Considerations:</strong></p>
+
+<ul>
+	<li>Every object which has a Parm rule defined is not included in the <a href="18484.html">Developer Menu</a> (because if it receives parameters, it must be called with the parameters values).</li>
+	<li>Parameters do not receive the null value. If a null value is sent in a parameter, the called program receives an empty value.</li>
+	<li>Variables that are in a Parm rule, if put in a form of a <a href="6916.html">Web Panel object</a> or <a href="1908.html">Transaction object</a> are set as read-only by default.</li>
+</ul>
+
+<h4><br />
+What is the difference between using a variable or an attribute in the Parm rule of the invoked object?</h4>
+
+<p>If you receive the value in a variable, it may be used freely in programming; as a filter condition for equality, higher than, greater than or equal to, lesser than, lesser than or equal to, it may be used for some arithmetical operation, or whatever you may need to do with it. On the other hand, if you receive the value in an attribute, it will automatically act as a filter for equality in the object.</p>
+
+<p>If your objective is not to use a value received to filter for equality, then the only solution possible is to receive the values in variables to use them freely.</p>
+
+<h3><br />
+Examples</h3>
+
+<p>The following codes, show two ways of filtering for equality the same information. The result and performance of both solutions are equal.</p>
+
+<p><img src="./images/24354.png" id="24354" class="WikiImage"/></p>
+
+<p> </p>
+
+<h3><a id="More+examples" class="HashLink" href="#More+examples">More examples</a></h3>
+
+<p><strong>1) </strong>Suppose you define a <a href="6916.html">Web Panel</a> for the user to enter a start and end range of names of attractions to be listed. </p>
+
+<p><img src="./images/24358.png" id="24358" class="WikiImage"/></p>
+
+<p>As the image shows, two variables and a button are present in the Web Panel form (the default Caption -Confirm- and the default event -Enter- are kept for the button). In the Enter event associated with the button, you have to call the <a href="6293.html">Procedure object</a> that prints the attractions that their names are included in the range indicated by the user.</p>
+
+<p>The Procedure will receive the start and end range of names of attractions, and you have to use the range received to filter the requested attractions.</p>
+
+<p>This is the invocation defined in the Web Panel:</p>
+
+<p><img src="./images/24359.png" id="24359" class="WikiImage"/></p>
+
+<p>And this is the Parm rule declared in the Procedure:</p>
+
+<p><img src="./images/24361.png" id="24361" class="WikiImage"/></p>
+
+<p>Note that the variables are named differently regarding the names defined in the Web Panel. What it is important is that the data types sent and received match.<br />
+<br />
+The variables you receive in the Procedure will be used to filter the requested attractions. The following image shows the Procedure source section, with the code that solves the requirement, using the received variables to filter:</p>
+
+<p><img src="./images/24360.png" id="24360" class="WikiImage"/></p>
+
+<p>Note: Suppose that this Procedure has the properties and rule necessary to print the output in a PDF format.</p>
+
+<p> </p>
+
+<p><strong>2)</strong> See the proposed examples in the following articles:</p>
+
+<p><a href="16224.html">Call method</a></p>
+
+<p><a href="3964.html">Udp method</a></p>
+
+<h3><br />
+Related specification messages</h3>
+
+<ul>
+	<li><a href="6432.html">spc0068</a> when a parameter has a data type that cannot be used for parameters in certain circunstances.</li>
+	<li><a href="6431.html">spc0023</a> for each parameter in the call command having a data type that is not compatible with the correspondig in the parm rule</li>
+	<li><a href="6431.html">spc0024</a> if there are too few parameters in the call command</li>
+	<li><a href="6431.html">spc0025</a> if there are too many parameters in the call command</li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="11884.html">Application property (Business Process Diagram Task)</a></TD><TD><a href="36811.html">Base Trn property</a></TD><TD><a href="8260.html">Call command</a></TD></TR><TR><TD><a href="16224.html">Call method</a></TD><TD><a href="21387.html">Calling a GeneXus generated program from other Environments</a></TD><TD><a href="39781.html">Chatbot Response</a></TD><TD><a href="8220.html">Definition of type of parameters received (in, out, inout)</a></TD></TR><TR><TD><a href="18484.html">Developer Menu</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="18243.html">Group Navigations that receive attributes as parameters</a></TD></TR><TR><TD><a href="18149.html">HowTo: Using Devices Registration Service for Push Notifications</a></TD><TD><a href="8099.html">Line Variable</a></TD><TD><a href="31376.html">Modules Distribution in GeneXus</a></TD></TR><TR><TD><a href="41037.html">Output property</a></TD><TD><a href="42900.html">Package Module with database access for Solutions extensibility scenarios</a></TD><TD><a href="8262.html">Procedure Rules</a></TD></TR><TR><TD><a href="31506.html">Security Web Development tips</a></TD><TD><a href="15386.html">Submit command</a></TD><TD><a href="24382.html">Submit method</a></TD><TD><a href="8213.html">Transaction rules</a></TD></TR><TR><TD><a href="2280.html">Transaction rules when executed as Business Component</a></TD><TD><a href="3964.html">Udp method</a></TD><TD><a href="8288.html">Web Panel rules</a></TD><TD><a href="17088.html">What is a Master Page</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

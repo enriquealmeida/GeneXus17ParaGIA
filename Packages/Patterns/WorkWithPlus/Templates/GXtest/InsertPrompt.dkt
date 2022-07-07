@@ -1,0 +1,52 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Insert Prompt in Form" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Assembly Name="Artech.Architecture.Language" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="controlGXName" Type="System.String" %>
+<%@ Property Name="levelName" Type="System.String" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="gridLevelName" Type="System.String" %>
+<%@ Property Name="promptObject" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="trnAtt" Type="Artech.Genexus.Common.Parts.TransactionAttribute" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="level" Type="System.String" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ SubTemplate Name="ClickPromptEvent" File="ClickPromptEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ClickPromptTableEvent" File="ClickPromptTableEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ClickTableEvent" File="ClickTableEvent.dkt" MergeProperties="True"%>
+<%
+	promptObject = TransactionHelper.GetPromptObject(trnAtt);
+	if (promptObject!=null)
+	{
+		if (!basicElements.ForeignKeyTables.Contains(promptObject.Name))// Foreign Key not processed yet
+		{
+			if (!TransactionHelper.IsGridLevel(level))
+			{
+%>
+<%@ CallSubTemplate ClickPromptEvent Object='Object' controlGXName='controlGXName' model='model' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+%>
+<%@ CallSubTemplate ClickPromptTableEvent Object='Object' byRow='true' gridName='gridLevelName' controlGXName='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='GXTestConstants.DataPoolRowNumber' value='""' variable='""' returnControl='controlGXName' model='model' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+			}
+			basicElements.ForeignKeyTables.Add(promptObject.Name);
+%>
+</Node>
+<Node Object="<%=promptObject.Name%>" ObjectType="<%=promptObject.TypeDescriptor.Name%>" title="<%=promptObject.Description%> <%=GXTestConstants.WWInsertAction%>">
+<%@ CallSubTemplate ClickTableEvent Object='promptObject' byRow='true' gridName='GXTestConstants.PromptGridName' controlGXName='controlGXName' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='controlGXName' value='""' variable='""' returnControl='GXTestConstants.PromptGridReturnControl' model='model' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+</Node>
+<Node Object="<%=Object.Name%>" ObjectType="<%=Object.TypeDescriptor.Name%>" title="<%=Object.Description%> <%=GXTestConstants.WWInsertAction%> after prompt">
+<%
+		}
+	}
+	else
+	{
+		DVelop.Patterns.WorkWithPlus.Helpers.LogHelper.WriteWarningLog(string.Format(GXTestElement.Resources_Action_GenerateGXTestCase_PromptNotFound, trnAtt.Name));
+	}
+%>

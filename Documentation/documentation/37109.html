@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Offline Native Mobile synchronization granularity alternatives</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37109,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Offline Native Mobile synchronization granularity alternatives</h1>
+<!--Offline Native Mobile synchronization granularity alternatives--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This article explains the different alternatives when using offline synchronization in the context of <a href="22221.html">Offline Native Mobile applications architecture</a>, given by the <a href="23541.html">receive granularity criteria</a>. In this context, the developer has two main options for synchronizing table's data from the server-side to the device (client-side): <em>by </em><em>table</em><em> </em>or <em>by row</em>. For this last option, there are also two flavors: <em>by </em><em>hash</em> or <em>by timestamp</em>.</p>
+
+<p>For simplicity, we'll refer to &quot;<em>rows</em>&quot; for those rows that satisfy the <a href="23570.html">Offline Database Object conditions</a>. </p>
+
+<h2><a id="Synchronization+by+table" class="HashLink" href="#Synchronization+by+table">Synchronization by table</a></h2>
+
+<p>For each table involved in the synchronization, if the table was changed, it sends <strong>all</strong> table records from the server to the device.</p>
+
+<p>On the device, for each table: if the table was modified, first all table records are deleted on the device, and then all the new values retrieved from the server are saved. If a table has not changed since the last synchronization, then nothing happens.</p>
+
+<p>This mechanism significantly decreases the processing needed in the server (because there is no need to compare the table's records), but the data transfer may increase severely.</p>
+
+<h3><a id="HowTo" class="HashLink" href="#HowTo">HowTo</a></h3>
+
+<p>To enable the <strong>synchronization by table</strong> mechanism, select the value &quot;By Table&quot; in the Offline Database object's Data Receive Granularity property.</p>
+
+<p><img src="./images/39955.png" id="39955" class="WikiImage"/></p>
+
+<h3><a id="Pros" class="HashLink" href="#Pros">Pros</a></h3>
+
+<p>This algorithm is useful when the system has few rows in the table or on every synchronization the device must bring a high quantity of rows.</p>
+
+<p>This solution avoids the expensive calculation of hashes for each row.</p>
+
+<h3><a id="Cons" class="HashLink" href="#Cons">Cons</a></h3>
+
+<p>Using this solution when few rows change, always transfers all of them unnecessarily.</p>
+
+<h2><a id="Synchronization+by+row+using+hashes" class="HashLink" href="#Synchronization+by+row+using+hashes">Synchronization by row using hashes</a></h2>
+
+<p>For each table involved in the synchronization, if the table was changed, it sends only the modified rows (inserted, updated or deleted) from the server to the device. Differences are computed by using row hashes.</p>
+
+<p>To be able to use this mechanism, GeneXus needs to create some auxiliary tables in the server and to compute the MD5 hashes of the existing records in order to be able to find out new, updated, and deleted records. This requires more processing in the server, but may significantly decrease the data traffic.</p>
+
+<h3><a id="HowTo" class="HashLink" href="#HowTo">HowTo</a></h3>
+
+<p>To enable the <strong>synchronization by row using hashes</strong> mechanism, select the value &quot;By Row&quot; (default) in the Offline Database object's Data Receive Granularity property.</p>
+
+<p><img src="./images/39956.png" id="39956" class="WikiImage"/></p>
+
+<h3><a id="The+algorithm" class="HashLink" href="#The+algorithm">The algorithm</a></h3>
+
+<p>The <strong>synchronization by hash</strong> algorithm works as follows (for each table, on each device):</p>
+
+<ol>
+	<li>The first time the devices synchronizes
+	<ol style="list-style-type: lower-alpha;">
+		<li>The algorithm determines the rows that need to be synchronized (all table records, filtered by the Offline Database object's conditions), computes a hash of the result set, and sends the data with the computed hash (used as an identifier) to the device.</li>
+		<li>Also, a hash is computed for each row in the result set and stored along with the result set’s hash (the identifier sent to the device) and the row’s primary key in a table used specifically for synchronization</li>
+	</ol>
+	</li>
+	<li>Upon a new synchronization, the device sends the table’s hash to the server (the identifier received in the previous synchronization), and then the server:
+	<ol style="list-style-type: lower-alpha;">
+		<li>Determines the rows that need to be in the device (by querying the database and applying the conditions)</li>
+		<li>Computes a hash of the result set</li>
+		<li>If this hash matches with the hash sent by the device, it means that the table has no changes and then no further action is needed and the algorithm ends here</li>
+		<li>If the hashes don’t match, then a hash is computed for each row in the result set, and compared with the hash of the previously synchronized hash for the same row, and then:
+		<ol style="list-style-type: upper-roman;">
+			<li>If the row hashes’ match, the row has no changes and does not need to be sent to the device</li>
+			<li>If the row hashes’ don’t match, the row has been modified and is sent as an update</li>
+			<li>If the row didn’t exist in the previous result set, it is sent as an insert</li>
+			<li>If the row existed in the previous result set and doesn’t exist now, it is sent as a delete</li>
+		</ol>
+		</li>
+		<li>The new table’s hash is stored in the server with the row’s hashes and the row’s primary key, to be used on the next synchronization.</li>
+	</ol>
+	</li>
+</ol>
+
+<h3><a id="Pros" class="HashLink" href="#Pros">Pros</a></h3>
+
+<p>This algorithm has several advantages when compared to other possible solutions. One of the main reasons to implement it this way was to avoid the modification of the model’s tables. By computing a hash and storing it outside of the Knowledge Base’s data model, there is no need to modify existing tables.</p>
+
+<p>Another strong point in this algorithm is that it works regardless of how the modifications are made to the database. The hashes are computed at the moment the synchronization is performed, essentially using a snapshot of the current state of the database. How the database came to be in that state is irrelevant.</p>
+
+<h3><a id="Cons" class="HashLink" href="#Cons">Cons</a></h3>
+
+<p>The main drawback of this algorithm is the performance when the datasets are too large. Especially when modifications are rare or synchronizations are very frequent. This is because on each synchronization the hashes of each row have to be computed on the new dataset. This operation may be time-consuming, and so it may not be the ideal solution in all scenarios.</p>
+
+<h2><a id="Synchronization+by+row+using+timestamps" class="HashLink" href="#Synchronization+by+row+using+timestamps">Synchronization by row using timestamps</a></h2>
+
+<p>The <strong>synchronization by timestamp</strong> algorithm uses a different approach. It still synchronizes by row, but it does not use hashes to compute the differences.</p>
+
+<p>For this reason, the algorithm requires the addition of two attributes: the <a href="37092.html">Last Modified Date Time attribute</a> and the <a href="37091.html">Logically Deleted attribute</a>.</p>
+
+<p>This algorithm can be applied on a per-table basis. Some tables may use synchronization by timestamp algorithm while others use the synchronization by hashes algorithm.</p>
+
+<h3><a id="HowTo" class="HashLink" href="#HowTo">HowTo</a></h3>
+
+<p>To enable the <strong>synchronization by row using timestamps</strong> mechanism, you first need to select the value &quot;By Row&quot; (default) in the Offline Database object's Data Receive Granularity property.</p>
+
+<p>Additionally, for each table you want to synchronize by timestamp, you need to indicate the <a href="37092.html">Last Modified Date Time</a> and the <a href="37091.html">Logically Deleted</a> attributes on the Transaction's level properties as shown below.</p>
+
+<p><img src="./images/39957.png" id="39957" class="WikiImage"/></p>
+
+<h3><a id="The+algorithm" class="HashLink" href="#The+algorithm">The algorithm</a></h3>
+
+<ol>
+	<li>The first time a synchronization request arrives, the server sends all the table’s data matching the conditions -specified in the Offline Database object- to the device, along with the timestamp of the synchronization.</li>
+	<li>The device stores this timestamp (to the device this is just an identifier), and uses it on the next synchronization, sending it to the server.</li>
+	<li>On the next synchronization, the server has the timestamp sent by the device, so it uses this timestamp to compare with the value in the Last Modified Date Time Attribute. All rows modified or added after the last synchronization are considered.</li>
+	<li>For each one of these rows:
+	<ol style="list-style-type: lower-alpha;">
+		<li>If the Logically Deleted Attribute has True value, the row is sent as a delete.</li>
+		<li>Then, conditions from the Offline Database object are applied and:
+		<ol style="list-style-type: upper-roman;">
+			<li>If the record matches the conditions, it is sent as an update (and treated as an <em>upsert</em> in the device),</li>
+			<li>Otherwise, it is sent as a delete.</li>
+		</ol>
+		</li>
+	</ol>
+	</li>
+</ol>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>Note that the algorithm uses a &quot;modification timestamp&quot;, that needs to be updated every time there is a modification. This action is the developer’s responsibility, if the record is modified without updating this value, the algorithm won’t synchronize it. Also, deletes need to be logical. If a record is physically deleted from the table, the algorithm won’t find it and it won’t be deleted on the devices. The developer is also responsible for prohibiting deletes and managing them logically instead.</p>
+
+<h3><a id="Limitations" class="HashLink" href="#Limitations">Limitations</a></h3>
+
+<h4><a id="Attributes+managed+by+the+developer" class="HashLink" href="#Attributes+managed+by+the+developer">Attributes managed by the developer</a></h4>
+
+<p>The attributes defined in the<a href="37091.html">Logically Deleted Attribute property</a> and <a href="37092.html">Last Modified Date Time Attribute property</a> are managed by the developer. If they are not correctly maintained, the algorithm will not work as expected.</p>
+
+<h4><a id="Deletes+need+to+be+logical" class="HashLink" href="#Deletes+need+to+be+logical">Deletes need to be logical</a></h4>
+
+<p>The algorithm does not keep track of deleted rows, as does the <em>synchronization by </em><em>hash</em> algorithm. In that way, if a record is deleted from the table, the information will be lost and the delete will never be performed on the device.</p>
+
+<h4><a id="Referenced+tables" class="HashLink" href="#Referenced+tables">Referenced tables</a></h4>
+
+<p>There are some tables that are synchronized because they are referenced by a foreign key on another table. These tables cannot use the <em>synchronization by timestamp</em> algorithm.<br />
+For example, suppose you have a Customer table which has a reference to a Country. The Country table is not used in the smart device's application, it is used only to display the country name on the Customer detail. In this case, the only records from Country that get synchronized to the device, are those referenced by a Customer. The recordset needed by the device does not depend on the Country table, it depends on the Customers. If a new Customer is added that belongs to another Country, the Country record needs to be sent to the device regardless of its modification date. This is handled automatically by synchronizing the referenced table by hash.<br />
+In summary, referenced tables do not use timestamp mechanism (even if they were set as it). In such case, referenced tables synchronize <em>by using hash</em> default mechanism (with its advantages/disadvantages) regardless of synchronization date. The reason behind this fact is that referenced tables can change its state, and that state must be reflected on the extended information displayed by the table synchronized by timestamp.</p>
+
+<h4><a id="Conditions+that+change+without+modifying+the+record" class="HashLink" href="#Conditions+that+change+without+modifying+the+record">Conditions that change without modifying the record</a></h4>
+
+<p>The<em> referenced tables limitation </em>is actually a special case of tables with records’ conditions that depend on information not contained in the table being synchronized. It is not the only case though.<br />
+Suppose we have the following scenario: in our application, we have a Customer table and an Invoice table. We define that a Customer is active if it has an Invoice in the last 30 days, and we want the synchronization to take to the device only the active customers.<br />
+In this case, the <em>synchronization by timestamp</em> algorithm cannot be used on the Customer table, because the records to synchronize can change without modifying the table’s records. In fact, in this case, as the condition depends on the current date time, the records to synchronize can change without any change in the database.</p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>Synchronization by timestamp is available as of <a href="https://wiki.genexus.com/commwiki/wiki?36778,," target="_blank">GeneXus 15 Upgrade 8</a></li>
+</ul>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li><a href="22509.html">Offline Database object</a></li>
+	<li><a href="23541.html">Data Receive Granularity property</a></li>
+	<li><a href="22221.html">Offline Native Mobile applications architecture</a></li>
+	<li><a href="37091.html">Logically Deleted Attribute property</a> and <a href="37092.html">Last Modified Date Time Attribute property</a>.</li>
+</ul>
+
+<p><br />
+</p>
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="23541.html">Data Receive Granularity property</a></TD></TR><TR><TD><a href="23672.html">KB:Sales</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/17/20 10:01 PM</em></font></td></TR></table></font>

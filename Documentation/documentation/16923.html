@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM: A way to solve Forgot Password</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16923,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM: A way to solve Forgot Password</h1>
+<!--GAM: A way to solve Forgot Password--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>See how to provide the user with a way to recover his password when using <a href="14960.html">GAM integrated security</a>.</p>
+
+<p>We can take as an example the &quot;GAMExampleLogin&quot; web Object, which has a link (&quot;Forgot your password?&quot;) which enables the user to recover his password.</p>
+
+<h5><img src="./images/16924.png" id="16924" class="WikiImage"/><br />
+<br />
+Figure 1.</h5>
+
+<p>The way suggested in this document is to send an e-mail to the user, with a link to a web page where he will be able to enter and confirm a new password. Everything is solved using the <a href="16535.html">GAM API</a>.</p>
+
+<h3><a id="Step+by+step" class="HashLink" href="#Step+by+step">Step by step</a></h3>
+
+<p>Two objects are distributed with the GAM examples Library: GAMExampleRecoverPasswordStep1 and GAMExampleRecoverPasswordStep2, in order to solve this functionality. The idea is that the GeneXus user completes these samples according to his needs. 1. Look at the GAMExampleLogin events, the event associated to &quot;ForgotPassword&quot; link is the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ForgotPassword'
+    GAMExampleRecoverPasswordStep1.Link()
+EndEvent</pre>
+
+<p>So the GeneXus user has to edit GAMExampleRecoverPasswordStep1 object, uncomment the code there, and add the code which sends an email to the user, after having generated a key which identifies the user. See the following step: 2. Edit GAMExampleRecoverPasswordStep1 events:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Enter
+   &amp;User = GAMRepository.GetUserByLogin(&amp;UserAuthTypeName, &amp;UserName, &amp;Errors)
+   If &amp;Errors.Count = 0
+<strong>      &amp;KeyToChangePassword = &amp;User.RecoverPasswordByKey(&amp;Errors) --&gt; This code generates the KEY to recover password (*)</strong>
+      If &amp;Errors.Count = 0
+      // Send mail to User with instructions, for example:
+         &amp;Mail.To.Clear() --&gt; &amp;Mail is MailMessage Data Type
+         &amp;Mail.To.New(Format(&quot;%1 %2&quot;,&amp;User.FirstName, &amp;User.LastName), &amp;User.EMail)
+         &amp;Mail.Subject  = 'Password change with GAM'
+         &amp;Mail.HTMLText = Format('To change the password in GAM click &lt;a href=&quot;%1&quot;&gt;here&lt;/a&gt;.', 
+         &amp;Host + &amp;BaseUrl + GAMExampleRecoverPasswordStep2.Link(,&amp;KeyToChangePassword)) <strong>(**)</strong>
+         &amp;SMTP.Host   = &amp;host --&gt; &amp;SMTP is &amp;SMTPSession Data Type
+         &amp;SMTP.Sender = &amp;Sender
+         &amp;isOK = &amp;SMTP.Login()
+         If &amp;SMTP.ErrCode = 0
+            &amp;SMTP.Send(&amp;Mail)
+            If &amp;SMTP.ErrCode &lt;&gt; 0
+       <span class="Apple-tab-span" style="white-space: pre;"> </span>       &amp;Message = Format('Failed to send mail: %1 (%2)', &amp;Smtp.ErrDescription, &amp;Smtp.ErrCode)
+            Endif
+            &amp;SMTP.Logout()
+         Else
+            &amp;Message = Format(&quot;Failed to start mail session: %1 (%1)&quot;, &amp;SMTP.ErrDescription, &amp;ret)
+         Endif
+         If &amp;Message.IsEmpty()
+            Msg('An email has been sent with instructions to change the password.')
+         Else
+            Msg(&amp;Message.ToString())
+         Endif
+      Else
+         Do 'DisplayMessages'
+      EndIf
+   Else
+      Do 'DisplayMessages'
+   EndIf
+EndEvent</pre>
+
+<p>(*) In the form of GAMExampleRecoverPasswordStep1 object the user is asked to enter his username or user email (see Figure 2). With the information given, a KEY is generated to identify this user. By this KEY  the user will be able to change his password; so the KEY has to be passed to the webpanel which enables the user to change the password. One way to preserve the user confidentiality is to send by email (to the user email) a link to the web panel which enables to change the password.</p>
+
+<p>(**) We have to add the value of the property Application ID of the Version properties when calling GAMExampleRecoverPasswordStep2. For example: GAMExampleRecoverPasswordStep2.Link(&quot;15c110fd-e271-4ec4-a911-4cbfe89b627c&quot;,&amp;KeyToChangePassword)</p>
+
+<p><img src="./images/18386.png" id="18386" class="WikiImage"/></p>
+
+<h6><a id="Figure+2." class="HashLink" href="#Figure+2.">Figure 2.</a></h6>
+
+<p>3. The user will receive an email with a link to &quot;gamexamplerecoverpasswordstep2&quot; object which receives the KEY as parameter, which has been generated by &quot;&amp;User.RecoverPasswordByKey(&amp;Errors)&quot; code shown above. Figure 3 shows an image of GAMExampleRecoverPasswordStep2 object, which has the form and logic to enter a new password twice and confirm the password change.</p>
+
+<p><img src="./images/16926.png" id="16926" class="WikiImage"/></p>
+
+<h5><a id="Figure+3." class="HashLink" href="#Figure+3.">Figure 3.</a></h5>
+
+<p>The code to change the user password is the following:</p>
+
+<p>&amp;ChangePwdOK = &amp;User.ChangePasswordByKey(&amp;KeyToChangePassword, &amp;UserPasswordNew, &amp;Errors)</p>
+
+<p>After the user confirms the new password, he logs in automatically. Change this code in order to redirect to the desired object depending on the sucess of the process.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="18590.html">User Recovery Password Key Timeout</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR></TR><TR><TD><a href="47237.html">Hardening of GeneXus Systems and Deployments with GAM</a></TD><TD><a href="18590.html">User Recovery Password Key Timeout</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

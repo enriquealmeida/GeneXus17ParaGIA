@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Inserting a Supertype Directly from Subtype’s Transaction</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?11491,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Inserting a Supertype Directly from Subtype’s Transaction</h1>
+<!--HowTo: Inserting a Supertype Directly from Subtype’s Transaction--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>There are some situations where we need to insert a subtype and the corresponding supertype at the same time; but it would be very useful to hide from the user the manipulation of the supertype transaction.</p>
+
+<p>For instance, let us suppose we have these two Transactions:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Transaction Party
+PartyId*
+PartyName
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Transaction People
+PeopleId*     subtype of PartyId
+PeopleName    subtype of PartyName
+PeopleGender
+</pre>
+
+<p>The ideal case would be to insert, update or delete a People without manipulating the Party Transaction. This behavior can be implemented by means of SDT’s and some rules.</p>
+
+<p>In order to do that you need to change the following:</p>
+
+<h3><a id="Supertype+Transaction" class="HashLink" href="#Supertype+Transaction">Supertype Transaction</a></h3>
+
+<p>Just define Party as Business Component</p>
+
+<h3><a id="Procedure+to+Insert%2C+Update+and+Delete+de+Supertype" class="HashLink" href="#Procedure+to+Insert%2C+Update+and+Delete+de+Supertype">Procedure to Insert, Update and Delete de Supertype</a></h3>
+
+<p>Rules:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;Party, in:&amp;Mode, out:&amp;PeopleId, out:&amp;Result);
+//&amp;Party is defined based on TRN Party 
+//&amp;Result is defined based on SDT with two elements: Success (Boolean) and Messages (Messages)</pre>
+
+<p>Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Result.Success = True
+&amp;PartyNew = New TParty()
+If &amp;Mode &lt;&gt; TrnMode.Insert
+  &amp;PartyNew.Load(&amp;Party.PartyId)
+Endif
+If &amp;Mode = TrnMode.Delete
+  &amp;PartyNew.Delete()
+Else
+  &amp;PartyNew.PartyName = &amp;Party.PartyName
+  &amp;PartyNew.Save()
+Endif
+If &amp;PartyNew.Fail()
+  &amp;Result.Mensajes = &amp;PartyNew.GetMessages()
+  &amp;Result.Success = False
+Else
+  &amp;PeopleId = &amp;PartyNew.PartyId
+  &amp;Result.Success = True
+Endif</pre>
+
+<p>Properties:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Commit on Exit = No
+</pre>
+
+<h3><a id="Subtype+Transaction" class="HashLink" href="#Subtype+Transaction">Subtype Transaction</a></h3>
+
+<p>Variables:</p>
+
+<p>Defined &amp;Party based on Party BC.</p>
+
+<p>Web Form:</p>
+
+<p>In the Web Form, substitutes the inferred subtype by their corresponding variable. In this case:<br />
+PeopleName by &amp;Party.Name<br />
+<br />
+Start Event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PeopleId.Visible = 0
+If not &amp;PeopleId.IsEmpty()
+  &amp;Party.Load(&amp;PeopleId)
+Endif</pre>
+
+<p>Rules:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+RefCall(PABMParty, &amp;Party, &amp;Mode, PeopleId, &amp;Result);
+PABMParty.Call(&amp;Party, &amp;Mode, PeopleId, &amp;Result) If Update dependencies PeopleId;
+
+&amp;ResultString = PResultGetString.Udp(&amp;Result) if (update or insert);
+Error(&amp;ResultString.Trim()) If (update or insert) and &amp;Result.Success = False dependencies PeopleId;
+
+​​​​​​​PABMParty.Call(&amp;Party, &amp;Mode, PeopleId, &amp;Result) If Delete on Beforecomplete;
+&amp;ResultString = PResultGetString.Udp(&amp;Result) If Delete on Beforecomplete;
+​​​​​​​Error(&amp;ResultString) If Delete and &amp;Result.Success = False on Beforecomplete;</pre>
+
+<p>Refcall is triggered when the referential integrity failed. In this case the procedure to insert a new Party is called on.</p>
+
+<p>The same object is also called in the update and delete mode. In the delete mode it is called on BeforeComplete events because the Party needs to be deleted after the referenced People. </p>
+
+<p>The rest of the rules enable you to show the possible error message when you insert/update/delete the supertype in the subtype transaction error viewer.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<link />
+<link />
+<link />
+<style type="text/css"><!<a href='CDATA[* {
+}
+'>CDATA[* {
+}
+</a>]></style>
+<link />
+<link />
+<link />
+<style type="text/css"><!<a href='CDATA[* {
+}
+'>CDATA[* {
+}
+</a>]></style>
+<link />
+<link />
+<link />
+<style type="text/css"><!<a href='CDATA[* {
+}
+'>CDATA[* {
+}
+</a>]></style>
+<link />
+<link />
+<link />
+<style type="text/css"><!<a href='CDATA[* {
+}
+'>CDATA[* {
+}
+</a>]></style>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

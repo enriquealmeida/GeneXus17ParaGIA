@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Web printing on client printer (without an applet)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33912,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Web printing on client printer (without an applet)</h1>
+<!--Web printing on client printer (without an applet)--><div class="TableWikiBody" id="tblwikibody"><h3><a id="Rationale" class="HashLink" href="#Rationale">Rationale</a></h3>
+
+<p>In late 2015 and for security reasons, browsers began to stop supporting JAVA applets.</p>
+
+<p> In this context, those applications that provided direct printing on the client (browser) no longer worked because the feature was based on that technology.</p>
+
+<p>The solution offered for these cases is to use the browser in &quot;<a href="28296.html">kiosk</a>&quot; mode, to prevent the print dialog from being displayed.</p>
+
+<p>Using the browser in kiosk mode has certain restrictions:</p>
+
+<ul>
+	<li>Only the default printer can be used.</li>
+	<li>The printer rule that selects the form/printer to use is not processed.</li>
+	<li>Control characters (escape chars) cannot be printed with codes lower than ASCII 32.</li>
+</ul>
+
+<h3><a id="Solution%3A+printing+without+an+Applet" class="HashLink" href="#Solution%3A+printing+without+an+Applet">Solution: printing without an Applet</a></h3>
+
+<p>To overcome the restrictions of the browsers kiosk mode, the applet used has been modified (printtingappletsigned.jar) by packaging it as an application or a service. In this way, it is possible to print on the client (browser) by including a JS (gxprint.js) in the application and installing the print service (gxprintserver.jar) on the computer connected to the printer.</p>
+
+<p>You have two alternative solutions:</p>
+
+<p><strong>1)</strong> Defining a PDF Reports (this is supported since GeneXus 16 u2).</p>
+
+<p>To achieve this:</p>
+
+<ul>
+	<li>Create a report in Graphic mode (default mode).
+	<ul>
+		<li>Set its <a href="7965.html">Output_File rule</a>.</li>
+		<li>Set its <a href="11734.html">Printer Rule</a> pointing out the desired printer.</li>
+		<li>Set the report with the following properties:
+		<ul>
+			<li>Call protocol = Internal</li>
+			<li>Report output property = Only to printer</li>
+			<li>Output device location property = Client</li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+</ul>
+
+<p><strong>2)</strong> Defining a <a href="https://wiki.genexus.com/commwiki/wiki?28308,," target="_blank">report in text mode</a>.</p>
+
+<p>To achieve this:</p>
+
+<ul>
+	<li>Create a <a href="https://wiki.genexus.com/commwiki/wiki?28308,," target="_blank">report in text mode</a>.
+	<ul>
+		<li>Set its <a href="7965.html">Output_File rule</a>.</li>
+		<li>Set its <a href="11734.html">Printer Rule</a> pointing out the desired printer.</li>
+		<li>Set the report with the following properties:
+		<ul>
+			<li><a href="7943.html">Report output property</a> = Only to printer</li>
+			<li><a href="14110.html">Output device location property</a> = Client</li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+</ul>
+
+<h3><a id="Implementation+and+use+from+GeneXus" class="HashLink" href="#Implementation+and+use+from+GeneXus">Implementation and use from GeneXus</a></h3>
+
+<p>The GeneXus application communicates with the print service via Ajax from the client machine's browser.</p>
+
+<p>As for the implementation's details, it consists of two parts:</p>
+
+<ol>
+	<li>Ajax call to the service</li>
+	<li>Print service</li>
+</ol>
+
+<p>1 - The standard JavaScript gxprint.js (distributed by GeneXus) must be included in the application that will invoke the report. It can be done in each <a href="6916.html">Web Panel</a> or in the entire application by including it in the <a href="10348.html">Master Page</a>.</p>
+
+<pre>
+Event Start
+    Form.JScriptSrc.Add(&quot;gxprint.js&quot;)
+Endevent</pre>
+
+<p>The <em>gxprint.js</em> JavaScript replaces the call to print via applet with an Ajax call to a print service. </p>
+
+<p><strong>Important Notes:</strong></p>
+
+<ul>
+	<li>You have to manually copy the gxprint.js to the static directory of the tomcat.</li>
+	<li>Consider in case of Java the path to the script (it must be the path to the file in the web app, that is: /webappName/static/gxprint.js)</li>
+	<li>Any error that occurs in the execution of the report is recorded in the log&lt;NNNN&gt;.log that is generated in the default temp directory (%temp%)</li>
+</ul>
+
+<p> </p>
+
+<p>2 - The new .jar, called gxprintserver.jar (also distributed by GeneXus), is similar to the printtingappletsigned.jar applet. However, it has been turned into an executable .jar that implements a <a href='https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html'>web http service</a>.</p>
+
+<p>The solution's architecture is as follows:</p>
+
+<p><img src="./images/33922.png" id="33922" class="WikiImage"/></p>
+
+<p>1. An HTTP request is made from the client to the web application in order to obtain the report (GeneXus Procedure).<br />
+2. The application returns the URL of the corresponding report to the client. <br />
+3. The client sends the URL of the corresponding report via Ajax to gxprintserver.jar.<br />
+4. Once the file path has been obtained, it is downloaded to the print server.<br />
+5. The report is printed on the configured printer.</p>
+
+<h4><a id="Remarks+about+the+service+architecture" class="HashLink" href="#Remarks+about+the+service+architecture">Remarks about the service architecture</a></h4>
+
+<p>- The print server (the machine where gxprintserver.jar is run) may be decoupled from the rest of the solution's components. That is to say, a Website that is visible to both the client browser and to the web server that hosts the application (so that steps 3 and 4 of the previous diagram are successfully completed). <br />
+- In the file gxprint.js, the URL where the gxprintserver.jar is located (by default http://localhost:8000/print) can be changed. This URL is interpreted from the machine that runs the browser.</p>
+
+<h4><a id="Sources" class="HashLink" href="#Sources">Sources</a></h4>
+
+<p>The solution's sources can be found by extracting gxprintserver.jar as if it were a zip file. The package com.genexus.printing will contain: ParseINI.java, Printer.java and gxprintserver.java.</p>
+
+<h3><a id="Running+gxprintserver.jar" class="HashLink" href="#Running+gxprintserver.jar">Running gxprintserver.jar</a></h3>
+
+<h4><a id="Directly" class="HashLink" href="#Directly">Directly</a></h4>
+
+<p>It can be directly run via Command Line with the following command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java -jar gxprintserver.jar</pre>
+
+<h4><a id="As+a+service" class="HashLink" href="#As+a+service">As a service</a></h4>
+
+<p>Another option is to create a service. It can be created for win/unix using yajsw (<a href='http://yajsw.sourceforge.net/'>http://yajsw.sourceforge.net/</a>). Other options are available (this one has been tested).<br />
+The steps are simple; for a quick start, visit: <a href='http://yajsw.sourceforge.net/#mozTocId527639'>http://yajsw.sourceforge.net/#mozTocId527639</a>. There is also a screencast (Windows) available at <a href='https://www.youtube.com/watch?v=gX9tGInrIvg'>https://www.youtube.com/watch?v=gX9tGInrIvg</a></p>
+
+<p><strong>Important note: </strong>The service must be run with a user that allows accessing the TCP port used. In addition, it must be able to print and preferably create files in the &amp;quot;temp&amp;quot; directory where the print log is generated.</p>
+
+<h3><a id="Requirements" class="HashLink" href="#Requirements">Requirements</a></h3>
+
+<p>To run <em>gxprintserver.jar, </em>Java JRE 1.7 or higer is required. </p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>As from GeneXus XEv 3 Upgrade 10 and GeneXus 15 Upgrade 4.</p>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>When running the &quot;java -jar gxprintserver.jar&quot; command, the following error is displayed:</p>
+
+<p><span style="font-size: smaller;"><em>Exception in thread &quot;main&quot; java.lang.UnsupportedClassVersionError: com/genexus/p<br />
+rinting/gxprintserver : Unsupported major.minor version 51.0<br />
+        at java.lang.ClassLoader.defineClass1(Native Method)<br />
+        at java.lang.ClassLoader.defineClassCond(ClassLoader.java:631)<br />
+        at java.lang.ClassLoader.defineClass(ClassLoader.java:615)<br />
+        at java.security.SecureClassLoader.defineClass(SecureClassLoader.java:14<br />
+1)<br />
+        at java.net.URLClassLoader.defineClass(URLClassLoader.java:283)<br />
+        at java.net.URLClassLoader.access$000(URLClassLoader.java:58)<br />
+        at java.net.URLClassLoader$1.run(URLClassLoader.java:197)<br />
+        at java.security.AccessController.doPrivileged(Native Method)<br />
+        at java.net.URLClassLoader.findClass(URLClassLoader.java:190)<br />
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:306)<br />
+        at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:301)<br />
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:247)<br />
+Could not find the main class: com.genexus.printing.gxprintserver. Program will<br />
+exit.</em></span></p>
+
+<p><strong>Cause: </strong>the Java version installed on the machine is not compatible with the .jar. <br />
+<strong>Solution:</strong> install jre 1.7 or higher.</p>
+
+<p>When running in a secure environment (HTTPS), the following message is displayed after invoking the report:</p>
+
+<p><img src="./images/33977.png" id="33977" class="WikiImage"/></p>
+
+<p>Check that the following error is displayed in the browser's console:</p>
+
+<p><span style="font-size: smaller;"><em>Mixed Content: The page at 'https://somepage.com' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://printserver:8000/print'. This request has been blocked; the content must be served over HTTPS.<br />
+gx.printing.makeCorsRequest @ gxprint.js?201732715194119:27<br />
+gxgral.js?97813:5773 gx.printing.makeCorsRequest Error calling at http://printserver:8000/print</em></span></p>
+
+<p><strong>Cause: </strong>the app is running in an HTTPS environment and invoking an unsafe URL in another domain. For security reasons, browsers don't allow <a href='https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS'>cross origin</a> requests. <br />
+<strong>Solution: </strong>currently under development. </p>
+
+<p>Can I use the new mechanism if I'm using a previous GeneXus Upgrade?</p>
+
+<p>Yes, files can be distributed separately if the user is not using the corresponding Upgrade. <br />
+The file <em>gxprint.js</em> must be placed in the corresponding directory of the web application, and the file <em>gxprintserver.jar</em> in a Windows directory that has runtime permissions to run the print service as explained earlier in the document.</p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p> </p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/23/22 06:19 PM</em></font></td></TR></table></font>

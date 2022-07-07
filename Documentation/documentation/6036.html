@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Full Text Search Examples - Indexing</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6036,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Full Text Search Examples - Indexing</h1>
+<!--Full Text Search Examples - Indexing--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	In this page we gather some examples of the use of Indexing functions for full text search purposes:</p>
+<h4>
+	1. Index all data stored in the database, related to Business Components Transactions</h4>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event ReindexAll
+    &amp;error = TextSearch.ReindexAll()
+EndEvent</pre>
+<p>
+	Reindex all transactions with Searchable property True. All the information related to Searchable Business Components is deleted from the index, and indexed again. Note that only that information is deleted, not the other data that could have been indexed (as files and strings).</p>
+<h4>
+	2. Index all files of a specified directory</h4>
+<p>
+	In this example, all files of a directory are indexed.</p>
+<p>
+	When the documents are retrieved by the search, they will link to what is specified in the &amp;contentinfo.viewer property.</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event IndexFiles
+    &amp;directory.Source = &amp;source
+    For &amp;file in &amp;directory.GetFiles(&quot;*.*&quot;)
+        &amp;ContentInfo.Viewer = &amp;URL + &amp;file.GetName()
+        &amp;booleanvar = TextSearch.Add(&amp;file,&amp;ContentInfo)
+        If &amp;booleanvar= TRUE
+           msg( format(&quot;Indexing %1&quot;, &amp;file.GetName()))
+        else
+           msg(format(&quot;Error indexing %1&quot;,&amp;file.GetName()))
+        EndIf
+    EndFor
+EndEvent</pre>
+<p>
+	Data types:</p>
+<ul>
+	<li>
+		&amp;directoy is a  Directory Data Type</li>
+	<li>
+		&amp;file is variable is a File Data Type</li>
+	<li>
+		&amp;contentinfo is a ContentInfo Data Type.</li>
+</ul>
+<h4>
+	3. Update Index Content</h4>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event UpdateContentFile
+    &amp;directory.Source = &amp;source
+    For &amp;file in &amp;directory.GetFiles(&quot;*.*&quot;)
+        &amp;ContentInfo.Viewer = &amp;URL + &amp;file.GetName()
+        &amp;booleanvar = TextSearch.Update(&amp;file,&amp;ContentInfo)
+        If &amp;booleanvar = TRUE
+           msg( format(&quot;Re-Indexing %1&quot;, &amp;file.GetName()))
+        else
+           msg(format(&quot;Error re-indexing %1&quot;,&amp;file.GetName()))
+        EndIf
+    EndFor
+EndEvent</pre>
+<h4>
+	4. Delete File from Index</h4>
+<p>
+	Delete a file from the index.</p>
+<p>
+	Notes:</p>
+<ul>
+	<li>
+		&amp;sourcefile is the path to the file which will be deleted from the index.</li>
+	<li>
+		&amp;file is of File Data Type.</li>
+</ul>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Delete File Index
+    &amp;file.Source = &amp;sourcefile
+    &amp;booleanvar = TextSearch.Delete(&amp;file)
+    if &amp;booleanvar= TRUE
+       msg( format(&quot;Index Entry %1 was deleted&quot;, &amp;file.GetName()))
+    else
+       msg(format(&quot;Error deleting index entry %1&quot;,&amp;file.GetName()))
+    endif 
+EndEvent</pre>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event IndexString
+      &amp;ContentInfo.Id = &amp;AccountingEntry.Id.ToString()
+      &amp;ContentInfo.Title = 'Accounting Entry # ' + &amp;AccountingEntry.Id.ToString()
+      &amp;ContentInfo.Type = 'Accounting Entry'
+      &amp;ContentInfo.Viewer = AccountingEntrydata.Link(&amp;AccountingEntry.Id,'DSP') //call the transaction in display mode
+      &amp;AccountingDetail = &amp;AccountingEntry.ToXml() //convert all the accounting entry to a XML string
+      &amp;booleanvar = TextSearch.Add(&amp;AccountingDetail,&amp;ContentInfo)
+      if &amp;booleanvar= TRUE
+         msg( format(&quot;Indexing %1&quot;, &amp;ContentInfo.Id))
+      else
+          msg(format(&quot;Error indexing %1&quot;,&amp;ContentInfo.Id))
+     endif
+EndEvent</pre>
+<p>
+	In order to delete the entry from the index:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Delete Index'
+    &amp;AccountingEntryAux = &amp;AccountingEntryDataId.ToString()
+    &amp;booleanvar = TextSearch.Delete(&amp;AccountingEntryAux)
+    if &amp;booleanvar= TRUE
+        msg( format(&quot;Deleting Index Content %1&quot;, &amp;AccountingEntry.Id.ToString()))
+    else
+        msg(format(&quot;Error deleting index content %1&quot;,&amp;AccountingEntryDataId.ToString()))
+    endif
+EndEvent</pre>
+<p>
+	See also: <a href="5278.html">Full Text Search in Applications</a>, <a href="6024.html">Full Text Search Examples</a>, <a href="5292.html">Full Text Search Data Types</a>.</p>
+<h4>
+	5. Index a string (value from memory)</h4>
+<p>
+	Sometimes you may want to be able to search for information which isn't stored in a database or in a file, but that is the result or output of a process which gathers information from different sources.</p>
+<p>
+	For example, consider an accounting entry which is represented in GeneXus as a SDT, and you want to make the information of all the accounting entries searchable.</p>
+<p>
+	After the accounting entry is calculated, you would store the necessary information in a ContentInfo variable, and then, call the TextSearch.Add or TextSearch.Update function.</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'IndexString'
+      &amp;ContentInfo.Id = &amp;AccountingEntry.Id.ToString()
+      &amp;ContentInfo.Title = format('Accounting Entry # %1', &amp;AccountingEntry.Id)
+      &amp;ContentInfo.Type = 'Accounting Entry'
+      &amp;ContentInfo.Viewer = AccountingEntrydata.Link(&amp;AccountingEntry.Id,'DSP') //call the transaction in display mode
+      &amp;AccountingDetail = &amp;AccountingEntry.ToXml() //convert all the accounting entry to a XML string
+      &amp;booleanvar = TextSearch.Add(&amp;AccountingDetail,&amp;ContentInfo)
+      if &amp;booleanvar= TRUE
+         msg( format(&quot;%1 was indexed&quot;, &amp;ContentInfo.Id))
+      else
+         msg(format(&quot;Error indexing %1&quot;,&amp;ContentInfo.Id))
+      endif
+EndEvent</pre>
+<h3>
+	See also</h3>
+<p>
+	<a href="5292.html">Full Text Search Data Types</a><br />
+	<a href="6701.html">Full Text Search Examples</a></p>
+<p>
+	</p>
+<p>
+	</p>
+<p>
+	</p>
+<p>
+	</p>
+<br />   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5292.html">Full Text Search Data Types</a></TD><TD><a href="6024.html">Full Text Search example 1</a></TD><TD><a href="6666.html">Full Text Search example 2</a></TD></TR><TR><TD><a href="6682.html">Full Text Search example 3</a></TD><TD><a href="6709.html">Full Text Search example 4</a></TD><TD><a href="6701.html">Full Text Search Examples</a></TD><TD><a href="5278.html">Category:Full-Text Search in Applications</a></TD></TR><TR><TD><a href="6468.html">HowTo: Configuring Full Text Search in Your Application</a></TD><TD><a href="9018.html">Searchable property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

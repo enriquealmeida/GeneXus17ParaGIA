@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Managing Roles in applications using SSO</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25538,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Managing Roles in applications using SSO</h1>
+<!--Managing Roles in applications using SSO--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Applications using <a href="19888.html">GeneXus Access Manager</a> can implement <a href='http://en.wikipedia.org/wiki/Single_sign-on'>SSO</a>.</p>
+
+<p>In the GeneXus SSO solution, all the web applications involved have to be connected to a GAM database. Only one of those applications is the Identity Provider (or the server application), and the rest are referenced as client applications. See <a href="25385.html">Single Sign On in applications using GAM</a> for details about this topic.</p>
+
+<p>What SSO provides is a solution to the problem of providing centralized authentication for different distributed web applications. As for the authorization, it's always centralized in the client applications.</p>
+
+<h3><a id="GAM+Remote+authentication+and+roles" class="HashLink" href="#GAM+Remote+authentication+and+roles">GAM Remote authentication and roles</a></h3>
+
+<p>As mentioned before, the client applications are in charge of the authorization, which means that the <a href="17569.html">GAM Roles</a> and <a href="15912.html">GAM Permissions</a> have to be defined in the GAM of the client application.</p>
+
+<p>However, when the user authenticates in the Identity Provider, the information on roles which resides in the GAM of the Identity Provider can be transferred to the GAM of the client application.</p>
+
+<p>The mechanism is as follows:</p>
+
+<ul>
+	<li>When the user authenticates, the list of roles can be transferred from the server to the client application. In order to be assigned to the user, those roles have to be mapped in the GAM of the client application.</li>
+</ul>
+
+<p>The roles need to be mapped using their External ID property. That is, the External ID of the roles in the server have to be the same as the External ID of the role in the client in order to be considered the same role.</p>
+
+<h5><img src="./images/25552.png" id="25552" class="WikiImage"/><br />
+Picture#1. Roles in the server</h5>
+
+<h5><img src="./images/25553.png" id="25553" class="WikiImage"/><br />
+Picture#2.Roles in the client</h5>
+
+<ul>
+	<li>The roles should have the same hierarchy in the server and in the client.</li>
+</ul>
+
+<p>However, as explained before the authorization is centralized in the client application, so what really matters is the definition and the hierarchy of the roles in the client. In addition, the permissions are centralized in the client application.</p>
+
+<h3><a id="How+to+transfer+roles+from+the+server+to+the+client+in+the+remote+authentication" class="HashLink" href="#How+to+transfer+roles+from+the+server+to+the+client+in+the+remote+authentication">How to transfer roles from the server to the client in the remote authentication</a></h3>
+
+<p>In the Identity Provider's GAM, all the client applications need to be registered with their corresponding Client ID and Client Secret, whereas in the client applications the <a href="25355.html">GAM Remote Authentication Type</a> needs to be defined.</p>
+
+<p>1. When running the <a href="15935.html">GAM Web Backoffice</a> in the server application, it is necessary to check the &quot;Get User roles&quot; option for the client application registered:</p>
+
+<h5><img src="./images/25554.png" id="25554" class="WikiImage"/><br />
+Picture#3.Server configuration for SSO : get user roles. Running GAMExampleEntryApplication webpanel.</h5>
+
+<p>Note that the ClientAllowGetUserRoles method of the GAMApplication object - which belongs to the <a href="16535.html">GAM API</a> - is the method used in the code of this webpanel (GAMExampleEntryApplication). The GAMExampleEntryApplication object is part of the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Application.ClientAllowGetUserRoles         = &amp;ClientAllowGetUserRoles  //&amp;Application is GAMApplication data type.</pre>
+
+<p>2. When running the <a href="15935.html">GAM Web Backoffice</a> in the client application, it is necessary to specify in the definition of the GAM Remote authentication type that it is going to manage &quot;Authentication and Roles&quot;. </p>
+
+<h5><img src="./images/25555.png" id="25555" class="WikiImage"/><br />
+Picture#4.Client configuration for SSO : get user roles. Running GAMExampleEntryAuthenticationType webpanel.</h5>
+
+<p>When using the <a href="16535.html">GAM API</a>, the code would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AuthenticationTypeGAMRemote.FunctionId = &amp;FunctionId.ToString() //&amp;AuthenticationTypeGAMRemote is GAMAuthenticationTypeGAMRemote data type. &amp;FunctionId is based on GAMAuthenticationFunctions domain.</pre>
+
+<p>After this configuration is made, when the user authenticates using the configured Remote Authentication, he is updated in the client application with the roles he has on the Identity Provider.</p>
+
+<p>Remember that only the roles which are related by their External ID are going to be assigned to the user. </p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44841.html">Client side configuration for GAM Remote Rest Authentication type</a></TD><TD><a href="25355.html">GAM Remote Authentication Type</a></TD></TR><TR><TD><a href="44840.html">Server side configuration for GAM Remote Rest Authentication type</a></TD></TR><TR><TD><a href="25385.html">Single Sign On in applications using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

@@ -1,0 +1,22 @@
+delimiters "$", "$"
+import "Types.stg"
+
+g_bc_data(page, gx)::=<<
+import { Transform, Type } from 'class-transformer';
+$page.Imports:g_imports();separator="\r\n"$
+
+$page.GxObject.Structure.Levels:g_bc_datalevel()$
+>>
+
+g_bc_datalevel( level)::= <<
+
+export class $g_type_name(level.GeneratorType)$ {
+  $level.Attributes:{att|$g_declare_item_att(att)$};separator="\r\n"$
+  $level.ChildLevels:{slvl|$g_declare_item(slvl)$};separator="\r\n"$
+
+  constructor() {
+    $level.Attributes:{ att|$g_init_item(att)$}$
+    $level.ChildLevels:{slvl|$g_init_item(slvl)$}$
+  }
+}
+>>

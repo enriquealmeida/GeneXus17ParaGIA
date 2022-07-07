@@ -1,0 +1,379 @@
+group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities, dpfunctions, apis, sdts, gx)::=<<
+$header(hostinfo, entities, dpfunctions, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities, dpfunctions, apis, sdts, gx)::=<<
+
+package $hostinfo.package$;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
+import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.apache.olingo.commons.api.edm.provider.*;
+import org.apache.olingo.commons.api.ex.ODataException;
+
+public class GxEdmProvider extends CsdlAbstractEdmProvider {
+
+	public static final String ODATA_NAMESPACE = "$hostinfo.Title$.OData";  //Odata namespace (Exposed namespace)
+	public static final String CONTAINER_NAME = "Container"; //Container Name
+	public static final FullQualifiedName CONTAINER = new FullQualifiedName(ODATA_NAMESPACE, CONTAINER_NAME); 
+
+	$dpfunctions:{function|$function_constants(function, gx)$};separator="\n"$
+
+	$entities:{item|$entity_constants(item, gx)$};separator="\n"$
+
+	$entities:{item|$item.SDT.SubLevels:{struct|$complex_type_constants(item, struct, gx)$}$}$
+
+	$sdts:{item|$entity_sdt_constants(item, gx)$};separator="\n"$
+
+
+	@Override
+	public CsdlEntityContainer getEntityContainer() throws ODataException {
+		List<CsdlEntitySet> entitySets = new ArrayList<CsdlEntitySet>();
+		$entities:{item|$add_entity_set(item,gx)$}$
+
+		List<CsdlFunctionImport> functionImports = new ArrayList<CsdlFunctionImport>();
+		$dpfunctions:{function|$function_import(function,gx)$}$
+
+		CsdlEntityContainer entityContainer = new CsdlEntityContainer();
+		entityContainer.setName(CONTAINER_NAME);
+		entityContainer.setEntitySets(entitySets);
+		entityContainer.setFunctionImports(functionImports);
+		return entityContainer;
+	}
+
+	@Override
+	public CsdlEntityContainerInfo getEntityContainerInfo(FullQualifiedName entityContainerName) throws ODataException {
+		if (entityContainerName == null || entityContainerName.equals(CONTAINER)) {
+			CsdlEntityContainerInfo entityContainerInfo = new CsdlEntityContainerInfo();
+			entityContainerInfo.setContainerName(CONTAINER);
+			return entityContainerInfo;
+		}
+		return null;
+	}
+
+	public CsdlComplexType getComplexType(final FullQualifiedName complexTypeName) throws ODataException {
+		$entities:{item| $set_sublevels_metadata(item, item.SDT, gx)$};separator="\n"$
+		$sdts:{itemsd| $set_sdt_sublevels_metadata(itemsd.SDT, gx)$};separator="\n"$
+		return null;
+	}
+
+	@Override
+	public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) throws ODataException {		
+		if (entityContainer.equals(CONTAINER)) {
+		    $entities:{item| $return_entity_set(item,gx)$};separator="\n"$
+		}
+		return null;
+	}
+
+	@Override
+	public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) throws ODataException {
+		$entities:{item|$set_entity_metadata(item, item.SDT, gx)$};separator="\n"$
+		$sdts:{item|$set_sdt_metadata(item, gx)$};separator="\n"$
+
+		return null;
+	}
+
+	@Override
+	public List<CsdlFunction> getFunctions(final FullQualifiedName functionName) {
+		$dpfunctions:{function|$declare_function(function,gx)$};separator="\n"$
+		return null;
+	}
+
+	@Override
+	public CsdlFunctionImport getFunctionImport(FullQualifiedName entityContainer, String functionImportName) {
+		if(entityContainer.equals(CONTAINER)) {
+			$dpfunctions:{function|$process_function(function,gx)$};separator="\n"$
+		}
+		return null;
+	}
+
+
+	@Override
+	public List<CsdlSchema> getSchemas() throws ODataException {
+		
+		CsdlSchema schema = new CsdlSchema();
+		schema.setNamespace(ODATA_NAMESPACE);
+		
+		List<CsdlEntityType> entityTypes = new ArrayList<CsdlEntityType>();
+		$entities:{item|entityTypes.add(getEntityType(ET_$gx.ToUpper.(item.Name)$_QN));};separator="\n"$		
+		schema.setEntityTypes(entityTypes);
+		schema.setEntityContainer(getEntityContainer());	
+		  
+		List<CsdlComplexType> complexTypes = new ArrayList<CsdlComplexType>();
+		$entities:{item|$item.SDT.SubLevels:{struct|$declare_complex_type_sub(item, struct)$}$}$		
+
+		$sdts:{item|$declare_complex_type(item.SDT)$}$
+		schema.setComplexTypes(complexTypes);
+
+
+		List<CsdlFunction> functions = new ArrayList<CsdlFunction>();
+		$dpfunctions:{function|$function_add(function, gx)$};separator="\n"$
+		schema.setFunctions(functions);
+
+		List<CsdlSchema> schemas = new ArrayList<CsdlSchema>();		
+		schemas.add(schema);
+		return schemas;
+	}
+}
+>>
+
+declare_complex_type_sub(item, struct)::=<<
+complexTypes.add(getComplexType(CTYPE_$gx.ToUpper.(item.Name)$$gx.ToUpper.(struct.Name)$_QN));
+>>
+
+declare_complex_type(struct)::=<<
+complexTypes.add(getComplexType(CTYPE_$gx.ToUpper.(struct.Name)$_QN));
+>>
+
+declare_function(func,gx)::=<<
+if (functionName.equals(FUNCTION_$gx.ToUpper.(func.Name)$_QN)) {
+  
+    $declare_inpars_list(func.InParameters,gx)$
+	$declare_outpar_list(func.OutParameters,gx)$
+    
+    final CsdlFunction function = new CsdlFunction();
+    function.setName(FUNCTION_$gx.ToUpper.(func.Name)$_QN.getName())
+        .setParameters(Arrays.asList($get_parameter_list(func.InParameters,gx)$))
+        .setReturnType(returnType);    
+    final List<CsdlFunction> functions = new ArrayList<CsdlFunction>();
+	functions.add(function);
+    return functions;
+}
+>>
+
+get_parameter_list(params, gx)::=<<
+$params:{par|parameter$par.Name$};separator=","$
+>>
+
+declare_inpars_list(params,gx)::=<<
+$params:{par|$declare_inpar(par,gx)$};separator="\n"$
+>>
+
+declare_inpar(par,gx)::=<<
+final CsdlParameter parameter$par.Name$ = new CsdlParameter();
+parameter$par.Name$.setName("$par.Name$");
+$if (par.IsNullable)$
+parameter$par.Name$.setNullable(true);
+$else$
+parameter$par.Name$.setNullable(false);
+$endif$
+parameter$par.Name$.setType(EdmPrimitiveTypeKind.$par.ODataType$.getFullQualifiedName());
+>>
+
+declare_outpar_list(params, gx)::=<<
+$params:{par|$declare_outpar( par, gx)$};separator="\n"$
+>>
+
+declare_outpar(param, gx)::=<<
+final CsdlReturnType returnType = new CsdlReturnType();
+$if (param.IsCollection)$
+returnType.setCollection(true);
+$else$
+returnType.setCollection(false);
+$endif$
+returnType.setType(ET_$gx.ToUpper.(param.SDTType)$_QN);
+>>
+
+process_function(func, gx)::=<<
+if(functionImportName.equals(FUNCTION_$gx.ToUpper.(func.Name)$_QN.getName())) {
+	return new CsdlFunctionImport()
+	.setName(functionImportName)
+	.setFunction(FUNCTION_$gx.ToUpper.(func.Name)$_QN)
+	//.setEntitySet(ES_CATEGORIES_NAME)
+	.setIncludeInServiceDocument(true);
+}
+>>
+
+function_add(function, gx)::=<<
+functions.addAll(getFunctions(FUNCTION_$gx.ToUpper.(function.Name)$_QN));
+>>
+
+function_constants(item,gx)::=<<
+public static final String FUNCTION_$gx.ToUpper.(item.Name)$ = "$item.Name$";
+public static final FullQualifiedName FUNCTION_$gx.ToUpper.(item.Name)$_QN = new FullQualifiedName(ODATA_NAMESPACE, FUNCTION_$gx.ToUpper.(item.Name)$); 
+>>
+
+entity_constants(item,gx)::=<<
+public static final String ET_$gx.ToUpper.(item.Name)$_NAME = "$item.Name$";
+public static final FullQualifiedName ET_$gx.ToUpper.(item.Name)$_QN = new FullQualifiedName(ODATA_NAMESPACE, ET_$gx.ToUpper.(item.Name)$_NAME); 
+public static final String ES_$gx.ToUpper.(item.Name)$_LIST_NAME = "$item.Name$";
+>>
+
+complex_type_constants(item, level, gx)::=<<
+public static final String CTYPE_$gx.ToUpper.(item.Name)$$gx.ToUpper.(level.Name)$_NAME = "$item.Name$$level.Name$";
+public static final FullQualifiedName CTYPE_$gx.ToUpper.(item.Name)$$gx.ToUpper.(level.Name)$_QN = new FullQualifiedName(ODATA_NAMESPACE, CTYPE_$gx.ToUpper.(item.Name)$$gx.ToUpper.(level.Name)$_NAME); 
+>>
+
+
+entity_sdt_constants(item, gx)::=<<
+public static final String ET_$gx.ToUpper.(item.Name)$_NAME = "$item.Name$";
+public static final FullQualifiedName ET_$gx.ToUpper.(item.Name)$_QN = new FullQualifiedName(ODATA_NAMESPACE, ET_$gx.ToUpper.(item.Name)$_NAME); 
+public static final String ES_$gx.ToUpper.(item.Name)$_LIST_NAME = "$item.Name$";
+
+public static final String CTYPE_$gx.ToUpper.(item.Name)$_NAME = "$item.Name$";
+public static final FullQualifiedName CTYPE_$gx.ToUpper.(item.Name)$_QN = new FullQualifiedName(ODATA_NAMESPACE, CTYPE_$gx.ToUpper.(item.Name)$_NAME); 
+>>
+
+add_entity_set(item,gx)::=<<
+entitySets.add(getEntitySet(CONTAINER, ES_$gx.ToUpper.(item.Name)$_LIST_NAME));
+>>
+
+function_import(func, gx)::=<<
+functionImports.add(getFunctionImport(CONTAINER, FUNCTION_$gx.ToUpper.(func.Name)$));
+>>
+
+return_entity_set(item, gx)::=<<
+if (entitySetName.equals(ES_$gx.ToUpper.(item.Name)$_LIST_NAME)) {
+	CsdlEntitySet entitySet = new CsdlEntitySet();
+	entitySet.setName(ES_$gx.ToUpper.(item.Name)$_LIST_NAME);
+	entitySet.setType(ET_$gx.ToUpper.(item.Name)$_QN);
+	return entitySet;
+}
+>>
+
+set_sdt_metadata(sdttype, gx)::=<<
+$if (sdttype.SDT.IsCollection)$
+if (entityTypeName.equals(ET_$gx.ToUpper.(sdttype.Name)$_QN)) {
+	List<CsdlProperty> entity_properties = new ArrayList<CsdlProperty>();
+	$sdt_type_col_definitions(sdttype, sdttype.SDT)$
+	CsdlEntityType entityType = new CsdlEntityType();
+	entityType.setName(ET_$gx.ToUpper.(sdttype.Name)$_NAME);
+	entityType.setProperties(entity_properties);	
+	return entityType;	    		
+}
+$else$
+if (entityTypeName.equals(ET_$gx.ToUpper.(sdttype.Name)$_QN)) {
+	List<CsdlProperty> entity_properties = new ArrayList<CsdlProperty>();
+	$sdt_type_definitions(sdttype, sdttype.SDT)$
+	CsdlEntityType entityType = new CsdlEntityType();
+	entityType.setName(ET_$gx.ToUpper.(sdttype.Name)$_NAME);
+	entityType.setProperties(entity_properties);	
+	return entityType;	    		
+}
+$endif$
+>>
+
+sdt_type_definitions(sdttype, struct)::=<< 
+$if (!struct.IsCollection)$$sdt_type_props(sdttype.FullName, struct)$$endif$
+>>
+
+sdt_type_col_definitions(sdttype, struct)::=<< 
+$if (struct.IsCollection)$$sdt_type_props(sdttype.FullName, struct)$$endif$
+>>
+
+sdt_type_props(fullname, struct)::=<<
+$struct.Attributes:{item| $set_att_type_props(item)$};separator="\n"$
+>>
+
+set_entity_metadata(entity, level, gx)::=<<
+if (entityTypeName.equals(ET_$gx.ToUpper.(entity.Name)$_QN)) {
+	List<CsdlProperty> entity_properties = new ArrayList<CsdlProperty>();
+	$type_prop_definitions(level, entity.FullName)$
+	$level.SubLevels:{ sublevel | $sublevel_prop_definitions(entity, sublevel, gx)$};separator="\n"$
+	CsdlEntityType entityType = new CsdlEntityType();
+	entityType.setName(ET_$gx.ToUpper.(entity.Name)$_NAME);
+	entityType.setProperties(entity_properties);
+	$type_add_key(level)$    
+	return entityType;
+}
+>>
+
+set_sublevels_metadata(entity, level, gx)::=<<
+$level.SubLevels:{ sublevel | $set_level_metadata(entity, sublevel, gx)$};separator="\n"$
+>>
+
+set_level_metadata(item, level, gx)::=<<
+if (complexTypeName.equals(CTYPE_$gx.ToUpper.(item.Name)$$gx.ToUpper.(level.Name)$_QN)) {
+	List<CsdlProperty> entity_properties = new ArrayList<CsdlProperty>();
+	$if (level && !level.IsCollection)$$type_prop_definitions(level, level.FullName)$$endif$
+	CsdlComplexType complexType = new CsdlComplexType();
+	complexType.setName(CTYPE_$gx.ToUpper.(item.Name)$$gx.ToUpper.(level.Name)$_QN.getName());
+	complexType.setProperties(entity_properties);
+	return complexType;
+}
+>>
+
+set_sdt_sublevels_metadata(item, gx)::=<<
+$if (item.IsCollection)$$set_col_level_metadata(item,gx)$$else$$set_sdt_level_metadata(item, gx)$$endif$	
+>>
+
+set_sdt_level_metadata(level, gx)::=<<
+if (complexTypeName.equals(CTYPE_$gx.ToUpper.(level.Name)$_QN)) {
+	List<CsdlProperty> entity_properties = new ArrayList<CsdlProperty>();
+	$if (level && !level.IsCollection)$$type_prop_definitions(level, level.FullName)$$endif$
+	CsdlComplexType complexType = new CsdlComplexType();
+	complexType.setName(CTYPE_$gx.ToUpper.(level.Name)$_QN.getName());
+	complexType.setProperties(entity_properties);
+	return complexType;
+}
+>>
+
+set_col_level_metadata(level, gx)::=<<
+if (complexTypeName.equals(CTYPE_$gx.ToUpper.(level.Name)$_QN)) {
+	List<CsdlProperty> entity_properties = new ArrayList<CsdlProperty>();
+	$if (level && level.IsCollection)$$type_prop_definitions(level, level.FullName)$$endif$
+	CsdlComplexType complexType = new CsdlComplexType();
+	complexType.setName(CTYPE_$gx.ToUpper.(level.Name)$_QN.getName());
+	complexType.setProperties(entity_properties);
+	return complexType;
+}
+>>
+
+type_prop_definitions(level, entityFName)::=<< 
+$level_type_props(level)$
+>>
+
+level_type_props(level)::=<<
+$level.Attributes:{item| $set_att_type_props(item)$};separator="\n"$
+$level.KeyAttributes:{keyitem| $set_att_key(keyitem)$};separator="\n"$
+>>
+
+sublevel_prop_definitions(entity, sublevel,gx)::=<<
+$if (sublevel && !sublevel.IsCollection)$$sublevel_type_props(entity, sublevel,gx)$$endif$
+>>
+
+sublevel_type_props(entity, sublevel,gx)::=<<
+CsdlProperty p_$sublevel.Name$ = new CsdlProperty();
+p_$sublevel.Name$.setName("$sublevel.Name$");
+p_$sublevel.Name$.setType(CTYPE_$gx.ToUpper.(entity.Name)$$gx.ToUpper.(sublevel.Name)$_QN);
+p_$sublevel.Name$.setCollection(true);
+p_$sublevel.Name$.setNullable(true);
+entity_properties.add(p_$sublevel.Name$);
+>>
+
+ 
+set_att_type_props(att)::=<<
+CsdlProperty p_$att.Name$ = new CsdlProperty();
+p_$att.Name$.setName("$att.Name$");
+p_$att.Name$.setType(EdmPrimitiveTypeKind.$att.ODataType$.getFullQualifiedName());
+$if(att.IsNullable)$
+p_$att.Name$.setNullable(true);
+$else$
+p_$att.Name$.setNullable(false);
+$endif$
+$if (att.IsNumericType)$
+$if (att.HasDecimals)$
+p_$att.Name$.setPrecision($att.Length$);
+p_$att.Name$.setScale($att.Decimals$);
+$endif$
+$endif$
+entity_properties.add(p_$att.Name$);
+>>
+
+set_att_key(att)::=<<
+CsdlPropertyRef p_$att.Name$Ref = new CsdlPropertyRef();
+p_$att.Name$Ref.setName("$att.Name$");
+>>
+
+type_add_key(level)::=<<
+entityType.setKey(Arrays.asList($level.KeyAttributes:{item|p_$item.Name$Ref};separator=","$));
+>>

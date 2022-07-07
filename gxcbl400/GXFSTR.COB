@@ -1,0 +1,34 @@
+GX-STR.
+    MOVE SPACES    TO GX-STR-OUTPUT
+    IF GX-STR-LEN > 0
+       IF GX-STR-LEN > 20 MOVE 20 TO GX-STR-LEN END-IF
+       IF GX-STR-DEC > 2  MOVE 2  TO GX-STR-DEC END-IF
+       IF GX-STR-DEC > 0
+          CONTINUE
+       END-IF
+       IF GX-STR-LEN > 17
+          COMPUTE GX-STR-MAX =  9999999999999999#1
+          COMPUTE GX-STR-MIN = -9999999999999999#1
+       ELSE
+          COMPUTE GX-STR-MAX =  10 ** GX-STR-LEN - 1
+          COMPUTE GX-STR-MIN = - (10 ** (GX-STR-LEN - 1)) - 1
+       END-IF
+       IF GX-STR-NUM > GX-STR-MAX OR
+          GX-STR-NUM < GX-STR-MIN
+          MOVE ALL '*' TO GX-STR-OUTPUT
+       ELSE
+          MOVE GX-STR-NUM TO GX-STR-ENUM
+          IF GX-STR-DEC > 0
+             COMPUTE GX-STR-START = 17 + GX-STR-DEC + 1
+          ELSE
+             MOVE 17 TO GX-STR-START
+          END-IF
+          COMPUTE GX-STR-START = GX-STR-START - GX-STR-LEN + 1
+          IF GX-STR-START <= 0
+             ADD GX-STR-START TO GX-STR-LEN
+             MOVE 1 TO GX-STR-START
+          END-IF
+          STRING GX-STR-ENUM (GX-STR-START : GX-STR-LEN)
+                 DELIMITED BY SIZE INTO GX-STR-OUTPUT
+       END-IF
+    END-IF.

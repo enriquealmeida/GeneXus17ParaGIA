@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Calling objects from Menu Events</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17392,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Calling objects from Menu Events</h1>
+<!--Calling objects from Menu Events--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document will guide you through an easy example of the objects that may be called, and how to call them from a <a href="16321.html">Menu object</a>.</p>
+
+<p>You can call different objects and perform numerous different actions from a Menu. Each option in a Menu can be created by right-clicking on the root_element/Add/Item.</p>
+
+<p><img src="./images/17400.png" id="17400" class="WikiImage"/></p>
+
+<p>An event will be triggered when a user taps on one of the items in the Menu. So, you want to have an Event for each Item.</p>
+
+<p>To add an Event (temporary restriction) go to the Events tab and add a new event with a unique name.</p>
+
+<p>To link an Event to the Item of the Menu you have the <a href="6985.html">Name property</a>. The value of this property will be the name of the event that will be executed when the user taps on that option.</p>
+
+<p>The first distinction is that an event in a Menu can call one object or make a <a href="17389.html">composite</a> call. It's easy to call an object, with the user tapping on the icon/tab/line (to see different ways to show a Menu read <a href="16098.html">Several ways to show a Menu</a>) of the item, to invoke the event and call only one object. The Composite call can help you add a more sophisticated behavior to your Menu.</p>
+
+<h3><a id="Call+Work+With+Pattern+Instances+with+associated+Business+Component" class="HashLink" href="#Call+Work+With+Pattern+Instances+with+associated+Business+Component">Call Work With Pattern Instances with associated Business Component</a></h3>
+
+<p>For this tutorial, the following <a href="1908.html">Transaction object</a> will be used.</p>
+
+<p><img src="./images/17404.png" id="17404" class="WikiImage"/></p>
+
+<p>Apply the <a href="15974.html">Work With for Smart Devices object</a> to the Transaction (for further information see <a href="15975.html">Applying Work With for Smart Devices Pattern</a>).</p>
+
+<p>Let's start with a basic example. Suppose you want an item in your Menu to call a <a href="20429.html">List node</a> of a <a href="15974.html">Work With for Smart Devices object</a>.</p>
+
+<p>a. Now create a new Event on the Events tab with the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'WWSDList'
+    WorkWithDevicesPerson.Person.List()
+EndEvent</pre>
+
+<p>Add a new item to your Menu as shown in the image above.</p>
+
+<p>For the <a href="6985.html">Name property</a> use the event name, in this case: WWSDList.</p>
+
+<p>By tapping on this element at run-time, you'll be able to go to the list of Persons.</p>
+
+<p><img src="./images/17395.png" id="17395" class="WikiImage"/></p>
+
+<p>b. Now let's call the Detail view of a WorkWith Pattern. You want to call the View Mode of the Section (General) in the <a href="20433.html">Detail node</a>, so you can view the details on a Person.</p>
+
+<p>You have to take into consideration that the Detail node of an instance of a WorkWith with associated <a href="2416.html">BC</a> receives a parameter; the parameter is the <a href="20770.html">PK</a> of the <a href="1908.html">Transaction object</a>. So, in your call, you have to pass the value of the PK of the Person you want to update. In this case, you will make the Event as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'WWSDDetail'
+    WorkWithDevicesPerson.Person.Detail(2)
+EndEvent</pre>
+
+<p>Add a new item to the Menu and set the <a href="6985.html">Name property</a> with WWSDDetail.</p>
+
+<p><img src="./images/17396.png" id="17396" class="WikiImage"/></p>
+
+<h3><a id="Call+the+BCs+of+a+WW+in+their+different+Modes+%28Insert%2C+Update%2C+Delete%29" class="HashLink" href="#Call+the+BCs+of+a+WW+in+their+different+Modes+%28Insert%2C+Update%2C+Delete%29">Call the BCs of a WW in their different Modes (Insert, Update, Delete)</a></h3>
+
+<p>Sometimes you need or want to call a Transaction directly in one of the modes that the Transaction can be called (Insert, Update, Delete). To do so, the event should be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'TRNInsert'
+    WorkWithDevicesPerson.Person.Detail.Update(2)
+EndEvent</pre>
+
+<p>If you change the last part you can invoke the Transaction in Insert mode or Delete mode.</p>
+
+<p><img src="./images/17397.png" id="17397" class="WikiImage"/></p>
+
+<h3><a id="Call+any+action+of+the+Smart+Device+API" class="HashLink" href="#Call+any+action+of+the+Smart+Device+API">Call any action of the Smart Device API</a></h3>
+
+<p>Calling objects from the Smart Device API is another way to use your Menu Items.</p>
+
+<p>For this example, you will call the SendMessage method from the Interop External Object. (For more information on the Smart Device API object, read the document <a href="15528.html">HowTo: Using SendMessage from Interop in Smart Devices</a>).</p>
+
+<p>The event programming should be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'SDApiCall'
+    Interop.SendMessage(&quot;A message&quot;, 1234342)
+EndEvent</pre>
+
+<p>Set the Name property with SDApiCall. This will invoke the SendMessage method with the parameters specified.</p>
+
+<p><img src="./images/17398.png" id="17398" class="WikiImage"/></p>
+
+<h3><a id="Call+other+Menus" class="HashLink" href="#Call+other+Menus">Call other Menus</a></h3>
+
+<p>Sometimes you can have many Menus, where one of them can call another.</p>
+
+<p>Create a new Menu; set the Name property with SubMenu and save it.</p>
+
+<p>Note: it makes no difference if there are no items on that Menu.</p>
+
+<p>The event will be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'SubMenu' 
+    SubMenu.Call()
+EndEvent</pre>
+
+<p>Add a new Item to the Menu and set the Name property with SubMenu.</p>
+
+<h3><a id="Call+an+Entry+Panel+with+no+Business+Component" class="HashLink" href="#Call+an+Entry+Panel+with+no+Business+Component">Call an Entry Panel with no Business Component</a></h3>
+
+<p>Let's create a new WorkWith object as shown in the following image:</p>
+
+<p><img src="./images/17401.png" id="17401" class="WikiImage"/></p>
+
+<p>Create a new Event with the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'EntryPanel'
+    EntryPanel.EntryPanel.Detail.Edit()
+EndEvent</pre>
+
+<p>Lastly, add a new item to the Menu and set the Name property with EntryPanel.</p>
+
+<p><img src="./images/17402.png" id="17402" class="WikiImage"/></p>
+
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/grammar-of-events-on-the-client-side-and-composite-command?p=3682'>Grammar of Events on the Client Side and Composite Command</a><br />
+<img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/events-in-mobile-applications-6103211?p=3673'>Events in Mobile Applications</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="15551.html">Composite examples</a></p>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR></TR><TR><TD><a href="16321.html">Category:Menu object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/10/20 11:54 PM</em></font></td></TR></table></font>

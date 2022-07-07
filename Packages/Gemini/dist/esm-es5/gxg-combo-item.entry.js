@@ -1,0 +1,71 @@
+import { r as registerInstance, c as createEvent, h, H as Host, g as getElement } from './index-09b1517f.js';
+var comboItemCss = ":host{display:block;cursor:pointer;height:var(--spacing-comp-05);display:-ms-flexbox;display:flex;-ms-flex-align:center;align-items:center;font-family:var(--font-family-primary);font-size:var(--font-size-sm);background-color:var(--color-background);color:var(--color-on-background);padding:0 var(--spacing-comp-01);-webkit-transition:height 0.25s, opacity 0.25s;transition:height 0.25s, opacity 0.25s;opacity:1;overflow:hidden}:host .content{display:-ms-flexbox;display:flex;-ms-flex-align:center;align-items:center}:host(.hidden){height:0;opacity:0}:host(.display-none){display:none}:host(:hover),:host(.selected:hover){background-color:var(--color-secondary-hover);color:var(--color-always-white)}:host(.selected){background-color:var(--color-secondary-active);color:var(--color-always-white)}:host(.exact-match){background-color:var(--color-success-light);color:var(--color-success-dark)}:host(:focus){outline-width:var(--border-width-md);outline-color:var(--color-primary-active);outline-style:solid;outline-offset:-2px}";
+var GxgComboItem = /** @class */ (function () {
+    function GxgComboItem(hostRef) {
+        registerInstance(this, hostRef);
+        this.itemClicked = createEvent(this, "itemClicked", 7);
+        /**
+         * Any icon that belongs to Gemini icon library: https://gx-gemini.netlify.app/?path=/story/icons
+         */
+        this.icon = undefined;
+        /**
+         * The item value. This is what the filter with search for. If value is not provided, the filter will search by the item innerHTML.
+         */
+        this.value = undefined;
+        /**
+         * (This prop is for internal use).
+         */
+        this.iconColor = "auto";
+    }
+    GxgComboItem.prototype.itemClickedFunc = function () {
+        var index = this.el.getAttribute("index");
+        var icon = this.el.getAttribute("icon");
+        var value = this.value;
+        if (value === undefined) {
+            value = this.el.innerHTML;
+        }
+        this.itemClicked.emit({
+            index: parseInt(index, 10),
+            value: value.toString(),
+            icon: icon,
+        });
+    };
+    GxgComboItem.prototype.onKeyDown = function (e) {
+        e.preventDefault();
+        if (e.code === "ArrowDown") {
+            var nextItem = this.el.nextElementSibling;
+            if (nextItem !== null) {
+                nextItem.focus();
+            }
+        }
+        else if (e.code === "ArrowUp") {
+            var prevItem = this.el.previousElementSibling;
+            if (prevItem !== null) {
+                prevItem.focus();
+            }
+        }
+        if (e.code === "Enter") {
+            this.itemClickedFunc();
+        }
+    };
+    GxgComboItem.prototype.onMouseOver = function () {
+        this.iconColor = "negative";
+    };
+    GxgComboItem.prototype.onMouseOut = function () {
+        var itemIsSelected = this.el.classList.contains("selected");
+        if (!itemIsSelected) {
+            this.iconColor = "auto";
+        }
+    };
+    GxgComboItem.prototype.render = function () {
+        return (h(Host, { onClick: this.itemClickedFunc.bind(this), onKeyDown: this.onKeyDown.bind(this), onMouseOver: this.onMouseOver.bind(this), onMouseOut: this.onMouseOut.bind(this) }, h("div", { class: "content" }, this.icon !== undefined ? (h("gxg-icon", { color: this.iconColor, size: "small", type: this.icon })) : null, h("slot", null))));
+    };
+    Object.defineProperty(GxgComboItem.prototype, "el", {
+        get: function () { return getElement(this); },
+        enumerable: false,
+        configurable: true
+    });
+    return GxgComboItem;
+}());
+GxgComboItem.style = comboItemCss;
+export { GxgComboItem as gxg_combo_item };

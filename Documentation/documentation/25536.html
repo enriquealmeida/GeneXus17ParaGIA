@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Advanced Concepts of Offline Applications architecture</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25536,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Advanced Concepts of Offline Applications architecture</h1>
+<!--Advanced Concepts of Offline Applications architecture--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><a href="20286.html">Offline applications</a> offer a whole new branch of possible scenarios for devices. Because of this, the offline application architecture is more complex than online application architectures given by GeneXus. In addition, GeneXus creates auxiliary tables, files, and objects, either on the client-side (the device) or the server-side, in order to perform the synchronization process.</p>
+
+<p>This document is an extension of the <a href="22221.html">Offline Native Mobile applications architecture</a> document and explains advanced concepts of how GeneXus generates this type of application.</p>
+
+<h3><a id="Client-side+architecture" class="HashLink" href="#Client-side+architecture">Client-side architecture</a></h3>
+
+<h4><a id="Auxiliary+structures+for+data+sending" class="HashLink" href="#Auxiliary+structures+for+data+sending">Auxiliary structures for data sending</a></h4>
+
+<p>As mentioned in the <a href="22221.html">Offline Native Mobile applications architecture</a> document, the device needs a local database in order to work offline. This means that the device can insert, update, or delete data at any time, whether it has a connection to the server or not. <span style="line-height: 1.6em;">In most scenarios, these applications need to synchronize with a central server in order to keep data updated in the device and to send all changes made in the device to the server. This process is described as 'Data Synchronization'.</span></p>
+
+<p>But, how does the device know what changes did it made?</p>
+
+<p>Here comes the need of storing somehow all the modifications made by the device, so that, once the device is connected, it can send these modifications to the application server.</p>
+
+<p>In order to do that, along with the tables defined by the <a href="22509.html">Offline Database object</a>, a table named 'GxPendingEvents' is created in the local database to store all the modifications (insert, update or delete) made in the local database. These modifications are stored as &quot;synchronization events&quot; in the auxiliary table.</p>
+
+<p><strong>Important note</strong>: Only modifications (insert, update, delete) made by <a href="5846.html">Business Component</a> are stored into the GxPendingEvents table.</p>
+
+<p>Every time the device executes a <a href="2416.html">BC</a>, it stores all the related information of that event into the GxPendingEvents table. <span style="line-height: 1.6em;">Every time a device executes the <a href="23604.html">Synchronization.Send method</a>, it sends all the events with Status &quot;Pending&quot; from the GxPendingEvents table.</span></p>
+
+<p><span style="line-height: 1.6em;">It is possible to access this table's data by using the </span><a href="31341.html">SynchronizationEvents external object</a>.</p>
+
+<h4><a id="Auxiliary+structures+for+data+reception" class="HashLink" href="#Auxiliary+structures+for+data+reception">Auxiliary structures for data reception</a></h4>
+
+<p>Another important component of offline applications is the data reception process. This process transfers data from the server into the device in order to keep both systems synchronized.</p>
+
+<p>But, how do the device and the server know if they are not in sync?</p>
+
+<p>The first time the device tries to synchronize, the server sends all necessary data as it is defined in the <a href="22509.html">Offline Database object</a>. The server also sends a set of table hashes that are stored in the device in a JSON file.</p>
+
+<p>In the subsequent synchronizations, the device sends the table hashes to the server.</p>
+
+<p>These hashes are used to determine which changes have been made since the last synchronization, so that, in the next synchronization the server sends only the data that has changed. The behavior on how is the data changes processed in the server depends on the <a href="23541.html">Data Receive Granularity property</a> of the <a href="22509.html">Offline Database object</a>.</p>
+
+<h3><a id="Server-side+architecture" class="HashLink" href="#Server-side+architecture">Server-side architecture</a></h3>
+
+<p>In addition to the <a href="22221.html">Offline Native Mobile applications architecture</a>, the server architecture changes if the GeneXus developer sets in the <a href="22509.html">Offline Database object</a> the <a href="23541.html">Data Receive Granularity property</a> the value &quot;By Row&quot;.</p>
+
+<p>GeneXus gives two alternatives on how data from the server is received in the device. These implementation options are given by the <a href="23541.html">Data Receive Granularity property</a>. The Developer can choose between &quot;By Table&quot; granularity, which is the simplest implementation, or &quot;By Row&quot;, which is a little more complex.</p>
+
+<p>If the developer chooses to use &quot;By Row&quot; granularity synchronization (which is the default value of the <a href="23541.html">Data Receive Granularity property</a>), new specific tables are created in the server database in the <a href="7158.html">Create Database Tables</a> process.</p>
+
+<p>The created tables are the following: 'GXPARAMETERS', 'GXDEVICERESULT' and 'GXRESULTROW'</p>
+
+<p><img src="./images/33761.png" id="33761" class="WikiImage"/></p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  A file named gxrowlevelcache_ReorganizationScript.txt is generated with the corresponding sentences to create those tables. If the user that executes the programs has no permissions on the database, those sentences have to be executed by the corresponding team, in deployment time.</div>
+</p>
+
+<p>These tables store all the necessary information to perform the synchronization by row.</p>
+
+<p>To prevent an excessive size increase of these tables, the <a href="https://wiki.genexus.com/commwiki/wiki?31160,," target="_blank">Minimum Time Between Table Purges property</a> is available to periodically purge them. </p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also"><span style="line-height: 1.2em;">See also</span></a></h3>
+
+<ul>
+	<li><a href="22221.html">Offline Native Mobile applications architecture</a></li>
+	<li><a href="22269.html">Data Synchronization</a></li>
+	<li><a href="23541.html">Data Receive Granularity property</a></li>
+	<li><a href="42733.html">Batch Synchronization</a></li>
+</ul>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22267.html">Automatic Offline Data Synchronization</a></TD><TD><a href="23541.html">Data Receive Granularity property</a></TD></TR><TR><TD><a href="22269.html">Data Synchronization</a></TD><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR><TR><TD><a href="22221.html">Offline Native Mobile applications architecture</a></TD><TD><a href="25839.html">Synchronization.ServerStatus method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/06/20 09:09 PM</em></font></td></TR></table></font>

@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * GxUI Library 2.0.1
+ * Copyright (c) 2009, Artech
+ * All rights reserved.
+ * 
+ * GxUI Library is freely distributable under the terms of the BSD license.
+ * 
+ */
+
+/// &lt;reference path=&quot;..\..\Freezer\Ext\ext-all-dev.js&quot; /&gt;
+
+<span id='gxui-Toolbar'>/**
+</span>* @class gxui.Toolbar
+* Toolbar User Control. Wraps Ext.toolbar.Toolbar so it can be used from GeneXus.
+* The control basically loads a SDT which contains the toolbar items. Consequently you will have to 
+* define a variable based on gxuiToolbar SDT which must be assigned to the {@link #Data} property of the control.
+* This variable will have a collection of items (gxuiToolbarItem SDT) that will be displayed in the toolbar.
+*
+* 
+* #Basic Toolbar
+* {@img Toolbar/gxuiToolbar.png Toolbar sample}
+* The code below is an example of a Data Provider that produces a simple toolbar as the one shown in the image.
+*
+*        gxuiToolbar
+*        {
+*            Buttons
+*            {
+*                Item
+*                {
+*                    Id = !&quot;DSP&quot;
+*                    Text = &quot;Display&quot;
+*                    Tooltip = &quot;Tooltip for Display Button&quot;
+*                    Type = gxuiToolbarItemTypes.Button
+*                    Icon = ActionDisplay.Link()
+*                }
+*                Item
+*                {
+*                    Id = !&quot;UPD&quot;
+*                    Text = &quot;Update&quot;
+*                    Tooltip = &quot;Toltip for Update Button&quot;
+*                    Type = gxuiToolbarItemTypes.Button
+*                    Icon = ActionUpdate.Link()
+*                }
+*                Item
+*                {
+*                    Id = !&quot;DLT&quot;
+*                    Text = &quot;Delete&quot;
+*                    Tooltip = &quot;Tooltip for Delete Button&quot;
+*                    Type = gxuiToolbarItemTypes.Button
+*                    Icon = ActionDelete.Link()
+*                    AskConfirmation = True
+*                    Confirmation
+*                    {
+*                        Message = !&quot;Please confirm this action.&quot;
+*                        CancelButtonText = !&quot;Cancel&quot;
+*                        OKButtonText = !&quot;Delete&quot;
+*                    }
+*                }
+*                Item
+*                {
+*                    Id = !&quot;SEARCH&quot;
+*                    Text = &quot;Search...&quot;
+*                    Tooltip = &quot;Enter search query.&quot;
+*                    Type = gxuiToolbarItemTypes.Edit
+*                }
+*            }
+*        }
+*
+*
+* # Multi-level menu
+* {@img Toolbar/gxuiToolbar2.png Toolbar sample}
+*
+* Example of a data provider to load the items shown in the above image.
+*
+*        gxuiToolbar
+*        {
+*            Buttons
+*            {
+*                Item
+*                {
+*                    Id = !&quot;DSP&quot;
+*                    Text = &quot;Display&quot;
+*                    Tooltip = &quot;Tooltip for Display Button&quot;
+*                    Type = gxuiToolbarItemTypes.Menu
+*                    Icon = ActionDisplay.Link()
+*                    Items
+*                    {
+*                        Item
+*                        {
+*                            Id = !&quot;DSP11&quot;
+*                            Text = &quot;Display incoming calls&quot;
+*                            Tooltip = &quot;Tooltip for display incoming calls button&quot;
+*                            Type = gxuiToolbarItemTypes.Button
+*                            Icon = ActionDisplay.Link()
+*                        }
+*                        Item
+*                        {
+*                            Id = !&quot;DSP12&quot;
+*                            Text = &quot;Display outgoing calls&quot;
+*                            Tooltip = &quot;Tooltip for display outgoing calls button&quot;
+*                            Type = gxuiToolbarItemTypes.Menu
+*                            Icon = ActionDisplay.Link()
+*                            Items
+*                            {
+*                                Item
+*                                {
+*                                    Id = !&quot;DSP121&quot;
+*                                    Text = &quot;Display outgoing calls - Today&quot;
+*                                    Tooltip = &quot;Tooltip for display outgoing calls Today button&quot;
+*                                    Type = gxuiToolbarItemTypes.Button
+*                                    Icon = ActionDisplay.Link()
+*                                }
+*                                Item
+*                                {
+*                                    Id = !&quot;DSP122&quot;
+*                                    Text = &quot;Display outgoing calls - Yesterday&quot;
+*                                    Tooltip = &quot;Tooltip for display outgoing calls Yesterday button&quot;
+*                                    Type = gxuiToolbarItemTypes.Button
+*                                    Icon = ActionDisplay.Link()
+*                                }
+*                            }
+*                        }
+*                    }
+*                }
+*                Item
+*                {
+*                    Id = !&quot;UPD&quot;
+*                    Text = &quot;Update&quot;
+*                    Tooltip = &quot;Toltip for Update Button&quot;
+*                    Type = gxuiToolbarItemTypes.Button
+*                    Icon = ActionUpdate.Link()
+*                }
+*                Item
+*                {
+*                    Id = !&quot;DLT&quot;
+*                    Text = &quot;Delete&quot;
+*                    Tooltip = &quot;Tooltip for Delete Button&quot;
+*                    Type = gxuiToolbarItemTypes.Button
+*                    Icon = ActionDelete.Link()
+*                    AskConfirmation = True
+*                    Confirmation
+*                    {
+*                        Message = !&quot;Please confirm this action.&quot;
+*                        CancelButtonText = !&quot;Cancel&quot;
+*                        OKButtonText = !&quot;Delete&quot;
+*                    }
+*                }
+*                Item
+*                {
+*                    Id = !&quot;SEARCH&quot;
+*                    Text = &quot;Search...&quot;
+*                    Tooltip = &quot;Enter search query.&quot;
+*                    Type = gxuiToolbarItemTypes.Edit
+*                }
+*            }
+*        }
+* #More information:#
+* For more examples please see the [online KB][1].
+* [1]: http://xev2.genexusserver.com/gxserver/action.aspx?1,RSSReader2.0:0:c9584656-94b6-4ccd-890f-332d11fc2c25:15
+*
+*/
+Ext.define('gxui.Toolbar', {
+	extend: 'gxui.UserControl',
+
+<span id='gxui-Toolbar-method-initialize'>	initialize: function () {
+</span>		this.callParent();
+
+		this.ButtonPressedId = &quot;&quot;;
+		this.EditFieldValue = &quot;&quot;;
+
+		this.addEvents({
+<span id='global-event-beforebuttonpressed'>			/**
+</span>			* @event beforebuttonpressed
+			* Fires before a click on a toolbar Button (Type = &quot;Button&quot;) is processed. Return false to cancel the default action.
+			* @param {gxui.UserControl} this
+			* @param {Ext.Toolbar.Button} btn Pressed button
+			* @param {Ext.EventObject} e
+			* @ignore
+			*/
+			&quot;beforebuttonpressed&quot;: true,
+<span id='global-event-buttonpressed'>			/**
+</span>			* @event buttonpressed
+			* Fires after a toolbar Button (Type = &quot;Button&quot;) has been pressed.
+			* @param {gxui.UserControl} this
+			* @param {Ext.Toolbar.Button} btn Pressed button
+			* @param {Ext.EventObject} e
+			* @ignore
+			*/
+			&quot;buttonpressed&quot;: true,
+<span id='global-event-editfieldkeypress'>			/**
+</span>			* @event editfieldkeypress
+			* Fires after a key has been pressed in a toolbar Edit field (Type == &quot;Edit&quot;).
+			* @param {gxui.UserControl} this
+			* @param {Ext.form.TextField} edit Edit field
+			* @param {Ext.EventObject} e
+			* @ignore
+			*/
+			&quot;editfieldkeypress&quot;: true,
+<span id='global-event-editfieldblur'>			/**
+</span>			* @event editfieldblur
+			* Fires after a toolbar Edit field (Type == &quot;Edit&quot;) loses focus.
+			* @param {gxui.UserControl} this
+			* @param {Ext.form.TextField} edit Edit field
+			* @ignore
+			*/
+			&quot;editfieldblur&quot;: true
+		});
+
+
+		// Register default Toolbar item resolvers
+		gxui.Toolbar.ItemResolvers.register({
+			&quot;Button&quot;: function (toolbar, button) {
+				var config = {
+					id: toolbar.getUniqueButtonId(button.Id),
+					gxConfirmation: gxui.CBoolean(button.AskConfirmation) ? button.Confirmation : false,
+					cls: toolbar.getBtnCls(button),
+					enableToggle: gxui.CBoolean(button.EnableToggle),
+					pressed: gxui.CBoolean(button.Pressed),
+					disabled: gxui.CBoolean(button.Disabled),
+					hidden: gxui.CBoolean(button.Hidden),
+					handler: toolbar.buttonClickHandler,
+					isDropTarget: gxui.CBoolean(button.IsDropTarget),
+					scope: toolbar,
+					RefreshData: gxui.CBoolean(button.RefreshData)
+				};
+
+				gxui.tryPropertyMapping(config, button, {
+					&quot;gxid&quot;: &quot;Id&quot;,
+					&quot;text&quot;: &quot;Text&quot;,
+					&quot;tooltip&quot;: &quot;Tooltip&quot;,
+					&quot;icon&quot;: &quot;Icon&quot;,
+					&quot;iconCls&quot;: &quot;IconCls&quot;,
+					&quot;rowspan&quot;: &quot;RowSpan&quot;,
+					&quot;colspan&quot;: &quot;ColSpan&quot;,
+					&quot;iconAlign&quot;: { property: &quot;IconAlign&quot;, ignoreEmpty: true },
+					&quot;arrowAlign&quot;: { property: &quot;ArrowAlign&quot;, ignoreEmpty: true },
+					&quot;scale&quot;: { property: &quot;Scale&quot;, ignoreEmpty: true },
+					&quot;width&quot;: { property: &quot;Width&quot;, ignoreEmpty: true }
+				});
+
+				return config;
+			},
+
+			&quot;Text&quot;: function (toolbar, button) {
+				return button.Text;
+			},
+
+			&quot;Edit&quot;: function (toolbar, button) {
+				var edit = Ext.create('Ext.form.field.Text', {
+					id: toolbar.getUniqueButtonId(button.Id),
+					cls: button.Cls,
+					width: button.Width || 180,
+					disabled: gxui.CBoolean(button.Disabled),
+					hidden: gxui.CBoolean(button.Hidden),
+					enableKeyEvents: true,
+					value: button.Value || undefined
+				});
+
+				if (edit.Text != '')
+					edit.emptyText = button.Text;
+
+				edit.on({
+					&quot;keypress&quot;: {
+						fn: function (field, e) {
+							this.fireEvent(&quot;editfieldkeypress&quot;, this, field, e);
+							if (e.getKey() == Ext.EventObject.ENTER) {
+								e.stopEvent();
+								this.editActionHandler(field);
+							}
+						},
+						scope: toolbar
+					},
+					&quot;blur&quot;: {
+						fn: function (field) {
+							this.fireEvent(&quot;editfieldblur&quot;, this, field);
+							this.editActionHandler(field);
+						},
+						scope: toolbar
+					}
+				});
+				edit.gxid = button.Id;
+
+				return edit;
+			},
+
+			&quot;Fill&quot;: function () {
+				return Ext.create('Ext.toolbar.Fill');
+			},
+
+			&quot;Separator&quot;: function () {
+				return &quot;-&quot;;
+			},
+
+			&quot;Menu&quot;: function (toolbar, button) {
+				var menuItems = [];
+
+				if (button.Items) {
+					Ext.each(button.Items, function (item, index, allItems) {
+						menuItems.push(toolbar.getConfig(item));
+					});
+				}
+
+				var config = {
+					hidden: gxui.CBoolean(button.Hidden),
+					menu: {
+						items: menuItems,
+						ignoreParentClicks: true
+					},
+					cls: toolbar.getBtnCls(button),
+					disabled: gxui.CBoolean(button.Disabled)
+				};
+
+				gxui.tryPropertyMapping(config, button, {
+					&quot;text&quot;: &quot;Text&quot;,
+					&quot;tooltip&quot;: &quot;Tooltip&quot;,
+					&quot;icon&quot;: &quot;Icon&quot;,
+					&quot;iconCls&quot;: &quot;IconCls&quot;,
+					&quot;rowspan&quot;: &quot;RowSpan&quot;,
+					&quot;colspan&quot;: &quot;ColSpan&quot;,
+					&quot;iconAlign&quot;: { property: &quot;IconAlign&quot;, ignoreEmpty: true },
+					&quot;arrowAlign&quot;: { property: &quot;ArrowAlign&quot;, ignoreEmpty: true },
+					&quot;scale&quot;: { property: &quot;Scale&quot;, ignoreEmpty: true },
+					&quot;width&quot;: { property: &quot;Width&quot;, ignoreEmpty: true }
+				});
+
+				return config;
+			},
+
+			&quot;SplitButton&quot;: function (toolbar, button) {
+				var splitButton = gxui.Toolbar.ItemResolvers.get(gxui.Toolbar.ItemType.Menu)(toolbar, button);
+
+				splitButton.gxid = button.Id;
+				splitButton.gxConfirmation = gxui.CBoolean(button.AskConfirmation) ? button.Confirmation : false;
+				splitButton.xtype = 'splitbutton';
+				splitButton.enableToggle = gxui.CBoolean(button.EnableToggle);
+				splitButton.pressed = gxui.CBoolean(button.Pressed);
+				if (gxui.CBoolean(button.EnableToggle)) {
+					splitButton.toggleHandler = toolbar.buttonClickHandler;
+				}
+				else {
+					splitButton.handler = toolbar.buttonClickHandler;
+				}
+				splitButton.scope = toolbar;
+
+				return splitButton;
+			},
+
+			&quot;Group&quot;: function (toolbar, button) {
+				var groupItems = [];
+
+				if (button.Items) {
+					Ext.each(button.Items, function (item, index, allItems) {
+						groupItems.push(toolbar.getConfig(item));
+					});
+				}
+
+				var config = {
+					xtype: 'buttongroup',
+					defaults: {},
+					items: groupItems
+				};
+
+				gxui.tryPropertyMapping(config, button, {
+					&quot;title&quot;: &quot;Text&quot;,
+					&quot;columns&quot;: &quot;GroupColumns&quot;
+				});
+
+				gxui.tryPropertyMapping(config.defaults, button, {
+					&quot;iconAlign&quot;: { property: &quot;IconAlign&quot;, ignoreEmpty: true },
+					&quot;arrowAlign&quot;: { property: &quot;ArrowAlign&quot;, ignoreEmpty: true },
+					&quot;scale&quot;: { property: &quot;Scale&quot;, ignoreEmpty: true }
+				});
+
+				return config;
+			},
+
+			&quot;ComboBox&quot;: function (toolbar, comboBox) {
+				var config = {
+					xtype: 'combobox',
+					gxid: comboBox.Id,
+					cls: toolbar.getBtnCls(comboBox),
+					disabled: gxui.CBoolean(comboBox.Disabled),
+					hidden: gxui.CBoolean(comboBox.Hidden),
+					editable: true,
+					triggerAction: 'all',
+					selectOnFocus: true,
+					disableKeyFilter: false,
+					forceSelection: true,
+					queryMode: 'local',
+					store: {
+						autoDestroy: true,
+						fields: ['id', 'dsc'],
+						data: []
+					},
+					displayField: 'dsc',
+					valueField: 'id',
+					listeners: {
+						'select': function (field) {
+							this.editActionHandler(field);
+						},
+						scope: toolbar
+					}
+				};
+
+				if (comboBox.Items) {
+					for (var i = 0, len = comboBox.Items.length; i &lt; len; i++) {
+						config.store.data.push({
+							id: comboBox.Items[i].Id,
+							dsc: comboBox.Items[i].Text
+						});
+					}
+				}
+
+				gxui.tryPropertyMapping(config, comboBox, {
+					&quot;gxid&quot;: &quot;Id&quot;,
+					&quot;text&quot;: &quot;Text&quot;,
+					&quot;tooltip&quot;: &quot;Tooltip&quot;,
+					&quot;icon&quot;: &quot;Icon&quot;,
+					&quot;iconCls&quot;: &quot;IconCls&quot;,
+					&quot;rowspan&quot;: &quot;RowSpan&quot;,
+					&quot;colspan&quot;: &quot;ColSpan&quot;,
+					&quot;iconAlign&quot;: { property: &quot;IconAlign&quot;, ignoreEmpty: true },
+					&quot;arrowAlign&quot;: { property: &quot;ArrowAlign&quot;, ignoreEmpty: true },
+					&quot;scale&quot;: { property: &quot;Scale&quot;, ignoreEmpty: true },
+					&quot;width&quot;: { property: &quot;Width&quot;, ignoreEmpty: true },
+					&quot;value&quot;: { property: &quot;Value&quot;, ignoreEmpty: true },
+					&quot;emptyText&quot;: { property: &quot;Text&quot;, ignoreEmpty: true }
+				});
+
+				return config;
+			}
+		});
+	},
+
+<span id='gxui-Toolbar-method-SetData'>	//private
+</span>	SetData: function (data) {
+		this.Data = data;
+	},
+
+<span id='gxui-Toolbar-method-GetData'>	//private
+</span>	GetData: function (data) {
+		return this.Data;
+	},
+
+<span id='gxui-Toolbar-method-GetToolbar'>	//private
+</span>	GetToolbar: function (add) {
+		return this.m_toolbar;
+	},
+
+<span id='gxui-Toolbar-method-onRender'>	onRender: function () {
+</span>		this.createToolbar().render(this.getContainerControl());
+	},
+
+<span id='gxui-Toolbar-method-onRefresh'>	onRefresh: function () {
+</span>		this.refreshButtons(this.Data.Buttons, this.m_toolbar.items);
+	},
+
+<span id='gxui-Toolbar-method-getUnderlyingControl'>	getUnderlyingControl: function () {
+</span>		return this.m_toolbar;
+	},
+
+<span id='gxui-Toolbar-method-createToolbar'>	//private
+</span>	createToolbar: function (options) {
+		var vertical = false,
+			itemId;
+		if (options) {
+			if (options.id) {
+				this.getUniqueId = function () {
+					return options.id;
+				};
+			}
+
+			if (options.data) {
+				this.SetData(options.data);
+			}
+
+			if (options.container) {
+				options.container.buttonActionHandler = this.buttonActionHandler;
+				options.container.editActionHandler = this.editActionHandler;
+
+				this.buttonActionHandler = Ext.bind(this.buttonActionHandler, options.container);
+				this.editActionHandler = Ext.bind(this.editActionHandler, options.container);
+			}
+
+			if (options.on) {
+				this.on(options.on);
+			}
+
+			if (options.vertical)
+				vertical = options.vertical;
+
+			itemId = options.itemId;
+		}
+
+		var config = {
+			id: this.getUniqueId(),
+			stateful: false,
+			items: this.createButtons(),
+			listeners: {},
+			vertical: vertical,
+			itemId: itemId
+		};
+
+		if (options &amp;&amp; options.container) {
+			config.dock = options.dock || 'top';
+		}
+
+		if (!options || !options.container) {
+			if (this.Width != 'auto') {
+				config.width = parseInt(this.Width, 10);
+			}
+
+			if (this.Height != 'auto') {
+				config.height = parseInt(this.Height, 10);
+			}
+		}
+
+		config.listeners['afterrender'] = {
+			fn: this.adjustWidth,
+			delay: 300
+		};
+		config.listeners.scope = this;
+
+		this.m_toolbar = Ext.create('Ext.toolbar.Toolbar', config);
+
+		return this.m_toolbar;
+	},
+
+<span id='gxui-Toolbar-method-createButtons'>	//private
+</span>	createButtons: function () {
+		var toolbarItems = [];
+		if (this.Data &amp;&amp; this.Data.Buttons) {
+			Ext.each(this.Data.Buttons, function (item, index, allItems) {
+				if (!item.Type) {
+					item.Type = gxui.Toolbar.ItemType.Button;
+				}
+				toolbarItems.push(this.getConfig(item));
+				if (this.SeparateAll &amp;&amp; allItems[index + 1])
+					toolbarItems.push('-');
+			}, this);
+		}
+		return toolbarItems;
+	},
+
+<span id='gxui-Toolbar-method-buttonClickHandler'>	//private
+</span>	buttonClickHandler: function (btn, e) {
+		if (this.fireEvent(&quot;beforebuttonpressed&quot;, this, btn, e) !== false) {
+			if (btn.gxConfirmation) {
+				var processResult = function (option, text) {
+					if (option == 'ok')
+						this.buttonActionHandler(btn, e);
+				};
+
+				var msgBox = new Ext.window.MessageBox({
+					buttonText: {
+						ok: btn.gxConfirmation.OKButtonText,
+						cancel: btn.gxConfirmation.CancelButtonText
+					},
+					listeners: {
+						'afterrender': function (mb) {
+							// Put focus on Cancel button by default.
+							mb.defaultFocus = 3;
+						}
+					}
+				});
+
+				msgBox.show({
+					title: btn.gxConfirmation.Title,
+					msg: btn.gxConfirmation.Message,
+					buttons: Ext.Msg.OKCANCEL,
+					fn: processResult,
+					scope: this,
+					animateTarget: btn.getEl(),
+					icon: Ext.Msg.QUESTION
+				});
+			}
+			else {
+				this.buttonActionHandler(btn, e);
+			}
+			this.fireEvent(&quot;buttonpressed&quot;, this, btn, e);
+		}
+	},
+
+<span id='gxui-Toolbar-method-buttonActionHandler'>	//private
+</span>	buttonActionHandler: function (btn, e) {
+<span id='gxui-Toolbar-event-ButtonPressed'>		/**
+</span>		* @event ButtonPressed
+		* Fires after a toolbar item has been pressed. The only items that fire this event are Button and SplitButton.
+		* The following properties are set when the event is fired:
+		*
+		* - {@link #ButtonPressedId}
+		*/
+		if (this.ButtonPressed) {
+			this.ButtonPressedId = btn.gxid;
+			this.ButtonPressed();
+		}
+	},
+
+<span id='gxui-Toolbar-method-editActionHandler'>	//private
+</span>	editActionHandler: function (field) {
+		this.EditFieldValue = field.getValue();
+		this.buttonActionHandler(field);
+	},
+
+<span id='gxui-Toolbar-method-getConfig'>	//private
+</span>	getConfig: function (button) {
+		if (button.id &amp;&amp; button.id.indexOf(&quot;ext&quot;) == 0)
+			return button;
+
+		if (!button.Type)
+			button.Type = gxui.Toolbar.ItemType.Button;
+
+		var resolver = gxui.Toolbar.ItemResolvers.get(button.Type) || gxui.Toolbar.ItemResolvers.get(gxui.Toolbar.ItemType.Button);
+		if (resolver)
+			return resolver(this, button);
+	},
+
+<span id='gxui-Toolbar-method-defineBtnsDropTarget'>	//private
+</span>	defineBtnsDropTarget: function () {
+		this.m_toolbar.items.each(function (item, pos) {
+			if (item.type == &quot;button&quot; &amp;&amp; item.isDropTarget) {
+				var dt = new Ext.dd.DropTarget(item.getEl(), { ddGroup: 'GridDD' });
+				dt._btn = item;
+				dt._scope = this;
+				dt.notifyOver = function (source, e, data) {
+					if (data.grid) {
+						return 'x-dd-drop-ok';
+					}
+					return 'x-dd-drop-nodrop';
+				};
+				dt.notifyDrop = function (source, e, data) {
+					if (data.grid) {
+						this._scope.buttonActionHandler(this._btn);
+						return true;
+					}
+					return false;
+				};
+				dt.notifyEnter = function (source, e, data) {
+					if (data.grid) {
+						return 'x-dd-drop-ok';
+					}
+					return 'x-dd-drop-nodrop';
+				};
+			}
+		},
+		this);
+	},
+
+<span id='gxui-Toolbar-method-refreshButtons'>	//private
+</span>	refreshButtons: function (buttons, renderedButtons) {
+		var i = 0;
+		var ItemType = gxui.Toolbar.ItemType;
+		renderedButtons.each(function (renderedBtn) {
+			var button = buttons[i];
+			if (button) {
+				if (!gxui.CBoolean(button.Disabled) &amp;&amp; renderedBtn.disabled) {
+					if (renderedBtn.enable)
+						renderedBtn.enable();
+				}
+				else {
+					if (gxui.CBoolean(button.Disabled) &amp;&amp; !renderedBtn.disabled) {
+						if (renderedBtn.disable)
+							renderedBtn.disable();
+					}
+				}
+
+				if (gxui.CBoolean(button.Hidden) &amp;&amp; !renderedBtn.hidden) {
+					if (renderedBtn.hide)
+						renderedBtn.hide();
+				}
+				else {
+					if (!gxui.CBoolean(button.Hidden) &amp;&amp; renderedBtn.hidden) {
+						if (renderedBtn.show)
+							renderedBtn.show();
+					}
+				}
+
+				if (button.Type == ItemType.Text)
+					renderedBtn.setText(button.Text);
+
+				if ((button.Type == ItemType.Menu || button.Type == ItemType.SplitButton) &amp;&amp; button.Items &amp;&amp; renderedBtn.menu) {
+					this.refreshButtons(button.Items, renderedBtn.menu.items);
+				}
+			}
+			i += 1;
+		}, this)
+
+		this.adjustWidth(this.m_toolbar);
+	},
+
+<span id='gxui-Toolbar-method-getUniqueButtonId'>	//private
+</span>	getUniqueButtonId: function (btnId) {
+		return this.getUniqueId() + &quot;_btn_&quot; + btnId;
+	},
+
+<span id='gxui-Toolbar-method-findItem'>	//private
+</span>	findItem: function (id, items) {
+		var ItemType = gxui.Toolbar.ItemType;
+		var searchedItem;
+		Ext.each(items, function (item) {
+			if (item.Id == id) {
+				searchedItem = item;
+			}
+			else {
+				if ((item.Type == ItemType.Menu || item.type == ItemType.SplitButton) &amp;&amp; item.Items) {
+					searchedItem = this.findItem(id, item.Items);
+				}
+			}
+
+			if (searchedItem) {
+				return false;
+			}
+		}, this);
+		return searchedItem;
+	},
+
+<span id='gxui-Toolbar-method-changeItemPropertyValue'>	//private
+</span>	changeItemPropertyValue: function (itemId, propertyId, propertyValue) {
+		var item = this.findItem(itemId, this.Data.Buttons);
+		if (item) {
+			item[propertyId] = propertyValue;
+		}
+		return item;
+	},
+
+<span id='gxui-Toolbar-method-getBtnCls'>	//private
+</span>	getBtnCls: function (btn) {
+		if (!btn.Cls) {
+			if (btn.Icon) {
+				return (btn.Text) ? &quot;x-btn-text-icon&quot; : &quot;x-btn-icon&quot;;
+			}
+			else {
+				return &quot;x-btn-text&quot;;
+			}
+		}
+		return btn.Cls;
+	},
+
+<span id='gxui-Toolbar-method-adjustWidth'>	adjustWidth: function (toolbar) {
+</span>		if (!toolbar.ownerCt) {
+			if (this.Width == 'auto') {
+				var lastItem = null;
+				toolbar.items.each(function (item) {
+					if (item.isVisible())
+						lastItem = item;
+				})
+
+				if (lastItem) {
+					toolbar.setWidth(100); // WA
+					width = lastItem.el.getLeft(true) + lastItem.el.getWidth() + toolbar.el.getFrameWidth('l r');
+					toolbar.setWidth(width);
+				}
+			}
+		}
+	},
+
+<span id='gxui-Toolbar-property-methods'>	methods: {
+</span>		// Methods
+<span id='gxui-Toolbar-method-ChangeToolbar'>		/**
+</span>		* Changes the current list of toolbar items with a new one and render it.
+		* @param {gxuiToolbar} toolbar gxuiToolbar configuration object containing the list of new toolbar items to render
+		* @method
+		*/
+		ChangeToolbar: function (toolbarData, id, container) {
+			this.m_toolbar.removeAll();
+			this.m_toolbar.add(this.createButtons());
+			return this.m_toolbar;
+		},
+
+<span id='gxui-Toolbar-method-DisableItem'>		/**
+</span>		* Disable a toolbar item by id
+		* @param {String} itemId Toolbar item id
+		* @method
+		*/
+		DisableItem: function (itemId) {
+			this.changeItemPropertyValue(itemId, &quot;Disabled&quot;, true);
+			this.refreshButtons(this.Data.Buttons, this.m_toolbar.items);
+		},
+
+<span id='gxui-Toolbar-method-EnableItem'>		/**
+</span>		* Enable a toolbar item by id
+		* @param {String} itemId Toolbar item id
+		* @method
+		*/
+		EnableItem: function (itemId) {
+			this.changeItemPropertyValue(itemId, &quot;Disabled&quot;, false);
+			this.refreshButtons(this.Data.Buttons, this.m_toolbar.items);
+		},
+
+<span id='gxui-Toolbar-method-HideItem'>		/**
+</span>		* Hide a toolbar item by id
+		* @param {String} itemId Toolbar item id
+		* @method
+		*/
+		HideItem: function (itemId) {
+			this.changeItemPropertyValue(itemId, &quot;Hidden&quot;, true);
+			this.refreshButtons(this.Data.Buttons, this.m_toolbar.items);
+		},
+
+<span id='gxui-Toolbar-method-ShowItem'>		/**
+</span>		* Shows a hidden toolbar item by id
+		* @param {String} itemId Toolbar item id
+		* @method
+		*/
+		ShowItem: function (itemId) {
+			this.changeItemPropertyValue(itemId, &quot;Hidden&quot;, false);
+			this.refreshButtons(this.Data.Buttons, this.m_toolbar.items);
+		}
+	}
+});
+
+<span id='gxui-Toolbar-ItemType'>/**
+</span>* @class gxui.Toolbar.ItemType
+* Standard gxui.Toolbar item types
+* @ignore
+*/
+gxui.Toolbar.ItemType = {
+<span id='gxui-Toolbar-ItemType-property-Button'>	Button: &quot;Button&quot;,
+</span><span id='gxui-Toolbar-ItemType-property-Text'>	Text: &quot;Text&quot;,
+</span><span id='gxui-Toolbar-ItemType-property-Edit'>	Edit: &quot;Edit&quot;,
+</span><span id='gxui-Toolbar-ItemType-property-Fill'>	Fill: &quot;Fill&quot;,
+</span><span id='gxui-Toolbar-ItemType-property-Separator'>	Separator: &quot;Separator&quot;,
+</span><span id='gxui-Toolbar-ItemType-property-Menu'>	Menu: &quot;Menu&quot;,
+</span><span id='gxui-Toolbar-ItemType-property-SplitButton'>	SplitButton: &quot;SplitButton&quot;,
+</span><span id='gxui-Toolbar-ItemType-property-Group'>	Group: &quot;Group&quot;
+</span>};
+
+<span id='gxui-Toolbar-ItemResolvers'>/**
+</span>* @class gxui.Toolbar.ItemResolvers
+* gxui.Toolbar.ItemResolvers stores the list of toolbar item resolvers for {@link gxui.Toolbar}. A resolver maps
+* a {@link gxui.Toolbar} item configuration with a Ext.toolbar.Toolbar component configuration or object.
+* New types of items can be added to {@link gxui.Toolbar}. For each new type, a resolver must be registered using 
+* the register method.
+* @singleton
+* @ignore
+*/
+gxui.Toolbar.ItemResolvers = {
+<span id='gxui-Toolbar-ItemResolvers-property-items'>	// private
+</span>	items: {},
+
+<span id='gxui-Toolbar-ItemResolvers-method-register'>	/**
+</span>	* Register a new {@link gxui.Toolbar} item resolver.
+	* @param {String} type Toolbar item type
+	* @param {Function} resolver Resolver function that maps a {@link gxui.Toolbar} configuration with a Ext.toolbar.Toolbar component configuration or object.
+	* @method
+	*/
+	register: function (type, resolver) {
+		if (typeof (type) == 'string')
+			this.items[type] = resolver;
+		else if (typeof (type) == 'object') {
+			for (var item in type) {
+				if (typeof (type[item]) == 'function') {
+					this.items[item] = type[item];
+				}
+			}
+		}
+	},
+
+<span id='gxui-Toolbar-ItemResolvers-method-unregister'>	/**
+</span>	* Unregister a {@link gxui.Toolbar} item resolver.
+	* @param {String} type Toolbar item type
+	* @method
+	*/
+	unregister: function (type) {
+		delete this.items[type];
+	},
+
+<span id='gxui-Toolbar-ItemResolvers-method-get'>	/**
+</span>	* Get an existing {@link gxui.Toolbar} item resolver, by name.
+	* @param {String} type Toolbar item type
+	* @method
+	*/
+	get: function (type) {
+		return this.items[type];
+	}
+};</pre>
+</body>
+</html>

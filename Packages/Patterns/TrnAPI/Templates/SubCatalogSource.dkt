@@ -1,0 +1,38 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Selected Objects SDT" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Concepto.Patterns.TrnAPI" %>
+<%@ Import Namespace="Concepto.Patterns.TrnAPI" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	TrnAPIInstance trnAPIInstance = new TrnAPIInstance(Instance);
+	
+%>
+<Part type="<%= PartType.DataProviderSource %>">
+<Source><![CDATA[
+TreeNode [one]
+where <%= trnAPIInstance.AttributesName.CategoryId %> = &<%= trnAPIInstance.AttributesName.CategoryId %>
+{
+	Name = <%= trnAPIInstance.AttributesName.CategoryName %>
+	Childs
+	where <%= trnAPIInstance.AttributesName.CategoryId %> = &<%= trnAPIInstance.AttributesName.CategoryId %>
+	{
+		Name = ItemName
+	}
+	Children.Insert()
+}
+
+SubGroup Children
+Dummy [NoOutput]
+where <%= trnAPIInstance.AttributesName.CategoryParentId %> = &<%= trnAPIInstance.AttributesName.CategoryId %>
+{
+	&node = <%= trnAPIInstance.ParentObject.Name %>SubCatalog(<%= trnAPIInstance.AttributesName.CategoryId %>)
+	Childs = &node [IsCollection]
+}
+EndSubGroup
+]]>
+	</Source>
+</Part>

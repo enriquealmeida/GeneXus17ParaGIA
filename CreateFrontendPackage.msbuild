@@ -1,0 +1,26 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<PropertyGroup>
+	<GXDeployFileProject>$([System.IO.Path]::GetFullPath('$(DeployFullPath)\..\..\..\..\web\$(ProjectName).gxdproj'))</GXDeployFileProject>
+	<ProjectRootDirectory>$([System.IO.Path]::GetFullPath('$(DeployFullPath)\..\..\..\..\mobile\Angular'))</ProjectRootDirectory>
+	<GeneratorBuildScript>$([System.IO.Path]::GetFullPath('$(GX_PROGRAM_DIR)\GenExtensions\SmartDevices\$(GenExtensionName)\deploy\$(DeploymentScript)'))</GeneratorBuildScript>
+</PropertyGroup>
+
+<Import Project="$(GXDeployFileProject)"/>
+<Import Project="$(GeneratorBuildScript)"/>
+
+<Target Name="CreatePackage" DependsOnTargets="PrepareDeploy;ValidateBuildTarget" >
+	<CallTarget Targets="Build"/>
+</Target>
+
+<Target Name = "PrepareDeploy">
+	<ItemGroup>
+		<AllFrontendObjects Include="@(SelectedObject->HasMetadata('Type')->WithMetadataValue('Type','SDPanel'));@(SelectedObject->HasMetadata('Type')->WithMetadataValue('Type','WorkWithDevices'));@(SelectedObject->HasMetadata('Type')->WithMetadataValue('Type','Dashboard'))" />
+		<ArtifactDeploy Include="%(AllFrontendObjects.QualifiedName)" />
+	</ItemGroup>
+</Target>
+
+<Target Name="ValidateBuildTarget">
+	<Error Condition="'@(AllFrontendObjects)'==''" Text="At least 1 Front end Application must be selected in the Deployment Unit"/>
+</Target>
+
+</Project>

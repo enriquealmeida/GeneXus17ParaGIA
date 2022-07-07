@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>After Action Triggering event</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8284,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">After Action Triggering event</h1>
+<!--After Action Triggering event--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	Triggering a Rule after a specific action has been executed.</p>
+<h3>
+	Syntax</h3>
+<p>
+	<a href="8282.html">AfterValidate</a></p>
+<p>
+	It allows the execution of rules after certain level data has been confirmed. But before the insert, update or delete operations are performed in association with the mentioned level of the Transaction.</p>
+<p>
+	<a href="8213.html">Any valid Transaction rule</a>  [ IF <em>condition </em>][ <strong>ON AfterValidate</strong>];</p>
+<p>
+	<strong>Wh​ere:</strong></p>
+<p>
+	<em>condition</em><br />
+	     Is any valid logic condition</p>
+<h4>
+	AfterInsert</h4>
+<p>
+	It triggers immediately after doing the Insert action.</p>
+<p>
+	<a href="8213.html">Any valid Transaction rule</a>  [ IF condition ][ <strong>ON AfterInsert</strong>];</p>
+<p>
+	<strong>Where:</strong></p>
+<p>
+	<em>condition</em><br />
+	      Is any valid logic condition</p>
+<h4>
+	AfterUpdate</h4>
+<p>
+	It triggers immediately after doing the Update action.</p>
+<p>
+	<a href="8213.html">Any valid Transaction rule</a>  [ IF condition ][ <strong>ON AfterUpdate</strong>];</p>
+<p>
+	<strong>Where:</strong></p>
+<p>
+	<em>condition</em><br />
+	      Is any valid logic condition</p>
+<h4>
+	AfterDelete</h4>
+<p>
+	It triggers immediately after doing the Delete action.</p>
+<p>
+	<a href="8213.html">Any valid Transaction rule</a>  [ IF condition ][ <strong>ON AfterDelete</strong>];</p>
+<p>
+	<strong>Where:</strong></p>
+<p>
+	<em>condition</em><br />
+	     Is any valid logic condition</p>
+<p>
+	<a href="8160.html">AfterComplete</a></p>
+<p>
+	It triggers after the completion of a Logical Work Unit.</p>
+<p>
+	<a href="8213.html">Any valid Transaction rule</a>  [ IF condition ][ <strong>ON AfterComplete</strong>];</p>
+<h4>
+	Where:</h4>
+<p>
+	<em>condition</em><br />
+	      Is any valid logic condition</p>
+<p>
+	Type Returned: Boolean (True or False)</p>
+<h3>
+	Examples</h3>
+<p>
+	The operation is triggered after updating or inserting the associated record.</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+A = B * C On AfterInsert, AfterUpdate;</pre>
+<p>
+	Supposing we have a transaction that allows handling customer information, we want to print the customer's information after inserting a new customer or after an existing one has been modified. To do so, we must call a procedure that re-reads the Customer record from the database and then prints it.</p>
+<p>
+	Customers<br />
+	}<br />
+	    CustomerId*<br />
+	    CustomerName<br />
+	    CustomerAccountBalance<br />
+	    CustomerAddress<br />
+	}</p>
+<p>
+	The following call is correct, because the operation (insert or update) over the database record has already been performed. So the called procedure will be able to read the information again.</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PrintFile.Call(CustomerId) On AfterInsert, AfterUpdate;</pre>
+<p>
+	The call takes place after the record has been inserted or updated.</p>
+<p>
+	In this example:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PrintFile.Call(CustId) On AfterComplete;</pre>
+<p>
+	the call takes place after the LUW (Logical Unit of Work) has been completed. In this case, the insertion or update has been completed, and confirmed by the execution of the Commit (only works if transactional integrity is supported).</p>
+<p>
+	The following examples show a wrong way of specifying this:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PrintFile.Call(CustId); // Incorrect!!</pre>
+<p>
+	For triggering the rule, the only thing necessary is to know the Customer Id. In a Microcomputer environment, because the operation is done field by field, the CALL will be performed after entering the Customer Id. This is incorrect, since the customer has not yet been inserted or modified.</p>
+<p>
+	In the iSeries environment, Java and Web interface, the CALL is triggered after pressing ENTER (even before requesting confirmation). This occurs because the dialog is performed by screen (instead of by field). Only after pressing ENTER the program takes control of all the data entered. Either way, the specification is not correct since the insert or update operation has not yet occurred.</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PrintFile.Call(CustId) On AfterValidate; // Incorrect!!</pre>
+<p>
+	The above rule is executed when there is an explicit change. AfterValidate means: &quot;only after the operation on the table has been confirmed or validated&quot;. But &quot;has been confirmed/validated&quot; does not mean &quot;has been performed&quot;, so the specification is incorrect for our purposes.</p>
+<h3>
+	Scope</h3>
+<p>
+	<strong>Objects   </strong><a href="1908.html">Transaction object</a></p>
+<p>
+	Compatibility</p>
+<p>
+	The After(Insert), After(Update) and After(Delete) functions are maintained for backward compatibility reasons. We highly recommend that you use the AfterInsert, AfterUpdate and AfterDelete events instead, For further information see <a href="6840.html">Triggering Events</a>.</p>
+<h3>
+	See also</h3>
+<p>
+	<a href="8321.html">After function</a><br />
+	<a href="8213.html">Transaction rules</a></p>
+<p>
+	<a href="8283.html">Before Action Triggering event</a><br />
+	<a href="6840.html">Triggering events for rules in Transactions</a></p>
+<p>
+	</p>
+<p>
+	</p>
+<p>
+	</p>
+<p>
+	</p>
+<br />   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8283.html">Before Action Triggering event</a></TD><TD><a href="8546.html">Functions in Transactions</a></TD><TD><a href="8438.html">Level clause for transaction rules</a></TD></TR><TR><TD><a href="6840.html">Category:Triggering events for rules in Transactions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

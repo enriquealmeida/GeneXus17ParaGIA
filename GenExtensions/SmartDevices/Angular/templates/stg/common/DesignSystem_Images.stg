@@ -1,0 +1,63 @@
+delimiters "$", "$"
+
+g_dso_images(page, gx) ::= 
+<<
+$page.Images:g_dso_image_group(); separator="\n"$
+
+// prefers-color-scheme
+$page.PrefersColorScheme.Images:g_dso_images_color_scheme(); separator="\n"$
+>>
+
+g_dso_images_color_scheme(colorScheme) ::=
+<<
+@media (prefers-color-scheme: $colorScheme$) {
+	$page.Images:{ imageGroup | $if(imageGroup.Selector.ColorScheme.(colorScheme))$$g_dso_image_group(imageGroup, true)$$endif$ }; separator="\n"$
+}
+>>
+
+g_dso_image_group(imageGroup, excludeColorScheme=false) ::= 
+<<
+$g_dso_image_group_selector(imageGroup.Selector.Language, imageGroup.Selector.Options, imageGroup.Selector.ColorScheme.Value, excludeColorScheme)$ {
+	$imageGroup.Images:{ image | --gx-image_$image.Name$: url($image.Location$);}; separator="\n"$
+}
+>>
+
+g_dso_image_group_selector(language, options, colorScheme, excludeColorScheme) ::= 
+<%
+$if(colorScheme)$
+$if (excludeColorScheme)$
+:not([data-gx-ds-opt-color-scheme])
+$else$
+$(g_dso_image_option_type.(page.PrefersColorScheme.OptionType.(colorScheme)))("color-scheme", colorScheme)$
+$endif$
+$endif$
+
+$if(options)$
+$options:{ option | $(g_dso_image_option_type.(option.Type))(option.Name, option.Value)$}$
+$endif$
+
+$if(language)$
+:lang($language$)
+$endif$
+
+
+$if(!colorScheme&&!options&&!language)$
+:root
+$endif$
+%>
+
+g_dso_image_group_selector_option(name, value) ::=
+<%
+[data-gx-ds-opt-$name$="$value$" i]
+%>
+
+g_dso_image_group_selector_option_default(name, value) ::=
+<%
+:is($g_dso_image_group_selector_option(name, value)$, :not([data-gx-ds-opt-$name$]))
+%>
+
+g_dso_image_option_type ::=
+[
+	"default":"g_dso_image_group_selector_option_default",
+	"standard":"g_dso_image_group_selector_option"
+]

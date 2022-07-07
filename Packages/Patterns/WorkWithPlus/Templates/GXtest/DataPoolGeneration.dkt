@@ -1,0 +1,128 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="DataPool Generation Subtemplate" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Architecture.Language" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Common.Helpers" %>
+<%@ Assembly Name="Artech.Packages.Patterns" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="Artech.Genexus.Common.Entities" %>
+<%@ Import Namespace="System" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ SubTemplate Name="TagValue" File="TagValue.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DisplayColumnAttributes" File="DisplayColumnAttributes.dkt" MergeProperties="False"%>
+<%@ SubTemplate Name="Header" File="Header.dkt"%>
+<%
+	model = DVelop.Patterns.WorkWithPlus.ArtechGetSetObjectsUtilities.GetWorkingModel(myInstance.Model.KB);		
+	Object = myInstance.ParentObject;
+	bool generateDatapool = myInstance.GXTest.GenerateDataPool;
+	bool isGridLevel = false;
+	string firstLevelAttributeName = string.Empty;
+%>
+<%
+if (generateDatapool)
+{
+	string masterName = myInstance.GXTest.DataPoolName + GXTestConstants.DataPoolMasterName;
+%>
+<%@ CallSubTemplate Header ItemName='"DataPools"' %>
+<Datapools GXtestVersion="<%=Settings.GXTest.GXtestVersion%>">
+	<Datapool Name="<%=masterName%>" Desc="<%=masterName%>" ProjectName="" FolderId="0">
+		<Columns>
+<%
+	if (myInstance.GXTest.GenerateSetIdColumn)
+	{
+%>
+<%@ CallSubTemplate TagValue value='GXTestConstants.SetId' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+<%
+	}
+%>
+<%@ CallSubTemplate TagValue value='myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolInsertTimes' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate TagValue value='myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolUpdateTimes' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate TagValue value='myInstance.GXTest.DataPoolName+GXTestConstants.DataPoolDeleteTimes' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+		</Columns>
+	</Datapool>
+<%
+	IEnumerator<TransactionLevel> iterator =  myInstance.Transaction.Transaction.Structure.GetLevels().GetEnumerator();
+	while (iterator.MoveNext())
+	{
+		Artech.Genexus.Common.Parts.TransactionLevel level = iterator.Current;
+		string levelName = TransactionHelper.GetFullLevelName(level,myInstance.GXTest.DataPoolName);
+		firstLevelAttributeName = TransactionHelper.GetFirstAttributeNameFromLevel(level);
+		isGridLevel = WebFormHelper.IsAttributeUsedInGridLevel(firstLevelAttributeName,basicElements);
+%>
+	<Datapool Name="<%=levelName%>" Desc="<%=levelName%>" ProjectName="" FolderId="0">
+		<Columns>
+<%
+		if (!isGridLevel)
+		{
+%>
+<%@ CallSubTemplate TagValue value='GXTestConstants.DataPoolRowCount' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+<%
+		}
+%>
+<%@ CallSubTemplate TagValue value='GXTestConstants.DataPoolRowNumber' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+<%		
+		if (myInstance.GXTest.GenerateSetIdColumn)
+		{
+%>
+<%@ CallSubTemplate TagValue value='GXTestConstants.SetId' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>	
+<%
+		}
+%>
+<%@ CallSubTemplate DisplayColumnAttributes level='level.SuperKey' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+		List<string> added = new List<string>();
+		foreach (TransactionAttribute trnAtt in level.Attributes)
+		{
+			string tName = trnAtt.Name;		
+			if (trnAtt.IsKey || TransactionHelper.AttributeInFilter(tName, myInstance) || basicElements.DescriptionAttribute == tName || (TransactionHelper.IsAttributeValidForDataPool(trnAtt) && !(basicElements.IsAttributeUsedInRules(tName))))
+			{	
+				added.Add(tName);
+			}
+		}
+		
+		List<string> filtrosNoEstan = TransactionHelper.FiltersNotInTrn(myInstance, added);
+
+		foreach (string filter in added)
+		{
+		
+%>
+<%@ CallSubTemplate TagValue value='filter' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+<%			
+		}
+				
+		if (!isGridLevel)
+		{
+			foreach (string filter in filtrosNoEstan)
+			{		
+%>
+<%@ CallSubTemplate TagValue value='filter' tagName='"Column"' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+<%			
+			}
+		}		
+%>
+		</Columns>
+	</Datapool>
+<%
+	}
+%>
+</Datapools>
+<%
+}
+else
+{
+%>
+<!--DataPools not generated, check the GXtest Pattern instance Definition -->
+<Datapools/>
+<%
+}
+%>

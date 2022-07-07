@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Extension Library concept for Extending GeneXus for Smart Devices</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33545,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Extension Library concept for Extending GeneXus for Smart Devices</h1>
+<!--Extension Library concept for Extending GeneXus for Smart Devices--><div class="TableWikiBody" id="tblwikibody"><p>The Extension Library concept is introduced as of <a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a> to simplify the development of extensions for Smart Devices.</p>
+
+<h2><a id="Library+concept" class="HashLink" href="#Library+concept">Library concept</a></h2>
+
+<p>A <strong>Library</strong> is a way to group implementation details for some extension points such as <a href="15301.html">User Controls</a>, <a href="17880.html">External Objects</a>, and External Providers for Smart Devices. It consists of two main components:</p>
+
+<ul>
+	<li>An XML-like file with extension <em>*.</em><em>library</em> where the developer must list the extensibility components for each platform and their implementations.</li>
+	<li>The binaries and any other dependent file needed for the implementation.</li>
+</ul>
+
+<p>The <em>*.</em><em>library</em> file defines tags with a special semantic:</p>
+
+<ul>
+	<li><span style="font-family: courier new;">&lt;ExtensionLibrary&gt;...&lt;/ExtensionLibrary&gt;</span><br />
+	Root tag indicates the begin-end of the library file.
+	<ul>
+		<li><span style="font-family: courier new;">&lt;</span><em>DependsOn</em><span style="font-family: courier new;">&gt;...&lt;/</span><em>DependsOn</em><span style="font-family: courier new;">&gt;</span>                    </li>
+	</ul>
+	</li>
+</ul>
+
+<p>                    Declare the dependencies that are needed for the .library.Initially only a nodes of type &lt;ExtensionLibrary&gt;<em>ExtensionLibraryName</em>&lt;/ExtensionLibrary&gt; are allowed (where <em>ExtensionLibraryName</em> is a string with the name of the dependant extension library). For example, FirebaseAnalytics extension libraries could depend on a Firebase extension library, in which case the initialization code of Firebase is added.</p>
+
+<ul>
+	<li><span style="font-family: courier new;">&lt;Implements&gt;...&lt;/Implements&gt;</span><br />
+	Lists which components are implemented in the library.<br />
+	The tags for its items must match the GeneXus object name. A few examples below:
+	<ul>
+		<li><span style="font-family: courier new;">&lt;ExternalObject name=&quot;my_external_object&quot; /&gt;</span><br />
+		Refers to an External Object implementation.<br />
+		 </li>
+		<li><span style="font-family: courier new;">&lt;UserControl name=&quot;my_user_control&quot; /&gt;</span><br />
+		Refers to a User Control implementation.<br />
+		 </li>
+		<li><span style="font-family: courier new;">&lt;NotificationProvider name=&quot;my_notification_provider&quot; /&gt;</span><br />
+		Refers to a <a href="33670.html">notification provider</a> implementation.<br />
+		 </li>
+		<li><span style="font-family: courier new;">&lt;CacheProvider name=&quot;my_cache_provider&quot; /&gt;</span><br />
+		Refers to a <a href="31147.html">cache provider</a> implementation.<br />
+		 </li>
+		<li><span style="font-family: courier new;">&lt;StorageProvider name=&quot;my_storage_provider&quot; /&gt;</span><br />
+		Refers to a <a href="31121.html">storage provider</a> implementation.<br />
+		 </li>
+		<li><span style="font-family: courier new;">&lt;Procedure name=&quot;my_procedure_name&quot; /&gt;</span><br />
+		Refers to a full-qualified name Procedure object implementation. Available since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a>.</li>
+	</ul>
+	</li>
+</ul>
+
+<p> </p>
+
+<ul>
+	<li><span style="font-family: courier new;">&lt;Android&gt;...&lt;/Android&gt;</span><br />
+	Indicates the implementation of dependencies for the Android generator.<br />
+	Also, it defines special tags.<br />
+	 
+	<ul>
+		<li><span style="font-family: courier new;">&lt;ModuleClass&gt;...&lt;/ModuleClass&gt;</span><br />
+		Class instantiated at runtime responsible for mapping the extension to the components that use it. Optional*.<br />
+		 </li>
+		<li><span style="font-family: courier new;">&lt;GroupId&gt;...&lt;/GroupId&gt;</span><br />
+		Package group identifier for Maven repository where there are <a href='https://developer.android.com/studio/projects/android-library.html'>AAR files</a> that implement the library (with its transitive dependencies).Optional*.</li>
+		<li><font face="courier new">&lt;Name&gt;...&lt;/Name&gt;</font><br />
+		Name of the library in the Maven repository.Optional*.</li>
+		<li><font face="courier new">&lt;Version&gt;...&lt;/Version&gt;</font><br />
+		Version code of the library in the Maven repository.Optional*.</li>
+		<li><font face="courier new">&lt;GradleExtensionFile&gt;...&lt;GradleExtensionFile&gt;</font><br />
+		Optional. A <em>*.gradle</em> file for a library building. Use this option if you want to include external libraries' references.</li>
+	</ul>
+	</li>
+</ul>
+
+<p>                       Note: <em>Extension Libraries authors no longer have to add standard Maven repositories to their library definitions for Android because they're now included.</em> So, since Genexus 16 U5 it is no longer necessary to include this extension.</p>
+
+<p>* As of <a href="47936.html">GeneXus 17 upgrade 4</a> it's no longer necessary to add these values, now it is possible to create extension libraries without build.gradle dependencies.</p>
+
+<p style="margin-left: 40.0px;"><span style="font-family: courier new;">&lt;iOS&gt;...&lt;/iOS&gt;</span><br />
+Indicates the implementation dependencies for the iOS generator.</p>
+
+<p style="margin-left: 40.0px;"><strong>Attributes: </strong>Platforms</p>
+
+<p style="margin-left: 40.0px;">Optional. It allows indicating the Apple platforms for which this extension is planned, separated by commas.</p>
+
+<p style="margin-left: 40.0px;"><strong>Values: </strong>iOS, tvOS, watchOS. </p>
+
+<ul>
+	<li><span style="font-family: courier new;">&lt;ModuleClass&gt;...&lt;/ModuleClass&gt;</span><br />
+	Optional. Class instantiated at runtime responsible for mapping the extension to the components that use it. It is optional if the only component using the extension is a User Control.<br />
+	 </li>
+	<li><font face="courier new">&lt;PodFile&gt;...&lt;/PodFile&gt;</font><br />
+	Optional. A <a href='https://guides.cocoapods.org/using/the-podfile.html'><em>*.pod</em></a> complete filename for indicating the library dependencies.<br />
+	 </li>
+	<li><font face="courier new">&lt;XCProjExtensionFile&gt;...&lt;/XCProjExtensionFile&gt;</font><br />
+	Optional. An XML filename for extending the generated XCode project.<br />
+	 </li>
+	<li><font face="courier new">&lt;CopyListFile&gt;...&lt;/CopyListFile&gt;</font><br />
+	Optional. An XML filename which lists a set of files or directories to be copied to the generated project.</li>
+	<li>
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;DisableBitcode&gt;true&lt;/DisableBitcode&gt;</pre>
+	Optional. Use it to disable the Bitcode property if the project contains extensions that do not support it. </li>
+	<li>Also, it defines special tags (details on <a href="36340.html">this</a> site).</li>
+</ul>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>For example, let's take the a<em>*.library</em> file defined as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;ExtensionLibrary&gt;
+    &lt;Implements&gt;
+       &lt;UserControl name=&quot;MyUserControl&quot;/&gt; 
+       &lt;UserControl name=&quot;MyUserControlVariant&quot;/&gt;
+       &lt;ExternalObject name=&quot;MyExternalObject&quot;/&gt;
+    &lt;/Implements&gt;
+    &lt;Android&gt;
+        &lt;GroupId&gt;com.example&lt;/GroupId&gt;
+        &lt;Name&gt;MyExtension&lt;/Name&gt;
+        &lt;Version&gt;1.0&lt;/Version&gt;
+        &lt;ModuleClass&gt;com.example.MyExtensionLibraryClassName&lt;/ModuleClass&gt;
+        &lt;GradleExtensionFile&gt;mylibraryextension.gradle&lt;/GradleExtensionFile&gt;
+    &lt;/Android&gt;
+    &lt;iOS&gt;
+        &lt;PodFile&gt;MyExtension.Template.pod&lt;/Library&gt;
+        &lt;ModuleClass&gt;MyExtensionLibraryClassName&lt;/ModuleClass&gt;
+        &lt;XCProjExtensionFile&gt;MyExtension.XCExtensionTemplate.xml&lt;/XCProjExtensionFile&gt;
+        &lt;CopyListFile&gt;MyExtension.CopyListTemplate.xml&lt;/CopyListFile&gt;
+    &lt;/iOS&gt;
+&lt;/ExtensionLibrary&gt;</pre>
+
+<p>As we mentioned before, the <span style="font-family: courier new;">&lt;ModuleClass&gt;</span> tag references a class where each component is initialized.</p>
+
+<p>The <em>mylibraryextension.gradle</em> file could add the following to reference the public repository; add whatever is needed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+repositories {
+    jcenter()
+}</pre>
+
+<h3><a id="Android+initialization+code+sample" class="HashLink" href="#Android+initialization+code+sample">Android initialization code sample</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+class com.mypackage.MyExtensionLibraryClassName {
+
+    @Override
+    public void initialize(Context context) {
+
+         UserControlDefinition ucDefinition = new UserControlDefinition(&quot;MyUserControl&quot;, MyUserControl.class);
+         UcFactory.addControl(ucDefinition);
+
+         UserControlDefinition ucDefinition = new UserControlDefinition(&quot;MyUserControlVariant&quot;, MyUserControlVariant.class);
+         UcFactory.addControl(ucDefinition);
+
+         ExternalApiDefinition apiDefinition = new ExternalApiDefinition(&quot;Module.Example.MyExternalObject&quot;, MyExternalObject.class);
+         ExternalApiFactory.addApi(apiDefinition);
+
+         // Other components initialization.
+    }
+}</pre>
+
+<p>The Library itself details which component implements. The External Object does not need to fill the platform-specific parameters.</p>
+
+<h3><a id="iOS+initialization+code+sample" class="HashLink" href="#iOS+initialization+code+sample">iOS initialization code sample</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+@objc(MyExtensionLibraryClassName)
+public class MyExtensionLibraryClassName: NSObject, GXExtensionLibraryProtocol {
+
+    public func initializeExtensionLibrary(withContext context: GXExtensionLibraryContext) {
+
+        GXActionExternalObjectHandler.register(MyGXActionExternalObjectHandlerSubclass.self, forExternalObjectName: &quot;Module.Example.MyExternalObject&quot;)
+
+        // Other components initialization, except for User Controls because GeneXus automatically generate the mapping by using the UC definition.
+
+    }
+
+}</pre>
+
+<p>Note that the implementation uses Swift language. In this case, the <span style="font-family: courier new;">@objc(MyExtensionLibraryClassName)</span>notation must be used in order to instantiate this class at runtime via reflection.</p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>Android support as of <a href="https://wiki.genexus.com/commwiki/wiki?33278,," target="_blank">GeneXus 15 Upgrade 3</a>.<br />
+iOS support as of <a href="https://wiki.genexus.com/commwiki/wiki?35908,," target="_blank">GeneXus 15 Upgrade 6</a>.</p>
+
+<h2><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h2>
+
+<ul>
+	<li><a href="15301.html">User Controls for Smart Devices</a></li>
+	<li><a href="17880.html">External Objects for Smart Devices</a></li>
+</ul>
+
+<p><br />
+<br />
+</p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="37152.html">Alipay API</a></TD><TD><a href="33546.html">Creating an Extension Library for Android</a></TD></TR><TR><TD><a href="36340.html">Creating an Extension Library for iOS</a></TD><TD><a href="17878.html">External Object for Android</a></TD><TD><a href="33547.html">External Objects and User Controls for Smart Devices Compatibility in GeneXus 15</a></TD><TD><a href="32508.html">Framework template for iOS User Controls or External Objects</a></TD></TR><TR><TD><a href="40315.html">GeneXusAI Overview</a></TD><TD><a href="37146.html">HowTo: Pay using Alipay in GeneXus applications</a></TD></TR><TR><TD><a href="37321.html">HowTo: Pay using WeChat Pay in GeneXus applications</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD><TD><a href="15288.html">Category:Smart Devices API</a></TD></TR><TR><TD><a href="37322.html">WeChat Pay API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/25/21 09:28 AM</em></font></td></TR></table></font>

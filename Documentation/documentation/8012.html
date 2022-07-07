@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Transactional Integrity and Enterprise Java Beans</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8012,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Transactional Integrity and Enterprise Java Beans</h1>
+<!--Transactional Integrity and Enterprise Java Beans--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When an EJB is called from a web panel, a new <a href="https://wiki.genexus.com/commwiki/wiki?2110,," target="_blank">LUW</a> is created. It can be managed by either:</p>
+
+<ul>
+	<li>
+	<p>The object (bean) itself</p>
+	</li>
+	<li>
+	<p>The EJB Container where it runs.</p>
+	</li>
+</ul>
+
+<p>An interesting advantage of the second option is that it allows a non <a href="1756.html">GeneXus</a> developer -usually someone with in-depth knowledge of the EJB Container- to configure the LUWs of this <a href="1756.html">GeneXus</a> EJB procedure.<br />
+<br />
+This feature makes the <a href="1756.html">GeneXus</a> EJBs more independent from the <a href="1756.html">GeneXus</a> Java applications because they can be called by an external client. In addition, their LUWs can be managed in the EJB Container.</p>
+
+<p>Only Session Beans take into account the Transaction Type property value. Message Driven Beans are always generated with Transaction Type = Bean value, regardless the value of the property Transaction Type of the procedure.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>In order to determine whether to use this feature or not, a new object property called<b> Transaction Type </b>was implemented. Its values are:<br />
+<br />
+<b>Container:</b> The LUW will be managed by the EJB Container. When this value is set, an attribute must be set for the Container. In this case, another property called Transaction Attribute is available to tell the Container how to manage the LUW of this bean.<br />
+<br />
+<b>Note:</b> In order to use this value (the default value, in fact) the connection to the database must be through a datasourse defined in the J2EE Server.<br />
+<br />
+<b>Object:</b> The bean behaves as usual, meaning that the object's programmer defines the size of the LUW using the commit and/or rollback commands, as well as the Commit on Exit property.<br />
+<br />
+When the LUW is managed by the EJB Container, the commit commands are ignored. The Container will always execute the commit at the end of the bean execution. But if a rollback exists, the commit will not be done.<br />
+<br />
+Two very <b>important</b> things are that, if an EJB procedure or any other procedure called by it has a:</p>
+
+<ul>
+	<li><b>commit</b>, the Container will ignore it and the commit will not be done.</li>
+	<li><b>rollback</b>, the Container will set a flag in order to remember at the end (not at this point) of the execution, that it doesn't have to do the commit.</li>
+</ul>
+
+<p>When the Container value is set, a new property called <b>Transaction Attribute </b>is available. Its values are: Required, RequiresNew, Supports, Mandatory, NotSupported or Never.<br />
+<br />
+<b>Required</b></p>
+
+<p>Use the Required mode to have your bean always run in a transaction. If a transaction is already running, your bean joins in that transaction. If no transaction is running, the EJB container will start one.<br />
+<br />
+<b>RequiresNew</b></p>
+
+<p>Use the RequiresNew attribute to have a new transaction started every time your bean is called. If a transaction is already underway when your bean is called, that transaction will not be suspended during the bean invocation.<br />
+<br />
+Then, the Container launches a new transaction and delegates the call to the bean. The bean performs its operations and completes them.<br />
+<br />
+Finally, the Container commits or aborts the transaction and resumes the old transaction. Of course, if no transaction is running when your bean is called, then there is nothing to suspend or resume.<br />
+<br />
+<b>Supports</b></p>
+
+<p>When a bean is called with Supports, it only runs in a transaction if the client already has one running -it joins that transaction. If the client does not have a transaction, the bean will run with no transaction.<br />
+<br />
+<b>Mandatory</b></p>
+
+<p>Mandatory requires that a transaction be already running when the bean method is called.<br />
+<br />
+If there is no transaction running, then the javax.ejb.TransactionRe-quiredException exception is thrown back to the caller. If the client is local, the exception thrown is: javax.ejb.Transaction-RequiredLocalException.<br />
+<br />
+<b>NotSupported</b></p>
+
+<p>If you set your bean to use NotSupported, it can't be involved in a transaction.<br />
+<br />
+For example, in the case of two enterprise beans: A and B, when bean A begins a transaction and then calls bean B, if bean B is using the NotSupported attribute, the transaction started by A is suspended. When B is complete, then A's transaction is resumed.</p>
+
+<p>None of B's operations are transactional, such as reads/writes to databases.<br />
+<br />
+<b>Never</b></p>
+
+<p>The Never transaction attribute means that your bean can't be involved in a transaction.<br />
+<br />
+Also, if the client calls your bean in a transaction, the Container throws an exception back to client:</p>
+
+<ul>
+	<li>Remote: java.rmi.RemoteException</li>
+	<li>Local: javax.ejb.EJBException</li>
+</ul>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><b>Language:</b> Java<br />
+<b>Objects:</b> Enterprise Java Bean Procedures</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p> </p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8011.html">Expose as Enterprise Java Bean property</a></TD><TD><a href="37259.html">Transaction Type property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

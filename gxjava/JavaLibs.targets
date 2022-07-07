@@ -1,0 +1,617 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">	
+
+	<Target Name="InitializeCmpVersion">
+		<PropertyGroup Condition="'$(UseNativeSoap)' == 'true' AND '$(SoapSupport)' == 'true'">
+			<SoapNativeSupport>true</SoapNativeSupport>
+		</PropertyGroup>	
+		<PropertyGroup Condition="'$(ApplicationServer)' == 'Generic Servlet 5.0' or '$(ApplicationServer)' == 'Tomcat 10.x'">
+			<JakartaSupport>true</JakartaSupport>
+		</PropertyGroup>
+		
+		<PropertyGroup>		
+			<JacksonVersion>2.13.2</JacksonVersion>		
+		</PropertyGroup>
+		
+		<PropertyGroup Condition="'$(JakartaSupport)' != 'true'">
+			<JerseyVersion>2.34</JerseyVersion>		
+			<Hk2Version>2.6.1</Hk2Version>
+		</PropertyGroup>
+		
+		<PropertyGroup Condition="'$(JakartaSupport)' == 'true'">
+			<JerseyVersion>3.0.1</JerseyVersion>		
+			<Hk2Version>3.0.1</Hk2Version>
+		</PropertyGroup>
+	</Target>
+	
+	<Target Name="GetLibs" DependsOnTargets="InitializeCmpVersion">
+						
+		<ItemGroup>
+			<Lib Include="gxclassR.jar">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="gxcommon.jar">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="gxwrappercommon.jar">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<Reorg>true</Reorg>
+			</Lib>			
+			<Lib Include="gxwrapperjavax.jar" Condition=" '$(JakartaSupport)' != 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>false</JakartaEE>
+			</Lib>
+			<Lib Include="gxwrapperjakarta.jar" Condition=" '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>						
+			<Lib Include="gxcryptocommon.jar">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="GxGeoSpatial.jar" Condition=" '$(GeographySupport)' == 'true' " >
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="GxExternalProviders.jar" Condition="'$(CloudServices)' == 'true' AND ('$(StorageProvider)' != '' OR '$(CacheProvider)' != '' OR '$(WebNotificationSupport)' == 'true' OR '$(NotificationsProvider)' != '')">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="jackson-annotations-$(JacksonVersion).jar">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="javax.ws.rs-api-2.1.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' != 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="jakarta.ws.rs-api-3.0.0.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>			
+			<Lib Include="simple-xml-2.7.1.jar">
+				<System>true</System>
+				<Deploy>false</Deploy>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="jackson-core-$(JacksonVersion).jar">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="jackson-databind-2.13.2.1.jar">
+				<System>true</System>
+			</Lib>
+			<Lib Include="jackson-jaxrs-json-provider-$(JacksonVersion).jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' != 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="jackson-jaxrs-json-provider-2.12.2-jakarta.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="jersey-media-json-jackson-$(JerseyVersion).jar" Condition=" '$(RestSupport)' == 'true'">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>			
+			<Lib Include="xercesImpl-2.12.0.jar">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="gxmaps.jar">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="lucene-core-2.2.0.jar">
+				<System>true</System>
+				<Deploy>false</Deploy>
+			</Lib>
+			<Lib Include="itext-2.1.7.jar" Condition=" '$(PDFSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="iTextAsian.jar" Condition=" '$(PDFSupport)' == 'true' AND ('$(DoubleByteSupport)' == 'true' OR '$(NationalLanguageSupport)' == 'true')">
+				<System>false</System>
+			</Lib>
+			<Lib Include="commons-lang-2.6.jar">
+				<System>true</System>
+			</Lib>
+			<Lib Include="commons-codec-1.9.jar">
+				<System>true</System>
+			</Lib>
+			<Lib Include="joda-time-2.10.4.jar">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="json-20180813.jar">
+				<System>true</System>
+			</Lib>			
+			<Lib Include="spatial4j-0.6.jar" Condition=" '$(GeographySupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="jts-1.14.jar" Condition=" '$(GeographySupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="jtsio-1.14.jar" Condition=" '$(GeographySupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="noggit-0.5.jar" Condition=" '$(GeographySupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="GeographicLib-Java-1.49.jar" Condition=" '$(GeographySupport)' == 'true' ">
+				<System>true</System>
+				<Deploy>false</Deploy>
+			</Lib>
+			<Lib Include="poi-4.1.2.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="commons-math3-3.6.1.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="SparseBitSet-1.2.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="poi-ooxml-4.1.2.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="commons-compress-1.21.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="curvesapi-1.06.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="poi-ooxml-schemas-4.1.2.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="xmlbeans-3.1.0.jar" Condition=" '$(OfficeSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="commons-collections4-4.1.jar">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="wss4j-1.6.19.jar">
+				<System>true</System>
+				<Deploy>false</Deploy>
+			</Lib>
+			<Lib Include="xalan-2.7.2.jar">
+				<System>true</System>
+				<Deploy>false</Deploy>
+			</Lib>
+			<Lib Include="serializer-2.7.2.jar">
+				<System>true</System>
+				<Deploy>false</Deploy>
+			</Lib>
+			<Lib Include="slf4j-api-1.7.32.jar" Condition=" '$(CryptoSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="slf4j-nop-1.7.7.jar" Condition=" '$(CryptoSupport)' == 'true' ">
+				<System>true</System>
+			</Lib>
+			<Lib Include="bcutil-jdk15on-1.69.jar" Condition=" '$(CryptoSupport)' == 'true' ">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="bcprov-jdk15on-1.69.jar">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="bcpkix-jdk15on-1.69.jar" Condition=" '$(CryptoSupport)' == 'true' ">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="xmlsec-2.2.3.jar">
+				<System>true</System>
+				<Deploy>false</Deploy>
+			</Lib>
+			<Lib Include="commons-logging-1.0.4.jar">
+				<System>true</System>
+			</Lib>
+			<Lib Include="commons-io-2.11.0.jar">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="xml-apis-1.4.01.jar">
+				<System>true</System>
+			</Lib>
+			<Lib Include="jakarta.activation-2.0.0.jar" Condition=" '$(MailSupport)' == 'true' ">
+				<System>true</System>
+				<MailSupport>true</MailSupport>
+			</Lib>
+			<Lib Include="log4j-core-2.17.1.jar">
+				<System>true</System>
+				<VersionSpecific>7</VersionSpecific>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="log4j-api-2.17.1.jar">
+				<System>true</System>
+				<VersionSpecific>7</VersionSpecific>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include="jakarta.mail-2.0.1.jar">
+				<System>true</System>
+				<VersionSpecific>7</VersionSpecific>
+			</Lib>
+			<Lib Include="httpclient-4.5.13.jar">
+				<System>true</System>
+				<VersionSpecific>7</VersionSpecific>
+			</Lib>
+			<Lib Include="httpcore-4.4.13.jar">
+				<System>true</System>
+				<VersionSpecific>7</VersionSpecific>
+			</Lib>
+			<Lib Include="log4j-1.2-api-2.17.1.jar">
+				<System>true</System>
+				<VersionSpecific>7</VersionSpecific>
+			</Lib>
+			<Lib Include="mail.jar" Condition="'$(MailSupport)' == 'true'">
+				<System>true</System>
+				<MailSupport>true</MailSupport>
+				<VersionSpecific>6</VersionSpecific>
+			</Lib>
+			<Lib Include="javax.jws-3.1.2.2.jar">
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>false</JakartaEE>
+				<VersionSpecific>8</VersionSpecific>
+			</Lib>
+			<Lib Include="javax.annotation-api-1.3.2.jar" Condition=" '$(JakartaSupport)' != 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+				<VersionSpecific>8</VersionSpecific>
+			</Lib>
+			<Lib Include="jakarta.annotation-api-2.0.0.jar" Condition=" '$(JakartaSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+				<VersionSpecific>8</VersionSpecific>
+			</Lib>			
+			<Lib Include="gxmail.jar" Condition=" '$(MailSupport)' == 'true' ">
+				<Android>false</Android>
+				<MailSupport>true</MailSupport>
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="javapns.jar">
+				<Android>false</Android>
+				<System>true</System>
+				<Deploy>false</Deploy>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="Tidy.jar" Condition=" '$(Searchable)' == 'true'"/>
+			<Lib Include="gxsearch.jar" Condition=" '$(Searchable)' == 'true'">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="lucene-core-2.2.0.jar" Condition=" '$(Searchable)' == 'true'">
+				<Android>false</Android>
+			</Lib>
+			<Lib Include="lucene-highlighter-2.2.0.jar" Condition=" '$(Searchable)' == 'true'">
+				<Android>false</Android>
+			</Lib>
+			<Lib Include="lucene-spellchecker-2.2.0.jar" Condition=" '$(Searchable)' == 'true'">
+				<Android>false</Android>
+			</Lib>
+			<Lib Include="gxoffice.jar" Condition="'$(OfficeSupport)' == 'true'">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="encoder-1.2.2.jar">
+				<System>true</System>
+			</Lib>
+			<Lib Include="encoder-jsp-1.2.2.jar">
+				<System>true</System>
+			</Lib>
+			<Lib Include="javax.jms-3.1.2.2.jar" Condition=" '$(JakartaSupport)' != 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>			
+			
+
+			<!-- Native Soap Libs Java EE -->
+			<Lib Include="jaxws-api-2.3.1.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>false</JakartaEE>
+				<VersionSpecific>8</VersionSpecific>
+			</Lib>
+			<Lib Include="jaxb-api-2.3.1.jar" Condition="('$(SoapNativeSupport)' == 'true' or '$(RestSupport)' == 'true') and '$(JakartaSupport)' != 'true'">
+				<System>true</System>
+				<Compile>true</Compile>
+				<VersionSpecific>8</VersionSpecific>
+			</Lib>
+			<Lib Include="gmbal-api-only-3.1.0-b001.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="ha-api-3.1.12.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="jaxb-core-2.3.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="jaxb-impl-2.3.1.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="jaxws-rt-2.3.1.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="management-api-3.2.1.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="policy-2.7.5.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="stax-ex-1.8.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="streambuffer-1.5.6.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' != 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+
+			<!-- Native Soap Libs Jakarta EE -->
+			<Lib Include="jaxws-rt-3.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="jakarta.jws-api-3.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="jakarta.xml.soap-api-2.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="jakarta.activation-2.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="jaxb-core-3.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="jaxb-impl-3.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="saaj-impl-2.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="stax-ex-2.0.0.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="streambuffer-2.0.1.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="gmbal-api-only-4.0.2.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true' ">
+				<Android>false</Android>
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="saaj-api-1.3.5.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="management-api-3.2.3.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			<Lib Include="ha-api-3.1.12.jar" Condition="'$(SoapNativeSupport)' == 'true' and '$(JakartaSupport)' == 'true'">
+				<Deploy>true</Deploy>
+			</Lib>
+			
+			<!-- gRPC Libs -->
+			<Lib Include="gson-2.8.6.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+
+			<Lib Include="guava-30.1-jre.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="protobuf-java-util-3.19.3.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="protobuf-java-3.19.3.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-all-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+    			<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-alts-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+    			<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-core-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+    			<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-api-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-stub-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-protobuf-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-protobuf-lite-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-services-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-grpclb-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-xds-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-auth-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-context-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-netty-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="grpc-okhttp-1.37.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include="perfmark-api-0.23.0.jar" Condition="'$(GRPCSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+			</Lib>
+			<!-- DBMSS drivers -->
+			<Lib Include=".\drivers\mssql-jdbc-10.2.0.jre8.jar" Condition="'$(ValidateLint)' == 'true' OR ('$(SQLServer)' == 'true' And '$(JDBCDrivers.Contains(&quot;com.microsoft.sqlserver.jdbc.SQLServerDriver&quot;))')">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+
+			<Lib Include=".\drivers\mysql-connector-java-5.1.49.jar" Condition="'$(ValidateLint)' == 'true' OR ('$(MySQL)' == 'true' AND '$(MySQLVersion)' != '8' And '$(TargetId)' != 'GAE')">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+
+			<Lib Include=".\drivers\ojdbc8.jar" Condition="'$(Oracle)' == 'true'">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+
+			<Lib Include=".\drivers\jt400.jar" Condition="'$(Db2foriSeries)' == 'true'">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+
+			<Lib Include=".\drivers\postgresql-42.2.14.jar" Condition="'$(PostgreSQL)' == 'true'">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<Lib Include=".\drivers\ngdbc.jar" Condition="'$(SAPHana)' == 'true'">
+				<System>true</System>
+				<Reorg>true</Reorg>
+			</Lib>
+			<!-- RUNTIME ONLY -->
+			<Lib Include="compiler-0.9.7.jar"/>
+			<Lib Include="guava-30.1-jre.jar"/>
+			<Lib Include="commons-fileupload-1.3.3.jar"/>
+			<Lib Include="poi-scratchpad-4.1.2.jar" Condition=" '$(OfficeSupport)' == 'true' " />
+
+			<Lib Include="javax.inject-2.4.0-b34.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' != 'true' " />
+			<Lib Include="jakarta.inject-api-2.0.0.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' == 'true' " />
+			
+			<Lib Include="jackson-jaxrs-base-$(JacksonVersion).jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' != 'true' " />
+			<Lib Include="jackson-jaxrs-base-2.12.2-jakarta.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' == 'true' " />
+			<Lib Include="jackson-jaxrs-json-provider-$(JacksonVersion).jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' != 'true' " />
+			<Lib Include="jackson-jaxrs-json-provider-2.12.2-jakarta.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' == 'true' " />
+			<Lib Include="jackson-module-jaxb-annotations-$(JacksonVersion).jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' != 'true' " />
+			<Lib Include="jackson-module-jaxb-annotations-2.12.2-jakarta.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' == 'true' " />
+			
+
+			<Lib Include="jersey-server-$(JerseyVersion).jar" Condition=" '$(RestSupport)' == 'true'" />
+			<Lib Include="jersey-client-$(JerseyVersion).jar" Condition=" '$(RestSupport)' == 'true'" />			
+			<Lib Include="jersey-common-$(JerseyVersion).jar" Condition=" '$(RestSupport)' == 'true'" />						
+			<Lib Include="jersey-container-servlet-core-$(JerseyVersion).jar" Condition=" '$(RestSupport)' == 'true'" />			
+			<Lib Include="jersey-entity-filtering-$(JerseyVersion).jar" Condition=" '$(RestSupport)' == 'true'" />			
+			<Lib Include="jersey-hk2-$(JerseyVersion).jar" Condition=" '$(RestSupport)' == 'true'" />
+
+											
+			<Lib Include="hk2-api-$(Hk2Version).jar" Condition=" '$(RestSupport)' == 'true'" />			
+			<Lib Include="hk2-locator-$(Hk2Version).jar" Condition=" '$(RestSupport)' == 'true'" />			
+			<Lib Include="hk2-utils-$(Hk2Version).jar" Condition=" '$(RestSupport)' == 'true'" />
+			
+			<Lib Include="annotations-api.jar" Condition=" '$(RestSupport)' == 'true' " />
+			<Lib Include="validation-api-1.1.0.Final.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' != 'true' " />
+			<Lib Include="jakarta.validation-api-3.0.0.jar" Condition=" '$(RestSupport)' == 'true' AND '$(JakartaSupport)' == 'true' " />
+			<Lib Include="jakarta.xml.bind-api-3.0.0.jar" Condition=" ('$(RestSupport)' == 'true' or '$(SoapNativeSupport)' == 'true') AND '$(JakartaSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>
+			<Lib Include="jakarta.xml.ws-api-3.0.0.jar" Condition=" ('$(RestSupport)' == 'true' or '$(SoapNativeSupport)' == 'true') AND '$(JakartaSupport)' == 'true' ">
+				<System>true</System>
+				<Compile>true</Compile>
+				<JakartaEE>true</JakartaEE>
+			</Lib>			
+			<Lib Include="sqlitejdbc-v056.jar">
+				<System>true</System>
+				<Android>true</Android>
+			</Lib>
+			
+			<Lib Include=".\std\gxandroid.jar">
+				<System>true</System>
+				<Android>true</Android>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include=".\std\gxandroidcommon.jar">
+				<System>true</System>
+				<Android>true</Android>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include=".\std\apacheandroid.jar">
+				<System>true</System>
+				<Android>true</Android>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include=".\std\gxandroidreports.jar">
+				<System>true</System>
+				<Android>true</Android>
+				<Compile>true</Compile>
+			</Lib>
+			<Lib Include=".\std\xercesImpl-2.12.0.jar">
+				<System>true</System>
+				<Android>true</Android>
+				<Compile>true</Compile>
+			</Lib>
+			
+		</ItemGroup>
+
+	</Target>
+
+</Project>

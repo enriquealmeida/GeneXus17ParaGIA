@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Google Annotated Time Line Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?10617,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Google Annotated Time Line Control</h1>
+<!--Google Annotated Time Line Control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h4><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h4>
+
+<p>This control shows an interactive time series line chart with optional annotations. It basically displays the Time dimension in the X axis, and the serie's values in the Y one.</p>
+
+<p>The chart is rendered within the browser using Flash.</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>The user control is really simple, you just need to set one property in order to get the control working. The Data property.</p>
+
+<h4><a id="Show+a+simple+chart+illustrating+outcomes+and+incomes+during+a+certain+period" class="HashLink" href="#Show+a+simple+chart+illustrating+outcomes+and+incomes+during+a+certain+period">Show a simple chart illustrating outcomes and incomes during a certain period</a></h4>
+
+<ul>
+	<li>Drag and drop Annotated Timeline.</li>
+	<li>Assign to VisualizationData property a variable based on AnnotatedTimeLine data type (this SDT is automatically imported when dropping the control to the web form).</li>
+	<li>Load the information that will be shown by the chart using the previous mentioned variable.</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub 'LoadTimeLine'
+  &amp;incomes.Name = &quot;Incomes&quot;
+  &amp;serieItem.XValue = ctod(&quot;01/01/08&quot;)
+  &amp;serieItem.YValue = 20000
+  &amp;serieItem.AnnotationTitle = &quot;title event 20000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 20000&quot;
+  &amp;incomes.Data.Add(&amp;serieItem)
+
+  &amp;serieItem = new()
+  &amp;serieItem.XValue = ctod(&quot;04/01/08&quot;)
+  &amp;serieItem.YValue = 40000
+  &amp;serieItem.AnnotationTitle = &quot;title event 40000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 40000&quot;
+  &amp;incomes.Data.Add(&amp;serieItem)
+
+  &amp;serieItem = new()
+  &amp;serieItem.XValue = ctod(&quot;08/01/08&quot;)
+  &amp;serieItem.YValue = 60000
+  &amp;serieItem.AnnotationTitle = &quot;title event 60000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 60000&quot;
+  &amp;incomes.Data.Add(&amp;serieItem)
+
+  &amp;serieItem = new()
+  &amp;serieItem.XValue = ctod(&quot;12/01/08&quot;)
+  &amp;serieItem.YValue = 80000
+  &amp;serieItem.AnnotationTitle = &quot;title event 80000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 80000&quot;
+  &amp;incomes.Data.Add(&amp;serieItem)
+
+  &amp;outcomes.Name = &quot;Outcomes&quot;
+  &amp;serieItem = new()
+  &amp;serieItem.XValue = ctod(&quot;01/01/08&quot;)
+  &amp;serieItem.YValue = 10000
+  &amp;serieItem.AnnotationTitle = &quot;title event 10000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 10000&quot;
+  &amp;outcomes.Data.Add(&amp;serieItem)
+
+  &amp;serieItem = new()
+  &amp;serieItem.XValue = ctod(&quot;04/01/08&quot;)
+  &amp;serieItem.YValue = 30000
+  &amp;serieItem.AnnotationTitle = &quot;title event 30000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 30000&quot;
+  &amp;outcomes.Data.Add(&amp;serieItem)
+
+  &amp;serieItem = new()
+  &amp;serieItem.XValue = ctod(&quot;08/01/08&quot;)
+  &amp;serieItem.YValue = 50000
+  &amp;serieItem.AnnotationTitle = &quot;title event 50000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 50000&quot;
+  &amp;outcomes.Data.Add(&amp;serieItem)
+
+  &amp;serieItem = new()
+  &amp;serieItem.XValue = ctod(&quot;12/01/08&quot;)
+  &amp;serieItem.YValue = 70000
+  &amp;serieItem.AnnotationTitle = &quot;title event 70000&quot;
+  &amp;serieItem.AnnotationText = &quot;text event 70000&quot;
+  &amp;outcomes.Data.Add(&amp;serieItem)
+
+  &amp;timeLine.Add(&amp;incomes)
+  &amp;timeLine.Add(&amp;outcomes)
+  googleAnnotatedTimeLine1.Reload = trueEndSub
+</pre>
+
+<p><img src="./images/10618.png" id="10618" class="WikiImage"/></p>
+
+<h4><a id="Handling+events" class="HashLink" href="#Handling+events">Handling events</a></h4>
+
+<p>As we mentioned before, Annotated Time Line Chart Control is an interactive chart. That is, when clicking on an annotation, its corresponding information will be highlighted and a GeneXus event wil be fired as well.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event googleAnnotatedTimeLine1.ItemSelected
+    msg(&quot;Serie: &quot; + &amp;selectedItem.SerieName + &quot; XValue: &quot; + &amp;selectedItem.XValue.ToString() + &quot; XYvalue: &quot; + &amp;selectedItem.YValue.ToString())
+EndEvent
+</pre>
+
+<p><b>Note:</b> &amp;selectedItem is based on AnnotatedTimeLineSelectedItem SDT (this SDT is also automatically imported when dropping the control to a web form).</p>
+
+<h4><br />
+<br />
+<br />
+</h4>
+
+<p><br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="10447.html">GXGoogle Visualization Library</a></TD><TD><a href="8132.html">Web Panel form</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

@@ -1,0 +1,44 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="VerifyControlText Validation Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="ControlGXName" Type="System.String" %>
+<%@ Property Name="value" Type="System.String" %>
+<%@ Property Name="variable" Type="System.String" %>
+<%@ Property Name="dataPoolName" Type="System.String" %>
+<%@ Property Name="dataPoolColumnName" Type="System.String" %>
+<%@ Property Name="AttType" Type="Artech.Genexus.Common.eDBType" %>
+<%@ SubTemplate Name="ObjectGXTag" File="ObjectGXTag.dkt" MergeProperties="True"%>
+<%
+	string compare = TransactionHelper.GetComparatorValue(AttType);
+%>
+<VerifyControlText Type="Validation">
+	<Boolean Value="false" />
+    <SelectionByControl ComparatorType="<%=compare%>" Comparator="equal">
+		<ControlGX Name="<%=ControlGXName%>">
+<%@ CallSubTemplate ObjectGXTag Object='Object' model='model' IndentLevel='IndentLevel + 3' IndentLevelChar='"\t"' %>
+		</ControlGX>
+<%
+	if (value != string.Empty)
+	{	// Apply Value Tag
+%>
+		<Value Value="<%=value%>" />
+<%
+	}
+	else if (variable != string.Empty)
+	{	// Apply Variable Tag
+%>
+		<Variable VariableName="<%=variable%>" />
+<%	}
+	else
+	{	// Apply DataPool Tag
+%>
+		<DataPool DataPoolName="<%=dataPoolName%>" DataPoolColumnName="<%=dataPoolColumnName%>" />
+<%
+	}
+%>
+	</SelectionByControl>
+	<Boolean Value="false" />
+    <Value Value="" />
+</VerifyControlText>

@@ -1,0 +1,53 @@
+delimiters "$", "$"
+
+testcaseInstructionTemplateMap ::= [
+    "button_click":"g_testcase_instruction_button_click",
+    "tabpage_click":"g_testcase_instruction_tabpage_click",
+    "cell_assert":"g_testcase_instruction_cell_assert"
+]
+
+g_testspec(page, gx)::=<%
+$if(page.Test.TestCases)$
+$g_test(page.Test)$
+$endif$
+%>
+
+g_test(test) ::= <<
+import {gxTestSuite} from '../$test.Module:{x|../}$gx/gx-test-suite';
+
+gxTestSuite({
+  name: "$test.Name$",
+  url: "app/$test.Url$",
+  description:"$test.Description$",
+  connectsRestService: $test.ConnectsRestService$,
+  testCases: [
+    $test.TestCases:g_testcase();separator=",\r\n"$
+  ]
+});
+>>
+
+g_testcase(tc) ::= <<
+{ 
+  name: "$tc.Name$",
+  description: "$tc.Description$",
+  instructions: [
+    $tc.Instructions:g_testcase_instruction();separator=",\r\n"$
+  ]
+}
+>>
+
+g_testcase_instruction(tc_instr) ::= <<
+$(testcaseInstructionTemplateMap.(tc_instr.type))(tc_instr)$
+>>
+
+g_testcase_instruction_button_click(tc_instr) ::= <<
+{ type:"button_click", id:"$tc_instr.id$"}
+>>
+
+g_testcase_instruction_tabpage_click(tc_instr) ::= <<
+{ type:"tabpage_click", id:"$tc_instr.id$-caption"}
+>>
+
+g_testcase_instruction_cell_assert(tc_instr) ::= <<
+{ type:"cell_assert", description: "$tc_instr.name$", cells: [$tc_instr.cells:{c|"$c$"};separator=","$]}
+>>

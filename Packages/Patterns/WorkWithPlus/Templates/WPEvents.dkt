@@ -1,0 +1,1116 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="WP Events" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="iGenObj" Type="DVelop.Patterns.WorkWithPlus.IGeneratedObject" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubAddressAutoLinkEvent" File="SubAddressAutoLinkEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventStart" File="SubExtraGridsEventStart.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventRefresh" File="SubExtraGridsEventRefresh.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventLoad" File="SubExtraGridsEventLoad.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventCalculateTotalizers" File="SubExtraGridsEventCalculateTotalizers.dkt" MergeProperties="True"%>
+<%
+	SettingsTemplateElement template = wwInstance.GetAppropiateTemplate();
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	WPTableElement rootTable = (WPTableElement)iGenObj.GetRootTable();
+	bool isSmooth = wwInstance.Main_IsWebUserExperienceSmooth();
+	
+	bool advancedSecurity = settings.Security.IsAdvancedOrGAM();
+	bool isWizard = (iGenObj is WPRootElement && ((WPRootElement)iGenObj).IsTypeWizard());
+	bool isWizardStep = (iGenObj is StepElement);
+	StepElement step = isWizardStep ? (StepElement)iGenObj : null;
+	StepsElement steps = isWizardStep ? step.ParentCasted.Steps : null;
+	int stepIndex = isWizardStep ? steps.IndexOf(step): 0;
+	bool isLastStep = isWizardStep ? (stepIndex == steps.Count -1): false;
+	string stepName = isWizardStep ? step.Name : null;
+	string wizardExtraParameters = null, wizardSessionKeySuffix = null, wizardSessionSetProc = null, wizardSessionGetProc = null;
+	IStandardActionElement wizardNextAction = null;
+	if (isWizard || isWizardStep)
+	{
+		wizardExtraParameters = (wwInstance.WPRoot.Multiple ? ", &SessionGuid" + (isWizard ? "Aux" : "") : "");
+		if (wwInstance.WPRoot.Parameters != null && wwInstance.WPRoot.Parameters.Count > 0)
+		{
+			foreach (ParameterElement param in wwInstance.WPRoot.Parameters)
+			{
+				wizardExtraParameters += ", " + param.Name.Substring(param.Name.IndexOf(":") + 1).Trim();
+			}
+		}
+		if (isWizard && wwInstance.WPRoot.Multiple)
+		{
+			wizardSessionKeySuffix = " + &SessionGuidAux.ToString().Trim()";
+		}
+		if (wwInstance.WPRoot.IsResumeNever())
+		{
+			wizardSessionSetProc = "&WebSession.Set";
+			wizardSessionGetProc = "&WebSession.Get";
+		}
+		else
+		{
+			wizardSessionSetProc = "SaveUserKeyValue";
+			wizardSessionGetProc = "LoadUserKeyValue";
+		}
+	}
+
+	List<IAttributesItem> tableAttributesAndVariables = rootTable.GetTableAttributesAndVariables();
+    bool addAttSecurityCode, addAttVisibleConditionCode, otherControlVisibleCondition;
+	rootTable.AddShowAttSecurityCode(out addAttSecurityCode, out addAttVisibleConditionCode, out otherControlVisibleCondition);
+	List<IAttributesItem> allAttsAndVars = null;
+	SettingsPaginationBarActionElement paginationBarSettings = null;
+	System.Boolean[] hasAnSDTItemTotalizer = new System.Boolean[]{false};
+	bool hasAtLeastOneStepCondition = false;
+	if (isWizard)
+	{
+		foreach (StepElement stepItem in ((WPRootElement)iGenObj).Steps)
+		{
+			if (!string.IsNullOrEmpty(stepItem.Condition))
+			{
+				hasAtLeastOneStepCondition = true;
+				break;
+			}
+		}
+	}
+	List<IGrid> grids = rootTable.AllGrids();
+    bool [] hasLoadEventLinks = new bool[] {false};
+	string linksEvent = grids.Count == 0 ? "NotLoad" : "";
+	string returnToSummaryStepName = null;
+%>
+Event Start
+<%@ CallSubTemplate SubLinkAttributes Attributes='tableAttributesAndVariables' LinkAssocToImage='true' LinksEvent='linksEvent' HasLoadEventLinks='hasLoadEventLinks' IndentLevel='1' IndentLevelChar='"\t"' %>
+	
+<%
+	if (isWizardStep || (isWizard && hasAtLeastOneStepCondition))
+	{
+%>
+	Do 'LoadVariablesFromWizardData'
+<%
+		if (isWizardStep)
+		{
+			wizardNextAction = rootTable.GetStandardAction(isLastStep ? StandardAction.WizardLastNext : StandardAction.WizardNext);
+			returnToSummaryStepName = !isLastStep && wizardNextAction != null && (wizardNextAction.RetToSum == "<default>" ? settings.StandardActions.WizardNext.RetToSum : wizardNextAction.RetToSum) == "Return to summary" ? step.GetReturnToSummaryStepName() : null;
+			if (!string.IsNullOrEmpty(steps[stepIndex].Condition))
+			{
+%>
+	If Not(<%= steps[stepIndex].Condition %>)
+		If &GoingBack
+			<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', !'<%= steps[stepIndex - 1].Name %>', true<%= wizardExtraParameters %>)
+		Else
+			<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', !'<%= steps[stepIndex + 1].Name %>', false<%= wizardExtraParameters %>)
+		Endif
+	Endif
+<%			
+			}
+		}
+	}
+	if (isWizard)
+	{
+%>
+	&WizardSteps = new()
+
+<%
+		string tabIndent = "";
+		foreach (StepElement stepItem in ((WPRootElement)iGenObj).Steps)
+		{
+			tabIndent = "";
+			if (!string.IsNullOrEmpty(stepItem.Condition))
+			{
+				tabIndent = "\t";
+%>
+	If <%= stepItem.Condition %>
+<%
+			}
+%>
+	<%= tabIndent %>&WizardStep = new()
+	<%= tabIndent %>&WizardStep.Code = !'<%= stepItem.Name %>'
+	<%= tabIndent %>&WizardStep.Title = '<%= stepItem.Title %>'
+	<%= tabIndent %>&WizardStep.Description = '<%= stepItem.Description != "<default>" ? stepItem.Description : stepItem.Title %>'
+<%
+			if (stepItem.IncludeFontIcon)
+			{
+%>
+	<%= tabIndent %>&WizardStep.IconThemeClass = !'<%= stepItem.IconThemeClass %>'
+<%
+			}
+%>
+	<%= tabIndent %>&WizardSteps.Add(&WizardStep)
+<%
+			if (!string.IsNullOrEmpty(stepItem.Condition))
+			{
+%>
+	EndIf
+<%
+			}
+%>
+
+<%
+		}
+		if (wwInstance.WPRoot.IsResumeAskUser())
+		{
+			if (wwInstance.WPRoot.Multiple)
+			{
+%>
+	If &SessionGuid.IsEmpty()
+		&SessionGuidAux.FromString(<%= wizardSessionGetProc %>(&Pgmname + !'_SessionGuid'))
+	Else
+		&SessionGuidAux = &SessionGuid
+	EndIf
+<%
+			}
+%>
+	If &CurrentStep.IsEmpty()
+<%
+			if (wwInstance.WPRoot.Multiple)
+			{
+%>
+		AND &SessionGuid.IsEmpty() 
+		AND not &SessionGuidAux.IsEmpty()
+<%
+			}
+%>
+		AND <%= wizardSessionGetProc %>(&Pgmname + !'_CurrentStep'<%= wizardSessionKeySuffix %>) <> ''
+		AND <%= wizardSessionGetProc %>(&Pgmname + !'_Data'<%= wizardSessionKeySuffix %>) <> ''
+
+		&CurrentStepAux = !'<%= ((WPRootElement)iGenObj).Steps[0].Name %>'
+		ConfirmPanel_AskResume.Confirm()
+	Else
+<%
+			if (wwInstance.WPRoot.Multiple)
+			{
+%>
+		&SessionGuidAux = iif(&SessionGuidAux.IsEmpty(), Guid.NewGuid(), &SessionGuidAux)
+		<%= wizardSessionSetProc %>(&Pgmname + !'_SessionGuid', &SessionGuidAux.ToString().Trim())
+<%
+			}
+%>
+		&CurrentStepAux = iif(&CurrentStep.IsEmpty(), !'<%= ((WPRootElement)iGenObj).Steps[0].Name %>', &CurrentStep)
+		<%= wizardSessionSetProc %>(&Pgmname + !'_CurrentStep'<%= wizardSessionKeySuffix %>, &CurrentStepAux)
+		Do 'LoadWizardStepWC'
+	EndIf
+<%
+		}
+		else
+		{
+%>
+	If &CurrentStep.IsEmpty()
+<%
+			if (wwInstance.WPRoot.IsResumeNever())
+			{
+%>
+		&CurrentStepAux = !'<%= ((WPRootElement)iGenObj).Steps[0].Name %>'
+		&WebSession.Remove(&Pgmname + !'_Data'<%= wizardSessionKeySuffix %>)
+<%
+			}
+			else
+			{
+%>
+		If <%= wizardSessionGetProc %>(&Pgmname + !'_CurrentStep') <> '' AND <%= wizardSessionGetProc %>(&Pgmname + !'_Data') <> ''
+			&CurrentStepAux = <%= wizardSessionGetProc %>(&Pgmname + !'_CurrentStep')
+		Else
+			&CurrentStepAux = !'<%= ((WPRootElement)iGenObj).Steps[0].Name %>'
+			SaveUserKeyValue(&Pgmname + !'_Data', '')
+		EndIf
+<%
+			}
+%>
+	Else
+		&CurrentStepAux = &CurrentStep
+	EndIf
+<%
+			if (wwInstance.WPRoot.IsResumeAlways())
+			{
+%>
+	<%= wizardSessionSetProc %>(&Pgmname + !'_CurrentStep', &CurrentStepAux)
+<%
+			}
+			else if (wwInstance.WPRoot.Multiple)
+			{
+%>
+	&SessionGuidAux = iif(&SessionGuid.IsEmpty(), GUID.NewGuid(), &SessionGuid)
+<%
+			}
+%>
+	Do 'LoadWizardStepWC'
+<%
+		}
+	}
+	if (advancedSecurity)
+	{
+%>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' Object='Object' SecurityFunction='iGenObj.GetSecurityFunctionKey()' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	}
+	string generalInitializationCode = rootTable.GetGeneralInitializationCode(Object);
+	if (generalInitializationCode != "")
+	{
+%>
+
+<%= Indentation.Indent(generalInitializationCode, 1) %>
+<%
+	}
+
+    List<IGrid> thisStepGrids = null;
+	if (isWizardStep)
+	{
+		thisStepGrids = new List<IGrid>(grids);
+		step.AddSummaryGrids(grids);
+	}
+
+	bool addAttVisibleConditionCodeInLoadEvent = false;
+	if (grids.Count == 0 && (addAttVisibleConditionCode || otherControlVisibleCondition))
+	{
+		addAttVisibleConditionCodeInLoadEvent = WPTableElement.AddAttVisibleConditionCodeInLoadEvent(tableAttributesAndVariables, grids);
+	}
+	
+	if (addAttSecurityCode || addAttVisibleConditionCode)
+	{
+		allAttsAndVars = rootTable.GetAllAttributesAndVariables(true, true, true);
+	}
+	
+	if (addAttSecurityCode || ((addAttVisibleConditionCode || otherControlVisibleCondition) && !addAttVisibleConditionCodeInLoadEvent))
+	{
+%>
+
+	Do 'AttributesSecurityCode'
+<%
+	}
+
+	bool hasRequiredAtts = false;
+	foreach (IAttributesItem item in tableAttributesAndVariables)
+	{
+		if (!item.Visible)
+		{
+%>
+	<%= item.ControlName %>.Visible = False
+<%
+		}
+		else
+		{
+			if (!hasRequiredAtts && item.GetIsRequired())
+			{
+				hasRequiredAtts = true;
+			}
+		}
+	}
+	List<IActionElement> standaloneActionsWithSecurityCheck = new List<IActionElement>();
+	List<IActionElement> actions = rootTable.AllActions();
+
+	bool hasPaginationBar = false;
+	foreach (IGrid grid in grids)
+    {
+		if (grid.IncludePagBar())
+		{
+			paginationBarSettings = settings.StandardActions.PaginationBar;
+			hasPaginationBar = true;
+			break;
+		}
+	}
+	if (actions != null)
+	{
+		foreach (IActionElement action in actions)
+		{
+			if (action.HasStandaloneCondition())
+			{
+				standaloneActionsWithSecurityCheck.Add(action);
+			}
+		}
+	}
+	if (returnToSummaryStepName != null && wizardNextAction.GetControlType() != "Image")
+	{
+%>
+	If &GoingBack AND &PreviousStep = !'<%= returnToSummaryStepName %>'
+		<%= wizardNextAction.ControlName() %>.Caption = <%= WorkWithStringValues.StringWithQuotes(settings.StandardActions.WizardNext.RetToSumCaption) %>
+	EndIf
+<%
+	}
+%>
+<%@ CallSubTemplate SubExtraGridsEventStart grids='grids' actions='actions' settings='settings' advancedSecurity='advancedSecurity' rootTable='rootTable' isSmooth='isSmooth'  %>
+
+EndEvent
+
+<%@ CallSubTemplate SubAddressAutoLinkEvent Attributes='tableAttributesAndVariables' EventAssocToImage='true' ExtraGrids='grids' %>
+<%	
+	bool addRefreshEvent = (standaloneActionsWithSecurityCheck.Count > 0 || hasPaginationBar);
+	if (!addRefreshEvent)
+	{
+		foreach (IGrid grid in grids)
+		{
+			if (grid.IsGXUIMultiRowSelectionAndCheckAll()
+				|| grid.HasTotalizers() && grid is WPGridElement && !string.IsNullOrEmpty(((WPGridElement)grid).SDTCollection)
+				|| !string.IsNullOrEmpty(grid.GetConditionalFormattingRefreshCode()))
+			{
+				addRefreshEvent = true;
+				break;
+			}
+		}
+	}
+	if (addRefreshEvent)
+	{
+%>	
+Event Refresh
+
+<%
+		if (standaloneActionsWithSecurityCheck.Count > 0)
+		{
+%>		
+	Do 'CheckSecurityForActions'
+
+<%
+		}
+%>
+<%@ CallSubTemplate SubExtraGridsEventRefresh grids='grids' settings='settings' paginationBarSettings='paginationBarSettings' hasAnSDTItemTotalizer='hasAnSDTItemTotalizer' %>
+
+EndEvent
+<%
+		if (standaloneActionsWithSecurityCheck.Count > 0)
+		{	
+%>
+
+Sub 'CheckSecurityForActions'
+<%
+			foreach (IActionElement action in standaloneActionsWithSecurityCheck)
+			{
+%>
+<%= Indentation.Indent(action.EnableDisableCodeOutsideGrid(), 1) %> 
+<%
+			}
+%>
+EndSub
+
+<%
+		}
+	}
+    if (grids.Count > 0)
+	{
+%>
+<%@ CallSubTemplate SubExtraGridsEventLoad grids='grids' paginationBarSettings='paginationBarSettings' isWizardStep='isWizardStep' %>
+<%
+	}
+	if (isWizard)
+	{
+		if (wwInstance.WPRoot.IsResumeAskUser())
+		{
+%>
+
+Event ConfirmPanel_AskResume.Close
+
+	If ConfirmPanel_AskResume.Result = !'Yes'
+		&CurrentStepAux = <%= wizardSessionGetProc %>(&Pgmname + !'_CurrentStep'<%= wizardSessionKeySuffix %>)
+		<%= StepTitlesElement.GetCreateStepTitlesWCCall(wwInstance.WPRoot) %>
+		Refresh
+	Else
+<%
+			if (wwInstance.WPRoot.Multiple)
+			{
+%>
+		&SessionGuidAux = Guid.NewGuid()
+		<%= wizardSessionSetProc %>(&Pgmname + !'_SessionGuid', &SessionGuidAux.ToString().Trim())
+<%
+			}
+			else
+			{
+%>
+		SaveUserKeyValue(&Pgmname + !'_Data', '')
+<%
+			}
+%>
+		<%= wizardSessionSetProc %>(&Pgmname + !'_CurrentStep'<%= wizardSessionKeySuffix %>, &CurrentStepAux)
+	EndIf
+	Do 'LoadWizardStepWC'
+
+EndEvent
+
+<%
+		}
+%>
+
+Sub 'LoadWizardStepWC'
+
+	Do Case
+<%
+		foreach (StepElement stepItem in ((WPRootElement)iGenObj).Steps)
+		{
+%>
+		Case &CurrentStepAux = !'<%= stepItem.Name %>'
+			WizardStepWC.Object = <%= iGenObj.ObjectName %><%= stepItem.Name %>.Create(&Pgmname + !'_Data'<%= wizardSessionKeySuffix %>, &PreviousStep, &GoingBack<%= wizardExtraParameters %>)
+<%
+		}
+%>
+	EndCase
+
+EndSub
+	
+<%
+	}
+
+	if (isWizardStep || (isWizard && hasAtLeastOneStepCondition))
+	{
+%>
+
+Sub 'LoadVariablesFromWizardData'
+
+	&WizardData.FromJson(<%= wizardSessionGetProc %>(<%= isWizardStep ? "&WebSessionKey" : "&Pgmname + !'_Data'" %><%= wizardSessionKeySuffix %>))
+<%
+		if (isWizardStep)
+		{
+		List<string> addedSDTs = new List<string>();
+		foreach (VariableElement var in rootTable.GetTableVariables())
+		{
+			if (var.IsBasedOnTransaction())
+			{
+				if (!addedSDTs.Contains(var.Name))
+				{
+					addedSDTs.Add(var.Name);
+					bool bcAdded = false;
+					if (step.WizardShareBCsAcrossSteps)
+					{
+						foreach (StepElement otherStep in steps)
+						{
+							if (step != otherStep)
+							{
+								foreach (VariableElement var2 in otherStep.Table.GetTableVariables())
+								{
+									if (var2.IsBasedOnTransaction() && var.Name == var2.Name)
+									{
+										bcAdded = true;
+%>
+	&<%= var.Name %>.FromJson(&WizardData.<%= otherStep.Name %>.<%= var.Name %>Json)
+<%
+										break;
+									}
+								}
+								if (bcAdded)
+								{
+									break;
+								}
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					if (!bcAdded)
+					{
+%>
+	&<%= var.Name %>.FromJson(&WizardData.<%= stepName %>.<%= var.Name %>Json)
+<%
+					}
+				}
+			}
+			else if (var.IsBasedOnSDT())
+			{
+				if (!addedSDTs.Contains(var.Name) && var.Name.ToLower() != "wizarddata")
+				{
+					addedSDTs.Add(var.Name);
+%>
+	&<%= var.Name %> = &WizardData.<%= stepName %>.<%= var.Name %>
+<%
+				}
+			}
+			else
+			{
+%>
+	&<%= var.Name %> = &WizardData.<%= stepName %>.<%= var.Name %>
+<%
+			}
+			if (DateRangePickerHelper.IsIAttributeItemDateRange(var) && !var.IsBasedOnSDTOrTransaction())
+			{
+%>
+	&<%= var.Name %>_To = &WizardData.<%= stepName %>.<%= var.Name %>_To
+<%
+			}
+		}
+		foreach (IGrid grid in thisStepGrids)
+		{
+			if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+			{
+				foreach (VariableElement var in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+				{
+					if (grid.GetSDTCollection().Substring(1).ToLower().Equals(var.Name.ToLower())
+						&& var.Domain is Artech.Genexus.Common.Objects.SDT)
+					{
+%>
+	&<%= var.Name %> = &WizardData.<%= stepName %>.<%= var.Name %>
+<%
+						break;
+					}
+				}
+			}
+			else if (grid.HasMultiRowActions())
+			{
+				//TODO: cargar el grid seleccionado
+			}
+			else
+			{
+				//TODO: cargar el grid seleccionado
+			}
+		}
+			foreach (string line in step.GetSummaryVariablesToSet())
+			{
+%>
+	<%= line %>
+<%
+			}
+		}
+%>
+
+EndSub
+<%
+		if (isWizardStep)
+		{
+		if (!wwInstance.WPRoot.IsResumeNever())
+		{
+%>
+
+Event WizardChronometer.Tick
+	Do 'SaveVariablesToWizardData'
+EndEvent
+
+<%
+		}
+%>
+
+Sub 'SaveVariablesToWizardData'
+
+	&WizardData.FromJson(<%= wizardSessionGetProc %>(&WebSessionKey))
+<%
+		List<string> addedSDTs = new List<string>();
+		foreach (VariableElement var in rootTable.GetTableVariables())
+		{
+			if (step.IsSummarized && LoadDVComboProcedureHelper.IsIAttributeItemDVelopComboAndNeedSummaryDescription(var))
+			{
+				string varControlName = var.ControlName;
+				if (var.ControlAllowMultipleSelection)
+				{
+%>
+	&WizardData.<%= stepName %>.<%= varControlName.Substring(6) %>_Description = ''
+	&SelectedTextCol.FromJson(<%= varControlName %>.SelectedText_get)
+	For &SelectedTextVal in &SelectedTextCol
+		If not &WizardData.<%= stepName %>.<%= varControlName.Substring(6) %>_Description.IsEmpty()
+			&WizardData.<%= stepName %>.<%= varControlName.Substring(6) %>_Description += <%= WorkWithStringValues.StringWithQuotes(settings.Labels.MultipleValuesSeparator) %>
+		EndIf
+		&WizardData.<%= stepName %>.<%= varControlName.Substring(6) %>_Description += &SelectedTextVal
+	EndFor
+<%
+				}
+				else if (var.Style != "Regular")
+				{
+%>
+	&ComboTitles = new()
+	&ComboTitles.FromJson(<%= varControlName %>.SelectedText_get)
+	&WizardData.<%= stepName %>.<%= varControlName.Substring(6) %>_Description = iif(&ComboTitles.Count > 0, &ComboTitles.Item(1), '')
+<%
+				}
+				else
+				{
+%>
+	&WizardData.<%= stepName %>.<%= varControlName.Substring(6) %>_Description = <%= varControlName %>.SelectedText_get
+<%
+				}
+			}
+			if (var.IsBasedOnTransaction())
+			{
+				if (!addedSDTs.Contains(var.Name))
+				{
+					addedSDTs.Add(var.Name);
+					bool bcAdded = false;
+					if (step.WizardShareBCsAcrossSteps)
+					{
+						foreach (StepElement otherStep in steps)
+						{
+							if (step != otherStep)
+							{
+								foreach (VariableElement var2 in otherStep.Table.GetTableVariables())
+								{
+									if (var2.IsBasedOnTransaction() && var.Name == var2.Name)
+									{
+										bcAdded = true;
+%>
+	&WizardData.<%= otherStep.Name %>.<%= var.Name %>Json = &<%= var.Name %>.ToJson()
+<%
+										break;
+									}
+								}
+								if (bcAdded)
+								{
+									break;
+								}
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					if (!bcAdded)
+					{
+%>
+	&WizardData.<%= stepName %>.<%= var.Name %>Json = &<%= var.Name %>.ToJson()
+<%
+					}
+				}
+			}
+			else if (var.IsBasedOnSDT())
+			{
+				if (!addedSDTs.Contains(var.Name) && var.Name.ToLower() != "wizarddata")
+				{
+					addedSDTs.Add(var.Name);
+%>
+	&WizardData.<%= stepName %>.<%= var.Name %> = &<%= var.Name %>
+<%
+				}
+			}
+			else
+			{
+%>
+	&WizardData.<%= stepName %>.<%= var.Name %> = &<%= var.Name %>
+<%
+			}
+			if (DateRangePickerHelper.IsIAttributeItemDateRange(var) && !var.IsBasedOnSDT() && !var.IsBasedOnTransaction())
+			{
+%>
+	&WizardData.<%= stepName %>.<%= var.Name %>_To = &<%= var.Name %>_To
+<%
+			}
+		}
+		foreach (IGrid grid in thisStepGrids)
+		{
+			if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+			{
+				foreach (VariableElement var in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+				{
+					if (grid.GetSDTCollection().Substring(1).ToLower().Equals(var.Name.ToLower())
+						&& var.Domain is Artech.Genexus.Common.Objects.SDT)
+					{
+%>
+	&WizardData.<%= stepName %>.<%= var.Name %> = &<%= var.Name %>
+<%
+						break;
+					}
+				}
+			}
+			else if (grid.HasMultiRowActions())
+			{
+%>
+	Do 'Load<%= grid.GetControlName() %>SelectedRows'
+<%
+			}
+			else
+			{
+				bool levelDefined = false;
+				foreach (VariableElement var in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+				{
+					if (!levelDefined)
+					{
+						levelDefined = true;
+%>
+	&WizardData.<%= stepName %>.<%= grid.GetControlName() %>.Clear()
+	For Each Line in <%= grid.GetControlName() %>
+		&<%= grid.GetControlName() %>Item = new()
+<%
+					}
+%>
+		&<%= grid.GetControlName() %>Item.<%= var.Name %> = &<%= var.Name %>
+<%
+					if (step.IsSummarized && LoadDVComboProcedureHelper.IsIAttributeItemDVelopComboAndNeedSummaryDescription(var))
+					{
+						if (var.ControlLoadDynamically)
+						{
+%>
+		&DscsCollection = new()
+		&DscsCollection.Add(<%= TableAttributeElement.GetIAttributeItemStringValue("&" + var.Name, var.eDBType, false) %>)
+		&DscsCollection.FromJson(<%= LoadDVComboProcedureHelper.GetProcedureCall(wwInstance, var, "'GET_DSC'", "&DscsCollection.ToJson()", null) %>)
+<%
+							if (var.Style == "Regular")
+							{
+%>
+		&<%= grid.GetControlName() %>Item.<%= var.Name %>_Description = iif(&DscsCollection.Item(1).IsEmpty(), <%= TableAttributeElement.GetIAttributeItemStringValue("&" + var.Name, var.eDBType, false) %>, &DscsCollection.Item(1))
+<%
+							}
+							else
+							{
+%>
+		&DscsCollection.FromJson(iif(&DscsCollection.Count = 0 OR &DscsCollection.Item(1).IsEmpty(), !'[]', &DscsCollection.Item(1)))
+		&<%= grid.GetControlName() %>Item.<%= var.Name %>_Description = iif(&DscsCollection.Count = 0 OR &DscsCollection.Item(1).IsEmpty(), <%= TableAttributeElement.GetIAttributeItemStringValue("&" + var.Name, var.eDBType, false) %>, &DscsCollection.Item(1))
+<%
+							}
+						}
+						else
+						{
+%>
+		&<%= grid.GetControlName() %>Item.<%= var.Name %>_Description = <%= TableAttributeElement.GetIAttributeItemStringValue("&" + var.Name, var.eDBType, false) %>
+		For &Combo_DataItem in &<%= var.ControlName.TrimStart('&') %>_Data
+			If &Combo_DataItem.ID.Trim() = <%= TableAttributeElement.GetIAttributeItemStringValue("&" + var.Name, var.eDBType, false) %>
+<%
+							if (var.Style == "Regular")
+							{
+%>
+				&<%= grid.GetControlName() %>Item.<%= var.Name %>_Description = &Combo_DataItem.Title
+<%
+							}
+							else
+							{
+%>
+				&ComboTitles = new()
+				&ComboTitles.FromJson(&Combo_DataItem.Title)
+				&<%= grid.GetControlName() %>Item.<%= var.Name %>_Description = &ComboTitles.Item(1)
+<%
+							}
+%>
+			EndIf
+		EndFor
+<%
+						}
+					}
+				}
+				if (levelDefined)
+				{
+%>
+
+		&WizardData.<%= stepName %>.<%= grid.GetControlName() %>.Add(&<%= grid.GetControlName() %>Item)
+	EndFor
+<%
+				}
+			}
+		}
+
+		if (!isLastStep && step.ParentCasted.CleanNextStepData)
+		{
+			StepElement nextStep = steps[stepIndex + 1];
+			addedSDTs = new List<string>();
+			foreach (VariableElement var in nextStep.Table.GetTableVariables())
+			{
+				if (nextStep.IsSummarized && LoadDVComboProcedureHelper.IsIAttributeItemDVelopComboAndNeedSummaryDescription(var))
+				{
+%>
+	&WizardData.<%= nextStep.Name %>.<%= var.ControlName.Substring(6) %>_Description = ''
+<%
+				}
+				if (var.IsBasedOnTransaction())
+				{
+					if (!addedSDTs.Contains(var.Name))
+					{
+						addedSDTs.Add(var.Name);
+%>
+	&WizardData.<%= nextStep.Name %>.<%= var.Name %>Json = &EmptyWizardData.<%= nextStep.Name %>.<%= var.Name %>Json
+<%
+					}
+				}
+				else if (var.IsBasedOnSDT())
+				{
+					if (!addedSDTs.Contains(var.Name) && var.Name.ToLower() != "wizarddata")
+					{
+						addedSDTs.Add(var.Name);
+%>
+	&WizardData.<%= nextStep.Name %>.<%= var.Name %> = &EmptyWizardData.<%= nextStep.Name %>.<%= var.Name %>
+<%
+					}
+				}
+				else
+				{
+%>
+	&WizardData.<%= nextStep.Name %>.<%= var.Name %> = &EmptyWizardData.<%= nextStep.Name %>.<%= var.Name %>
+<%
+				}
+			}
+			foreach (IGrid grid in nextStep.Table.AllGrids())
+			{
+				if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+				{
+					foreach (VariableElement var in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+					{
+						if (grid.GetSDTCollection().Substring(1).ToLower().Equals(var.Name.ToLower())
+							&& var.Domain is Artech.Genexus.Common.Objects.SDT)
+						{
+%>
+	&WizardData.<%= nextStep.Name %>.<%= var.Name %>.Clear()
+<%
+							break;
+						}
+					}
+				}
+				else if (grid.HasMultiRowActions())
+				{
+%>
+	&WizardData.<%= nextStep.Name %>.<%= grid.GetControlName() %>.Clear()
+<%
+				}
+				else
+				{
+					bool levelDefined = false;
+					foreach (VariableElement var in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+					{
+%>
+	&WizardData.<%= nextStep.Name %>.<%= grid.GetControlName() %>.Clear()
+<%
+						break;
+					}
+				}
+			}
+		}
+%>
+	<%= wizardSessionSetProc %>(&WebSessionKey, &WizardData.ToJson())
+
+EndSub
+
+<%
+		string nextEventType;
+		if (wizardNextAction != null && wizardNextAction is ActionGroupActionGeneralElement && ((ActionGroupActionGeneralElement)wizardNextAction).Confirm)
+		{
+			nextEventType = "Sub";
+%>
+
+Sub 'Do Action WizardNext'
+
+<%
+		}
+		else
+		{
+			nextEventType = "Event";
+%>
+
+Event Enter
+
+<%
+		}
+		if (hasRequiredAtts)
+		{
+%>
+	Do 'CheckRequiredFields'
+<%
+		}
+%>
+	If <%= hasRequiredAtts ? "&CheckRequiredFieldsResult AND " : "" %>not &HasValidationErrors
+		Do 'SaveVariablesToWizardData'
+<%
+		if (isLastStep)
+		{
+%>
+		Do 'FinishWizard'
+<%
+			if (wwInstance.WPRoot.IsResumeNever())
+			{
+%>
+		&WebSession.Remove(&WebSessionKey)
+<%
+			}
+			else
+			{
+%>
+		SaveUserKeyValue(&WebSessionKey, '')
+		SaveUserKeyValue(!'<%= wwInstance.ParentObject.Name %>_CurrentStep'<%= wizardSessionKeySuffix %>, '')
+<%
+				if (wwInstance.WPRoot.Multiple)
+				{
+%>
+		SaveUserKeyValue(!'<%= wwInstance.ParentObject.Name %>_SessionGuid', '')
+<%
+				}
+			}
+		}
+		else
+		{
+			if (returnToSummaryStepName != null && returnToSummaryStepName != steps[stepIndex + 1].Name)
+			{
+%>
+		If &GoingBack AND &PreviousStep = !'<%= returnToSummaryStepName %>'
+			<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', &PreviousStep, false<%= wizardExtraParameters %>)
+		Else
+			<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', !'<%= steps[stepIndex + 1].Name %>', false<%= wizardExtraParameters %>)
+		EndIf
+<%
+			}
+			else
+			{
+%>
+		<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', !'<%= steps[stepIndex + 1].Name %>', false<%= wizardExtraParameters %>)
+<%
+			}
+		}
+%>
+	EndIf
+
+End<%= nextEventType %>
+
+<%
+		if (isLastStep)
+		{
+%>
+
+Sub 'FinishWizard'
+
+EndSub
+
+<%
+		}
+		IStandardActionElement wizardPreviousAction = rootTable.GetStandardAction(stepIndex > 0 ? StandardAction.WizardPrevious : StandardAction.WizardFirstPrevious);
+		if (wizardPreviousAction != null)
+		{
+%>
+
+Event 'WizardPrevious'
+
+<%
+			if (stepIndex > 0)
+			{
+				if (!((StepElement)iGenObj).ParentCasted.CleanNextStepData)
+				{
+%>
+	Do 'SaveVariablesToWizardData'
+<%
+				}
+%>
+	<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', !'<%= steps[stepIndex - 1].Name %>', true<%= wizardExtraParameters%>)
+<%
+			}
+			else
+			{
+				if (wwInstance.WPRoot.IsResumeNever() && wwInstance.WPRoot.Multiple)
+				{
+%>
+	&WebSession.Remove(&WebSessionKey)
+<%
+				}
+%>
+	<%= WizardHelper.GetWizardFirstPreviousEvent(wizardPreviousAction, template) %>
+<%
+			}
+%>
+
+EndEvent
+
+<%
+		}
+		foreach (IStandardActionElement wizardGoToAction in rootTable.GetStandardActions(StandardAction.WizardGoTo))
+		{
+			string gotoStepName = wizardGoToAction.GetStepName();
+			int gotoStepIndex = steps.IndexOf(gotoStepName);
+%>
+
+Event 'WizardGoTo <%= gotoStepName %>'
+
+<%
+			if (stepIndex > gotoStepIndex)
+			{
+				if (!((StepElement)iGenObj).ParentCasted.CleanNextStepData)
+				{
+%>
+	Do 'SaveVariablesToWizardData'
+<%
+				}
+%>
+	<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', !'<%= gotoStepName %>', true<%= wizardExtraParameters%>)
+<%
+			}
+			else
+			{
+				if (hasRequiredAtts)
+				{
+%>
+	Do 'CheckRequiredFields'
+<%
+				}
+%>
+	If <%= hasRequiredAtts ? "&CheckRequiredFieldsResult AND " : "" %>not &HasValidationErrors
+		Do 'SaveVariablesToWizardData'
+		<%= step.ParentCasted.ObjectName %>(!'<%= stepName %>', !'<%= gotoStepName %>', false<%= wizardExtraParameters %>)
+	EndIf
+<%
+			}
+%>
+
+EndEvent
+
+<%
+		}
+		}		
+	}
+
+	if (addAttVisibleConditionCodeInLoadEvent || hasLoadEventLinks[0])
+	{
+%>
+
+Event Load
+
+<%
+		if (hasLoadEventLinks[0])
+		{
+%>
+<%@ CallSubTemplate SubLinkAttributes Attributes='tableAttributesAndVariables' LinkAssocToImage='true' LinksEvent='"Load"' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+<%
+		}
+		if (addAttVisibleConditionCode)
+		{
+%>
+<%= Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, allAttsAndVars, false, true), 1) %>
+
+<%
+		}
+		if (otherControlVisibleCondition)
+		{
+%>
+<%= Indentation.Indent(GeneralTableElement.GetControlVisibleConditionsCode(rootTable), 1) %>
+
+<%
+		}
+%>
+EndEvent
+
+<%
+	}
+
+	foreach (IActionElement action in actions)
+	{
+		string eventCode = action.Event();
+		if (eventCode != String.Empty)
+		{
+%>
+<%= eventCode %>
+
+<%		}
+	}
+	if (hasRequiredAtts)
+	{
+%>
+<%= TableVariableElement.GetRequiredFieldsValidationSub(rootTable, settings) %>
+<%
+	}
+	if (addAttSecurityCode || ((addAttVisibleConditionCode || otherControlVisibleCondition) && !addAttVisibleConditionCodeInLoadEvent))
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+
+<%
+	if (addAttSecurityCode || (addAttVisibleConditionCode && !addAttVisibleConditionCodeInLoadEvent))
+	{
+%>
+<%= Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, allAttsAndVars, true, !addAttVisibleConditionCodeInLoadEvent), 1) %>
+
+<%
+	}
+	if (otherControlVisibleCondition && !addAttVisibleConditionCodeInLoadEvent)
+	{
+%>
+<%= Indentation.Indent(GeneralTableElement.GetControlVisibleConditionsCode(rootTable), 1) %>
+
+<%
+	}
+%>
+
+EndSub
+<%
+	}
+	if (grids.Count > 0)
+	{
+%>
+<%@ CallSubTemplate SubExtraGridsEventCalculateTotalizers grids='grids' hasAnSDTItemTotalizer='hasAnSDTItemTotalizer[0]' settings='settings' %>
+<%
+	}
+%>
+<%= rootTable.GetGeneralEventsAndSubs() %>

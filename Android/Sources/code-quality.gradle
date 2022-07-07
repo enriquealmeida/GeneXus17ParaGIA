@@ -1,0 +1,55 @@
+// Java compiler configuration
+
+// 1. Report deprecation usages as warnings.
+// 2. Treat all warnings as errors. This also means that it'll fail if any
+// error-prone warning is thrown, as it's hooked into javac.
+
+tasks.withType(JavaCompile) {
+  options.deprecation = true
+  options.compilerArgs += ['-Werror']
+}
+
+// Error-prone configuration
+apply plugin: 'net.ltgt.errorprone'
+
+dependencies {
+  annotationProcessor deps.null_away
+  errorproneJavac deps.error_prone_javac
+  errorprone deps.error_prone_core
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.errorprone {
+    disable("UnusedVariable", "UnusedMethod", "MixedMutabilityReturnType", "RefersToDaggerCodegen", "TypeParameterUnusedInFormals")
+    option("NullAway:AnnotatedPackages", "com.genexus.live_editing")
+    option("NullAway:KnownInitializers", "com.genexus.live_editing.LiveEditingGenexusModule.initiate")
+    excludedPaths = ".*/build/generated/.*"
+  }
+}
+
+// Checkstyle configuration
+apply plugin: 'checkstyle'
+
+task checkstyle(type: Checkstyle) {
+  configFile rootProject.file('checkstyle.xml')
+
+  ignoreFailures false
+  showViolations true
+
+  source 'src/main/java', 'src'
+  include '**/*.java'
+  exclude '**/gen/**'
+  exclude '**/R.java'
+  exclude '**/BuildConfig.java'
+
+  classpath = files()
+}
+
+checkstyle {
+  toolVersion deps_versions.checkstyle
+}
+
+afterEvaluate {
+  def checkTask = tasks.findByName('check')
+  checkTask.dependsOn('checkstyle')
+}

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * GxUI Library 2.0.1
+ * Copyright (c) 2009, Artech
+ * All rights reserved.
+ * 
+ * GxUI Library is freely distributable under the terms of the BSD license.
+ * 
+ */
+
+/// &lt;reference path=&quot;..\..\Freezer\Ext\ext-all-dev.js&quot; /&gt;
+
+<span id='gxui-Treeview'>/**
+</span>* @class gxui.Treeview
+* Tree User Control. Wraps Ext.tree.Panel so it can be used from GeneXus.
+*
+* This control provides tree-structured UI representation of tree-structured data and is an excellent tool for displaying heirarchical data in an application.
+* Tree nodes can be loaded invoking a remote URL or through a SDT.
+* To load the tree by invoking a remote URL, set {@link #LazyLoading} = true and set {@link #LoaderURL} to the URL of a procedure that will populate the tree 
+* (a main procedure with call protocol = HTTP that returns a collection of gxuiTreeviewNode SDT in Json format). For example: 
+* 
+*     Treeview.LoaderURL = Procedure.Link()
+*
+* To load a tree from a SDT, set {@link #LazyLoading} = false and set {@link #Children} to a variable with gxuiTreeviewNode type. The variable might be a collection 
+* or a single node with child nodes.
+*/
+Ext.define('gxui.Treeview', {
+	extend: 'gxui.UserControl',
+
+<span id='gxui-Treeview-method-initialize'>	initialize: function () {
+</span>		this.callParent(arguments);
+
+		this.NotifyContext = &quot;false&quot;;
+		this.NotifyDataType = 'gxuiTreeNode';
+		this.CheckedNodes = [];
+	},
+
+<span id='gxui-Treeview-method-SetChildren'>	// Databinding
+</span>	SetChildren: function (data) {
+		this.Children = data;
+	},
+
+<span id='gxui-Treeview-method-GetChildren'>	// Databinding
+</span>	GetChildren: function (data) {
+		return this.Children;
+	},
+
+<span id='gxui-Treeview-method-SetCheckedNodes'>	// Databinding
+</span>	SetCheckedNodes: function (data) {
+		this.CheckedNodes = data;
+	},
+
+<span id='gxui-Treeview-method-GetCheckedNodes'>	// Databinding
+</span>	GetCheckedNodes: function (data) {
+		this.CheckedNodes = [];
+		if (this.m_tree) {
+			var checkedNodes = this.m_tree.getChecked();
+			this.CheckedNodes = Ext.Array.map(checkedNodes, function (node) {
+				return node.data.id;
+			}, this);
+		}
+		return this.CheckedNodes
+	},
+
+<span id='gxui-Treeview-method-SetUncheckedNodes'>	// Databinding
+</span>	SetUncheckedNodes: function (data) {
+		this.UncheckedNodes = data;
+	},
+
+<span id='gxui-Treeview-method-GetUncheckedNodes'>	// Databinding
+</span>	GetUncheckedNodes: function (data) {
+		this.UncheckedNodes = [];
+		if (this.m_tree) {
+			var root = this.m_tree.getRootNode();
+			if (root) {
+				var nodes = [];
+				root.cascadeBy(function () {
+					if (this.data.checked === false) {
+						nodes.push(this.data.id);
+					}
+				});
+				this.UncheckedNodes = nodes;
+			}
+		}
+		return this.UncheckedNodes;
+	},
+
+<span id='gxui-Treeview-method-SetDropData'>	// Databinding
+</span>	SetDropData: function (data) {
+		this.DropData = data;
+	},
+
+<span id='gxui-Treeview-method-GetDropData'>	// Databinding
+</span>	GetDropData: function (data) {
+		return this.DropData;
+	},
+
+<span id='gxui-Treeview-method-SetSelectedNodeData'>	// Databinding
+</span>	SetSelectedNodeData: function (data) {
+		this.SelectedNodeData = data;
+	},
+
+<span id='gxui-Treeview-method-GetSelectedNodeData'>	// Databinding
+</span>	GetSelectedNodeData: function (data) {
+		return this.SelectedNodeData;
+	},
+
+<span id='gxui-Treeview-method-SetSelectedNodes'>	// Databinding
+</span>	SetSelectedNodes: function (data) {
+		this.SelectedNodes = data;
+	},
+
+<span id='gxui-Treeview-method-GetSelectedNodes'>	// Databinding
+</span>	GetSelectedNodes: function () {
+		return this.SelectedNodes;
+	},
+
+<span id='gxui-Treeview-method-onRender'>	onRender: function () {
+</span>		var Tree = Ext.tree;
+		var ddGroup = this.DragDropGroup || undefined;
+
+		this.Width = parseInt(this.Width);
+		this.Height = parseInt(this.Height);
+		this.EnableCheckbox = gxui.CBoolean(this.EnableCheckbox);
+		this.LazyLoading = gxui.CBoolean(this.LazyLoading);
+
+		var store = this.createStore();
+
+		var config = {
+			id: this.getUniqueId(),
+			title: this.Title,
+			frame: gxui.CBoolean(this.Frame),
+			border: gxui.CBoolean(this.Border) ? undefined : 0,
+			cls: this.Cls,
+			animate: gxui.CBoolean(this.Animate),
+			rootVisible: gxui.CBoolean(this.RootVisible),
+			lines: gxui.CBoolean(this.ShowLines),
+			store: store,
+			folderSort: gxui.CBoolean(this.Sort),
+			viewConfig: {},
+			plugins: [],
+			autoScroll: gxui.CBoolean(this.AutoScroll),
+			stateful: gxui.CBoolean(this.Stateful),
+			stateId: (this.StateId &amp;&amp; this.StateId != &quot;&quot;) ? this.StateId : this.getUniqueId(),
+			stateEvents: gxui.CBoolean(this.Stateful) ? ['itemcollapse', 'itemexpand'] : undefined,
+			getState: gxui.CBoolean(this.Stateful) ? this.getState : undefined,
+			applyState: gxui.CBoolean(this.Stateful) ? this.applyState(this.LazyLoading) : undefined,
+			listeners: this.getListeners()
+		};
+
+		// @TODO: Change this to use AutoWidth and AutoHeight
+		if (this.Width != 100)
+			config.width = this.Width;
+		else
+			config.autoWidth = true;
+
+		if (this.Height != 100)
+			config.height = this.Height;
+		else
+			config.autoHeight = true;
+
+		if (gxui.CBoolean(this.EnableDragDrop)) {
+			config.viewConfig.plugins = {
+				ptype: 'treeviewdragdrop',
+				appendOnly: gxui.CBoolean(this.AppendOnly),
+				ddGroup: ddGroup
+			};
+			config.viewConfig.listeners = this.getDDListeners();
+		}
+
+		if (gxui.CBoolean(this.Multiselection)) {
+			config.selModel = {
+				mode: 'MULTI',
+				listeners: {
+					'selectionchange': function (selModel, nodes) {
+						this.SelectedNodes = [];
+						Ext.each(nodes, function (node) {
+							this.SelectedNodes.push(node.data.id);
+						}, this);
+					},
+					scope: this
+				}
+			};
+		}
+
+		if (gxui.CBoolean(this.Editable)) {
+			// The column has to be explicitly defined, to set editor properties
+			config.columns = [{
+				xtype: 'treecolumn',
+				dataIndex: 'text',
+				flex: 1,
+				editor: {
+					xtype: 'textfield',
+					allowBlank: false,
+					selectOnFocus: true,
+					cancelOnEsc: true,
+					ignoreNoChange: true
+				}
+			}];
+
+			config.hideHeaders = true;
+
+			config.plugins.push({
+				ptype: 'cellediting',
+				pluginId: this.getUniqueId() + '-celledit',
+				clicksToEdit: 2,
+				listeners: {
+					'edit': function (editor, e) {
+						this.NodeEditText = e.value;
+						if (this.NodeEdit) {
+							this.NodeEdit();
+						}
+					},
+					scope: this
+				}
+			});
+			config.viewConfig.toggleOnDblClick = false;
+		}
+
+		this.m_tree = Ext.create('Ext.tree.Panel', config);
+	},
+
+<span id='gxui-Treeview-method-onRefresh'>	onRefresh: function () {
+</span>		var selNodes = this.m_tree.getSelectionModel().getSelection();
+		if (selNodes &amp;&amp; selNodes[0]) {
+			this.setSelectedNode(selNodes[0]);
+		}
+	},
+
+<span id='gxui-Treeview-method-onAfterRender'>	onAfterRender: function () {
+</span>		if (gxui.CBoolean(this.ExpandRoot)) {
+			Ext.defer(function () {
+				this.m_tree.getRootNode().expand(gxui.CBoolean(this.ExpandAll));
+			}, 300, this);
+		}
+	},
+
+<span id='gxui-Treeview-method-getUnderlyingControl'>	getUnderlyingControl: function () {
+</span>		return this.m_tree;
+	},
+
+<span id='gxui-Treeview-method-addToParent'>	addToParent: function () {
+</span>		return gxui.CBoolean(this.AddToParentGxUIControl);
+	},
+
+<span id='gxui-Treeview-method-createRootNode'>	createRootNode: function () {
+</span>		return {
+			id: (this.RootId ? this.RootId : 'ROOT'),
+			text: this.RootText,
+			icon: (this.RootIcon ? this.RootIcon : undefined),
+			cls: (this.RootCls ? this.RootCls : undefined),
+			iconCls: (this.RootIconCls ? this.RootIconCls : undefined),
+			draggable: false, // disable root node dragging
+			children: !this.LazyLoading ? this.cloneNodes(this.Children) : undefined,
+			expanded: gxui.CBoolean(this.ExpandRoot)
+		};
+	},
+
+<span id='gxui-Treeview-method-createStore'>	createStore: function () {
+</span>		var config = {
+			root: this.createRootNode(),
+			_enableCheckbox: this.EnableCheckbox
+		};
+
+
+		if (this.LazyLoading) {
+			config.proxy = {
+				type: 'ajax',
+				url: this.LoaderURL,
+				reader: {
+					type: 'json'
+				},
+				actionMethods: {
+					create: &quot;POST&quot;,
+					read: &quot;POST&quot;,
+					update: &quot;POST&quot;,
+					destroy: &quot;POST&quot;
+				}
+			};
+		}
+
+		return config;
+	},
+
+<span id='gxui-Treeview-method-cloneNodes'>	cloneNodes: function (children) {
+</span>		children = gxui.clone(children);
+
+		return children.length &amp;&amp; children.length &gt; 0 ? children : [children]
+	},
+
+<span id='gxui-Treeview-method-getRowDropData'>	getRowDropData: function (data) {
+</span>		if (data &amp;&amp; data.gxRow) {
+			var gxGrid = data.gxGrid,
+				gxRow = data.gxRow,
+				gxCols = data.gxColumns;
+
+			var dropData = {};
+			for (var i = 0, len = gxCols.length; i &lt; len; i++) {
+				var col = gxCols[i],
+					colName = col.gxAttName || (col.gxAttId.charAt(0) == &quot;&amp;&quot; ? col.gxAttId.substring(1) : col.gxAttId),
+					cell = gxGrid.getPropertiesCell(data.gxGrid.getUnderlyingControl(), gxRow.id, i, true);
+				dropData[colName] = cell.value;
+			}
+
+			return dropData;
+		}
+
+		return null;
+	},
+
+<span id='gxui-Treeview-method-getNodeById'>	getNodeById: function (nodeId) {
+</span>		return this.m_tree.getStore().getNodeById(nodeId);
+	},
+
+<span id='gxui-Treeview-method-getDDListeners'>	getDDListeners: function () {
+</span>		return {
+			'dragover': function (node, data, overModel, dropPosition) {
+				if (this.NodeOver) {
+					// Set UC properties before fireing the event
+					this.DropTarget = overModel.data.id;
+					this.DropPoint = dropPosition;
+
+					if (data.gxGrid) {
+						this.DropData = this.getRowDropData(data);
+					}
+					else {
+						this.DropNode = data.records[0].data.id;
+					}
+
+					this.DropAllowed = true;
+
+<span id='gxui-Treeview-event-NodeOver'>					/**
+</span>					* @event NodeOver
+					* Fires when a node is being dragged over another node. While the node is being dragged, an icon is shown describing if the
+					* drop operation over the hovered node is allowed. To indicate that the drop operation is allowed (default), set {@link #DropAllowed} = true.
+					* To indicate that the drop operation is not allowed, set {@link #DropAllowed} = false.
+					* The following properties are set when the event is fired:
+					*
+					* - {@link #DropTarget}
+					* - {@link #DropPoint}
+					* - {@link #DropNode}
+					*
+					*/
+					this.NodeOver();
+
+					return this.DropAllowed;
+				}
+				return true;
+			},
+
+			'beforedrop': function (node, data, overModel, dropPosition, opts) {
+				if (data.gxGrid) {
+					this.DropTarget = overModel.data.id;
+					this.DropPoint = dropPosition;
+
+					this.DropData = this.getRowDropData(data);
+					opts.cancelDrop();
+
+					if (this.RowDrop) {
+						this.RowDrop();
+					}
+				}
+			},
+
+			'drop': function (node, data, overModel, dropPosition) {
+				this.DropTarget = overModel.data.id;
+				this.DropPoint = dropPosition;
+
+				if (data.records.length &gt; 0) {
+					this.DropNode = data.records[0].data.id;
+					if (this.NodeDrop) {
+<span id='gxui-Treeview-event-NodeDrop'>						/**
+</span>						* @event NodeDrop
+						* Fires when a node is dropped.
+						* The following properties are set when the event is fired:
+						*
+						* - {@link #DropTarget}
+						* - {@link #DropPoint}
+						* - {@link #DropNode}
+						*
+						*/
+						this.NodeDrop();
+					}
+				}
+			},
+
+			scope: this
+		};
+	},
+
+<span id='gxui-Treeview-method-getListeners'>	getListeners: function () {
+</span>		var listeners = {
+			'itemclick': function (view, node, item, index, e) {
+				var editorPlugin = this.getEditorPlugin();
+				var startEdit = (node.data.id == this.SelectedNode) &amp;&amp; editorPlugin;
+				this.endEdit();
+				this.setSelectedNode(node);
+				if (!node.data.href) {
+					if (this.NotifyContext == &quot;true&quot;) {
+						this.notifyContext([this.NotifyDataType], { id: node.data.id, text: node.data.text, leaf: node.data.leaf, icon: node.data.icon });
+					}
+					if (this.Click &amp;&amp; (!node.hasChildNodes() || !gxui.CBoolean(this.DisableBranchEvents))) {
+<span id='gxui-Treeview-event-Click'>						/**
+</span>						* @event Click
+						* Fires when a node is clicked. The following properties are set when the event is fired:
+						*
+						* - {@link #SelectedNode}
+						* - {@link #SelectedText}
+						* - {@link #SelectedIcon}
+						* - {@link #SelectedNodeData}
+						* - {@link #SelectedNodeChecked}
+						*
+						*/
+						this.Click();
+					}
+				}
+				if (startEdit) {
+					editorPlugin.startEdit(node, 0);
+				}
+			},
+
+			'itemdblclick': function (view, node) {
+				this.endEdit();
+				this.setSelectedNode(node);
+				if (this.DoubleClick &amp;&amp; (!node.hasChildNodes() || !gxui.CBoolean(this.DisableBranchEvents))) {
+<span id='gxui-Treeview-event-DoubleClick'>					/**
+</span>					* @event DoubleClick
+					* Fires when a node is double clicked. The following properties are set when the event is fired:
+					*
+					* - {@link #SelectedNode}
+					* - {@link #SelectedText}
+					* - {@link #SelectedIcon}
+					* - {@link #SelectedNodeData}
+					* - {@link #SelectedNodeChecked}
+					*
+					*/
+					this.DoubleClick();
+				}
+			},
+
+			'checkchange': function (node) {
+				if (this.CheckChange) {
+					this.setSelectedNode(node);
+<span id='gxui-Treeview-event-CheckChange'>					/**
+</span>					* @event CheckChange
+					* Fires when a node with a checkbox changes its value. The following properties are set when the event is fired:
+					*
+					* - {@link #SelectedNode}
+					* - {@link #SelectedText}
+					* - {@link #SelectedIcon}
+					* - {@link #SelectedNodeData}
+					* - {@link #SelectedNodeChecked}
+					*
+					*/
+					this.CheckChange();
+				}
+			},
+
+			scope: this
+		};
+
+		if (this.ContextMenu) {
+			listeners['itemcontextmenu'] = function (view, node) {
+				this.endEdit();
+				if (this.ContextMenu) {
+					this.setSelectedNode(node);
+					this.m_tree.getSelectionModel().select(node);
+<span id='gxui-Treeview-event-ContextMenu'>					/**
+</span>					* @event ContextMenu
+					* Fires when a node is right clicked. The following properties are set when the event is fired:
+					*
+					* - {@link #SelectedNode}
+					* - {@link #SelectedText}
+					* - {@link #SelectedIcon}
+					* - {@link #SelectedNodeData}
+					* - {@link #SelectedNodeChecked}
+					*
+					*/
+					this.ContextMenu();
+				}
+			};
+		}
+
+		return listeners;
+	},
+
+<span id='gxui-Treeview-method-setSelectedNode'>	setSelectedNode: function (node) {
+</span>		this.SelectedNode = node.data.id;
+		this.SelectedText = node.data.text;
+		this.SelectedIcon = node.data.icon;
+		this.SelectedNodeData = node.data.data;
+		this.SelectedNodeChecked = node.data.checked || false;
+	},
+
+<span id='gxui-Treeview-method-getEditorPlugin'>	getEditorPlugin: function () {
+</span>		return this.m_tree.getPlugin(this.getUniqueId() + '-celledit');
+	},
+
+<span id='gxui-Treeview-method-endEdit'>	endEdit: function () {
+</span>		var editorPlugin = this.getEditorPlugin();
+		if (editorPlugin) {
+			editorPlugin.completeEdit();
+		}
+	},
+
+<span id='gxui-Treeview-method-getState'>	getState: function () {
+</span>		var nodes = [], state = Ext.tree.Panel.prototype.getState.apply(this, arguments);
+		this.getRootNode().eachChild(function (child) {
+			//function to store state of tree recursively
+			var storeTreeState = function (node, expandedNodes) {
+				if (node.isExpanded() &amp;&amp; node.childNodes.length &gt; 0) {
+					expandedNodes.push(node.getPath(&quot;id&quot;));
+					node.eachChild(function (child) {
+						storeTreeState(child, expandedNodes);
+					});
+				}
+			};
+			storeTreeState(child, nodes);
+		});
+
+		Ext.apply(state, {
+			expandedNodes: nodes
+		});
+
+		return state;
+	},
+
+<span id='gxui-Treeview-method-applyState'>	applyState: function (lazyLoading) {
+</span>		return function (state) {
+			var nodes = state.expandedNodes || [],
+				len = nodes.length;
+
+			var expandNodes = Ext.bind(function () {
+				for (var i = 0; i &lt; len; i++) {
+					if (typeof nodes[i] != 'undefined') {
+						this.expandPath(nodes[i], 'id');
+					}
+				}
+				Ext.tree.Panel.prototype.applyState.call(this, state)
+			}, this);
+			
+			this.collapseAll();
+			if (lazyLoading) {
+				setTimeout(expandNodes, 100);
+			}
+			else {
+				expandNodes();
+			}
+		};
+	},
+
+<span id='gxui-Treeview-method-findChildNode'>	findChildNode: function (id, nodes) {
+</span>		for (var i = 0, len = nodes.length; i &lt; len; i++) {
+			if (nodes[i].id == id) {
+				return nodes[i];
+			}
+			if (nodes[i].children.length &gt; 0) {
+				var node = this.findChildNode(id, nodes[i].children);
+				if (node) {
+					return node;
+				}
+			}
+		}
+		return null;
+	},
+
+<span id='gxui-Treeview-method-setNodeProperty'>	setNodeProperty: function (nodeId, name, value) {
+</span>		var node = this.getNodeById(nodeId);
+		if (node) {
+			node.set(name, value);
+		}
+	},
+
+<span id='gxui-Treeview-property-methods'>	methods: {
+</span>		// Methods
+<span id='gxui-Treeview-method-SelectNode'>		/**
+</span>		* Selects a node by id.
+		* @param {String} nodeId Node id
+		* @method
+		*/
+		SelectNode: function (nodeId) {
+			var node = this.getNodeById(nodeId);
+			if (node) {
+				this.setSelectedNode(node)
+				this.m_tree.getSelectionModel().select(node);
+				this.m_tree.expandPath(node.getPath(&quot;id&quot;), &quot;id&quot;);
+			}
+		},
+
+<span id='gxui-Treeview-method-SelectNextNode'>		/**
+</span>		* Selects the node immediately following the currently selected node.
+		* @method
+		*/
+		SelectNextNode: function () {
+			this.m_tree.getSelectionModel().selectNext();
+		},
+
+<span id='gxui-Treeview-method-SelectPreviousNode'>		/**
+</span>		* Selects the node that precedes the currently selected node.
+		* @method
+		*/
+		SelectPreviousNode: function () {
+			this.m_tree.getSelectionModel().selectPrevious();
+		},
+
+<span id='gxui-Treeview-method-DeleteNode'>		/**
+</span>		* Remove a node from the tree
+		* @param {String} nodeId Node id
+		* @method
+		*/
+		DeleteNode: function (nodeId) {
+			var node = this.getNodeById(nodeId);
+			if (node) {
+				node.remove();
+			}
+		},
+
+<span id='gxui-Treeview-method-ExpandNode'>		/**
+</span>		* Expand a node by id.
+		* @param {String} nodeId Node id
+		* @method
+		*/
+		ExpandNode: function (nodeId) {
+			var node = this.getNodeById(nodeId);
+			if (node) {
+				node.expand();
+			}
+		},
+
+<span id='gxui-Treeview-method-ExpandAllNodes'>		/**
+</span>		* Expand all the tree nodes.
+		* @method
+		*/
+		ExpandAllNodes: function () {
+			this.m_tree.expandAll();
+		},
+
+<span id='gxui-Treeview-method-CollapseNode'>		/**
+</span>		* Collapse a node by id.
+		* @param {String} nodeId Node id
+		* @method
+		*/
+		CollapseNode: function (nodeId) {
+			var node = this.getNodeById(nodeId);
+			if (node) {
+				node.collapse();
+			}
+		},
+
+<span id='gxui-Treeview-method-CollapseAllNodes'>		/**
+</span>		* Collapse all the tree nodes.
+		* @method
+		*/
+		CollapseAllNodes: function () {
+			this.m_tree.collapseAll();
+		},
+
+<span id='gxui-Treeview-method-Reload'>		/**
+</span>		* Reloads the tree from a given node. If a node is not provided, it reloads the tree from the root node.
+		* If {@link #LazyLoading} = false, the tree is always reloaded from the root node, reading the value from {@link #Children} property.
+		* @param {String} [nodeId] Node id
+		* @method
+		*/
+		Reload: function (node, expand) {
+			var tree = this.m_tree;
+			// node can be a TreeNode or a String with the Id of a node. If node is undefined, the root node is reloaded.
+			var n = node ? ((typeof node == 'object') ? node : this.getNodeById(node)) : tree.getRootNode();
+
+			if (n) {
+				var loadCallback = function (node, initState) {
+					node = node || n;
+					if (expand || expand === undefined) {
+						node.expand();
+					}
+					if (initState !== false) {
+						tree.initState();
+					}
+				};
+
+				var store = tree.getStore();
+				if (this.LazyLoading) {
+					var loadCfg = {
+						callback: Ext.bind(loadCallback, this),
+						node: n
+					};
+
+					store.getProxy().url = this.LoaderURL;
+					if (store.isLoading())
+						Ext.defer(store.load, 500, store, [loadCfg]);
+					else
+						store.load(loadCfg);
+				}
+				else {
+					if (n == tree.getRootNode()) {
+						tree.setRootNode(this.createRootNode());
+					}
+					else {
+						var rawNode = this.findChildNode(node, this.Children),
+							newNode = n.parentNode.replaceChild(rawNode, n);
+					}
+					loadCallback(newNode, false);
+				}
+
+				if (this.SelectedNode != undefined) {
+					this.SelectNode(this.SelectedNode);
+				}
+			}
+		},
+
+<span id='gxui-Treeview-method-Refresh'>		/**
+</span>		* Reloads the tree from the root node and applies {@link #Width}, {@link #Height} and {@link #Title} properties.
+		* @method
+		*/
+		Refresh: function () {
+			var tree = this.m_tree;
+			tree.setHeight((this.Height != 100) ? this.Height : undefined);
+			tree.setWidth((this.Width != 100) ? this.Width : undefined);
+			tree.setTitle(this.Title);
+			this.Reload(tree.getRootNode(), gxui.CBoolean(this.ExpandRoot));
+		},
+
+<span id='gxui-Treeview-method-Show'>		/**
+</span>		* Shows the control
+		* @method
+		*/
+		Show: function () {
+			this.m_tree.setVisible(true);
+		},
+
+<span id='gxui-Treeview-method-Hide'>		/**
+</span>		* Hides the control
+		* @method
+		*/
+		Hide: function () {
+			this.m_tree.setVisible(false);
+		},
+
+<span id='gxui-Treeview-method-GetNodeParentId'>		/**
+</span>		* Returns the id of the parent of the given node. If the given node doesn't exist or is the root node, it returns &quot;&quot;.
+		* @param {String} nodeId Node id
+		* @return {String}
+		* @method
+		*/
+		GetNodeParentId: function (nodeId) {
+			var node = this.getNodeById(nodeId);
+			if (node &amp;&amp; node.parentNode) {
+				return node.parentNode.data.id;
+			}
+			return &quot;&quot;;
+		},
+
+<span id='gxui-Treeview-method-SetNodeData'>		/**
+</span>		* Sets the data property of the given node with nodeData.
+		* @param {String} nodeId Node id
+		* @param {Object} nodeData Node data to set in the data property of the node. It can be any type of SDT.
+		* @method
+		*/
+		SetNodeData: function (nodeId, nodeData) {
+			var node = this.getNodeById(nodeId);
+			if (node) {
+				node.data.data = nodeData;
+			}
+		},
+
+<span id='gxui-Treeview-method-GetNodeData'>		/**
+</span>		* Returns the data property of the given node.
+		* @param {String} nodeId Node id
+		* @return {Object}
+		* @method
+		*/
+		GetNodeData: function (nodeId) {
+			var node = this.getNodeById(nodeId);
+			if (node) {
+				return node.data.data;
+			}
+		},
+
+<span id='gxui-Treeview-method-SetNodeText'>		/**
+</span>		* Sets the text of a given node.
+		* @param {String} nodeId Node id
+		* @param {String} text New text for the node
+		* @method
+		*/
+		SetNodeText: function (nodeId, text) {
+			this.setNodeProperty(nodeId, 'text', text);
+		},
+
+
+<span id='gxui-Treeview-method-SetNodePropertyBoolean'>		/**
+</span>		* Sets the boolean value of a property of a given node.
+		* @param {String} nodeId Node id
+		* @param {String} name Property name
+		* @param {Boolean} value Property value
+		* @method
+		*/
+		SetNodePropertyBoolean: function (nodeId, name, value) {
+			this.setNodeProperty(nodeId, name, value);
+		},
+
+<span id='gxui-Treeview-method-SetNodePropertyString'>		/**
+</span>		* Sets the string value of a property of a given node.
+		* @param {String} nodeId Node id
+		* @param {String} name Property name
+		* @param {String} value Property value
+		* @method
+		*/
+		SetNodePropertyString: function (nodeId, name, value) {
+			this.setNodeProperty(nodeId, name, value);
+		},
+
+<span id='gxui-Treeview-method-SetNodePropertyNumber'>		/**
+</span>		* Sets the numeric value of a property of a given node.
+		* @param {String} nodeId Node id
+		* @param {String} name Property name
+		* @param {Number} value Property value
+		* @method
+		*/
+		SetNodePropertyNumber: function (nodeId, name, value) {
+			this.setNodeProperty(nodeId, name, value);
+		},
+
+<span id='gxui-Treeview-method-StartEdit'>		/**
+</span>		* Starts editing a given node
+		* @param {String} nodeId Node id
+		* @param {Number} [value] A value to initialize the node editor with.
+		* @method
+		*/
+		StartEdit: function (nodeId, value) {
+			var node = this.getNodeById(nodeId),
+				editorPlugin;
+			if (node) {
+				editorPlugin = this.getEditorPlugin();
+				if (editorPlugin) {
+					if (value !== undefined) {
+						editorPlugin.on({
+							'beforeedit': function (editor, e) {
+								e.value = value;
+							},
+							single: true
+						});
+					}
+					editorPlugin.startEdit(node, 0);
+				}
+			}
+		},
+
+<span id='gxui-Treeview-method-CancelEdit'>		/**
+</span>		* Cancels any active editing.
+		* @method
+		*/
+		CancelEdit: function () {
+			var editorPlugin = this.getEditorPlugin();
+			if (editorPlugin) {
+				editorPlugin.cancelEdit();
+			}
+		},
+
+<span id='gxui-Treeview-method-ClearAllNodes'>		/**
+</span>		* Sets the text of a given node.
+		* @param {String} nodeId Node id
+		* @param {String} text New text for the node
+		* @method
+		*/
+		ClearAllNodes: function () {
+			var root = this.m_tree.getRootNode();
+			root.removeAll();
+			delete root.data.children;
+		},
+
+<span id='gxui-Treeview-method-NodeExists'>		/**
+</span>		* Returns true if the given node exists in the tree.
+		* @param {String} nodeId Node id
+		* @return {Boolean}
+		* @method
+		*/
+		NodeExists: function (nodeId) {
+			var node = this.getNodeById(nodeId);
+			return (node ? true : false);
+		}
+	}
+});
+
+// isValidDropPoint is overriden to be able to fire dragover event.
+Ext.tree.ViewDropZone.override({
+	isValidDropPoint: function (node, position, dragZone, e, data) {
+		if (this.callOverridden(arguments) === false)
+			return false;
+
+		if (this.view.fireEvent('dragover', node, data, this.view.getRecord(node), position, e) === false)
+			return false;
+
+		return true;
+	}
+});
+
+Ext.data.TreeStore.override({
+	fillNode: function (node, records) {
+		if (records) {
+			for (var i = 0, len = records.length; i &lt; len; i++) {
+				var record = records[i];
+				if (!this._enableCheckbox) {
+					delete record.raw.checked;
+					record.data.checked = null;
+				}
+				if (record.raw.leaf === false &amp;&amp; record.raw.children &amp;&amp; record.raw.children.length == 0)
+					delete record.raw.children;
+			}
+		}
+		return this.callOverridden(arguments);
+	}
+});</pre>
+</body>
+</html>

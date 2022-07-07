@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>API object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46151,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">API object</h1>
+<!--Category:API object--><div class="TableWikiBody" id="tblwikibody"><p>Defines an Application Programming Interface of a set of programs like <a href="5270.html">Data Providers</a> and <a href="6293.html">Procedures</a>.</p>
+
+<p>It is meant for modeling an API mediation layer that clearly separates the interface from the implementation and so facilitates incremental development and the management of the evolution of an API.</p>
+
+<p>An API object groups several services that are semantically and functionally related. For each service, it declares a mapping between its external name (exposed as a service) and the internal implementation in the KB. It features flexibility in terms of service declaration, allowing the configuration of the HTTP method to be used when the service is REST. It also allows indicating the name and type of the parameters, offering great flexibility in parameter transformation.</p>
+
+<h3><a id="API+Interface" class="HashLink" href="#API+Interface">API Interface</a></h3>
+
+<p>The API interface is declared in the 'Service Source' part of the object. </p>
+
+<p>For each service of the interface, you can declare:</p>
+
+<ul>
+	<li>Name</li>
+	<li>Parameters</li>
+	<li>Which GeneXus object contains the implementation and with what parameters it is called.</li>
+	<li>Annotations for protocol-specific options.<br />
+	 </li>
+</ul>
+
+<h4><a id="API+Protocols+" class="HashLink" href="#API+Protocols+">API Protocols </a></h4>
+
+<p>The API object allows you to expose an API for the following protocols:</p>
+
+<ul>
+	<li>REST</li>
+	<li>gRPC (*)</li>
+</ul>
+
+<p>At the object level, you have properties to enable each of them.</p>
+
+<p>(*) The gRPC protocol is not supported in the <a href="2892.html">.NET Framework generator</a>. It is in beta state in the <a href="38604.html">.NET</a> and <a href="12258.html">Java</a> generators.</p>
+
+<h3><a id="API+Object+Events" class="HashLink" href="#API+Object+Events">API Object Events</a></h3>
+
+<p>Events can be defined in the 'Events' part of the object.</p>
+
+<p>This is where you can do the following:</p>
+
+<ul>
+	<li>Program data transformations to the service parameters, before and after calling the object that implements the service, which helps to maintain a stable API</li>
+	<li>Manage traffic, analyze it, apply service policies. That is, for example, count service calls, log them, accept or deny access to your API.</li>
+</ul>
+
+<p>For each API object, you can define a 'Before' and 'After' event, which will be executed before and after each service implementation. <br />
+In addition, for each service you can define '&lt;service name&gt;.Before|After' events. So, every time a service is invoked, the following will be executed: </p>
+
+<ul>
+	<li>Event 'Before'</li>
+	<li>Event '&lt;service&gt;.Before'</li>
+	<li>The object corresponding to the implementation of the service, referenced in the 'Service Source'</li>
+	<li>Event '&lt;service&gt;.After'</li>
+	<li>Event 'After'</li>
+</ul>
+
+<p>Database access is not allowed in Events. That kind of logic should be placed in the called Procedures or Data Providers.</p>
+
+<h3><a id="API+object+Variables" class="HashLink" href="#API+object+Variables">API object Variables</a></h3>
+
+<p>Here you can define the variables to be used in the 'Service Source' and 'Events'.</p>
+
+<p>There are some standard variables of each API object:</p>
+
+<ul>
+	<li><a href="8870.html">&amp;Pgmname</a> - It contains the name of the object. </li>
+	<li><a href="7672.html">&amp;Pgmdesc</a> - It contains the description of the object. </li>
+	<li>&amp;RestMethod - It contains the <a href="https://wiki.genexus.com/commwiki/wiki?50500,," target="_blank">HTTP method</a> with which the object was called. It is empty when the object is called using protocols other than REST.</li>
+	<li>&amp;RestCode - You may set it to customize the returned <a href='https://www.restapitutorial.com/httpstatuscodes.html'>HTTP Status Code</a>.</li>
+</ul>
+
+<h3><a id="API+object+Properties" class="HashLink" href="#API+object+Properties">API object Properties</a></h3>
+
+<p>These are the properties that can be set at the object level:</p>
+
+<ul>
+	<li>Name</li>
+	<li>Description</li>
+	<li><a href="46380.html">REST Protocol</a></li>
+	<li><a href="46381.html">gRPC Protocol</a></li>
+	<li><a href="46382.html">gRPC Package</a></li>
+	<li><a href="31859.html">Generate OpenAPI interface property</a></li>
+	<li>OpenAPI version</li>
+	<li><a href="46383.html">Services base path</a></li>
+	<li><a href="25540.html">Module/Folder</a></li>
+	<li><a href="22473.html">Object Visibility</a></li>
+	<li>Miscellaneous
+	<ul>
+		<li><a href="7633.html">Generate Object</a></li>
+	</ul>
+	</li>
+	<li>Integrated Security
+	<ul>
+		<li><a href="15214.html">Integrated Security Level</a></li>
+		<li><a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a></li>
+	</ul>
+	</li>
+</ul>
+
+<h2><a id="Sample" class="HashLink" href="#Sample">Sample</a></h2>
+
+<p>This sample showcases the API called 'Client' with services to list clients, get details of a specific client, and insert a client. </p>
+
+<p>This is the 'Service Source' part of the API object:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Client{
+
+    List(out:&amp;SDTClients) 
+    =&gt; Core.ClientsList(&amp;ClientCategoryCode,&amp;SDTClients);
+
+    GetByKey(in:&amp;ClientId,out:&amp;Client,out:&amp;Messages) 
+    =&gt; Core.ClientGetbyKey(&amp;ClientId,&amp;Client);
+
+    [RestMethod(POST)]
+    Insert(in:&amp;ClientId,in:&amp;ClientName,in:&amp;ClientAddress,out:&amp;Messages) 
+    =&gt; Core.ClientInsert(&amp;ClientId,&amp;ClientName,&amp;ClientAddress,&amp;Messages);
+ }</pre>
+
+<p>Notes:</p>
+
+<ul>
+	<li>When accessed through the Rest Protocol, List and GetByKey are accessed via HTTP 'GET' Method, and Insert is accessed via 'POST' declared with the '[RestMethod(POST)]' annotation. </li>
+	<li>Service parameters have to be declared as in, out, or inout.</li>
+	<li>Parameter mapping and parameter value transformations can be done using the 'Events' part as shown below</li>
+	<li>Overloading of services (Using the same service name for different Rest Methods as it is usual in REST Services) is possible in APIs that are <em>only</em> exposed as REST </li>
+	<li>For the REST protocol, the URI is as shown below:<br />
+	        <em>URLBase/ModuleName/ApiObjectName/Method</em><br />
+	So, in this sample, it is similar to the following: <br />
+	        <em>URLBase/Core/Client/List</em></li>
+</ul>
+
+<p>             Unless you use the &quot;Services base path&quot; property, where the URL is as shown:<br />
+                        <em>URLBase/ServicesBasePath/Method</em><br />
+ </p>
+
+<ul>
+	<li>Objects referenced in the right part of each service are called using an internal protocol, even if they are exposed as services, or their <a href="7947.html">Call protocol property</a> says different.</li>
+</ul>
+
+<p>This is the 'Events' part:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Before
+    Statsregister(&amp;pgmname)
+EndEvent
+
+Event List.Before
+    &amp;ClientCategoryCode = 'Any'
+EndEvent
+
+Event Insert.Before
+    if &amp;ClientId &lt;= 0
+        &amp;RestCode = 412
+        return
+    endif
+EndEvent
+
+Event GetByKey.After
+    if &amp;Client.ClientId = 0
+        &amp;Message.Type = MessageTypes.Error
+        &amp;Message.Description = format(&quot;Client %1 was not found&quot;,&amp;ClientId)
+        &amp;Messages.Add(&amp;Message)
+        &amp;RestCode = 404
+    endif    
+EndEvent</pre>
+
+<p>Notes:</p>
+
+<ul>
+	<li>'List.Before' initializes a variable that is not part of the API but that is required by the called object</li>
+	<li>The Procedure associated with the Insert service (and the Insert.After event) in this sample will only be executed if &amp;ClientId &gt; 0</li>
+</ul>
+
+<p>You can download the source of this sample from this article: <a href="https://wiki.genexus.com/commwiki/wiki?46152,," target="_blank">API Object Playground</a>.</p>
+
+<h2><a id="Consuming+the+ReST+API" class="HashLink" href="#Consuming+the+ReST+API">Consuming the ReST API</a></h2>
+
+<p>When <a href="31859.html">Generate OpenAPI interface property</a> is enabled, GeneXus generates a .yaml with the OpenAPI specification for each API object. That file (named &lt;apiobject's qualified name&gt;.yaml) contains all the information related to the services exposed by the API.</p>
+
+<p>Parameters in the query string (input parameters of the services) are named, separated by &amp;, and are also case-sensitive in Java. Therefore, if you consume the API, make sure to name them using the casing declared in the .yaml so that your consumer does not depend on the generator used to provide the services.</p>
+
+<h2><a id="General+recommendations" class="HashLink" href="#General+recommendations">General recommendations</a></h2>
+
+<ul>
+	<li>To avoid interface compatibility or stability problems, it is not recommended to use the same Structured Data Type that is used in an API object in services of another type: such as Rest Data Providers, Rest Procedures or Rest Business Components, because there may be differences between the serialization of these services.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Example</p>
+
+<p style="margin-left: 40.0px;">In the example below, the SDT named SDTClients it is being called only by Core.ClientsList:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+     Client{
+           List(out:&amp;SDTClients)=&gt; Core.ClientsList(&amp;ClientCategoryCode,&amp;SDTClients);
+           }</pre>
+
+<ul>
+	<li>It is also not recommended to use a variable marked as a collection in an API Object interface, since you won't be able to set the <a href="48147.html">Json Collection Serialization property</a>. If you need to return a collection, you should define the Structured Data Type as a collection instead of using a variable of a Structured Data Type marked as a collection.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Example</p>
+
+<p style="margin-left: 40.0px;">In the code shown below, the SDT named SDTClients is set to be a collection, however, the &amp;SDTClients variable defined within the API object is not of a collection type.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    Client{
+          List(out:&amp;SDTClients)=&gt; Core.ClientsList(&amp;ClientCategoryCode,&amp;SDTClients);
+          }
+</pre>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This feature is available in .NET and .NET Core in <a href="46066.html">GeneXus 17</a>, and in Java in <a href="47418.html">GeneXus 17 upgrade 2</a>.<br />
+In <a href="46852.html">GeneXus 17 upgrade 1</a>, &amp;RestCode standard variable has been added.</p>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<p><a href="50879.html">API Object Syntax</a><br />
+<a href="50360.html">RestPath annotation</a><br />
+<a href="50508.html">RestMethod annotation</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Pages</b></TD></TR><TR><TD><a href="49781.html">API Object - Delete service definition and declaration</a></TD><TD><a href="50052.html">API Object - GetByKey service definition and declaration</a></TD><TD><a href="49778.html">API Object - Insert service definition and declaration</a></TD></TR><TR><TD><a href="50051.html">API Object - ListCustomers service definition and declaration</a></TD><TD><a href="49780.html">API Object - Update service definition and declaration</a></TD><TD><a href="50053.html">API object Considerations</a></TD></TR><TR><TD><a href="50054.html">Calling rest API Using Postman app</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/03/22 03:41 PM</em></font></td></TR></table></font>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Send a message to the chatbot from a menu</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?40912,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Send a message to the chatbot from a menu</h1>
+<!--HowTo: Send a message to the chatbot from a menu--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document explains how to send a message to the <a href="38520.html">Chatbot</a> from any user event (such as a menu item).</p>
+
+<p>Its purpose is to show the user a Web or SD panel where he/she is presented with many options to choose from, and after selecting any of them, the Chatbot is notified so it can answer according to the inquiry made by the user.</p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>Consider that when the user or the Chatbot greets, the first action of the Chatbot is to tell the user what he can talk about; take a look at the figure below:</p>
+
+<p><img src="./images/40913.png" id="40913" class="WikiImage"/></p>
+
+<p>Note that the user selects an action from an action list, and the Chatbot repeats the user's intention, so it's clear what the <a href="38949.html">intent</a> to be processed is: &quot;<em>Make an inquiry</em>.&quot;</p>
+
+<p>Afterward, the Chatbot answers the user after the message has been processed by the <a href='https://en.wikipedia.org/wiki/Natural_language_processing'>NLP</a> provider.</p>
+
+<h2><a id="How+to+implement+it" class="HashLink" href="#How+to+implement+it">How to implement it</a></h2>
+
+<h3><a id="Defining+the+Flows+of+the+conversation" class="HashLink" href="#Defining+the+Flows+of+the+conversation">Defining the Flows of the conversation</a></h3>
+
+<p>In this example, the &quot;Greetings&quot; <a href="38531.html">Flow</a> looks as follows:</p>
+
+<p><img src="./images/40914.png" id="40914" class="WikiImage"/></p>
+
+<p>Note that the <a href="38189.html">Conversational Object</a> set for the Flow is the &quot;Greetings&quot; object, which in this case is a Web panel (it could be an SD panel).</p>
+
+<p>Depending on the selection made by the user, one of the following Flows show be triggered:</p>
+
+<ul>
+	<li>Make a Claim Flow</li>
+	<li>Get Information Flow</li>
+	<li>Set a date and time Flow</li>
+</ul>
+
+<p>So, the <a href="37113.html">Conversational Flows object</a> looks like the following picture:</p>
+
+<p><img src="./images/40916.png" id="40916" class="WikiImage"/></p>
+
+<p>To trigger any of these Flows, a valid message has to be sent to the NLP Provider, so the intent is correctly identified. </p>
+
+<p>Look at the <a href="39067.html">Trigger Messages property</a> of each Flow, to know which messages should be used to trigger the intent.</p>
+
+<p>The &quot;Greetings&quot; Web panel form is as follows:</p>
+
+<p><img src="./images/40915.png" id="40915" class="WikiImage"/></p>
+
+<h3><a id="Defining+the+UI+objects+of+the+Flow" class="HashLink" href="#Defining+the+UI+objects+of+the+Flow">Defining the UI objects of the Flow</a></h3>
+
+<p>The code of the Conversational Object panel (&quot;Greetings Web panel&quot;) is as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    GreetingsProcedure(&amp;greeting)
+    GreetingLbl.Caption = format(!&quot;%1 I'm here to assist you. This is what I can help you with. Let's start!&quot;,&amp;greeting)
+Endevent
+
+Event 'Get Information' //On click event for &quot;Make an inquiry&quot; button.
+    GlobalEvents.BotEvent(!&quot;Make an inquiry&quot;)
+Endevent
+
+Event 'Schedule an activity' //On click event for &quot;Set a date and time&quot; button
+    GlobalEvents.BotEvent(!&quot;Set a date and time&quot;)
+Endevent
+
+Event 'Do a claim' //On click event for &quot;Do a claim&quot; button
+    GlobalEvents.BotEvent(!&quot;Do a claim&quot;)
+Endevent
+</pre>
+
+<p>First, in the &quot;Start Event,&quot; a procedure is called that takes part of the greeting message, depending on the hour of the day. </p>
+
+<p>Then, each button has an associated event, which notifies the Chatbot that there is a new message. The message that you will use to trigger the Flow has to be a valid <a href="39067.html">Trigger Message</a> for that Flow, as previously explained.</p>
+
+<p>When the event is executed, the Chatbot services are triggered, and a response is sent to the user as if the user had entered his query typing the message in the message box of the Chatbot.</p>
+
+<p>This is because you are using the <a href="31164.html">Global Events</a> functionality.</p>
+
+<h3><a id="How+does+this+work+behind+the+scenes%3F" class="HashLink" href="#How+does+this+work+behind+the+scenes%3F">How does this work behind the scenes?</a></h3>
+
+<p>The <em>GlobalEvents.BotEvent</em> event is defined in the objects &quot;PanelChatWeb&quot; and &quot;PanelChatSD&quot; <a href="37102.html">generated</a>. As in the example, you are using these objects, the corresponding <em>GlobalEvents.BotEvent </em>is triggered, which receives the message, and sends it to the NLP provider.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event GlobalEvents.BotEvent(&amp;Send)
+    Do 'SendMessage'
+Endevent
+
+Sub 'SendMessage' //Send Message
+    &amp;WebClient = &amp;WebNotification.ClientId
+    &amp;NotificationInfo = new()
+    &amp;PreviousContext = GetChatMeta(&amp;UserId, &amp;Instance)    
+    NewMessage(&amp;UserId, ChatbotMessageTypes.User, &amp;Send, &quot;&quot;, &amp;PreviousContext, &quot;&quot;, &amp;WebClient, &amp;Instance)
+    GridSent.Refresh()    
+    CommonChatbots.SendMessage.Submit(&quot;&quot;, &amp;Instance, ChatbotPlatform.Web, &amp;Send, &quot;&quot;, &amp;PreviousContext, &amp;WebClient)
+    Do 'NotifyOtherClients'
+    &amp;Send.SetEmpty()
+endsub
+
+</pre>
+
+<p>The CommonChatbots.SendMessage procedure calls the <a href="42971.html">SendMessage</a> method.</p>
+
+<div style="background-color: rgb(225,245,254);border-left: 6.0px solid rgb(2,136,209);">
+<p>Note: You don't have to program these events, because they are already defined in the objects PanelChatWeb and PanelChatSD generated.</p>
+</div>
+
+<h2><a id="Download+the+sample" class="HashLink" href="#Download+the+sample">Download the sample</a></h2>
+
+<p>Take a look at the complete example in <a href="37076.html">HowTo: Build a chatbot using GeneXus</a>. The solution is in the CitizenSDAdv and CitizenAdv instances of the example.</p>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38520.html">Toc:Chatbots in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/28/21 06:42 PM</em></font></td></TR></table></font>

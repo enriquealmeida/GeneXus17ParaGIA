@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Treeview Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5055,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Treeview Control</h1>
+<!--Treeview Control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p align="left">The treeview control provides a rich visual presentation of hierarchical data. It can be fully customized at design time or runtime (if necessary) through a vast set of properties that allow you to configure how the tree will be displayed. The control is based on Yahoo! Treeview.</p>
+
+<p>Key features:</p>
+
+<ul>
+	<li>Unlimited number of levels</li>
+	<li>Supports all major browsers</li>
+	<li>Alternative images for each node</li>
+	<li>Raises server event when the selected nodes changes</li>
+	<li>Supports populate on demand.</li>
+</ul>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><img src="./images/5233.gif" id="5233" class="WikiImage"/></td>
+			<td><img src="./images/5234.jpg" id="5234" class="WikiImage"/></td>
+			<td><img src="./images/5235.jpg" id="5235" class="WikiImage"/></td>
+		</tr>
+		<tr>
+			<td> Custom icons</td>
+			<td> Modern style</td>
+			<td> Menu style</td>
+		</tr>
+	</tbody>
+</table>
+
+<p align="left"> </p>
+
+<h3><a id="Using+the+control" class="HashLink" href="#Using+the+control">Using the control</a></h3>
+
+<p>After dragging and dropping a treeview control into a web panel or transaction you will notice that the following variables are created:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 800.0px;">
+	<tbody>
+		<tr>
+			<td><strong>&amp;treeNodeCollectionData:</strong></td>
+			<td>Based on TreeNodeCollection SDT (collection of TreeNodeCollection.TreeNode)</td>
+		</tr>
+		<tr>
+			<td><strong>&amp;treeNode:</strong></td>
+			<td>Based on TreeNodeCollection.TreeNode SDT</td>
+		</tr>
+		<tr>
+			<td><strong>&amp;parent:</strong></td>
+			<td>Based on TreeNodeCollection.TreeNode SDT</td>
+		</tr>
+		<tr>
+			<td><strong>&amp;selectedTreeNode:</strong></td>
+			<td>Based on TreeNodeCollection.TreeNode SDT</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p>&amp;treeNodeCollectionData and &amp;selectedTreeNode are automatically assigned to the control's TreeNodeCollectionData and SelectedTreeNode properties, respectively. &amp;treeNodeCollection data will hold the tree structure, while &amp;selectedTreeNode will be used to hold the currently selected node of the treeview when handling events. &amp;parentNode and &amp;treeNode, for their part, are auxiliary variables used in the code snippet to create a sample tree. The snippet looks as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Sub 'TreeViewSample'
+  &amp;treeNode.Id = &quot;Some GeneXus Sites&quot;
+  &amp;treeNode.Name = &quot;GeneXus Sites&quot;
+  &amp;treeNodeCollectionData.Add(&amp;treeNode)
+
+  &amp;treeNode = new()
+  &amp;treeNode.Id = &quot;GeneXus Home Page&quot;
+  &amp;treeNode.Name = &quot;GeneXus Home Page&quot;
+  &amp;parent = &amp;treeNodeCollectionData.Item(1)
+  &amp;parent.Nodes.Add(&amp;treeNode)
+
+  &amp;treeNode = new()
+  &amp;treeNode.Id = &quot;Developer Resources&quot;
+  &amp;treeNode.Name = &quot;Developer Resources&quot;
+  &amp;parent = &amp;treeNodeCollectionData.Item(1)
+  &amp;parent.Nodes.Add(&amp;treeNode)
+
+  &amp;treeNode = new()
+  &amp;treeNode.Id = &quot;GXTechnical&quot;
+  &amp;treeNode.Name = &quot;GXTechnical&quot;
+  &amp;parent = &amp;treeNodeCollectionData.Item(1).Nodes.Item(2)
+  &amp;parent.Nodes.Add(&amp;treeNode)
+
+  &amp;treeNode = new()
+  &amp;treeNode.Id = &quot;GXSearch&quot;
+  &amp;treeNode.Name = &quot;GXSearch&quot;
+  &amp;parent = &amp;treeNodeCollectionData.Item(1).Nodes.Item(2)
+  &amp;parent.Nodes.Add(&amp;treeNode)
+EndSub
+
+//Event treeview1.NodeClicked
+//    textBlock1.Caption = &amp;selectedTreeNode.Name
+//EndEvent
+
+//Event treeview1.PopulateNode
+//    &amp;treeNode = new()
+//    &amp;treeNode.Id = &quot;Server Node&quot;
+//    &amp;treeNode.Name = &quot;Server Node&quot;
+//    &amp;selectedTreeNode.Nodes.Add(&amp;treeNode)
+//EndEvent</pre>
+
+<p>This snippet creates the treeview shown below. In addition, you will notice that there's a snippet that shows you how to manage the NodeClicked event and how to populate a treeNode on demand (both topics will be covered later).</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><img src="./images/5236.png" id="5236" class="WikiImage"/></td>
+		</tr>
+		<tr>
+			<td> Default tree</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h3><a id="Control+Properties" class="HashLink" href="#Control+Properties">Control Properties</a></h3>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 700.0px;">
+	<tbody>
+		<tr>
+			<td>LinkTarget</td>
+			<td>Default target for all nodes</td>
+		</tr>
+		<tr>
+			<td><strong>Appearance</strong></td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>     Style</td>
+			<td>Only one node within a parent can be expanded at the same time.</td>
+		</tr>
+		<tr>
+			<td><strong>Appearance/CustomImages</strong></td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>     ParentIcon</td>
+			<td>Image for all parent nodes</td>
+		</tr>
+		<tr>
+			<td>     ParentSelectedIcon</td>
+			<td>Image for all parent nodes when selected</td>
+		</tr>
+		<tr>
+			<td>     LeafIcon</td>
+			<td>Image for all leaf nodes</td>
+		</tr>
+		<tr>
+			<td>     LeafSelectedIcon</td>
+			<td>Image for all leaf nodes when selected</td>
+		</tr>
+		<tr>
+			<td><strong>DataBindings</strong></td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>     TreeNodeCollectionData</td>
+			<td>TreeNodeCollection SDT instance containing the tree structure</td>
+		</tr>
+		<tr>
+			<td>     SelectedTreeNode</td>
+			<td>TreeNode SDT for the selected treeNode</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+Control properties allow you (among other things) to set icons for the diferent types of nodes of the control. This of course applies to the entire treeview, but if you also define some special icons for a specific treeNode at runtime, the special icons will have precedence over the icons defined for the control (ParentIcon, ParentSelectedIcon, LeafIcon, LeafSelectedIcon).</p>
+
+<p>There are also are some predefined styles that can be applied to the treeview. These styles can be extended, but in order to do so, you need to change certain css and js codes. The list of available styles is:</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 700.0px;">
+	<tbody>
+		<tr>
+			<td>Default</td>
+			<td>Lines</td>
+		</tr>
+		<tr>
+			<td>DefaultWithDefaultIcons</td>
+			<td>Lines + default icon set</td>
+		</tr>
+		<tr>
+			<td>Modern</td>
+			<td>Lines (big plus and minus icons)</td>
+		</tr>
+		<tr>
+			<td>ModernWithDefaultIcons</td>
+			<td>Lines (big plus and minus icons) + default icon set</td>
+		</tr>
+		<tr>
+			<td>Menu</td>
+			<td>Menu style</td>
+		</tr>
+		<tr>
+			<td>NoLines</td>
+			<td>No lines, no icons</td>
+		</tr>
+		<tr>
+			<td>NoLinesWithDefaultIcons</td>
+			<td>No lines + default icon set</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h3><a id="TreeNode+SDT+fields" class="HashLink" href="#TreeNode+SDT+fields">TreeNode SDT fields</a></h3>
+
+<p>When creating a new treeNode (TreeNodeCollection.TreeNode), there are several fields that allow you to specify how the treeNode behaves and how it should be displayed. These field are:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 900.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Id (character):</strong></td>
+			<td>Internal id, useful for event handling.</td>
+		</tr>
+		<tr>
+			<td><strong>Name (character):</strong></td>
+			<td>Text of the treenode.</td>
+		</tr>
+		<tr>
+			<td><strong>Link (character), (optional):</strong></td>
+			<td>URL that is called when the node is clicked.</td>
+		</tr>
+		<tr>
+			<td><strong>LinkTarget (character):</strong></td>
+			<td>Same as the html anchors target.</td>
+		</tr>
+		<tr>
+			<td><strong>Expanded (boolean):</strong></td>
+			<td>Specifies if the tree node should be opened by default after the treenode has been loaded.</td>
+		</tr>
+		<tr>
+			<td><strong>DynamicLoad (boolean):</strong></td>
+			<td>Sets whether the treenode should load its children on demand.</td>
+		</tr>
+		<tr>
+			<td><strong>Icon:</strong></td>
+			<td>Image icon representing the tree node. If it is left empty, a default image will be used.</td>
+		</tr>
+		<tr>
+			<td><strong>IconWhenSelected:</strong></td>
+			<td>Image icon representing the tree node when it's open. If it is left empty, a default image will be used.</td>
+		</tr>
+		<tr>
+			<td><strong>Nodes:</strong></td>
+			<td>TreeNodeCollection</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+<br />
+Some considerations concerning the fields listed above:</p>
+
+<ol>
+	<li>When creating a node you can specify a link or not. Either way, the NodeClicked event will be triggered, but if there is a link, the browser will then navigate to the specified url (according to the linkTarget).</li>
+	<li>When DynamicLoad = true for a treeNode, the PopulateNode event will be triggered if there is code to handle the event.</li>
+</ol>
+
+<h4><a id="Handling+the+NodeClicked+event" class="HashLink" href="#Handling+the+NodeClicked+event">Handling the NodeClicked event</a></h4>
+
+<p>When a node is clicked, a NodeClicked event will be triggered every time you have a code to handle that event from the server side. An example of a code for handling that event would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event treeview1.NodeClicked
+    textBlock1.Caption = &amp;selectedTreeNode.Name
+EndEvent</pre>
+
+<p>It should be noted that the NodeClicked event is raised every time you click the node but not when the node is expanded or collapsed using the plus/minus icons.</p>
+
+<h4><a id="Dynamic+Load+%28load+on+demand%29" class="HashLink" href="#Dynamic+Load+%28load+on+demand%29">Dynamic Load (load on demand)</a></h4>
+
+<p>Nodes can be loaded on demand, that is, you can add children to a node at runtime. In order to do this you have to set the dynamicLoad property of the treeNode to True.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;treeNode = new()
+&amp;treeNode.Id = &quot;SampleNode&quot;
+&amp;treeNode.Name = &quot;SampleNode&quot;
+&amp;treeNode.DynamicLoad = true</pre>
+
+<p>Consequently, when &quot;SampleNode&quot; is expanded for the first time, you can add children to it. This can be accomplished by handling the PopulateNode event of the treeview as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event treeview1.PopulateNode
+    &amp;treeNode = new()
+    &amp;treeNode.Id = &quot;Server Node&quot;
+    &amp;treeNode.Name = &quot;Server Node&quot;
+    &amp;selectedTreeNode.Nodes.Add(&amp;treeNode)
+EndEvent</pre>
+
+<p>The &amp;selectedTreeNode variable represents the node that has been expanded. This is because we have previously bound the &amp;selectedTreeNode variable to the SelectedTreeNode property of the treeview (this is done automatically when you drop the treeview control in a form, but you can change this).</p>
+
+<p><img src="./images/5237.jpg" id="5237" class="WikiImage"/></p>
+
+<h3><a id="Loading+a+Treeview+control+using+a+wiki%3F4891%2CRecursive%2BData%2BProviders+Recursive+Data+Providers" class="HashLink" href="#Loading+a+Treeview+control+using+a+wiki%3F4891%2CRecursive%2BData%2BProviders+Recursive+Data+Providers">Loading a Treeview control using a <a href="4891.html">Recursive Data Providers</a></a></h3>
+
+<p>Suppose you have the following entities:</p>
+
+<p><img src="./images/5238.jpg" id="5238" class="WikiImage"/></p>
+
+<p>CategoryFatherId and CategoryFatherName are obviously subtypes of CategoryId and CategoryName, respectively. Consequently, each Category has a &quot;Category Father&quot;. Moreover, each Item is related to a Category through the CategoryItem transaction.</p>
+
+<p>Now suppose that you want to create a Data Provider that recursively loads the treeview structures using the entities described above. That data provider should start loading the &quot;top parent category&quot; (the category that has 0 as the CategoryFatherID) and then go on to load all its children recursively (that is, it should load its child categories and items). In addition, remember that the TreeNodeDataCollection structures look as follows:</p>
+
+<p><img src="./images/5239.jpg" id="5239" class="WikiImage"/></p>
+
+<p>The data provider will look as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+TreeNodeCollection
+where CategoryFatherId = &amp;CategoryFatherId
+{
+  Id = str(CategoryId)
+  Name = CategoryName
+  Link = ViewCategory.Link(CategoryId)
+  Nodes = Catalog(CategoryId)
+}
+TreeNodeCollection
+where CategoryId = &amp;CategoryFatherId
+{
+  Id = str(ItemId)
+  Name = ItemName
+  Link = ViewItem.Link(ItemId)
+}</pre>
+
+<p>You should then call this data provider as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    &amp;treeNodeCollectionData = Catalog(0)
+EndEvent</pre>
+
+<p>...where &amp;treeNodeCollection data is a TreeNodeCollection SDT-based variable. Note that we call the data provider passing 0 as a parameter because we want to start loading the nodes whose CategoryFatherID is 0 (that is, the Categories that have no &quot;parent&quot;).</p>
+
+<h2><a id="Licensing" class="HashLink" href="#Licensing">Licensing</a></h2>
+
+<p>This user control automatically distributed with GeneXus uses the following components:</p>
+
+<ul>
+	<li>Yahoo! Treeview from the <a href='https://github.com/yui/yui3/wiki/YUI-Documentation'>YUI Library</a>; open license (BSD).</li>
+	<li>Syntax Highlighter from <a href='https://github.com/syntaxhighlighter/'>https://github.com/syntaxhighlighter/</a>; MIT license.</li>
+</ul>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5928.html">Category:Common Controls</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

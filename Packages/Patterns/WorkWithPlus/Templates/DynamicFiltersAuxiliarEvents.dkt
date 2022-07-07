@@ -1,0 +1,550 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Append transaction redirection" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="DynamicFilters" Type="DynamicFilterAttributesElement" %>
+<%@ Property Name="IsSmooth" Type="System.Boolean" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+<%@ SubTemplate Name="SubUpdateFilterOperatorValues" File="SubUpdateFilterOperatorValues.dkt" MergeProperties="True"%>
+<%
+	bool includeNamesInSDTGridState =  Settings.IncludeNamesInSDTGridState;
+	SettingsTemplateElement template = Instance.GetAppropiateTemplate();
+	bool? hasSearchAction = null;
+	for (int i = 1; i <= DynamicFilters.MaxFilters; i++)
+	{
+		if (i < DynamicFilters.MaxFilters)
+		{
+%>
+Event 'AddDynamicFilters<%= i.ToString() %>'
+
+	&DynamicFiltersEnabled<%= (i + 1).ToString() %> = True
+	AddDynamicFilters<%= i.ToString() %>.Visible = False
+<%
+			if (!Settings.StandardFilters.IsDynFiltersClearFilterVisibilityAlways())
+			{
+%>
+	RemoveDynamicFilters<%= i.ToString() %>.Visible = True
+<%
+			}
+			bool gridRefreshAdded = false;
+			if (IsSmooth && DynamicFilters.NeedOperatorVariable())
+			{
+				if (!hasSearchAction.HasValue)
+				{
+					hasSearchAction = (GridObject.GetStandardAction(StandardAction.Search) != null);
+				}
+				bool firstHasOperator = ((IFilter)DynamicFilters.Items[0]).HasOperators();
+				if (hasSearchAction.Value)
+				{
+					if (firstHasOperator)
+					{
+						if (includeNamesInSDTGridState)
+						{
+%>
+	&DynamicFiltersSelector<%= (i + 1).ToString() %> = !'<%= ((IFilter)DynamicFilters.Items[0]).Name.ToUpper() %>'
+<%
+						}
+%>
+	Do 'EnableDynamicFilters<%= (i + 1).ToString() %>'
+<%
+					}
+					else
+					{
+%>
+	&DynamicFiltersOperator<%= (i + 1).ToString() %>.Visible = False
+<%
+					}
+				}
+				else if (firstHasOperator && DynamicFilters.FiltersWithOperatorVariable() > 1)
+				{
+					HierarchySettingsElement hierarchySettings = (GridObject is SelectionElement ? ((SelectionElement)GridObject).HierarchySettings : null);
+					if (hierarchySettings != null)
+					{
+%>
+	&DynamicFiltersOperator<%= (i + 1).ToString() %>.Clear()
+<%
+						int operIndex = 0;
+						foreach (FilterAttributeOperatorElement oper in ((IFilter)DynamicFilters.Items[0]).GetOperators())
+						{
+%>
+	&DynamicFiltersOperator<%= (i + 1).ToString() %>.AddItem(<%= operIndex.ToString() %>, <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>)
+<%
+							operIndex++;
+						}
+					}
+					else
+					{
+						gridRefreshAdded = true;
+%>
+	Grid.Refresh()
+<%
+					}
+				}
+			}
+			if (IsSmooth && !gridRefreshAdded && !((IFilter)DynamicFilters.Items[0]).Condition.ToLower().Contains(" when "))
+			{
+%>
+	Grid.Refresh()
+<%
+			}
+%>
+
+EndEvent
+
+<%
+		}
+		if (DynamicFilters.MaxFilters > 1 || Settings.StandardFilters.IsDynFiltersClearFilterVisibilityAlways())
+		{
+%>
+
+Event 'RemoveDynamicFilters<%= i.ToString() %>'
+
+<%
+			if (DynamicFilters.MaxFilters > 1)
+			{
+%>
+	&DynamicFiltersRemoving = True
+<%
+			}
+			if (i == 1)
+			{
+%>
+	&DynamicFiltersIgnoreFirst = True
+<%
+			}
+			else
+			{
+%>
+	&DynamicFiltersEnabled<%= i.ToString() %> = False
+<%
+			}
+%>
+	Do 'SaveDynFiltersState'
+<%
+			if (i == 1 && Settings.StandardFilters.IsDynFiltersClearFilterVisibilityAlways())
+			{
+				IFilter firstFilter = (IFilter)DynamicFilters.Items[0];
+%>
+	&DynamicFiltersSelector1 = <%= includeNamesInSDTGridState ? "!'" + firstFilter.Name.ToUpper() + "'": "0" %>
+<%
+				if (firstFilter.HasOperators())
+				{
+%>
+	&DynamicFiltersOperator1 = 0
+<%
+				}
+				if (firstFilter.Default != String.Empty)
+				{
+%>
+	&<%= firstFilter.Name %>1 = <%= firstFilter.Default %>
+<%
+				}
+				else if (firstFilter is FilterAttributeMultipleGeneralElement)
+				{
+%>
+	&<%= firstFilter.Name%>1Values = new()
+<%
+					if (((FilterAttributeMultipleGeneralElement)firstFilter).IsTypeDropDownSelector())
+					{
+%>
+	DDO_FilterMultiple<%= firstFilter.Name %>1.SelectedValue_set = &<%= firstFilter.Name %>1Values.ToJson()
+<%
+					}
+					if (((FilterAttributeMultipleGeneralElement)firstFilter).DescriptionsAttribute != null)
+					{
+%>
+	&<%= firstFilter.Name%>1Descriptions = new()
+<%
+						if (((FilterAttributeMultipleGeneralElement)firstFilter).IsTypeDropDownSelector())
+						{
+%>
+	DDO_FilterMultiple<%= firstFilter.Name %>1.SelectedText_set = &<%= firstFilter.Name %>1Descriptions.ToJson()
+<%
+						}
+					}
+				}
+				else if (!firstFilter.IsBoolean())
+				{
+					
+%>
+	&<%= firstFilter.Name %>1.SetEmpty()
+<%
+					if (firstFilter.HasRange() || firstFilter.HasRangeOperator())
+					{
+%>
+	&<%= firstFilter.Name %>_To1.SetEmpty()
+<%
+					}
+				}
+				else
+				{
+%>
+	&<%= firstFilter.Name %>1 = False
+<%				
+				}
+%>
+	Do 'EnableDynamicFilters1'
+<%
+			}
+			if (DynamicFilters.MaxFilters > 1)
+			{
+%>
+	Do 'ResetDynFilters'
+<%
+			}
+%>
+	Do 'LoadDynFiltersState'
+<%
+			if (IsSmooth)
+			{
+				if (DynamicFilters.MaxFilters > 1)
+				{
+%>
+	&DynamicFiltersRemoving = False
+<%
+				}
+				if (i == 1)
+				{
+%>
+	&DynamicFiltersIgnoreFirst = False
+<%
+				}
+%>
+	Grid.Refresh()
+<%
+			}
+%>
+
+EndEvent
+
+<%
+		}
+%>
+
+Event &DynamicFiltersSelector<%= i.ToString() %>.Click
+
+<%
+		if ((GridObject.HasPredefinedOperator || Settings.IsOptimizationNumber(2)) && DynamicFilters.FiltersWithOperatorVariable() > 1)
+		{
+%>
+	&DynamicFiltersOperator<%= i.ToString() %>.SetEmpty()
+<%
+		}
+%>
+	Do 'EnableDynamicFilters<%= i.ToString() %>'
+	
+EndEvent
+
+Sub 'EnableDynamicFilters<%= i.ToString() %>'
+
+<%
+		foreach (IFilter filter in DynamicFilters.Items)
+		{
+			if (!filter.HasOperators() || ((FilterAttributeGeneralElement)filter).HasOperatorWithoutFixedValue())
+			{
+%>
+	<%= DynamicFilterAttributeElement.ControlNameToShowAndHide(filter) + i %>.Visible = False
+<%
+			}
+		}
+		if (DynamicFilters.NeedOperatorVariable())
+		{
+%>
+	&DynamicFiltersOperator<%= i.ToString() %>.Visible = False
+<%
+			if (IsSmooth)
+			{
+				if (!hasSearchAction.HasValue)
+				{
+					hasSearchAction = (GridObject.GetStandardAction(StandardAction.Search) != null);
+				}
+				if (hasSearchAction.Value && DynamicFilters.FiltersWithOperatorVariable() > 1)
+				{
+%>
+	&DynamicFiltersOperator<%= i.ToString() %>.Clear()
+<%
+				}
+			}
+		}
+%>
+	Do Case
+<%
+		int filterIndex = 0;
+		foreach (IFilter filter in DynamicFilters.Items)
+		{
+%>
+	Case &DynamicFiltersSelector<%= i.ToString() %> = <%= includeNamesInSDTGridState ? "!'" + filter.Name.ToUpper() + "'" : filterIndex.ToString() %>
+<%
+			if (!filter.HasOperators() || ((FilterAttributeGeneralElement)filter).HasOperatorWithoutFixedValue())
+			{
+%>
+		<%= DynamicFilterAttributeElement.ControlNameToShowAndHide(filter) + i %>.Visible = True
+<%
+				if (filter.IsDVCombo())
+				{
+%>
+		Do 'LoadCombo<%= filter.Name + i %>'
+<%
+				}
+			}
+			if (filter.HasOperators())
+			{
+%>
+		&DynamicFiltersOperator<%= i.ToString() %>.Visible = True
+<%
+				if (IsSmooth)
+				{
+					if (!hasSearchAction.HasValue)
+					{
+						hasSearchAction = (GridObject.GetStandardAction(StandardAction.Search) != null);
+					}
+					if (hasSearchAction.Value && (DynamicFilters.FiltersWithOperatorVariable() > 1 || !Settings.IsOptimizationNumber(3)))
+					{
+						int operIndex = 0;
+						foreach (FilterAttributeOperatorElement oper in filter.GetOperators())
+						{
+%>
+		&DynamicFiltersOperator<%= i.ToString() %>.AddItem(<%= operIndex.ToString() %>, <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>)
+<%
+				operIndex++;
+						}
+					}
+				}
+				if (filter is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filter).HasUpdateFilterTypeSub())
+				{
+%>
+		Do 'Update<%= filter.Name + i %>OperatorValues'
+<%
+				}
+			}
+			filterIndex++;
+		}
+%>
+	EndCase
+	
+EndSub
+<%
+		bool hasUpdateFilterTypeSub = false;
+		foreach (IFilter filterVar in DynamicFilters.Items)
+		{
+			if (filterVar is FilterAttributeMultipleGeneralElement)
+			{
+				if (((FilterAttributeMultipleGeneralElement)filterVar).IsTypePrompt())
+				{
+%>
+
+<%= ((FilterAttributeMultipleGeneralElement)filterVar).GetPromptEventCode(i, IsSmooth) %>
+
+<%
+				}
+				else
+				{
+%>
+
+<%= ((FilterAttributeMultipleGeneralElement)filterVar).GetOnOptionClickedEventCode(i, template) %>
+
+<%
+				}
+%>
+
+Event TagsInput<%= filterVar.Name + i %>.OnTagRemoved
+
+<%
+				if (((FilterAttributeMultipleGeneralElement)filterVar).IsTypeDropDownSelector())
+				{
+%>
+	DDO_FilterMultiple<%= filterVar.Name + i %>.SelectedValue_set = &<%= filterVar.Name + i %>Values.ToJson()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filterVar).DescriptionsAttribute != null)
+					{
+%>
+	DDO_FilterMultiple<%= filterVar.Name + i %>.SelectedText_set = &<%= filterVar.Name + i %>Descriptions.ToJson()
+<%
+					}
+				}
+%>
+	Refresh
+
+EndEvent
+
+<%
+			}
+			else if (filterVar is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterVar).HasUpdateFilterTypeSub())
+			{
+				hasUpdateFilterTypeSub = true;
+%>
+<%@ CallSubTemplate SubUpdateFilterOperatorValues FilterVarGen='(FilterAttributeGeneralElement)filterVar' FilterActualIndex='i.ToString()' %>
+<%
+			}
+			if (filterVar is IFilterWithRange && ((IFilterWithRange)filterVar).IsPickerRange()
+				|| filterVar.HasRangeOperatorPickerRange())
+			{
+%>
+Event <%= filterVar.Name %>_RangePicker<%= i %>.DateRangeChanged
+	&<%= filterVar.Name + i %> = &<%= filterVar.Name + i %>
+	&<%= filterVar.Name %>_To<%= i %> = &<%= filterVar.Name %>_To<%= i.ToString() %>
+	Grid.Refresh()
+EndEvent
+<%
+			}
+		}
+		if (hasUpdateFilterTypeSub)
+		{
+%>
+
+Event &<%= DynamicFilters.Name %>Operator<%= i.ToString() %>.Click
+	Do Case
+<%
+			filterIndex = 0;
+			foreach (IFilter filterVar in DynamicFilters.Items)
+			{
+				if (filterVar is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterVar).HasUpdateFilterTypeSub())
+				{
+%>
+		Case &DynamicFiltersSelector<%= i.ToString() %> = <%= includeNamesInSDTGridState ? "!'" + filterVar.Name.ToUpper() + "'" : filterIndex.ToString() %>
+			<%= filterVar.VariableName + i %>.SetEmpty()
+<%
+					if (filterVar.HasRangeOperator())
+					{
+%>
+			<%= filterVar.RangeVariableName + i %>.SetEmpty()
+<%
+					}
+%>
+			Do 'Update<%= filterVar.Name + i %>OperatorValues'
+<%
+					if (!hasSearchAction.HasValue)
+					{
+						hasSearchAction = (GridObject.GetStandardAction(StandardAction.Search) != null);
+					}
+					if (!hasSearchAction.Value)
+					{
+%>
+			Grid.Refresh()
+<%
+					}
+				}
+				filterIndex++;
+			}
+%>
+	EndCase
+EndEvent
+
+<%
+		}
+	}
+	if (DynamicFilters.MaxFilters > 1)
+	{
+%>
+
+Sub 'ResetDynFilters'
+
+<%
+		for (int i = 2; i <= DynamicFilters.MaxFilters; i++)
+		{
+%>
+	&DynamicFiltersEnabled<%= i.ToString() %> = False
+<%
+			if (((IFilter)DynamicFilters.Items[0]).VisibleCondition != "")
+			{
+%>
+	&DynamicFiltersSelector<%= i.ToString() %> = &DynamicFiltersFirstFilter
+<%
+			}
+			else
+			{
+%>
+	&DynamicFiltersSelector<%= i.ToString() %> = <%= includeNamesInSDTGridState ? "!'" + ((IFilter)DynamicFilters.Items[0]).Name.ToUpper() + "'": "0" %>
+<%
+			}
+			bool resetOperator = true;
+			foreach (IFilter filter in DynamicFilters.Items)
+			{
+				if (resetOperator && filter.HasOperators())
+				{
+					resetOperator = false;
+%>
+	&DynamicFiltersOperator<%= i.ToString() %> = 0
+<%
+				}
+				if (filter.Default != String.Empty)
+				{
+%>
+	&<%= filter.Name + i %> = <%= filter.Default %>
+<%
+				}
+				else if (filter is FilterAttributeMultipleGeneralElement)
+				{
+%>
+	&<%= filter.Name + i %>Values = new()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filter).IsTypeDropDownSelector())
+					{
+%>
+	DDO_FilterMultiple<%= filter.Name + i %>.SelectedValue_set = &<%= filter.Name + i %>Values.ToJson()
+<%
+					}
+					if (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null)
+					{
+%>
+	&<%= filter.Name + i %>Descriptions = new()
+<%
+						if (((FilterAttributeMultipleGeneralElement)filter).IsTypeDropDownSelector())
+						{
+%>
+	DDO_FilterMultiple<%= filter.Name + i %>.SelectedText_set = &<%= filter.Name + i %>Descriptions.ToJson()
+<%
+						}
+					}
+				}
+				else if (filter.IsDVCombo())
+				{
+					if (((IItemWithControlInfo)filter).ControlAllowMultipleSelection)
+					{
+%>
+	&<%= filter.Name + i %> = new()
+<%
+					}
+					else
+					{
+%>
+	&<%= filter.Name + i %>.SetEmpty()
+<%
+					}
+				}
+				else if (!filter.IsBoolean())
+				{
+%>
+	&<%= filter.Name + i %>.SetEmpty()
+<%
+					if (filter.HasRange() || filter.HasRangeOperator())
+					{
+%>
+	&<%= filter.Name %>_To<%= i.ToString() %>.SetEmpty()
+<%
+					}
+				}
+				else
+				{
+%>
+	&<%= filter.Name + i %> = False
+<%				
+				}
+				if (filter.VisibleCondition == "")
+				{
+					break;
+				}
+			}
+%>
+	Do 'EnableDynamicFilters<%= i.ToString() %>'
+
+<%
+		}
+%>
+
+EndSub
+<%
+	}
+%>

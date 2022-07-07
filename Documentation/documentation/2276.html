@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component variables properties</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?2276,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component variables properties</h1>
+<!--Business Component variables properties--><div class="TableWikiBody" id="tblwikibody"><p>Every variable based on a <a href="5846.html">Business Component</a> type of a <a href="1908.html">Transaction object</a>, provides one property per each Transaction attribute.</p>
+
+<p>Suppose you define the following Transaction as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+  CustomerId*
+  CustomerName
+  CustomerAddress
+  CustomerPhone
+  CustomerEmail
+  CustomerAddedDate 
+  CustomerTotalMiles
+}</pre>
+
+<p>Accordingly, a Business Component data type of the Customer Transaction is automatically created in the <a href="1836.html">Knowledge Base</a>. Then, you will be able to define in any object a variable based on the Customer data type. Thus, in a <a href="6293.html">Procedure object</a> you define a variable named <em>&amp;Customer</em> based on the Customer type, and in the <a href="6664.html">Procedure Source</a> you will use the <em>&amp;Customer</em> variable and their properties.</p>
+
+<p>See the following scenario: By way of promotion, the travel agency wants to increase 1000 miles for each customer. So, what should you do? Browse all the customers stored, and update the total miles of each one of them. </p>
+
+<p>You need to write in the Procedure Source a <a href="24744.html">For Each command</a> to navigate the CUSTOMER table. To achieve this, the following image shows the Procedure Source with the For Each command mentioning the Customer <a href="25418.html">Base Transaction</a>: </p>
+
+<p><img src="./images/50157.jpg" id="50157" class="WikiImage"/></p>
+
+<p>Note that when you type a dot following the variable name, GeneXus offers two types of elements you can select:</p>
+
+<ul>
+	<li>Those with a purple icon with an arrow are <a href="2277.html">methods</a> to be applied to the variable.</li>
+	<li>The ones with a blue gear are the properties, which means the attributes included in the structure of the Customer Transaction set as Business Component.</li>
+</ul>
+
+<p>Select the <a href="23211.html">Load method</a> and, in this example, the <a href="1868.html">Primary Key</a> value you have to include inside the parenthesis is the CustomerId attribute. It is available because for each customer navigated you have the CustomerId value (as well as the rest of the attributes that belong to the CUSTOMER <a href="6029.html">extended table</a>):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Customer
+   &amp;Customer.Load(CustomerId)
+Endfor</pre>
+
+<p>Once the navigated customer is loaded into memory, all you need to do is modify the customer’s total miles and save the changes.</p>
+
+<p>Write the 2nd instruction inside the For Each, type ampersand, and all the variables are offered. Select the &amp;Customer variable, type dot, and all the available methods and properties are offered. Select the CustomerTotalMiles property or attribute, and assign to it 1000 miles more than the value it already has:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Customer
+   &amp;Customer.Load(CustomerId)
+   &amp;Customer.CustomerTotalMiles += 1000
+Endfor</pre>
+
+<p><strong>You can assign values only to the same attributes that are editable on the Transaction’s Form (it means, not to inferred attributes neither attributes defined as global formulas).</strong></p>
+
+<p>Now you must save physically this update, so apply the Save method to the &amp;Customer variable:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Customer
+   &amp;Customer.Load(CustomerId)
+   &amp;Customer.CustomerTotalMiles += 1000
+   &amp;Customer.save()
+Endfor</pre>
+
+<p>When the Save method is executed, the rules defined in the Transaction and the automatic validations done by the Transaction are triggered. In case of error rules or automatic validations are triggered, the texts corresponding to what happened are loaded into memory in a collection. You can run through and process this collection. It will not be shown that in this example.</p>
+
+<p>Now determine if the saving operation was actually successful. If it was successful, execute <a href="7964.html">Commit command</a>; if not, execute Rollback:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Customer
+   &amp;Customer.Load(CustomerId)
+   &amp;Customer.CustomerTotalMiles += 1000
+   &amp;Customer.save()
+   if &amp;Customer.success()
+      commit
+   else 
+      rollback
+   endif
+Endfor</pre>
+
+<p>Finally, the objective is completely developed.</p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5846.html">Toc:Business Component</a></TD><TD><a href="23804.html">Business Component GetOldValues method</a></TD><TD><a href="23211.html">Business Component Load method</a></TD></TR><TR><TD><a href="23790.html">Business Component Mode method</a></TD><TD><a href="9548.html">Business Component property</a></TD><TD><a href="23229.html">Business Component Save method</a></TD></TR><TR><TD><a href="2281.html">Insertion of a Business Component variable in a Layout</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/24/22 10:27 PM</em></font></td></TR></table></font>

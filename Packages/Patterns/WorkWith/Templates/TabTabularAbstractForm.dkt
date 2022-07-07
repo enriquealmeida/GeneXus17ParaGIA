@@ -1,0 +1,187 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Tabular Tab WebForm" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Import Namespace="Artech.Patterns.WorkWithDevices.Copy" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	WorkWithSettings settings = wwInstance.Settings;
+	Transaction transaction = wwInstance.Transaction.Transaction; 
+	if (transaction == null)
+			throw new ArgumentNullException("Object");
+	var layout = Artech.Patterns.WorkWith.Helpers.TemplateManagment.CalculateTemplate(transaction);
+	string formClass = null;
+	string actionGroupThemeClass = null;
+	switch (layout)
+	{
+		case DefaultFormHelper.FormTemplate.Fiori:
+		{
+			actionGroupThemeClass  	= "Confirm";		
+			break;		
+		}
+		case DefaultFormHelper.FormTemplate.Carmine:
+		case DefaultFormHelper.FormTemplate.Unanimo:
+		{
+			formClass = "FormCell";
+			actionGroupThemeClass  	= "WWViewActions";	
+			break;
+		}
+		case DefaultFormHelper.FormTemplate.Flat:
+			break;
+		default:
+			throw new InvalidOperationException(string.Format("Missing sub-template for {0}", layout));
+	}	
+	TabElement tab = wwInstance.GetElement<TabElement>(Element);
+	if (tab.Attributes == null)
+		throw new PatternApplicationException("Tabular Tab must have attributes");
+
+	bool hasActions = false;
+	foreach (ActionElement action in tab.Actions)
+	{
+		if (!action.InGrid)
+		{
+			hasActions = true;
+			break;
+		}
+	}
+
+	bool hasImages = tab.Attributes.HasVisibleImages;
+	int visibleAttsCount = tab.Attributes.VisibleAttributesCount;
+	int visibleImgsCount = tab.Attributes.VisibleImagesCount;
+		
+	ResponsiveSizes mainTableSizes = Artech.Patterns.WorkWith.Helpers.TabularAbstractForm.MainTableResponsiveSizes(hasActions, hasImages);
+%>
+<%= WebMultiForm.BeginMultiForm(1) %>
+	<%-- Main form --%>
+	<%= WebMultiForm.BeginLayoutForm(1) %>
+		<%= WebLayout.BeginLayout() %>
+			<%= WebLayout.BeginResponsiveTable(mainTableSizes, Constants.MainTable, null) %>
+				
+<%
+	if (hasActions)
+	{
+%>
+				<%= WebLayout.BeginTableRow() %>
+					<%
+					string alignment = null;
+					switch (layout)
+					{
+						case DefaultFormHelper.FormTemplate.Unanimo:
+						{
+							alignment  	= "Right";		
+							break;		
+						}
+						case DefaultFormHelper.FormTemplate.Carmine:
+						case DefaultFormHelper.FormTemplate.Flat:
+						case DefaultFormHelper.FormTemplate.Fiori:
+						{
+							alignment  	= "Center";		
+							break;
+						}
+						default:
+							throw new InvalidOperationException(string.Format("Missing sub-template for {0}", layout));
+					}
+					%>
+					<%= WebLayout.BeginTableCell(null, Constants.ViewActionsCellClass,null,null,alignment,null) %>
+						<%= tab.Actions.ToActionGroupBlock() %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+<%
+	}
+%>	
+
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%-- Attributes --%>
+
+<%
+	if (visibleAttsCount > 0 && visibleAttsCount > visibleImgsCount)
+	{
+%>
+						<%= WebLayout.BeginResponsiveTable(Artech.Patterns.WorkWith.Helpers.AbstractForm.SimpleResponsiveSizesHelper((uint)(visibleAttsCount - visibleImgsCount), 1), Constants.AttributesTable, null) %>
+<%
+		foreach (IAttributesItem item in tab.Attributes.VisibleAttributes)
+		{
+			if (item.TypeInfo.Type != eDBType.BITMAP)
+			{
+%>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell(null, formClass) %>
+									<%= WebFormScript.Item(item, true, true) %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+<%
+			}
+		}
+%>
+						<%= WebLayout.EndResponsiveTable() %>
+<%
+	}
+%>
+					<%= WebLayout.EndTableCell() %>
+<%	
+	if (hasImages)
+	{
+%>
+					<%= WebLayout.BeginTableCell() %>
+<%-- Images --%>
+						<%= WebLayout.BeginResponsiveTable(Artech.Patterns.WorkWith.Helpers.AbstractForm.SimpleResponsiveSizesHelper((uint)visibleImgsCount, 1), Constants.ImagesTable, null) %>
+<%
+	foreach (IAttributesItem item in tab.Attributes.VisibleImages)
+	{
+%>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell(null, formClass) %>
+									<%= WebFormScript.Item(item, true, false) %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+<%
+	}
+%>
+						<%= WebLayout.EndResponsiveTable() %>
+					<%= WebLayout.EndTableCell() %>
+<%
+	}
+%>
+				<%= WebLayout.EndTableRow() %>
+
+<%-- Invisible attributes (needed for navigation) --%>
+<%
+	foreach (AttributeElement attribute in tab.Attributes.Attributes)
+	{
+		if (!attribute.Visible)
+		{
+%>
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebFormScript.HiddenAttribute(attribute.Attribute.Name, true) %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+<%
+		}
+	}
+
+%>
+			<%= WebLayout.EndResponsiveTable() %>
+<%-- Action group --%>
+			<%= WebLayout.BeginActionGroups() %>
+<%
+	if (hasActions)
+	{
+%>
+				<%= tab.Actions.ToActionGroup(actionGroupThemeClass) %>
+<%
+	}
+%>
+			<%= WebLayout.EndActionGroups() %>
+		<%= WebLayout.EndLayout() %>
+	<%= WebMultiForm.EndLayoutForm() %>
+<%= WebMultiForm.EndMultiForm() %>

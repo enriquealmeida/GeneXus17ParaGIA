@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Data Provider Subgroup statement</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25412,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Data Provider Subgroup statement</h1>
+<!--Data Provider Subgroup statement--><div class="TableWikiBody" id="tblwikibody"><p>It is one of the components of the <a href="5309.html">Data Provider output-based declarative language</a>. A subgroup is the declarative equivalent of a <a href="24767.html">subroutine</a> in a procedural language. Once declared, could be invoked instead of an <a href="25103.html">element statement</a>  by means of a Subgroup element insertion. </p>
+
+<h2><a id="Syntax+" class="HashLink" href="#Syntax+">Syntax </a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>&lt;subgroupStatement&gt;</em>::= <strong>subgroup</strong> <em>&lt;subgroupName&gt;</em><strong>(</strong>[<em>&lt;ParameterList&gt;</em>]<strong>)</strong>
+                            <em>&lt;mainGroupList&gt;</em>
+<em>                       </em><strong>endsubgroup</strong>
+</pre>
+
+<p style="text-align: right;">View <a href="6626.html">Syntax conventions</a></p>
+
+<p><strong>Where:</strong></p>
+
+<p><em>subgroupName</em><br />
+          It is the name of the subgroup. </p>
+
+<p><em>ParameterList</em><br />
+          It is a list of variables that will be used as a parameter for the subgroup</p>
+
+<p><em>mainGroupList</em><br />
+          Is a list of subsequent <a href="25082.html">group statements</a>.</p>
+
+<p><strong>Note: </strong>The subgroups should be defined all together at the end of the Data Provider source, that is: after all the <a href="25082.html">group statements</a>.  </p>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customers
+{
+   Customer
+   {
+      Code = CustomerId
+      Name = CustomerName
+      <strong>AddressGroup.Insert</strong>(CustomerAddress, CityName)
+   }
+}
+
+<strong>SubGroup</strong> AddressGroup(&amp;Street, &amp;City)
+Address 
+{ 
+   Street = &amp;Street
+   City = &amp;City 
+}
+<strong>EndSubGroup</strong>
+</pre>
+
+<p>A Subgroup can be internal (like this one) or external (defined as another Data Provider). For example, if you have an 'Address' SDT with Street and City as its members, and a Data Provider 'GetAddress' :</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Output: Address
+Collection: False
+Rules: parm( &amp;Street, &amp;City );</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Address
+{
+    Street = &amp;street
+    City = &amp;city 
+}
+</pre>
+
+<p>You can declare the previous 'GetCustomers' Data Provider like:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customers
+{
+    Customer
+    {
+         Code = CustomerId
+         Name = CustomerName
+         Address = GetAddress( CustomerAddress, CityName )
+    }
+}
+</pre>
+
+<p>The Address member of the 'Customer' output SDT must have the 'Address' SDT data type (the output of 'GetAddress'). Otherwise, an error will appear.<br />
+<br />
+Note the difference between 'inserting' a subgroup and 'assigning' an element calling a Data Provider.<br />
+<br />
+One interesting use of this is the <a href="4891.html">recursive one</a>.</p>
+
+<h4><a id="" class="HashLink" href="#"><span style="line-height: 1.6em;"></span></a></h4>
+
+<p><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25082.html">Data Provider Group statement</a></TD><TD><a href="5309.html">Toc:Data Provider language</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/21/22 10:23 PM</em></font></td></TR></table></font>

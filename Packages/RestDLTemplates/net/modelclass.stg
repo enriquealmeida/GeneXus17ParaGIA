@@ -1,0 +1,58 @@
+﻿group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities,  dps, apis, sdts, gx)::=<<
+$header(hostinfo, entities,  dps, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities,  dps, apis, sdts, gx)::=<<
+using System;
+using $hostinfo.netnamespace$;
+using $hostinfo.netnamespace$.Controllers;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace $hostinfo.netnamespace$.Models
+{    
+	$entities:{item|$class_instance(item, item.SDT, gx)$};separator="\n"$
+	$sdts:{item|$class_instance(item, item.SDT, gx)$};separator="\n"$
+}
+>>
+
+sublvl_class_instance(item, level, gx)::=<<
+$level.SubLevels:{ sublevel | $sublvl_class_instance(item, sublevel, gx)$}$
+public class $gx.ToProper.(item.Name)$$gx.ToProper.(level.Name)$
+{
+	$level.Attributes:{att|$sub_att_properties( att, gx)$ };separator="\n"$	
+}
+>>
+
+
+class_instance(item, level, gx)::=<<
+$level.SubLevels:{ sublevel | $sublvl_class_instance(item, sublevel, gx)$}$
+public class $item.Name$
+{
+	$level.Attributes:{att|$att_properties( att, gx)$ };separator="\n"$
+	$level.SubLevels:{ sublevel | public ICollection<$gx.ToProper.(item.Name)$$gx.ToProper.(sublevel.Name)$> $gx.ToProper.(sublevel.Name)$$get_sub(sublevel, gx)$};separator="\n"$	               
+}
+>>
+
+get_sub(sublevel, gx)::=<<
+{
+	get ;
+	set ;
+}
+>>
+
+sub_att_properties( att, gx)::=<<
+public $if (att.IsCollection)$List<$endif$$att.NETTypeClass$$if (att.IsCollection)$>$endif$ $att.Name$ {get; set;}
+>>
+
+
+att_properties( att, gx)::=<<
+$if (att.IsKey)$[Key]$endif$
+$if (att.IsSecondaryAtt)$[ConcurrencyCheck]$endif$
+public $if (att.IsCollection)$List<$endif$$att.NETTypeClass$$if (att.IsCollection)$>$endif$ $att.Name$ {get; set;}
+>>

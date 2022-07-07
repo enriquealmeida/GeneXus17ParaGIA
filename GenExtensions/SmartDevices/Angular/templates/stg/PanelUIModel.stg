@@ -1,0 +1,93 @@
+delimiters "$", "$"
+
+g_uimodel(page) ::= <<
+class $page.FullName$UIModel {
+
+  private _host: $page.FullName$Component;
+
+  constructor( host: $page.FullName$Component) {
+    this._host = host;
+    $g_uimodel_init(page)$
+  }
+
+  $g_uimodel_controls(page)$
+}
+
+$g_nested_uimodel( page)$
+>>
+
+g_uimodel_init(page) ::= <%
+  $page.PanelUIModel:g_uimodel_control_properties()$
+%>
+
+g_uimodel_control_properties(control) ::= <%
+  $control.InitialValues:{prop|$g_uimodel_control_property(control, prop)$}$
+%>
+
+g_uimodel_control_property(control, property) ::= <<
+this.$control.Name$.$property.Name$ = $property.Value$;
+
+>>
+
+g_uimodel_controls(page) ::= <%
+  $page.PanelUIModel:{control|$if(control.IncludeInUIModel)$$g_uimodel_control_declare(control)$$endif$};separator="\r\n"$
+%>
+
+g_uimodel_control_declare(control) ::= <<
+$control.Name$ = $g_type_ctor(control.GeneratorType)$;
+>>
+
+g_nested_uimodel(page) ::= <%
+  $page.PanelUIModel:{ control|$g_uimodel_nested_control_declare(control, page)$ }$
+%>
+
+g_uimodel_nested_control_declare(control, page) ::= <<
+$if(control.HasNestedControls)$
+class $control.UIModelName$ extends UIListElementItem {
+   $control.Controls:g_uimodel_control_declare();separator="\r\n"$
+}
+
+$control.Controls:{ childControl|$g_uimodel_nested_control_declare(childControl, page)$ }$
+$endif$
+>>
+
+g_ui_element_initializers(init) ::= <%
+  $init.Name$: $init.Value$
+%>
+
+
+g_uiactions(page) ::= <<
+class $page.FullName$UIActions {
+
+  private _host: $page.FullName$Component;
+
+  constructor( host: $page.FullName$Component) {
+    this._host = host;
+    $page.PanelUIModel:g_uiactions_control_actions()$
+  }
+
+  $page.PanelUIModel:g_uiactions_controls()$
+}
+
+>>
+
+g_uiactions_control_actions(control) ::= <%
+  $control.Actions:{action|$g_uiaction_control_action(control, action)$}$
+  $if (control.HasNestedControls)$
+  $control.Controls:{child_control|$g_uiactions_control_actions(child_control)$}$
+  $endif$
+%>
+
+g_uiaction_control_action(control, action) ::= <<
+this.$control.Name$.set$(action.EventBinding)$Action( (...parms) => {this._host.callAction(this._host.$action.ActionName$, ...parms);});
+
+>>
+
+g_uiactions_controls(control) ::= <<
+$if(control.BindedToActions)$
+$g_uimodel_control_declare(control)$
+$endif$
+$if (control.HasNestedControls)$
+$control.Controls:{child_control|$g_uiactions_controls(child_control)$}$
+$endif$
+>>

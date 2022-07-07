@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to use the GeneXus Scheduler Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?11577,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to use the GeneXus Scheduler Control</h1>
+<!--How to use the GeneXus Scheduler Control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="When+to+use+it%3F" class="HashLink" href="#When+to+use+it%3F">When to use it?</a></h2>
+
+<p>If you want to show a serie of chronological events by day, week or month probably this is the control that will fit your needs.</p>
+
+<h2><a id="What+does+it+look+like%3F" class="HashLink" href="#What+does+it+look+like%3F">What does it look like?</a></h2>
+
+<p><img src="./images/11579.JPG" id="11579" class="WikiImage"/></p>
+
+<p><img src="./images/11580.JPG" id="11580" class="WikiImage"/></p>
+
+<h2><a id="How+to+use+it%3F" class="HashLink" href="#How+to+use+it%3F">How to use it?</a></h2>
+
+<p>The scheduler control is available in the GeneXus toolbox as many other controls. If you want to use it:</p>
+
+<ol>
+	<li>First of all, drag it on to your webpanel form.</li>
+	<li>In order to load the events set the control's LoadObjectEvents property with a Procedure or DataProvider which must return an SDT with the corresponding events. Take a look on <b>How must be the LoadObjectEvents DataProvider look like</b> for details.</li>
+	<li>Handle the EventAdded, EventDeleted or EventUpdated if needed. Take a look on <b>How to handle Scheduler user events</b> for details.</li>
+</ol>
+
+<h2><a id="How+must+the+LoadObjectEvents+Data+Provider+look+like%3F" class="HashLink" href="#How+must+the+LoadObjectEvents+Data+Provider+look+like%3F"><b>How must the LoadObjectEvents Data Provider look like?</b></a></h2>
+
+<p>This DataProvider is in charge of loading the events of a given period. Must have the following parameter:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(&amp;dateFrom, &amp;dateTo,&amp;events);
+   // &amp;dateFrom and &amp;dateTo must be Date</pre>
+
+<p>And the Data Provider's SDT (&amp;events) must be of type SchedulerEvents.</p>
+
+<h4><a id="Example+1%3A+Loading+a+set+of+fixed+data" class="HashLink" href="#Example+1%3A+Loading+a+set+of+fixed+data">Example 1: Loading a set of fixed data</a></h4>
+
+<p>This is the Data Provider used to show the previous screenshots:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CalendarEvents
+{
+	Items
+	{
+		event
+		{
+			Id = &quot;1&quot;	
+			Notes = &quot;&lt;img  src='http://i.conmebol.com/banderas/VEN_flag_ssm.gif' /&gt; &lt;img src='http://i.conmebol.com/banderas/URU_flag_ssm.gif' /&gt;Venezuela vs Uruguay&quot;
+			StartTime = ctot(&quot;06/11/2009 01:00 AM&quot;)
+			EndTime = ctot(&quot;06/11/2009 03:00 AM&quot;)
+			
+		}
+		event
+		{
+			Id = &quot;2&quot;	
+			Notes = &quot;&lt;img src='http://i.conmebol.com/banderas/COL_flag_ssm.gif' /&gt; &lt;img src='http://i.conmebol.com/banderas/PER_flag_ssm.gif' /&gt;Colombia vs Peru&quot;
+			StartTime = ctot(&quot;06/10/2009 11:00 PM&quot;)
+			EndTime = ctot(&quot;06/10/2009 11:45 PM&quot;)
+			
+		}
+		event
+		{
+			Id = &quot;3&quot;	
+			Notes = &quot;&lt;img src='http://i.conmebol.com/banderas/ECU_flag_ssm.gif' /&gt; &lt;img src='http://i.conmebol.com/banderas/ARG_flag_ssm.gif' /&gt;Ecuador vs Argentina&quot;
+			StartTime = ctot(&quot;06/10/2009 09:00 PM&quot;)
+			EndTime = ctot(&quot;06/10/2009 11:00 PM&quot;)
+			
+		}
+		event
+		{
+			Id = &quot;4&quot;	
+			Notes = &quot;&lt;img src='http://i.conmebol.com/banderas/BRA_flag_ssm.gif' /&gt; &lt;img src='http://i.conmebol.com/banderas/PAR_flag_ssm.gif' /&gt;Brasil vs Paraguay&quot;
+			StartTime = ctot(&quot;06/11/2009 00:50 AM&quot;)
+			EndTime = ctot(&quot;06/11/2009 01:50 AM&quot;)
+		}
+		event
+		{
+			Id = &quot;5&quot;	
+			Notes = &quot;&lt;img src='http://i.conmebol.com/banderas/CHI_flag_ssm.gif' /&gt; &lt;img src='http://i.conmebol.com/banderas/BOL_flag_ssm.gif' /&gt;Chile vs Bolivia&quot;
+			StartTime = ctot(&quot;06/11/2009 01:00 AM&quot;)
+			EndTime = ctot(&quot;06/11/2009 03:00 AM&quot;)
+		}
+	}
+}</pre>
+
+<h4><a id="Example+II%3A+loading+event+from+the+database" class="HashLink" href="#Example+II%3A+loading+event+from+the+database">Example II: loading event from the database</a></h4>
+
+<p>If you have the events stored in the database you can write something like this:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CalendarEvents
+{
+   items
+   {
+      event
+         where EventStart &gt;= &amp;dateFrom
+         where EventEnd   &lt;= &amp;dateTo
+      {
+          Id                    = EventId
+          StartTime             = EventStart
+	  EndTime               = EventEnd
+	  Notes                 = EventDescription
+	  AdditionalInformation = EventDetails
+      }
+   }
+}</pre>
+
+<h2><a id="How+to+handle+Scheduler+user+events%3F" class="HashLink" href="#How+to+handle+Scheduler+user+events%3F">How to handle Scheduler user events?</a></h2>
+
+<p>The Scheduler control expose four events: EventAdded, EventDeleted, EventUpdated, EventSelected</p>
+
+<p>These events are essential when you want to allow the user to create, update or delete events directly using the Scheduler control. When the Scheduler control raise one of these events it load the property CurrentEvent that is bound to a variable (by default the variable is called &amp;currentEvent).</p>
+
+<p>So, suppose you want to add the event to your data store when the control raise the EventAdded</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event gxCalendar1.EventAdded
+	&amp;eventTrnBC.EventId = &amp;currentEvent.Id
+	&amp;eventTrnBC.EventStart = &amp;currentEvent.StartTime
+	&amp;eventTrnBC.EventEnd = &amp;currentEvent.EndTime
+        &amp;eventTrnBC.EventDescription = &amp;currentEvent.Notes
+	&amp;eventTrnBC.EventDetails = &amp;currentEvent.AdditionalInformation
+	&amp;eventTrnBC.Save()
+	commit	
+EndEvent </pre>
+
+<h2><a id="Sample+KB" class="HashLink" href="#Sample+KB">Sample KB</a></h2>
+
+<p>See <a href="https://wiki.genexus.com/commwiki/wiki?11725,," target="_blank">Patient Appointment KB</a>.</p>
+
+<p></p>
+
+<p> </p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

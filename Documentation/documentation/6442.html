@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Inline Formulas outside a contextual table</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6442,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Inline Formulas outside a contextual table</h1>
+<!--Inline Formulas outside a contextual table--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As it was mentioned before when the <a href="6441.html">Inline Formulas</a> were introduced, the fact a formula has a table in its context at evaluation time will affect its result. And its very definition, either. </p>
+
+<p>When an <a href="6441.html">inline formula</a> is defined without a contextual table, at the moment the formula is triggered you are not positioned on any table. Consequently, this is only valid for <a href="5868.html">Aggregate Formulas</a>, and in the formula definition you can only include attributes that belong to the desired table to be navigated and its <a href="6029.html">extended table</a>, in addition to variables.</p>
+
+<p>What scenarios do not state <strong>contextual table</strong>?</p>
+
+<ul>
+	<li><a href="6664.html">Procedure Source</a>: outside <a href="24744.html">For Each command</a> (or inside whether <a href="8603.html">When None Clause</a> block code).</li>
+	<li><a href="6664.html">Procedure Source</a>: attribute assignment inside <a href="6714.html">New command</a> (only whether outside <a href="24843.html">When duplicate clause</a>).</li>
+	<li>Events with no associated base table: outside for each commands.</li>
+	<li><a href="24767.html">Subroutines</a>: outside for each commands.</li>
+	<li><a href="25082.html">Data provider Group</a> with no base table (at <a href="25103.html">Data provider Element statement</a>)</li>
+	<li>SDT or Business Component (element assignment): outside every block code with base table.</li>
+</ul>
+
+<p> </p>
+
+<p><span style="line-height: 1.6em;">Given the following transactions:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong><strong>Customer             //transaction name
+</strong><em><strong>  {CustomerId*
+  CustomerName}
+
+</strong></em></strong><strong><strong>Invoice             //transaction name
+</strong><em><strong>  {InvoiceId*
+  InvoiceDate
+  CustomerId
+  CustomerName
+  InvoiceTotal}</strong></em></strong>
+</pre>
+
+<p>In the following examples, note how the same formula has a contextual table and implicit filters when it is defined inside a For Each command; and when it is defined outside a For Each command, it has neither a contextual table nor implicit filters:</p>
+
+<p><img src="./images/6735.JPG" id="6735" class="WikiImage"/></p>
+
+<p>In the first example, the For Each base table is: CUSTOMER and as the <a href="6500.html">Sum formula</a> is defined inside the For Each, its contextual table is also CUSTOMER. Even though the Sum formula only involves an attribute that belongs to the INVOICE table (which is the desired table to be navigated by the formula), it could also contain attributes that belong to the CUSTOMER table and its extended table, in addition to variables.</p>
+
+<p>Another thing to consider in the first example is that GeneXus determines an implicit filter for the formula, which is: INVOICE.<em>CustomerId</em> =  CUSTOMER.<em>CustomerId</em> (because <em>CustomerId</em> is a common attribute between the For Each base table and the table navigated by the formula). So, for each customer navigated by the For Each, its invoices are summarized.</p>
+
+<p>Note: as of <a href="https://wiki.genexus.com/commwiki/wiki?20247,," target="_blank">GeneXus X Evolution 3</a> you would probably have specified the BaseTrn in the for each (i.e. <strong>for each Customer</strong>...)</p>
+
+<p>In the second example, the same Sum formula was defined, <strong>but outside a For Each command</strong>. Thus, the formula doesn't have a contextual table, and it can only involve attributes that belong to the desired table to be navigated by the formula and its extended table, in addition to variables. Besides this, the formula won't have implicit filters inferred by GeneXus. So, in this example all the invoices are summarized.</p>
+
+<h3><a id="Important+consideration" class="HashLink" href="#Important+consideration">Important consideration</a></h3>
+
+<p>The formula is triggered when the group that contains the formula <strong>begins</strong>.</p>
+
+<p>This means that if you have a formula defined in a certain line of the code with its parameters, the parameter values will be those that were read at the moment that the group was executed in the data base. So, if the group was executed in the database, and after that, you have assigned different values to the parameters that you will involve in the formula definition, the parameter values taken into account won't be those that you have assigned; on the contrary, they will be those read when the group that contains the formula was executed in the database.</p>
+
+<p>So, when are groups executed?</p>
+
+<ol>
+	<li>when a program begins</li>
+	<li>when a For Each begins</li>
+	<li>after an Endfor</li>
+	<li>when a subroutine or event begins</li>
+</ol>
+
+<p><span style="line-height: 1.6em;">The same happens with variables. The variable values which are taken into account when the formulas are triggered, are the values that the variables have assigned at the moment that the group that contains the formula is executed. So, if you write the following code:</span></p>
+
+<p><em> </em><em>&amp;CustomerId = 1</em></p>
+
+<p><em>&amp;total = Sum(InvoiceTotal, CustomerId = &amp;CustomerId)</em></p>
+
+<p>The <em>&amp;CustomerId </em>variable won't have a value at the moment that the formula is triggered.</p>
+
+<p>This can be solved as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CustomerId = 1
+Do 'CalcTotal'
+...
+
+Sub 'CalcTotal'
+    &amp;total = Sum(InvoiceTotal, CustomerId = &amp;CustomerId)
+EndSub
+</pre>
+
+<p>In this way, as there is a new beginning of a group (when the subroutine begins) and the formula is included inside the subroutine, when the formula is executed the <em>&amp;CustomerId</em> variable already has the desired value.</p>
+
+<h4><a id="Note" class="HashLink" href="#Note">Note</a></h4>
+
+<p>Whenever you want an isolated evaluation you can also use a procedure to do the calculation.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5882.html">Examples of Using Formulas</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="6441.html">Inline Formulas</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/08/21 01:00 PM</em></font></td></TR></table></font>

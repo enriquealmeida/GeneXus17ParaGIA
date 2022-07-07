@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to create a simple JWT</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46132,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to create a simple JWT</h1>
+<!--How to create a simple JWT--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p class="Code">This document describes how to create a very simple JWT with a common symmetric algorithm using GeneXusJWT module.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+//******HEADER******//
+//{
+//  &quot;alg&quot;: &quot;HS256&quot;,
+//  &quot;typ&quot;: &quot;JWT&quot;
+//}
+//******PAYLOAD******//
+//{
+//  &quot;jti&quot;: &quot;0696bb20-6223-4a1c-9ebf-e15c74387b9c&quot;,
+//  &quot;iss&quot;: &quot;example.com&quot;,
+//    &quot;exp&quot; : 1909649720,
+//  &quot;company&quot;: &quot;Example&quot;,
+//}
+
+//Obtaining an hexadecimal key for a symmetric encryption algorithm since it is what we are using (HS256)
+&amp;symmetricKey = &amp;SymmetricKeyGenerator.DoGenerateKey(SymmetricKeyType.GENERICRANDOM, 256)
+
+//Adding iss claim, it is a registered claim
+//Registered claims are not mandatory therefore are added on JWTOptions SDT
+//Documentation: https://wiki.genexus.com/commwiki/servlet/wiki?43983,JWT+Optional+Data
+//For more information about JWT claim types https://wiki.genexus.com/commwiki/servlet/wiki?43981,JSON+Web+Token+Standard+%28JWT%29
+&amp;JWTOptions.AddRegisteredClaim(RegisteredClaim.iss, &quot;example.com&quot;)
+
+//Adding exp claim, it is a registered claim that validates time.
+//Therefore AddCustomTimeValidationClaim is the method to use with a time with &quot;yyyy/MM/dd HH:mm:ss&quot; picture
+&amp;JWTOptions.AddCustomTimeValidationClaim(RegisteredClaim.exp, &quot;2030/07/07 10:15:20&quot;, &quot;0&quot;)
+&amp;JWTOptions.AddRegisteredClaim(RegisteredClaim.jti, &quot;0696bb20-6223-4a1c-9ebf-e15c74387b9c&quot;)
+//Adding the key to use for the signature
+&amp;JWTOptions.SetSecret(&amp;symmetricKey)
+
+&amp;PrivateClaims.SetClaim(&quot;company&quot;,&quot;Example&quot;)
+
+//Use DoCreate to sign and encode the token
+//Documentation: https://wiki.genexus.com/commwiki/servlet/wiki?43989,JWT+Creator
+&amp;token = &amp;JWTCreator.DoCreate(JWTAlgorithm.HS256, &amp;PrivateClaims, &amp;JWTOptions)
+
+if &amp;JWTCreator.HasError()
+    msg(&quot;Error on creation: Code: &quot; + &amp;JWTCreator.GetErrorCode() + &quot; Description: &quot; + &amp;JWTCreator.GetErrorDescription(), status)
+else
+    msg(&quot;Correctly generated&quot;, status)
+
+    msg(&quot;Base 64 token: &quot; + &amp;token, status)
+
+    //The JWTCeator object also has functions to obtain the header and  the payload from the encoded token in plain text
+
+    &amp;header = &amp;JWTCreator.GetHeader(&amp;token)
+
+    msg(&quot;Token header: &quot; + &amp;header, status)
+
+    &amp;payload = &amp;JWTCreator.GetPayload(&amp;token)
+
+    msg(&quot;Token payload: &quot; + &amp;payload, status)
+
+    &amp;verification = &amp;JWTCreator.DoVerify(&amp;token, JWTAlgorithm.HS256, &amp;PrivateClaims, &amp;JWTOptions)
+    //This verification method verifies the recieved token agains the key and claims provided, not just the signature
+    //If the token was changed in any mean it will fail
+    //When the above specification fails it will return false as for any other type of error
+    if &amp;JWTCreator.HasError()
+        msg(&quot;Error on creation: Code: &quot; + &amp;JWTCreator.GetErrorCode() + &quot; Description: &quot; + &amp;JWTCreator.GetErrorDescription(), status)
+    else
+        msg(&quot;Correctly verified. Result: &quot; + &amp;verification.ToString(), status)
+    endif
+
+endif</pre>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/18/20 01:34 PM</em></font></td></TR></table></font>

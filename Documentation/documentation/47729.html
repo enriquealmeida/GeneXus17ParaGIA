@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to: create a GeneXus procedure to be deployed as an Azure Function</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47729,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to: create a GeneXus procedure to be deployed as an Azure Function</h1>
+<!--How to: create a GeneXus procedure to be deployed as an Azure Function--><div class="TableWikiBody" id="tblwikibody"><p>Some <a href="47430.html">Azure functions</a> (other than the Http-triggered functions) may require parameters to be executed.<br />
+When the Azure runtime invokes a function (the function is triggered), it receives information related to the event that happened (e.g: the message that was received from a queue in a Queue Storage or a Service Bus function, or the blob that was stored in a Blob storage).<br />
+This information is needed inside the GeneXus procedure to program the logic of the function.</p>
+
+<p>Therefore, in order to create a GeneXus procedure that will be deployed as a function, you should consider some aspects regarding the parameters of the procedure that are explained in this document.</p>
+
+<p><em>Note </em>: This is valid for functions whose trigger type is Service Bus, Queue, and Timer.</p>
+
+<p><img alt="enlightened" height="23" src="https://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />The GeneXus procedures have to be main (call protocol = Internal).</p>
+
+<h2><a id="Install+the+GeneXusServerlessAPI+module" class="HashLink" href="#Install+the+GeneXusServerlessAPI+module">Install the GeneXusServerlessAPI module</a></h2>
+
+<p>First, import into the knowledge base the external module called &quot;GeneXusServerlessAPI.&quot; This module contains the definitions of the SDTs necessary to be passed as parameters to the function.</p>
+
+<p><img src="./images/47807.png" id="47807" class="WikiImage"/></p>
+
+<p><img src="./images/47808.png" id="47808" class="WikiImage"/></p>
+
+<p>The parm rule can be any of the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;EventMessages,out:&amp;EventMessageResponse); 
+
+parm(in:&amp;RawData,out:&amp;EventMessageResponse); // RawData is a char parameter
+</pre>
+
+<h3><a id="About+EventMessage+SDT" class="HashLink" href="#About+EventMessage+SDT">About EventMessage SDT</a></h3>
+
+<p>The header of EventMessage allows getting from the Azure function all the information of the event (such as its ID).<br />
+The item EventMessageCustomPayload is a property-value structure, where you can retrieve the body of the message, including its metadata. It's a dynamic structure to support any kind of message, regardless of the trigger type of the function.</p>
+
+<p><img src="./images/47732.png" id="47732" class="WikiImage"/></p>
+
+<p>Note: If you want to receive the message in a JSON string, use in:&amp;RawData character parameter.</p>
+
+<h3><a id="About+EventMessageResponse+SDT" class="HashLink" href="#About+EventMessageResponse+SDT">About EventMessageResponse SDT</a></h3>
+
+<p>The EventMessageResponse has the following structure:</p>
+
+<p><img src="./images/47734.png" id="47734" class="WikiImage"/></p>
+
+<p>See Error Handling below for more details.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>The following is an example of code where the EventMessage is processed.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for &amp;EventMessage in &amp;EventMessages.EventMessage
+    
+    &amp;MessageInfo = format(!&quot;Id : %1, Source : %2, Version : %3, Date : %4, Data : %5&quot;
+    ,&amp;EventMessage.EventMessageId
+    ,&amp;EventMessage.EventMessageSourceType
+    ,&amp;EventMessage.EventMessageVersion
+    ,&amp;EventMessage.EventMessageDate
+    ,&amp;EventMessage.EventMessageData)
+    
+    //Process the message properties.
+    //This is a dynamic structure (property-value) which depends on the type of message and the provider.
+    for &amp;CustomPayloadItem in &amp;EventMessage.EventMessageCustomPayload
+     
+          &amp;CustomPayload +=    format(!&quot;%1:%2 %3 &quot;,&amp;CustomPayloadItem.PropertyId,&amp;CustomPayloadItem.PropertyValue, &quot;-&quot;)
+     endif
+
+endfor    
+endfor
+
+&amp;myQueueItem = format(!&quot;*Message Info*--&gt; '%1'. *CustomPayload*--&gt; %2.&quot;,&amp;MessageInfo,&amp;CustomPayload)
+</pre>
+
+<h2><a id="Deploy" class="HashLink" href="#Deploy">Deploy</a></h2>
+
+<p>To deploy the procedure as a function, use the deployment tool. See <a href="49351.html">Deploy to Azure Functions</a>.</p>
+
+<h2><a id="Error+Handling" class="HashLink" href="#Error+Handling">Error Handling</a></h2>
+
+<p>To avoid lost events, error handling is a very important issue to consider. This is for exceptions that require that the function is executed again until the maximun number of retries is reached.</p>
+
+<p>Each type of function has its own management of <a href='https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-error-pages?tabs=csharp'>retries and error handling</a> in its infrastructure. According to the <a href='https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-error-pages?tabs=csharp#app-level-configuration'>MS documentation</a>, a retry policy can be defined for all functions in an app using the <a href='https://docs.microsoft.com/en-us/azure/azure-functions/functions-host-json#retry'>host.json file</a>. <br />
+This file is added to the deployment package with basic settings. You have to modify it to your needs and include it as a file if you want.<br />
+<br />
+In the GeneXus procedure, if the application fails for any reason, you should try to catch the error and assign the EventMessageResponse output parameter with an ErrorMessage and the Handled element set to FALSE.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+If &amp;isError
+    &amp;EventMessageResponse.Handled = FALSE
+    &amp;EventMessageResponse.ErrorMessage = &quot;There was an error in the process.&quot;
+ Endif</pre>
+
+<p>In this case, the error is thrown to the Azure runtime so the function can retry all the times it is configured to do so. In the case of Queue Storage or Service Bus, and if none of the retries is successful, the message is sent to a Poison queue or dead letter, respectively.<br />
+In this case, in the monitor of Azure cloud you will see the error as an Application Error: </p>
+
+<p><img src="./images/47738.png" id="47738" class="WikiImage"/></p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="47659.html">GeneXus 17 upgrade 3</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="47430.html">Azure Functions</a></li>
+	<li><a href="49260.html">HowTo: Troubleshooting Azure Functions</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49264.html">Azure timer triggered functions</a></TD><TD><a href="49351.html">Deploy to Azure Functions</a></TD><TD><a href="49355.html">Service Bus and Queue Storage triggered Azure functions</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/26/21 06:37 PM</em></font></td></TR></table></font>

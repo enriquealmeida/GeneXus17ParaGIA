@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploying a Java application on a JBoss server</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46032,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploying a Java application on a JBoss server</h1>
+<!--Deploying a Java application on a JBoss server--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This example focuses on a particular case, deploying a Java application to a test environment using a JBoss application server, accessing the Oracle Database via JNDI and using the <a href="19888.html">GeneXus Access Manager</a>.</p>
+
+<h2><a id="Step+1%3A+Creating+the+Data+Source" class="HashLink" href="#Step+1%3A+Creating+the+Data+Source">Step 1: Creating the Data Source</a></h2>
+
+<p><img src="./images/46117.gif" id="46117" class="WikiImage"/></p>
+
+<p>For this step, you need to use the Database Driver, which can be found at &lt;GeneXus_Installation&gt;\gxjava\drivers\ojdbc*.jar</p>
+
+<p>The driver is deployed in the application server, and you can check that it is listed in the configuration. The creation of a new data source must use the driver, as well as contain the connection data to the Oracle instance; the process is completed with a successful connection test.</p>
+
+<p>The name assigned to the Data Source is configured in the KB, in the Data Store properties.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java:/OracleDS
+</pre>
+
+<p class="Code"><a href="https://wiki.genexus.com/commwiki/wiki?9384,," target="_blank">Use Data Source for Web Based Applications</a></p>
+
+<p><a href="2112.html">JDBC Data Source</a></p>
+
+<p>Both the default data store and the GAM data store use the same data source in the example.</p>
+
+<h2><a id="Step+2%3A+Packaging+Generation" class="HashLink" href="#Step+2%3A+Packaging+Generation">Step 2: Packaging Generation</a></h2>
+
+<p>The WAR packaging is generated using the <a href="32092.html">Application Deployment Tool</a>.</p>
+
+<p><img src="./images/46118.gif" id="46118" class="WikiImage"/></p>
+
+<p>To do so, set the property <a href="44032.html">Use Application Server Data Source</a> to True.</p>
+
+<p>Reorganization of the GAM database can be done from within GeneXus or using the GAM Deploy Tool in standalone or command line mode. <a href="18608.html">Read the documentation</a></p>
+
+<h2><a id="Step+3%3A+Deployment+and+Packaging+Configuration+%28WAR%29" class="HashLink" href="#Step+3%3A+Deployment+and+Packaging+Configuration+%28WAR%29">Step 3: Deployment and Packaging Configuration (WAR)</a></h2>
+
+<p>The application is deployed in the test environment.</p>
+
+<p><img src="./images/46119.gif" id="46119" class="WikiImage"/></p>
+
+<p>In this step, errors may occur due to the specific configuration of the environment, which should be solved by modifying mainly web.xml or jboss-deployment-structure.xml configuration files.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GenexusWebApp.war could not be deployed.Details {&quot;WFLYDC0074: Operation failed or undone on all servers. Server failures: &quot; =&gt; {&quot;server-group&quot; =&gt; {&quot;main-server-group&quot; =&gt; {&quot;host&quot; =&gt; {&quot;master&quot; =&gt; { &quot;server-one&quot; =&gt; {&quot;WFLYCTL0080: Servicios fallidos&quot; =&gt; {&quot;jboss.deployment.unit.\&quot;GenexusWebApp.war\&quot;.undertow-deployment.UndertowDeploymentInfoService&quot; =&gt; &quot;java.lang.ClassNotFoundException: genexus.security.api.aGAMSSORestRequestTokenAndUserInfo_v20 from [Module \&quot;deployment.GenexusWebApp.war\&quot; from Service Module Loader] Caused by: java.lang.ClassNotFoundException: genexus.security.api.aGAMSSORestRequestTokenAndUserInfo_v20 from [Module \&quot;deployment.GenexusWebApp.war\&quot; from Service Module Loader]&quot;}}, &quot;server-two&quot; =&gt; {&quot;WFLYCTL0080: Service failures&quot; =&gt; {&quot;jboss.deployment.unit.\&quot;GenexusWebApp.war\&quot;.undertow-deployment.UndertowDeploymentInfoService&quot; =&gt; &quot;java.lang.ClassNotFoundException: genexus.security.api.aGAMSSORestRequestTokenAndUserInfo_v20 from [Module \&quot;deployment.GenexusWebApp.war\&quot; from Service Module Loader] Caused by: java.lang.ClassNotFoundException: genexus.security.api.aGAMSSORestRequestTokenAndUserInfo_v20 from [Module \&quot;deployment.GenexusWebApp.war\&quot; from Service Module Loader]&quot;}} }}}}}}</pre>
+
+<p>The <a href='https://access.redhat.com/solutions/3682621'>Solution</a> to this error is a dependency defined in the web.xml file that is not necessary, so it is enough to delete or rename it using lowercase.</p>
+
+<p>Also added to the web.xml file are the tags needed to disable JBoss' RESTeasy service module as described in the article <a href="20110.html">Deployment of Java Applications</a></p>
+
+<h2><a id="Step+4%3A+Connection+property+may+be+needed" class="HashLink" href="#Step+4%3A+Connection+property+may+be+needed">Step 4: Connection property may be needed</a></h2>
+
+<p>In the particular case of some DBMS such as Oracle or SQL Server, the Data Source property must be configured.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+fixed string = True
+</pre>
+
+<p><img src="./images/46120.gif" id="46120" class="WikiImage"/></p>
+
+<p>This can also be done by editing the file domain.xml/standalone.xml, as indicated in <a href='https://www.genexus.com/es/developers/websac?data=21246;;'>SAC #21246</a><br />
+“NOTE: This is because a Data Source is used; GeneXus adds this property through code, but when using a Data Source you have to add it manually.” For this reason, see how the error Repository not found is solved.</p>
+
+<h2><a id="Step+5%3A+Application+testing" class="HashLink" href="#Step+5%3A+Application+testing">Step 5: Application testing</a></h2>
+
+<p><img src="./images/46121.gif" id="46121" class="WikiImage"/></p>
+
+<p>In this step, a test is performed by querying the application data and successfully changing it.</p>
+
+<p><strong>Software versions used:</strong></p>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?45624,," target="_blank">GeneXus 16 upgrade 10</a></li>
+	<li>JBoss EAP 7.3.0.GA</li>
+	<li>Java 1.8</li>
+	<li>Oracle 19C</li>
+</ul>
+
+<p><strong>Note:</strong> To deploy the application in a distributed environment (cluster), take into account the information of <a href='https://www.genexus.com/es/developers/websac?data=47815;;'>SAC #47815</a></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/25/20 10:38 PM</em></font></td></TR></table></font>

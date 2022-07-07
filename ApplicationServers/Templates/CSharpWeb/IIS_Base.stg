@@ -1,0 +1,382 @@
+
+delimiters "$", "$"
+
+generateConfig()::=<<
+$iisVersion()$
+<configuration>
+	
+	$configSections()$
+
+	$appSettings()$
+
+	$languages()$
+  
+	$logging()$
+
+	$systemWeb()$
+
+	$systemServiceModel()$
+ 
+	$systemWebServer()$
+  
+	$location()$
+
+</configuration>
+>>
+
+configSections()::=<<
+$ConfigSections.Value$
+>>
+
+appSettings()::=<<
+$AppSettings.Value$
+>>
+
+languages()::=<<
+$Languages.Value$
+>>
+
+logging()::=<<
+$Logging.Value$
+>>
+
+systemWeb()::=<<
+<system.web>
+	$Trace.Value$
+	$CustomErrors.Value$
+	$HttpRuntime.Value$
+	$compilation()$
+	$HttpCookies.Value$
+	$SessionState.Value$
+	$httpHandlers()$
+</system.web>
+>>
+
+systemServiceModel()::=<<
+$if (Services || HasWorkflow || WebNotificationSupport)$
+<system.serviceModel>
+	<client />
+	<serviceHostingEnvironment aspNetCompatibilityEnabled="true" />
+	$if (Services || HasWorkflow)$
+	<services>
+		$Services:{ service | $serviceEndpoint(service)$ };separator="\r\n"$
+	$gxFlowServices()$
+	</services>
+	<extensions>
+		<behaviorExtensions>
+			<add name="customWebHttp" type="GeneXus.Utils.CustomHttpBehaviorExtensionElement, GxClasses, Version=11.0.0.0, Culture=neutral, PublicKeyToken=6f5bf81c27b6b8aa" />
+		</behaviorExtensions>
+	</extensions>
+	<behaviors>
+		<endpointBehaviors>
+			<behavior name="ServiceRestBehavior">
+				<customWebHttp />
+			</behavior>
+		</endpointBehaviors>
+		<serviceBehaviors>
+			<behavior name="ServiceDefaultBehavior">
+				$serviceMetadata()$
+				<dataContractSerializer maxItemsInObjectGraph="2147483647" />
+			</behavior>
+		</serviceBehaviors>
+	</behaviors>
+	<bindings>
+		<webHttpBinding>
+			<binding name="CustomBinding" maxReceivedMessageSize="10485760">
+				$security()$
+				<readerQuotas maxStringContentLength="10485760" />
+			</binding>
+		</webHttpBinding>
+		<basicHttpBinding>
+			<binding name="CustomBinding" maxReceivedMessageSize="10485760">
+				$security()$
+				<readerQuotas maxStringContentLength="10485760" />
+			</binding>
+		</basicHttpBinding>
+	</bindings>
+	$endif$
+</system.serviceModel>
+$endif$
+>>
+
+serviceMetadata()::=<%
+<serviceMetadata 
+$if (HttpsEnabled)$
+	httpGetEnabled="false" httpsGetEnabled="true"
+$else$
+	httpGetEnabled="true"
+$endif$
+/>
+%>
+
+security()::=<<
+<security mode="$if (HttpsEnabled)$Transport$else$None$endif$">
+	<transport clientCredentialType="None" />
+</security>
+>>
+
+serviceEndpoint(service)::=<<
+
+$if (service.FullName)$
+<service name="$(service.FullName)$" behaviorConfiguration="ServiceDefaultBehavior">
+	<endpoint address="" binding="basicHttpBinding" bindingConfiguration="CustomBinding" contract="$(service.FullName)$" />
+	<endpoint address="rest" behaviorConfiguration="ServiceRestBehavior" binding="webHttpBinding" bindingConfiguration="CustomBinding" contract="$(service.FullName)$" />
+</service>
+$else$
+<service name="$Namespace$$gx.DotifyModule.(service.RelativeTargetDir)$$service.Filename$_services" behaviorConfiguration="ServiceDefaultBehavior">
+	<endpoint address="" binding="basicHttpBinding" bindingConfiguration="CustomBinding" contract="$Namespace$$gx.DotifyModule.(service.RelativeTargetDir)$$service.Filename$_services" />
+	<endpoint address="rest" behaviorConfiguration="ServiceRestBehavior" binding="webHttpBinding" bindingConfiguration="CustomBinding" contract="$Namespace$$gx.DotifyModule.(service.RelativeTargetDir)$$service.Filename$_services" />
+</service>
+$endif$
+>>
+
+systemWebServer()::=<<
+<system.webServer>
+	$urlRewrite()$
+	$StaticContent.Value$
+	$handlers()$
+	$modules()$
+	<validation validateIntegratedModeConfiguration="false" />
+	<urlCompression doStaticCompression="true" />
+	<security>
+		<requestFiltering allowDoubleEscaping="true">
+			<hiddenSegments>
+				<add segment="PrivateTempStorage" />
+				<add segment="private" />
+			</hiddenSegments>
+		</requestFiltering>
+	</security>
+</system.webServer>
+>>
+
+urlRewrite()::=<<
+$if (HttpsEnabled || IntegratedSecurity || HasBC || SDEnabled || RestEnabled || HasWorkflow)$
+<rewrite>
+	<rules>
+		$restRules()$
+		$httpsRule()$
+		$gamRules()$
+		$bcRules()$
+		$sdRules()$
+		$gxFlowRules()$
+		<rule name="GX REST Services" stopProcessing="true">
+			<match url="^rest/((?:/?[\w \.-]+)+)/?(.*)\$" />
+			<action type="Rewrite" url="{R:1}.svc/rest/{R:2}" />
+		</rule>
+	</rules>
+</rewrite>
+$endif$
+>>
+
+gamRules()::=<<
+$if (IntegratedSecurity)$
+$if (SDEnabled || RestEnabled)$
+<rule name="GXOAuthAccessToken" stopProcessing="true">
+	<match url="^oauth/access_token\$" />
+	<action type="Rewrite" url="GXOAuthAccessToken.aspx" />
+</rule>
+<rule name="GXOAuthLogout" stopProcessing="true">
+	<match url="^oauth/logout\$" />
+	<action type="Rewrite" url="GXOAuthLogout.aspx" />
+</rule>
+<rule name="GXOAuthUserInfo" stopProcessing="true">
+	<match url="^oauth/userinfo\$" />
+	<action type="Rewrite" url="GXOAuthUserInfo.aspx" />
+</rule>
+$endif$
+<rule name="GXGamSignIn" stopProcessing="true">
+	<match url="^oauth/gam/signin\$" />
+	<action type="Rewrite" url="agamextauthinput.aspx" />
+</rule>
+<rule name="GXGamCallback" stopProcessing="true">
+	<match url="^oauth/gam/callback\$" />
+	<action type="Rewrite" url="agamextauthinput.aspx" />
+</rule>
+<rule name="GXGamAccessToken" stopProcessing="true">
+	<match url="^oauth/gam/access_token\$" />
+	<action type="Rewrite" url="agamoauth20getaccesstoken.aspx" />
+</rule>
+<rule name="GXGamUserInfo" stopProcessing="true">
+	<match url="^oauth/gam/userinfo\$" />
+	<action type="Rewrite" url="agamoauth20getuserinfo.aspx" />
+</rule>
+<rule name="GXGamSignOut" stopProcessing="true">
+	<match url="^oauth/gam/signout\$" />
+	<action type="Rewrite" url="agamextauthinput.aspx" />
+</rule>
+<rule name="GXGamSamlSignin" stopProcessing="true">
+	<match url="^saml/gam/signin\$" />
+	<action type="Rewrite" url="Saml2/SignIn" />
+</rule>
+<rule name="GXGamSamlCallBack" stopProcessing="true">
+	<match url="^saml/gam/callback\$" />
+	<action type="Rewrite" url="gamexternalauthenticationinputsaml20_ws.aspx" />
+</rule>
+<rule name="GXGamSamlSignout" stopProcessing="true">
+	<match url="^saml/gam/signout\$" />
+	<action type="Rewrite" url="Saml2/Logout" />
+</rule>
+<rule name="GXGamRequestTokenService" stopProcessing="true">
+	<match url="^oauth/requesttokenservice\$" />
+	<action type="Rewrite" url="agamstsauthappgetaccesstoken.aspx" />
+</rule>
+<rule name="GXGamQueryAccessToken" stopProcessing="true">
+	<match url="^oauth/queryaccesstoken\$" />
+	<action type="Rewrite" url="agamstsauthappvalidaccesstoken.aspx" />
+</rule>
+<rule name="GamAccessTokenV2" stopProcessing="true">
+	<match url="^oauth/gam/v2.0/access_token\$" />
+	<action type="Rewrite" url="agamoauth20getaccesstoken_v20.aspx" />
+</rule>
+<rule name="OAuthUserInfoV2" stopProcessing="true">
+	<match url="^oauth/gam/v2.0/userinfo\$" />
+	<action type="Rewrite" url="agamoauth20getuserinfo_v20.aspx" />
+</rule>
+<rule name="OAuthSSORestV2" stopProcessing="true">
+	<match url="^oauth/gam/v2.0/RequestTokenAndUserinfo\$" />
+	<action type="Rewrite" url="aGAMSSORestRequestTokenAndUserInfo_v20.aspx" />
+</rule>
+$endif$
+>>
+
+bcRules()::=<<
+$BCs:{ bc | $bcRule(bc)$ };separator="\r\n"$
+>>
+
+bcRule(bc)::=<<
+<rule name="$gx.RulesNameModules.(bc.ModulePath)$$bc.Name$_bc" stopProcessing="true">
+	<match url="^rest/$gx.RulesUrlModules.(bc.ModulePath)$$bc.Name$(/.*)*\$" />
+	<action type="Rewrite" url="$gx.RulesNameModules.(bc.ModulePath)$$bc.Name$_bc.svc/rest/{R:1}" />
+</rule>
+>>
+
+sdRules()::=<<
+$SDServices:{ sds | $sdRule(sds)$ };separator="\r\n"$
+>>
+
+sdRule(sds)::=<<
+<rule name="$gx.RulesNameModules.(sds.ModulePath)$$sds.Identity$" stopProcessing="true">
+	<match url="^rest/$gx.RulesUrlModules.(sds.ModulePath)$$sds.Identity$(/.*)*\$" />
+	<action type="Rewrite" url="$gx.RulesNameModules.(sds.ModulePath)$$sds.Identity$.svc/rest/{R:1}" />
+</rule>
+>>
+
+restRules()::=<<
+$if (RestEnabled)$
+<rule name="GXObject" stopProcessing="true">
+	<match url="^rest/(.*)/gxobject\$" />
+	<action type="Rewrite" url="{R:1}.svc/rest/gxobject" />
+</rule>
+<rule name="gx_valid_service" stopProcessing="true">
+	<match url="^gx_valid_service(.*)\$" />
+	<action type="Rewrite" url="gx_valid_service.aspx{R:1}" />
+</rule>
+<rule name="gxmulticall" stopProcessing="true">
+	<match url="^gxmulticall(.*)\$" />
+	<action type="Rewrite" url="gxmulticall.aspx{R:1}" />
+</rule>
+<rule name="metadata" stopProcessing="true">
+	<match url="^rest/metadata/(.*).json\$" />
+	<action type="Rewrite" url="gxmetadata/{R:1}.json" />
+</rule>
+<rule name="metadataList" stopProcessing="true">
+	<match url="^rest/metadata\$" />
+	<action type="Rewrite" url="gxmetadata/gx_entity_list.json" />
+</rule>
+<rule name="metadataImg" stopProcessing="true">
+	<match url="^rest/metadata/images/(.*)\$" />
+	<action type="Rewrite" url="gxmetadata/images/{R:1}" />
+</rule>
+<rule name="metadataJson" stopProcessing="true">
+	<match url="^rest/metadata/(.*)\$" />
+	<action type="Rewrite" url="gxmetadata/{R:1}.json" />
+</rule>
+$endif$
+>>
+
+httpsRule()::=<<
+$if (HttpsEnabled)$
+<rule name="HTTP to HTTPS redirect" stopProcessing="true">
+	<match url="(.*)" />
+	<conditions>
+		<add input="{HTTPS}" pattern="off" ignoreCase="true" />
+		<add input="{HTTP_X_FORWARDED_PROTO}" pattern="^https\$" negate="true" />
+	</conditions>
+	<action type="Redirect" redirectType="Found" url="https://{HTTP_HOST}{REQUEST_URI}" />
+</rule>
+$endif$
+>>
+
+location()::=<<
+<location path="PublicTempStorage">
+	<system.webServer>
+		<handlers>
+			<clear />
+			<add name="StaticFile" path="*" verb="*" modules="StaticFileModule,DefaultDocumentModule,DirectoryListingModule" resourceType="Either" requireAccess="Read" />
+		</handlers>
+	</system.webServer>
+</location>
+>>
+
+gxQueryHandler()::=<%
+$if (IncludeQueryViewer)$
+<add name="QueryViewer handler for agxpl_*.aspx" verb="*" path="agxpl_*.aspx" type="QueryViewer.Services.HttpHandlerFactory, QueryViewer.Services.HttpHandlerFactory" />
+$endif$
+%>
+
+handlers()::=<<
+<handlers>
+	$webSocketHandler()$
+	$gxFlowHanlders()$
+	<add name="GeneXus.HttpHandlerFactory.HandlerFactory" verb="*" path="*.aspx" type="GeneXus.HttpHandlerFactory.HandlerFactory,gxclasses" />
+	$gxQueryHandler()$
+	$if (RestEnabled)$
+	<remove name="WebDAV" />
+	$endif$
+</handlers>
+>>
+
+modules()::=<<
+<modules>
+	<add name="GXStaticContentCache" type="GeneXus.Http.HttpModules.GXStaticCacheModule,gxclasses" />
+	<add name="GXAPIServices" type="GeneXus.Http.HttpModules.GXAPIModule,gxclasses" />
+	<add name="GXRewriter" type="GeneXus.Http.HttpModules.GXRewriter,gxclasses" />
+	$if (IntegratedSecurity)$
+	<add name="SessionAuthenticationModule" type="System.IdentityModel.Services.SessionAuthenticationModule, System.IdentityModel.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+	<add name="Saml2AuthenticationModule" type="Sustainsys.Saml2.HttpModule.Saml2AuthenticationModule, Sustainsys.Saml2.HttpModule" />
+	$endif$
+	$if (RestEnabled)$
+	<remove name="WebDAVModule" />
+	$endif$
+</modules>
+>>
+
+gxFlowHanlders()::=<<
+$if (HasWorkflow)$
+<add name="GXflow Handler for awf*.aspx" verb="*" path="awf*.aspx" type="GXflow.Programs.WFHttpHandlerFactory, GXflow.Programs.WFHttpHandlerFactory" />
+<add name="GXflow Handler for wf*.aspx" verb="*" path="wf*.aspx" type="GXflow.Programs.WFHttpHandlerFactory, GXflow.Programs.WFHttpHandlerFactory" />
+<add name="GXflow Handler for apwf*.aspx" verb="*" path="apwf*.aspx" type="GXflow.Programs.WFHttpHandlerFactory, GXflow.Programs.WFHttpHandlerFactory" />
+$endif$
+>>
+
+gxFlowRules()::=<<
+$if (HasWorkflow)$
+	<rule name="GXflow REST Services" stopProcessing="true">
+		<match url="^wfrest/([\w \.-]+)/?(.*)\$" />
+		<action type="Rewrite" url="{R:1}.svc/rest/{R:2}" />
+	</rule>
+$endif$
+>>
+
+gxFlowServices()::=<<
+$if (HasWorkflow)$
+	<service name="GXflow.Programs.pwfimportgamrolesrest_services" behaviorConfiguration="ServiceDefaultBehavior">
+		<endpoint address="" binding="basicHttpBinding" bindingConfiguration="CustomBinding" contract="GXflow.Programs.pwfimportgamrolesrest_services" />
+		<endpoint address="rest" binding="webHttpBinding" behaviorConfiguration="ServiceRestBehavior" bindingConfiguration="CustomBinding" contract="GXflow.Programs.pwfimportgamrolesrest_services" />
+	</service>
+	<service name="GXflow.Programs.pwfexportgamrolesrest_services" behaviorConfiguration="ServiceDefaultBehavior">
+		<endpoint address="" binding="basicHttpBinding" bindingConfiguration="CustomBinding" contract="GXflow.Programs.pwfexportgamrolesrest_services" />
+		<endpoint address="rest" binding="webHttpBinding" behaviorConfiguration="ServiceRestBehavior" bindingConfiguration="CustomBinding" contract="GXflow.Programs.pwfexportgamrolesrest_services" />
+	</service>
+$endif$
+>>

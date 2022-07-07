@@ -1,0 +1,114 @@
+delimiters "$", "$"
+
+typeConversionTemplate ::= [
+  "string_number" : "convert_string_to_numeric",
+  "string_boolean" : "convert_string_to_boolean",
+  "number_string" : "convert_numeric_to_string",
+  "number_boolean" : "convert_numeric_to_boolean",
+  "boolean_number" : "convert_boolean_to_number",
+  "Date_string" : "convert_date_to_string",
+  "string_Date" : "convert_string_to_date",
+  "GUID_string" : "convert_guid_to_string",
+  "string_GUID" : "convert_string_to_guid",
+  default: "default_conversion"
+]
+
+typeDecoratorTemplate ::= [
+  "number" : "number_type_decorator",
+  "GUID" : "guid_type_decorator",
+  "GxBinary" : "binary_type_decorator",
+   default : "default_type_decorator" 
+]
+
+toSerializableTypeTemplate ::= [
+  "GUID" : "convert_guid_to_string",
+  "GxBinary" : "convert_binary_to_string",
+   default : "convert_sdt_to_object" 
+]
+
+g_convert_to( fromGeneratorType, toGeneratorType, exp) ::=<%
+$({$typeConversionTemplate.({$fromGeneratorType:g_type_name()$_$toGeneratorType:g_type_name()$})$})(exp)$
+%>
+
+convert_string_to_numeric(exp) ::= <%
++$exp$
+%>
+
+convert_string_to_boolean(exp) ::= <%
+($exp$ == 'true')
+%>
+
+convert_numeric_to_string(exp) ::= <%
+'' + $exp$
+%>
+
+convert_number_to_boolean(exp) ::= <%
+($exp$ !== 0)
+%>
+
+convert_boolean_to_number(exp) ::= <%
++ $exp$
+%>
+
+convert_date_to_string(exp) ::= <%
+this.dateToISOString($exp$)
+%>
+
+convert_string_to_date(exp) ::= <%
+this.dateFromISOString($exp$)
+%>
+
+convert_string_to_guid(exp) ::= <%
+GUID.fromString($exp$ || '')
+%>
+
+convert_guid_to_string(exp) ::= <%
+$exp$.toString()
+%>
+
+default_conversion(exp) ::= <%
+$exp$
+%>
+
+g_declare_item_decorator(item) ::=<%
+$if(item.isCollection)$
+$if(item.ItemGeneratorType)$
+    $collection_type_decorator(item)$ 
+$endif$
+$else$
+    $g_type_decorator(item)$
+$endif$
+%>
+
+collection_type_decorator(item) ::= <%
+  @Type(() => $g_type_name(item.ItemGeneratorType)$) 
+%>
+
+g_type_decorator(item) ::= <%
+$({$typeDecoratorTemplate.({$item.GeneratorType:g_type_name()$})$})(item)$
+%>
+
+number_type_decorator(item) ::= <%
+  @Type(() => Number) 
+%>
+
+guid_type_decorator(item) ::= <%
+  @Transform(value => value.toString(), { toPlainOnly: true }) 
+  @Transform(value => GUID.fromString(value), { toClassOnly: true }) 
+%>
+
+binary_type_decorator(item) ::= <%
+  @Transform(value => value.toString(), { toPlainOnly: true }) 
+  @Transform(value => GxBinary.fromString(value), { toClassOnly: true }) 
+%>
+
+default_type_decorator(item) ::= <%
+%>
+
+g_convert_to_serializable_type( type, exp) ::= <%
+$({$toSerializableTypeTemplate.({$type:g_type_name()$})$})(exp)$
+%>
+
+convert_sdt_to_object( exp ) ::= <%
+TypeConversions.classToObject( $exp$ )
+%>

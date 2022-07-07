@@ -1,0 +1,56 @@
+delimiters "$", "$"
+
+g_touch_event_binding(data) ::= <<
+$data.UIActionsInfo.TapAction:g_event_binding( {click}, data )$
+$data.UIActionsInfo.DoubleTapAction:g_event_binding( {dblclick}, data )$
+$data.UIActionsInfo.LongTapAction:g_event_binding( {lngclick}, data )$
+$data.UIActionsInfo.SwipeAction:g_event_binding( {swipe}, data )$
+$data.UIActionsInfo.SwipeUpAction:g_event_binding( {swipeup}, data )$
+$data.UIActionsInfo.SwipeDownAction:g_event_binding( {swipedown}, data )$
+$data.UIActionsInfo.SwipeLeftAction:g_event_binding( {swipeleft}, data )$
+$data.UIActionsInfo.SwipeRightAction:g_event_binding( {swiperight}, data )$
+$data.UIActionsInfo.DragAction:g_event_binding( {drag}, data )$
+$data.UIActionsInfo.DropAction:g_event_binding( {drop}, data )$
+$data.UIActionsInfo.DragCanceledAction:g_event_binding( {dragcanceled}, data )$
+$data.UIActionsInfo.DropAcceptedAction:g_event_binding( {dropaccepted}, data )$
+$data.UIActionsInfo.TapAction:g_event_styling()$
+$g_event_highlightable(data)$
+>>
+
+g_event_highlightable(data) ::= <%
+$if(data.UIActionsInfo.TapAction || data.UIActionsInfo.DoubleTapAction)$
+highlightable
+$endif$
+%>
+
+g_timer_event_binding(data) ::= <<
+(tick) = "$data.BindingInfo.DataBinding:g_expression()$ = \$event.target.value; $g_event_uiaction( {Tick}, data)$"
+>>
+
+g_button_click_event_binding(data, onClickAction) ::= <<
+(click)="$onClickAction$"
+>>
+
+g_event_binding( modelEvent, controlEvent, data) ::= <<
+$event_binding( modelEvent, controlEvent, data)$
+>>
+
+g_event_binding_call( modelEvent, data ) ::= <%
+  $g_event_uiaction(modelEvent, data)$;
+%>
+
+g_event_uiaction( modelEvent, data ) ::= <%
+$event_uiaction( modelEvent, data )$
+%>
+
+g_event_styling(modelEvent) ::= <%
+data-has-action=""
+%>
+
+g_event_set_action_context( ctx ) ::= <%
+  this.$ctx.ControlName$SetContext($ctx.Ix$);
+%>
+
+g_enter_event_binding(data) ::= <<
+$data.EnterAction:{evt|(keyup.enter)="callAction($evt$); \$event.stopPropagation()"}$
+>>

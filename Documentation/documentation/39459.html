@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Application Configuration using Environment Variables</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39459,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Application Configuration using Environment Variables</h1>
+<!--Application Configuration using Environment Variables--><div class="TableWikiBody" id="tblwikibody"><p>In various scenarios, it is common practice to read configuration information from environment variables, rather than configuration files. This document details the scenarios in which this practice is used, its advantages and how to do so.</p>
+
+<h2><a id="Scenarios" class="HashLink" href="#Scenarios">Scenarios</a></h2>
+
+<p>1) Typical case and good practice using Docker Containers</p>
+
+<p>One of the main benefits of the use of containers is that they can be mounted on any boat.<br />
+In technical terms: The idea is that the docker image that you use for testing could be used for production; this way you have certainty that what you tried, is what you execute in production.</p>
+
+<p>The solution that the industry uses, in this case, is Environment Variables.<br />
+In practice: When the container is instantiated, it is said to execute with these and those values for these and those environment variables. And the application that runs in the container reads those environment variables.</p>
+
+<p>Without this, the connection options to the databases are hardcoded into a connection file that is part of the web app that goes into the docker image (the container). So the container that you use in your testing environment is not the one you can use in your production environment, where it has to be attached to another database with other credentials.</p>
+
+<p>2) Security, Independence of development and production teams: Case of Deployment of a war or zip</p>
+
+<p>Without the use of Environment Variables, the only way to reuse the deployment package for production is to know the Database credentials and other properties of production when you create the package using the GeneXus IDE, something that is not viable in many companies or projects.</p>
+
+<p>3) Cloud Native: In a PaaS environment, when connecting against a Database service, Cloud providers propose specific environment variables maintained by them. With this, they guarantee that if they later change the Database service URI  (for example after a restore) requiring other credentials or connection options, the applications automatically take those new values without having to change other things in the web servers.</p>
+
+<p>4) Agility in testing: If you run an application in a Docker container, you might want to run it with some configuration, and then with another; for example, to test how its behavior varies, or how it behaves depending to which Database is connected.</p>
+
+<h2><a id="Solution" class="HashLink" href="#Solution">Solution</a></h2>
+
+<p>Each configuration entry of an application can be read from an environment variable. This environment variable must be prefixed with 'GX_' and it must be all in capital letters.</p>
+
+<h3><a id=".NET" class="HashLink" href="#.NET">.NET</a></h3>
+
+<p>For the case of .NET, the variable must be called the same as it is defined in the web.config.</p>
+
+<p>Suppose you have a Docker Image (named &quot;environmenttest.netenvironment&quot;) with a web app that points to a production DB. Now you want to raise an instance of that image pointing to the Test DB (named &quot;EnvTest&quot;). For that you execute the following command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -e GX_CONNECTION-DEFAULT-DB=EnvTest environmenttest.netenvironment</pre>
+
+<p>where the flag -e sets the environment variable <span style="font-family: courier new;">GX_Connection-Default-DB</span> (same name as it has in the web.config) to &quot;EnvTest&quot;. When the application starts and wants to read the value of that property, it first checks if there is an environment variable with that name. As it exists, it takes that value.</p>
+
+<p>If on the contrary, you want to raise the same image (environmenttest.netenvironment) against the production DB (EnvProd), execute the following command:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -e GX_CONNECTION-DEFAULT-DB=EnvProd environmenttest.netenvironment</pre>
+
+<p>The same works for any configuration property of the web.config. Whenever you are going to look for a configuration property, the application first searches for an environment variable with that name.</p>
+
+<h3><a id=".NET+Core" class="HashLink" href="#.NET+Core">.NET Core</a></h3>
+
+<p>.NET Core works just like .NET, but the settings are stored in a file called appsettings.json</p>
+
+<h3><a id="Java" class="HashLink" href="#Java">Java</a></h3>
+
+<p>The case of Java is a bit different because Java has the client.cfg that works differently, it has sections.</p>
+
+<p>For example, if you have a section called com.environmenttest|DEFAULT (which is the default DBMS of your environment) where there is a DB_URL entry that has the url to the DBMS, for example jdbc:jtds:sqlserver://172.16.3.21:1435/EnvProd.</p>
+
+<p>If you want to change that value, you have to create an environment variable concatenating the section and the property, all in upper case, replacing points and pipes with an underscore. For example, if you create the variable <span style="font-family: courier new;">GX_COM_ENVIRONMENTTEST_DEFAULT_DB_URL</span>, you overwrite the value of the client.cfg: The value of that variable becomes the one that the app handles.</p>
+
+<p>In this case, to launch the container with this variable you have to execute the following command to connect to the test DB:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -p 8890: 8080 -e GX_COM_ENVIRONMENTTEST_DEFAULT_DB_URL=jdbc:jtds:sqlserver://172.16.3.21:1435/EnvTest environmenttestjavaenvironment</pre>
+
+<p class="Code">and the following for the production DB:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -p 8890: 8080 -e GX_COM_ENVIRONMENTTEST_DEFAULT_DB_URL=jdbc:jtds:sqlserver://172.16.3.21:1435/EnvProd environmenttestjavaenvironment</pre>
+
+<p><strong>AWS MYSQL Sample</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -p 8890: 8080 -e GX_COM_ENVIRONMENTTEST_DEFAULT_DB_URL=jdbc:mysql://myrdsname.us-east-1.rds.amazonaws.com/mybdname?useSSL=false
+</pre>
+
+<h3><a id="Cloud+Services" class="HashLink" href="#Cloud+Services">Cloud Services</a></h3>
+
+<p>This feature also works with Cloud Services properties. For instance, if you configured your application to use Microsoft Azure as your <a href="31121.html">Storage Provider</a>, you will have to set some properties like the account details and container names. These properties can also be modified at runtime via environment variables. These variables must be also prefixed with 'GX_' and must contain the type of the service and the name of the property all in capital letters. So, if you want to modify the Public Container Name, you can create a variable called <span style="font-family: courier new;">GX_STORAGE_PUBLIC_CONTAINER_NAME</span> with the value of your choice. For further reference of the Types and property names, you can open the generated CloudServices.config file.</p>
+
+<h3><a id="Property+redirection" class="HashLink" href="#Property+redirection">Property redirection</a></h3>
+
+<p>There are cloud providers that already provide environment variables with the values to connect to the different services.<br />
+If the provider does not provide environment variables for the purpose, you can define your own.</p>
+
+<p>In any case, to use those variables, a specific file allows you to declare the mapping between the environment variables defined at the cloud provider and the configuration property. This file is called <em>confmapping.json</em> and contains a json octopus (property value) with the necessary mapping.</p>
+
+<h4><a id="Java+Example" class="HashLink" href="#Java+Example">Java Example</a></h4>
+
+<p>Amazon provides the environment variables RDS_USERNAME and RDS_PASSWORD (among others) where the corresponding values of the RDS are already loaded. For that case, you can have the file <em>confmapping.json</em> in the WEB-INF directory of your web app with the following json:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{&quot;com.environmenttest|DEFAULT:USER_ID&quot;:&quot;RDS_USERNAME&quot;,&quot;com.environmenttest|DEFAULT:USER_PASSWORD&quot;:&quot;RDS_PASSWORD&quot;}</pre>
+
+<p>When the web app wants to raise the USER_ID property of the com.environmenttest |DEFAULT section, it will read the value of the RDS_USERNAME environment property (and the same with the USER_PASSWORD / RDS_PASSWORD). </p>
+
+<h4><a id=".Net+or+Net+Core" class="HashLink" href="#.Net+or+Net+Core">.Net or Net Core</a></h4>
+
+<p>In the case of Net Core, and .Net, the <em>confmapping.json </em>should be like the following<i> </i>(where XXX and YYY are variables defined in the Cloud provider)</p>
+
+<p>{&quot;Connection-Default-DB&quot;:&quot;XXX&quot;,&quot;Connection-Default-User&quot;:&quot;YYY&quot;}</p>
+
+<p>Note: To test what value is being taken into account or what environment variables are set, you may use <a href="40085.html">ConfigurationManager external object</a></p>
+
+<h3><a id="Configuration+information+that+is+not+included+in+this+solution+%28exceptions+to+the+rule%29" class="HashLink" href="#Configuration+information+that+is+not+included+in+this+solution+%28exceptions+to+the+rule%29">Configuration information that is not included in this solution (exceptions to the rule)</a></h3>
+
+<p>There is some configuration information that must not be changed through environment variables. The reason is that not all the program parts (eg. gxcfg.js) take into account those changes and inconsistencies may arise.<br />
+This is a list of those exceptions (the names of the following configuration entries correspond to .NET):</p>
+
+<ul>
+	<li>AppMainNamespace</li>
+	<li>DateFormat</li>
+	<li>YearLimit</li>
+	<li>TimeAmPmFormat</li>
+	<li>VER_STAMP</li>
+	<li>StorageTimeZone</li>
+	<li>LANGUAGE</li>
+	<li>LANG_NAME</li>
+	<li>DECIMAL_POINT</li>
+	<li>DATE_FMT</li>
+	<li>CTOD_DATE_FMT</li>
+	<li>GX_BUILD_NUMBER</li>
+	<li>DocumentType</li>
+</ul>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This feature is available as of <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="36951.html">How to Deploy an Application to Docker</a></p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="40085.html">ConfigurationManager external object</a></TD><TD><a href="45309.html">Considerations for building and deploying applications to containers</a></TD></TR><TR><TD><a href="40607.html">Docker Environment variables property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/07/22 09:46 PM</em></font></td></TR></table></font>

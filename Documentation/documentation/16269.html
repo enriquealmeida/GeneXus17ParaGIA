@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Linear Gauge Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16269,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Linear Gauge Control</h1>
+<!--Linear Gauge Control--><div class="TableWikiBody" id="tblwikibody"><p>This control allows you to display information in the form of ranges, and decide whether you want to show it using linear or circular gauges.</p>
+
+<p>When you enter a variable of string type and change the value of the <a href="9550.html">Control Type property</a> to Linear Gauge, GeneXus automatically generates a new SDT called GaugeSDT, which is divided by properties and values that will affect the control as a whole; the same applies to each range.  </p>
+
+<p> </p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>Title</td>
+			<td>Text shown above the control if it is of Linear type; if it is of Circular type, it will be shown in the center of the control.</td>
+		</tr>
+		<tr>
+			<td>Type</td>
+			<td>Allows you to choose the form in which it will be displayed. The possible values are Line, Circular. The default value is Line.</td>
+		</tr>
+		<tr>
+			<td>Thickness</td>
+			<td>Applicable when the control is of Circular type; it allows specifying the width of the circumference.</td>
+		</tr>
+		<tr>
+			<td>Height</td>
+			<td>Height of the range bars.</td>
+		</tr>
+		<tr>
+			<td>Width</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>MaxValue</td>
+			<td>Indicates the maximum value the control can represent, i.e., the sum of all its ranges.</td>
+		</tr>
+		<tr>
+			<td>MinValue</td>
+			<td>Indicates the minimum value that a range can represent. </td>
+		</tr>
+		<tr>
+			<td>Value</td>
+			<td>Indicates the current value represented.</td>
+		</tr>
+		<tr>
+			<td>ShowMinMax</td>
+			<td>Allows displaying the maximum and minimum value indicators.</td>
+		</tr>
+		<tr>
+			<td>ShowValue</td>
+			<td>Allows displaying the value.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<h4><a id="Ranges+%28applicable+to+each+range%29%3A" class="HashLink" href="#Ranges+%28applicable+to+each+range%29%3A"><b>Ranges (applicable to each range):</b></a></h4>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td>Color:</td>
+			<td>A hexadecimal string value. Example: &quot;#F80303&quot;</td>
+		</tr>
+		<tr>
+			<td>Name:</td>
+			<td>Name of this range.</td>
+		</tr>
+		<tr>
+			<td>Length:</td>
+			<td>Length of this range.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="Sample%3A+" class="HashLink" href="#Sample%3A+"><strong>Sample: </strong></a></h3>
+
+<p>Now you will place a variable of string type in your <a href="24829.html">Panel object</a> and will set the Control Type property to Linear Gauge (variable called &amp;LineGauge in this example).</p>
+
+<p><img src="./images/40626.png" id="40626" class="WikiImage"/></p>
+
+<p>Note that changing the GeneXus control type will change the preview of the object. The image shown in the layout is merely illustrative.</p>
+
+<p>In the Refresh event, you will load the data. In this case, it will be provided by a <a href="5270.html">Data Provider object</a> (called LoadData in the example). It will have the following structure:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GaugeSDT
+{
+    MaxValue   = 100
+    MinValue   = 0
+    Value      = 35
+    Height     = 8
+    ShowMinMax = False
+    ShowValue  = True
+    Ranges
+    {
+        Range
+        {
+            Color  = '#00FF00'//Green
+            Name   = 'Low' 
+            Length = 28
+        }
+        Range
+        {
+            Color     = '#FF8000'//Orange
+            Name     = 'Medium' 
+            Length     = 52
+        }
+        Range
+        {
+            Color  = '#FF0000' //Red
+            Name   = 'High' 
+            Length = 20
+        }
+    }
+}</pre>
+
+<p>Following the same line and reusing the returned data you will change 2 properties of the control (Thickness and Type) to display the same information but using the circular type (variable &amp;CircularGauge). The code is as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Refresh
+//Linear Gauge
+    &amp;GaugeSDT      = LoadData()
+    &amp;LineGauge     = &amp;GaugeSDT.ToJson()
+
+//Circular Gauge
+    &amp;GaugeSDT.Type       = 'Circular'
+    &amp;GaugeSDT.Thickness  = 35
+    &amp;CircularGauge       = &amp;GaugeSDT.ToJson()
+Endevent</pre>
+
+<p><img src="./images/40627.png" id="40627" class="WikiImage"/></p>
+
+<p>The Animated and Animated Duration properties of the Attribute class apply to this control, generating an animation that will be displayed when loading the view where it is located. </p>
+
+<p><img src="./images/40628.gif" id="40628" class="WikiImage"/></p>
+
+<h3><a id="+Angular+specific+considerations" class="HashLink" href="#+Angular+specific+considerations"> Angular specific considerations</a></h3>
+
+<p>Note that, for <a href="42550.html">Angular Generator</a> you can configure this new properties for the Gauge control:</p>
+
+<ul>
+	<li><strong>--stroke-animation-duration:</strong> Determines how long the charging animation lasts for each Gauge range. </li>
+</ul>
+
+<p>This property can be configured from the CarmineSD theme or from the <a href="47375.html">Design System Object</a>.</p>
+
+<p>By default, it is set to 1s, which means that each range is animated for one second when the gauge is first loaded.<br />
+This applies to both types of Gauge control (Line and Circle).</p>
+
+<p><br />
+<strong>To configure it from the CarmineSD theme</strong><br />
+In an Attribute class or a subclass go to the section Advanced → Custom Properties and there you can set the --stroke-animation-duration property. </p>
+
+<p><strong>To configure it from the Design System Object</strong><br />
+In this case, if you have a selector called AttributeStyled_1 that is used in the Gauge control class, to set the --stroke-animation-duration property, write it like any other CSS property, like this example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles CarmineSD
+{
+      .AttributeStyled_1
+      {
+          background-color: $colors.Background;
+          --stroke-animation-duration: 0s;
+          --stroke-linecap: round;
+      }
+}</pre>
+
+<p> </p>
+
+<ul>
+	<li><strong>--stroke-linecap:</strong> Determines the shape of the initial and final edges of the Gauge ranges. This property only applies to the circular Gauge.</li>
+</ul>
+
+<p>It can be configured with the values:</p>
+
+<ul>
+	<li>butt (default)</li>
+	<li>round</li>
+	<li>square</li>
+</ul>
+
+<p> </p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><strong>Object:</strong> <a href="24829.html">Panel</a><br />
+<strong>Generators:</strong> <a href="14453.html">Android</a>, <a href="42550.html">Angular</a>, <a href="14917.html">Apple</a></p>
+
+<p><br />
+</p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9550.html">Control Type property</a></TD><TD><a href="20402.html">Category:Control Types</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/28/22 01:14 PM</em></font></td></TR></table></font>

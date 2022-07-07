@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component InsertOrUpdate method</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31697,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component InsertOrUpdate method</h1>
+<!--Business Component InsertOrUpdate method--><div class="TableWikiBody" id="tblwikibody"><p>Performs an “upsert” operation. An addition will be attempted, but if it fails because a duplicate key is found, an update will be performed.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><strong>    </strong>&amp;BCVariable.<strong>InsertOrUpdate()</strong></p>
+
+<p><strong>Where:</strong><br />
+<em>&amp;BCVariable</em><br />
+     Is a scalar or collection variable based on a Business Component. </p>
+
+<p><strong>Type returned:</strong><br />
+Boolean</p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p><strong>1) </strong>Suppose you define the following <a href="1908.html">Transaction</a> as a Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+  CustomerId*     
+  CustomerName
+  CustomerAddress
+  CustomerPhone
+  CustomerEmail
+  CustomerAddedDate
+}</pre>
+
+<p>A Business Component data type of the Customer Transaction is automatically created in the <a href="1836.html">Knowledge Base</a> and you can define a variable of the new type created in any object.</p>
+
+<p>Thus, the following <a href="6293.html">Procedure object</a> receives a &amp;Customer variable based on the Customer type. In its source, the <strong>InsertOrUpdate </strong>method is applied to the variable to try to Insert the customer or Update it if the addition fails because the key is duplicated.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Procedure: InsertOrUpdateCustomer
+   Rules
+      parm(in:&amp;Customer)
+   Source
+      <strong>&amp;Customer.InsertOrUpdate()
+</strong>      if &amp;Customer.success()
+         commit
+      else
+         rollback
+      endif</pre>
+
+<p><br />
+<strong>2) </strong>Consider the following Transaction defined as a Business Component (by setting its <a href="9548.html">Business Component property</a>  = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product
+{
+  ProductId*     
+  ProductName
+  ProductStock
+}</pre>
+
+<p>A Business Component data type of the Product Transaction is automatically created in the Knowledge Base and you can define a variable of the new type created in any object.</p>
+
+<p>You can define a variable named &amp;Products based on the Product data type and set it as a collection in any object. </p>
+
+<p>The objective of this example is to assign to the &amp;Products variable a collection of products (returned by a <a href="5270.html">Data Provider object</a>) and, after that, apply the <strong>InsertOrUpdate</strong> method to the &amp;Products variable. Therefore, each insertion will be attempted and if some product of the collection already exists, it will be updated.</p>
+
+<p>To achieve this, write the following code in the corresponding object section (Web Panel object Events, Panel object Events, Procedure object Source, etc.):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Products=DPProducts()
+if <strong>&amp;Products.InsertOrUpdate()</strong>
+    commit    
+else
+    rollback
+endif
+</pre>
+
+<p>The DPProducts <a href="5270.html">Data Provider object</a> definition is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Data Provider: DPProducts
+Properties: Output:Product / Collection:True
+   
+Source:
+Product
+{
+   ProductId = 100
+   ProductName = 'X Muscular Pain Medicine'
+   ProductStock = 1000
+}
+Product
+{ 
+  ProductId = 101
+  ProductName = 'J Headache Medicine'
+  ProductStock = 1500
+}
+
+</pre>
+
+<p><strong>3) </strong>Now, consider the following two-level Transaction as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Country
+{
+  CountryId*     
+  CountryName
+  CountryFlag 
+  CountryPopulation 
+  City
+  {
+   CityId*
+   CityName
+  }
+}
+</pre>
+
+<p>A Business Component data type of the Country Transaction is automatically created in the Knowledge Base and you can define a variable of the new type created in any object.</p>
+
+<p>You can define a variable named &amp;Countries based on the Country data type and set it as a collection in any object. This variable will be loaded with a collection of countries (returned by a <a href="5270.html">Data Provider object</a>). After that, the <strong>InsertOrUpdate</strong> method will be applied to the variable. Each insertion will be attempted and if some country of the collection already exists, it will be updated.</p>
+
+<p>Suppose that a record with CountryId=1 is already stored; its corresponding CountryName='Uruguay', its CountryPopulation=3300000, the CountryFlag has the corresponding stored image, and the following related cities are also stored:</p>
+
+<p>1, 1, Montevideo<br />
+1, 2, Maldonado<br />
+1, 3, Colonia</p>
+
+<p>Now, define a DPCountries Data Provider as shown:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Data Provider: DPCountries
+Properties: Output:Country / Collection:True
+
+Source:
+Country
+{
+  CountryId = 1
+  CountryPopulation = 3445863
+  City
+  {
+    CityId = 4
+    CityName = 'Salto'
+  }
+  City
+  {
+    CityId = 5
+    CityName = 'Paysandu'
+  }
+}
+
+Country
+{ 
+  CountryId = 2 
+  CountryName = Argentina
+  CountryFlag = ArgentinaFlag.Link()
+  CountryPopulation = 43000000
+  City
+  { 
+    CityId = 1
+    CityName = 'Buenos Aires'
+  }
+  City
+  { 
+    CityId = 2
+    CityName = 'Rosario'
+  } 
+  City
+  {
+    CityId = 3
+    CityName = 'Cordoba'
+  } 
+}
+</pre>
+
+<p>After that, write the following code in the corresponding object section (<a href="8178.html">Web Panels events</a>, <a href="24829.html">Panel object</a> events, <a href="6664.html">Procedure object Source</a>, etc.):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Countries=DPCountries()
+<strong>&amp;Countries.InsertOrUpdate()</strong>
+if &amp;Countries.success()
+    commit    
+else
+    rollback
+endif
+</pre>
+
+<p>For the CountryId=1, the insertion will be attempted, but the CountryId=1 already exists. So, its CountryPopulation will be Updated and the CityId=4 and the CityId=5 will be added related to it. Besides, for the CountryId=2, the insertion will be attempted and it will be successful.</p>
+
+<p><strong>If there's an error in a BC from the list, are the following BCs processed?</strong> <br />
+Yes, all elements in the list are processed whether an error occurs or not. Then, it's up to you to commit the changes. </p>
+
+<p>To find out which BCs had an error, scan the list and check each one; for example, after applying the <strong>InsertOrUpdate </strong>method, you may write the following code: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;Product in &amp;Products
+    if &amp;Product.GetMessages().Count &gt; 0
+       //msg(...)
+    endif
+endfor
+</pre>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: if the primary key has its <a href="6798.html">Autonumber property</a> set to True, the method will always insert, since a duplicate key will never be detected (because a new identifier value is always generated).</div>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This method is available since <a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a>.<br />
+For 
+<style type="text/css"><!<a href='CDATA[td {
+	border: 1.0px solid rgb(204,204,204);
+}
+br {
+}
+'>CDATA[td {
+	border: 1.0px solid rgb(204,204,204);
+}
+br {
+}
+</a>]></style>
+<a href="14917.html">Apple</a> offline applications it is available since <a href="https://wiki.genexus.com/commwiki/wiki?32886,," target="_blank">GeneXus 15 Upgrade 2</a>.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="2279.html">Error handling in Business Components</a></p>
+
+<p><br />
+<br />
+<br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5846.html">Toc:Business Component</a></TD><TD><a href="23662.html">Business Component Add method</a></TD><TD><a href="2278.html">Business Component samples</a></TD></TR><TR><TD><a href="41179.html">Collection property</a></TD><TD><a href="41037.html">Output property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/16/22 05:31 PM</em></font></td></TR></table></font>

@@ -1,0 +1,29 @@
+delimiters "$", "$"
+
+g_routes(page, gx) ::= <<
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
+$if(page.MainObjectTarget)$
+import { AppHome } from 'app/app-home.component';
+$endif$
+$page.PanelsMain: { obj | import { $obj.FullName$Component \} from "app/$obj.ProjectPath$/$gx.ToLower.(obj.FileName)$.component" }; separator=";\r\n"$;
+
+export const moduleRoutes: Routes = [
+  $if(page.MainObjectTarget)$
+  { path:"", component: AppHome},
+  $else$
+  {path:"", redirectTo: "$page.MainObjectPath$", pathMatch: 'full'},
+  $endif$
+
+  $page.PanelsMain: { obj | { path: "$obj.RoutingPath$", component: $obj.FullName$Component \} }; separator = ",\r\n"$,
+  {
+    path: "app",
+    loadChildren: () => import("./shared.module").then(mod => mod.SharedModule)
+  }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(moduleRoutes, { relativeLinkResolution: 'legacy' })],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }>>

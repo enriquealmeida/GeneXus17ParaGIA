@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy to SAP Cloud Foundry</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45430,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy to SAP Cloud Foundry</h1>
+<!--Deploy to SAP Cloud Foundry--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><strong>Prerequisites:</strong></p>
+
+<ul>
+	<li>Having installed the <a href='https://github.com/cloudfoundry/cli#installers-and-compressed-binaries'>Cloud Foundry Client</a></li>
+</ul>
+
+<p><br />
+To deploy a GeneXus Application to SAP Cloud Foundry, follow the steps described below:</p>
+
+<p><a href="45430.html">Cloud Foundry Configuration</a><br />
+<a href="45430.html">SAP Cloud Platform (Neo) Configuration</a><br />
+<a href="45430.html">Data Store Configuration</a><br />
+<a href="45430.html">Application Deployment</a></p>
+
+<h3><br />
+Cloud Foundry Configuration</h3>
+
+<p>Log into SAP Cloud Foundry Trial (if you do not have an account, you have to create one). Once there, select trial:</p>
+
+<p><img src="./images/45431.png" id="45431" class="WikiImage"/></p>
+
+<p>Then, select the dev Space as shown below:</p>
+
+<p><img src="./images/45432.png" id="45432" class="WikiImage"/></p>
+
+<p>In the left menu, select Services &gt; Service Marketplace. Then, search for Hana using the search box, and select SAP HANA Schemas &amp; HDI Containers:</p>
+
+<p><img src="./images/45433.png" id="45433" class="WikiImage"/></p>
+
+<p>The next step is to create a new instance of the service. So, select Instances and press the New Instance button:</p>
+
+<p><img src="./images/45434.png" id="45434" class="WikiImage"/></p>
+
+<p>A Popup Wizard will be opened. In the first step, select the &quot;hdi-shared&quot; value for the Plan combo box and click on the Next button:</p>
+
+<p><img src="./images/45435.png" id="45435" class="WikiImage"/></p>
+
+<p>In the next step, you can specify parameters for the schema. You have to configure the schema name using a JSON:</p>
+
+<p><img src="./images/45436.png" id="45436" class="WikiImage"/></p>
+
+<p><strong>Note:</strong> myschema is an example name. You can choose the name that you prefer for your schema.</p>
+
+<p>The next step is to bind the container to an application you already have on the cloud. Leave it set to (None):</p>
+
+<p><img src="./images/45437.png" id="45437" class="WikiImage"/></p>
+
+<p>In the last step, you can choose the Instance Name:</p>
+
+<p><img src="./images/45438.png" id="45438" class="WikiImage"/></p>
+
+<p>Click on Finish to create the instance.</p>
+
+<p><strong>Notes:</strong></p>
+
+<p>You can create the HDI instance from the command line using the command cf create-service hanatrial hdi-shared myHANAdb.</p>
+
+<h3><br />
+SAP Cloud Platform (Neo) Configuration</h3>
+
+<p>To be able to use the HDI instance to store data you have just created, you need to access the Neo Environment of your <a href='https://cockpit.hanatrial.ondemand.com/cockpit#/home/trialSAP'>Cloud Platform Account</a>. After logging in, you have to select in Home: &lt;Your Region&gt; - Cloud Foundry - Trial. This will take you to this next page:</p>
+
+<p><img src="./images/45450.png" id="45450" class="WikiImage"/></p>
+
+<p>Scroll down the page until you find the Access Neo Trial option:</p>
+
+<p><img src="./images/45451.png" id="45451" class="WikiImage"/></p>
+
+<p>Select Access Neo Trial. This will send you to the Neo Environment Cockpit.</p>
+
+<p>The first step here is to enable “Principal Propagation.” To do so, in the left menu select Security &gt; Trust. Next, click on the Edit button, change the value of the Principal Propagation field to Enabled, and Save:</p>
+
+<p><img src="./images/45453.png" id="45453" class="WikiImage"/></p>
+
+<p>This will allow the Web IDE of Neo to communicate with Cloud Foundry.</p>
+
+<p>Next, you have to enable the Web IDE Full-Stack tool. To achieve this, in the left menu select Services &gt;  SAP Web IDE Full-Stack, enable it, and select Go to Service.</p>
+
+<p><img src="./images/45452.png" id="45452" class="WikiImage"/></p>
+
+<p>Once the Web IDE is open, you may be prompted to connect to Cloud Foundry. Otherwise, you can set it up by going to Preferences &gt; Workspace Preferences &gt; Cloud Foundry and by setting it up with the correct endpoint. This will vary according to what Region your Cloud Foundry is.</p>
+
+<p><img src="./images/45454.png" id="45454" class="WikiImage"/></p>
+
+<p>After this setup, go to the Home Page, select New Project from Template &gt; (Environment=Cloud Foundry) Multi-Target Application, enter a name (the name is not relevant for the deployment), and select Finish.</p>
+
+<p>This should take you to the Development screen:</p>
+
+<p><img src="./images/45456.png" id="45456" class="WikiImage"/></p>
+
+<p>Once here, right-click on &lt;Your Application Name&gt; and select New &gt; SAP HANA Database Module:</p>
+
+<p><img src="./images/45457.png" id="45457" class="WikiImage"/></p>
+
+<p>A wizard will be opened. Enter a Name (the name that you prefer), then press Next and Finish:</p>
+
+<p><img src="./images/45458.png" id="45458" class="WikiImage"/></p>
+
+<p>The next step is to enable the Database Explorer in order to manage the HDI Container. To do so, go to Preferences &gt; Extensions and search for &quot;Database Explorer.&quot; Turn SAP HANA Database Explorer on.</p>
+
+<p><img src="./images/45475.png" id="45475" class="WikiImage"/></p>
+
+<p>Then, go to the Database Explorer and select the plus symbol:</p>
+
+<p><img src="./images/45459.png" id="45459" class="WikiImage"/></p>
+
+<p>It will open a prompt in which you have to select the HDI Instance you had created. To do so, select Database Type = HDI Container.  All the HDI instances you have will be shown. Select the one you will use to deploy your app and click OK.</p>
+
+<p><img src="./images/45460.png" id="45460" class="WikiImage"/></p>
+
+<p>This will connect the Web IDE with the HDI Container allowing you to execute SQL Queries.</p>
+
+<h3><a id="Data+Store+Configuration" class="HashLink" href="#Data+Store+Configuration">Data Store Configuration</a></h3>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: You have to use a HANA Data Store and it is only tested on a Java Environment.</div>
+<br />
+Before Setting up the datastore you need to access once more the SAP Cloud Foundry, go to Services, Instances, and select the HDI Service Instance you Created.</p>
+
+<p>Select Services Keys and select the one with the following format &lt;yourEmailOrUserName&gt;+Numbers (Ex. jdoe@testing.com:A7@4231235344575685), and keep the JSON from the service key saved because you are going to need it through the configuration of the Data Store in GeneXus.</p>
+
+<p><img src="./images/45890.png" id="45890" class="WikiImage"/></p>
+
+<p>To be able to use the HDI container, you need to configure the <a href="7117.html">Data Store</a>. To achieve this, go to the <a href="7109.html">Knowledge Base Preferences</a> and select the <a href="5698.html">Environment</a> you want to deploy. Then, select the desired <a href="7117.html">Data Store</a>, and set the following properties with the values you have on the JSON you retrieved from the HDI container Key:</p>
+
+<p><a href="9381.html">Use Custom JDBC URL</a> = True<br />
+<a href="9381.html">Use Custom JDBC URL</a> = JSON URL field<br />
+<a href="9117.html">Server Name</a> = JSON host field<br />
+User Id = JSON user field<br />
+Password = JSON password field<br />
+Database Schema = JSON schema field<br />
+You should have something like this:</p>
+
+<p><img src="./images/45476.png" id="45476" class="WikiImage"/></p>
+
+<p>This will allow you to work on your application using the Cloud Foundry Container directly even if you are still developing on your PC and have not deployed yet to SAP Cloud Foundry.</p>
+
+<p>After executing all the queries, you are ready to deploy the application to SAP Cloud Foundry.</p>
+
+<h3><br />
+Application Deployment</h3>
+
+<p>To deploy the application, go to Build &gt; Deploy Application and select the objects you want to deploy. Select SAP Cloud Platform (Cloud Foundry) as Target.</p>
+
+<p>Then you need to set up the following Deploy Properties:</p>
+
+<p>Cloud Foundry CLI Directory = the directory where you have installed the Cloud Foundry client (e.g.: C:\Program Files\Cloud Foundry)<br />
+API Endpoint = endpoint where your Cloud Foundry account is located.<br />
+Organization Name = organization name of your Cloud Foundry account (e.g.: p123456789trial).<br />
+Space Name = space name of the Cloud Foundry (e.g.: dev).<br />
+User = user account used to log into the SAP Cloud Foundry.<br />
+Password = user's password.<br />
+HANA Instance Name = name of the service created (e.g.: myHANAdb).<br />
+Application Name = name you want to give to the application.<br />
+In the routes field, it will show you where the app has been deployed and you can access it by adding /servlet/com.&lt;Knowledge Base name&gt;.&lt;object you want to access&gt;</p>
+
+<p>(e.g.: https://deploycf-wacky-klipspringer.cfapps.eu10.hana.ondemand.com/servlet/com.deploycf.fioribaseobjects.fiorilaunchpad)</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This applies from GeneXus 16 upgrade 10 onwards for Java Environments.</p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="45430.html">Deploy to SAP Cloud Foundry</a></TD></TR><TR><TD><a href="46594.html">Expanded DevOps with GeneXus 17</a></TD><TD><a href="46884.html">GeneXus for SAP Systems 17 Release Notes</a></TD><TD><a href="45792.html">SAP Cloud Foundry API Endpoint property</a></TD></TR><TR><TD><a href="45796.html">SAP Cloud Foundry Application Name property</a></TD><TD><a href="45791.html">SAP Cloud Foundry CLI Directory property</a></TD><TD><a href="45795.html">SAP Cloud Foundry HANA Instance name property</a></TD><TD><a href="45793.html">SAP Cloud Foundry Organization name property</a></TD></TR><TR><TD><a href="45814.html">SAP Cloud Foundry Password property</a></TD><TD><a href="45813.html">SAP Cloud Foundry User property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 05:43 PM</em></font></td></TR></table></font>

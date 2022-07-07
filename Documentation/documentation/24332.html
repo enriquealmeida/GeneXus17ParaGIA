@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Client-side Events in Native Mobile Applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24332,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Client-side Events in Native Mobile Applications</h1>
+<!--Client-side Events in Native Mobile Applications--><div class="TableWikiBody" id="tblwikibody"><p>Client events allow you to add behavior and logic to the application mixing the execution between the client-side and server-side. As mentioned in <a href="17042.html">Native Mobile Applications Events</a>, <strong>Start</strong>, <strong>Refresh</strong> and <strong>Load</strong> are server-side<sup>(1)</sup> events. All other events are <strong>client-side events</strong>, you can mix the power of the server and the resources of our device.</p>
+
+<p>Client-side events must use the <a href="17389.html">Composite command</a> when executing more than one action.</p>
+
+<h3><a id="ClientStart+event" class="HashLink" href="#ClientStart+event">ClientStart event</a></h3>
+
+<p><a href="24044.html">ClientStart event</a> is the first event executed on the device, even before executing the Start event (server-side), without user interaction. Allows the developer to initialize the entry screen, e.g. UI, variables, etc.</p>
+
+<h3><a id="Navigation.Start+event" class="HashLink" href="#Navigation.Start+event">Navigation.Start event</a></h3>
+
+<p><a href="25668.html">Navigation.Start event</a><sup>(2)</sup> is executed immediately after the ClientStart event, and allows the developer to initialize aspects related to <a href="16229.html">navigation style</a> (e.g. call the main panel when the application has Slide navigation).</p>
+
+<h3><a id="Back+event" class="HashLink" href="#Back+event">Back event</a></h3>
+
+<p><a href="24950.html">Back event</a> allows the developer to capture when the end-user press back button on Android or do a back gesture on iOS.</p>
+
+<h3><a id="Control+and+user+events" class="HashLink" href="#Control+and+user+events">Control and user events</a></h3>
+
+<p>These events are the programmatic response of the application to user interaction. These forms of interaction are called <a href="https://wiki.genexus.com/commwiki/wiki?20623,," target="_blank">actions</a> and can be seen in on-screen buttons, images, or other controls that when tapped, long tapped, etc., will execute the event associated to the action. There also exists other predefined events that are executed in special cases or without any user interaction.</p>
+
+<p>Mainly you have two types of events: <a href="https://wiki.genexus.com/commwiki/wiki?25198,," target="_blank"><strong>user</strong></a> and <a href="24271.html"><strong>control</strong></a> events. Both are associated with controls. The slight difference is while the former has a name given by the developer and then associated to the controls themselves (with the tap gesture as the way to trigger them); the latter are automatically predefined, depending on control type, having, in the case of <a href="20044.html">touch control events</a>, the event itself as the way to trigger them (e.g. <em>control</em><strong>.LongTap</strong> event). Other kind of control events are, for example, <em>control</em><strong>.PageChanged</strong> event (when control is a grid of certain control type), or <em>control</em><strong>.ControlValueChanged</strong> event (when control is a read-write attribute or variable).</p>
+
+<p>What happens when the end-user triggers an action? The associated code is executed on the client-side (i.e. in the device) unless a roundtrip to the server is required; for example, when a procedure must be invoked. In any case, system events are not executed (unless they are explicitly required by the Refresh command).</p>
+
+<p>In this event, the developer is allowed to:</p>
+
+<ul>
+	<li>Call <strong>Rest Web Services</strong>:
+
+	<ul>
+		<li>Call a <a href="6293.html">Procedure object</a> or a <a href="5270.html">Data Provider object</a> exposed as <a href="14573.html">REST Web Services</a>.<br />
+		For example,
+		<ul>
+			<li>&amp;var = <strong>DP</strong>( &amp;parm<sub>1</sub>, ..., &amp;parm<sub>n </sub>)</li>
+			<li>&amp;var = <strong>Proc</strong>( &amp;parm<sub>1</sub>, ..., &amp;parm<sub>n </sub>)</li>
+		</ul>
+		</li>
+		<li>Use <a href="5846.html">Business Component</a> in a batch way: BC based variables and items.<br />
+		For example,
+		<ul>
+			<li><em>&amp;BC</em><strong>.Load( </strong><em>primaryKey</em> <strong>)</strong></li>
+			<li><em>&amp;BC</em><strong><em>.</em></strong><em>Attribute<sub>n</sub></em> = ...</li>
+			<li><em>&amp;BC</em><strong>.Save()</strong></li>
+			<li><em>&amp;BC<strong>.</strong></em><strong>Delete()</strong></li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+	<li>Call a<strong> WorkWith </strong>
+	<ul>
+		<li><strong>Edit</strong><br />
+		<a href="17160.html">Call a Work With object</a> Detail node in order to Insert, Update or Delete information:
+		<ul>
+			<li><em>WorkWithDevicesObject</em>.<em>levelname</em><strong>.Detail.Delete(</strong> <em>primaryKey</em> <strong>)</strong></li>
+			<li><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Update(</strong> <em>primaryKey</em> <strong>)</strong></li>
+			<li><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Insert(</strong> <em>&amp;bc</em> <strong>)</strong></li>
+		</ul>
+		</li>
+		<li><strong>View</strong><br />
+		<a href="17160.html">Call a Work With object</a> List or Detail:
+		<ul>
+			<li><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail(</strong> <em>primaryKey</em> <strong>)</strong></li>
+			<li><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.List( )</strong></li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+	<li>Call a <a href="24829.html">Panel object</a></li>
+	<li>Call a <a href="16321.html">Menu object</a></li>
+	<li>Invoke the <strong>external objects</strong> of the <a href="15288.html">Smart Devices API</a>. For example,
+	<ul>
+		<li>Msg(&amp;var)</li>
+		<li>Confirm (&amp;var)</li>
+		<li>Return</li>
+		<li>Refresh</li>
+		<li>AddressBook.AddContact( ... )</li>
+		<li>etc.</li>
+	</ul>
+	</li>
+	<li>Call a <strong><a href="6916.html">Panel for Web</a></strong> by means of the <a href="16186.html">Component domain</a>.<br />
+	This action displays a web page by the web navigator, loading the web panel without showing the navigator's frame. That can be recovered if the user wishes to do so.</li>
+	<li>Call to <strong><a href="24767.html">Subroutines</a></strong>.</li>
+	<li><strong>Commands</strong>:
+	<ul>
+		<li><strong>Control properties assignments</strong> depending on the control.<br />
+		When the developer enters the control name followed by a dot (&quot;.&quot;), an IntelliTip is opened showing all possibilities for this control.<br />
+		For example,
+		<ul>
+			<li><em>Control</em><strong>.visible =</strong> ...</li>
+			<li><em>Control</em><strong>.class =</strong> ...</li>
+		</ul>
+		</li>
+		<li>Simple <strong>variable assignment</strong>.<br />
+		For exmaple,
+		<ul>
+			<li><em>&amp;Var</em> = &quot;Test&quot;</li>
+			<li><em>&amp;Var</em> = 123</li>
+			<li><em>&amp;Var</em> = <em>proc</em>.<strong>Udp()</strong></li>
+		</ul>
+		</li>
+		<li>Use<strong> SDT or BC based variables</strong> element assignation.<br />
+		For example,
+		<ul>
+			<li><em>&amp;Var</em> = <em>&amp;SDT</em>.<i>Field</i></li>
+			<li><em>&amp;BC.item</em> = ...</li>
+		</ul>
+		</li>
+		<li>Execute <strong><a href="8605.html">For Each Line</a></strong> and <strong><a href="16149.html">selected line</a> </strong>commands in grids with multiple selections.</li>
+		<li>Use <strong>If-Else-EndIf</strong>, <strong>Do-Case</strong> and <strong>Do-While</strong> code blocks.<br />
+		Cannot use complex expressions on the conditions such as calling Procedures or External Objects methods; only simple conditions are allowed using variables, attributes or SDT members, and involving operators and standard functions.<br />
+		<br />
+		<strong>Note: </strong>As you can see, the <a href="24744.html">For Each command</a> is not allowed. So, in case of defining it inside these events, the following error message will be displayed: <strong>error: Line can't be interpreted by devices</strong>.</li>
+	</ul>
+	</li>
+</ul>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<p><sup>(1) </sup>Note that in this context, &quot;server-side&quot; refers to the architecture and not to the actual location of the code being executed. In <a href="22237.html">Offline applications</a>, the Start, Refresh and Load events execute locally, but they still have the same limitation regarding the type of code they can execute.</p>
+
+<p><sup>(2) </sup>Navigation.Start event actually refers to a family of events. There is one evento for each type of navigation. For example, Tabs.Start or Slide.Start.</p>
+
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/grammar-of-events-on-the-client-side-and-composite-command?p=3682'>Grammar of Events on the Client Side and Composite Command</a><br />
+<img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/events-in-mobile-applications-6103211?p=3673'>Events in Mobile Applications</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="17614.html">Event Triggering Order in Native Mobile Applications</a></li>
+	<li><a href="24807.html">Determining the Base Table for the Form and Grid in Panels</a></li>
+	<li><a href="17160.html">Calls to Elements in Work Withs from Native Mobile Applications Events</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?20623,," target="_blank">Smart Devices Actions</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?25198,," target="_blank">Flexibility added to Syntax of Smart Devices User Events</a></li>
+</ul>
+
+<p> </p>
+<br />
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17160.html">Calls to Elements in Work Withs from Native Mobile Applications Events</a></TD><TD><a href="20911.html">Connectivity Support property</a></TD></TR><TR><TD><a href="31772.html">GUID data type</a></TD></TR><TR><TD><a href="5864.html">Horizontal Formulas</a></TD><TD><a href="31657.html">HowTo: Formatting plain text programmatically</a></TD><TD><a href="31635.html">Msg function</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD><TD><a href="17042.html">Category:Native Mobile Applications Events</a></TD><TD><a href="9646.html">SetEmpty Method</a></TD></TR><TR><TD><a href="6774.html">Specification Codes from spc0150 onwards</a></TD><TD><a href="29785.html">Synchronization.ResetOfflineDatabase method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/29/21 05:18 PM</em></font></td></TR></table></font>

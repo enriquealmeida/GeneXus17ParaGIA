@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>ClientInformation.Id Property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20198,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">ClientInformation.Id Property</h1>
+<!--ClientInformation.Id Property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This property returns an acceptable client identifier in both platforms: WEB and SD.</p>
+
+<h2><a id="Smart+Devices+apps" class="HashLink" href="#Smart+Devices+apps">Smart Devices apps</a></h2>
+
+<p>In some Smart Devices apps, it is important to identify the device (SD) that is used. Some examples of this are:</p>
+
+<ul>
+	<li>For security
+	<ul>
+		<li>Transactions in the X bank account may only take place from device Y.</li>
+		<li>User X may only use devices Y and Z during predetermined hours.</li>
+	</ul>
+	</li>
+	<li>For promotions
+	<ul>
+		<li>When you install two or more of my Company’s applications, you will get a discount of X.</li>
+	</ul>
+	</li>
+	<li>For calculating use statistics</li>
+</ul>
+
+<p>It would be best to know the equivalent to the device’s &quot;serial number&quot; or MAC Address, a feature that makes it one and only, but it’s not so easy.</p>
+
+<p>Despite the fact that all devices include some kind of unique identification that is accessed through software, it is due to privacy reasons that it will not be &quot;for use&quot;, and access to it might even be forbidden (iOS).</p>
+
+<p>The ClientInformation.Id property provided in <a href="https://wiki.genexus.com/commwiki/wiki?19948,," target="_blank">ClientInformation API external object (X Evolution 3)</a> counteracts this situation with acceptable device identification mechanisms whose implementations have a common base and variations for the different platforms.</p>
+
+<p>The value of ClientInformation.Id is:</p>
+
+<ul>
+	<li>Universally unique</li>
+</ul>
+
+<p style="margin-left: 40.0px;">The same criteria of a GUID (UUID) applies.</p>
+
+<p style="margin-left: 40.0px;">Two devices may return the same value of ClientInformation.Id in any of the following situations:</p>
+
+<ul style="margin-left: 40.0px;">
+	<li>In iOS, when a device contains the restored data of another device.</li>
+	<li>In Android, rooted devices may change the value returned, losing the guarantee of unicity.</li>
+</ul>
+
+<ul>
+	<li>Stable (on all platforms) throughout the life of an application (from the moment it is installed until it is uninstalled).</li>
+	<li>Each device has a unique value of ClientInformation.Id.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">In Android, any GX application installed on a device will return the same value (see exception in Annex below).</p>
+
+<p style="margin-left: 40.0px;">In iOS, it is possible for the same device to return different values of ClientInformation.Id depending on the application (see Annex below).</p>
+
+<p>In sum:</p>
+
+<ul>
+	<li>Identifying a device (hardware) univocally is not among the best practices, and sometimes it is impossible.</li>
+	<li>GeneXus provides an &quot;acceptable&quot; mechanism to identify devices that have variations with the platform.</li>
+</ul>
+
+<h2><a id="Web+Applications" class="HashLink" href="#Web+Applications">Web Applications</a></h2>
+
+<p>In the case of Web applications, the ClientInformation.Id property returns an identifier for the user, which is persistent in all the sessions unless the final user deletes the cookies of the browser. The ClientInformation.Id remains the same for the same application and browser because it's saved on a cookie with the maximum expiration date. It identifies the browser where the user access to the application.</p>
+
+<p>One use case is the following, where the user is identified using the ClientInformation.Id called in the Start Event of a web panel. Then, that information is persisted in the database and used by another web panel which sends a <a href="22442.html">web notification</a> for that particular user.</p>
+
+<pre>
+Event Start
+    &amp;clientId = ClientInformation.Id
+   //save the information of the client: RegisteredClientId = &amp;clientId//
+Endevent</pre>
+
+<p>In the procedure that sends the notification, we get the ClientInformation.Id  (that may have been saved in the database). The Notifyclient method is executed by passing the ClientInformation.Id as a parameter, so only that client will receive the message.</p>
+
+<pre>
+&amp;ClientId = RegisteredClientId //ClientInformation.Id of the user, retrieved from the database
+&amp;NotificationInfo.Id= &amp;Id
+&amp;NotificationInfo.Message= &amp;MyMessage
+&amp;webnotification.NotifyClient(&amp;ClientId, &amp;NotificationInfo)
+</pre>
+
+<p>Download sample from <a href="https://wiki.genexus.com/commwiki/wiki?33475,," target="_blank">here</a></p>
+
+<h2><a id="Annexes" class="HashLink" href="#Annexes">Annexes</a></h2>
+
+<h3><a id="Android" class="HashLink" href="#Android">Android</a></h3>
+
+<p>The value of ClientInformation.Id is a GUID generated from the <a href='http://developer.android.com/reference/android/provider/Settings.Secure.html#ANDROID_ID'>device’s internal identifier</a>. This guarantees, at least, that its value will be the same between two applications installed on the same device during the life of the device.</p>
+
+<p>The known exceptions are:</p>
+
+<ul>
+	<li>In the case of a &quot;factory reset&quot; the ID may change.</li>
+	<li>On a rooted device, it is possible to change the ID.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Since we stored the GUID generated, the applications installed before the rooted will return an ID value while those installed after the rooted will probably return a different one. But the value returned by the same application will not change.</p>
+
+<ul>
+	<li>The devices originating in certain manufacturers have an error in Android 2.2 that makes them all return the same ANDROID_ID.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">This number is known and in such case we generate a random GUID (per application).</p>
+
+<p>See this response in stackoverflow for a detailed explanation. The solution proposed is practically the same as the one we are using, except that we do not consider the IMEI for generating the GUID (because to do that we would need to have special permits).</p>
+
+<h3><a id="iOS" class="HashLink" href="#iOS">iOS</a></h3>
+
+<p>The value of ClientInformation.Id is a GUID that we calculate at the time of installing the first GX application on the device. The value is stored in what is known as &quot;Keychain&quot; and it is maintained even when the application that created it is uninstalled and installed again.</p>
+
+<p>In iOS, each application has its own &quot;Keychain&quot;, though it is possible to share the same one among several applications. To ClientInformation.Id effects a shared keychain means that all applications with the same Keychain will return the same value of ClientInformation.Id for a given device. With no shared keychain, each application installed on a device will return a different value of ClientInformation.Id.</p>
+
+<p>The value of ClientInformation.Id may change when a factory reset is done or when the firmware is restored (reinstalls the Operating System), and also if NO security copy is restored. An example of this is when the device is passed on to a different person (when sold for example).</p>
+
+<p>It is possible for several devices to have the same value of ClientInformation.Id when a security copy is restored on several devices. This case may occur when a device is replaced with a newer model and a security copy of the old device is restored in the new one.</p>
+
+<h4><a id="How+to+obtain+the+same+value+of+ClientInformation.Id+for+several+applications+from+the+same+provider" class="HashLink" href="#How+to+obtain+the+same+value+of+ClientInformation.Id+for+several+applications+from+the+same+provider">How to obtain the same value of ClientInformation.Id for several applications from the same provider</a></h4>
+
+<p>To achieve this we need to make a change in implementation and also the GX user must be aware that it is possible to control this behavior. Which applications are shared and which not will depend on the user’s decision.</p>
+
+<p>The unique identifier in an application in iOS (Application ID) consists of two parts: &lt;Bundle Seed ID&gt;.&lt;Bundle Identifier&gt;. The Bundle Seed ID is a chain with 10 unique characters, unique in the whole App Store, and it is generated by Apple. The Bundle Identifier is a chain of characters that must be unique among the same provider’s applications, and in GX it is configured with a property with the same name in the Main.</p>
+
+<p>For two (or more) applications from the same provider to return the same value of ClientInformation.Id on the same device, they _must_ have the same value of Bundle Seed ID.</p>
+
+<p>Because the Bundle Seed Id  _maynot_ be changed after an application has been published, it is VERY IMPORTANT to be aware of this particular functioning. Fortunately, the default value when a new App ID is created on the Apple site (developer.apple.com) is that the Bundle Seed ID be shared by all apps (see combo at &quot;Use Team ID&quot;):</p>
+
+<p><img src="./images/20200.png" id="20200" class="WikiImage"/></p>
+
+<p><br />
+<br />
+<br />
+</p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31271.html">ClientInformation external object</a></TD></TR><TR><TD><a href="33633.html">HowTo: Receiving and processing a notification message from an external app</a></TD><TD><a href="22442.html">Server.Socket external object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

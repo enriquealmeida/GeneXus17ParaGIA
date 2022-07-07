@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Unique clause in For Each command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24593,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Unique clause in For Each command</h1>
+<!--Unique clause in For Each command--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The  <a href="24744.html">For Each command</a> <a href="24592.html">Unique Clause</a> is optional and is useful in scenarios where you need to process records with no duplicated values for a set of attributes.</p>
+
+<p>Below are some examples where this clause could be used to solve the proposed problem. Suppose we have the following transaction structures:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Customer</strong>
+{
+   CustomerId*
+   CustomerName
+}
+
+<strong>Product</strong>
+{
+   ProductId*
+   ProductName
+   ProductPrice
+}
+
+<strong>Invoice</strong>
+{
+   InvoiceId*
+   InvoiceDate
+   CustomerId
+   CustomerName
+   <strong>Line</strong>
+   {
+      InvoiceLineId*
+      ProductId
+      ProductName
+      ProductPrice
+      InvoiceLineQty
+      InvoiceLineTotal = ProductPrice * InvoiceLineQty
+   }
+   InvoiceTotal = Sum( InvoiceLineTotal)
+}</pre>
+
+<h3><a id="Example+1" class="HashLink" href="#Example+1">Example 1</a></h3>
+
+<p>Get all the products that have ever been sold:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Invoice.Line <strong>Unique ProductName</strong>
+   print PB //printblock with: ProductName
+endfor</pre>
+
+<p>Note the for each base table is that of the <a href="25418.html">base transaction</a> Invoice.Line, that is: INVOICELINE. Without the unique clause all products that have ever been sold will be returned, repeatedly. With the unique, you avoid having duplicated values in the output.</p>
+
+<p>Note unique attribute, ProductName, is in the extended table of the for each base table. </p>
+
+<h3><a id="Example+2%3A+sales+by+customer" class="HashLink" href="#Example+2%3A+sales+by+customer">Example 2: sales by customer</a></h3>
+
+<p>Now we want to print the total amount spent by customer, for customers that have invoices from a certain date (&amp;fromDate):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each Invoice <strong>unique CustomerId</strong>
+where InvoiceDate &gt;= &amp;fromDate
+   &amp;total = Sum( InvoiceTotal )
+   print totalbycustomer //printblock with: CustomerName, &amp;total
+endfor</pre>
+
+<p>Note the aggregate <a href="6500.html">Sum</a> formula will have an implicit condition: the CustomerId &quot;is given&quot; by the context. That is, by the &quot;group&quot; of Invoice records that share the same CustomerId value, considered in each iteration of the for each.</p>
+
+<p>Note the CustomerName attribute is allowed because given a CustomerId (the specified unique attribute), its value is unique as well (CustomerId is a foreign key, thus all the Customer extended table attributes will have a unique value from a CustomerId one).</p>
+
+<p>Note Sum filter is only that of the group by (coming from the unique clause). The where clase filter is not applied, because it is only valid for the for each. Thus, for each customer with some invoice since &amp;fromDate, he/she will be printed, with the total sum of his/her invoices (those after &amp;fromDate and those before: all of them). If you want to sum only the invoices from that given date, you will have to make it explicit:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each Invoice <strong>unique CustomerId</strong>
+where InvoiceDate &gt;= &amp;fromDate
+   &amp;total = Sum( InvoiceTotal, InvoiceDate &gt;= &amp;fromDate )
+   print totalbycustomer //printblock with: CustomerName, &amp;total
+endfor</pre>
+
+<h3><a id="Example+3%3A+sales+by+year" class="HashLink" href="#Example+3%3A+sales+by+year">Example 3: sales by year</a></h3>
+
+<p>You need to group by not for an attribute but for an horizontal <a href="6441.html">inline formula</a> of some of them.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Invoice Unique <strong>InvoiceDate.Year()</strong>
+   &amp;total = Sum( InvoiceTotal )
+   print totalbyyear //printblock with: InvoiceDate.Year(), &amp;total
+endfor</pre>
+
+<p>As a temporary limitation, this is not allowed. You can only use attributes in the unique clause (possibly <a href="6440.html">formula attributes</a>). Thus, the solution is to define a InvoiceDateYear attribute in the Invoice transaction structure level, as a formula, calculated as: &quot;InvoiceDate.Year()&quot;.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="24592.html">Unique Clause</a></li>
+	<li><a href="24594.html">Unique clause in Data Providers</a></li>
+</ul>
+
+<p><span style="font-family: Arial;font-size: 10.0pt;line-height: 15.6pt;"> </span></p>
+
+<p style="line-height: 15.6pt;"><span style="font-size: 10.0pt;font-family: Arial;"></span></p>
+
+<p style="line-height: 15.6pt;"></p>
+   <br />    <br /> <br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24592.html">Unique Clause</a></TD><TD><a href="24594.html">Unique clause in Data Providers</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

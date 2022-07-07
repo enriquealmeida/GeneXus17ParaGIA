@@ -1,0 +1,2372 @@
+<?xml version='1.0' encoding='iso-8859-1'?>
+<Content version='93996 $'>
+	<Object id='VFP'>
+		<Group>
+			<Name>VFP</Name>
+			<Type>Main</Type>
+			<Children>
+				<Prop hidden='1'>
+					<Id>MAIN_GEN</Id>
+					<Name>Main generator</Name>
+					<Type>Boolean</Type>
+					<Default>true</Default>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>MAIN_DBMS</Id>
+					<Name>Main DBMS</Name>
+					<Type>Integer</Type>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>IS_WEB_GEN</Id>
+					<Name>Is web generator</Name>
+					<Type>Boolean</Type>
+					<Default>true</Default>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>HelpKeyword</Id>
+					<Name>HelpKeyword</Name>
+					<Type>Integer</Type>
+					<Dependencies>
+						<Depend type='Default'>
+							<Value>9</Value>
+						</Depend>
+					</Dependencies>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Group>
+					<Id>GENERAL_GROUP</Id>
+					<Name>General</Name>
+					<Description>General</Description>
+					<Type>Group</Type>
+					<Children>
+						<Prop>
+							<Id>PSEUDO_CHECK</Id>
+							<Name>Transaction's dialog locking scheme</Name>
+							<Description>Transaction's dialog locking scheme</Description>
+							<Type>Combo</Type>
+							<Default>Yes</Default>
+							<Values>
+								<Value id='Yes' desc='Pseudo-conversational (updated tables only)'/>
+								<Value id='No' desc='Conversational (updated tables only)'/>
+								<Value id='All' desc='Pseudo-conversational (all accessed tables)'/>
+							</Values>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>CONFIRM</Id>
+							<Name>Compatibility confirmation</Name>
+							<Description>Set confirmation option</Description>
+							<Type>Combo</Type>
+							<Default>Yes</Default>
+							<Values>
+								<Value id='Yes' desc='Yes'/>
+								<Value id='No' desc='No'/>
+								<Value id='UMPV' desc='Use Environment property value'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Default'>
+									<Value>UMPV</Value>
+									<Cond>value(TRNCFM) == UMPV</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>TRNCFM</PropName>
+											<Value>UMPV</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Default'>
+									<Value>Yes</Value>
+									<Cond>value(TRNCFM) == All</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>TRNCFM</PropName>
+											<Value>All</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Default'>
+									<Value>No</Value>
+									<Cond>(value(TRNCFM) == None) or (value(TRNCFM) == NoFirst)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>TRNCFM</PropName>
+													<Value>None</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>TRNCFM</PropName>
+													<Value>NoFirst</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='FlagSpecificable'></Value>
+							</Metadata>
+							<Options>
+								<Option type='Not Show'/>
+							</Options>
+						</Prop>
+						<Group>
+							<Id>GENERAL_GROUP_VFP</Id>
+							<Name>VFP specific</Name>
+							<Description>VFP specific</Description>
+							<Type>Group</Type>
+							<Children>
+								<Prop>
+									<Id>SET_EXACT</Id>
+									<Name>Set exact</Name>
+									<Description>Set exact</Description>
+									<Type>Combo</Type>
+									<Default>ON</Default>
+									<Values>
+										<Value id='OFF' desc='Off'/>
+										<Value id='ON' desc='On'/>
+									</Values>
+								</Prop>
+								<Prop>
+									<Id>INDEX_CHK</Id>
+									<Name>Check indices existence</Name>
+									<Description>Check indices existence</Description>
+									<Type>Combo</Type>
+									<Default>No</Default>
+									<Values>
+										<Value id='No' desc='No'/>
+										<Value id='Yes' desc='Every time the application runs'/>
+									</Values>
+								</Prop>
+								<Prop>
+									<Id>MAIN_CALL_TYPE</Id>
+									<Name>Main objects build</Name>
+									<Description>Main objects build</Description>
+									<Type>Combo</Type>
+									<Default>Dir</Default>
+									<Values>
+										<Value id='Dir' desc='Include with caller'/>
+										<Value id='No' desc='Call as external'/>
+									</Values>
+								</Prop>
+							</Children>
+						</Group>
+						<Prop>
+							<Id>DECIMAL_MATH</Id>
+							<Name>Use decimal arithmetic</Name>
+							<Description>Use decimal arithmetic</Description>
+							<Type>Combo</Type>
+							<Default>Y</Default>
+							<Values>
+								<Value id='N' desc='No'/>
+								<Value id='Y' desc='Yes'/>
+							</Values>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>USER_INTERFACE</Id>
+					<Name>User interface</Name>
+					<Description>User interface</Description>
+					<Type>Group</Type>
+					<Children>
+						<Prop>
+							<Id>TRNCFM</Id>
+							<Name>Confirmation</Name>
+							<Description>In transactions, it indicates whether or not the user's confirmation will be requested when passing from one level to another.
+		  In procedures, it indicates whether or not the user's confirmation will be requested when the process starts executing.</Description>
+							<Alias>ConfirmTransaction</Alias>
+							<Type>Combo</Type>
+							<Default>None</Default>
+							<Values>
+								<Value id='UMPV' desc='Use Environment property value'/>
+								<Value id='All' desc='Always prompt'/>
+								<Value id='None' desc='Never prompt'/>
+								<Value id='NoFirst' desc='Do not prompt on first level'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Not Show'>
+									<Cond>context(CFMTRN) == Yes</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName source='context'>CFMTRN</PropName>
+											<Value>Yes</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Default'>
+									<Value>All</Value>
+									<Cond>value(IS_WEB_GEN) == false</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>false</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Invalid'>
+									<Value>UMPV</Value>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='FlagCategories'>Advanced</Value>
+								<Value name='FlagSpecificationName'>TRNCFM</Value>
+								<Value name='FlagModelIniName'>TRNCFM</Value>
+							</Metadata>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>AUTOCENTER</Id>
+							<Name>Autocenter objects in (0,0)</Name>
+							<Description>Autocenter objects in (0,0)</Description>
+							<Type>Combo</Type>
+							<Default>No</Default>
+							<Values>
+								<Value id='UMPV' desc='Use Environment property value'/>
+								<Value id='No' desc='No'/>
+								<Value id='Yes' desc='Yes'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Invalid'>
+									<Value>UMPV</Value>
+								</Depend>
+								<Depend type='Not Show'>
+									<Cond>value(IS_WEB_GEN) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop>
+							<Id>AttWidthScale</Id>
+							<Name>Automatic width scale factor</Name>
+							<Description>Automatic width scale factor</Description>
+							<Type>Combo</Type>
+							<Default>1</Default>
+							<Values>
+								<Value id='UMPV' desc='Use Environment property value'/>
+								<Value id='1' desc='1x'/>
+								<Value id='2' desc='2x'/>
+							</Values>
+							<Dependencies>
+								<Depend type='On Change'>
+									<Cond>onChange(Type)</Cond>
+									<Condition>
+										<Expression>
+											<Type>OnChange</Type>
+											<PropName>Type</PropName>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Readonly'>
+									<Cond>context(IsStandardVariable) == -1</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName source='context'>IsStandardVariable</PropName>
+											<Value>-1</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Invalid'>
+									<Value>UMPV</Value>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>FormClassSelector</Id>
+							<Name>Form Class</Name>
+							<Type>Custom</Type>
+							<CustomType>Artech.Genexus.Common.CustomTypes.FormClassSelector, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</CustomType>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(IS_WEB_GEN) == false</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>false</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>STATUSBAR</Id>
+							<Name>Show status bar</Name>
+							<Description>Show status bar</Description>
+							<Type>Combo</Type>
+							<Default>when_needed</Default>
+							<Values>
+								<Value id='when_needed' desc='Depending on object type'/>
+								<Value id='always' desc='Always'/>
+								<Value id='never' desc='Never'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Default'>
+									<Value>always</Value>
+									<Cond>context(SHOW_S) == YES</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName source='context'>SHOW_S</PropName>
+											<Value>YES</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Default'>
+									<Value>never</Value>
+									<Cond>context(SHOW_S) == NO</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName source='context'>SHOW_S</PropName>
+											<Value>NO</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+								<Depend type='Not Show'>
+									<Cond>value(IS_WEB_GEN) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop>
+							<Id>TAB_PAGE_EXIT</Id>
+							<Name>End tab page action</Name>
+							<Description>End tab page action</Description>
+							<Type>Combo</Type>
+							<Default>next_page</Default>
+							<Values>
+								<Value id='next_page' desc='Jump to next page'/>
+								<Value id='exit_tab' desc='Exit tab'/>
+							</Values>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>SHOW_FRM</Id>
+							<Name>Show form</Name>
+							<Description>Show form</Description>
+							<Type>Combo</Type>
+							<Default>BEFORE</Default>
+							<Values>
+								<Value id='UMPV' desc='Use Environment property value'/>
+								<Value id='BEFORE' desc='Before Start Event'/>
+								<Value id='AFTER' desc='After Start Event'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Invalid'>
+									<Value>UMPV</Value>
+								</Depend>
+								<Depend type='Not Show'>
+									<Cond>value(IS_WEB_GEN) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>FC_READONLY</Id>
+							<Name>Color in read-only fields</Name>
+							<Description>Color in read-only fields</Description>
+							<Type>Combo</Type>
+							<Default>GRAYED</Default>
+							<Values>
+								<Value id='GRAYED' desc='Grayed (Windows Default)'/>
+								<Value id='ORIGINAL' desc='Original'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Not Show'>
+									<Cond>value(IS_WEB_GEN) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>SUBFILE_ORDER</Id>
+							<Name>Click to sort in grid</Name>
+							<Description>Click to sort in grid</Description>
+							<Type>Combo</Type>
+							<Default>Y</Default>
+							<Values>
+								<Value id='UMPV' desc='Use Environment property value'/>
+								<Value id='Y' desc='Enabled'/>
+								<Value id='N' desc='Disabled'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Invalid'>
+									<Value>UMPV</Value>
+								</Depend>
+								<Depend type='Not Show'>
+									<Cond>value(IS_WEB_GEN) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop>
+							<Id>WP_SKIP</Id>
+							<Name>Skip read-only columns</Name>
+							<Description>Skip read-only columns</Description>
+							<Type>Combo</Type>
+							<Default>Yes</Default>
+							<Values>
+								<Value id='Yes' desc='Yes'/>
+								<Value id='No' desc='No'/>
+							</Values>
+						</Prop>
+						<Prop>
+							<Id>SHOW_M</Id>
+							<Name>Show menu bar</Name>
+							<Description>Show menu bar</Description>
+							<Type>Combo</Type>
+							<Default>YES</Default>
+							<Values>
+								<Value id='YES' desc='Yes'/>
+								<Value id='NO' desc='No'/>
+							</Values>
+						</Prop>
+						<Prop>
+							<Id>SHOW_T</Id>
+							<Name>Show toolbar</Name>
+							<Description>Show toolbar</Description>
+							<Type>Combo</Type>
+							<Default>YES</Default>
+							<Values>
+								<Value id='YES' desc='Yes'/>
+								<Value id='NO' desc='No'/>
+							</Values>
+						</Prop>
+						<Prop>
+							<Id>WORKFILE_LINES</Id>
+							<Name>Maximum workFile lines</Name>
+							<Description>Maximum workFile lines</Description>
+							<Type>Integer</Type>
+							<Default>10000</Default>
+						</Prop>
+						<Prop hidden='1'>
+							<Id>WP_RESIZE</Id>
+							<Name>Allow column resizing</Name>
+							<Description>Allow column resizing</Description>
+							<Type>Combo</Type>
+							<Default>Yes</Default>
+							<Values>
+								<Value id='Yes' desc='Yes'/>
+								<Value id='No' desc='No'/>
+							</Values>
+							<Dependencies>
+								<Depend type='Not Show'>
+									<Cond>value(IS_WEB_GEN) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Group>
+							<Name>Web interface</Name>
+							<Description>Web interface</Description>
+							<Type>Group</Type>
+							<Children>
+								<Group>
+									<Id>PROP_DATEPICKER_GROUP</Id>
+									<Name>Datepicker</Name>
+									<Type>Group</Type>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(IS_WEB_GEN) != true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>NotEqual</Operator>
+													<PropName>IS_WEB_GEN</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+									<Children>
+										<Prop>
+											<Id>idUSE_WEB_DATEPICKER</Id>
+											<Name>Enable Datepicker</Name>
+											<Description>Enable datepicker calendar generation</Description>
+											<Type>Combo</Type>
+											<Default>Yes</Default>
+											<Values>
+												<Value id='Yes' desc='Yes'/>
+												<Value id='No' desc='No'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+											</Dependencies>
+										</Prop>
+										<Prop>
+											<Id>WNUM_DATEPICKER</Id>
+											<Name>Show week numbers</Name>
+											<Description>Show calendar week numbers</Description>
+											<Type>Combo</Type>
+											<Default>No</Default>
+											<Values>
+												<Value id='Yes' desc='Yes'/>
+												<Value id='No' desc='No'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(idUSE_WEB_DATEPICKER) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>idUSE_WEB_DATEPICKER</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>Yes</Value>
+													<Cond>value(idUSE_WEB_DATEPICKER) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>idUSE_WEB_DATEPICKER</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+													<Cond>value(idUSE_WEB_DATEPICKER) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>idUSE_WEB_DATEPICKER</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+											</Dependencies>
+										</Prop>
+										<Prop>
+											<Id>FIRST_WD_DATEPICKER</Id>
+											<Name>First day of week</Name>
+											<Description>Select first day of week for calendar</Description>
+											<Type>Combo</Type>
+											<Default>Sunday</Default>
+											<Values>
+												<Value id='Sunday' desc='Sunday'/>
+												<Value id='Monday' desc='Monday'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(idUSE_WEB_DATEPICKER) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>idUSE_WEB_DATEPICKER</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>Monday</Value>
+													<Cond>value(idUSE_WEB_DATEPICKER) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>idUSE_WEB_DATEPICKER</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+													<Cond>value(idUSE_WEB_DATEPICKER) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>idUSE_WEB_DATEPICKER</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+											</Dependencies>
+										</Prop>
+									</Children>
+								</Group>
+							</Children>
+						</Group>
+						<Group>
+							<Id>KEYC</Id>
+							<Name>Key configuration</Name>
+							<Description>Key configuration</Description>
+							<Type>Group</Type>
+							<Metadata>
+								<Value name='FlagCategories'>Win</Value>
+							</Metadata>
+							<Children>
+								<Prop>
+									<Id>FIELD_EXIT</Id>
+									<Name>Field exit</Name>
+									<Description>Field exit</Description>
+									<Type>Combo</Type>
+									<Default>Tab</Default>
+									<Values>
+										<Value id='Tab' desc='Tab, Shift-Tab'/>
+										<Value id='TabEnter' desc='Enter, Tab, Shift-Tab'/>
+										<Value id='Only+' desc="'+' Key, Tab, Shift-Tab"/>
+										<Value id='Enter' desc='Enter, Down Arrow, Up Arrow, Tab, Shift-Tab'/>
+										<Value id='+' desc="'+' Key, Down Arrow, Up Arrow, Tab, Shift-Tab"/>
+										<Value id='fpw_comp' desc='FoxPro 2.6 generator'/>
+										<Value id='last_char' desc='Passing last char'/>
+									</Values>
+									<Dependencies>
+										<Depend type='Invalid'>
+											<Value>Only+</Value>
+											<Cond>value(IS_WEB_GEN) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>IS_WEB_GEN</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Invalid'>
+											<Value>Enter</Value>
+											<Cond>value(IS_WEB_GEN) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>IS_WEB_GEN</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Invalid'>
+											<Value>+</Value>
+											<Cond>value(IS_WEB_GEN) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>IS_WEB_GEN</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Group>
+									<Id>AS4KEYS</Id>
+									<Name>Key assignment</Name>
+									<Description>Key assignment</Description>
+									<Type>Group</Type>
+									<Children>
+										<Prop>
+											<Id>ASSIGNED_FNC_KEYS</Id>
+											<Name>Assign Function Keys to Standard Events</Name>
+											<Type>Combo</Type>
+											<Default>No</Default>
+											<Values>
+												<Value id='Yes' desc='Yes'/>
+												<Value id='No' desc='No'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Default'>
+													<Value>Yes</Value>
+													<Cond>value(IS_WEB_GEN) != true</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>NotEqual</Operator>
+															<PropName>IS_WEB_GEN</PropName>
+															<Value>true</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+											</Dependencies>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_HELP</Id>
+											<Name>Help key</Name>
+											<Description>Help key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>1</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_CHECK</Id>
+											<Name>Check key</Name>
+											<Description>Check key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>2</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_EXIT</Id>
+											<Name>Exit key</Name>
+											<Description>Exit key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>3</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_PROMPT</Id>
+											<Name>Prompt key</Name>
+											<Description>Prompt key</Description>
+											<Type>Combo</Type>
+											<Default>4</Default>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>4</Value>
+												</Depend>
+												<Depend type='Default'>
+													<Value>N</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_REFRESH</Id>
+											<Name>Refresh key</Name>
+											<Description>Refresh key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>5</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_INSERT</Id>
+											<Name>Insert key</Name>
+											<Description>Insert key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>6</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_PREVIOUS</Id>
+											<Name>Previous record key</Name>
+											<Description>Previous record key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>7</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_NEXT</Id>
+											<Name>Next record key</Name>
+											<Description>Next record key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>8</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_RETRIEVE</Id>
+											<Name>Retrieve key</Name>
+											<Description>Retrieve key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>9</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_MENU</Id>
+											<Name>Menu key</Name>
+											<Description>Menu key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'/>
+												<Depend type='Default'>
+													<Value>10</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_UPDATE</Id>
+											<Name>Update key</Name>
+											<Description>Update key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>11</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_CANCEL</Id>
+											<Name>Cancel key</Name>
+											<Description>Cancel key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>12</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_DELETE</Id>
+											<Name>Delete key</Name>
+											<Description>Delete key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>13</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_DISPLAY</Id>
+											<Name>Display key</Name>
+											<Description>Display key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>14</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_SELECT</Id>
+											<Name>Select key</Name>
+											<Description>Select key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>16</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_FIRST</Id>
+											<Name>First record key</Name>
+											<Description>First record key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>19</Value>
+												</Depend>
+												<Depend type='Default'>
+													<Value>N</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_LAST</Id>
+											<Name>Last record key</Name>
+											<Description>Last record key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>20</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_ENTER</Id>
+											<Name>Enter key</Name>
+											<Description>Enter key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'>
+													<Cond>value(ASSIGNED_FNC_KEYS) == No</Cond>
+													<Condition>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ASSIGNED_FNC_KEYS</PropName>
+															<Value>No</Value>
+														</Expression>
+													</Condition>
+												</Depend>
+												<Depend type='Default'>
+													<Value>N</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>KEY_MOREKEYS</Id>
+											<Name>More keys key</Name>
+											<Description>More keys key</Description>
+											<Type>Combo</Type>
+											<Values>
+												<Value id='N' desc='None'/>
+												<Value id='0' desc='Disabled'/>
+												<Value id='1' desc='F1'/>
+												<Value id='2' desc='F2'/>
+												<Value id='3' desc='F3'/>
+												<Value id='4' desc='F4'/>
+												<Value id='5' desc='F5'/>
+												<Value id='6' desc='F6'/>
+												<Value id='7' desc='F7'/>
+												<Value id='8' desc='F8'/>
+												<Value id='9' desc='F9'/>
+												<Value id='10' desc='F10'/>
+												<Value id='11' desc='F11'/>
+												<Value id='12' desc='F12'/>
+												<Value id='13' desc='F13 (Shift-F1)'/>
+												<Value id='14' desc='F14 (Shift-F2)'/>
+												<Value id='15' desc='F15 (Shift-F3)'/>
+												<Value id='16' desc='F16 (Shift-F4)'/>
+												<Value id='17' desc='F17 (Shift-F5)'/>
+												<Value id='18' desc='F18 (Shift-F6)'/>
+												<Value id='19' desc='F19 (Shift-F7)'/>
+												<Value id='20' desc='F20 (Shift-F8)'/>
+												<Value id='21' desc='F21 (Shift-F9)'/>
+												<Value id='22' desc='F22 (Shift-F10)'/>
+												<Value id='23' desc='F23 (Shift-F11)'/>
+												<Value id='24' desc='F24 (Shift-F12)'/>
+												<Value id='UMPV' desc='Use Environment property value'/>
+											</Values>
+											<Dependencies>
+												<Depend type='Not Show'/>
+												<Depend type='Default'>
+													<Value>24</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>UMPV</Value>
+												</Depend>
+												<Depend type='Invalid'>
+													<Value>0</Value>
+												</Depend>
+											</Dependencies>
+											<Metadata>
+												<Value name='FlagModelIniIfApply'></Value>
+											</Metadata>
+										</Prop>
+									</Children>
+								</Group>
+								<Prop hidden='1'>
+									<Id>ESCAPE_FUNCTION</Id>
+									<Name>Esc key action</Name>
+									<Description>Esc key action</Description>
+									<Type>Combo</Type>
+									<Default>Exit_form</Default>
+									<Values>
+										<Value id='Exit_form' desc='Exit form'/>
+										<Value id='Change_level' desc='Change level'/>
+										<Value id='None' desc='None'/>
+									</Values>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(IS_WEB_GEN) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>IS_WEB_GEN</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+							</Children>
+						</Group>
+						<Group>
+							<Id>PRINT_GROUP</Id>
+							<Name>Printing</Name>
+							<Description>Printing</Description>
+							<Type>Group</Type>
+							<Children>
+								<Prop hidden='1'>
+									<Id>PRN_DLG</Id>
+									<Name>Show printer dialog on reports</Name>
+									<Description>Show printer dialog on reports</Description>
+									<Type>Combo</Type>
+									<Default>Yes</Default>
+									<Values>
+										<Value id='Yes' desc='Yes'/>
+										<Value id='No' desc='No'/>
+									</Values>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(IS_WEB_GEN) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>IS_WEB_GEN</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+								</Prop>
+								<Prop>
+									<Id>PRINT_METHOD</Id>
+									<Name>Print method</Name>
+									<Description>Print method</Description>
+									<Type>Combo</Type>
+									<Default>RV</Default>
+									<Values>
+										<Value id='RV' desc='Report Viewer'/>
+										<Value id='DLL' desc='Use DLL'/>
+										<Value id='Native' desc='Native Printing'/>
+									</Values>
+								</Prop>
+								<Group hidden='1'>
+									<Id>REPORT_VIEWER_GROUP</Id>
+									<Name>Report viewer</Name>
+									<Description>Report viewer</Description>
+									<Type>Group</Type>
+									<Dependencies>
+										<Depend type='Not Show'>
+											<Cond>value(PRINT_METHOD) != RV</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>NotEqual</Operator>
+													<PropName>PRINT_METHOD</PropName>
+													<Value>RV</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+										<Depend type='Not Show'>
+											<Cond>value(IS_WEB_GEN) == true</Cond>
+											<Condition>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>IS_WEB_GEN</PropName>
+													<Value>true</Value>
+												</Expression>
+											</Condition>
+										</Depend>
+									</Dependencies>
+									<Children>
+										<Prop hidden='1'>
+											<Id>RV_MAXIMIZE</Id>
+											<Name>Maximized</Name>
+											<Description>Maximized</Description>
+											<Type>Combo</Type>
+											<Default>No</Default>
+											<Values>
+												<Value id='Yes' desc='Yes'/>
+												<Value id='No' desc='No'/>
+											</Values>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>RV_ONTOP</Id>
+											<Name>Always on top</Name>
+											<Description>Always on top</Description>
+											<Type>Combo</Type>
+											<Default>No</Default>
+											<Values>
+												<Value id='Yes' desc='Yes'/>
+												<Value id='No' desc='No'/>
+											</Values>
+										</Prop>
+										<Prop hidden='1'>
+											<Id>RV_MODAL</Id>
+											<Name>Modal</Name>
+											<Description>Modal</Description>
+											<Type>Combo</Type>
+											<Default>Yes</Default>
+											<Values>
+												<Value id='Yes' desc='Yes'/>
+												<Value id='No' desc='No'/>
+											</Values>
+										</Prop>
+									</Children>
+								</Group>
+								<Group>
+									<Id>PRINT_GROUP_VFP</Id>
+									<Name>VFP specific</Name>
+									<Description>VFP specific</Description>
+									<Type>Group</Type>
+									<Children>
+										<Prop>
+											<Id>PRN_ROW_HEIGHT</Id>
+											<Name>Text grid size</Name>
+											<Description>Text grid size</Description>
+											<Type>Combo</Type>
+											<Default>GXGRID</Default>
+											<Values>
+												<Value id='GXGRID' desc='GeneXus Grid'/>
+												<Value id='CN10' desc='Courier New, 10'/>
+											</Values>
+										</Prop>
+									</Children>
+								</Group>
+							</Children>
+						</Group>
+						<Group hidden='1'>
+							<Id>RIGHT_BUTTON</Id>
+							<Name>Right button</Name>
+							<Description>Right button</Description>
+							<Type>Group</Type>
+							<Dependencies>
+								<Depend type='Not Show'>
+									<Cond>value(IS_WEB_GEN) == true</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>IS_WEB_GEN</PropName>
+											<Value>true</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Children>
+								<Prop hidden='1'>
+									<Id>CALC</Id>
+									<Name>Calculator on numeric fields</Name>
+									<Description>Calculator on numeric fields</Description>
+									<Type>Combo</Type>
+									<Default>Yes</Default>
+									<Values>
+										<Value id='Yes' desc='Yes'/>
+										<Value id='No' desc='No'/>
+									</Values>
+								</Prop>
+								<Prop hidden='1'>
+									<Id>CALENDAR</Id>
+									<Name>Calendar on date fields</Name>
+									<Description>Calendar on date fields</Description>
+									<Type>Combo</Type>
+									<Default>Yes</Default>
+									<Values>
+										<Value id='Yes' desc='Yes'/>
+										<Value id='No' desc='No'/>
+									</Values>
+								</Prop>
+							</Children>
+						</Group>
+						<Group>
+							<Id>FORMAT_GROUP</Id>
+							<Name>Format</Name>
+							<Description>Format</Description>
+							<Type>Group</Type>
+							<Children>
+								<Prop>
+									<Id>CTOD_FMT</Id>
+									<Name>Date format in CTOD function</Name>
+									<Description>Date format in CTOD function</Description>
+									<Type>Combo</Type>
+									<Default>L</Default>
+									<Values>
+										<Value id='ENG' desc='mm/dd/yy'/>
+										<Value id='SPA' desc='dd/mm/yy'/>
+										<Value id='YMD' desc='yy/mm/dd'/>
+										<Value id='ENG4' desc='mm/dd/yyyy'/>
+										<Value id='SPA4' desc='dd/mm/yyyy'/>
+										<Value id='Y4MD' desc='yyyy/mm/dd'/>
+										<Value id='L' desc='Language Dependent'/>
+									</Values>
+								</Prop>
+								<Prop>
+									<Id>YEAR_LIMIT</Id>
+									<Name>First year of 20th century</Name>
+									<Description>First year of 20th century</Description>
+									<Type>Integer</Type>
+									<Default>40</Default>
+								</Prop>
+							</Children>
+						</Group>
+						<Group>
+							<Id>USER_INTERFACE_VISUAL</Id>
+							<Name>VFP/VB specific</Name>
+							<Description>VFP/VB specific</Description>
+							<Type>Group</Type>
+							<Children>
+								<Prop>
+									<Id>GRID_COMBO</Id>
+									<Name>Combo style</Name>
+									<Description>Combo style</Description>
+									<Type>Combo</Type>
+									<Default>NC</Default>
+									<Values>
+										<Value id='NC' desc='Show Descriptions Only'/>
+										<Value id='DD' desc='Show Values And Descriptions'/>
+									</Values>
+								</Prop>
+								<Prop>
+									<Id>GRID_LISTBOX</Id>
+									<Name>Listbox style</Name>
+									<Description>Listbox style</Description>
+									<Type>Combo</Type>
+									<Default>NC_LB</Default>
+									<Values>
+										<Value id='NC_LB' desc='Show Descriptions Only'/>
+										<Value id='DD_LB' desc='Show Values And Descriptions'/>
+									</Values>
+								</Prop>
+							</Children>
+						</Group>
+						<Group>
+							<Id>USER_INTERFACE_VFP</Id>
+							<Name>VFP specific</Name>
+							<Description>VFP specific</Description>
+							<Type>Group</Type>
+							<Children>
+								<Prop>
+									<Id>CANCEL_FUNCTION</Id>
+									<Name>Cancel button action</Name>
+									<Description>Cancel button action</Description>
+									<Type>Combo</Type>
+									<Default>exit_form</Default>
+									<Values>
+										<Value id='exit_form' desc='Exit form'/>
+										<Value id='exit_level' desc='Exit level'/>
+									</Values>
+								</Prop>
+								<Prop>
+									<Id>OUT_RANGE_ERROR</Id>
+									<Name>Error if control value invalid</Name>
+									<Description>Error if control value invalid</Description>
+									<Type>Combo</Type>
+									<Default>Yes</Default>
+									<Values>
+										<Value id='Yes' desc='Yes'/>
+										<Value id='No' desc='No'/>
+									</Values>
+								</Prop>
+								<Prop>
+									<Id>SIZE_CORRECT</Id>
+									<Name>Interface size</Name>
+									<Description>Interface size</Description>
+									<Type>Combo</Type>
+									<Default>Normal</Default>
+									<Values>
+										<Value id='Normal' desc='Normal'/>
+										<Value id='Fit' desc='Arrange to fit fonts in controls'/>
+									</Values>
+								</Prop>
+							</Children>
+						</Group>
+					</Children>
+				</Group>
+				<Group>
+					<Id>TEMP_FILES_GROUP</Id>
+					<Name>Temporary files</Name>
+					<Description>Temporary files</Description>
+					<Type>Group</Type>
+					<Children>
+						<Group>
+							<Id>TEMP_FILES_GROUP_VFP</Id>
+							<Name>VFP specific</Name>
+							<Description>VFP specific</Description>
+							<Type>Group</Type>
+							<Children>
+								<Prop>
+									<Id>TMP_FILES</Id>
+									<Name>Temp. files environment variable</Name>
+									<Description>Temp. files environment variable</Description>
+									<Type>Text</Type>
+								</Prop>
+							</Children>
+						</Group>
+					</Children>
+				</Group>
+				<Group>
+					<Id>idSPECIFIER_GROUP</Id>
+					<Name>Specification</Name>
+					<Description>Specification options</Description>
+					<Type>Group</Type>
+					<Children>
+						<Group>
+							<Id>TYPE_CHECKING_GROUP</Id>
+							<Name>Type checking</Name>
+							<Description>Type checking</Description>
+							<Type>Group</Type>
+							<Children>
+								<Prop>
+									<Id>TYPE_ERRORS</Id>
+									<Name>Check type errors</Name>
+									<Description>Check type errors</Description>
+									<Type>Combo</Type>
+									<Default>Yes</Default>
+									<Values>
+										<Value id='Yes' desc='Yes'/>
+										<Value id='No' desc='No'/>
+									</Values>
+								</Prop>
+								<Prop>
+									<Id>STD_FUNC</Id>
+									<Name>Standard Functions</Name>
+									<Description>Standard Functions</Description>
+									<Type>Combo</Type>
+									<Default>Yes</Default>
+									<Values>
+										<Value id='Yes' desc='Error on non-standard functions when specifying'/>
+										<Value id='No' desc='Allows non-standard functions when specifying'/>
+									</Values>
+									<Metadata>
+										<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.StandardFunctionsForEnvironmentDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+										<Value name='FlagOnlyDefault'></Value>
+									</Metadata>
+									<Options>
+										<Option type='Readonly'/>
+									</Options>
+								</Prop>
+							</Children>
+						</Group>
+						<Group>
+							<Id>SPC_WARNING_MESSAGES_GROUP</Id>
+							<Name>Warning messages</Name>
+							<Description>Configure warning messages handling options.</Description>
+							<Type>Group</Type>
+							<Metadata>
+								<Value name='FlagCategories'>Output</Value>
+							</Metadata>
+							<Children>
+								<Prop>
+									<Id>SPC_WARNINGS_DISABLED</Id>
+									<Name>Disabled warnings</Name>
+									<Description>Type a space separated list of warning message codes you want to be disabled.</Description>
+									<Type>Text</Type>
+									<Dependencies>
+										<Depend type='Default'>
+											<Value>spc0096 spc0107 spc0142</Value>
+										</Depend>
+									</Dependencies>
+									<Metadata>
+										<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.DisabledWarningsDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+									</Metadata>
+								</Prop>
+								<Prop>
+									<Id>SPC_WARNINGS_AS_ERRORS</Id>
+									<Name>Warnings treated as errors</Name>
+									<Description>Type a space separated list of warning message codes you want to be treated as errors.</Description>
+									<Type>Text</Type>
+								</Prop>
+							</Children>
+						</Group>
+						<Prop>
+							<Id>EXPAND_DYNAMIC_CALL</Id>
+							<Name>Expand dynamic calls</Name>
+							<Description>Convert dynamic calls to static calls to every possible object.</Description>
+							<Type>Combo</Type>
+							<Default>No</Default>
+							<Values>
+								<Value id='Yes' desc='Yes'/>
+								<Value id='No' desc='No'/>
+							</Values>
+						</Prop>
+						<Prop>
+							<Id>AutomaticPrompts</Id>
+							<Name>Generate prompt programs</Name>
+							<Description>Controls whether prompt objects are generated automatically or not.</Description>
+							<Type>Combo</Type>
+							<Values>
+								<Value id='Yes' desc='Yes'/>
+								<Value id='No' desc='No'/>
+							</Values>
+							<Metadata>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.AutomaticPromptsDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>idExecutionGroup</Id>
+					<Name>Execution</Name>
+					<Type>Group</Type>
+					<Children>
+						<Prop>
+							<Id>VFPPath</Id>
+							<Name>Visual Foxpro Path</Name>
+							<Description>Visual Foxpro Path</Description>
+							<Type>Custom</Type>
+							<CustomType>Artech.Genexus.Common.CustomTypes.ExeFileType, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</CustomType>
+							<Metadata>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.VFPPathDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+								<Value name='customValidResolver'>Artech.Genexus.Common.Resolvers.FileExistValidResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+								<Value name='FlagStoreValueByUser'></Value>
+								<Value name='FlagExport'>false</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>RPL</Id>
+					<Name>Replication</Name>
+					<Description>Replication</Description>
+					<Type>Group</Type>
+					<Children>
+						<Prop>
+							<Id>LOG_TABLES</Id>
+							<Name>Tables to replicate (*ALL replicate all tables)</Name>
+							<Description>Tables to replicate (*ALL replicate all tables)</Description>
+							<Type>Text</Type>
+						</Prop>
+						<Prop>
+							<Id>LOG_FILE</Id>
+							<Name>Replication log file name</Name>
+							<Description>Replication log file name</Description>
+							<Type>Text</Type>
+						</Prop>
+					</Children>
+				</Group>
+			</Children>
+		</Group>
+	</Object>
+</Content>

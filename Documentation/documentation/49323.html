@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Design System Class Properties</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49323,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Design System Class Properties</h1>
+<!--Design System Class Properties--><div class="TableWikiBody" id="tblwikibody"><p>They specify features such as color, background, borders, size, margins, padding, fonts, links, positioning, alignment, and many others that can be applied to screen controls in any platform (Web, Angular, Android, Apple). They are also used to configure <a href="47472.html">rule</a> settings such as <a href="49338.html">Font-face style rule</a>.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>property_name</em><strong>:</strong> {<em>value</em>[<em>unit</em>] | <strong>$</strong><em>token_group</em><strong>.</strong><em>token_name</em><strong> | </strong><em>GX-function</em><strong>( </strong><em>gx_object </em><strong>)</strong>}... <strong>;</strong></pre>
+
+<p style="text-align: right;"><a href="49363.html">View Syntax conventions</a>.</p>
+
+<p>Where:</p>
+
+<p><em>property_name:</em> Valid style property name. Valid properties are both the existing ones for Web platform objects (for example, <a href="6916.html">Web Panel</a>) and for Native or Angular (for example, <a href="24829.html">Panel</a>). </p>
+
+<p><em>value:</em> Valid value for the property_name property. </p>
+
+<p><em>unit:</em> Valid unit of measurement according to<em> property_name</em>. Some of them are <strong>px, dip, em, %.</strong></p>
+
+<p><em>token_group:</em> Valid Token category. In the <a href="47378.html">Token</a> editor, you can see a combo box with all the possible values (colors, radius, spacing, etc.).</p>
+
+<p><em>token_name:</em> Name of the Token defined under the<em> token_group</em> category in the Tokens section of the <a href="47375.html">Design System Object</a> or of a DSO (or <a href="47378.html">Tokens</a> section of a DSO) imported by it (in a sort of "extended DSO" if viewed as an analogy to the concept of extended table). </p>
+
+<p><em>gx-function:</em> Function used to return a reference to a <a href="2428.html">KB</a> object as a value. For example, the gx-image function returns a reference to a KB image and is used for properties specifying images. The gx-file function returns a reference to a KB file. </p>
+
+<p><em>gx_object:</em> KB object referenced by the GX-function. It is of Image type if the function is gx-image and of file type if the function is gx-file.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+tokens myTokens
+{
+       #colors
+       {
+               Highlight: #D89722;
+       }
+       #spacing
+       {
+               s: 15px;
+       }
+}
+
+styles myStyle
+{
+       .class1
+       {
+               color: red;
+               line-height: 75px; 
+       }
+       .class2
+       {
+                color: #D82822;
+                line-height: 1.8;
+       }
+       @font-face
+       {
+                 Font-family: TestFont;
+                 src: gx-file(MyFontFile);
+       }
+       .class3
+       {
+                 color: $colors.Highlight;
+                 font-family: TestFont;
+       }
+       .class4
+       {
+                 gx-lottie-file: gx-file(lottieFile);   //Panels only
+       }        
+       .class5
+       {
+                 margin: 10dip 5dip 15dip 5dip;
+                 background-image: gx-image(myImage);
+       }
+       .class6
+       {
+                 margin: 10px 5px;
+       }
+       .class7
+       {
+                 margin: $spacing.s;
+                 border: 5px solid red;
+       }
+       .class8
+       {
+                 color: blue;
+                 gx-label-class:  class3;
+       }
+}</pre>
+
+<p>As in CSS, some properties accept shorthand notation to combine several properties into one. For example, instead of setting the 4 individual properties margin-top, margin-bottom, margin-left, and margin-right, you can type margin and set all four values inline. Also, if top and bottom and right and left match, they can be set in pairs. If they all match, you can specify a single value. </p>
+
+<p>See, for example, the CSS shorthand <a href='https://www.w3schools.com/css/css_border_shorthand.asp'>border</a> property.</p>
+
+<p>Some properties are valid for rendering both Web Panel and Panel controls, but others are specific to each type (Web Panel or Panel). </p>
+
+<p>For the Web case, all properties valid in CSS will be valid here as well. The reverse is not true because there is a set of GeneXus-specific properties that will provide a higher level of abstraction —along low-code lines— and will be widely used. They start with the prefix "gx-".</p>
+
+<p>Also, unlike in CSS, here Tokens can be referenced instead of typing the values directly. </p>
+
+<p>For native or Angular applications, the properties that do the same thing as in Web apps are usually called in the same way, although in some cases they may differ. Going forward the plan is to move towards standardization.</p>
+
+<p>When a property or its value are meaningless or invalid for rendering a particular control on a particular platform, the definition will be ignored. This is not the case for the other valid properties of the class for that control.</p>
+
+<h3><a id="gx-+Properties" class="HashLink" href="#gx-+Properties">gx- Properties</a></h3>
+
+<p>They are GeneXus-specific for that object. For example, suppose you want to set a consistent style to certain Attribute/Variable controls through a HighlightInfo class. </p>
+
+<p>How do you set the style of that control's label, when it is visible? By indicating, in the class, which class specifies the style of the label through the property <strong>gx-label-class</strong>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+styles MyStyles
+{
+    .HighlightInfo
+    {
+        font-family: serif;
+        font-size: 60px;
+        color: grey;
+        gx-label-class: LabelHighlightInfo;
+    }
+    .LabelHighlightInfo
+    {
+        color: green;
+        font-weight: bold;
+    }
+}</pre>
+
+<p>For example, if you associate the LabelHighlightInfo class with a Text Block and the HighlightInfo class with the Attribute (where for the label you associate the same LabelHighlightInfo class as for the Text Block), see how it looks at runtime:</p>
+
+<p><img src="./images/49325.jpg" id="49325" class="WikiImage"/></p>
+
+<p>If you want the text of the attribute and the text of the tag to match in all but a few characteristics, you could use the include rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+.HighlightInfo
+{
+    font-family: serif;
+    font-size: 40px;
+    color: grey;
+    gx-label-class: LabelHighlightInfo;
+}
+
+.LabelHighlightInfo
+{
+     @include HighlightInfo;
+     color: green;
+     font-weight: bold;
+}</pre>
+
+<p><img src="./images/49326.jpg" id="49326" class="WikiImage"/></p>
+
+<p>Another example: if a Text Block control with caption "CONTACT US TODAY" is associated with the class:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   .MainActionText
+    {
+        color: $colors.Highlight;  //token Highlight: #D82822; 
+        font-size: 14px;
+        font-family: Rubik-Medium;
+        font-weight: 500;
+        text-transform: uppercase;
+        line-height: 18px;
+    }
+</pre>
+
+<p>When running on the web, you will see:</p>
+
+<p><img src="./images/49328.jpg" id="49328" class="WikiImage"/></p>
+
+<p>But if the Text Block (whose name is TextBlock1) has a Link property defined, for example, in the Start event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+                        TextBlock1.Link = ContactUs_web.Link()</pre>
+
+<p>At runtime it will look as follows:</p>
+
+<p><img src="./images/49329.jpg" id="49329" class="WikiImage"/></p>
+
+<p>Because it is a link, the HTML selection will look for the style of the &lt;a&gt; tag that is used to indicate links and by default is displayed in the typical blue color. <br />
+If you want to give it a distinctive style when the class is used for a link, just add the <strong>gx-attribute-link-class </strong>property and indicate the class that will set the style of the control when it is a link. In the example, it is selected:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+.MainActionText
+  {
+       color: $colors.Highlight;
+       font-size: 14px;
+       font-family: Rubik-Medium;
+       font-weight: 500;
+       text-decoration: none;
+       text-transform: uppercase;
+       line-height: 18px;
+       gx-attribute-link-class: MainActionText;
+   }
+</pre>
+
+<p>At runtime, it will look as follows:</p>
+
+<p><img src="./images/49330.jpg" id="49330" class="WikiImage"/></p>
+
+<p>You could also add a class to change the color when hovering over the Text Block:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+   .MainActionText
+    {
+        color: $colors.Highlight;
+        font-size: 14px;
+        font-family: Rubik-Medium;
+        font-weight: 500;
+        text-decoration: none;
+        text-transform: uppercase;
+        line-height: 18px;
+        gx-attribute-link-class: MainActionText;
+        gx-attribute-hovered-class: LinkHover;
+    }
+   .LinkHover
+    {
+        color: $colors.HighlightNeg; //token HighlightNeg: #D89722
+    }
+</pre>
+
+<p>At runtime:</p>
+
+<p><img src="./images/49331.jpg" id="49331" class="WikiImage"/></p>
+
+<h3><a id="Availabilty" class="HashLink" href="#Availabilty">Availabilty</a></h3>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49309.html">Design System Class</a></TD><TD><a href="49494.html">Design System Class Properties List</a></TD><TD><a href="47378.html">Design System Tokens</a></TD></TR><TR><TD><a href="50939.html">Design System Tokens (GeneXus 17 Upgrade 9)</a></TD><TD><a href="40108.html">Toc:Design Systems</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/09/22 04:19 PM</em></font></td></TR></table></font>

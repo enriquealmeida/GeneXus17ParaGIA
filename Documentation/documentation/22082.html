@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Users</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22082,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Users</h1>
+<!--GAM - Users--><div class="TableWikiBody" id="tblwikibody"><p>GAM users are stored in User <a href="19888.html">GeneXus Access Manager</a> Database table.</p>
+
+<p>The information of the credentials stored in User table depends on the <a href="16508.html">GAM - Authentication Types</a> used in GAM.</p>
+
+<p>In case of <a href="20703.html">GAM - Local Authentication Type</a> the credentials of the user are stored in GAM User table, and this is the only case in which they are accessible by GAM. In case of <a href="21755.html">GAM - External Authentication Type</a>, <a href="17208.html">GAM - Twitter Authentication Type</a>, <a href="29013.html">GAM - Google Authentication Type</a> or <a href="29007.html">GAM - Facebook Authentication Type</a> the credentials of the user belong to the external identity providers.</p>
+
+<p>Depending on the model design of the application, the information of the user can reside entirely in the GAM User table or can be in any table of the application, in which case you need to map the information so as GAM can solve the security issues despite the user information is located in a table outside of GAM. See <a href="16552.html">HowTo: Mapping Application Users to GAM Users</a> for details on this topic.</p>
+
+<p>This document is about:</p>
+
+<p><ul><li><a class="HashLink" href="#User+identity">User identity</a></li><li><a class="HashLink" href="#Adding+users+">Adding users </a></li><li><a class="HashLink" href="#Deleting+users">Deleting users</a></li><li><a class="HashLink" href="#GAMUser+external+object">GAMUser external object</a></li><li><a class="HashLink" href="#User+relation+to+17569%2C+17568+and+15912">User relation to <a href="17569.html">GAM - Roles</a>, <a href="17568.html">GAM - Repository</a> and <a href="15912.html">GAM - Permissions</a></a></li><li><a class="HashLink" href="#User+properties">User properties</a></li><li><a class="HashLink" href="#GAM+Initialization+and+admin+user">GAM Initialization and admin user</a></li><li><a class="HashLink" href="#See+Also">See Also</a></li></ul></ul></p>
+
+<h3><a id="User+identity" class="HashLink" href="#User+identity">User identity</a></h3>
+
+<p>A user is identified by a GUID in User GAM Table. Besides, "User Namespace (UserNameSpace) \ Authentication Type (UserAuthTypeName) \User Name (UserName)" is a <a href="https://wiki.genexus.com/commwiki/wiki?2199,," target="_blank">Candidate Key</a>.</p>
+
+<p>When created, the user takes the <a href="https://wiki.genexus.com/commwiki/wiki?18678,," target="_blank">Repository Namespace</a> where he is defined.</p>
+
+<p>Users can be referenced by other properties, like their name, login, or nickname, as explained here: <a href="16534.html">GAM API: How to reference GAM users</a>.</p>
+
+<h3><a id="Adding+users+" class="HashLink" href="#Adding+users+">Adding users </a></h3>
+
+<p>Despite the Database being case sensitive, GAM does not support case sensitivity for the username. If you try to insert a user named "Jhon" (capital letters) and another user whose username is "jhon" already exists, an error will be thrown: Username already exist. (GAM49).</p>
+
+<h3><a id="Deleting+users" class="HashLink" href="#Deleting+users">Deleting users</a></h3>
+
+<p>A user can be logically deleted, using the delete method:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;GAMGUID)
+    if &amp;GAMUser.Success()
+        &amp;GAMUser.delete()
+    endif
+endif</pre>
+
+<p>To undelete the user, use the corresponding method:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;GAMGUID)
+    if &amp;GAMUser.Success()
+        &amp;isOK = &amp;GAMUser.UnDelete(&amp;GAMErrors)
+        if &amp;IsOK
+          commit
+        else
+           //Display GAM Errors
+       endif
+endif
+</pre>
+
+<p>Another option is to physically delete the user (the user and all its relations are removed from the Database):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;GAMGUID)
+     if &amp;GAMUser.Success()
+        &amp;isOK = &amp;GAMUser.PhysicalDelete(&amp;GAMErrors)
+           if &amp;isOK
+             commit
+           else
+              //Process GAM Errors
+           endif
+     endif</pre>
+
+<p>Read about <a href="51085.html">How to revoke tokens from external IDPs</a>.</p>
+
+<h3><a id="GAMUser+external+object" class="HashLink" href="#GAMUser+external+object">GAMUser external object</a></h3>
+
+<p>The GAMUser external object (imported when GAM is activated or updated) is used to manage the GAM Users in the application.</p>
+
+<p>It is part of the <a href="16535.html">GAM API</a> and allows handling properties and performing different actions on the users.</p>
+
+<p>Some examples of how to use the GAM API to manage user relations are detailed in the following links:</p>
+
+<ul>
+	<li><a href="20583.html">Update GAM User Permissions</a></li>
+	<li><a href="20593.html">Update GAM Role Permissions</a></li>
+</ul>
+
+<p>See the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a> distributed, in particular the GAMExampleWWUsers and GAMExampleEntryUser objects to get more examples.</p>
+
+<h3><a id="User+relation+to+wiki%3F17569%2CGAM%2B-%2BRoles+GAM+-+Roles%2C+wiki%3F17568%2CGAM%2B-%2BRepository+GAM+-+Repository+and+wiki%3F15912%2CGAM%2B-%2BPermissions+GAM+-+Permissions" class="HashLink" href="#User+relation+to+wiki%3F17569%2CGAM%2B-%2BRoles+GAM+-+Roles%2C+wiki%3F17568%2CGAM%2B-%2BRepository+GAM+-+Repository+and+wiki%3F15912%2CGAM%2B-%2BPermissions+GAM+-+Permissions">User relation to <a href="17569.html">GAM - Roles</a>, <a href="17568.html">GAM - Repository</a> and <a href="15912.html">GAM - Permissions</a></a></h3>
+
+<ul>
+	<li>User is a strong entity, defined by a GUID as Primary Key as stated previously.<br />
+	Taking into consideration that in GAM, there can exist more than one repositories (see <a href="18682.html">GAM - Multiple Repositories Scenarios</a>), a user can be enabled in n repositories regarding that the user Namespace is the same as the <a href="https://wiki.genexus.com/commwiki/wiki?18678,," target="_blank">Repository Namespace</a> where he is enabled. See <a href="21042.html">Users enabled or disabled in the GAM Repository</a>.<br />
+	 </li>
+	<li>Users are associated with Roles in a Repository (a user can have n Roles in a Repository), following the <a href="17808.html">Role Based Access Control (RBAC)</a> approach.<br />
+	 </li>
+	<li>Nevertheless, users can be related directly to <a href="15912.html">GAM - Permissions</a> also.</li>
+</ul>
+
+<h3><a id="User+properties" class="HashLink" href="#User+properties">User properties</a></h3>
+
+<p>The User table structure allows storing UserFirstName, UserLastName, UserBirthday, UserGender, UserPhone, etc. If you need to store other information than the information provided by the User table structure, you can extend the User table properties using an approach based on OAV : see <a href="19634.html">Extensibility of GAM entity properties</a> and <a href="https://wiki.genexus.com/commwiki/wiki?21315,," target="_blank">HowTo: GAM User table extensibility - multivalued attributes</a>.</p>
+
+<h3><a id="GAM+Initialization+and+admin+user" class="HashLink" href="#GAM+Initialization+and+admin+user">GAM Initialization and admin user</a></h3>
+
+<p>When GAM is activated for the first time (<a href="14706.html">Enable Integrated Security property</a> is set to TRUE), the user "admin" is created for prototyping purposes. You can login using "admin" in the <a href="15935.html">GAM - Web Backoffice</a> in order to start working, and afterwards create new users for your application. See <a href="19946.html">GAM Getting Started</a> for more details.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?22017,," target="_blank">Import Users - GAM Deploy Tool</a><br />
+<a href="15387.html">HowTo: Filtering Data by User Using the GAM API</a></p>
+
+<p><span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span></p>
+
+<p></p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="51085.html">GAM - How to revoke tokens from external IDPs</a></TD><TD><a href="17568.html">GAM - Repository</a></TD></TR><TR><TD><a href="15935.html">Category:GAM - Web Backoffice</a></TD><TD><a href="16534.html">GAM API: How to reference GAM users</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 05:52 PM</em></font></td></TR></table></font>

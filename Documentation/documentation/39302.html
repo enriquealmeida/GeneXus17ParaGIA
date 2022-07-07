@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo : Initialize entity values in the AI provider</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39302,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo : Initialize entity values in the AI provider</h1>
+<!--HowTo : Initialize entity values in the AI provider--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In order to create and initialize <a href="39083.html">Chatbot Entity</a> values (and their synonyms) in the <a href='https://en.wikipedia.org/wiki/Artificial_intelligence'>AI</a> provider, using the <a href="37102.html">Chatbot generator</a>, you just need to execute the following steps.</p>
+
+<ol>
+	<li>Create a <a href="4417.html">Data Provider</a> or procedure which loads into an <a href="10021.html">Structured Data Type (SDT) object</a> the list of values for the entity you want to load in the AI provider.</li>
+	<li>Call the &quot;<em>SendEntitiyValues</em>&quot; procedure (this procedure is an entry point which belongs to the Chatbot external module). In the Kb, you can see it under References - Chatbot/Entities module.<br />
+	<br />
+	<img src="./images/42957.png" id="42957" class="WikiImage"/></li>
+</ol>
+
+<p>Its signature is as follows:</p>
+
+<pre>
+parm(in:&amp;ChatbotInstance, in:&amp;EntityValues, in:&amp;Entity, out:&amp;Messages);</pre>
+
+<p><strong>where</strong></p>
+
+<ul>
+	<li>&amp;ChatbotInstance is varchar(256). The name of the <a href="37113.html">Conversational Flows object</a>.</li>
+	<li>&amp;EntityValues is of EntityValues data type. Here load all the entity values and it synonyms.</li>
+</ul>
+
+<p>   <img src="./images/40209.png" id="40209" class="WikiImage"/></p>
+
+<ul>
+	<li>&amp;Entity is varchar(40). The name of the <a href="39083.html">Entity</a> in the NLP provider.</li>
+	<li>&amp;Messages is an output parameter of Messages data type. See <a href="42695.html">Chatbot Generator common errors and solutions</a> to have details about the values which can take the &amp;Messages parameter.</li>
+</ul>
+
+<h2><a id="Sample" class="HashLink" href="#Sample">Sample</a></h2>
+
+<p>Take a look at the example shown in <a href="37076.html">HowTo: Build a chatbot using GeneXus</a>, and open the &quot;<em>InitializeEntityValuesPrc</em>&quot; procedure.</p>
+
+<p>In this example, you are sending values to the AI provider to load the &quot;<em>Social_Event_Type</em>&quot; entity and some synonyms for each of the values (the synonyms are not mandatory).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SDTEntityValues.values.Clear()
+&amp;SDTEntitiesValuesValue.value = !&quot;Art&quot;
+&amp;SDTEntitiesValuesValue.synonyms.Add(!&quot;Artistic&quot;)
+&amp;SDTEntityValues.values.Add(&amp;SDTEntitiesValuesValue)
+
+&amp;SDTEntitiesValuesValue = new()
+&amp;SDTEntitiesValuesValue.value = !&quot;Culture&quot;
+&amp;SDTEntitiesValuesValue.synonyms.Add(!&quot;Cultural&quot;)
+&amp;SDTEntityValues.values.Add(&amp;SDTEntitiesValuesValue)
+
+&amp;SDTEntitiesValuesValue = new()
+&amp;SDTEntitiesValuesValue.value = !&quot;Nature&quot;
+&amp;SDTEntitiesValuesValue.synonyms.Add(!&quot;Fresh air&quot;)
+&amp;SDTEntityValues.values.Add(&amp;SDTEntitiesValuesValue)
+
+&amp;InstanceName = !&quot;CitizenServiceSD&quot;
+Chatbot.Watson.SendEntitiyValues(&amp;InstanceName,&amp;SDTEntityValues,!&quot;Social_Event_Type&quot;,&amp;messages)
+do &quot;ProcessErrors&quot;
+</pre>
+
+<p>After executing this procedure, consider that the AI takes a time to train the information.</p>
+
+<p><strong>Note</strong>: The entities are created in the Provider if they do not exist.</p>
+
+<h3 class="Code"><a id="See+also" class="HashLink" href="#See+also">See also</a></h3 class="Code">
+
+<p><a href="38520.html">Chatbots in GeneXus</a></p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="39083.html">Chatbot Entity</a></TD><TD><a href="37102.html">Chatbot generator</a></TD></TR><TR><TD><a href="42695.html">Chatbot Generator common errors and solutions</a></TD><TD><a href="38520.html">Toc:Chatbots in GeneXus</a></TD></TR><TR><TD><a href="40937.html">KB:Citizen Service Chatbot sample</a></TD><TD><a href="46415.html">HowTo: Integrate queries in a chatbot</a></TD></TR><TR><TD><a href="41314.html">HowTo: Manage training examples using the Chatbot Generator API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/28/21 03:00 PM</em></font></td></TR></table></font>

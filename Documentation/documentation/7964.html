@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Commit command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?7964,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Commit command</h1>
+<!--Commit command--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The Commit command sets the successful end of a set of database changes. The set of database changes between Commit (or <a href="7998.html">Rollback</a>) commands is treated as a single unit (called <a href="7963.html">Logical Unit of Work (LUW)</a>).<br />
+<br />
+A Commit command assures that the set of changes are all (or none, if any error arises) applied to the Database.</p>
+
+<p>If the <a href="1836.html">Knowledge Base</a> has multiple <a href="7117.html">Data Stores</a>, a Commit command executes a Commit on every one of them that is active (i.e. where database changes have been performed) at the time the command is executed.</p>
+
+<p>Issuing a Commit command also releases any database locks that have been acquired.</p>
+
+<p>Unless the <a href="7951.html">Commitment property</a> has been disabled, GeneXus activates Commitment Control for all <a href="6293.html">Procedure</a> and <a href="1908.html">Transaction</a> objects. If the <a href="https://wiki.genexus.com/commwiki/wiki?7942,," target="_blank">Commit on Exit property</a> is set to Yes, it also generates a Commit at the end of each object that updates the database.</p>
+
+<p>The Commit command can be specified anywhere in the program source of <a href="6293.html">Procedure object</a>s. This will force GeneXus to generate a Commit in the source.</p>
+
+<p>When a Commit command is included within a <a href="24744.html">For Each command</a>, the Commit is executed just before the EndFor always (regardless of where it was included within the For Each sentence).</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><b>Commit</b></p>
+
+<h3><a id="Notes" class="HashLink" href="#Notes"><strong>Notes</strong></a></h3>
+
+<ul>
+	<li>Many DBMSs impose a limit on the number of database changes in a <a href="7963.html">Logical Unit of Work (LUW)</a>.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Take this into account when designing batch processes that work with a large number of rows. You may need to &quot;break&quot; a big LUW into smaller ones by issuing Commit commands as appropriate.</p>
+
+<ul>
+	<li>Many DBMSs close all open cursors when a Commit is executed.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">This is a very important portability issue. You may face this problem in a For Each group that has (or calls an object that has) a Commit command.</p>
+
+<ul>
+	<li>A Commit command in a For Each is always executed just before the EndFor.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">No matter where you wrote the Commit command inside a For Each group, if it is executed, an internal flag is set so as to actually perform a Commit to the database just before the EndFor and after performing any Database changes that the For Each may have had.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example"><strong>Example</strong></a></h3>
+
+<p>Given the Invoice <a href="1908.html">Transaction object</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Invoice
+{
+</strong>  InvoiceId*
+  InvoiceDate
+  InvoiceAmount
+<strong>}</strong></pre>
+
+<p>from which the following table is created in the application database:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+InvoiceID* 
+InvoiceDate
+InvoiceAmount</pre>
+
+<p>suppose you need to perform a Commit each time 10 invoices are deleted.<br />
+<br />
+This could be solved as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;i = 0
+For each Invoice
+    &amp;i = &amp;i + 1
+    delete
+    If &amp;i = 10
+       commit
+       &amp;i = 0
+    EndIf
+EndFor</pre>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="6293.html">Procedure object</a>, <a href="6916.html">Web Panel object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Languages</strong></td>
+			<td>.NET, Ruby, (until GeneXus X Evolution 3) Java, RPG, Cobol</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="7998.html">Rollback command</a><br />
+<a href="7951.html">Commitment property</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?7942,," target="_blank">Commit on Exit property</a><br />
+<a href="7999.html">Confirm Transactions property</a></p>
+
+<p></p>
+<br />
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8996.html">Before Commit, After Commit, Before Rollback and After Rollback Generator properties</a></TD><TD><a href="9548.html">Business Component property</a></TD><TD><a href="7924.html">Commands in Procedures</a></TD></TR><TR><TD><a href="32698.html">GAM Events subscription</a></TD></TR><TR><TD><a href="37092.html">Last Modified Date Time Attribute property</a></TD><TD><a href="7963.html">Logical Unit of Work (LUW)</a></TD><TD><a href="7998.html">Rollback command</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

@@ -1,0 +1,48 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template for One Attribute" %>
+<%@ SubTemplate Name="WebFormLayoutButton" File="TrnWebFormLayout_Button.dkt" MergeProperties="True" %>
+<%@ Property Name="att" Type="TransactionAttribute" %>
+<%@ Property Name="Counters" Type="Dictionary<string,int>"%>
+<%@ Property Name="getButton" Type="System.Boolean" %>
+<%@ Property Name="descAttNames" Type="IDictionary<TransactionAttribute,Artech.Genexus.Common.Objects.Attribute>" %>
+<%
+	Artech.Genexus.Common.Objects.Attribute attName;
+	if (!descAttNames.TryGetValue(att, out attName))
+		attName = att.Attribute;
+
+	string captionProperty = "Title";
+	if (att.Parent != null && att.Parent.AssociatedTable != null && att.IsLocal)
+		captionProperty = "ContextualTitle";
+
+	// Don't show the get button.
+	getButton = false;
+%>
+<tr>
+	 <td style="width:40px;" classref="td5" valign="top">
+		<%= WebForm.TextBlock("TextBlock" + att.Name, null, String.Format("={0}.{1}", attName.Name, captionProperty)) %>
+	</td>
+	<td>
+<%
+	if (getButton)
+	{
+%>						
+		<%= WebForm.BeginTable() %>
+			<tr>
+				<td>
+<%
+	}
+%>
+		<%= WebForm.Attribute(att.Name) %>
+<%
+	if (getButton)
+	{
+%>				</td>
+				<td>
+<%@ CallSubTemplate WebFormLayoutButton ControlClass=""BtnGet"" ControlName=""btn_get"" ControlCaption=""GX_BtnGet"" ControlEvent=""Get"" %>
+				</td>
+			</tr>
+		<%= WebForm.EndTable() %>
+<%
+	}
+%>
+	</td>
+</tr>

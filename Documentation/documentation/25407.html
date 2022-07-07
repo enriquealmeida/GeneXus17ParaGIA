@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Default clause</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25407,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Default clause</h1>
+<!--Default clause--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>If the Default clause is present, the <a href="25082.html">Data provider group</a> will go to the Output only if the preceding Group (with the same name) is not present. </p>
+
+<h2><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h2>
+
+<p><em>&lt;Default&gt;</em>::= <strong>[Default]</strong></p>
+
+<h2><a id="Examples" class="HashLink" href="#Examples">Examples</a></h2>
+
+<p>If you have a Taxes table:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Taxes ( TaxInitialDate*, TaxFinalDate*, TaxVAT, TaxIncome )</pre>
+
+<p>A Data Provider that returns the current tax values can be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CurrentTaxes 
+   Where TaxInitialDate &gt;= today()
+   Where TaxFinalDate &lt;= today() 
+{ 
+   VAT = TaxVAT 
+   Income = TaxIncome 
+}
+CurrentTaxes <strong>[Default] </strong>
+{ 
+   VAT = 0.7 
+   Income = 0.3 
+}</pre>
+
+<p>Here, the last Group will return the default values if there aren't any taxes in the period.</p>
+
+<p>Note that the Default clause is equivalent to a <a href="8603.html">When none</a> in a For Each.</p>
+
+<p>The default clause applies to all groups at the same level (brothers). The Default group is executed if none of the previous condition was satisfied.</p>
+
+<p>Look at this in more detail with a sample. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MySdtColl
+{
+      MySdtCollItem
+      {
+        Element where &amp;a&gt;3 { A=1 }
+        Element where &amp;a=5 { A=2 }
+        Element [Default] where &amp;a=2 { A=3 }
+        Element [Default] { A=4 }
+       }
+}</pre>
+
+<p>...and its behavior in runtime with some cases:</p>
+
+<p>If &amp;a=5 return two items (A=1 and A=2)</p>
+
+<p>If &amp;a=6 return one item (A=1)</p>
+
+<p>If &amp;a=2 return one item (A=3)</p>
+
+<p>If &amp;a=1 return one item (A=4)</p>
+
+<p>Another sample, suppose you want to return a collection with the name of the products belonging to some Category or if not exist any product in the given category you want to return a text indicating ‘No products in the given category’.</p>
+
+<p>You can write the following Data Provider:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ProductsInCategory
+{
+      ProductsInCategoryItem
+      Where ProductCategoryId = &amp;CategoryId
+      {
+           ProductName
+      }
+      ProductsInCategoryItem [Default]
+      {
+            ProductName = 'No product in the given category'
+       }
+}</pre>
+
+<p><br />
+<br />
+<br />
+</p>
+
+<p><br />
+</p>
+   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25082.html">Data provider Group statement</a></TD><TD><a href="5309.html">Toc:Data Provider language</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

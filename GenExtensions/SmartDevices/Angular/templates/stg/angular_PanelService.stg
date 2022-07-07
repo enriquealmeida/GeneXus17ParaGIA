@@ -1,0 +1,91 @@
+delimiters "$", "$"
+
+action_service_proc(stmt) ::=<<
+$gx.CallToObjectName.(stmt.TargetName)$ = async ($g_action_service_call_parameters(stmt.InputParameters)$) : Promise<any> => {
+    $g_body_parameters(stmt.InputParameters)$
+    try {
+      const response = await EndpointConnector.postData(this.http, Settings.SERVICE_API_ENDPOINT + "$gx.CallToObjectName.(stmt.TargetRoute)$", body $stmt:g_convert_from_server_spec()$);
+      return response;
+    }
+    catch(error)
+    {
+      return this.handleError(error);
+    }
+};
+
+>>
+
+g_service_imports(page, gx) ::=<<
+import { Injectable } from '@angular/core';
+import { HttpHeaders, HttpClient } from '@angular/common/http';
+import { Router } from "@angular/router";
+
+import { Settings } from 'app/app.settings';
+import { AppContainer } from 'app/gx/base/app-container';
+import { PanelService } from "app/gx/base/panel.service";
+import { EndpointConnector } from "app/gx/base/endpoint.connector";
+import { GAMService } from "app/gx/auth/gam.service";
+import { Type, Transform } from 'class-transformer';
+import { Observable, throwError } from "rxjs";
+import { catchError } from 'rxjs/operators';
+>>
+
+g_service_class_attributes() ::=<<@Injectable()>>
+
+g_service_constructor(data) ::=<<
+  constructor(private http: HttpClient, private _router:Router, private _loginService: GAMService, private _app: AppContainer) {
+    super(_router, _loginService, _app);
+  }
+>>
+
+g_get_data_content(data) ::=<<
+$if(data.ItemGeneratorType)$
+    $if(data.CacheEnabled)$
+    $g_get_data_content_observable_cacheable(data)$
+    $else$
+    $g_get_data_content_non_cacheable(data)$
+    $endif$
+$else$
+    $g_get_data_content_non_cacheable(data)$
+$endif$
+>>
+
+g_get_data_content_observable_cacheable(data) ::=<<
+    return EndpointConnector.getCacheableDataCollectionForType<$data.DataExpressions.EntityItemExpression.exprDataType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.DataExpressions.EntityItemExpression.exprDataType:g_type_name()$)
+    .pipe(catchError(err => {
+        this.handleError(err);
+        return throwError("error");
+    }));
+>>
+
+g_get_data_content_observable_non_cacheable(data) ::=<<
+    return EndpointConnector.getDataCollectionForTypeObservable<$data.DataExpressions.EntityItemExpression.exprDataType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.DataExpressions.EntityItemExpression.exprDataType:g_type_name()$)
+    .pipe(catchError(err => {
+        this.handleError(err);
+        return throwError("error");
+    }));
+>>
+
+g_get_data_content_non_cacheable(data) ::=<<
+  try {
+  $if(data.ItemGeneratorType)$
+    return await EndpointConnector.getDataCollectionForType<$data.DataExpressions.EntityItemExpression.exprDataType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.DataExpressions.EntityItemExpression.exprDataType:g_type_name()$);
+  $else$
+    $if(data.ControlInfo.IsGridControl)$
+    const response = await EndpointConnector.getData(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$);
+    return response as $data.GeneratorType:g_type_name()$
+    $else$
+    $if(data.isCollection)$
+    const response = await EndpointConnector.getData(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$);
+    return response as $data.GeneratorType:g_type_name()$
+    $else$
+    return await EndpointConnector.getDataForType<$data.GeneratorType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.GeneratorType:g_type_name()$);
+    $endif$
+    $endif$
+  $endif$
+  }
+  catch (error) {
+    return this.handleError(error);
+  }
+>>
+

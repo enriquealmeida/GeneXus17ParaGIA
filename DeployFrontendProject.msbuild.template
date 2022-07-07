@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="CreatePackage">
+	
+	<!-- Model Properties -->
+	<PropertyGroup>
+#Model.Properties:{ metadata |
+		<#metadata.Name#>#metadata.Value#</#metadata.Name#>}#
+	</PropertyGroup>
+
+	<!-- Deploy Properties -->
+	<PropertyGroup>
+#DeployProps.Properties:{ p |
+		<#p.Name#>#p.Value#</#p.Name#>}#
+	</PropertyGroup>
+
+	<!-- General Properties -->
+	<PropertyGroup>
+		<GX_PROGRAM_DIR Condition=" '$(GX_PROGRAM_DIR)' == '' ">#GX#</GX_PROGRAM_DIR>
+		<AdditionalItems Condition=" '$(AdditionalItems)' == ''">$(DeploymentUnit)_user.gxdproj</AdditionalItems>
+	</PropertyGroup>
+	
+	<!-- Selected Objects -->
+	<ItemGroup>
+#Selected:{ item |
+		<SelectedObject Include="#item.Name#">
+			<Type>#item.Type#</Type>
+#item.Properties:{ metadata |
+			<#metadata.Name#>#metadata.Value#</#metadata.Name#>}#
+		</SelectedObject>}#
+	</ItemGroup>
+
+	<Target Name="ValidateDeployment">
+		<!-- overrideable on custom targets -->
+
+	</Target>
+
+	<Import Project="$(GX_PROGRAM_DIR)\FrontendImports.targets"/>
+	<Import Project="$(AdditionalItems)" Condition="'$(AdditionalItems)'!='' and Exists('$(AdditionalItems)')" />
+	
+</Project>

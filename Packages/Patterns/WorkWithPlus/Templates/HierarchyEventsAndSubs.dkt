@@ -1,0 +1,311 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prepare Transaction event code" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Settings" Type="WorkWithPlusSettings" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+<%@ Property Name="HierarchySettings" Type="DVelop.Patterns.WorkWithPlus.HierarchySettingsElement" %>
+<%@ Property Name="Grid" Type="DVelop.Patterns.WorkWithPlus.IGrid" %>
+<%@ Property Name="Parameters" Type="DVelop.Patterns.WorkWithPlus.ParametersElement" %>
+<%@ Property Name="DynamicFilters" Type="DVelop.Patterns.WorkWithPlus.DynamicFilterAttributesElement" %>
+<%@ Property Name="HasMultiRowActions" Type="System.Boolean" %>
+<%@ Property Name="HasSelectAll" Type="System.Boolean" %>
+<%
+	
+%>
+
+Event &Expand.Click
+
+	WWPHierarchy_ExpandCollapseAction(<%= HierarchySettings.PkAttributeName %>, &<%= HierarchySettings.FkAttributeName %>, &NodeExpanded, &Expanded<%= HierarchySettings.PkAttributeName %>Collection, &Expanded<%= HierarchySettings.FkAttributeName %>Collection, &Collapsed<%= HierarchySettings.PkAttributeName %>Collection)
+	Grid.Refresh()
+
+EndEvent
+
+Sub 'Hierarchy_ProcessRecordsToShow'
+
+	&<%= HierarchySettings.PkAttributeName %>Collection.Clear()
+	&<%= HierarchySettings.FkAttributeName %>Collection.Clear()
+	&Searched<%= HierarchySettings.PkAttributeName %>Collection.Clear()
+	
+	If &GridState.DynamicFilters.ToJson() <> &OldGridStateDynamicFilters or &GridState.FilterValues.ToJson() <> &OldGridStateFilterValues
+		If &HTTPRequest.Method <> HTTPMethod.Get
+			&Expanded<%= HierarchySettings.PkAttributeName %>Collection.Clear()
+			&Expanded<%= HierarchySettings.FkAttributeName %>Collection.Clear()
+			&Collapsed<%= HierarchySettings.PkAttributeName %>Collection.Clear()
+
+<%
+	if (HasMultiRowActions)
+	{
+%>
+			&<%= HierarchySettings.PkAttributeName %>Col.Clear()
+			&<%= HierarchySettings.PkAttributeName %>Json = &<%= HierarchySettings.PkAttributeName %>Col.ToJson()
+<%
+		if (HasSelectAll)
+		{
+%>
+			&SelectAll = False
+			&IsSelectAllChecked = False
+<%
+		}
+	}
+%>
+		EndIf
+		
+		&FiltersChanged = True
+		
+		&OldGridStateDynamicFilters = &GridState.DynamicFilters.ToJson()
+		&OldGridStateFilterValues = &GridState.FilterValues.ToJson()
+	Else
+		&FiltersChanged = False
+	EndIf
+
+	&FirstMatchingRecordIndex = 0
+	If &GridState.DynamicFilters.Count >= 1 or &GridState.FilterValues.Count >= 1
+		For Each
+			order <%= HierarchySettings.CodeAttributeName %>
+<%
+				bool generateDataSelector = DataSelectorHelper.GenerateDataSelector(GridObject, Settings);
+				if (generateDataSelector)
+				{
+%>
+			using <%= Settings.Objects.GridDataSelectorName(GridObject, false) %>(<%= DataSelectorHelper.GetParameters(GridObject, Grid, "\t\t\t\t\t") %>)
+<%
+				}
+				else
+				{
+					string parmCondition = Parameters.WhereCondition();
+					if (parmCondition != String.Empty)
+					{
+%>
+			Where <%= parmCondition %>
+<%
+					}
+					foreach (string filterCond in GridObject.GetFiltersConditions())
+					{
+%>
+			Where <%= filterCond %>
+<%
+					}
+					if (DynamicFilters != null)
+					{
+						foreach (string cond in DynamicFilters.GetConditions())
+						{
+%>
+			Where <%= cond %>
+<%
+						}
+					}
+				}
+				
+				SettingsTemplateElement template = GridObject.Instance.GetAppropiateTemplate();
+				bool? filterInDataSelector = (!generateDataSelector || !template.IncludeAutomaticConditionsInDataSelector) ? (bool?)null : (bool?)false;
+				List<string> automaticConditions = GridObject.GetAutomaticConditions(filterInDataSelector);
+				if (automaticConditions != null)
+				{
+					foreach (string conditions in automaticConditions)
+					{
+%>
+			Where <%= conditions %>
+<%
+					}
+				}
+
+				List<string> customConditions = SelectionGeneralElement.GetCustomConditionsFromObject(GridObject);
+				foreach (string condition in customConditions)
+				{
+%>
+			Where <%= condition %>
+<%				
+				}
+%>
+
+			If &GridState.DynamicFilters.Count = 0 and &GridState.FilterValues.Count >= 1 and not(&GridState.FilterValues.ToJson().Contains('"Name":"TF'))
+				If <%= HierarchySettings.LevelAttributeName %> = 1
+					&<%= HierarchySettings.PkAttributeName %>Collection.Add(<%= HierarchySettings.PkAttributeName %>)
+					&<%= HierarchySettings.FkAttributeName %>Collection.Add(<%= HierarchySettings.FkAttributeName %>)
+				EndIf
+			Else
+				&<%= HierarchySettings.PkAttributeName %>Collection.Add(<%= HierarchySettings.PkAttributeName %>)
+				&<%= HierarchySettings.FkAttributeName %>Collection.Add(<%= HierarchySettings.FkAttributeName %>)
+				&Searched<%= HierarchySettings.PkAttributeName %>Collection.Add(<%= HierarchySettings.PkAttributeName %>)
+			
+				If <%= HierarchySettings.LevelAttributeName %> > 1
+				
+					If &FiltersChanged
+						&FirstMatchingRecordIndex = <%= HierarchySettings.LevelAttributeName %>
+						&FiltersChanged = False
+					EndIf
+				
+					&Aux<%= HierarchySettings.PkAttributeName %>Collection.Clear()
+					&Aux<%= HierarchySettings.FkAttributeName %>Collection.Clear()
+					&Aux_<%= HierarchySettings.PkAttributeName %> = <%= HierarchySettings.FkAttributeName %>
+					Do 'Hierarchy_GetParents'
+					For &Aux_<%= HierarchySettings.PkAttributeName %> in &Aux<%= HierarchySettings.PkAttributeName %>Collection
+						If &<%= HierarchySettings.PkAttributeName %>Collection.IndexOf(&Aux_<%= HierarchySettings.PkAttributeName %>) = 0
+							&<%= HierarchySettings.PkAttributeName %>Collection.Add(&Aux_<%= HierarchySettings.PkAttributeName %>)
+							&<%= HierarchySettings.FkAttributeName %>Collection.Add(&Aux<%= HierarchySettings.FkAttributeName %>Collection.Item(&Aux<%= HierarchySettings.PkAttributeName %>Collection.IndexOf(&Aux_<%= HierarchySettings.PkAttributeName %>)))
+						EndIf
+					EndFor
+				Else
+					&FiltersChanged = False
+				EndIf
+			EndIf			
+		EndFor
+		
+		&GridRows = Grid.Rows
+		If &GridRows > 0 AND &FirstMatchingRecordIndex > &GridRows
+			&PageInt = (&FirstMatchingRecordIndex - 1) / &GridRows + 1
+			Grid.GotoPage(&PageInt)
+		EndIf
+
+		WWPHierarchy_RemoveCollapsed(&Collapsed<%= HierarchySettings.PkAttributeName %>Collection, &<%= HierarchySettings.PkAttributeName %>Collection, &<%= HierarchySettings.FkAttributeName %>Collection)
+		&Aux<%= HierarchySettings.PkAttributeName %>Collection.Clear()
+		For &Aux_<%= HierarchySettings.PkAttributeName %> in &Searched<%= HierarchySettings.PkAttributeName %>Collection
+			&IsFound = iif(&<%= HierarchySettings.PkAttributeName %>Collection.IndexOf(&Aux_<%= HierarchySettings.PkAttributeName %>) = 0, false, true)
+			If not &IsFound
+				&Aux<%= HierarchySettings.PkAttributeName %>Collection.Add(&Aux_<%= HierarchySettings.PkAttributeName %>)
+			EndIf
+		EndFor
+		For &Aux_<%= HierarchySettings.PkAttributeName %> in &Aux<%= HierarchySettings.PkAttributeName %>Collection
+			&Searched<%= HierarchySettings.PkAttributeName %>Collection.Remove(&Searched<%= HierarchySettings.PkAttributeName %>Collection.IndexOf(&Aux_<%= HierarchySettings.PkAttributeName %>))
+		EndFor
+	Else
+		For Each
+			Where <%= HierarchySettings.LevelAttributeName %> = 1
+<%
+				if (automaticConditions != null)
+				{
+					foreach (string conditions in automaticConditions)
+					{
+%>
+			Where <%= conditions %>
+<%
+					}
+				}
+	
+				foreach (string condition in customConditions)
+				{
+%>
+			Where <%= condition %>
+<%				
+				}
+%>
+			&<%= HierarchySettings.PkAttributeName %>Collection.Add(<%= HierarchySettings.PkAttributeName %>)
+			&<%= HierarchySettings.FkAttributeName %>Collection.Add(<%= HierarchySettings.FkAttributeName %>)
+		EndFor
+	EndIf
+	
+	WWPHierarchy_RemoveExpandedOrphans(&<%= HierarchySettings.PkAttributeName %>Collection, &Expanded<%= HierarchySettings.PkAttributeName %>Collection, &Expanded<%= HierarchySettings.FkAttributeName %>Collection)
+	
+	For &Aux_<%= HierarchySettings.PkAttributeName %> in &Expanded<%= HierarchySettings.PkAttributeName %>Collection
+		If &<%= HierarchySettings.PkAttributeName %>Collection.IndexOf(&Aux_<%= HierarchySettings.PkAttributeName %>) = 0
+			&<%= HierarchySettings.PkAttributeName %>Collection.Add(&Aux_<%= HierarchySettings.PkAttributeName %>)
+			&<%= HierarchySettings.FkAttributeName %>Collection.Add(&Expanded<%= HierarchySettings.FkAttributeName %>Collection.Item(&Expanded<%= HierarchySettings.PkAttributeName %>Collection.IndexOf(&Aux_<%= HierarchySettings.PkAttributeName %>)))
+		EndIf
+		
+		If &<%= HierarchySettings.FkAttributeName %>Collection.IndexOf(&Aux_<%= HierarchySettings.PkAttributeName %>) = 0
+			For Each
+				Where <%= HierarchySettings.FkAttributeName %> = &Aux_<%= HierarchySettings.PkAttributeName %>
+				If &<%= HierarchySettings.PkAttributeName %>Collection.IndexOf(<%= HierarchySettings.PkAttributeName %>) = 0
+					&<%= HierarchySettings.PkAttributeName %>Collection.Add(<%= HierarchySettings.PkAttributeName %>)
+					&<%= HierarchySettings.FkAttributeName %>Collection.Add(<%= HierarchySettings.FkAttributeName %>)
+				EndIf
+			EndFor
+		EndIf
+	EndFor
+
+EndSub
+
+<%
+	if (HasMultiRowActions)
+	{
+%>
+Sub 'Hierarchy_GetChildren'
+	&Aux_<%= HierarchySettings.PkAttributeName %>Children = new()
+	&i = 0
+	Do While &i <= &Aux_<%= HierarchySettings.PkAttributeName %>Children.Count
+		If &i > 0
+			&Children_<%= HierarchySettings.PkAttributeName %> = &Aux_<%= HierarchySettings.PkAttributeName %>Children.Item(&i)
+		EndIf
+		For Each
+			Where <%= HierarchySettings.FkAttributeName %> = &Children_<%= HierarchySettings.PkAttributeName %>
+			
+			&Aux_<%= HierarchySettings.PkAttributeName %>Children.Add(<%= HierarchySettings.PkAttributeName %>)
+		EndFor
+		&i += 1
+	EndDo
+EndSub
+<%
+	}
+%>
+
+Sub 'Hierarchy_HasChildren'
+	&HasChildren = False
+	For Each
+		Where <%= HierarchySettings.FkAttributeName %> = &HasChildren_<%= HierarchySettings.PkAttributeName %>
+		&HasChildren = True
+		Exit
+	EndFor
+EndSub
+
+
+Sub 'Hierarchy_GetParents'
+	&AuxParent_<%= HierarchySettings.PkAttributeName %> = &Aux_<%= HierarchySettings.PkAttributeName %>
+	Do While not &AuxParent_<%= HierarchySettings.PkAttributeName %>.IsEmpty()
+		&AuxParent_<%= HierarchySettings.PkAttributeName %>2 = &AuxParent_<%= HierarchySettings.PkAttributeName %>
+		&AuxParent_<%= HierarchySettings.PkAttributeName %> = ''
+		For Each
+			Where <%= HierarchySettings.PkAttributeName %> = &AuxParent_<%= HierarchySettings.PkAttributeName %>2
+			
+			&Aux<%= HierarchySettings.PkAttributeName %>Collection.Add(<%= HierarchySettings.PkAttributeName %>)
+			&Aux<%= HierarchySettings.FkAttributeName %>Collection.Add(<%= HierarchySettings.FkAttributeName %>)
+			
+			if <%= HierarchySettings.LevelAttributeName %> > 1
+				&AuxParent_<%= HierarchySettings.PkAttributeName %> = <%= HierarchySettings.FkAttributeName %>
+			EndIf
+		EndFor
+	EndDo
+EndSub
+
+<%
+	if (HasMultiRowActions)
+	{
+%>
+Sub 'Hierarchy_SelectChildren'
+	&AuxSelect_<%= HierarchySettings.PkAttributeName %>Collection = new()
+	&AuxSelect_<%= HierarchySettings.PkAttributeName %>Collection.Add(&Aux_<%= HierarchySettings.PkAttributeName %>)
+	Do While &AuxSelect_<%= HierarchySettings.PkAttributeName %>Collection.Count > 0
+		&Aux_<%= HierarchySettings.PkAttributeName %> = &AuxSelect_<%= HierarchySettings.PkAttributeName %>Collection.Item(1)
+		&AuxSelect_<%= HierarchySettings.PkAttributeName %>Collection.Remove(1)
+		&Index = 0
+		For &<%= HierarchySettings.FkAttributeName %> in &<%= HierarchySettings.FkAttributeName %>Collection
+			&Index += 1
+			If &Aux_<%= HierarchySettings.PkAttributeName %> = &<%= HierarchySettings.FkAttributeName %>
+				&Aux<%= HierarchySettings.PkAttributeName %> = &<%= HierarchySettings.PkAttributeName %>Collection.Item(&Index)
+				If &<%= HierarchySettings.PkAttributeName %>Col.IndexOf(&Aux<%= HierarchySettings.PkAttributeName %>) = 0
+					&<%= HierarchySettings.PkAttributeName %>Col.Add(&Aux<%= HierarchySettings.PkAttributeName %>)
+				EndIf
+				&HasChildren_<%= HierarchySettings.PkAttributeName %> = &Aux<%= HierarchySettings.PkAttributeName %>
+				Do 'Hierarchy_HasChildren'
+				If &HasChildren
+					If &<%= HierarchySettings.FkAttributeName %>Collection.IndexOf(&Aux<%= HierarchySettings.PkAttributeName %>) > 0
+						&AuxSelect_<%= HierarchySettings.PkAttributeName %>Collection.Add(&Aux<%= HierarchySettings.PkAttributeName %>)
+					Else
+						&Children_<%= HierarchySettings.PkAttributeName %> = &Aux<%= HierarchySettings.PkAttributeName %>
+						Do 'Hierarchy_GetChildren'
+						For &Aux<%= HierarchySettings.PkAttributeName %> in &Aux_<%= HierarchySettings.PkAttributeName %>Children
+							If &<%= HierarchySettings.PkAttributeName %>Col.IndexOf(&Aux<%= HierarchySettings.PkAttributeName %>) = 0
+								&<%= HierarchySettings.PkAttributeName %>Col.Add(&Aux<%= HierarchySettings.PkAttributeName %>)
+							EndIf
+						EndFor
+					EndIf
+				EndIf
+			EndIf
+		EndFor
+	EndDo
+
+EndSub
+<%
+	}
+%>

@@ -1,0 +1,45 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="View Variables" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider.Helpers" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubStandardVariables" File="SubStandardVariables.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Variables %>">
+<%
+	EntityProviderInstance epInstance = EntityProviderInstance.Load(Instance);
+	ViewElement view = epInstance.GetElement<ViewElement>(Element);
+	VariablesWrapper variables = new VariablesWrapper();
+%>
+
+<%@ CallSubTemplate SubStandardVariables Settings='epInstance.Settings' %>
+
+	<%= variables.BasedOnDomain("TabCode", GenexusType.DomainTabCode(Object.Model)) %>
+	<%= variables.BasedOnDomain("SelectedTabCode", GenexusType.DomainTabCode(Object.Model)) %>
+	<%= variables.Sdt("Tabs", "TabOptions") %>
+	<%= variables.Sdt("Tab", "TabOptions.TabOptionsItem") %>
+	<%= variables.Basic("Exists", "Exists", eDBType.Boolean) %>
+	<%= variables.Basic("LoadAllTabs", "LoadAllTabs", eDBType.Boolean) %>
+
+<%
+	// Variables for parameters.
+	foreach (ParameterElement parameter in view.Parameters)
+	{
+%>
+	<%= parameter.DefineVariable(variables) %>
+<%
+	}
+
+	if (view.HasConditionalTabs())
+	{
+%>
+	<%= variables.Basic("Index", "Index", eDBType.NUMERIC, 4) %>
+	<%= variables.Basic("Increment", "Increment", eDBType.NUMERIC, 4) %>
+<%
+	}
+%>
+</Part>

@@ -1,0 +1,128 @@
+delimiters "$", "$"
+import "PanelUIModel.stg"
+import "Types.stg"
+import "actions.stg"
+import "expressions.stg"
+
+
+dashboardTemplate ::= [
+  "Table":  "g_html_list",
+  "List" :  "g_html_list",
+  "Tabs" :  "g_html_list",
+  default:  "g_html_list"
+]
+
+g_dashboard_html( page, gx, gx_generation_mode)::=<<
+  $(dashboardTemplate.(page.Control))(page)$
+>>
+
+g_html_list(page)::=<<
+>>
+
+g_dashboard_caption(page) ::= <%
+$if(page.IsMain)$
+gx-form-properties formCaption="$page.instanceProperties.({@AppTitle})$"
+$endif$
+%>
+
+g_dashboard_component( page, gx)::=<<
+import { Component, Input, ChangeDetectorRef } from '@angular/core';
+import { AppContainer } from 'app/gx/base/app-container';
+import { ActivatedRoute } from '@angular/router';
+import { CompositeNavigation } from 'app/gx/navigation/composite-navigation';
+import { PanelComponent} from 'app/gx/base/panel.component';
+import { GAMService} from "app/gx/auth/gam.service";
+import { AppBarService } from "app/gx/base/app-bar.service";
+
+import { $page.FullName$Service } from './$gx.ToLower.(page.ComponentName)$.service';
+$page.Imports:g_imports();separator="\r\n"$
+
+@Component({
+  selector: '$page.FullName$',
+  templateUrl: './$gx.ToLower.(page.ComponentName)$.component.html',
+  providers: [
+    $page.LocalProviders:{comp|$comp.GeneratorType:g_type_name()$,}$
+    $page.FullName$Service,
+  ],
+  styles: [":host { display: flex; flex: 1; }"]
+})
+export class $page.FullName$Component extends PanelComponent {
+
+  showNavbarOptions = false;
+
+  $page.PanelUsedVars:g_properties_definitions()$
+
+  constructor(
+      private panelService: $page.FullName$Service,
+      $page.LocalProviders:{comp|private $g_declare_parameter(comp)$,}$
+      $page.GlobalProviders:{comp|private $g_declare_parameter(comp)$,}$
+      protected gam: GAMService,
+      public app:AppContainer,
+      protected nvg:CompositeNavigation,
+      protected activatedRoute: ActivatedRoute,
+      private appBarService: AppBarService,
+      protected cdr: ChangeDetectorRef
+  ) {
+    super( app, nvg, activatedRoute, cdr);
+    $page.PanelUsedVars:g_init_component_item()$
+    this.initState(null);
+  }
+
+  async initPanel() {
+    $page.PanelUsedVars:g_init_state_item()$
+    this.appBarService.setNavigation({
+      visible: true,
+      secondaryClassName: "$page.Class$",
+      toggleButtonLabel: this.translate("Toggle Menu"),
+      items: [
+        $page.Item:g_list_item();separator = ",\r\n"$
+      ]
+    });
+
+  }
+
+  async loadPanel() {
+    $if(page.StartupActionName)$
+    if (this.nvg.emptyPrimaryOutlet()) {
+      this.$page.StartupActionName$();    
+    }
+    $endif$
+  }
+
+  goPage = (id: string, element:string) => {
+      if (element) {
+        const page = element.match(/tab\[([0-9]+)\]/i);
+        if (page && page.length > 0) {
+          $page.Item:{item|$g_gopage_action(item, i)$}$;
+        }
+    }
+  }
+
+  // Actions
+  $page.Actions.Action:{ action | $g_action(action)$ };separator="\r\n"$
+
+  $g_subscriptions(page)$
+
+}
+
+$g_uimodel( page)$
+$g_uiactions( page)$
+>>
+
+g_list_item(action) ::= <<
+{
+    id: "$action.Name$",
+    caption: "$action.Description$",
+    className: "$action.Class$",
+$if (action.Image)$
+    iconSrc: this.getImageSource('$action.Image$'),
+$endif$
+    onClick: this.$action.Name$,
+}>>
+
+g_gopage_action(item, i) ::= <<
+if (+page[1] === $i$) {
+  this.$item.Name$();
+  return;
+}
+>>

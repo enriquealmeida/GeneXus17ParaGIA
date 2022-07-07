@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pattern xmlns="http://schemas.genexus.com/Patterns/InstanceSpecification/v1.0" Name="Conversational" Version="1.4" RootElement="instance" RootType="Instance">
+	<ElementTypes>
+		<ElementType Name="Instance" Caption="Conversational Flows Instance" Icon="">
+			<Attributes>
+				<Attribute VisibleIf="self::*[@provider != 'None']" Name="instanceLanguage" Type="custom(ConversationalLanguage)" Description="Select the chatbot language" DefaultValue="English"/>
+				<Attribute Visible="false" Name="lastGeneratedVersion" Type="int" Exportable="false" DefaultValue="0"/>
+				<Attribute Name="webGenerationUI" Type="bool" Description="Generate Web Panels for this instance" DefaultValue="true" PrettyName="Generate Web UI"/>
+				<Attribute Name="sdGenerationUI" Type="bool" Description="Generate Panels for this instance" DefaultValue="false" PrettyName="Generate UI"/>
+				<Attribute Name="mergeTriggers" VisibleIf="self::*[@provider != 'None']" Type="bool" Description="Merge trigger messages before synchronize." DefaultValue="true" PrettyName="Merge Triggers"/>
+				<Attribute Name="generateOnSave" Type="bool" Description="Sets whether to generate when saving or not." DefaultValue="true" PrettyName="Generate On Save"/>
+				<Attribute Name="synchronizeOnSave" VisibleIf="self::*[@provider != 'None']" Type="bool" Description="Sets whether to synchronize when saving or not." DefaultValue="true" PrettyName="Synchronize On Save"/>
+				<Attribute Name="notUnderstoodMessages" Type="custom(ConversationalMessages)" Description="Type the messages to send if the chatbot does not understand the user input. You can type multiple messages using the ‘;’ delimiter and you can reference any context parameter using the '&amp;' character." DefaultValue="I'm sorry, I don't understand '&amp;GXUserInput' yet :(;" PrettyName="Input Not Understood Messages"/>
+				<Attribute Name="notUnderstoodRedirection" Type="custom(ConversationalFlow)" Description="Select an existing flow to redirect the conversation when the chatbot does not understand the user input." PrettyName="Input Not Understood Redirection"/>
+				<Attribute Category="NLP Provider" Name="provider" PrettyName="NLP Provider" Type="enum{Watson;Dialogflow;None}" Description="Select the Natural Language Processing provider" DefaultValue="Watson" Resolver="Genexus.Patterns.Conversational.Resolvers.ProviderResolver" />
+
+				<Attribute Category="NLP Provider" VisibleIf="self::*[@provider = 'Watson']" Name="watsonAuthType" PrettyName="Authentication Type" Type="enum{IAM Authentication;Basic}" Description="Authentication type to be used to create and update the instance in the provider. The authentication type is determined by the provider. Check the provider's documentation." />
+				<Attribute Exportable ="false" Category="NLP Provider" VisibleIf="self::*[@provider = 'Watson' and @watsonAuthType = 'IAM Authentication']" Name="watsonAPIKey" PrettyName="API Key" Type="password" Description="Specify the Watson Assistant API Key." />
+				<Attribute Category="NLP Provider" VisibleIf="self::*[@provider = 'Watson' and @watsonAuthType = 'IAM Authentication']" Name="watsonRegion" PrettyName="Region" Type="enum{Dallas;Washington, DC;Frankfurt;Sydney;London;Tokyo;Seoul}" DefaultValue="Dallas" Description="Specify the Watson Assistant region." />	
+				<Attribute Exportable ="false" Category="NLP Provider" VisibleIf="self::*[@provider = 'Watson' and @watsonAuthType = 'Basic']" Name="watsonUser" PrettyName="User Name" Type="password" Description="Specify the Watson Assistant user name." />
+				<Attribute Exportable ="false" Category="NLP Provider" VisibleIf="self::*[@provider = 'Watson' and @watsonAuthType = 'Basic']" Name="watsonPassword" PrettyName="User Password" Type="password" Description="Specify the Watson Assistant user password." />
+				<Attribute VisibleIf="self::*[@provider = 'Watson']" Category="NLP Provider" Name="conversationalGuids" PrettyName="Workspace Id" Type="string" Description="Watson Assistant Workspace Id. If this value is empty, or the Workspace doesn't exist in your Watson Asisstant service, GeneXus will create a new Workspace."/>
+
+				<Attribute Category="Watson" VisibleIf="self::*[@provider = 'Watson']" Name="disambiguation" Type="bool" Description="Enable disambiguations for this instance." DefaultValue="false" PrettyName="Disambiguation"/>
+				<Attribute Category="Watson" VisibleIf="self::*[@provider = 'Watson' and @disambiguation = 'True']" Name="disambiguationMessage" Type="string" Description="Specify the disambiguation message." DefaultValue="Did you mean:" PrettyName="Disambiguation Message"/>
+				<Attribute Category="Watson" VisibleIf="self::*[@provider = 'Watson' and @disambiguation = 'True']" Name="disambiguationCancellationMessage" Type="string" Description="Specify the cancellation message for desambiguation." DefaultValue="None of the above" PrettyName="Disambiguation Cancellation Message"/>
+				
+				<Attribute Category="NLP Provider" VisibleIf="self::*[@provider = 'Dialogflow']" Name="dialogFlowGoogleCloudProject" PrettyName="Google Cloud Project" Type="string" Description="Specify the Google Cloud Project Id."/>
+				<Attribute Exportable ="false" Category="NLP Provider" VisibleIf="self::*[@provider = 'Dialogflow']" Name="dialogFlowCredentials" PrettyName="Google Cloud JSON Credentials" Type="password" Description="Specify the credentials of your Service Account (JSON format)."/>
+
+				<Attribute VisibleIf="self::*[@provider = 'None']" Category="NLP Provider" Name="customChatbotDefinition" PrettyName="Custom Chatbot Definition" Type="reference(DataProvider)" Description="Select a custom Data Provider for the Chatbot Definition."/>
+
+				<Attribute Category="Channels" Name="whatsapp" PrettyName="Enable Whatsapp" Type ="bool" Description="Enable Whatsapp Integration" DefaultValue="false"/>
+				<Attribute VisibleIf="self::*[@whatsapp = 'True']" Category="Whatsapp" Name="whatsappPartner" PrettyName="Whatsapp Partner" Type="enum{Twilio;Botmaker}" DefaultValue="Twilio" Description="Select the Whatsapp Partner"/>
+				<Attribute Exportable ="false" VisibleIf="self::*[@whatsapp = 'True' and @whatsappPartner = 'Twilio']" Category="Whatsapp" Name="twilioAuthToken" PrettyName="Twilio Token" Type="password" Description="Twilio Authorization Token"/>
+				<Attribute Exportable ="false" VisibleIf="self::*[@whatsapp = 'True' and @whatsappPartner = 'Botmaker']" Category="Whatsapp" Name="botmakerAuthToken" PrettyName="Botmaker Token" Type="password" Description="Botmaker Authorization Token"/>
+				<Attribute Exportable ="false" VisibleIf="self::*[@whatsapp = 'True' and @whatsappPartner = 'Botmaker']" Category="Whatsapp" Name="botmakerSecurityToken" PrettyName="Botmaker Security Token" Type="password" Description="Botmaker Security Token used in the webhook"/>
+
+				<Attribute Category="Channels" Name="telegram" PrettyName="Enable Telegram" Type ="bool" Description="Enable Telegram Integration" DefaultValue="false"/>
+				<Attribute Exportable ="false" VisibleIf="self::*[@telegram = 'True']" Category="Telegram" Name="telegramBotToken" PrettyName="Telegram Bot Token" Type="password"  Description="Telegram Bot Token. "/>
+				
+				</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="flow" ElementType="Flow" Multiple="true" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="ResponseAttributes" Caption="Response Parameters" ChildrenType="Mixed" Icon="StructureLevel" IconResource="Genexus.Patterns.Conversational.Resources.Images,Genexus.Patterns.Conversational">
+			<Attributes>
+				<Attribute Name="canAdd" Type="bool" Visible="false" DefaultValue="false" />
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="variable" ElementType="ResponseVariable" Multiple="true" CanAddIf="self::*[@canAdd = 'True']"/>
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Attributes" Caption="User Input" ChildrenType="Mixed" Icon="StructureLevel" IconResource="Genexus.Patterns.Conversational.Resources.Images,Genexus.Patterns.Conversational">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="variable" ElementType="Variable" Multiple="true" Optional="false"/>
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Flow" Caption="Flow: {0}" CaptionParameters="name" Icon="Pattern_Level" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="conversationalObject" Type="reference(KBObject)" Description="GeneXus object that will resolve the flow’s action. In the case of web objects, it has to be a Web Component. It's called automatically after the User inputs are entered. If the Message of the Flow has a Component view Style, and the SD Component or Web Component property is set, you have to call the conversational object from the Start Event of the corresponding component." PrettyName ="Conversational Object" Resolver="Genexus.Patterns.Conversational.Resolvers.ConversationalObjectResolver"/>
+				<Attribute NotNull="true" Name="name" Type="string" Description="Flow name." DefaultValue="New Flow"/>
+				<Attribute Name="fromTransaction" Type="bool" Description="Is this flow for an action?" DefaultValue="false" Visible="false"/>
+				<Attribute Name="forRender" Type="bool" Description="Is this flow for make a render?" DefaultValue="false" Visible="false"/>
+				<Attribute Visible="false" Name="action" Type="string" Description="Action for this intent" ReadOnlyIf="self::*[@fromTransaction = 'True']"/>
+				<Attribute NotNull="true" Name="triggerMessages" PrettyName="Trigger Messages" Type="custom(ConversationalMessages)" Description="Specify the triggers messages for this flow. You can type multiple messages using the ‘;’ delimiter."/>
+				<Attribute Category="Watson" VisibleIf="/*[/@provider = 'Watson']" Name="digressionIn" PrettyName="Available For Digressions" Type="bool" Description="If true, another flow can digress into this flow." DefaultValue="true"/>
+				<Attribute Category="Watson" VisibleIf="self::*[@digressionIn = 'True' and /*[/@provider = 'Watson']]" Name="digressionInReturn" PrettyName="Return After Digression" Type="bool" Description="If true, return to the previous flow when this flow is finished." DefaultValue="true"/>
+				<Attribute Name="Category" Type="string" Description="Set the flow category"/>
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="userInput" ElementType="Attributes" Multiple="false" Optional="true" />
+				<ChildElement Name="composite" ElementType="Composite" Multiple="false" Optional="true" />
+				<ChildElement Name="response" ElementType="View" Multiple="false" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Composite" Caption="Composite" Icon="Tab" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes />
+			<ChildrenElements>
+				<ChildElement Name="flow" ElementType="Flow" Multiple="true" Optional="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="View" Caption="Response" Icon="ConversationalObject" IconResource="Genexus.Patterns.Conversational.Resources.Images,Genexus.Patterns.Conversational">
+			<Attributes/>
+			<ChildrenElements>
+				<ChildElement Name="responseParameters" ElementType="ResponseAttributes" Multiple="false" Optional="true" CanAddIf="false"/>
+				<ChildElement Name="messages" ElementType="Messages" Multiple="true" Optional="false" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="Messages" Caption="Message ({0})" CaptionParameters="style" Icon="Messages" IconResource="Genexus.Patterns.Conversational.Resources.Images,Genexus.Patterns.Conversational">
+			<Attributes>
+				<Attribute Name="responseName" PrettyName="Name" Type="string" Description="Name for this Response"/>
+				<Attribute Name="condition" PrettyName="Condition" Type="code(Expressions)" Description="This message will be sent if the condition is true"/>
+				<Attribute Name="style" PrettyName="Action" Type="enum{component view;text message;redirect to}" Description="Define the output style" DefaultValue="text message" Resolver="Genexus.Patterns.Conversational.Resolvers.ConversationalStyleResolver"/>
+				<Attribute Name="format" PrettyName="Messages" Type="custom(ConversationalMessages)" Description="Specify the response messages for this flow. You can type multiple messages using the ‘;’ delimiter and you can reference any context parameter using the '&amp;' character."/>
+				<Attribute Name="componentType" PrettyName="Show Response As" Type="enum{Call Panel;Component}" Description="Choose how the component will be visualized" VisibleIf="self::*[@style = 'component view']" Category="Component view properties for Smart Devices"  DefaultValue="Component"/>
+				<Attribute Name="sdComponent" PrettyName="Component" Type="reference(SDPanel)" Description="Component that shows the response. If the property value is empty, a default component will be generated, considering the response parameters of the flow. Its name is given in the Generated Component property. If the property value is not empty, and it is assigned to any custom component, you have to call the Conversational Object in the Start event of your component." VisibleIf="self::*[@style = 'component view']" Category="Component references" Resolver="Genexus.Patterns.Conversational.Resolvers.ConversationalSDComponentResolver"/>
+				<Attribute ReadOnly="true" Name="sdGeneratedComponent" PrettyName="Generated Component" Type="string" Description="Name of the Component that GeneXus will generate for this Message." VisibleIf="self::*[@style = 'component view' and @sdComponent = '']"  Category="Component references"/>
+				<Attribute Name="webComponent" PrettyName="Web Component" Type="reference(WebPanel)" Description="Web component that shows the response. If the property value is empty, a default Web component will be generated, considering the response parameters of the flow. Its name is given in the Generated Web component property. If the property value is not empty, and it is assigned to any custom Web component, you have to call the Conversational Object in the Start event of your Web component. " VisibleIf="self::*[@style = 'component view']" Category="Component references" Resolver="Genexus.Patterns.Conversational.Resolvers.ConversationalWebComponentResolver"/>
+				<Attribute ReadOnly="true" Name="webGeneratedComponent" PrettyName="Generated Web Component" Type="string" Description="Name of the Web Component that GeneXus will generate for this Message." VisibleIf="self::*[@style = 'component view' and @webComponent = '']"  Category="Component references"/>
+				<Attribute VisibleIf="self::*[@style = 'redirect to']" NotNullIf="self::*[@style = 'redirect to']" Name="redirectTo" PrettyName="Redirect to Flow" Type="custom(ConversationalFlow)" Description="Select an existing flow to redirect when the current flow finishes." />
+			</Attributes>
+			<ChildrenElements />
+		</ElementType>
+		<ElementType Name="Variable" Caption="{0}" CaptionParameters="variable" KeyAttribute="variable" Icon="Variable" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="variable" PrettyName="Variable" Type="custom(ConversationalVariable)" Description="Select a Variable for this User Input" ReadOnlyIf="self::*[@autoInferred = 'True']" Resolver="Genexus.Patterns.Conversational.Resolvers.UserInputResolver"/>
+				<Attribute Name="autoInferred" Type="bool" DefaultValue="false" Visible="false" />
+				<Attribute Name="description" Type="string" Description="Parameter description" />
+				<Attribute Name="isForeign" Type="bool"  Description="True if is foreign" DefaultValue="false" PrettyName="Is Foreign" Visible="false"/>
+				<Attribute VisibleIf="self::*[@notIsInView = 'True' and /*[/@provider != 'None']]" Name="matchWithEntity" Type="bool" Description="If true, the NLP provider maps the entered value to a value of the entity specified in the Entity Property." DefaultValue="false" Resolver="Genexus.Patterns.Conversational.Resolvers.ConversationalEntityResolver"/>
+				<Attribute VisibleIf="self::*[@matchWithEntity = 'True' and /*[/@provider != 'None']]" NotNullIf="self::*[@matchWithEntity = 'True']" Name="entity" Type="string"  Description="If the Match With Entity property is switched on, the value of this property will represent a Custom Entity. Otherwise, the value of this property represents the base type of the parameter."/>
+				<Attribute Category="Watson" VisibleIf="/*[/@provider = 'Watson']" Name="digressionOut" Type="bool" PrettyName="Digression" Description="If true, the provider can go away from this user input and start another flow." DefaultValue="false"/>
+				<Attribute Name="type" Type="string" Description="Attribute type." Visible="false" />
+				<Attribute Name="transaction" Type="string" Description="Attribute transaction." Visible="false" />
+				<Attribute VisibleIf="self::*[@notIsInView = 'True' and /*[/@provider = 'Watson']]" Name="askAgain" Type="bool"  Description="In case of the user input is based on a wrong type, the chatbot will ask again." DefaultValue="false" PrettyName="Ask again"/>
+				<Attribute Name="tryLimit" Type="int" Description="Attempts limits when an input is invalid." PrettyName="Try Limit" DefaultValue="2" VisibleIf="self::*[(@askAgain = 'True' and /*[/@provider = 'Watson']) or (@validationProcedure != '' and /*[/@provider != 'None'])]"/>
+				<Attribute Visible="false" Type="bool" Name="notIsInView" DefaultValue="True"/>
+				<Attribute Name="askMessages" PrettyName="Ask Messages" Type="custom(ConversationalMessages)" Description="Specify the ask messages for this parameter. You can type multiple messages using the ‘;’ delimiter and you can reference any context parameter using the '&amp;' character." DefaultValue="Please, tell me the &amp;GxVariableName" />
+				<Attribute VisibleIf="/*[/@provider = 'Watson']" Name="onErrormessages" PrettyName="On Error Messages" Type="custom(ConversationalMessages)" Description="Specify the on error messages for this parameter. You can type multiple messages using the ‘;’ delimiter and you can reference any context parameter using the '&amp;' character."/>
+				<Attribute Name="cleanInContext" PrettyName="Clean Context Value" Type="bool" DefaultValue="False" Description="Clear the value given for this user input when the flow begins.
+True -> Clean the context value for this user input when the flow begins, so it will be asked again to the user.
+False -> Do not clean the context value for this user input when the flow begins. The value will be remembered / used from the value stored in the context."/>
+				<Attribute VisibleIf="/*[/@provider != 'None']" Name="validationProcedure" PrettyName="Validation Procedure" Type="reference(Procedure)" Resolver="Genexus.Patterns.Conversational.Resolvers.ValidationProcedureResolver" Description="Specify the Procedure used to validate the User Input."/>
+				<Attribute VisibleIf="/*[/@provider != 'None']" Name="required" Type="custom(ConversationalRequiredInputType)" DefaultValue="Always" Description="Specify if the User Input is required.
+Always -> The parameter is required if its value is empty or if the 'Clean Context Value' property is True.
+Never -> The parameter is not required.
+Condition -> The parameter is required if the 'Required condition' is true."/>
+				<Attribute VisibleIf="self::*[@required = 'Condition' and /*[/@provider != 'None']]" Name="requiredCondition" Type="code(Expressions)" PrettyName="Required Condition" Description="Condition to evaluate. If true, the User Input will be required."/>
+			</Attributes>
+			<ChildrenElements>
+				<ChildElement Name="Redirection" ElementType="Redirection" Multiple="true" Optional="true" />
+			</ChildrenElements>
+		</ElementType>
+		<ElementType Name="ResponseVariable" Caption="{0}" CaptionParameters="name" KeyAttribute="name" Icon="Variable" IconResource="Artech.Genexus.UI.Resources.Images,Artech.Genexus.UI.Resources">
+			<Attributes>
+				<Attribute Name="name" Type="string" Description="Parameter name." />
+				<Attribute Name="description" Type="string" Description="Parameter description." />
+			</Attributes>
+			<ChildrenElements/>
+		</ElementType>
+		<ElementType Name="Redirection" Caption="Redirection ({0})" CaptionParameters="redirectTo" Icon="Hyperlink" IconResource="Genexus.Patterns.Conversational.Resources.Images,Genexus.Patterns.Conversational">
+			<Attributes>
+				<Attribute Name="redirectCondition" PrettyName="Condition" Type="code(Expressions)" Description="Condition to evaluate" NotNull="true" />
+				<Attribute Name="redirectTo" PrettyName="Redirect to Flow" Type="custom(ConversationalFlow)" Description="Select an existing flow to redirect the conversation when the current condition is true." NotNull="true"/>
+			</Attributes>
+			<ChildrenElements/>
+		</ElementType>
+	</ElementTypes>
+</Pattern>

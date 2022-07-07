@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Context Sensitive User Interfaces</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5285,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Context Sensitive User Interfaces</h1>
+<!--Category:Context Sensitive User Interfaces--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The current trend is to implement Intent-oriented interfaces, which can be approached by keeping track of the application context and taking actions accordingly.</p>
+
+<p>The best way to introduce this feature is to give an example: Suppose that you have a web page which loads two web components. One of them has a list of all the colleges (or faculties) in a university. Another component displays the college details (photo and description).</p>
+
+<p>The first component saves the collegeid in the context when a college is selected by the user. The other component tracks the context changes and therefore loads the corresponding information as soon as the collegeid is selected.</p>
+
+<p><img src="./images/8165.jpg" id="8165" class="WikiImage"/></p>
+
+<h3><a id="What+Do+We+Call+Context%3F" class="HashLink" href="#What+Do+We+Call+Context%3F"><font color="#000000">What Do We Call Context?</font></a></h3>
+
+<p>When we say Context, we mean the context of our application in a form. When we access the CustomerId Textbox, our context is CustomerId; when we access the invoice lines grid, our context is the invoice line; and so on. When we move inside a screen, we're changing the context of attributes and variables. This information about context changes is essential when creating an intent-oriented interface.</p>
+
+<p>Our approach enables us to trigger events and take actions depending on the context information of the application (the place where the cursor is positioned). </p>
+
+<p>Suppose that the application consists of several web components which make up the web form. You can easily trigger an event in one of the web components as soon as the end user changes his/her context information in another component (changes the focus to a control, or selects a grid line).</p>
+
+<p>Basically, the web controls that you want to track changes in &quot;subscribe&quot; to an event which listens to the context changes of any other control.</p>
+
+<p>By programming a <em>TrackContext</em> event, the programmer retrieves the context information and takes the desired actions. That's all!</p>
+
+<h3><a id="Implementation+Details" class="HashLink" href="#Implementation+Details">Implementation Details</a></h3>
+
+<p><strong>NotifyContextChange Property</strong><br />
+<br />
+Applies to the following controls: grids, freestylegrids, grid columns, attributes/variables.<br />
+<br />
+If the Notify Context Change property is set for a control, the context is saved by default with the corresponding information.</p>
+
+<p>For attributes and variables, it only applies to fields that are not read-only (it can be any control: edits, checkboxes, comboboxes, radio buttons). When the variable/attribute is focused, the context is saved with that information. Value changes in the variable/attribute are not detected, only the cursor's focus on it. The same happens for attributes/variables in freestyle grids.</p>
+
+<p>In the case of standard grids:</p>
+
+<ul>
+	<li>by selecting a row, the entire row is saved in the context.</li>
+</ul>
+
+<p>In the case of standard/freestyle grids:</p>
+
+<ul>
+	<li>for grids bound to SDT collections, select the grid title and all the grid information is tracked in the context <sup>(1)</sup>.</li>
+</ul>
+
+<p>You can change the information that is tracked by programming the SetContext event (explained below).</p>
+
+<p>For example, Notify Context Change Property in grid control:</p>
+
+<p><img src="./images/6370.jpg" id="6370" class="WikiImage"/></p>
+
+<p><strong>SetContext Event</strong></p>
+
+<p>It applies to the same controls as the NotifyContextChange property: grids, freestylegrids, grid columns, attributes/variables.</p>
+
+<p>Syntax: Event &lt;control&gt;.SetContext(parameter)</p>
+
+<p>It can only be one SDT-type variable parameter. It means the context will be loaded in that parameter.<br />
+It's a way of changing the information tracked in the context for a control.</p>
+
+<p><strong>TrackContext Event</strong><br />
+<br />
+Syntax: Event TrackContext(parameters)</p>
+
+<p>The parameters can only be variables.<br />
+The event is qualified by the parameters it receives; that is to say, you may have any number of <em>TrackContext Events</em> in your source code, and they are distinguished by the parameters they receive.</p>
+
+<p>Notes:</p>
+
+<ol>
+	<li>
+	<p>Any parameter which is not a Structured Data Type (SDT) is qualified by name.<br />
+	If you have the following in an object &quot;A&quot;:<br />
+	  <br />
+	   Event TrackContext(&amp;X)<br />
+	   EndEvent<br />
+	<br />
+	Any object &quot;B&quot; which has a variable &amp;X with the NotifyContextChange property set to TRUE (in the form or in a grid) will subscribe to that TrackContext event. The same happens with an attribute named &quot;X&quot;.</p>
+	</li>
+	<li>
+	<p>Any parameter which is a Structured Data Type is qualified by type. That is to say,<br />
+	If you have the following in an object &quot;A&quot;, where &amp;sdtvar1 is based on SDT:<br />
+	  <br />
+	   Event TrackContext(&amp;sdtvar1)<br />
+	   EndEvent<br />
+	<br />
+	Any object &quot;B&quot;, which has a grid with &quot;Notify Context&quot; that loads a &amp;sdtvar2 variable also based on an SDT, will subscribe to that TrackContext event.</p>
+	</li>
+	<li>The following applies to all subgroups:<br />
+	Suppose you have the following events in the same object:</li>
+</ol>
+
+<p>             Event TrackContext(param1, param2,..., paramN)<br />
+             EndEvent</p>
+
+<p>             Event TrackContext(param1, param2)<br />
+             EndEvent       </p>
+
+<p>          <b>Both</b> events will be triggered as param1, param2, paramN notify their context.</p>
+
+<h3><a id="Examples+and+Use+Cases" class="HashLink" href="#Examples+and+Use+Cases">Examples and Use Cases</a></h3>
+
+<p><font size="2"><font color="#000000">1. When selecting an element from a grid (for example, &quot;Colleges&quot;), show the detailed information about the College next to it (this information may or may not be in the same web component of the &quot;Colleges grid&quot;).<br />
+<br />
+<img src="./images/6371.jpg" id="6371" class="WikiImage"/><br />
+<br />
+<img src="./images/6372.gif" id="6372" class="WikiImage"/></font></font></p>
+
+<p><font color="#000000" size="2">2. When selecting a foreign key field, show a contextual prompt. </font></p>
+
+<p><font color="#800080"><font size="2"><font color="#000000">3. When selecting a field, show a textblock with Help information next to it. It's very easy! Suppose that you have three fields in the form: &amp;courseid, &amp;coursedescription, &amp;courseprerequisites. You want to show a contextual help each time the focus is on one of these fields. Thus, you may code as follows:</font></font></font></p>
+
+<p></p>
+
+<pre class="Code">
+Event TrackContext(&amp;courseId)
+  textBlock1.Caption = 'Course Identification. Required field'
+EndEvent
+Event TrackContext(&amp;coursedescription)
+  textBlock2.Caption = 'Course Description. Required field'
+EndEvent
+Event TrackContext(&amp;courseprerequisites)
+  textBlock3.Caption = 'Course Prerequisites.'
+EndEvent
+</pre>
+
+<p></p>
+
+<p><img src="./images/6374.jpg" id="6374" class="WikiImage"/></p>
+
+<p>Download <a href='http://www.gxopen.com/gxopen/servlet/projectinformation?715'>Context-Sensitive User Interfases</a> sample.</p>
+
+<p>4. Load information without posts! Suppose you have two web components in your web form. One of them displays a grid with college degrees. The other web component displays a grid which loads all the courses of that degree program. You can load the second grid depending on the line selected in the first one, just by reading the context and without posting the entire web form!</p>
+
+<p><img src="./images/6375.jpg" id="6375" class="WikiImage"/></p>
+
+<p>The &quot;Careers&quot; grid has the Notify Context Change property set to true.</p>
+
+<p>The code in the web component where the &quot;Courses&quot; grid displays is the following:</p>
+
+<p></p>
+
+<pre class="Code">
+Event TrackContext(&amp;CareerId,&amp;careerDescription)
+   for each 
+       where CareerId = &amp;CareerId
+            &amp;CourseId = CourseId
+            &amp;CourseDescription = CourseDescription
+            &amp;CoursePrerequisites = CoursePrerequisites
+            coursegrid.Load()
+   endfor
+EndEvent</pre>
+
+<p></p>
+
+<p>Notes:</p>
+
+<p><sup>(1)</sup> In the future it will be possible to track all of the grid's information regardless of whether it is bound to an SDT Collection or not.</p>
+
+<p><strong>FAQ</strong><br />
+Q: Can I use the &quot;Context functionalities&quot; to make form validations, for instance, to validate data entered by the user?<br />
+A: Changes in field values are not detected, so this functionality cannot be used to validate the form. For information on validating forms, click <a href="6564.html">here</a>.<br />
+<br />
+Q: What user actions are detected as Context changes?<br />
+A: </p>
+
+<ol>
+	<li>The cursor's position in a form field (the change of position is detected when the user moves with either the mouse or the tab key). The form field can be an edit control, dynamic/combobox, checkbox, or listbox, all of them NON read-only. Changes in field values are not detected; only the position or selection of the cursor in that field is detected.</li>
+	<li>The click on a grid column, row, or the grid itself. In this case, the grid rows can be ReadOnly.</li>
+</ol>
+
+<p><img src="./images/6373.gif" id="6373" class="WikiImage"/></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Pages</b></TD></TR><TR><TD><a href="8856.html">NotifyContextChange property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

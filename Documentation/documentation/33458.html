@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>CryptoSign data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33458,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">CryptoSign data type</h1>
+<!--CryptoSign data type--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>CryptoSign belongs to the <a href="22980.html">Cryptography data types</a>.</p>
+
+<p>It enables us to handle digital signatures with a public key-private key, as per standard  <a href='http://es.wikipedia.org/wiki/PKCS'>PKCS#7/CMS</a> or PKCS1, using <a>X509 certificates</a>.</p>
+
+<h3><a id="CryptoSign+Methods" class="HashLink" href="#CryptoSign+Methods">CryptoSign Methods</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Name</strong></td>
+			<td><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td><strong>Sign(</strong>text:String[,detached:Boolean]<strong>)</strong>:String </td>
+			<td>Returns the text that results from applying the signature algorithm, using the certificate specified by the text entered. The detached parameter indicates if only the signature is returned or if the signature is returned together with the content. The detached parameter is valid only when the PKCS7 format is used.</td>
+		</tr>
+		<tr>
+			<td><strong>Verify(</strong>signature:String,text:String[,detached:Boolean]<strong>)</strong>:Boolean</td>
+			<td>With a given text and a signature, verifies if the signature corresponds to the text using the information of the configured certificate. The detached parameter is valid only when the PKCS7 format is used</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Properties" class="HashLink" href="#Properties">Properties</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>Certificate</strong>:CryptoCertificate</td>
+			<td style="vertical-align: top;">Allows us to specify the certificate that will be used in signing the text.</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Algorithm</strong>:CryptoAlgorithmSign</td>
+			<td style="vertical-align: top;">Allows us to specify the signature algorithm. SHA1withRSA is the default signature algorithm.</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>ValidateCertificate</strong>:Boolean</td>
+			<td style="vertical-align: top;">Specifies whether the fact that the certificate is valid or not must be validated in the Verify method.</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Standard</strong>:{PKCS7,PKCS1}</td>
+			<td style="vertical-align: top;">Allows us to specify the standard that will be used. The default value is PKCS1. The detached parameter is valid only when the PKCS7 format is used, in which case the standard must be specified as PKCS7.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<h4><a id="A.+How+to+sign+a+text" class="HashLink" href="#A.+How+to+sign+a+text">A. How to sign a text</a></h4>
+
+<p>In the example below, upon a given certificate in .pfx format, a text is signed using the Hash SignSHA1withRSA algorithm.<br />
+The first thing is to load the disk certificate. If the loading is error-free, we must request the private key to sign the text. If a key exists, a Hash algorithm is selected for the signature, and the Sign method is used to sign the text.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;errorCode = &amp;CryptoCert.Load(&quot;my_keystore.pfx&quot;, &amp;pwd) //&amp;CryptoCert is of CryptoCertificate type.
+if &amp;errorCode = 0
+    if (&amp;CryptoCert.HasPrivateKey())
+     &amp;CryptoSign.Algorithm = CryptoSignAlgorithm.SHA1withRSA //&amp;CryptoSign is of CryptoSign type. 
+     //CryptoSignAlgorithm is an enumerated domain containing the signature algorithms supported. 
+     &amp;CryptoSign.Certificate = &amp;CryptoCert
+     &amp;signedText = &amp;CryptoSign.Sign(&amp;textToSign, false)
+     if &amp;CryptoSign.ErrCode &lt;&gt; 0
+       //Process Errors
+     endif
+   else
+     //Process Errors
+  endif
+else
+  //Process Errors
+endif</pre>
+
+<h4><a id="B.+How+to+validate+a+text%E2%80%99s+signature" class="HashLink" href="#B.+How+to+validate+a+text%E2%80%99s+signature">B. How to validate a text’s signature</a></h4>
+
+<p>In the case of a certificate with a public key, the text signature is verified as shown in the following example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;errorCode = &amp;CryptoCert.Load(&quot;MyPublicKey.cer&quot;)
+if &amp;errorCode = 0
+    &amp;CryptoSign.Certificate = &amp;CryptoCert //&amp;CryptoSign is of CryptoSign type.
+    &amp;CryptoSign.ValidateCertificate = True //True means that the certificate is validated in the signature validation process.
+    &amp;CryptoSign.Algorithm = CryptoSignAlgorithm.SHA1withRSA
+    &amp;isOK = &amp;CryptoSign.Verify(&amp;SignedText,&amp;TextToSign,false)
+    if not &amp;isOK
+       //Process Errors
+    else
+      //OK
+    endif
+else
+ //Process Errors
+endif </pre>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Platform </strong></td>
+			<td>Web(.NET,Java)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>The SHA256withRSA is used by default since GeneXus Evolution v15 U10. The previous versions use SHA1withRSA</p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22980.html">Toc:Cryptography data types</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

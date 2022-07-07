@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Transaction Rules Syntax</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6868,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Transaction Rules Syntax</h1>
+<!--Transaction Rules Syntax--><div class="TableWikiBody" id="tblwikibody"><p>Specifies the syntax associated to the Transaction’s rules.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><i>Rule</i> [ <b>if</b> <i>condition</i> ]  [ <b>on</b> <i>event</i>… ] [ <b>level</b> <i>att</i>… ] [ <strong>dependencies</strong> <em>att | var</em>…];<br />
+<br />
+<b>Where:</b></p>
+<i>Rule</i>
+
+<p style="margin-left: 40.0px;">Specifies a GeneXus rule.</p>
+<i>condition </i>
+
+<p style="margin-left: 40.0px;">Is the boolean expression that details the conditions that must be fulfilled to trigger the rule. It can be composed of logic operators (and, or, not).</p>
+<i><a href="6840.html">event</a></i>
+
+<p style="margin-left: 40.0px;">Is the event or list of events separated by “,”. The possible values are AfterInsert, AfterUpdate, AfterDelete, AfterValidate, AfterComplete, AfterLevel, BeforeValidate, BeforeInsert, BeforeUpdate, BeforeDelete and BeforeComplete.</p>
+<i>att</i>
+
+<p style="margin-left: 40.0px;">Is the attribute or list of attributes separated by “,” determining the level of the transaction where the rule applies; the first level is assumed in case the section level is not specified.</p>
+<em>att | var </em>
+
+<p style="margin-left: 40.0px;">Is an attribute (or variable), or a list of them separated by &quot;;&quot;. The Dependencies clause determines that the rule will be triggered upon accepting those attributes (variables).</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>The syntax of the transaction rules can be logically divided into two sections: <i>condition</i> and <i>triggering event</i>. The <i>condition</i> section is used to specify an expression that must be evaluated to execute the rule. The <i>triggering event </i>details the events where the rule must be triggered, which are associated with the <b>on</b> and <b>level</b> sections.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p>Given the following <a href="1908.html">Transaction object</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Client
+{
+  ClientId*
+  ClientName
+  ClientType
+  ClientBalance
+  Phone
+  { 
+     ClientPhoneId*
+     ClientPhoneNumber
+     ClientPhoneDescription
+  {
+{</pre>
+
+<p class="Code"><br />
+The following are some detailed examples using this syntax:</p>
+
+<p>Assigning a value on the AfterValidate (same to BeforeInsert) event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ClientType = 1 If Insert On AfterValidate;
+ClientType = 1 On BeforeInsert;
+</pre>
+
+<p>Calling a procedure on the AfterInsert or AfterUpdate event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Proc(ClientId) On AfterInsert, AfterUpdate;
+</pre>
+
+<p>Executing the rule error if a maximum is reached:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Error('Maximum reached') If ClientBalance &gt; &amp;Max On AfterValidate;
+</pre>
+
+<p>Calling a log procedure on the AfterInsert or AfterDelete event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Proc1(ClientId, &amp;Mode) On AfterInsert, AfterDelete;
+</pre>
+
+<p>Calling a procedure after the level associated with the attribute ClientPhoneId:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Proc2(ClientId) On AfterLevel Level ClientPhoneId;
+ </pre>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><strong>Objects   </strong><a href="1908.html">Transaction object</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="8213.html">Transaction rules</a><br />
+<a href="6840.html">Triggering events for rules in Transactions</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8324.html">After Attribute Function</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/28/22 09:11 PM</em></font></td></TR></table></font>

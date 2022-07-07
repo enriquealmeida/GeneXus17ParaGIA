@@ -1,0 +1,39 @@
+delimiters "$", "$"
+
+component_controllers_methods(page) ::= <<
+$g_component_initcontrollers_method(page)$
+$page.ContainedLayoutComponents:g_layoutcomponent_refresh_method()$
+$page.GridControllers:g_controller_grid_methods()$
+$page.DataControllers:g_controller_data_methods()$
+>>
+
+layoutcomponent_refresh_method(component) ::= <<
+async $component.ControlName$Refresh() {
+  await $component:g_layoutcomponent_refresh()$
+}
+
+>>
+
+controller_grid_setcontext_method(controller) ::= <<
+$controller.ControlName$SetContext( ix: number) {
+  $controller.EntityCurrentExpression:g_expression()$ = $controller.EntityCollectionExpression:g_expression()$[ix];
+  $controller.GridControllerExpression:g_expression()$.balanceModels();
+  $controller.UIEntityCurrentExpression:g_expression()$ = $controller.UIEntityCollectionExpression:g_expression()$[ix];
+}
+
+>>
+
+controller_grid_refresh_data(controller) ::= <<
+async $controller.ControlName$Refresh() {
+  $if(controller.HasDataLoad)$
+  $if(controller.CacheEnabled)$
+  await this.$controller.ControlName$Load().toPromise();
+  $else$
+  await this.$controller.ControlName$Load();
+  $endif$
+  $controller.GridControllerExpression:g_expression()$.refreshUI();
+  $endif$
+  this.cdr.markForCheck();
+}
+
+>>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Data Provider object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5270,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Data Provider object</h1>
+<!--Category:Data Provider object--><div class="TableWikiBody" id="tblwikibody"><p>Loads data in a hierarchical structure (from databases, services, fixed values, etc.).</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>Applications increasingly need to interact by exchanging data. From an application in a travel agency, ticket requests have to be sent to an airline containing the passengers' information; from another application, a Google service has to be used or merely exchange structured data within the application itself.</p>
+
+<p>In this scenario, handling structured data becomes essential. The format used to represent them is not and will not be homogeneous. While XML is the most widely used format today, other formats are emerging, such as JSON to lighten the transfer, and we don't know what the future holds.</p>
+
+<p>A Data Provider is a 'declarative procedure' used to obtain data in a hierarchical structure, with maximum clarity and minimum effort. How? By making the intention clear, that is to say, the output. Then, by simply indicating the desired format of the output.</p>
+
+<p><img src="./images/5973.jpg" id="5973" class="WikiImage"/></p>
+
+<p>Anything that can be done with a <strong>Data Provider</strong> can also be done with a <strong><a href="6293.html">Procedure</a></strong>. Both can be seen as processes where there is an Input, a Transformation, and an Output. The difference between them is that in a regular Procedure the focus is on the Transformation language. Meanwhile, in a Data Provider, <strong>the focus is on the Output language</strong>.<br />
+<br />
+For example, if the process consists of reading all customers (Input) and writing an XML file with them (Output), the Procedure is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;XmlWriter.Open(...)
+&amp;XmlWriter.WriteStartElement('Clients')
+For Each
+   &amp;XmlWriter.WriteStartElement('Client')
+      &amp;XmlWriter.WriteElement('Code', CustomerId.ToString())
+      &amp;XmlWriter.WriteElement('Name', CustomerName)
+   &amp;XmlWrite.EndElement()
+Endfor
+&amp;XmlWriter.EndElement()
+&amp;XmlWriter.Close()
+</pre>
+
+<p>&amp;XmlWriter is a variable of the GeneXus <a href="https://wiki.genexus.com/commwiki/wiki?5967,," target="_blank">XMLWriter</a> data type.</p>
+
+<p>Here is not so easy to quickly 'see' the procedure output. Indeed, it is confusingly embedded inside the code written to obtain it.</p>
+
+<p>Instead, the Data Provider shows clearly the intention:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Clients
+{
+     Client
+     {
+          Code = CustomerId
+          Name = CustomerName
+     }
+}</pre>
+
+<p>Then, through the ToXML method, the output could be easily converted into the equivalent XML format:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Clients&gt;
+   &lt;Client&gt;
+      &lt;Code&gt;1&lt;/Code&gt;
+      &lt;Name&gt;John Smith&lt;/Name&gt;
+   &lt;/Client&gt;
+   &lt;Client&gt;
+      &lt;Code&gt;2&lt;/Code&gt;
+      &lt;Name&gt;Jennifer Lopez&lt;/Name&gt;
+   &lt;/Client&gt;
+   ...
+&lt;/Clients&gt;</pre>
+
+<p><img src="./images/6020.jpg" id="6020" class="WikiImage"/><br />
+<br />
+The way GeneXus implements hierarchical structures is the <a href="10021.html">Structured Data Type (SDT) object</a>. You can see this <a href="6310.html">example fully implemented</a>.</p>
+
+<p>As you can see, a Data Provider is easier to write and understand, so some tasks will be easier to do with Data Providers than with regular Procedures. Which are they? Those that return structured data. For example:</p>
+
+<ul>
+	<li>Writing XML files, like <a href='http://en.wikipedia.org/wiki/Web_service'>Web Services</a> and <a href="https://wiki.genexus.com/commwiki/wiki?2337,," target="_blank">RSS feeds</a>.</li>
+	<li>Filling SDTs, like the one used to bind with <a href="5273.html">User Controls</a>, <a href="4890.html">GXchart</a> or <a href="4796.html">TabbedView Web Component</a>.</li>
+	<li>Filling the structure of BCs, that can be returned in a collection variable and then, going through it, saving in the Database.</li>
+</ul>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p>Before going into a more formal definition, it can be helpful to present some samples:</p>
+
+<h4><a id="Sample+1%3A+Listing+today%27s+Invoices+ordered+by+the+amount" class="HashLink" href="#Sample+1%3A+Listing+today%27s+Invoices+ordered+by+the+amount">Sample 1: Listing today's Invoices ordered by the amount</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Invoices
+{
+  Date = today()
+  Invoice Order InvoiceAmount
+  Where InvoiceDate = today()
+  { 
+    Id = InvoiceId 
+    CustomerId = CustomerId
+    CustomerName = CustomerName
+    Amount = InvoiceAmount
+    Product
+    { 
+      Id = ProductId
+      DetailQuantity = InvoiceDetailQuantity 
+      DetailAmount = InvoiceDetailAmount 
+    } 
+  }
+}</pre>
+
+<p>The output will be an <a href="10021.html">SDT</a> with today's date and a collection of items representing those invoices with InvoiceDate = today().</p>
+
+<h4><a id="Sample+2%3A+System+Constants" class="HashLink" href="#Sample+2%3A+System+Constants">Sample 2: System Constants</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ChartConstants
+{
+  ChartServer = 'http://www.gxchart.com/drawchart.asp'
+  ChartParameters = '...'
+}
+</pre>
+
+<p>Another example in the same area is loading the Tabs <a href="10021.html">SDT</a> needed by the <a href="4796.html">TabbedView Web Component</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+LoadTabs parm(&amp;CustomerId)
+Tabs
+{
+  Tab
+  {
+    Code = 'General'
+    WebComponent = link(WCustomerGeneral, &amp;CustomerId)
+  }
+  Tab
+  {
+    Code = 'Invoices'
+    WebComponent = link(WCustomerInvoices, &amp;CustomerId)
+  }
+}
+</pre>
+
+<p>(see <a href="4955.html">here</a> for more details).</p>
+
+<h4><a id="Sample+3%3A+wiki%3F2337%2CRSS+RSS+feed+with+today%27s+Invoices" class="HashLink" href="#Sample+3%3A+wiki%3F2337%2CRSS+RSS+feed+with+today%27s+Invoices">Sample 3: <a href="https://wiki.genexus.com/commwiki/wiki?2337,," target="_blank">RSS feed</a> with today's Invoices</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+rss
+{
+  version = "2.0"
+  channel
+  {
+    title = "Today's Invoices"
+    link = link(ViewTodayInvoices)
+    item where InvoiceDate = today()
+    {
+      title = format('Invoice %1', InvoiceId)
+      link = link(ViewInvoice, InvoiceId)
+      description = format('Invoice %1 for customer %2, amount %3', InvoiceId, CustomerName, InvoiceAmount)
+      author = 'system'
+      pubDate = today()
+    }
+  }
+}</pre>
+
+<p>Now that you understand the spirit of Data Providers, take a look at:</p>
+
+<ul>
+	<li><a href="5309.html">Data Provider language</a></li>
+	<li><a href="6292.html">Data Provider: Input</a></li>
+	<li><a href="41037.html">Data Provider: Output</a></li>
+	<li><a href="5310.html">Using Data Providers in Other GX Objects</a></li>
+	<li><a href="11231.html">Expose a Data Provider as Web Service</a></li>
+	<li><a href="4891.html">Recursive Data Providers</a></li>
+</ul>
+
+<p>And at the following examples and use cases:</p>
+
+<ul>
+	<li><a href="6310.html">Example: step by step 'CustomersProvider' Data Provider</a></li>
+	<li><a href="4955.html">Data Provider Use Case: TabbedView usage</a></li>
+	<li><a href="6342.html">Data Provider Use Case: sales invoice into accounting</a></li>
+	<li><a href="6043.html">Example: Data Provider Break</a></li>
+</ul>
+
+<p>Data Providers go a step further in 'declaring' instead of 'programming'. The big advantage: the underlying implementation can be changed, and the Data Provider will remain valid. <a href="6259.html">More on Data Providers philosophy</a>.</p>
+
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus/genexus-16-course-analyst/compound-data-types-6098937?p=5262'>Compound data types</a></p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Pages</b></TD></TR><TR><TD><a href="41229.html">Collection Name property</a></TD><TD><a href="41179.html">Collection property</a></TD><TD><a href="https://wiki.genexus.com/commwiki/wiki?46606,Connectivity+Support+property+%28GeneXus+16+u11+or+prior%29," target="_blank">Connectivity Support property (GeneXus 16 u11 or prior)</a></TD></TR><TR><TD><a href="25096.html">Data provider Element</a></TD><TD><a href="25103.html">Data provider Element statement</a></TD><TD><a href="25412.html">Data Provider Subgroup statement</a></TD></TR><TR><TD><a href="6342.html">Data Provider Use Case: sales invoice into accounting</a></TD><TD><a href="4955.html">Data Provider Use Case: TabbedView usage</a></TD><TD><a href="25413.html">Data Provider Variable statement</a></TD></TR><TR><TD><a href="6292.html">Data Provider: Input</a></TD><TD><a href="6259.html">Data Providers philosophy</a></TD><TD><a href="6501.html">Data Selectors in Data Providers</a></TD></TR><TR><TD><a href="25407.html">Default clause</a></TD><TD><a href="23658.html">Defining a Data Provider</a></TD><TD><a href="6310.html">Example: 'CustomersProvider' Data Provider</a></TD></TR><TR><TD><a href="6043.html">Example: Data Provider Break</a></TD><TD><a href="11231.html">Expose a Data Provider as Web Service</a></TD><TD><a href="23651.html">HowTo: Using the Infer Structure property of a Data Provider</a></TD></TR><TR><TD><a href="23628.html">Infer Structure property</a></TD><TD><a href="25406.html">Input clause</a></TD><TD><a href="25408.html">NoOutput clause</a></TD></TR><TR><TD><a href="25411.html">One clause in Data Provider Group statement</a></TD><TD><a href="41037.html">Output property</a></TD><TD><a href="25409.html">OutputIfDetail clause</a></TD></TR><TR><TD><a href="25410.html">Paging clauses in Data Provider Group Statement</a></TD><TD><a href="4891.html">Recursive Data Providers</a></TD><TD><a href="5310.html">Using Data Providers in Other GX Objects</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/21/22 08:38 PM</em></font></td></TR></table></font>

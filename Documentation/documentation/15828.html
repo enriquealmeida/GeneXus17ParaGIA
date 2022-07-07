@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Creating Item User Controls for iOS</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15828,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Creating Item User Controls for iOS</h1>
+<!--Creating Item User Controls for iOS--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In this document we'll explain how to create an <em>Item</em> User Control for iOS to display the contents of an attribute or variable.</p>
+
+<p>To do this, we are going to create a Star Rating User Control, that displays a numeric field as a list of stars; very similar to the GeneXus <a href="18350.html">SD StarRating</a>.</p>
+
+<p>This is how it looks in execution:</p>
+
+<p><img src="./images/15829.png" id="15829" class="WikiImage"/> <img src="./images/15830.png" id="15830" class="WikiImage"/></p>
+
+<h2><a id="Software+requirements" class="HashLink" href="#Software+requirements">Software requirements</a></h2>
+
+<p>To develop user controls for iOS you'll need the following:</p>
+
+<ul>
+	<li>a Mac</li>
+	<li>XCode</li>
+</ul>
+
+<h2><a id="Steps+to+create+the+user+control" class="HashLink" href="#Steps+to+create+the+user+control">Steps to create the user control</a></h2>
+
+<p>The user control has two components: a definition and an implementation.</p>
+
+<p>The definition is similar to the definition of the web user controls, with some minor differences.</p>
+
+<p>For the implementation, you'll need to program in XCode, using the Objective-C language. This document asumes you are familiar with both.</p>
+
+<h3><a id="Definition" class="HashLink" href="#Definition">Definition</a></h3>
+
+<p>For the definition of the control, you can start by copying an existing control definition</p>
+
+<p>What you'll need to do is:</p>
+
+<ul>
+	<li>Change the User Control name and description; for example <em>UCStarRating</em>.</li>
+	<li>Set the Version tag to an initial value.</li>
+	<li>Set the Platform to &quot;SmartDevices&quot;.</li>
+	<li>Add a File to the iOS_SupportFiles, with the name of the library (for example: libUCStarRating.a); this is the library containing the implementation of your user control.</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;iOS_SupportFiles&gt;
+&lt;File&gt;libUCStarRating.a&lt;/File&gt;
+  &lt;/iOS_SupportFiles&gt;</pre>
+
+<ul>
+	<li>Add the name of the main class to the iOS_ClassName tag (in this case, UCStarRating)</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;iOS_ClassName&gt;UCStarRating&lt;/iOS_ClassName&gt;</pre>
+
+<p>Check the <em>Rating.control</em> file if you are in doubt.</p>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<ul>
+	<li>For this control, we will be using the <em>DLStarRatingControl</em> that can be found at <a href='https://github.com/dlinsin/DLStarRating'>https://github.com/dlinsin/DLStarRating</a>, so go grab a copy of it.<br />
+	 - There are a few changes you need to do in order to make it work.<br />
+	Rename the <em>DLStarRatingControl</em> class to <em>DLStarRatingControl2</em>, and <em>DLStarView</em> class to <em>DLStarView2</em> not to clash with the GeneXus User Control internal implementation. Make sure the project compiles, you will have to change internal references (use a find/replace strategy).<br />
+	Then, In <em>DLStarRatingControl2.m</em>, go to the <em>-endTrackingWithTouch:withEvent:</em> method, add the following line:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+[self sendActionsForControlEvents:UIControlEventValueChanged];</pre>
+
+<ul>
+	<li>Create a new XCode <em>Cocoa Touch Static Library</em> project called <em>UCStarRating</em> and<br />
+	 - import the <em>GXFlexibleClient.framework</em> located on the <em>/Users/MacUserName/Library/Artech/GeneXus</em><br />
+	 - import the <em>DLStarRating</em> project downloaded. Locate the xcodeproj associated project and drag it and drop it onto the root of your Xcode project's &quot;Groups and Files&quot; sidebar. A dialog will appear -- make sure &quot;<em>Copy items</em>&quot; is unchecked and &quot;<em>Reference Type</em>&quot; is &quot;<em>Relative to Project</em>&quot; before clicking &quot;<em>Add</em>&quot;.<br />
+	 </li>
+	<li>Create a new class and name it <em>UCStarRating</em>. Make it subclass of <em>GXControlEditableWithLabelSingleEditorViewBase</em><br />
+	 - you will need to import &lt;GXFlexibleClient/GXFlexibleClient.h&gt;<br />
+	 - add two properties: <em>maxValue</em> and <em>step</em> (both of type int)<br />
+	 - the <em>UCStarRating.h</em> header file should look like this:  </li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+#import &lt;Foundation/Foundation.h&gt;
+#import &lt;GXFlexibleClient/GXFlexibleClient.h&gt;
+@interface UCStarRating : GXControlEditableWithLabelSingleEditorViewBase {
+    float _maxValue;
+    float _step;
+}
+@property (nonatomic, readonly) float maxValue;
+@property (nonatomic, readonly) float step;
+@end</pre>
+
+<ul>
+	<li>Go to the implementation file, add a private property named <em>starRatingControl</em> of type <em>DLStarRatingControl2</em> (remember to import the h file)<br />
+	 </li>
+	<li>Synthesize the &quot;delegate&quot; property, that has been declaren in <em>GXControlEditableWithLabelSingleEditorViewBase</em>. This object will be used to notify the creator of the control of value changes.</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+@synthesize maxValue = _maxValue, step = _step;</pre>
+
+<ul>
+	<li>Implement the <em>GXControlEditableWithLabelSingleEditorViewBase</em> abstract methods</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+- (UIView *)newEditorViewWithFrame:(CGRect)frame {
+    if ([self properties]) {
+        _maxValue = [[self properties] getPropertyValueInteger:@&quot;@UCStarRatingMaxValue&quot;];
+        _step =     [[self properties] getPropertyValueInteger:@&quot;@UCStarRatingStep&quot;];
+    }
+    else {
+        _maxValue = 5;
+        _step = 1;
+    }
+    
+    int cantStars = CalculateNumberOfStars(_maxValue, _step);    
+    DLStarRatingControl2 *control = [[DLStarRatingControl2 alloc] initWithFrame:frame andStars:cantStars isFractional:NO];
+    control.rating = 3;
+    [control setAutoresizingMask:UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight];
+    [control setContentVerticalAlignment:UIControlContentVerticalAlignmentCenter];
+    [control addTarget:self action:@selector(valueChangedForControl:) forControlEvents:UIControlEventValueChanged];
+    [control setEnabled:self.enabled &amp;&amp; !self.readOnly];
+    return control;
+}
+
+- (void)valueChangedForControl:(id)sender {
+    if ([sender isEqual:self.starRatingControl]) {
+        int val = self.starRatingControl.rating * self.step;
+        if (val &gt; self.maxValue)
+            val = self.maxValue;
+        
+        id&lt;gxentitydata&gt; entityData = [self entityData];
+        
+        if ([entityData conformsToProtocol:@protocol(GXMutableEntityData)]) {
+            id fieldValue = [GXEntityHelper coreDataFieldValueFroFieldInfo:[[self fieldDescriptor] entityDataFieldInfo]
+                                                                 fromValue:[NSNumber numberWithInt:val]
+                             ];
+            [(id&lt;gxmutableentitydata&gt;)entityData setValue:fieldValue forEntityDataField:[self fieldDescriptor]];
+        }
+    }
+}
+
+#pragma mark - GXControlEditableWithLabelBase overrides 
+
+- (void)setReadOnly:(BOOL)readOnly {
+    [super setReadOnly:readOnly];
+    if ([self isEditorViewLoaded]) {
+        [self.starRatingControl setEnabled:!readOnly &amp;&amp; self.enabled];
+    }
+}
+
+- (void)setEnabled:(BOOL)enabled {
+	[super setEnabled:enabled];
+	if ([self isEditorViewLoaded]) {
+		[self.starRatingControl setEnabled:enabled &amp;&amp; !self.readOnly];
+	}
+}
+
+- (void)loadEntityDataFieldValue {
+	int value = [self.entityDataFieldValue respondsToSelector:@selector(intValue)] ? MAX(0, [self.entityDataFieldValue intValue]) : 0;
+	[self.starRatingControl setRating:CalculateNumberOfStars(value, self.step)];
+}
+
++ (BOOL)isValidForDataType:(GXDataType)dataType {
+    return (dataType == GXDataTypeNumeric);
+}
+&lt;/gxmutableentitydata&gt;&lt;/gxentitydata&gt;</pre>
+
+<ul>
+	<li>Override the necessary GXControlWithLabelBase methods</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+- (DLStarRatingControl2 *)starRatingControl {
+   return (DLStarRatingControl2 *)[self loadedEditorView];
+}
+
++ (BOOL) isValidForDataType:(GXDataType)dataType {
+    return (dataType == GXDataTypeNumeric);
+}
+
+- (DLStarRatingControl *) starRatingControl {
+    return (DLStarRatingControl *) [super editorView];
+}</pre>
+
+<ul>
+	<li>Define the <em>CalculateNumberOfStars</em> method:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+static int CalculateNumberOfStars(int value, int step) {
+    if (step == 0) return 0;
+    return (value / step) + (value % step == 0 ? 0 : 1);
+}
+</pre>
+
+<ul>
+	<li>create a bundle (DLImages.bundle) to locate the used images </li>
+</ul>
+
+<p><img src="./images/27048.png" id="27048" class="WikiImage"/></p>
+
+<ul>
+	<li>Change the following lines in DLStarRatingControl2.m from:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+
+star = [[UIImage imageNamed:@&quot;star.png&quot;] retain];    
+highlightedStar = [[UIImage imageNamed:@&quot;star_highlighted.png&quot;] retain]; 
+
+</pre>
+
+<p class="p1"><span style="line-height: 2.8px;">to:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+
+star = [GXUtilities imageNamed:@&quot;star.png&quot; inBundle:@&quot;DLImages&quot;];
+highlightedStar = [GXUtilities imageNamed:@&quot;star_highlighted.png&quot; inBundle:@&quot;DLImages&quot;];
+
+</pre>
+
+<ul>
+	<li>Make sure your library compiles.</li>
+	<li>Copy the <em>libUCStarRating.a</em> file generated and bundles if needed and define the <a href="18338.html">GeneXus User Control</a>.</li>
+</ul>
+
+<p><br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18330.html">Creating User Controls for iOS</a></TD><TD><a href="15301.html">Category:User Controls for Smart Devices</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

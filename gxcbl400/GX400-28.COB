@@ -1,0 +1,7 @@
+#1 #2.
+    05 #3     PIC 9(02) VALUE ZERO.
+    05 FILLER PIC X(01) VALUE '/'.
+    05 #4     PIC 9(02) VALUE ZERO.
+    05 FILLER PIC X(01) VALUE '/'.
+    05 #5     PIC 9(02) VALUE ZERO.
+

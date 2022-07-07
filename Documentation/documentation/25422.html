@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>My first BPM Application for Smart Devices</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25422,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">My first BPM Application for Smart Devices</h1>
+<!--My first BPM Application for Smart Devices--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This example explains how to create a <a href="16486.html">Business Process Diagram</a> assigning Smart Devices objects to user <a href="17495.html">Tasks</a>.</p>
+
+<p>If this is your first time creating a <a href="16486.html">Business Process Diagram object</a>, we recommend you to read <a href="11218.html">My first BPM Application</a>. If this is your first time using <a href="20087.html">Objects for mobile applications development</a> we recommend you to read <a href="14555.html">My first Android application</a> or <a href="14738.html">My first iOS application</a>.</p>
+
+<p>The best way of explaining is by using examples. This document is based on <a href="11218.html">My first BPM Application</a>, and so will be based on booking flight tickets.<br />
+Here you have a simple and practical example that illustrates the steps needed to complete it:</p>
+
+<ul>
+	<li>Creating the process objects</li>
+	<li>Creating the activity diagram that models the process</li>
+	<li>Associating <strong>Smart Devices</strong> objects to the diagram</li>
+	<li>Running the process</li>
+</ul>
+
+<p>This is a simple example that shows you how to use GXflow within the IDE to create a workflow for the <a href="29037.html">GXflow Client for Smart Devices</a>. As explained before it represents a simplified process for booking airline tickets, which consists of entering the reservation details into the system, with the operator registering any customer that is not registered. If the customer is already registered, the control will go straight to checking availability. If the reservation is available, the process ends, and if it's not available, the flow will return to where the reservation was entered to update the data.</p>
+
+<h3><a id="Step+1%3A+Creating+the+objects+that+will+be+part+of+the+process" class="HashLink" href="#Step+1%3A+Creating+the+objects+that+will+be+part+of+the+process">Step 1: Creating the objects that will be part of the process</a></h3>
+
+<p>Two transactions will be needed: Reservation and Customer.</p>
+
+<h4><a id="Reservation+Transaction" class="HashLink" href="#Reservation+Transaction">Reservation Transaction</a></h4>
+
+<p><img src="./images/5503.jpg" id="5503" class="WikiImage"/></p>
+
+<p><strong>Note</strong>: the CustomerId attribute is defined to allow nulls, which is necessary for the example to work properly.</p>
+
+<h5><a id="Rules" class="HashLink" href="#Rules"><em>Rules</em></a></h5>
+
+<p>CustomerId.SetNull() If CustomerId.IsEmpty();</p>
+
+<h4><a id="Customer+Transaction" class="HashLink" href="#Customer+Transaction">Customer Transaction</a></h4>
+
+<p><img src="./images/5504.jpg" id="5504" class="WikiImage"/></p>
+
+<h4><a id="ReservationMapRelevantData" class="HashLink" href="#ReservationMapRelevantData">ReservationMapRelevantData</a></h4>
+
+<p>We have the following procedure: Once the reservation is entered, it assigns the ReservationId and CustomerId <a href="11759.html">Relevant Data</a>.</p>
+
+<h5><a id="Rules" class="HashLink" href="#Rules"><em>Rules</em></a></h5>
+
+<p>Parm(ReservationId,CustomerId);</p>
+
+<p><strong>Note</strong>: ReservationId and CustomerId as attributes</p>
+
+<h5><a id="Variables" class="HashLink" href="#Variables"><em>Variables</em></a></h5>
+
+<p><img src="./images/25424.png" id="25424" class="WikiImage"/></p>
+
+<h5><a id="Code" class="HashLink" href="#Code"><em style="line-height: 1.2em;">Code</em></a></h5>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;WorkflowApplicationData = &amp;Workflowcontext.ProcessInstance.GetApplicationDataByName(&quot;ReservationId&quot;)
+&amp;WorkflowApplicationData.NumericValue = ReservationId
+
+&amp;WorkflowApplicationData2 = &amp;Workflowcontext.ProcessInstance.GetApplicationDataByName(&quot;CustomerId&quot;)
+if not CustomerId.IsNull()
+    &amp;WorkflowApplicationData2.NumericValue = CustomerId
+EndIf
+
+Commit</pre>
+
+<h4><a id="ProcCondAssignedCustomerId" class="HashLink" href="#ProcCondAssignedCustomerId">ProcCondAssignedCustomerId</a></h4>
+
+<p>We have the following procedure: this procedure checks if the Customer has been entered, returning 1 if so and 2 if not.</p>
+
+<h5><a id="Rules" class="HashLink" href="#Rules"><em>Rules</em></a></h5>
+
+<p>Parm(in: &amp;WorkflowProcessDefinition, in: &amp;WorkflowProcessInstance, in: &amp;WorkflowWorkitem, out: &amp;ConditionalCode);</p>
+
+<h5><a id="Variables" class="HashLink" href="#Variables"><em>Variables</em></a></h5>
+
+<p><img src="./images/25427.png" id="25427" class="WikiImage"/></p>
+
+<h5><a id="Code" class="HashLink" href="#Code"><em style="line-height: 1.2em;">Code</em></a></h5>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CustomerIdAppData = &amp;WorkflowProcessInstance.GetApplicationDataByName('CustomerId')
+&amp;CustomerId = &amp;CustomerIdAppData.NumericValue
+
+if &amp;CustomerIdmerId = 0
+    &amp;ConditionalCode = 2
+Else
+    &amp;ConditionalCode = 1
+EndIf</pre>
+
+<h4><a id="CustomerMapRelevantData" class="HashLink" href="#CustomerMapRelevantData">CustomerMapRelevantData</a></h4>
+
+<p>We have the following procedure: Once the Customer is entered, it assigns the CustomerId <a href="11759.html">Relevant Data</a>.</p>
+
+<h5><a id="Variables" class="HashLink" href="#Variables"><em>Variables</em></a></h5>
+
+<p><img src="./images/25425.png" id="25425" class="WikiImage"/></p>
+
+<h5><a id="Code" class="HashLink" href="#Code"><em style="line-height: 1.2em;">Code</em></a></h5>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;WorkflowApplicationData = &amp;Workflowcontext.ProcessInstance.GetApplicationDataByName(&quot;CustomerId&quot;)
+&amp;WorkflowApplicationData.NumericValue = CustomerId
+
+Commit</pre>
+
+<h4><a id="AssignToCustomer+Procedure" class="HashLink" href="#AssignToCustomer+Procedure">AssignToCustomer Procedure</a></h4>
+
+<p>We have the following procedure: Once the reservation and user are entered, it assigns that reservation to that user.</p>
+
+<h5><a id="Rules" class="HashLink" href="#Rules"><em>Rules</em></a></h5>
+
+<p>Parm(in:&amp;ReservationId, in:&amp;CustomerId);</p>
+
+<h5><a id="Variables" class="HashLink" href="#Variables"><em>Variables</em></a></h5>
+
+<p><img src="./images/25428.png" id="25428" class="WikiImage"/></p>
+
+<h5><a id="Code" class="HashLink" href="#Code"><em style="line-height: 1.2em;">Code</em></a></h5>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+     Where ReservationId = &amp;ReservationId
+             CustomerId = &amp;CustomerId
+Endfor</pre>
+
+<h4><a id="ProcCondReservationAvailable" class="HashLink" href="#ProcCondReservationAvailable">ProcCondReservationAvailable</a></h4>
+
+<p>We have the following procedure: this procedure checks if the Reservation is available, returning 1 if so and 2 if not.</p>
+
+<h5><a id="Rules" class="HashLink" href="#Rules"><em>Rules</em></a></h5>
+
+<p>Parm(in: &amp;WorkflowProcessDefinition, in: &amp;WorkflowProcessInstance, in: &amp;WorkflowWorkitem, out: &amp;ConditionalCode);</p>
+
+<h5><a id="Variables" class="HashLink" href="#Variables"><em>Variables</em></a></h5>
+
+<p><img src="./images/25426.png" id="25426" class="WikiImage"/></p>
+
+<h5><a id="Code" class="HashLink" href="#Code"><em style="line-height: 1.2em;">Code</em></a></h5>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ReservationId = &amp;WorkflowProcessInstance.GetApplicationDataByName('ReservationId')
+
+For each
+    Where ReservationId = &amp;ReservationId.NumericValue
+    if ReservationAvailable = False
+        &amp;ConditionalCode = 2
+    Else
+        &amp;ConditionalCode = 1
+    EndIf
+EndFor</pre>
+
+<h3><a id="Step+2%3A+Creating+the+activity+diagram+that+models+the+process" class="HashLink" href="#Step+2%3A+Creating+the+activity+diagram+that+models+the+process">Step 2: Creating the activity diagram that models the process</a></h3>
+
+<p>To add an activity diagram all you have to do is add the <a href="16486.html">Business Process Diagram object</a>, like with any other object.</p>
+
+<p><img src="./images/25790.png" id="25790" class="WikiImage"/></p>
+
+<h3><a id="Step+3%3A+Applying+Work+With+Pattern+for+Smart+Devices" class="HashLink" href="#Step+3%3A+Applying+Work+With+Pattern+for+Smart+Devices">Step 3: Applying Work With Pattern for Smart Devices</a></h3>
+
+<p>Apply the Work With Pattern for Smart Devices to the Customer and Reservation transactions, see <a href="15975.html">Applying Work With for Smart Devices Pattern</a> for further details.</p>
+
+<h3><a id="Step+4%3A+Associating+the+objects+to+the+diagram" class="HashLink" href="#Step+4%3A+Associating+the+objects+to+the+diagram">Step 4: Associating the objects to the diagram</a></h3>
+
+<p>To mark the beginning of the process, drag a <a href="17347.html">None Start Event</a> symbol into the &quot;TicketReservationSD&quot; <a href="16486.html">Business Process Diagram object</a>.</p>
+
+<p>The first associated object will be the WorkWithDevicesReservation. To associate it, drag it from the <a href="3210.html">KB Explorer</a> to the line that connects the Start and End connectors in the diagram.</p>
+
+<p>Or, drag a <a href="17495.html">User Task</a> from the <a href="16487.html">Toolbox</a>, to the properties windows and press the button in the <a href="25199.html">SD Application property</a>. You can change its name by pressing F2 button to &quot;Reservation&quot;:</p>
+
+<p><img src="./images/11219.jpg" id="11219" class="WikiImage"/></p>
+
+<p>You need to create Relevant Data with the same name and data type as the transaction's primary key. This data, just like the rest of the relevant information, will be known throughout the flow.</p>
+
+<p>Once the Relevant Data is created, open the <a href="25199.html">SD Application property</a>, and edit the Application to &quot;WorkWithDevicesReservation.Reservation.<strong>Detail</strong>&quot; and select the Relevant Data created before in the &quot;Relevant Data&quot; column. The purpose of this change is to call the WorkWithDevicesReservation in insert mode.<br />
+The properties must be configured as shown below:</p>
+
+<p><img src="./images/25430.png" id="25430" class="WikiImage"/></p>
+
+<p>Then open WorkWithDevicesReservation and edit the source of the 'Save' event as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Save'
+    Composite
+        SDActions.Save()
+        ReservationMapRelevantData.Call(ReservationId,CustomerId)
+        return
+    EndComposite
+EndEvent</pre>
+
+<p>This is an important step. Relevant Data is not mapped automatically when using Smart Devices Objects, so that the call to the Procedure <em>ReservationMapRelevantData</em> must be added.</p>
+
+<p>The second step consists in adding the conditional that defines whether or not the customer is registered and associated to the reservation transaction. To do so, add the exclusive gateway symbol from the diagram toolbar (by default it is located on the right-hand side of the screen), as shown in the figure below.</p>
+
+<p><img src="./images/11220.png" id="11220" class="WikiImage"/></p>
+
+<p>Once the gateway has been inserted, you have to define <a href="https://wiki.genexus.com/commwiki/wiki?17510,," target="_blank">Condition procedure property</a> to the Procedure <em>ProcCondAssignedCustomerId.</em> This Gateway will make the flow follow the usual course or follow the alternative course to register a customer.</p>
+
+<p>Next you need to add the WorkWithDevicesCustomer to the diagram and connect it with the conditional's alternative route, as follows:</p>
+
+<p><img src="./images/11221.png" id="11221" class="WikiImage"/></p>
+
+<p>Change its name to &quot;Customer&quot; by pressing F2 button.</p>
+
+<p><strong>Note</strong>: To connect the gateway with the 'Customer' task, click the right-hand side of the conditional and drag the arrow to the left-hand side of the task. Its type is defined in the route properties.</p>
+
+<p>Now add the call to the Procedure CustomerMapRelevantData in order to update the RelevantData — just like with the WorkWithDevicesreservation, open the WorkWithDevicesCustomer and edit the source of the 'Save' event as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Save'
+    Composite
+        SDActions.Save()
+        CustomerMapRelevantData.Call(CustomerId)
+        return
+    EndComposite
+EndEvent</pre>
+
+<p>To complete the conditional you have to define the condition that will make the flow follow one route or the other. To this end, the IDE offers a condition editor that allows you to express the condition returned by the <a href="13266.html">Condition Procedure</a>. Select the connector to the WorkWithDevicesCustomer and edit the Conditional Code to the value &quot;2&quot;.</p>
+
+<p>By defining this condition, non-registered customers—CustomerId.IsEmpty() = True—are registered.</p>
+
+<p>Next, following the usual flow, the WorkWithDevicesReservation is added again. This task evaluates whether the reservation is available to be issued or not; change its name to &quot;Reservation Availability&quot; by pressing F2 button.</p>
+
+<p><img src="./images/11222.png" id="11222" class="WikiImage"/></p>
+
+<p>Once the reservation availability has been determined, another gateway must be defined as follows to evaluate the condition:</p>
+
+<p><img src="./images/25434.png" id="25434" class="WikiImage"/></p>
+
+<p>If the reservation is available, the process is finished. If it is not available, the flow goes back to the initial task in order to change the reservation details.</p>
+
+<p>Once the gateway has been inserted, you have to define the <a href="https://wiki.genexus.com/commwiki/wiki?17510,," target="_blank">Condition procedure property</a> to the object <em>ProcCondReservationAvailable</em><em>.</em> So, after registering the customer, you have to assign him or her to the reservation and check availability.</p>
+
+<p>Edit the connector to the <a href="17271.html">End Event</a> an set the Conditional Code to the value &quot;1&quot; and the Conditional Code of the connector to Reservation to the value &quot;2&quot;.<br />
+If the reservation is available, the process is finished. If it's not available, the flow goes back to the initial task in order to change the reservation details.</p>
+
+<p>To complete the flow, define the alternative course to be followed when the customer is not registered. So, after registering the customer, you have to assign him or her to the reservation and check availability. To do so, add the procedure AssignToCustomer and the connection routes as follows:</p>
+
+<p><img src="./images/25435.png" id="25435" class="WikiImage"/></p>
+
+<p>Once the procedure is added to the diagram, the parameter rule (parm) is automatically evaluated. If attributes or variables with the same name and type as the relevant data are found, they will be instantiated with their values. In this case, the <strong>&amp;ReservationId</strong> and <strong>&amp;CustomerId</strong> variables will be associated with the values of the corresponding relevant data.</p>
+
+<h3><a id="Step+5%3A+Importing+and+configuring+the+GXflow+Client+for+Smart+Devices" class="HashLink" href="#Step+5%3A+Importing+and+configuring+the+GXflow+Client+for+Smart+Devices">Step 5: Importing and configuring the GXflow Client for Smart Devices</a></h3>
+
+<p>In order to run the newly created Business Process Diagram it is required the <a href="29037.html">GXflow Client for Smart Devices</a> to be configured. Follow the steps from <a href="25444.html">HowTo: Configuring GXflow For Smart Devices</a> in order to do so —skip the step of creating a Buisiness Process Diagram.</p>
+
+<p>Once the GXflow Client for Smart Devices has been imported you must add a call to each of the <a href="20087.html">Objects for mobile applications development</a>, that are used in your <a href="16486.html">Business Process Diagram object</a>s, to the &quot;WorkflowSDClient&quot; <a href="16321.html">Menu object</a> in order to be included in the Smart Devices application.<br />
+Therefore add the following code to &quot;WorkflowSDClient&quot;:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'DummyCalls'
+        WorkWithDevicesReservation.Reservation.Detail(1)
+        WorkWithDevicesReservation.Reservation.List()
+        WorkWithDevicesCustomer.Customer.Detail(1)
+        WorkWithDevicesCustomer.Customer.List()
+EndEvent</pre>
+
+<p><strong>Note</strong>: It is not required to use the &quot;DummyCalls&quot; event in any item of the &quot;WorkflowSDClient&quot; Dashboard—including the event is enough.</p>
+
+<h3><a id="Step+6%3A+Running+the+process" class="HashLink" href="#Step+6%3A+Running+the+process">Step 6: Running the process</a></h3>
+
+<p>Before running the process for the first time, do a <strong><a href="https://wiki.genexus.com/commwiki/wiki?7166,," target="_blank">Build All</a></strong>, lastly run the application by pressing F5.</p>
+
+<p>Next, GeneXus performs the necessary actions to run this diagram and show the changes made. The steps that follows are:</p>
+
+<ul>
+	<li>Update workflow objects</li>
+	<li>Specify objects</li>
+	<li>Generate objects</li>
+	<li>Compile workflow objects</li>
+	<li>Impact the diagram on the database</li>
+</ul>
+
+<p>Whether or not all these steps are performed will depend on the changes made; that is to say, a change in the diagram will cause all its objects to be specified, generated and compiled, impacting the diagram.</p>
+
+<p>When generating for Android, the emulator will run automatically with the application, and the user will be requested to login, as shown in the figure below:</p>
+
+<p><img src="./images/25439.png" id="25439" class="WikiImage"/> <img src="./images/25438.png" id="25438" class="WikiImage"/></p>
+
+<p>Below is the process flow for both cases: the first case corresponds to a customer that has to be registered, and the second case corresponds to a customer that is already registered in the system.</p>
+
+<h4><a id="Example+1%3A+When+the+user+needs+to+be+registered" class="HashLink" href="#Example+1%3A+When+the+user+needs+to+be+registered">Example 1: When the user needs to be registered</a></h4>
+
+<p>Create a new Task, once created tap on it, in order to open the preview:</p>
+
+<p><img src="./images/25445.png" id="25445" class="WikiImage"/></p>
+
+<p>Next press the execute button in order to take the task:</p>
+
+<p><img src="./images/25773.png" id="25773" class="WikiImage"/></p>
+
+<p>Then add the reservation details, but left the CustomerId field blank because the customer is not registered yet:</p>
+
+<p><img src="./images/25769.png" id="25769" class="WikiImage"/></p>
+
+<p>After the reservation details are inserted complete the task:</p>
+
+<p><img src="./images/25775.png" id="25775" class="WikiImage"/></p>
+
+<p>Now you have to register a new customer for the reservation.</p>
+
+<p><img src="./images/25771.png" id="25771" class="WikiImage"/></p>
+
+<p>Once the Reservation and Customer are registered, the procedure that assigns the customer to the reservation is automatically executed.</p>
+
+<p>Finally, to end the process, you have to define whether the reservation is available or not. Notice that the customer has been asociated to the reservation.</p>
+
+<p><img src="./images/25772.png" id="25772" class="WikiImage"/></p>
+
+<h4><a id="Example+2%3A+When+the+customer+is+already+registered" class="HashLink" href="#Example+2%3A+When+the+customer+is+already+registered">Example 2: When the customer is already registered</a></h4>
+
+<p>As with case 1 you need to create a new task, next enter the reservation details including the Customer, who in this case is registered in the system.</p>
+
+<p><img src="./images/25446.png" id="25446" class="WikiImage"/></p>
+
+<p>Next, the reservation is set to 'not available' and the flow returns to the beginning where the reservation data can be changed.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<ul>
+	<li><a href="3913.html">Structure Editor</a></li>
+	<li><a href="25199.html">SD Application property</a></li>
+	<li><a href="25469.html">Consult SD application property</a></li>
+	<li><a href="25470.html">Preview SD application property</a></li>
+</ul>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="20955.html">Beginners in GeneXus BPM Suite</a></TD><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR><TR><TD><a href="25444.html">HowTo: Configuring GXflow For Smart Devices</a></TD></TR><TR><TD><a href="20951.html">Looking for help in GeneXus BPM Suite and GXflow?</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/04/20 11:55 AM</em></font></td></TR></table></font>

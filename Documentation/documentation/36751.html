@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Selecting between a Query Object or Data Provider when using the QueryViewer User Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?36751,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Selecting between a Query Object or Data Provider when using the QueryViewer User Control</h1>
+<!--Selecting between a Query Object or Data Provider when using the QueryViewer User Control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The Query Viewer User Control can be populated with a <a href="9026.html">Query object</a> or <a href="4417.html">Data Provider</a> by means of the Object property.</p>
+
+<p>Both objects are targeted to solve different scenarios. The purpose of this article is to precisely detail these differences in relation to the Query Viewer User Control so that you can choose the right one for your use case.</p>
+
+<h3><a id="Generation+Strategy" class="HashLink" href="#Generation+Strategy">Generation Strategy</a></h3>
+
+<p>A query object is ultimately mapped to a Select SQL statement, and therefore its output is a flat structure of columns. It is mandatory that the sentence is resolved to a same extended table for all its attributes. A sample query object could be the following one</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SalesByDateQuery
+{
+   InvoiceDate
+   Sum(InvoiceTotal)
+}
+</pre>
+
+<p>The SQL statement is similar to the following one</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT ..... FROM ([Invoice] T1 LEFT JOIN
+(
+  SELECT [InvoiceId], SUM([InvoiceAmount]) AS InvoiceTotalNoTaxes FROM [InvoiceLines] GROUP BY [InvoiceId]
+) T2 ON T2.[InvoiceId] = T1.[InvoiceId]) ORDER BY T1.[InvoiceDate] 
+</pre>
+
+<p>A data provider is mapped to a program that is associated to the knowledge base environment (generator) and it must be exposed as a Web Service (when using C# generator) so it can be called by the Query Viewer User Control. In this case the result is a hierarchical structure represented by a SDT. Using the same sample an equivalent data provider could be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SalesByDate From Invoice Unique InvoiceDate
+{
+   SaleDate  = InvoiceDate
+   SaleTotal = sum(InvoiceTotal)
+}
+</pre>
+
+<h3><a id="Focus" class="HashLink" href="#Focus">Focus</a></h3>
+
+<p>The approach for constructing a Query object is 'Input then Output'; the developer is in charge of detailing the associated attributes to be used, aggregations and filters; then decide the output.</p>
+
+<p>On the other hand, when working with a Data Provider the focus is 'Output then Input'; where you first define the SDT with the required Output and then define how the DP is loaded.</p>
+
+<h3><a id="Visualization" class="HashLink" href="#Visualization">Visualization</a></h3>
+
+<p>The query object has already integrated the visualization layer within the object; so you can design it as you want it (Card, Pivot Table, Table and Chart) and define the look &amp; feel for all the query elements.</p>
+
+<p>When using a Data Provider, all the visualization must be done in a programmatic way directly on the Query Viewer object. Default assumptions made when rendering the object are:</p>
+
+<ul>
+	<li>Numeric attributes with decimal values are rendered as data elements.</li>
+	<li>everything else is rendered as row elements.</li>
+</ul>
+
+<h4><a id="Sample+case" class="HashLink" href="#Sample+case">Sample case</a></h4>
+
+<p>Suppose we have the following Data Provider to load Unit information</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+UnitCollection
+{
+    &amp;ModelsSDT = AllCarModelColor()
+    Unit Input &amp;Model in &amp;ModelsSDT
+    {
+        UnitDescription = &amp;Model.CarBrandName.Trim() + ' ' + &amp;Model.CarModelName.Trim() + ' ' + &amp;Model.ColorName.Trim()
+        CarBrandId = &amp;Model.CarBrandId
+        CarModelId = &amp;Model.CarModelId
+        ColorId = &amp;Model.ColorId
+    }
+}</pre>
+
+<p>To be used from a <a href="9075.html">QueryViewer control</a> and to get the desired layout</p>
+
+<p><img src="./images/36753.gif" id="36753" class="WikiImage"/></p>
+
+<p>code the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &amp;Axis = New()
+    &amp;Axis.Name = &quot;UnitDescription&quot;
+    &amp;Axis.Type = QueryViewerAxisType.Page
+    &amp;Axes.Add(&amp;Axis)
+
+    &amp;Axis = New()
+    &amp;Axis.Name = &quot;CarBrandId&quot;
+    &amp;Axis.Title = &quot;Brand&quot;
+    &amp;Axis.Type = QueryViewerAxisType.Row // Send attribute to the Pages area
+    &amp;Axis.AxisOrder.Type = QueryViewerAxisOrderType.Descending // Set descending order for the attribute
+    &amp;Axis.Format.Subtotals = QueryViewerSubtotals.Yes
+    &amp;Axis.Format.Style = &quot;color:#FF0000&quot; // Set some format (color=red)
+    &amp;Axes.Add(&amp;Axis)
+
+    &amp;Axis = New()
+    &amp;Axis.Name = &quot;CarModelId&quot;
+    &amp;Axis.Title = &quot;Model&quot;
+    &amp;Axis.Type = QueryViewerAxisType.Column // Send attribute to the Columns area
+    &amp;Axis.AxisOrder.Type = QueryViewerAxisOrderType.Ascending // Set ascending order for the attribute
+    &amp;Axis.Format.Subtotals = QueryViewerSubtotals.No // No subtotals
+    &amp;Axis.Format.Style = &quot;backgroundColor:blue&quot; // Set some format (backgroun color=blue)
+    &amp;Axes.Add(&amp;Axis)
+
+    &amp;Axis = New()
+    &amp;Axis.Name = &quot;ColorId&quot;
+    &amp;Axis.Title = &quot;ID&quot;
+    &amp;Axis.Type = QueryViewerAxisType.Data // Send attribute to the Data area
+    &amp;Axes.Add(&amp;Axis)
+</pre>
+
+<p>In short, you need to specify for each axis how it will be rendered.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>When using a <a href="4417.html">Data Provider</a> as a source for your Query Viewer control, consider the following; the associated SDT cannot include:</p>
+
+<ul>
+	<li>Items cannot be other structures; you must reference basic data types.</li>
+	<li>Hierarchy structures such as collection of collections are not supported.</li>
+	<li>Structure items with collections.</li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="19645.html">When to use Query and when to use Data Provider with the QueryViewer control</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="$Main.AndroidPackageName$"
+    android:installLocation="auto">
+
+$if(Main.EnableNotification)$
+    <!-- Only this application can receive the messages and registration result -->
+    <permission android:name="$Main.AndroidPackageName$.permission.C2D_MESSAGE" android:protectionLevel="signature" />
+$endif$
+$Main.AndroidPermissions:{ p |
+    <uses-permission android:name="$p$" />
+}$
+    $usespermission$
+
+$if(Main.IsUsingBackgroundLocation)$
+    <!-- Permission Required to access location in background. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+$endif$
+    <!-- used for CameraAPI or attributes/variables multimedia in android:maxSdkVersion="23" , used for PhotoLibrary API in all apis  -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application android:name=".MainApplication"
+                 android:hardwareAccelerated="true"
+                 android:resizeableActivity="false"
+                 android:allowBackup="false"
+                 android:supportsRtl="true"
+                 android:theme="@style/ApplicationTheme"
+                 android:icon="@drawable/appicon"
+                 android:networkSecurityConfig="@xml/network_security_config"
+                 android:label="@string/app_name">
+
+     <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+
+        <activity android:name="com.genexus.android.core.activities.StartupActivity" android:label="@string/app_name" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+$if(Main.EnableDeepLink)$
+    $Main.DeepLinkIntentList:{ intent |
+        $if(intent.IsWebSchema)$
+            <intent-filter android:autoVerify="true">
+        $else$
+            <intent-filter>
+        $endif$
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+        $intent.UriList:{ p |
+            $if(p.PathPrefix)$
+                <data android:scheme="$p.Scheme$" android:host="$p.Host$" android:pathPrefix="$p.PathPrefix$" />
+            $elseif(p.Host)$
+                <data android:scheme="$p.Scheme$" android:host="$p.Host$" />
+            $else$
+                <data android:scheme="$p.Scheme$" />
+            $endif$
+        }$
+            </intent-filter>
+    }$
+$endif$
+        </activity>
+
+$if(Main.EnableGcmNotification)$
+        <!-- Only GCM servers can send messages for the app. If permission is not set - any other app can generate it -->
+      <receiver
+          android:name="com.google.android.gms.gcm.GcmReceiver" android:permission="com.google.android.c2dm.permission.SEND" android:exported="true">
+        <intent-filter>
+          <!-- Receive the actual message -->
+          <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+          <!-- for Gingerbread GSF backward compat -->
+          <!-- Receive the registration id -->
+          <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+          <category android:name="$Main.AndroidPackageName$" />
+        </intent-filter>
+      </receiver>
+
+      <service android:name="com.genexus.android.gcm.GcmService" android:exported="false">
+        <intent-filter>
+          <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+        </intent-filter>
+      </service>
+$endif$
+
+        <!-- Provider -->
+        <provider android:name="$Main.AndroidPackageName$.AppEntityDataProvider" android:exported="false" android:authorities="$Main.AndroidPackageName$.appentityprovider" />
+
+        <!-- Service -->
+        <service android:enabled="true" android:name="$Main.AndroidPackageName$.AppEntityService" />
+
+$if (Main.IsOffline)$
+        <!-- Broadcast receiver -->
+        <receiver android:name="com.genexus.android.core.base.synchronization.SynchronizationAlarmReceiver" />
+        <receiver android:name="com.genexus.android.core.base.synchronization.SynchronizationSendAlarm" />
+$endif$
+
+$if(Main.IsUsingLocalNotificationAPI)$
+      <receiver android:name="com.genexus.android.core.externalobjects.application.CoreBootReceiverLocalNotifications" android:exported="false">
+        <intent-filter>
+          <action android:name="android.intent.action.BOOT_COMPLETED" />
+          <category android:name="android.intent.category.DEFAULT" />
+        </intent-filter>
+      </receiver>
+$endif$
+
+$if(Main.IsEnabledIntegratedSecurity)$
+        <activity android:name="com.genexus.android.gam.AuthRedirectActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="gxgam$Main.SecurityClientId$"/>
+            </intent-filter>
+        </activity>
+$endif$
+
+$if(Main.HasNotificationSettingsPanel)$
+        <activity android:name="com.genexus.android.notification.NotificationSettingsActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.NOTIFICATION_PREFERENCES" />
+            </intent-filter>
+        </activity>
+$endif$
+
+$Main.AndroidLibraryModules: { module |$module.AndroidManifestAppend$}; separator="\r\n\r\n"$
+  </application>
+</manifest>

@@ -1,0 +1,43 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template" %>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Common.Helpers" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+
+<%@ Import Namespace="System.Drawing" %>
+<%@ Import Namespace="System.Collections.Generic" %>
+<%@ Import Namespace="Artech.Common.Helpers.Structure" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ SubTemplate Name="WinFormLayout" File="TrnWinFormLayout.dkt" MergeProterties="True" %>
+<%
+	Transaction transaction = Object as Transaction;
+	if (transaction == null)
+		throw new ArgumentNullException("Object");
+	
+	TemplateHelper helper = new TemplateHelper();
+	helper.UISettings.ChangeConstantsForText();
+	helper.CurrentPoint.X = 1;  %>
+	<%-- Text Form --%>
+		<Form>
+			<Type>Text</Type>
+			<SizeUnit>ch</SizeUnit>
+			<Canvas>
+				<Elements>
+					<% Artech.Genexus.Common.Variable pgmdescVar = transaction.Variables.GetVariable("Pgmdesc"); %>
+					<%= WinForm.Variable(pgmdescVar.Name, null, helper.CurrentPoint) %>
+					<% Size size = helper.UISettings.GetControlSize(pgmdescVar);
+						helper.MaxX = Math.Max(helper.MaxX, helper.CurrentPoint.X + size.Width);
+						helper.CurrentPoint = new Point(helper.UISettings.FormInsets.Left, helper.UISettings.FormInsets.Top); %>
+<%@ CallSubTemplate WinFormLayout transaction="transaction" helper="helper" GenerateToolbar="false" GenerateDelete="false" GenerateButtons="false" %>
+				</Elements>
+				<% Size formSize = new Size(helper.CurrentPoint.X, helper.CurrentPoint.Y); %>
+				<%= WinForm.FormProperties(formSize, null, null) %>
+			</Canvas>
+		</Form>

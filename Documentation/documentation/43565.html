@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>XmlDSig Domains</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?43565,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">XmlDSig Domains</h1>
+<!--XmlDSig Domains--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: These domains are part of <a href="43917.html">GeneXus Cryptography Module</a>.</div>
+</p>
+
+<h2><a id="DSigSignatureType" class="HashLink" href="#DSigSignatureType">DSigSignatureType</a></h2>
+
+<p>It defines the type of DSig signature to be used.</p>
+
+<p><u>Available values:</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ENVELOPED</pre>
+
+<p><span style="font-size: small;"><span style="font-family: courier new;">***Enveloping and Detached signatures are not available in this module edition.</span></span></p>
+
+<p>Example of an Enveloped signature:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;Envelope xmlns=&quot;http://example.org/envelope&quot;&gt;
+  &lt;Body&gt;
+    Hello world
+  &lt;/Body&gt;
+    &lt;Signature xmlns=&quot;http://www.w3.org/2000/09/xmldsig#&quot;&gt;
+        &lt;SignedInfo&gt;
+            &lt;CanonicalizationMethod Algorithm=&quot;http://www.w3.org/2001/10/xml-exc-c14n#WithComments&quot; /&gt;
+            &lt;SignatureMethod Algorithm=&quot;http://www.w3.org/2000/09/xmldsig#rsa-sha1&quot; /&gt;
+            &lt;Reference URI=&quot;&quot;&gt;
+                &lt;Transforms&gt;
+                    &lt;Transform Algorithm=&quot;http://www.w3.org/2000/09/xmldsig#enveloped-signature&quot; /&gt;
+                    &lt;Transform Algorithm=&quot;http://www.w3.org/2001/10/xml-exc-c14n#WithComments&quot; /&gt;
+                &lt;/Transforms&gt;
+                &lt;DigestMethod Algorithm=&quot;http://www.w3.org/2000/09/xmldsig#sha1&quot; /&gt;
+                &lt;DigestValue&gt;RnMv...Ztmp8YOI=&lt;/DigestValue&gt;
+            &lt;/Reference&gt;
+        &lt;/SignedInfo&gt;
+        &lt;SignatureValue&gt;/jW1L...24vppECVoR6ckfZNI=&lt;/SignatureValue&gt;
+    &lt;/Signature&gt;
+&lt;/Envelope&gt;</pre>
+
+<h2><a id="Canonicalization" class="HashLink" href="#Canonicalization">Canonicalization</a></h2>
+
+<p>It defines the canonicalization method to be used to preprocess the data to be signed.</p>
+
+<p><u>Available values:</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+C14n_WITH_COMMENTS, C14n_OMIT_COMMENTS, exc_C14n_OMIT_COMMENTS, exc_C14N_WITH_COMMENTS
+</pre>
+
+<p><u>Implementation details:</u></p>
+
+<ul>
+	<li><u>C14n_WITH_COMMENTS</u> will include the transform &quot;http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments&quot;</li>
+	<li><u>C14n_OMIT_COMMENTS</u> will include the transform &quot;http://www.w3.org/TR/2001/REC-xml-c14n-20010315&quot;</li>
+	<li><u>exc_C14N_WITH_COMMENTS</u> will include the transform &quot;http://www.w3.org/2001/10/xml-exc-c14n#WithComments&quot;</li>
+	<li><u>exc_C14n_OMIT_COMMENTS</u> will include the transform &quot;http://www.w3.org/2001/10/xml-exc-c14n#&quot;</li>
+</ul>
+
+<p><span style="font-size: small;"><span style="font-family: courier new;">***C14N11 transformations are not available in this module edition. </span></span></p>
+
+<h2><a id="KeyInfoType" class="HashLink" href="#KeyInfoType">KeyInfoType</a></h2>
+
+<p>It defines the type of KeyInfo element to be used on the signature.</p>
+
+<p><u>Available values:</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+NONE, KeyValue, X509Certificate</pre>
+
+<ul>
+	<li><u>NONE</u> won't include a KeyInfo Element on the Signature structure.</li>
+	<li><u>X509Certificate</u> will include a KeyInfo Element with an X509Data Element inside the Signature structure. It will contain some information on the certificate and the Base64 encoded certificate.</li>
+	<li><u>KeyValue</u> will include a KeyInfo Element with a KeyValue Element inside the Signature structure. It will contain the Base64 encoded parameters of the public key.</li>
+</ul>
+
+<p>Example of X509Certificate KeyInfoType:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;KeyInfo&gt;
+    &lt;X509Data&gt;
+        &lt;X509IssuerSerial&gt;
+            &lt;X509IssuerName&gt;E=test@genexus.com, CN=test, OU=security, O=GX, L=Montevideo, S=Montevideo, C=UY&lt;/X509IssuerName&gt;
+            &lt;X509SerialNumber&gt;135465464315&lt;/X509SerialNumber&gt;
+        &lt;/X509IssuerSerial&gt;
+        &lt;X509SubjectName&gt;E=test@genexus.com, CN=test, OU=security, O=GX, L=Montevideo, S=Montevideo, C=UY&lt;/X509SubjectName&gt;
+        &lt;X509Certificate&gt;MI.....3qvV1YXMaTdbWy7Ks=&lt;/X509Certificate&gt;
+    &lt;/X509Data&gt;
+&lt;/KeyInfo&gt;</pre>
+
+<p>Example of KeyValue KeyInfoType:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;KeyInfo&gt;
+    &lt;KeyValue&gt;
+        &lt;RSAKeyValue&gt;   
+            &lt;Modulus&gt;40l......LRs=&lt;/Modulus&gt;
+            &lt;Exponent&gt;JJJJ&lt;/Exponent&gt;
+        &lt;/RSAKeyValue&gt;
+    &lt;/KeyValue&gt;
+&lt;/KeyInfo&gt;</pre>
+
+<p> </p>
+
+<p><br />
+</p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD><TD><a href="43579.html">XML DSig Signer</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

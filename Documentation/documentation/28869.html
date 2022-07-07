@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GXserver Tip : Obtaining the history of commits by command line</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?28869,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GXserver Tip : Obtaining the history of commits by command line</h1>
+<!--GXserver Tip : Obtaining the history of commits by command line--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p></p>
+
+<p><span style="line-height: 1.6em;">The possibility of querying the history of commits applied to a given version of a KB in a GXserver is a very practical resource that is also necessary.  </span></p>
+
+<p>Even when this may be done in a simple manner in GeneXus, with the <a href="https://wiki.genexus.com/commwiki/wiki?18296,," target="_blank">Team Development</a> option of a local version of the KB connected to GXserver, from the <a href="https://wiki.genexus.com/commwiki/wiki?14420,," target="_blank">GXserver console</a>, in some cases, it has become necessary to make the query by command line.</p>
+
+<p>An example would be to integrate that information with an external system for the management of incidents/tickets/issues.</p>
+
+<p>There is a utilitarian element called GXServer Client that allows, among <a href="https://wiki.genexus.com/commwiki/wiki?22086,," target="_blank">other functionalities</a>, the possibility of obtaining the history of commits, fully by command line, without the need for having GeneXus installed.</p>
+
+<p>The result is an xml with the list of commits and all the information relative to each commit (number, comments, date, user, objects involved, type of operation in each object, etc.)</p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<h2><a id="Steps+to+follow" class="HashLink" href="#Steps+to+follow">Steps to follow</a></h2>
+
+<h3><a id="Download+the+Client+GXServer." class="HashLink" href="#Download+the+Client+GXServer.">Download the Client GXServer.</a></h3>
+
+<p><strong>Note:</strong> As of GeneXus 15, it is no longer necessary to download the files mentioned below because they are located under the directory corresponding to the installation of GeneXus.</p>
+
+<p>It is at this <a href='http://bit.ly/NewTeamDevCommand'>link</a>, and it comprises these files: </p>
+
+<ul>
+	<li>TeamDev.exe</li>
+	<li>TeamDev.exe.config</li>
+	<li>TeamDev.pdb (debug)</li>
+</ul>
+
+<p><span style="line-height: 20.8px;">They should be copied onto a local directory, such as C:\GXServerClient, and in a computer with access to GXserver (via http).</span></p>
+
+<h3><a id="Making+queries" class="HashLink" href="#Making+queries"><span style="line-height: 1.6em;">Making queries</span></a></h3>
+
+<p>When the TeamDev.exe is executed directly, without parameters, it is possible to view all the options available<sup>1</sup>. In this case, the invocation should be made with the <span style="line-height: 1.6em;"><em>history</em> command. The output is an </span><span style="line-height: 1.6em;">XML with the list of commits and all the related data. </span></p>
+
+<p><strong>Examples</strong></p>
+
+<ul>
+	<li>Obtaining all commits within a date range:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+teamdev history /s:http://localhost/GeneXusServer /kb MyKB /u local\admin /p admin123 /from 2013-08-08T10:30:00 /to 2015-08-08T10:35:00</pre>
+
+<ul>
+	<li>Obtaining all the commits whose comments include a number of ticket/issue, such as #TCK00012#:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+teamdev history /s:http://localhost/GeneXusServer /kb Pruebas /u local\admin /p admin123 /q:&quot;comment:'#TCK00012#'&quot;</pre>
+
+<ul>
+	<li>When the -x parameter is added, it is possible to redirect the output for XML:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+teamdev history /s:http://localhost/GeneXusServer /kb Pruebas /u local\admin /p admin123 /q:&quot;comment:'#Tck00012#'&quot;  -x  &gt; Resultado.xml</pre>
+
+<p><strong>Notes</strong></p>
+
+<p>It is advisable to use dates in UTC format (there is a parameter to indicate this).</p>
+
+<p>A temporary restriction exists where the teamdev.exe will not function against a GXsever lacking security (user / password)</p>
+
+<p><sup>1</sup> TeamDev.exe options:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Usage: TeamDev.exe [@argfile] &lt;Command&gt; [/ServerUrl|s:&lt;value&gt;] [/ServerUsername|u:&lt;value&gt;] [/ServerPassword|p:&lt;value&gt;][/ServerKbAlias|kb:&lt;value&gt;] [/ServerKbVersion|v:&lt;value&gt;]    [/FromDate|from:&lt;value&gt;] [/ToDate|to:&lt;value&gt;] [/XmlOutput|x|xml[+|-]] [/UtcTimes|utc[+|-]] [/RevisionId|r:&lt;value&gt;] [/SearchQuery|q:&lt;value&gt;] [/help|?|h] [/version|v]
+
+@argfile                  Read arguments from a file.
+Command                   history
+/ServerUrl:&lt;value&gt;        GXserver URL (Default is &quot;&quot;)
+/ServerUsername:&lt;value&gt;   GXserver user name (Default is &quot;&quot;)
+/ServerPassword:&lt;value&gt;   GXserver user password (Default is &quot;&quot;)
+/ServerKbAlias:&lt;value&gt;    GXserver KB alias (Default is &quot;&quot;)
+/ServerKbVersion:&lt;value&gt;  GXserver KB version (Default is &quot;&quot;)
+/FromDate:&lt;value&gt;         Minimum date
+/ToDate:&lt;value&gt;           Maximum date
+/XmlOutput[+|-]           Output in XML
+/UtcTimes[+|-]            Times in UTC
+/RevisionId:&lt;value&gt;       Revision Id (Default is &quot;0&quot;)
+/SearchQuery:&lt;value&gt;      Search query (Default is &quot;&quot;)
+/help                     Show usage.
+/version                  Show version.</pre>
+
+<p><br />
+</p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

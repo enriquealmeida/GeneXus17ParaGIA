@@ -1,0 +1,56 @@
+delimiters "$", "$"
+import "UserControlCommon.stg"
+
+propertyMap ::= [
+  "Visible" : "visible",
+  "Enabled" : "enabled",
+  "Class"   : "class",
+  "Caption" : "caption",
+  "ActivePage" : "activePage",
+  default: key
+ ]
+
+g_model(page, gx)::=<<
+export interface I$page.FullName$Element {
+  $page.Properties:g_properties_definition();separator="\n"$
+  $page.ComponentEvents:g_event_definition();separator="\n"$
+}
+
+export class UI$page.FullName$Element implements I$page.FullName$Element {
+  $page.Properties:g_properties_definition();separator="\n"$
+
+  constructor() {
+    $page.Properties:g_properties_initialization();separator="\n"$
+  }
+  $page.ComponentEvents:g_event_impl();separator="\n"$
+}
+
+>>
+
+g_properties_definition(property) ::=<%
+$g_properties_definition_common(propertyMap.(property.ResolvedName), property.Type)$
+%>
+
+g_properties_initialization(property) ::=<%
+$g_properties_initialization_common(propertyMap.(property.ResolvedName), property.Type, property.Default)$
+%>
+
+g_event_definition(event) ::=<<
+
+$event.CamelCaseName$(eventInfo: any);
+set_$event.Name$Action(action: any);
+>>
+
+g_event_impl(event) ::=<<
+
+_$event.Name$Action = null;
+
+$event.CamelCaseName$(eventInfo: any) {
+  eventInfo.stopPropagation();
+  this._$event.Name$Action();
+}
+
+set_$event.Name$Action(action: any) {
+  this._$event.Name$Action = action;
+}
+>>

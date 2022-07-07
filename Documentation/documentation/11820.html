@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>JDBC Datasource in Tomcat 8 (or higher)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?11820,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">JDBC Datasource in Tomcat 8 (or higher)</h1>
+<!--JDBC Datasource in Tomcat 8 (or higher)--><div class="TableWikiBody" id="tblwikibody"><p>This document describes step by step How to configure a Java model in <b>GeneXus 8.0 or higher </b>to use a <b>SQL Server</b> JDBC datasource in <b>Tomcat 8</b>, using driver <b>JTDS.</b></p>
+
+<p>1. Configure<b> \conf\context.xml</b> of your tomcat installation</p>
+
+<p>Add the following code between the &lt;Context&gt; and &lt;/Context&gt; tag:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &lt;Resource name=&quot;jdbc/<b>testsql</b>&quot;
+                        auth=&quot;Container&quot;
+                        type=&quot;javax.sql.DataSource&quot;
+                        validationQuery=&quot;select 1&quot;
+                        driverClassName=&quot;net.sourceforge.jtds.jdbc.Driver&quot;
+                        url=&quot;jdbc:jtds:sqlserver://<b>yourServerName</b>:1433/<b>yourDBName</b>&quot;
+                        username=&quot;<b>yourUserName</b>&quot;                        
+                        password=&quot;<b>yourPassword</b>&quot;
+                        maxActive=&quot;8&quot;
+                        maxIdle=&quot;4&quot;  /&gt;</pre>
+
+<p>The fields marked in bold should be replaced with your particular data connection information. The resource name can be anyone, this is an example, and just consider to remember this name in order to use it later in Genexus.</p>
+
+<p>2. Configure<b> \webapps\yourWebapp\web-inf\web.xml</b></p>
+
+<p>Add the following code between the &lt;web-app&gt; and &lt;/web-app&gt; tag:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &lt;resource-ref&gt;
+     &lt;description&gt;DB Connection&lt;/description&gt;
+     &lt;res-ref-name&gt;jdbc/<b>testsql</b>&lt;/res-ref-name&gt;
+     &lt;res-type&gt;javax.sql.DataSource&lt;/res-type&gt;
+     &lt;res-auth&gt;Container&lt;/res-auth&gt;
+&lt;/resource-ref&gt;</pre>
+
+<p>3. <b>Copy the driver</b> (jtds1-2.jar) to the \lib folder of your tomcat installation</p>
+
+<p>4. <b>Configure your java model </b>in Genexus:</p>
+
+<p>Edit the application DBMS Options and set the following properties:<br />
+<br />
+Use datasource for web based applications = True<br />
+JDBC datasource = java:comp/env/jdbc/testsql<br />
+<br />
+Where jdbc/testsql is the JNDI name of the JDBC Datasource.</p>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>In case of Oracle Database, you should also set the JNDI name as follows: java:/comp/env/jdbc/myoracle after you've defined the datasource in your Context (\conf\context.xml of your tomcat installation).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Resource name=&quot;jdbc/myoracle&quot; auth=&quot;Container&quot;
+              type=&quot;javax.sql.DataSource&quot; driverClassName=&quot;oracle.jdbc.driver.OracleDriver&quot;
+              url=&quot;jdbc:oracle:thin:@testorcl:1521:testorcl&quot;
+              username=&quot;yourUserName&quot; password=&quot;yourPassword&quot; maxActive=&quot;20&quot; maxIdle=&quot;10&quot;
+              maxWait=&quot;-1&quot;/&gt;
+</pre>
+
+<h3><a id="Interesting+links" class="HashLink" href="#Interesting+links">Interesting links</a></h3>
+
+<p>Here is the official documentation of how to do this in Tomcat 6, also with other dbms samples, like MySql, Postgresql, and Oracle:</p>
+
+<p><a href='http://tomcat.apache.org/tomcat-6.0-doc/jndi-datasource-examples-howto.html'>jndi-datasource-examples-howto.html</a></p>
+
+<p> </p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="2112.html">Defining a JDBC Datasource</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/07/22 11:48 PM</em></font></td></TR></table></font>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Send and receive a message from the Provider</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42971,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Send and receive a message from the Provider</h1>
+<!--HowTo: Send and receive a message from the Provider--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The Message API allows sending and receiving a message from the Provider (keeping track of the context, and triggering the execution of the flow).<br />
+In addition, there's a method which allows analyzing the expression and getting the response of the Provider for that expression.</p>
+
+<p>These are methods of the <a href="37102.html">Chatbot Module</a>.</p>
+
+<h2><a id="1.+Analyzing+a+message" class="HashLink" href="#1.+Analyzing+a+message">1. Analyzing a message</a></h2>
+
+<p>To evaluate an expression in the Provider, the <em>Chatbot.Message.Analyze</em> method is used.</p>
+
+<p>Its signature is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;Instance, in:&amp;UserMessage, inout:&amp;AnalyzeResponse, out:&amp;Messages)</pre>
+
+<p>where</p>
+
+<ul>
+	<li>&amp;Instance is the <a href="37113.html">Conversational Flows object</a> name</li>
+	<li>&amp;UserMessage is varchar(256) and represents the user's message.</li>
+	<li>&amp;AnalyzeResponse is an SDT, which represents the Provider's response. Note that this is an inout parameter. It means that it can receive a previous response (which includes the conversation <a href="39351.html">context</a>), in order to be evaluated by the Provider along with the user's message. For more information, see below in this document.</li>
+	<li>&amp;Messages is an out parameter of Messages data type where you can get the errors thrown by the Provider.</li>
+</ul>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Instance = !&quot;Citizen&quot;
+&amp;UserMessage = !&quot;Hello&quot;
+Chatbot.Message.Analyze(&amp;Instance, &amp;UserMessage, &amp;AnalyzeResponse, &amp;Messages)
+&amp;BotResponse  = &amp;AnalyzeResponse.GXOutputCollection.toJson() <sup>(2)</sup>
+&amp;Intent       = &amp;AnalyzeResponse.Intents.Item(1).Intent
+&amp;Confidence   = &amp;AnalyzeResponse.Intents.Item(1).Confidence</pre>
+
+<h2><a id="2.+Sending+a+message+and+triggering+the+execution+of+the+flow" class="HashLink" href="#2.+Sending+a+message+and+triggering+the+execution+of+the+flow">2. Sending a message and triggering the execution of the flow</a></h2>
+
+<p>The purpose of this method is to analyze the expression (the user's message) and, additionally, execute the business logic defined for that <a href="38531.html">Flow</a>. That is, do the <a href="39220.html">redirections</a><sup>(1)</sup> defined for the flow, execute the <a href="42594.html">user input validations</a>, and the <a href="38189.html">Conversational Object</a>.</p>
+
+<p>Its signature is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;Instance, in:&amp;UserMessage, in:&amp;Image, inout:&amp;AnalyzeResponse, out:&amp;Messages)</pre>
+
+<p>where</p>
+
+<ul>
+	<li>&amp;Instance is the <a href="37113.html">Conversational Flows object</a> name</li>
+	<li>&amp;UserMessage is varchar(256) and represents the user's message </li>
+	<li>&amp;Image is of Image data type</li>
+	<li>&amp;AnalyzeResponse is an SDT, which represents the Provider's response.</li>
+	<li>&amp;Messages is an out parameter of Messages data type where you can get the errors thrown by the Provider.</li>
+</ul>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p>1. The PanelChatWeb and PanelChatSD objects, which are <a href="37102.html">resources</a> of the Chatbot Generator, are examples which call (indirectly) the <em>Chatbot.Message.SendMessage</em> method. They invoke the CommonChatbots.SendMessage procedure, which calls the <em>Chatbot.Message.SendMessage</em>. </p>
+
+<p>2. Another interesting use of this API is to build a test case of your chatbot. You can program, in batch mode, the dialog to the Provider and check the responses. The <a href="39351.html">Chatbot Context</a> will be kept in track as the &amp;AnalyzeResponse parameter which contains the context (among other information) is inout.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Instance = !&quot;Citizen&quot;
+
+&amp;UserMessage = !&quot;Hi&quot;
+do &quot;ProcessMessageSend&quot;
+&amp;UserMessage = !&quot;I'd like to make a complaint&quot;
+do &quot;ProcessMessageSend&quot;
+&amp;UserMessage = !&quot;About traffic&quot;
+do &quot;ProcessMessageSend&quot;
+&amp;UserMessage = !&quot;There's a car parked in front of a garage&quot;
+do &quot;ProcessMessageSend&quot;
+
+Sub &quot;ProcessMessageSend&quot;  
+    msg(format(!&quot;User: %1&quot;,&amp;UserMessage), status)
+   Chatbot.Message.SendMessage(&amp;Instance,&amp;UserMessage,&amp;Image,&amp;AnalyzeResponse,&amp;Messages)
+    msg(format(!&quot;Bot: %1&quot;, &amp;AnalyzeResponse.GXOutput), status)
+   
+    if &amp;Messages.Count &gt; 0
+        msg(format(!&quot;%1 (%2)&quot;,&amp;Messages.Item(1).Description,&amp;Messages.Item(1).Id), status)
+    endif
+EndSub
+</pre>
+
+<p>The output of running this test procedure would be as follows:</p>
+
+<p><strong>User</strong>: <em>Hi</em><br />
+<strong>Bot</strong>:   Hello! I'm your Citizen Assistant!<br />
+<strong>User</strong>: <em>I'd like to make a complaint</em><br />
+<strong>Bot</strong>:   What's the topic of your complaint? It can be about Lighting, Traffic, or Green Spaces<br />
+<strong>User</strong>: <em>About traffic</em><br />
+<strong>Bot</strong>: Please describe the problem <br />
+<strong>User</strong>: <em>There's a car parked in front of a garage</em><br />
+<strong>Bot</strong>: Thanks for your feedback. Your claim is 655. </p>
+
+<h2><a id="Analyze+Response+structure" class="HashLink" href="#Analyze+Response+structure">Analyze Response structure</a></h2>
+
+<p><img src="./images/43205.png" id="43205" class="WikiImage"/></p>
+
+<p><strong>Context:</strong> Substructure that contains the definition of the standard parameters for the context.<br />
+<strong>Custom Context</strong>: Key-Value collection, which represents the specific parameters of the model of your chatbot.<br />
+<strong>GXOutput: </strong>Represents the last of the response messages.<br />
+<strong>Intents: </strong>Collection containing the detected intent and its confidence.<br />
+<strong>GXOutputCollection:</strong> The collection of response messages from the chatbot for your query.</p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<p><strong>(1)</strong> Depends on the case, if the redirections are server side, it is necessary to use the SendMessage method (case of DialogFlow), if the redirections are provider side (case of Watson), the Analyze method can be used to execute the redirections.</p>
+
+<p><strong>(2)</strong> GXOutputCollection is useful when it comes with multiple answers. GXOutput has the last message, but in a case of redirection for example, the bot has two answers and GXOutputCollection has both.</p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?42755,," target="_blank">GeneXus 16 upgrade 4</a></p>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38520.html">Toc:Chatbots in GeneXus</a></TD><TD><a href="40912.html">HowTo: Send a message to the chatbot from a menu</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/26/21 03:51 PM</em></font></td></TR></table></font>

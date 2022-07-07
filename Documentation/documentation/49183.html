@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - OpenID Connect Authentication Type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49183,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - OpenID Connect Authentication Type</h1>
+<!--GAM - OpenID Connect Authentication Type--><div class="TableWikiBody" id="tblwikibody"><p>OpenID Connect (OIDC) is an authentication protocol that works with <a href='https://tools.ietf.org/html/rfc6749'>OAuth 2.0</a> by implementing authentication as an extension of the OAuth 2.0 authorization process. To use this extension, the app manager must include the <span style="font-family: courier new;">openid </span>scope in the Authorization Request when setting the authentication type. The information about the authentication performed is returned in a JSON Web Token (JWT) called ID Token.</p>
+
+<p>Remember that:</p>
+
+<ul>
+	<li>OAuth 2.0 authentication servers that implement OIDC are called OpenID Providers (OP).</li>
+	<li>OAuth 2.0 client applications using OIDC are called Relying Parties (RP).</li>
+</ul>
+
+<p>The current implementation of GAM makes it possible to authenticate an application against OAuth 2.0 identity providers because OIDC works with OAuth 2.0. Also, it allows you to authenticate an application against an OP by adding the above <span style="font-family: courier new;">openid </span>scope.</p>
+
+<p><iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/H4w1lkF_2W0?start=478" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></p>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h3>
+
+<p>Read the document <a href="48575.html">OAuth 2.0 Authentication Type in GAM</a> about how OAuth 2.0 configuration —which is necessary for OIDC configuration— is divided.<br />
+In addition, you need to install the modules <i>GeneXusJWT </i>and <i>GeneXusAPICommon </i>to use the functionality that allows validating the ID Token in OpenID Connect.</p>
+
+<h4><a id="New+Authorization+Tab+section+" class="HashLink" href="#New+Authorization+Tab+section+">New Authorization Tab section<strong> </strong></a></h4>
+
+<p><img src="./images/49198.png" id="49198" class="WikiImage"/></p>
+
+<p>There, the fields indicate the following:</p>
+
+<ul>
+	<li><strong>Enable OpenID Connect Protocol?</strong>: Enabling this option signals GAM that the OpenID Connect protocol will be used. Therefore, the developer in charge of configuring it doesn't need to add the openid scope, because it is added automatically. Additionally, the <em>OpenID Connect</em> section is displayed containing the fields described below.</li>
+	<li><strong>Validate ID Token?</strong>: Enabling this option will instruct GAM to validate the ID Token received (Issuer URL, token signature, claims, among other fields). Two fields required for token validation will also be displayed.
+	<ul>
+		<li><strong>Issuer URL</strong>: The URL of the ID Token issuer must be added.</li>
+		<li><strong>Path to server certificate filename</strong>: It is necessary to indicate the path to the issuer's certificate associated with the private key used to sign the token.</li>
+	</ul>
+	</li>
+	<li><strong>Allow only users with verified email?</strong>: Enabling this option will only allow users with verified email addresses to access the application.</li>
+</ul>
+
+<p><strong>Discovery URL</strong>: Since GeneXus needs permissions to write the certificate in the directory, a procedure must be maintained that automatically updates the certificate with no need for the user to change it. Depending on the provider, the renewal period of the certificate can vary from 15 days to 3 months.</p>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<h4><a id="Google+%28Non-custom+Callback+URL%29" class="HashLink" href="#Google+%28Non-custom+Callback+URL%29"><strong>Google (Non-custom Callback URL)</strong></a></h4>
+
+<p>First of all, you need to have created a Google Web application with the corresponding Callback URL; for example: <span style="font-family: courier new;">https://gamidentityprovider.com/ServerNetSQL/oauth/gam/callback</span> (the URL <span style="font-family: courier new;">https://gamidentityprovider.com/ServerNetSQL</span> is associated with the KB). Then, in the GAM backend, add a new authentication type that will use the OAuth 2.0 protocol, as shown below:</p>
+
+<p><img src="./images/49199.png" id="49199" class="WikiImage"/></p>
+
+<p>Below is the configuration of each of the tabs provided by GAM for OAuth 2.0 and the use of the extension used by OIDC:</p>
+
+<h3><a id="General+Tab%3A" class="HashLink" href="#General+Tab%3A">General Tab:</a></h3>
+
+<p><img src="./images/49200.png" id="49200" class="WikiImage"/></p>
+
+<h3><a id="Authorization+Tab%3A" class="HashLink" href="#Authorization+Tab%3A">Authorization Tab:</a></h3>
+
+<p><img src="./images/49201.png" id="49201" class="WikiImage"/></p>
+
+<h3><a id="Token+Tab%3A" class="HashLink" href="#Token+Tab%3A">Token Tab:</a></h3>
+
+<p><img src="./images/49202.png" id="49202" class="WikiImage"/></p>
+
+<h3><a id="User+Information+Tab%3A" class="HashLink" href="#User+Information+Tab%3A">User Information Tab:</a></h3>
+
+<p><img src="./images/49203.png" id="49203" class="WikiImage"/></p>
+
+<p>If the option to validate the ID Token is selected, it is not necessary to request the UserInfo endpoint data; that is, the field can be left empty. If you want to validate the ID Token and then call the UserInfo endpoint, the data obtained from the endpoint will prevail.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>The identity provider must have the OAuth 2.0 protocol and also implement OpenID Connect. In addition, it must have a service to obtain the authenticated user's data.</p>
+
+<p>If a custom callback URL is to be configured, a procedure must be created to handle the return from the OP for processing. This case is described in the following section.</p>
+
+<h4><a id="Custom+Callback+URL" class="HashLink" href="#Custom+Callback+URL">Custom Callback URL</a></h4>
+
+<p>A possible implementation for the case where the authentication type has been configured with a custom callback URL is the creation of a procedure containing the following lines to handle the OP's response:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Response = &amp;HTTPRequest.QueryString
+GAMRepository.InputExternalAuthentication(&amp;Response)
+</pre>
+
+<p>It is also necessary to create an object of URLRewrite type and place the following line:</p>
+
+<p>callback =&gt; NombreProcCallback;</p>
+
+<p>This allows you to define a friendly URL to improve the site's usability and accessibility. Thus, the friendly URL for the callback must match the URL provided (for example, if the callback URL placed in the GAM configuration is: <span style="font-family: courier new;">https://www.example.com/dirCallback</span> and the procedure that handles the OP's response is named <em>CallbackIDPCustom</em>, in the URLRewrite this would be added: dirCallback =&gt; CallbackIDPCustom;).</p>
+
+<h4><a id="Use+of+Event+Subscriptions+for+processing+user+data" class="HashLink" href="#Use+of+Event+Subscriptions+for+processing+user+data">Use of Event Subscriptions for processing user data</a></h4>
+
+<p>The developer may define an Event Subscription that provides full control over the user data that will be recorded in the GAM DB. The following is an example with the event &quot;Repository - External Authentication Response.&quot; Previously it was necessary to subscribe to this event in the Event Subscription section of GAM and associate it with the procedure that will handle the query when the event is triggered:</p>
+
+<p>In the Rules section of the procedure:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:&amp;EventName, in:&amp;JsonIIn the Source section of the procedure:N, out:&amp;JsonOUT);
+</pre>
+
+<p>In the Source section of the procedure:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+/*
+El JSON de entrada, &amp;JsonIN, tendrá la siguiente forma:
+{&quot;GAMToken&quot;:&quot;efe29cd2-d45...&quot;,
+&quot;AuthenticationTypeId&quot;:&quot;Oauth20&quot;,
+&quot;AutenticationTypeName&quot;:&quot;google_oidc&quot;,
+&quot;MethodName&quot;:&quot;gettoken&quot;  or  &quot;getuserinfo&quot;  or  &quot;getrefreshtoken&quot; ,
+&quot;String&quot;:&quot;{\&quot;access_token\&quot;:\&quot;27ef...y2\&quot;, 
+           \&quot;refresh_token\&quot;:\&quot;09e5...u6\&quot;, 
+           \&quot;token_type\&quot;:\&quot;bearer\&quot;, 
+           \&quot;expires_in\&quot;:3600, 
+           \&quot;id_token\&quot;:\&quot;eyJ...8h\&quot;}
+         &quot;}
+*/
+
+&amp;GAMExternalAuthenticationResponse.FromJsonString(&amp;JsonIN)
+
+If &amp;GAMExternalAuthenticationResponse.AutenticationTypeName = !&quot;google_oidc&quot;  AND
+   &amp;GAMExternalAuthenticationResponse.MethodName = !&quot;getuserinfo&quot;
+     &amp;JsonString = &amp;GAMExternalAuthenticationResponse.String
+     &amp;JsonString.ReplaceRegEx('\&quot;','&quot;') // User must parse the JSON
+     &amp;SDT_IDUruguayUser.FromJson(&amp;JsonString)
+
+     &amp;GAMUser.Load(GAMUser.GetId())
+     If &amp;GAMUser.Success()
+          &amp;GAMUser.FirstName   = Format(&quot;%1 %2&quot;,&amp;SDT_GoogleUser.first_name.Trim(), &amp;SDT_GoogleUser.middle_name.Trim() )
+          &amp;GAMUser.LastName    = Format(&quot;%1 %2&quot;,&amp;SDT_GoogleUser.last_name.Trim(), &amp;SDT_GoogleUser.second_surname.Trim() )
+          &amp;GAMUser.Save()
+          If &amp;GAMUser.Success()
+               commit
+          Endif
+     Endif
+Endif
+</pre>
+
+<p>When a user is registered using <strong>google_oidc </strong>authentication, this procedure allows the authenticated user to be registered in the GAM DB by entering both first and last names. You can handle the data as you wish, and store the users authenticated via <strong>google_oidc </strong>in the way that is most convenient to you.</p>
+
+<p>   </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="48684.html">GeneXus 17 Upgrade 6</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/30/22 07:05 PM</em></font></td></TR></table></font>

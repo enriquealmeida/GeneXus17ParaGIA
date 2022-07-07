@@ -1,0 +1,402 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Search TestCase Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="wwObject" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="wwName" Type="System.String" %>
+<%@ Property Name="myInstance" Type="WorkWithPlusInstance" %>
+<%@ Property Name="filtervalue" Type="System.String" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="selection" Type="SelectionGeneralElement" %>
+<%@ SubTemplate Name="FillInput" File="FillInput.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SelectComboAction" File="SelectComboAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="TableRowsNumberValidation" File="TableRowsNumberValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="GetValueAction" File="GetValueAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ConcatenationAction" File="ConcatenationAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DummyEvent" File="DummyEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="PressKeyAction" File="PressKeyAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ClickEvent" File="ClickEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DisplaySuccess" File="DisplaySuccess.dkt" MergeProperties="True"%>
+		<!--Search Section-->
+		<DummyEvent Type="Event"></DummyEvent>
+<%
+	string controlGXName = basicElements.DescriptionAttribute;
+	string emptyValue = basicElements.GetDescriptionAttributeEmptyValue();
+	string controlSelector = "DynamicFiltersSelector1";
+	string operSelector = "DynamicFiltersOperator1";
+	List<FilterAttributeGeneralElement> comboFilters = new List<FilterAttributeGeneralElement>();
+	List<FilterAttributeWithConditionElement> filtros = selection.GetFiltersOrdered();
+	DynamicFilterAttributesElement dynamicFilters = selection.Table.GetDynamicFilters();
+	
+	//1 row with real value
+	//No row with changed value
+	//Set dsc. att. in dynamic filter
+	
+	if (selection.DescriptionAttributeIsDynamicFilter)
+	{
+		foreach (IFilter filter in dynamicFilters)
+        {
+			FilterAttributeGeneralElement dynFil = filter as FilterAttributeGeneralElement;
+            if (dynFil != null && dynFil.Name.Equals(basicElements.DescriptionAttribute))
+            {
+				//Dsc. att. is dynamic filter
+				controlGXName = basicElements.DescriptionAttribute + "1";
+				
+				Artech.Genexus.Common.eDBType eDBType = dynFil.eDBType;
+				bool isDateType = (eDBType == Artech.Genexus.Common.eDBType.DATE || eDBType == Artech.Genexus.Common.eDBType.DATETIME);
+
+				Artech.Genexus.Common.Types.RuntimeControlType type = TransactionHelper.GetVariableControlType(selection, model, Object, controlGXName);
+
+				if (!WebFormHelper.IsControlComboListBox(type) && isDateType)
+				{
+					continue;
+				}
+
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlSelector' model='model' variable='""' value='dynFil.Description' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+				if (dynFil.HasOperators())
+				{
+					foreach(FilterAttributeOperatorElement oper in dynFil.GetOperators())
+					{
+						if (oper.Caption == "=")
+						{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='operSelector' model='model' variable='""' value='oper.Caption' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+							break;
+						}
+					}
+				}
+				if (!WebFormHelper.IsControlComboListBox(type))
+				{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='basicElements.DescriptionAttribute' dataPoolName='' dataPoolColumnName='' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%							
+				}				
+				else
+				{
+					comboFilters.Add(dynFil);
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' model='model' variable='controlGXName' dataPoolName='' dataPoolColumnName='' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%						
+				}
+				break;
+            }
+        }
+    }
+
+	foreach (FilterAttributeGeneralElement filtro in filtros)
+	{
+		controlGXName = filtro.Name;
+		emptyValue = "";
+		filtervalue = filtro.Name;
+		
+		Artech.Genexus.Common.eDBType eDBType = filtro.eDBType;
+		bool isDateType = (eDBType == Artech.Genexus.Common.eDBType.DATE || eDBType == Artech.Genexus.Common.eDBType.DATETIME);
+
+		Artech.Genexus.Common.Types.RuntimeControlType type = TransactionHelper.GetVariableControlType(selection, model, Object, controlGXName);
+
+		if (!WebFormHelper.IsControlComboListBox(type) && isDateType)
+		{
+			continue;
+		}
+		if (filtro.HasOperators())
+		{
+			foreach(FilterAttributeOperatorElement oper in filtro.GetOperators())
+			{
+				if (oper.Caption == "=")
+				{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='filtro.Name + "Operator"' model='model' variable='""' value='oper.Caption' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+					break;
+				}
+			}
+		}
+		if (!controlGXName.Equals(basicElements.DescriptionAttribute))
+		{			
+			if (!WebFormHelper.IsControlComboListBox(type))
+			{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='filtro.Name' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+				comboFilters.Add(filtro);
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' model='model' variable='' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='filtro.Name' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+			}
+		}
+		else
+		{
+			if (!WebFormHelper.IsControlComboListBox(type))
+			{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='controlGXName' dataPoolName='' dataPoolColumnName='' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%					
+			}				
+			else
+			{
+				comboFilters.Add(filtro);
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' model='model' variable='controlGXName' dataPoolName='' dataPoolColumnName='' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%				
+			}
+		}
+	}
+	bool hasSearchButton = false;
+	string btnSearchName = "";
+	if (TransactionHelper.GetIncludeSearchButton(myInstance, selection))
+	{		
+		foreach (DVelop.Patterns.WorkWithPlus.Helpers.IActionElement useraction in selection.Table.AllActions(false))
+		{
+			if (useraction.GetName().Equals("Buscar") || useraction.GetName().Equals("Search"))
+			{
+				btnSearchName = useraction.ControlName();
+				hasSearchButton = true;
+				break;
+			}
+		}
+    }
+    
+	if (hasSearchButton)
+	{
+%>	
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='btnSearchName' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+	}
+%>
+<%@ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"1"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%		
+
+	//Test every filter. Same as DescriptionAttribute
+	foreach (FilterAttributeGeneralElement filtro in filtros)
+	{ 
+		controlGXName = filtro.Name;
+		emptyValue = "";
+		filtervalue = filtro.Name;
+
+		Artech.Genexus.Common.eDBType eDBType = filtro.eDBType;
+		bool isDateType = (eDBType == Artech.Genexus.Common.eDBType.DATE || eDBType == Artech.Genexus.Common.eDBType.DATETIME);
+
+		Artech.Genexus.Common.Types.RuntimeControlType type = TransactionHelper.GetVariableControlType(selection, model, Object, controlGXName);
+		
+		if (!WebFormHelper.IsControlComboListBox(type) && isDateType)
+		{
+			continue;
+		}
+					
+		if (!WebFormHelper.IsControlComboListBox(type))
+		{		
+%>
+<%@ CallSubTemplate GetValueAction Object='wwObject' model='model' controlGXName='controlGXName' variableName='controlGXName' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate ConcatenationAction variableResult='"var" + controlGXName' variable1='filtervalue' value2='GXTestConstants.TestCasePostFixValue' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' value='""' variable='"var" + controlGXName' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+			if (hasSearchButton)
+			{
+%>	
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='btnSearchName' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+			}
+%>
+<%@ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"0"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%			
+		}
+		else //select other combo option
+		{/*
+
+ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='filtervalue' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' 
+ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' 
+ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"1"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' 
+
+		*/}
+		if (filtro.HasOperators())
+		{
+			foreach(FilterAttributeOperatorElement oper in filtro.GetOperators())
+			{
+				if (oper.Caption == "=")
+				{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='filtro.Name + "Operator"' model='model' variable='""' value='oper.Caption' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+					break;
+				}
+			}
+		}
+		if (!WebFormHelper.IsControlComboListBox(type))
+		{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='filtervalue' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%			
+		}
+		else //is combo
+		{/*
+
+ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' model='model' variable='filtervalue' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' 
+ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' 
+ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"1"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' 
+
+		*/}
+		//Lo deja en el valor real y vuelve a 1 fila
+	}
+		
+	if (dynamicFilters != null && dynamicFilters.MaxFilters > 1 && (
+			(dynamicFilters.Items.Count > 1)
+			||
+			(dynamicFilters.Items.Count == 1 && !selection.DescriptionAttributeIsDynamicFilter)
+			))
+	{
+		if (selection.DescriptionAttributeIsDynamicFilter)
+		{
+			controlSelector = "DynamicFiltersSelector2";
+			operSelector = "DynamicFiltersOperator2";
+%>	
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='"AddDynamicFilters1"' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%		
+		}
+		foreach (IFilter filter in dynamicFilters)
+        {
+			FilterAttributeGeneralElement dynFil = filter as FilterAttributeGeneralElement;
+			if (dynFil!=null && !dynFil.Name.Equals(basicElements.DescriptionAttribute))
+			{
+				if (selection.DescriptionAttributeIsDynamicFilter)
+					controlGXName = dynFil.Name + "2";
+				else
+					controlGXName = dynFil.Name + "1";
+				filtervalue = dynFil.Name;
+				
+				Artech.Genexus.Common.eDBType eDBType = dynFil.eDBType;
+				bool isDateType = (eDBType == Artech.Genexus.Common.eDBType.DATE || eDBType == Artech.Genexus.Common.eDBType.DATETIME);
+			
+				Artech.Genexus.Common.Types.RuntimeControlType type = TransactionHelper.GetVariableControlType(selection, model, Object, controlGXName);
+
+				if (!WebFormHelper.IsControlComboListBox(type) && isDateType)
+				{
+					continue;
+				}
+
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlSelector' model='model' variable='""' value='dynFil.Description' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+				if (dynFil.HasOperators())
+				{
+					foreach(FilterAttributeOperatorElement oper in dynFil.GetOperators())
+					{
+						if (oper.Caption == "=")
+						{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='operSelector' model='model' variable='""' value='oper.Caption' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+							break;
+						}
+					}
+				}
+				if (!WebFormHelper.IsControlComboListBox(type))
+				{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='dynFil.Name' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%							
+				}				
+				else
+				{
+					comboFilters.Add(dynFil);
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' model='model' variable='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='dynFil.Name' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+				}
+				if (hasSearchButton)
+				{
+%>	
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='btnSearchName' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+				}
+%>
+<%@ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"1"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+				if (!WebFormHelper.IsControlComboListBox(type))
+				{
+%>
+<%@ CallSubTemplate GetValueAction Object='wwObject' model='model' controlGXName='controlGXName' variableName='dynFil.Name' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate ConcatenationAction variableResult='"var" + dynFil.Name' variable1='dynFil.Name' value2='GXTestConstants.TestCasePostFixValue' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' value='""' variable='"var" + dynFil.Name' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+					if (hasSearchButton)
+					{
+%>	
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='btnSearchName' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+					}
+%>
+<%@ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"0"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%			
+				}
+				if (!WebFormHelper.IsControlComboListBox(type))
+				{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='filtervalue' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%			
+				}
+				else //es combo
+				{/*
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' model='model' variable='filtervalue' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate PressKeyAction value='"{TAB}"' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"1"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+				*/}
+				//Lo deja en el valor real y vuelve a 1 fila
+			}
+        }
+    }	
+	if (hasSearchButton)
+	{
+%>	
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='btnSearchName' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+	}
+%>
+<%@ CallSubTemplate TableRowsNumberValidation negateValidation='"false"' Object='wwObject' value='"1"' model='model' IndentLevel='IndentLevel + 2' IndentLevelChar='"\t"' %>
+<%
+	
+	int commentHeight = 0;
+	string comments = "Combo filters: ";
+    string itemDsc = "";
+    foreach (FilterAttributeGeneralElement filtro in comboFilters)
+    {
+		System.Collections.Generic.List<string> comboValues = TransactionHelper.GetComboValues(filtro, myInstance);
+		commentHeight++;
+		
+        if (comboValues.Count > 0)
+        {
+			comments += "\n" + filtro.Name + " -> values: ";
+			
+			foreach(string valor in comboValues)
+			{				
+				if(comboValues.IndexOf(valor) > 0)
+					comments += ", " + valor;
+				else
+					comments += valor;				
+			}
+        }
+        else
+        {
+			comments += "\n" + filtro.Name + " -> " + TransactionHelper.GetComboItemDescription(filtro, myInstance);
+        }
+                
+        //Helpers.LogHelper.WriteWarningLog(comments);
+    }
+    if (commentHeight > 0)
+    {
+%>
+		<Comment value="<%= comments %>" width="350" height="<%= 40 + 14 * commentHeight %>"/>
+<%
+	}
+%>

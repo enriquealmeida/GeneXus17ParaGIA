@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Grids with Selection By Code for Smart Devices</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?35987,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Grids with Selection By Code for Smart Devices</h1>
+<!--Grids with Selection By Code for Smart Devices--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Grid selection is an important feature to achieve the best user experience.</p>
+
+<p>In GeneXus, there are several alternatives for managing Grid selection.</p>
+
+<p>The first alternative is provided automatically by setting <a href="22556.html">multiple layouts for the Grid control</a>. Another option consists in manipulating the selected items by using programming strategies adapted to the business logic of the application. This document focuses on the principles of this last alternative, for the automatic case please refer to <a href="22556.html">Default Selected Item Layout property</a> article. </p>
+
+<h2><a id="Selection+by+code" class="HashLink" href="#Selection+by+code">Selection by code</a></h2>
+
+<p>There are four features that help the developer to manipulate Grid item selection by code.</p>
+
+<ul>
+	<li><a href="36232.html">SelectedItem property</a></li>
+	<li><a href="36234.html">Select method</a></li>
+	<li><a href="36235.html">Deselect method</a></li>
+	<li><a href="36236.html">SelectionChanged event</a></li>
+</ul>
+
+<h2><a id="Usage+example" class="HashLink" href="#Usage+example">Usage example</a></h2>
+
+<p>We want to design a simple music playlist application.</p>
+
+<p>The requirements are:</p>
+
+<ul>
+	<li>The user can tap on any item to play it; this action changes the selected item on the Grid.</li>
+	<li>When a song finishes, the next one should be played automatically and the selected item on the Grid must change accordingly.</li>
+</ul>
+
+<p>In other words, our aim will be to keep in sync both the Grid and the media queue (facilities provided by the <a href="30041.html">Audio external object</a>).</p>
+
+<p>First, we design how the music list will look on a Panel for Smart Devices. Basically, it will be a Grid control where each item is be a song (we display its title, subtitle and cover image). This Grid will have two layouts: one for displaying the song currently playing, and another one for the rest of the songs in the playlist. This first layout will be set as the <a href="22556.html">Default Selected Item Layout property</a>.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><img src="./images/35995.png" id="35995" class="WikiImage"/></td>
+			<td style="vertical-align: top;"><img src="./images/35996.png" id="35996" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<p>As we already know, the &lt;default&gt; value in <a href="20424.html">Default Action property</a> won't have any effect because the Grid control is embedded in a Panel for Smart Devices (different from WorkWithDevices object which will display the Detail node). Then, we can write code of the SelectionChange event without worrying about whether the Default Action will be triggered or not. In this scenario, we can get the selected index from the grid and use it with SetQueueCurrentIndex method of the <a href="30041.html">Audio external object</a> before start playing it or while it is playing another song.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Grid1.SelectionChanged
+    Composite
+        &amp;Index = Grid1.SelectedIndex
+        Audio.SetQueueCurrentIndex(&amp;Index)
+    EndComposite
+EndEvent</pre>
+
+<p>With these settings, any song will start playing when the end user taps on it from the playlist. But, there is another scenario that we must satisfy: when a song has finished playing, the application should select on the Grid the next one from the playlist. In order to do that, before starting the next song, the developer may use the QueueItemFinished event from <a href="30041.html">Audio external object</a> facilities and select the appropriate index. For example, we can write the event in a very simple way as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Audio.QueueItemFinished(&amp;MediaItemFinishedInfo)
+    Composite
+        If &amp;MediaItemFinishedInfo.Reason = MediaFinishReason.PlaybackCompleted
+            &amp;Index = &amp;MediaItemFinishedInfo.QueuePosition
+            Grid1.Select(&amp;Index)
+        EndIf
+    EndComposite
+EndEvent</pre>
+
+<p>Finally, we get the following result.</p>
+
+<p><img src="./images/36217.png" id="36217" class="WikiImage"/></p>
+
+<h2><a id="Note" class="HashLink" href="#Note">Note</a></h2>
+
+<ul>
+	<li>For those grids which <a href="9550.html">Control Type property</a> is out of scope (such as SD Image Gallery, SD Leaves, etc.) the behavior of the described elements in this document are:
+	<ul>
+		<li>The Select/Deselect methods do not have any effect.</li>
+		<li>The SelectedIndex will return empty (value 0).</li>
+		<li>The SelectionChanged event will never be triggered.</li>
+	</ul>
+	</li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="24829.html">Panel object</a>, <a href="15974.html">Work With for Smart Devices object</a> </td>
+		</tr>
+		<tr>
+			<td><strong>Controls</strong></td>
+			<td><a href="24817.html">Grid control</a>, <a href="18180.html">Horizontal Grid control</a> (iOS), <a href="https://wiki.genexus.com/commwiki/wiki?17302,," target="_blank">SD Paged Grid control</a> (iOS)</td>
+		</tr>
+		<tr>
+			<td><strong>Platform </strong></td>
+			<td>Smart Devices (iOS,Android)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Available" class="HashLink" href="#Available">Available</a></h2>
+
+<p>This set of funcionalities are available as of <a href="https://wiki.genexus.com/commwiki/wiki?35908,," target="_blank">GeneXus 15 Upgrade 6</a> for iOS and <a href="https://wiki.genexus.com/commwiki/wiki?36355,," target="_blank">GeneXus 15 Upgrade 7</a> for Android.</p>
+
+<p> </p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="36235.html">Deselect method</a></TD><TD><a href="36234.html">Select method</a></TD></TR><TR><TD><a href="36232.html">SelectedItem property</a></TD><TD><a href="36236.html">SelectionChanged event</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

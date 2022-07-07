@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Edit mock data file</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50844,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Edit mock data file</h1>
+<!--Edit mock data file--><div class="TableWikiBody" id="tblwikibody"><p>There are two scenarios at least in which you would want to change the recorded data.</p>
+
+<p>1. Generated sentences are dynamic</p>
+
+<p>If the sentences your object under test executes depend on dynamic data, you will have a mismatch when the test runs again. </p>
+
+<p>For example, if in your object/test you have the following:</p>
+
+<p><img src="./images/50845.png" id="50845" class="WikiImage"/></p>
+
+<p>Every time the test is executed the insertion will have a different time, rendering your mock data file not helpful.</p>
+
+<p> </p>
+
+<p>When this happens, you can open the mock file linked to the test, right-click it and select the option Edit. </p>
+
+<p>Once opened (select any app that allows you to edit a text file), search for the Insert query that's causing the problem, and edit it so it fits what you need.</p>
+
+<p><img src="./images/50846.png" id="50846" class="WikiImage"/></p>
+
+<p>In this example we removed the first part of the key and set it to the KeyPattern field, to be matched by a regular expression instead of the exact sentence in runtime.</p>
+
+<p><img src="./images/50847.png" id="50847" class="WikiImage"/>Alternatively, you could have written the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+"KeyPattern": "Mocked6,{{.+}},True,INSERT INTO [Country]([CountryName], [InsertedTime]) VALUES(@CountryName, @InsertedTime); SELECT SCOPE_IDENTITY()"</pre>
+
+<p>This way you are expecting that the country must be named "Mocked"</p>
+
+<p> </p>
+
+<p>2. Modify the results returned by the queries recorded</p>
+
+<p>In the example shown in the screenshots before, the first recorded data returns a country called Holanda with Id 11. You could modify those values and set whichever value you want, removing or adding data in case you need it. Be careful to respect the data types and JSON structure.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{
+   "Data": {
+      "innerArray": [
+         [
+            "Mocked value",
+            11
+         ]
+      ]
+   },
+   "Key": "Holanda7,True,SELECT TOP 1 [CountryName], [CountryId] FROM [Country] WHERE [CountryName] = @AV8name ORDER BY [CountryId] ",
+   "KeyPattern": ""
+}</pre>
+
+<p>Note that you could also use a KeyPattern to expect any Select from the table Country for example setting:</p>
+
+<p>"KeyPattern": "SELECT {{.*}} FROM [Country] WHERE {{.*}}"</p>
+
+<p> </p>
+
+<p>Note 1: the regular expression depends on the generator of the environment you are using, for .Net you should check the <a href='https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex'>Regex class</a> and for Java the <a href='https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html'>Pattern class</a>. Take into account that there are characters that must be escaped in order to not affect the mock data read.</p>
+
+<p>For example for a pattern to match a date time with the format dd/mm/yyyy HH:MM:SS you could have the following regular expression:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+\d{1,2}/\d{1,2}/\d{2,4} \d{1,2}:\d{1,2}:\d{1,2}</pre>
+
+<p>But the backslash must be escaped when writing it to the mock data file as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{{\\d{1,2}/\\d{1,2}/\\d{2,4} \\d{1,2}:\\d{1,2}:\\d{1,2}}}</pre>
+
+<p>Note 2: in Java environments, mocking data files are a little more verbose, but the way of modifying the data is similar to the example presented before for .Net environments.</p>
+
+<p> </p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38349.html">Database Mocking</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/13/22 07:07 PM</em></font></td></TR></table></font>

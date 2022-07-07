@@ -1,0 +1,76 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Level Delete" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="level" Type="Artech.Genexus.Common.Parts.TransactionLevel" %>
+<%@ Property Name="levelName" Type="System.String" %>
+<%@ Property Name="gridLevelName" Type="System.String" %>
+<%@ Property Name="index" Type="System.String" %>
+<%@ Property Name="firstLevelAttributeName" Type="System.String" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ SubTemplate Name="DPNextAction" File="DPNextAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextValidation" File="VerifyControlTextValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextTableValidation" File="VerifyControlTextTableValidation.dkt" MergeProperties="True"%>
+	<!-- Level <%=levelName%>  -->
+<%
+if (level!= myInstance.Transaction.Transaction.Structure.Root)
+{
+%>
+<%@ CallSubTemplate DPNextAction dataPoolName='levelName' dataPoolColumnName='firstLevelAttributeName' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+}
+bool show = false;
+foreach (TransactionAttribute trnAtt in level.Attributes )
+{
+	string tName = trnAtt.Name;
+	GenericElement ge = basicElements.ResolveBind(tName);
+
+	if (
+		TransactionHelper.IsAttributeVisibleInWebForm(trnAtt,basicElements) && 
+		!(TransactionHelper.IsAttributeAutonumber(trnAtt) && trnAtt.IsKey ) && 
+		!(basicElements.IsAttributeUsedInRules(tName)) &&
+		!(basicElements.IsAttributeUsedInEvents(tName)) &&
+		!(basicElements.IsAttributeUsingDateFunctionsInRules(trnAtt)) &&
+		!(ge.IsPassword) &&
+		!(ge.AtributeType == Artech.Genexus.Common.eDBType.BINARY || ge.AtributeType == Artech.Genexus.Common.eDBType.BITMAP) &&
+		!trnAtt.IsForeignKey
+
+		)
+	{
+		if (!TransactionHelper.IsFormula(trnAtt))
+			show = true;
+		else if (basicElements.CheckFormulas)
+			show = true;
+		if (show)
+		{
+			//Artech.Genexus.Common.eDBType attType = TransactionHelper.GetAttributeType(trnAtt);
+			// Use Type associated to the WebForm in case is overwritten from the Attribute default.
+			Artech.Genexus.Common.eDBType attType = WebFormHelper.IsControlComboListRadioBox(ge.RuntimeControlType)?Artech.Genexus.Common.eDBType.CHARACTER:ge.AtributeType;
+			if (TransactionHelper.IsGridLevel(index))
+			{
+%>
+<%@ CallSubTemplate VerifyControlTextTableValidation Object='Object' model='model' byRow='true' gridName='gridLevelName' ControlGXName='tName' variable1='""' value1='""' dataPoolName1='levelName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' variable2='""' value2='""' dataPoolName2='levelName' dataPoolColumnName2='tName' AttType='attType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+				if (tName==basicElements.DescriptionAttribute)
+				{ // Use variable instead of Datapool
+%>
+<%@ CallSubTemplate VerifyControlTextValidation Object='Object' model='model' ControlGXName='tName' variable='basicElements.DescriptionAttribute' value='""' dataPoolName='""' dataPoolColumnName='""' AttType='attType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+				}
+				else
+				{
+%>
+<%@ CallSubTemplate VerifyControlTextValidation Object='Object' model='model' ControlGXName='tName' variable='""' value='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='tName' AttType='attType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+				}
+			}
+		}
+	}
+}
+%>

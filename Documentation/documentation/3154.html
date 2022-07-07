@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Features of Reorganizations</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?3154,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Features of Reorganizations</h1>
+<!--Features of Reorganizations--><div class="TableWikiBody" id="tblwikibody"><p>This article describes the main features and aspects related to <a href="5288.html">database creation and reorganizations</a>.</p>
+
+<p>GeneXus generates automatically programs and scripts to maintain the database structure and that includes the maintenance of the schema and also the required data transformations associated with it.</p>
+
+<p>The database is maintained in the 3rd Normal Form, although <a href="5962.html">redundancy</a> is supported for performance reasons. (See also <a href="https://wiki.genexus.com/commwiki/wiki?6720,," target="_blank">GeneXus and Relational Databases: the Essence</a>)</p>
+
+<h3><a id="Schema+Changes" class="HashLink" href="#Schema+Changes">Schema Changes</a></h3>
+
+<p>GeneXus maintains (creates, alters, drops) the following objects of a database</p>
+
+<ul>
+	<li><a href='https://en.wikipedia.org/wiki/Table_(database)'>SQL Tables</a>, <a href='https://en.wikipedia.org/wiki/View_(SQL)'>Views</a>, Functions, and <a href='https://en.wikipedia.org/wiki/Column_(database)'>Attributes</a>
+	<ul>
+		<li>In the <a href="2428.html">KB</a>, defined by GeneXus as <a href="7120.html">Table</a> and <a href="7240.html">Attributes</a>, inferred automatically from the <a href="1908.html">Transactions</a> (and <a href="28062.html">Dynamic Transactions</a>, and Attributes) defined by the user</li>
+	</ul>
+	</li>
+	<li><a href='https://en.wikipedia.org/wiki/Database_index'>Indexes</a>, and Constraints
+	<ul>
+		<li>In the KB, defined as <a href="7121.html">Indexes</a>. Primary Keys and Foreign Keys are inferred automatically from definitions in Transactions and <a href="20206.html">Subtypes</a>; Candidate keys, and secondary indexes are defined by the user as Unique or Duplicate Indexes.</li>
+	</ul>
+	</li>
+</ul>
+
+<p>GeneXus creates also the database if needed, in some DBMSes (eg.: SQL Server) or the Schema (eg.: Oracle).</p>
+
+<p>Although several <a href="7117.html">Data Stores</a> can be accessed by the generated programs, GeneXus only generates reorganizations for the default data store. The schema of the other data sources are supposed to be maintained by other Knowledge bases or systems.)</p>
+
+<p>SQL sentences and syntax depends on target DBMS and DBMS version in order to achieve maximal efficiency.</p>
+
+<h3><a id="Efficient+data+transformations" class="HashLink" href="#Efficient+data+transformations">Efficient data transformations</a></h3>
+
+<p>As for Schema changes, data transformations and the associated syntax used in the reorganizations depend on target DBMS and DBMS version in order to achieve maximal efficiency.<br />
+Scenarios, where temporary tables are used for data transformations, are <a href="19529.html">minimal</a>, data flowing between the server and the client is minimal too, and 'ALTER TABLE' commands are used whenever possible.</p>
+
+<h5><a id="Examples" class="HashLink" href="#Examples">Examples</a></h5>
+
+<p>1) Adding a NOT NULL column to a table in SQL Server executes two statements. The example shows how a CustomerEmail not nullable column is added to the Customer table:</p>
+
+<p></p>
+
+<pre class="Code">
+ALTER TABLE [CUSTOMER] ADD [CustomerEmail] varchar(40) NOT NULL CONSTRAINT CustomerEmail_DEFAULT DEFAULT ' '
+ALTER TABLE [CUSTOMER] DROP CONSTRAINT CustomerEmail_DEFAULT
+</pre>
+
+<p></p>
+
+<p>2) Changing the table where a NOT NULL attribute is stored requires three statements. The example shows how CustomerEmail attribute is moved from the Invoice table to the Customer table.</p>
+
+<p></p>
+
+<pre class="Code">
+ALTER TABLE [CUSTOMER] ADD [CustomerEmail] varchar(40) NOT NULL CONSTRAINT CustomerEmail_DEFAULT DEFAULT ''
+UPDATE [CUSTOMER] SET [CustomerEmail] = T.[CustomerEmail] FROM 
+ (SELECT [CustomerEmail], [CustomerId] FROM [INVOICE]) T WHERE [CUSTOMER].CustomerId = T.CustomerId 
+ALTER TABLE [CUSTOMER] DROP CONSTRAINT CustomerEmail_DEFAULT</pre>
+
+<p></p>
+
+<p>3) Adding a new column, using IIF() in its initial value executes three statements. The example shows how the reorg resolves to add the  attribute ProductCategory with initial value = <font size="2">iif(ProductPrice &gt; 1000, &quot;Category 1&quot;, &quot;Category 2&quot;) to the table PRODUCT</font></p>
+
+<p></p>
+
+<pre class="Code">
+ALTER TABLE [Product] ADD [ProductCategory] char(20) NOT NULL CONSTRAINT ProductCategoryProduct_DEFAULT DEFAULT ''
+UPDATE [Product] SET [ProductCategory]=T.[ProductCategory] FROM 
+ (SELECT [ProductId], CASE WHEN [ProductPrice] &gt; 1000 THEN 'Category 1' ELSE 'Category 2' END AS ProductCategory 
+  FROM [Product]) T
+ WHERE [Product].ProductId= T.ProductId
+ALTER TABLE [Product] DROP CONSTRAINT ProductCategoryProduct_DEFAULT</pre>
+
+<p></p>
+
+<p>Avoiding temporary tables, in addition to improving performance, keeps the changes you manually made to table definitions. For example, if you added permissions to a table, when a temporary table is used, the table is deleted and re-created, so all the security settings are lost. If the table is not deleted because no temporary table was used, no settings are lost.</p>
+
+<h3><a id="Partitioned+Reorganizations" class="HashLink" href="#Partitioned+Reorganizations"><strong>Partitioned Reorganizations</strong></a></h3>
+
+<p>Reorganization code is generated in independent modules that can be executed in parallel. This allows you to radically improve the performance of reorganizations in servers with multiple processors.<br />
+<br />
+To be able to partition the reorganization, GeneXus identifies code-blocks that can be executed independently and the reorganization runs them in different threads. Achieving this involved a redesign of the reorganization process with a nice side effect: code is very easy to read, especially if you try to view the steps needed to reorganize a table.</p>
+
+<p>Informix Note: This feature is supported for all DBMS of GeneXus, unless Informix. The limitation in ANSI databases of Informix is that they don't support the autocommit. The autocommit is necessary to run in multi-threads, in order to manage the connections used by the different UTLs and avoid any deadlock.</p>
+
+<p>Changing the number of parallel threads: By default, the reorg is executed in 5 parallel threads. Depending on the number of processors you may want to change this. You do it changing the SUBMIT_POOL_SIZE in the reorg.cfg (java) or the REORG_MAX_THREADS in the client.exe.config (.net)</p>
+
+<h3><a id="SQL+Statements" class="HashLink" href="#SQL+Statements"><strong>SQL Statements</strong></a></h3>
+
+<p>Together with the Impact Analysis Report, you can see the SQL statements that will be executed in the database. This lets you have a better idea of what GeneXus will do to reorganize each table. A script (ReorganizationScript.txt) containing all reorganization statements in the order they will be executed is created in the model directory. The content of this file is not executed by GeneXus. it is created for documentation purposes only.</p>
+
+<h3><a id="Display+the+number+of+records+of+each+table+to+be+reorganized" class="HashLink" href="#Display+the+number+of+records+of+each+table+to+be+reorganized">Display the number of records of each table to be reorganized</a></h3>
+
+<p>One of the first steps in the default reorganization process is to count and show the number of records in each table to be reorganized. Besides, you can run the reorganization program only to count records. Executing the reorganization program with the &quot;-recordcount&quot; parameter will count records in all tables to be reorganized, display the results and stop. This may be used to estimate how long the reorganization may take.</p>
+
+<p>The -recordcount parameter, and many other reorganization options described in this document, can be set in GeneXus at the model preferences, under the group 'Build Process - Advanced - Reorganization Options'. By default, this option is set with the value -nogui.</p>
+
+<h3><a id="User-defined+pre%2Fpost+reorganization+script" class="HashLink" href="#User-defined+pre%2Fpost+reorganization+script">User-defined pre/post reorganization script</a></h3>
+
+<p>Sometimes you may need to execute SQL statements before and/or after the reorganization. For example, you may want to run a backup process and truncate some large table(s) before the reorganization and restore its data after it.<br />
+<br />
+If the reorganization process finds a file named &quot;beforeReorganizationScript.txt&quot; in the same (current) directory as the reorganization program, it will try to execute its SQL statements before the reorganization. The same occurs if there is a file named &quot;afterReorganizationScript.txt&quot; that is executed after the reorganization process.<br />
+<br />
+Both files must have SQL statements only. The SQL statements must be separated by a semicolon (&quot;;&quot;) as in the following script sample:<br />
+<br />
+</p>
+
+<pre class="Code">
+TRUNCATE TABLE [FirstBigTable];
+TRUNCATE TABLE [SecondBigTable];
+</pre>
+
+<p></p>
+
+<h3><a id="Resume+after+failure" class="HashLink" href="#Resume+after+failure">Resume after failure</a></h3>
+
+<p>A reorganization process may fail for several reasons. Power failures, running out of disk space, lack of authorizations are just a few common causes. In many failure situations there is no need to restore the database but just fix the problem (wait for power, free some disk space, authorize, etc.) and restart from the point of failure. Restarting saves time and work.<br />
+<br />
+The reorganization process has a built-in resume after failure. That is, if it starts executing after a failure it will skip all steps already accomplished and will actually start executing the step that failed in the previous execution. As a result, recovering from a reorganization failure is easy: fix the problem and restart the reorganization. It is important to notice that the resume after failure feature <u>includes</u> statements in the pre/post reorganization scripts. If, for example, the reorganization fails in the third SQL statement in beforeReorganization.txt, when resuming, the first two statements will not be executed.</p>
+
+<h4><a id="How+to+prevent+the+reorganization+from+resuming+after+a+failure" class="HashLink" href="#How+to+prevent+the+reorganization+from+resuming+after+a+failure">How to prevent the reorganization from resuming after a failure</a></h4>
+
+<p>In some failure recovery situations, you may want to start over and run the reorganization process from the very beginning. Running the reorganization process with the -ignoreresume parameter makes the reorganization process to execute while ignoring any resume information.</p>
+
+<h3><a id="Database+schema+verification" class="HashLink" href="#Database+schema+verification">Database schema verification</a></h3>
+
+<p>Reorganizations change the database schema. They create and remove tables, change their structure, add indexes and constraints, move data among tables, etc. Every statement or procedure used during a specific reorganization may fail if the database schema is not the expected one. For example, if the reorganization has to create a new table it should fail if that table already exists.<br />
+<br />
+The reorganization process searches the current database schema for possible inconsistencies between what's expected and what's actually there. We named this process &quot;Database Schema Verification&quot;.<br />
+<br />
+By the time this article is written, the following verifications are being made:</p>
+
+<ul>
+	<li>If a new table has to be created, it is verified that there are no tables or views with the same name</li>
+	<li>If a table is dropped, it is verified that it exists</li>
+	<li>If a table is renamed, it is verified that the new table (or a view with the same name) does not already exist, and that the old one exists</li>
+	<li>If an attribute has to be created, it is verified that it does not already exist</li>
+	<li>If an attribute is dropped, it is verified that it exists (see more <a href="14301'.html">here</a>).</li>
+</ul>
+
+<p><strong>Note: </strong> All verifications are made against the actual DBMS catalog.</p>
+
+<h4><a id="How+to+avoid+the+database+schema+verification" class="HashLink" href="#How+to+avoid+the+database+schema+verification">How to avoid the database schema verification</a></h4>
+
+<p>If, for any reason, you do not want the database schema to be verified, use the -noverifydatabaseschema parameter when running the reorganization.</p>
+
+<p>There are two model preferences where this value can be set: &quot;Create Database Options&quot; and &quot;Reorganization Options&quot; for reorganizations that are run directly from GeneXus. The default value is different in each case:</p>
+
+<ul>
+	<li>Reorganization Options default value = -nogui</li>
+	<li>Create Database Options default value = -nogui -noverifydatabaseschema</li>
+</ul>
+
+<h4><a id="DBMS+version+verification" class="HashLink" href="#DBMS+version+verification">DBMS version verification</a></h4>
+
+<p><span style="font-size: 10.0pt;">The DBMS version verification consists of verifying that the reorganization is running on a DBMS version equal to or greater than the DBMS version configured in GeneXus. This verification is performed in any type of reorganization, including Create database. </span></p>
+
+<p><span style="font-size: 10.0pt;">For example, if the SQL server version to be connected is 2000, and the &quot;SQL server Version&quot; property of GeneXus is set with the &quot;2005 or higher&quot; value, the following message is given:</span></p>
+
+<blockquote style="margin-right: 0.0px;"><em>An error was found in the database schema verification process. Reorganization code was generated to run on DBMS versions higher than the current one.<br />
+<strong>DBMS should be at least in version 2005</strong> or you may regenerate and re-run the reorganization after changing the corresponding DBMS version property.<br />
+The reorganization process was not successfully completed.<br />
+<span><strong><font color="#ff0000">Reorganization Failed</font></strong></span></em></blockquote>
+
+<p><strong>Note:<u> </u></strong> This verification cannot be avoided</p>
+
+<h3><br />
+How to run the reorganization twice</h3>
+
+<p>In order to avoid accidental executions of reorganizations that already finished successfully, the second time you run a reorganization you will get a message &quot;No reorganization needed&quot;. But if you really need to run a reorganization that has already been executed and finished successfully before, you can run it with the '-force' flag. </p>
+
+<h3><a id="Steps+involved+in+a+Reorganization" class="HashLink" href="#Steps+involved+in+a+Reorganization">Steps involved in a Reorganization</a></h3>
+
+<p>In general terms, a reorganization process consists of</p>
+
+<ul>
+	<li>Check the existence of the beforeReorganizationScript.txt file. </li>
+	<li>Database schema verification depending on the <a href="9016.html">reorganization options</a>.</li>
+	<li>Verify if the reorganization should resume from the latest entry point.</li>
+	<li>Execute the reorganization.
+	<ul>
+		<li>Execute the code to reorganize the database based on the IAR analysis including Table creation and data conversion.</li>
+		<li>Create Indices and Referential Integrity.</li>
+	</ul>
+	</li>
+	<li>Check the existence of the afterReorganizationScript.txt file.</li>
+	<li>Update the Knowledge Base.</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<ul>
+	<li><a href="19529.html">Database Reorganization cases where a temporary table is created</a></li>
+	<li><a href="43272.html">Reorganizations associated to Data Views</a></li>
+	<li><a href="28062.html">Dynamic Transactions</a></li>
+	<li><a href="48715.html">Scenario of backward compatible reorganizations</a></li>
+</ul>
+
+<p> </p>
+<br />
+<br />
+<br />
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9016.html">Create Database Options property</a></TD><TD><a href="19529.html">Database Reorganization cases where a temporary table is created</a></TD></TR><TR><TD><a href="26977.html">DB2 for iSeries requirements</a></TD><TD><a href="34476.html">Export Reorganization</a></TD><TD><a href="5288.html">Category:Reorganization</a></TD></TR><TR><TD><a href="36454.html">Reorganization Options property</a></TD><TD><a href="48715.html">Scenario of backward compatible reorganizations</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/23/22 01:56 PM</em></font></td></TR></table></font>

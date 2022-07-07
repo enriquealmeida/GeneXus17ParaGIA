@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>FAQ GXtest</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?41196,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">FAQ GXtest</h1>
+<!--FAQ GXtest--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="General" class="HashLink" href="#General">General</a></h2>
+
+<h3><a id="Can+I+debug+a+test%3F" class="HashLink" href="#Can+I+debug+a+test%3F">Can I debug a test?</a></h3>
+
+<p>Yes. You can use GeneXus debugger and run tests in a &quot;step by step&quot;  mode. </p>
+
+<h3><a id="Is+the+%22Build%22+process+affected+when+using+or+running+tests%3F+" class="HashLink" href="#Is+the+%22Build%22+process+affected+when+using+or+running+tests%3F+">Is the &quot;Build&quot; process affected when using or running tests? </a></h3>
+
+<p>No. Test objects are not referenced by any other object in the KB, which means that running a &quot;Build All&quot; or &quot;Rebuild All&quot; process in your KB will not generate test-related binaries in your working copy or deploy. </p>
+
+<h3><a id="Can+I+test+batch+processes%3F" class="HashLink" href="#Can+I+test+batch+processes%3F">Can I test batch processes?</a></h3>
+
+<p>Yes. Unit testing capabilities enable to test batch process.</p>
+
+<h3><a id="Where+can+I+find+GXtest%3F" class="HashLink" href="#Where+can+I+find+GXtest%3F">Where can I find GXtest?</a></h3>
+
+<p>GXtest 4 is released officially inside GeneXus 16 upgrades.<br />
+If you want to install the latest version of GXtest in a custom GeneXus version, you can download and install it on top. </p>
+
+<h3><a id="How+can+I+know+GXtest+version+build+number+programmatically+in+advance%3F" class="HashLink" href="#How+can+I+know+GXtest+version+build+number+programmatically+in+advance%3F">How can I know GXtest version build number programmatically in advance?</a></h3>
+
+<p>GXtest channel is released over AWS S3 with a &quot;key&quot; version.<br />
+You can get the version number using https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETtagging.html</p>
+
+<h2><a id="Building+Process" class="HashLink" href="#Building+Process">Building Process</a></h2>
+
+<h3><a id="Why+a+build+process+is+triggered+before+running+Unit+tests%3F" class="HashLink" href="#Why+a+build+process+is+triggered+before+running+Unit+tests%3F">Why a build process is triggered before running Unit tests?</a></h3>
+
+<p>Unit Tests are special GeneXus procedures that need to be generated, so each time you run a test GeneXus check if the tests have modifications.</p>
+
+<p>Only if the test itself has changed or one of its dependencies (generated test SDT, test DataProvider, and objects) has changed, then it forces to build the test case object. This means that objects in the KB will not be generated unless they are referenced by tests that have references pending to be built. </p>
+
+<h3><a id="Does+the+unit+test+objects+modify+the+original+object+spec%2Fgeneration+in+any+way%3F" class="HashLink" href="#Does+the+unit+test+objects+modify+the+original+object+spec%2Fgeneration+in+any+way%3F">Does the unit test objects modify the original object spec/generation in any way?</a></h3>
+
+<p>No. They are isolated objects that don't change other object behavior. </p>
+
+<h2><a id="UI+Automation" class="HashLink" href="#UI+Automation">UI Automation</a></h2>
+
+<h3><a id="How+to+run+tests+using+different+browsers%3F" class="HashLink" href="#How+to+run+tests+using+different+browsers%3F">How to run tests using different browsers?</a></h3>
+
+<p class="Code">You can change the default browser on your KB properties or just do it explicitly on your test using the Browsers' domain. I.e.:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.SetBrowser(Browsers.Firefox)</pre>
+
+<h3 class="Code"><a id="How+to+run+a+test+in+a+remote+browser%3F" class="HashLink" href="#How+to+run+a+test+in+a+remote+browser%3F">How to run a test in a remote browser?</a></h3 class="Code">
+
+<p>GXtest 4 supports Selenium / WebDriver architecture. You will need to have a Selenium node listening for running tests over some IP/port. Then, just use it on your test:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;driver.SetRemoteWebDriver(url)</pre>
+
+<h3><a id="How+to+run+the+same+test+against+different+environments+%2F+URLs%3F+%28ie.+dev%2C+staging%2C+pre-prod%29" class="HashLink" href="#How+to+run+the+same+test+against+different+environments+%2F+URLs%3F+%28ie.+dev%2C+staging%2C+pre-prod%29">How to run the same test against different environments / URLs? (ie. dev, staging, pre-prod)</a></h3>
+
+<p>There are 2 ways to do this since the UI test will start running after the Go command.</p>
+
+<p class="Code">1- Using the Go command to navigate to different environments:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &amp;driver.Go(&quot;http://stagingenv:port/App/home.aspx&quot;) </pre>
+
+<p>2- Or using the &quot;Base URL&quot; property on your KB/Environment in GeneXus IDE, plus using the Go() command with relative paths, like: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &amp;driver.Go(&quot;home.aspx&quot;) </pre>
+
+<h3><a id="How+to+use+the+right+targets+%28HTML+elements%29+in+a+Command%3F" class="HashLink" href="#How+to+use+the+right+targets+%28HTML+elements%29+in+a+Command%3F">How to use the right targets (HTML elements) in a Command?</a></h3>
+
+<p>When simulating user actions over HTML controls, commands need the right target to run against.<br />
+Use GXtest Recorder and after recording a test case, you will be able to use command locators in the Target section:</p>
+
+<p><img src="./images/41200.png" id="41200" class="WikiImage"/></p>
+
+<h3><a id="Does+GXtest4+support+Custom+Commands+%28like+GXtest+v3%29%3F" class="HashLink" href="#Does+GXtest4+support+Custom+Commands+%28like+GXtest+v3%29%3F">Does GXtest4 support Custom Commands (like GXtest v3)?</a></h3>
+
+<p>In older versions of GXtest, there were special commands used to interact with custom HTML elements and JS when was not possible using native commands. </p>
+
+<p>This is no longer needed since GXtest 4 can interact with <b>any HTML element on a webpage</b>, even if they are not GeneXus native web controls. </p>
+
+<h3><a id="How+to+add+validations+over+a+webPage%3F" class="HashLink" href="#How+to+add+validations+over+a+webPage%3F">How to add validations over a webPage?</a></h3>
+
+<p>Use Assertions: when recording a test, by right-clicking over an HTML control:</p>
+
+<p><img src="./images/41201.png" id="41201" class="WikiImage"/></p>
+
+<h3><a id="How+to+add+test+iterations+to+use+different+data+inputs+and+outputs%3F" class="HashLink" href="#How+to+add+test+iterations+to+use+different+data+inputs+and+outputs%3F">How to add test iterations to use different data inputs and outputs?</a></h3>
+
+<p>You can use a For in the test over a DataProvider or other Data sources to add different interactions. </p>
+
+<h3><a id="I+want+to+run+tests+using+Safari%2C+but+the+%22Browsers%22+domain%27s+Enum+values+didn%27t+have+that+option.+Can+I%3F" class="HashLink" href="#I+want+to+run+tests+using+Safari%2C+but+the+%22Browsers%22+domain%27s+Enum+values+didn%27t+have+that+option.+Can+I%3F">I want to run tests using Safari, but the &quot;Browsers&quot; domain's Enum values didn't have that option. Can I?</a></h3>
+
+<p>Yes. You can run on any browser supported by WebDriver technology. <br />
+To do so, use the SetRemoteWebDriver function to launch your test using a remote browser. </p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38327.html">Toc:GXtest v4</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/06/20 12:24 AM</em></font></td></TR></table></font>

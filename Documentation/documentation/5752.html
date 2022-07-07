@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Category Pattern</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5752,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Category Pattern</h1>
+<!--Category Pattern--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The name 'Category' is self-descriptive, as this pattern is used to 'categorize' items.</p>
+
+<p>See the <a href="https://wiki.genexus.com/commwiki/wiki?2212,," target="_blank">Difference between Type and Category</a>.</p>
+
+<p>When you have a set of things, it's very convenient to gather them in groups or 'categories'. Most of the time this is quite simple, just adding a Category transaction to the model is enough:</p>
+
+<p>Category</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    CategoryId*
+    CategoryName
+Item
+    ItemId*
+    ItemName
+    CategoryId
+    CategoryName</pre>
+
+<p>However, sometimes more advanced features are necessary:</p>
+
+<ul>
+	<li>An Item can belong to many categories (not just one as in the example above).</li>
+	<li>Validity. An Item belongs to a certain category only during a certain period of time.</li>
+	<li>Hierarchy of Categories. Instead of a set of 'flat' Categories, a hierarchy (such as Beverage (Alcoholic Beverages (Wines, Beers)), etc.) is needed.</li>
+	<li>Many Categories. You can have a set of categories to group Products from an Accounting point of view and another set to group them from a Production point of view.</li>
+</ul>
+
+<p>The purpose of this pattern is to provide all the objects needed to implement a 'high-end' Category engine for a given transaction.</p>
+
+<h3><a id="Canonical+Example" class="HashLink" href="#Canonical+Example">Canonical Example</a></h3>
+
+<p>This pattern is very useful for building Product Catalogs.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+
+Beverages
+    Alcoholic Beverages
+         Wines
+              Red
+              'Wine xxxx' (item)
+              'Wine yyy' (item)
+               ...
+         Beer
+               Light
+               'Beer 123' (item)
+               ...</pre>
+
+<p>This kind of catalog usually has a validity period, and you can have more than one Catalog at once.</p>
+
+<h3><a id="Category+Pattern+Implementation+" class="HashLink" href="#Category+Pattern+Implementation+">Category Pattern Implementation </a></h3>
+
+<p>For the generation of the default instance, you must have an Item transaction:</p>
+
+<p><img src="./images/5754.JPG" id="5754" class="WikiImage"/></p>
+
+<p>Supposing the pattern is applied to an Item transaction (above), then the new transactions that this pattern generates by default will be as follows:</p>
+
+<p><img src="./images/5755.JPG" id="5755" class="WikiImage"/></p>
+
+<p><img src="./images/5756.JPG" id="5756" class="WikiImage"/></p>
+
+<h5><a id="Notes" class="HashLink" href="#Notes">Notes</a></h5>
+
+<ul>
+	<li>Each ItemCatId with ItemCatParentId null is the root of a 'Catalog' (a category tree).</li>
+	<li>In this simple model no Validity functionality is provided.</li>
+</ul>
+
+<p>Functionality needed:</p>
+
+<ul>
+	<li>Hierarchy data entering for categories.</li>
+	<li>Copying of categories.</li>
+	<li>User-friendly Category/Item relationship assignment (probably using <a href="https://wiki.genexus.com/commwiki/wiki?1843,," target="_blank">Multiple Values Assignment Pattern</a>).</li>
+	<li>Category deleting (which entails deleting all its children and all the Category/Item relationships).</li>
+</ul>
+
+<h4><a id="Category+Pattern+Instance" class="HashLink" href="#Category+Pattern+Instance">Category Pattern Instance</a></h4>
+
+<p>The Instance has the following nodes:</p>
+
+<p><img src="./images/5757.JPG" id="5757" class="WikiImage"/></p>
+
+<ul>
+	<li><strong>AttributesName.</strong> Name of the attributes for CategoryItem transaction: ItemCatId, ItemCatName, ItemCatParentId (subtype of ItemCatId) and ItemCatParentName (subtype of ItemCatName).</li>
+	<li><strong>Transaction Names.</strong> CategoryItem and CategoryItemrelation.</li>
+</ul>
+
+<p>By default this pattern generates the following objects:</p>
+
+<ul>
+	<li><strong>CategoryItem</strong> Transaction - Defines Category Hierarchy. Each Category with null CategoryParentId is the root.</li>
+	<li><strong>CategoryItemRelation</strong> Transaction - Defines the relationship between Items and Category.</li>
+	<li><strong>TreeViewCategoryItemRelation</strong> Web Panel - Displays a Tree View of each category with its assigned items (see TreeView Sample below).</li>
+	<li><strong>ItemCatalog</strong> Data Provider - Implemented to load the Tree View from the Start event of the TreeViewCategoryItemRelation Web Panel.</li>
+	<li><strong>ItemByCategoryItemWC</strong> Web Component - This Web Component displays the Items assigned to a category from the TreeViewCategoryItemRelation Web Panel (see TreeView Sample below).</li>
+	<li><strong>CategoryItemRelationWC</strong> Web Component and <strong>AddItem</strong> and <strong>DeleteItem</strong> Procedures - Allows you to add items to a category or delete them from a category.</li>
+</ul>
+
+<p>The picture below shows the full node:</p>
+
+<p><img src="./images/5758.JPG" id="5758" class="WikiImage"/></p>
+
+<h3><a id="TreeView+Sample+1" class="HashLink" href="#TreeView+Sample+1">TreeView Sample 1</a></h3>
+
+<p>From the TreeView Web Panel you can not only obtain views but also assign items to categories. The following picture shows what happens after selecting the Salads node. </p>
+
+<p><img src="./images/5759.JPG" id="5759" class="WikiImage"/></p>
+
+<h3><a id="TreeView+Sample+2" class="HashLink" href="#TreeView+Sample+2">TreeView Sample 2</a></h3>
+
+<p>Clicking on <font color="#0000ff"><u>Assign Items To Salads</u></font> takes you to the situation shown in the picture below. Here, the back and forward buttons allow you to move elements from one side to the other for the Salads category.</p>
+
+<p><img src="./images/5760.JPG" id="5760" class="WikiImage"/></p>
+
+<p>See also <a href="6499.html">Setting the Category Pattern</a> to know the general settings related to all instances.</p>
+
+<h4><a id="Note%3A" class="HashLink" href="#Note%3A">Note:</a></h4>
+
+<p>This Pattern features the use of the Treeview User contol in order to render the folder and category view on screen.</p>
+
+<p></p>
+
+<p></p>
+
+<p>  </p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="15975.html">Applying Work With for Smart Devices Pattern</a></TD><TD><a href="6491.html">Built-in Patterns</a></TD><TD><a href="11605.html">Dynamic Pattern Update Property</a></TD></TR><TR><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="6546.html">Pattern settings</a></TD><TD><a href="2814.html">Category:Patterns</a></TD><TD><a href="12559.html">Patterns MSBuild Tasks</a></TD></TR><TR><TD><a href="6499.html">Setting the Category Pattern</a></TD><TD><a href="1908.html">Category:Transaction object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

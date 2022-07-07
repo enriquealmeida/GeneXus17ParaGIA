@@ -1,0 +1,84 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure Rules" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="IsExcel" Type="System.Boolean" %>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+	
+	string exportParameters;
+	bool sendGridStateToProcsBySession = wwInstance.Settings.Grid.IsSendGridStateToProceduresBySession();
+	IStandardActionElement standardAction = gridObject.GetStandardAction(IsExcel ? StandardAction.Export : StandardAction.ExportCSV);
+	string gridParameters = String.Empty;
+	if (standardAction != null)
+		gridParameters = standardAction.GetParameters().Concatenate("in:", true);
+
+	HierarchySettingsElement hierarchySettings = (gridObject is SelectionElement ? ((SelectionElement)gridObject).HierarchySettings : null);
+
+	if (sendGridStateToProcsBySession)
+	{
+		exportParameters = gridParameters;
+
+		if (hierarchySettings != null)
+		{
+			exportParameters += (exportParameters != String.Empty ? ", " : "") + "in:&" + hierarchySettings.PkAttributeName + "Collection";
+		}
+
+		if (IsExcel)
+			exportParameters += (exportParameters != String.Empty ? ", " : "") + "out:&Filename, out:&ErrorMessage";
+	}
+	else
+	{
+		if (standardAction == null)
+			gridParameters = gridObject.GetParameters().Concatenate("in:", true);
+	
+		exportParameters = (gridParameters != String.Empty ? gridParameters + ", " : String.Empty);
+	
+		DynamicFilterAttributesElement dynamicFilters = gridObject.Table.GetDynamicFilters();
+		if (dynamicFilters != null && dynamicFilters.Items.Count > 0)
+		{
+			exportParameters += "in:&GridStateXML, ";
+		}
+
+		if (hierarchySettings != null)
+		{
+			exportParameters += "in:&" + hierarchySettings.PkAttributeName + "Collection, ";
+		}
+
+		if (IsExcel)
+		{
+			if (gridObject.HasFilterMultiple)
+			{
+				foreach (System.Collections.IEnumerable filtersList in SelectionGeneralElement.GetFiltersAddFixedFiltersLists(gridObject, dynamicFilters))
+				{
+					foreach (IFilter filter in filtersList)
+					{
+						if (filter is FilterAttributeMultipleGeneralElement
+							&& ((FilterAttributeMultipleGeneralElement)filter).ValuesAttribute.GetPropertyValue<bool>(Artech.Genexus.Common.Properties.ATT.BasedOnEnumerated))
+						{
+							exportParameters = exportParameters.Replace("&" + filter.Name + "Values, ", "&" + filter.Name + "ValuesAux, ");
+						}
+					}
+				}
+			}
+			exportParameters += "out:&Filename, out:&ErrorMessage";
+		}
+		else if (exportParameters != "")
+		{
+			exportParameters = exportParameters.Substring(0, exportParameters.Length - 2);
+		}
+	}
+	if (!String.IsNullOrEmpty(exportParameters) || !sendGridStateToProcsBySession)
+	{
+%>
+parm(<%= exportParameters %>);
+<%
+	}
+%>

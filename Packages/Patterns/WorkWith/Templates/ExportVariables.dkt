@@ -1,0 +1,63 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure Variables" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith.Helpers" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubStandardVariables" File="SubStandardVariables.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.Variables %>">
+<%
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	VariablesWrapper variables = new VariablesWrapper();
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+%>
+
+<%@ CallSubTemplate SubStandardVariables Settings='wwInstance.Settings' %>
+
+	<%= variables.Extended("ExcelDocument", null, "ExcelDocument") %>
+	<%= variables.BasedOnDomain("Filename", GenexusType.DomainUrl(Object.Model)) %>
+	<%= variables.Basic("ErrorMessage", null, eDBType.VARCHAR, 512) %>
+	<%= variables.Basic("CellRow", null, eDBType.NUMERIC, 8, 0, false) %>
+	<%= variables.Basic("FirstColumn", null, eDBType.NUMERIC, 8, 0, false) %>
+	<%= variables.Basic("Random", null, eDBType.NUMERIC, 8, 0, false) %>
+	<%= variables.Extended("File", null, "File") %>
+	<%= variables.Extended("StorageProvider", null, "StorageProvider") %>
+	<%= variables.Extended("Messages", null, "Messages, GeneXus.Common") %>
+<%
+	// Variables for parameters.
+	foreach (ParameterElement parameter in gridObject.Parameters)
+	{
+%>
+	<%= parameter.DefineVariable(variables) %>
+<%
+	}
+
+	// Custom variables.
+	foreach (VariableElement var in gridObject.Attributes.Variables)
+	{
+%>
+	<%= variables.BasedOnDomain(var.Name, var.Domain) %>
+<%
+	}
+
+	// Variable for order choice.
+	if (gridObject.Orders.NeedsChoice)
+	{
+%>
+	<%= variables.Basic(OrdersElement.OrderVariable, null, eDBType.NUMERIC, 4, 0, false) %>
+<%	
+	}
+
+	// Variables for filter.
+	if (gridObject.Filter != null)
+	{
+%>
+	<%= gridObject.Filter.DefineVariables(variables) %>
+<%
+	}
+%>
+</Part>

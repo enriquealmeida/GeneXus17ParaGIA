@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Using appcfg to upload an application to Google App Engine</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?32213,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Using appcfg to upload an application to Google App Engine</h1>
+<!--Using appcfg to upload an application to Google App Engine--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The WAR of an application can be built and deployed automatically using the <a href="32092.html">Deploy Applications tool</a>. Nevertheless, the package built by the tool can also be uploaded manually if you want. To do that, you need to use the appcfg.cmd Google tool.</p>
+
+<p>Here we cover the steps to follow after the WAR, or EAR application is already built if you want to deploy such application to Google App Engine manually.</p>
+
+<h3><a id="Deploying+to+the+Google+platform+manually" class="HashLink" href="#Deploying+to+the+Google+platform+manually">Deploying to the Google platform manually</a></h3>
+
+<p>In order to take the application to production, follow these steps:</p>
+
+<p>1. Create an <a href='https://cloud.google.com/appengine/docs/java/config/appref'>appengine-web.xml<strong> </strong>file</a> under the WEB-INF directory. Note that the <a href="32092.html">Deploy Applications tool</a> already creates an appengine-web.xml file, so if you use that tool, you don't need to create it manually.</p>
+
+<p>2. You can use the <a href='https://cloud.google.com/appengine/docs/java/tools/uploadinganapp?hl=es'>appcfg</a> tool utility or glcloud to deploy the app (here we explain the use of appcfg tool).<br />
+<br />
+The appcfg tool is a command line tool of the <a href='https://cloud.google.com/appengine/downloads'>App Engine SDK</a>.<br />
+ </p>
+
+<div style="background-color: rgb(255,230,204);border-left: 6.0px solid rgb(255,128,0);">
+<p>Note: You will be prompted to confirm your account for the first time you upload the application to the cloud.</p>
+</div>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Open a command line prompt and execute the following. The War has been decompressed to the &quot;C:\TestGoogleCloudJavaGoogle&quot; path.</p>
+
+<div style="background-color: rgb(242,242,242);">
+<p>C:\soft\appengine-java-sdk-1.9.38\bin&gt;appcfg.cmd update C:\TestGoogleCloudJavaGoogle</p>
+
+<p>Reading application</p>
+
+<p>configuration data...</p>
+
+<p>Beginning interaction for module default...</p>
+
+<p>0% Created staging directory at: 'C:\Users\sjuarez\AppData\Local\Temp\appcfg7047062018562894258.tmp'</p>
+
+<p>5% Scanning for jsp files.</p>
+
+<p>20% Scanning files on local disk.</p>
+
+<p>25% Scanned 250 files. 28% Scanned 500 files.</p>
+
+<p>31% Scanned 750 files. 33% Scanned 1000 files.</p>
+
+<p>34% Scanned 1250 files. 35% Scanned 1500 files.</p>
+
+<p>36% Scanned 1750 files. 37% Scanned 2000 files.</p>
+
+<p>37% Initiating update. 37% Cloning 881 static files.</p>
+
+<p>37% Cloning 1236 application files.</p>
+
+<p>40% Uploading 1 files.</p>
+
+<p>52% Uploaded 1 files.</p>
+
+<p>61% Sending batch containing 1 file(s) totaling 2KB.</p>
+
+<p>68% Initializing precompilation...</p>
+
+<p>90% Deploying new version.</p>
+
+<p>95% Closing update: new version is ready to start serving.</p>
+
+<p>98% Uploading index definitions.</p>
+
+<p>Update for module default completed successfully.</p>
+
+<p>Success.</p>
+
+<p>Cleaning up temporary files for module default...</p>
+</div>
+
+<p>After you deploy, your application runs at the URL https://&lt;YOUR-PROJECT-ID&gt;.appspot.com</p>
+
+<h3><a id="Important+Note" class="HashLink" href="#Important+Note">Important Note</a></h3>
+
+<p>If the application were running in development mode (i.e., locally), use the com.mysql.jdbc.Driver to connect to the Google Mysql instance.<br />
+But If the web application is in production mode (i.e., the application is going to be deployed), you have to use com.mysql.jdbc.GoogleDriver to connect to your Cloud SQL instance. So, in GeneXus, configure:</p>
+
+<p>Custom JDBC Driver= com.mysql.jdbc.GoogleDriver</p>
+
+<p>Custom JDBC URL = jdbc:google:mysql://&lt;application&gt;:&lt;instance&gt;/&lt;database&gt;</p>
+
+<p><img src="./images/32215.png" id="32215" class="WikiImage"/></p>
+
+<p>In this last case, the appengine-web.xml is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;appengine-web-app xmlns=&quot;http://appengine.google.com/ns/1.0&quot;&gt;
+ &lt;application&gt;iconic-lane-12xxxx&lt;/application&gt;
+ &lt;version&gt;3&lt;/version&gt;
+ &lt;threadsafe&gt;true&lt;/threadsafe&gt;
+ &lt;use-google-connector-j&gt;true&lt;/use-google-connector-j&gt;
+&lt;sessions-enabled&gt;true&lt;/sessions-enabled&gt;
+&lt;/appengine-web-app&gt;
+</pre>
+
+<h3><br />
+Software Requirement up to the moment</h3>
+
+<p>The web.xml needs to have all the servlets mapped. Use the <a href="https://wiki.genexus.com/commwiki/wiki?29384,," target="_blank">GeneXus Application Deployment</a> to create it.</p>
+
+<h3><br />
+GeneXus requirements</h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a>, <a href="https://wiki.genexus.com/commwiki/wiki?29669,," target="_blank">GeneXus 15 Java Generator</a>.</p>
+
+<h3><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h3>
+
+<p>Blobs or any kind of data which requires storage (such as <a href="15204.html">Image data type</a>) cannot be used &quot;as is&quot; because <a href='https://cloud.google.com/storage/'>Google Storage</a> is not supported yet. </p>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>See <a href='https://cloud.google.com/sql/docs/diagnose-issues'>diagnose Issues</a><br />
+See <a href='https://developers.google.com/eclipse/docs/cloudsql-createapp'>cloud-</a><a href='https://developers.google.com/eclipse/docs/cloudsql-createapp'>sql</a><a href='https://developers.google.com/eclipse/docs/cloudsql-createapp'> create </a>app.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="32211.html">How to deploy an application to Google App Engine</a><br />
+    </p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

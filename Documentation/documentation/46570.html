@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM Events subscription (GeneXus 16 upgrade 11)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/servlet/wiki?46570,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM Events subscription (GeneXus 16 upgrade 11)</h1>
+<!--GAM Events subscription (GeneXus 16 upgrade 11)--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The purpose of the <a href="24746.html">GAM</a> Events subscription is to allow the automatic trigger of additional (external) code when a GAM event is executed. That is, being able to execute a custom event automatically, after a GAM event executes (i.e: the creation of a GAM user).</p>
+
+<p>Consider a scenario where you have a Users table, and the user information is redundant with the GAM Users table. You need to <br />
+keep the Users table updated, that is, any time a GAM User is updated (created or removed) the Users table should be updated accordingly.</p>
+
+<p>The following pseudo-code would be used in such case. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Save()
+//Call a procedure to make the necessary changes in the Users table.</pre>
+
+<p>To avoid considering this piece of code in every part where you update a GAM User, the code may be automatically triggered immediately after the GAM user is updated.</p>
+
+<p>So the GAM User <em>insert, update, and delete</em> are considered to be events that automatically trigger the piece of code declared to be executed.</p>
+
+<p>In other words, you subscribe some events, so that (external) code can be triggered as any of these events is executed.</p>
+
+<h3><a id="Events+you+may+subscribe" class="HashLink" href="#Events+you+may+subscribe">Events you may subscribe</a></h3>
+
+<div style="background-color: rgb(255,221,221);border-left: 6.0px solid rgb(244,67,54);">
+<ul>
+	<li>User_Insert: Insert of a GAM User</li>
+	<li>User_Update: Update of a GAM User</li>
+	<li>User_Delete: Delete of a GAM User</li>
+	<li>User_UpdateRoles: Change of roles of a list of users</li>
+	<li>User_GetCustomInfo    : Get user's information on the server when the <a href="25355.html">GAM Remote</a> or <a href="44833.html">GAM Remote Rest Authentication type (Oauth 2.0)</a> login is executed. It's executed when the user logs in to the server, and also in the SSO login (when an app connects from another tab of the browser, and the session already exists so the user doesn't need to login again) </li>
+	<li>User_SaveCustomInfo : This event is executed on the client when the  <a href="25355.html">GAM Remote</a> or <a href="44833.html">GAM Remote Rest Authentication type (Oauth 2.0)</a> login is successfully finished.</li>
+	<li>Role_Insert: Insert of a role</li>
+	<li>Role_Update: Update of a role</li>
+	<li>Role_Delete: Delete of a role</li>
+	<li>Repository_Login: GAM User login (any <a href="16508.html">GAM Authentication Types</a> is supported)</li>
+	<li>Repository_Logout: GAM log out</li>
+	<li>Application_CheckPermissionFail : Failure of a permission verification.</li>
+</ul>
+</div>
+
+<h3><a id="Requirements+of+a+program+that+subscribes+an+event" class="HashLink" href="#Requirements+of+a+program+that+subscribes+an+event">Requirements of a program that subscribes an event</a></h3>
+
+<p>The way to subscribe an event is to configure a program that will be triggered when the event is executed. The configuration may be done using the <a href="16535.html">GAM API</a><sup>(1)</sup> or the <a href="15935.html">GAM Web Backoffice</a><sup>(2)</sup>. We'll go over this topic in more detail below.</p>
+
+<p>The program that considers the GAM events may be developed using GeneXus or not, and it has to fulfill some requirements.</p>
+
+<p>First, the signature of the program has to be:</p>
+
+<p>(in Character <strong>&amp;EventName</strong>, in Character <strong>&amp;jsonIn</strong>, out Character <strong>&amp;jsonOut</strong>)</p>
+
+<p>Where </p>
+
+<ul>
+	<li><strong>&amp;EventName</strong>: belongs to the GAMEvents Domain.</li>
+	<li><strong>&amp;jsonIN</strong>: json string whose format depends on the GAM event that the program is subscribed to (see the table below for more details).</li>
+	<li><strong>&amp;jsonOUT</strong>: json string used to print information in the <a href="25395.html">GAM trace</a> (in the case it's enabled)</li>
+</ul>
+
+<p>Secondly, consider how the &amp;jsonIN format should be:</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Event</strong></td>
+			<td><strong>GAM object</strong></td>
+		</tr>
+		<tr>
+			<td>User_Insert</td>
+			<td>GAMUser (i.e., the jsonIN format is derived from the GAMUser object)</td>
+		</tr>
+		<tr>
+			<td>User_Update</td>
+			<td>GAMUser</td>
+		</tr>
+		<tr>
+			<td>User_Delete</td>
+			<td>GAMUser</td>
+		</tr>
+		<tr>
+			<td>User_UpdateRoles</td>
+			<td>GAMGUID collection representing the list of users whose roles were changed.</td>
+		</tr>
+		<tr>
+			<td>User_GetCustomInfo </td>
+			<td>GAMSession</td>
+		</tr>
+		<tr>
+			<td>User_SaveCustomInfo</td>
+			<td><em>(free format)</em></td>
+		</tr>
+		<tr>
+			<td>Role_Insert</td>
+			<td>GAMRole (i.e., the jsonIN format is derived from the GAMRole object)</td>
+		</tr>
+		<tr>
+			<td>Role_Update</td>
+			<td>GAMRole</td>
+		</tr>
+		<tr>
+			<td>Role_Delete</td>
+			<td>GAMRole</td>
+		</tr>
+		<tr>
+			<td>Repository_Login</td>
+			<td>GAMSession (i.e., the jsonIN format is derived from the GAMSession object)</td>
+		</tr>
+		<tr>
+			<td>Repository_Logout</td>
+			<td>GAMSession</td>
+		</tr>
+		<tr>
+			<td>Application_CheckPermissionFail</td>
+			<td>GAMSessionLogCheckPermissionFail</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Example+I" class="HashLink" href="#Example+I">Example I</a></h3>
+
+<p>In the following example, we have subscribed the User_Insert event.</p>
+
+<p>In the <a href="15935.html">GAM Web Backoffice</a><sup>(2)</sup>, go through Settings &gt; Event Subscriptions and define the Event as shown in the following figure.</p>
+
+<h5><img src="./images/32701.png" id="32701" class="WikiImage"/><br />
+Net configuration</h5>
+
+<h5><img src="./images/32835.png" id="32835" class="WikiImage"/><br />
+Java configuration (in this example the Java Package Name=com.gameventssubscription)<br />
+ </h5>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 800.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Status</strong></td>
+			<td>It may be {subscribed,unsubscribed}. It has to be subscribed for the procedure to be triggered when the event is executed.</td>
+		</tr>
+		<tr>
+			<td><strong>Event</strong></td>
+			<td>
+			<p>It's a combo box where you can select any of the events available.</p>
+
+			<p><img src="./images/37139.png" id="37139" class="WikiImage"/></p>
+			</td>
+		</tr>
+		<tr>
+			<td><strong>File Name</strong></td>
+			<td>The name of the .dll or .class file which listens to the event execution.</td>
+		</tr>
+		<tr>
+			<td><strong>Class Name</strong></td>
+			<td>The name of the program including its package.</td>
+		</tr>
+		<tr>
+			<td><strong>Method Name</strong></td>
+			<td>The method of the program in GeneXus it's always &quot;execute&quot;.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>The code of the notifyuserinsert procedure is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Rules: Parm(in:&amp;EventName, in:&amp;jsonIN, out:&amp;jsonOUT);</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<em>&amp;GAMUser.FromJsonString(&amp;jsonIN)</em>
+
+&amp;MyUser.Load(&amp;GAMUser.GUID)  //&amp;Myuser is based on a BC.
+If &amp;MyUser.Fail()
+    &amp;MyUser = new()    
+Endif
+&amp;MyUser.MyUserGUID    =&amp;GAMUser.GUID
+&amp;MyUser.MyUserEmail    = &amp;GAMUser.EMail
+&amp;MyUser.MyUserName    = &amp;GAMUser.FirstName.Trim() +&quot; &quot;+ &amp;GAMUser.LastName.Trim()
+&amp;MyUser.Save()
+If &amp;MyUser.Success()
+    //Ok
+Else
+    //load &amp;jsonOUT parameter with information about the error.
+Endif</pre>
+
+<h3><a id="Example+II" class="HashLink" href="#Example+II">Example II</a></h3>
+
+<p>See <a href="37703.html">HowTo: Get user's additional information from the GAM Identity Provider</a> for an example of User_GetCustomInfo and User_SaveCustomInfo events.</p>
+
+<h3><a id="Example+III" class="HashLink" href="#Example+III">Example III</a></h3>
+
+<p>In the case of the login event the proc subscribed will be triggered at the login (regardless of whether the login is local or not).<br />
+In that procedure, you can make additional controls, and allow you to cancel the login and prevent a session from being generated.</p>
+
+<p>Consider the following example code that triggers at the login:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMSession.FromJsonString(&amp;JsonIN)
+For each
+    Where  CustomerGUID = &amp;GAMSession.User.GUID
+    Where  CustomerActiveSubscription = True
+
+         //OK
+     When none
+      &amp;GAMError.Code        = GAMErrorMessages.UserInactive
+      &amp;GAMError.Message    = &quot;The user's subscription is not valid.&quot;
+      &amp;JsonOUT = &amp;GAMError.ToJsonString()
+Endfor</pre>
+
+<p>The JsonOut format must be GAMError. Only if it is empty, it does not cancel the login.<br />
+What happens internally is that the session is created, and revoked immediately.</p>
+
+<h3><a id="%281%29+How+to+subscribe+an+event+using+the+GAM+API" class="HashLink" href="#%281%29+How+to+subscribe+an+event+using+the+GAM+API"><sup>(1)   </sup>How to subscribe an event using the GAM API</a></h3>
+
+<p>You can define the event subscription as shown in the following example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMEventSubscription = new()    // &amp;GAMEventSubscription is GAMEventSubscription data type
+&amp;GAMEventSubscription.Description =  &quot;Inspecting the User Login&quot;
+&amp;GAMEventSubscription.Event       =  GAMEvents.Repository_Login
+&amp;GAMEventSubscription.FileName    = &quot;aNotifyUserLogin.dll&quot;
+&amp;GAMEventSubscription.ClassName   = &quot;GeneXus.Programs.anotifyuserlogin&quot;
+&amp;GAMEventSubscription.MethodName  =  &quot;execute&quot;
+&amp;GAMEventSubscription.Save()
+If &amp;GAMEventSubscription.Success()
+  Commit
+  // Subscription activation:
+  &amp;isOK = GAMRepository.SubscribeEvent(&amp;GAMEventSubscription.Id, &amp;GAMErrors)
+  If &amp;isOK
+     Commit
+  Endif
+Endif</pre>
+
+<p>You may define more than one program to be triggered when the event is executed.</p>
+
+<div style="background-color: rgb(255,221,221);border-left: 6.0px solid rgb(244,67,54);">
+<p>Note that the subscription must be activated using the SubscribeEvent method of GAMRepository.</p>
+</div>
+
+<h3><a id="Considerations+about+the+logic+transaction" class="HashLink" href="#Considerations+about+the+logic+transaction">Considerations about the logic transaction</a></h3>
+
+<h4><a id="Case+1.+The+program+was+developed+using+GeneXus+" class="HashLink" href="#Case+1.+The+program+was+developed+using+GeneXus+">Case 1. The program was developed using GeneXus </a></h4>
+
+<p>To include the program subscribed to the event in the same LWU (Logical work unit) of the event, include the <a href="7964.html">Commit command</a> after the code that triggers the event (i.e., &amp;GAMUser.save() or &amp;GAMRole.save()).</p>
+
+<p>On the contrary, if you don't want to include the program in the same LWU, just configure <a href="8008.html">Execute in new LUW property</a> = True for the program.</p>
+
+<p>The Repository_Login and Repository_Logout methods execute an implicit commit, so you don't need to execute it.</p>
+
+<h4><a id="Case+2.+The+program+was+not+developed+using+GeneXus" class="HashLink" href="#Case+2.+The+program+was+not+developed+using+GeneXus">Case 2. The program was not developed using GeneXus</a></h4>
+
+<p>It will not be in the same LWU. </p>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<p><br />
+<br />
+</p>
+
+<p></p>
+<br />
+<br />   <br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/21/20 02:23 PM</em></font></td></TR></table></font>

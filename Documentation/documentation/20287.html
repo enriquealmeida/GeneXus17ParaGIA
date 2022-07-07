@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Offline Native Mobile Applications Common Issues</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20287,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Offline Native Mobile Applications Common Issues</h1>
+<!--Offline Native Mobile Applications Common Issues--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Limitations" class="HashLink" href="#Limitations">Limitations</a></h2>
+
+<h3><a id="Server-side+External+Object+methods" class="HashLink" href="#Server-side+External+Object+methods">Server-side External Object methods</a></h3>
+
+<p>Some External Object methods, those that are executed from server-side like GeoLocalizationAPI.GetDistance(), are not implemented for offline Generators, yet. This kind of methods are generally invoked from <a href="17042.html">System Events</a>, Procedures, and Data Providers.  However, methods that run on the device's side, those directly mentioned on <a href="17042.html">User Events</a> are supported (for instance GeoLocalizationAPI.GetMyLocation).</p>
+
+<h3><a id="Data+types" class="HashLink" href="#Data+types">Data types</a></h3>
+
+<p>There are some DataTypes that are not implemented for offline applications yet. Check the <a href="25398.html">Offline non-implemented DataTypes</a> document for offline applications.</p>
+
+<h3><a id="Business+component+for+two-level+transactions" class="HashLink" href="#Business+component+for+two-level+transactions">Business component for two-level transactions</a></h3>
+
+<p>Transaction objects with two-levels (header plus a set of lines) won't be automatically synchronized with the server from the device (i.e. send) by using <a href="5846.html">Business Component</a>. Since only one-level transaction business component is allowed, as a workaround, you can flat the transaction by splitting it into two independent components: the header and its lines.</p>
+
+<p> </p>
+
+<h2><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h2>
+
+<hr />
+<h3><a id="%27Known+Error%27+when+inserting%2Fupdating+tables+from+offline+app" class="HashLink" href="#%27Known+Error%27+when+inserting%2Fupdating+tables+from+offline+app">'Known Error' when inserting/updating tables from offline app</a></h3>
+
+<p>This is a temporally restriction. Referential integrity messages errors, such as &quot;Not matching Customer&quot;, &quot;Customer already exists&quot;, etc are not included.  This also applies to Error rule messages.</p>
+
+<hr />
+<h3><a id="Unable+to+Chain+SQLException+no+such+column" class="HashLink" href="#Unable+to+Chain+SQLException+no+such+column">Unable to Chain SQLException no such column</a></h3>
+
+<p>This error appears when invoking a WWSD that requires a join on SQLite between two tables (Order and Customer):</p>
+
+<p>09-04 02:19:19.915: E/AndroidRuntime(884): Caused by: com.genexus.GXRuntimeException: java.sql.SQLException: Unable to Chain SQLException no such column: T1.CustomerId: , while compiling: SELECT T1.`CustomerId`, T1.`PurchaseOrderDate`, T1.`PurchaseOrderId`, T2.`CustomerName` FROM (`PurchaseOrder` T1 INNER JOIN `Customer` T2 ON T2.`CustomerId` = T1.`CustomerId`) ORDER BY T2.`CustomerName`</p>
+
+<p>This was a restriction on SQlite 3.5.9 (more info).  Android 2.2 is required. Check <a href="https://wiki.genexus.com/commwiki/wiki?22453,," target="_blank">GeneXus X Evolution 3 Hardware and Software Requirements</a></p>
+
+<hr />
+<h3><a id="Failure+NoWiki+1" class="HashLink" href="#Failure+NoWiki+1">Failure [INSTALL_FAILED_OLDER_SDK]</a></h3>
+
+<p>Android Execution Failed<br />
+Run &lt;main&gt; Failed</p>
+
+<p>Solution:</p>
+
+<p>Android 2.1 is no longer supported since GeneXus Tilo. Version 2.2 or higher is required.Check <a href="https://wiki.genexus.com/commwiki/wiki?22453,," target="_blank">GeneXus X Evolution 3 Hardware and Software Requirements</a></p>
+
+<p>After installed, delete the myGxAvd emulator instance and run the app again in order to create a new instance in GX.</p>
+
+<p>Recommended: install Google Inc.:Google APIs:8 (2.2) in order to prototype faster than with Android 4.x emulator instances</p>
+
+<hr />
+<h3><a id="java.lang.OutOfMemoryError+when+loading+the+app+in+Emulator" class="HashLink" href="#java.lang.OutOfMemoryError+when+loading+the+app+in+Emulator">java.lang.OutOfMemoryError when loading the app in Emulator</a></h3>
+
+<p>If logcat shows this error,  increase Max VM Heap size of the Android Virtual Device (AVD)</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+E/GeneXusApplication(  299): java.lang.OutOfMemoryError
+
+E/GeneXusApplication(  299):  at java.lang.AbstractStringBuilder.enlargeBuffer(AbstractStringBuilder.java:97)
+
+E/GeneXusApplication(  299):  at java.lang.AbstractStringBuilder.append0(AbstractStringBuilder.java:157)
+
+E/GeneXusApplication(  299):  at java.lang.StringBuilder.append(StringBuilder.java:217)
+
+E/GeneXusApplication(  299):  at com.artech.common.StringUtil.convertStreamToString(StringUtil.java:56)
+
+E/GeneXusApplication(  299):  at com.artech.base.metadata.loader.MetadataLoader.getDefinition(MetadataLoader.java:161)
+
+E/GeneXusApplication(  299):  at com.artech.base.metadata.loader.WorkWithMetadataLoader.load(WorkWithMetadataLoader.java:20)
+
+E/GeneXusApplication(  299):  at com.artech.base.metadata.loader.ApplicationLoader.loadPatternInstances(ApplicationLoader.java:340)
+
+E/GeneXusApplication(  299):  at com.artech.base.metadata.loader.ApplicationLoader.loadMetadata(ApplicationLoader.java:209)
+
+E/GeneXusApplication(  299):  at com.artech.base.metadata.loader.ApplicationLoader.loadApplication(ApplicationLoader.java:93)
+
+E/GeneXusApplication(  299):  at com.artech.application.MyApplication.initialize(MyApplication.java:254)
+
+E/GeneXusApplication(  299):  at com.artech.activities.dashboard.DashboardActivity.LoadApplication(DashboardActivity.java:314)
+
+E/GeneXusApplication(  299):  at com.artech.activities.dashboard.DashboardActivity.access$000(DashboardActivity.java:53)
+
+E/GeneXusApplication(  299):  at com.artech.activities.dashboard.DashboardActivity$1.run(DashboardActivity.java:301)
+
+E/GeneXusApplication(  299):  at java.lang.Thread.run(Thread.java:1096)
+</pre>
+
+<hr />
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24591.html">HowTo: Converting online applications into offline applications</a></TD><TD><a href="20249.html">My first Offline Native Mobile application</a></TD></TR><TR><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/18/20 07:47 PM</em></font></td></TR></table></font>

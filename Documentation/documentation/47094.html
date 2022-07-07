@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Axis and Visible property refactoring</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47094,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Axis and Visible property refactoring</h1>
+<!--Axis and Visible property refactoring--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The QueryElements <a href="19577.html">Axis</a> and <a href="43697.html">Visible</a> properties are refactored to ease the process of creating <a href="9026.html">Queries</a>. The objective is to separate the structural representation of a query element from its visualization so they can evolve separately.</p>
+
+<h3><a id="Changes" class="HashLink" href="#Changes">Changes</a></h3>
+
+<p>The <a href="19577.html">Axis</a> <em>Hidden</em> value is removed and moved to the <a href="43697.html">Visible</a> property; so, it changes from a <a href="4374.html">Boolean data type</a> to an Enumerated three-valued value.</p>
+
+<ul>
+	<li><em>Yes</em>: the element is visible from the start, but can be hidden from the UI.</li>
+	<li><em>No</em>: the element appears hidden from the start, but the user can unhide it with an action.</li>
+	<li><em>Never</em>: the element is not visible and cannot be changed.</li>
+</ul>
+
+<p>Besides, the <a href="19577.html">Axis</a> property is divided into two properties:</p>
+
+<ul>
+	<li><em>Type</em> (Datum|Axis): indicates the function of the attribute in the query</li>
+	<li><em>Axis</em> (Rows|Columns|Pages): only valid for <em>Type</em> = <em>Axis</em> and only if the query is displayed as a <em>PivotTable</em>.</li>
+</ul>
+
+<p><h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Objects:</strong> <a href="36769.html">Dashboard</a>, <a href="9026.html">Query</a></p>
+</p>
+
+<h3><a id="Compatibility" class="HashLink" href="#Compatibility">Compatibility</a></h3>
+
+<p>The modifications impact the following components:</p>
+
+<ul>
+	<li>Query structure; specifically, every <a href="19788.html">Query Element</a>.</li>
+	<li>The coding in a Web object using the <a href="9075.html">QueryViewer control</a> (<em>&amp;Axes</em> collection).</li>
+	<li><a href="36769.html">Dashboards</a> using a Query or DataProvider, every <a href="19788.html">Query Element</a>.</li>
+</ul>
+
+<h4><a id="Query" class="HashLink" href="#Query">Query</a></h4>
+
+<p>These properties are converted when opening a Query with version 17 Upgrade #1 or higher in the GeneXus IDE (there are no conversions in GeneXus Server). When saving the Query, they are saved with the new values and the version number of the Query is increased (internally, the version is updated from Version: 3 to 4) so that it cannot be opened with previous GeneXus versions (the version number is controlled in deserialization of the Query object). The version is also controlled in the Import, so it will not be possible to send a Query with a newer version to an IDE or to an older GeneXus Server through export / commit.</p>
+
+<h4><a id="Dashboard" class="HashLink" href="#Dashboard">Dashboard</a></h4>
+
+<p>The same properties are available within Query objects in a Dashboard. The Dashboard object is converted when opened in the IDE (as well as those that are configured directly in the Query). The new values will only be saved if the object is saved, at which point it can no longer be opened with previous versions of GeneXus.</p>
+
+<h4><a id="Code" class="HashLink" href="#Code">Code</a></h4>
+
+<p>It is necessary to reprogram the WebPanels where the <a href="9075.html">QueryViewer control</a> and properties are changed at runtime through programming. That is to say, if the <em>&amp;Axes</em> collection is used; more specifically, the <em>Visible</em> or <em>Type</em> properties.</p>
+
+<p>The necessary conversions are as follows:</p>
+
+<ul>
+	<li><em>QueryViewer.AllowChangeAxesOrder = &lt;value&gt;</em> must be changed to <em>QueryViewer.AllowElementsOrderChange = &lt;value&gt;</em></li>
+	<li>If you add an element <em>&amp;Axis</em> to the <em>&amp;Axes</em> collection and set the <em>Visible</em> or <em>Type</em> properties</li>
+	<li>The property <em>QueryViewerAxes</em> changes to <em>QueryViewerElements</em></li>
+	<li>The property <em>Axes</em> changes to <em>Elements</em></li>
+	<li>The property <em>Axis</em> changes to <em>Element</em></li>
+</ul>
+
+<p>Use the following conversion table:</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<thead>
+		<tr>
+			<th scope="col">Old Syntax</th>
+			<th scope="col">New Syntax</th>
+			<th scope="col"> </th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Visible = true</pre>
+			</td>
+			<td>
+			<pre>
+&amp;Axis.Visible = QueryViewerVisible.Yes</pre>
+			</td>
+			<td><sup>(1)</sup></td>
+		</tr>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Visible = true</pre>
+			</td>
+			<td>
+			<pre>
+&amp;Axis.Visible = QueryViewerVisible.No</pre>
+			</td>
+			<td><sup>(2)</sup></td>
+		</tr>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Visible = false</pre>
+			</td>
+			<td>
+			<pre>
+&amp;Axis.Visible = QueryViewerVisible.Never</pre>
+			</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerAxisType.Row</pre>
+			</td>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerElementType.Axis
+
+&amp;Axis.Axis = QueryViewerAxisType.Rows</pre>
+			</td>
+			<td><sup>(3)(8)</sup></td>
+		</tr>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerAxisType.Column</pre>
+			</td>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerElementType.Axis
+
+&amp;Axis.Axis = QueryViewerAxisType.Columns</pre>
+			</td>
+			<td><sup>(4)(8)</sup></td>
+		</tr>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerAxisType.Page</pre>
+			</td>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerElementType.Axis
+
+&amp;Axis.Axis = QueryViewerAxisType.Pages</pre>
+			</td>
+			<td><sup>(5)(8)</sup></td>
+		</tr>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerAxisType.Data</pre>
+			</td>
+			<td>
+			<pre>
+Axis.Type = QueryViewerElementType.Datum</pre>
+			</td>
+			<td><sup>(6)</sup></td>
+		</tr>
+		<tr>
+			<td>
+			<pre>
+&amp;Axis.Type = QueryViewerAxisType.NotShow</pre>
+			</td>
+			<td>
+			<pre>
+&amp;Axis.Visible = QueryViewerVisible.No</pre>
+			</td>
+			<td><sup>(7)</sup></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><sup>(1)</sup> - If &amp;Axis.Type &lt;&gt; QueryViewerAxisType.NotShow<br />
+<sup>(2)</sup> - If &amp;Axis.Type = QueryViewerAxisType.NotShow<br />
+<sup>(3)</sup> - Add an &quot;s&quot; to Row<br />
+<sup>(4)</sup> - Add an &quot;s&quot; to Column<br />
+<sup>(5)</sup> - Add an &quot;s&quot; to Page<br />
+<sup>(6)</sup> - Axis property is ignored<br />
+<sup>(7)</sup> - The values in the Type and Axis properties can be whatever you want<br />
+<sup>(8)</sup> - The second line is only necessary if the output is Pivot Table.</p>
+
+<h5><a id="Conversion+Example" class="HashLink" href="#Conversion+Example">Conversion Example</a></h5>
+
+<p>The following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Code valid up to GeneXus 17
+&amp;Axis.Name = !&quot;CustomerName&quot; // Some Attribute
+&amp;Axis.Visible = &amp;Visible // Boolean
+&amp;Axis.Type = &amp;Type // QueryViewerAxisType data type ('Row' 'Column' 'Page' 'Data' 'NotShow')
+&amp;Axes.Add(&amp;Axis)</pre>
+
+<p>Has to be changed to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Code valid since GeneXus 17 Upgrade #1
+&amp;Axis.Name = !&quot;CustomerName&quot;
+&amp;Axis.Visible = &amp;Visible // QueryViewerVisible data Type ('Yes' 'No' 'Never')
+&amp;Axis.Type = &amp;Type // QueryViewerElementType ('Axis' 'Datum')
+&amp;Axis.Axis = &amp;AxisItem // QueryViewerAxisType ('Rows' 'Columns' 'Pages')
+&amp;Axes.Add(&amp;Axis)
+</pre>
+
+<p>Otherwise, the following error will appear:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Change True|False to QueryViewerVisible.Yes|QueryViewerVisible.No|QueryViewerVisible.Never
+spc0010 Type mismatch in assignment: &amp;Axis.Visible = &amp;Visible (QueryViewerVisible=Boolean).
+// Change &amp;Type from QueryViewerAxisType to QueryViewerElementType
+spc0010 Type mismatch in assignment: &amp;Axis.Type = &amp;Type (QueryViewerElementType=QueryViewerAxisType).
+// Change QueryViewerAxisType.Page to QueryViewerAxisType.Pages and review the conversion table to decide if a new assignment to &amp;Axis.Type is needed
+spc0010 Type mismatch in assignment: &amp;Axis.Type = QueryViewerAxisType.Page (QueryViewerElementType=QueryViewerAxisType)
+</pre>
+
+<p><h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This property is available since  <a href="46852.html">GeneXus 17 upgrade 1</a>.</p>
+</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  When using GeneXus Server, updating to version 17 Upgrade #1 or higher is recommended; if Query Objects are used programmatically or saved with v17, it is mandatory.</div>
+</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="19603.html">Allow Change Axes Order property</a><br />
+<a href="47159.html">Axis property in Query Element</a><br />
+<a href="47140.html">Visible property</a><br />
+<a href="47137.html">Type property in Query Element</a></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46852.html">GeneXus 17 upgrade 1</a></TD><TD><a href="9105.html">Query Object - Troubleshooting</a></TD><TD><a href="11032.html">Query Object Compatibility</a></TD></TR><TR><TD><a href="25314.html">Toc:Reporting in GeneXus</a></TD><TD><a href="47140.html">Visible property in Query Element</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 12/14/20 06:53 PM</em></font></td></TR></table></font>

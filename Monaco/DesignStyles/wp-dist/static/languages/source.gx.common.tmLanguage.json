@@ -1,0 +1,208 @@
+{
+  "scopeName": "source.gx.common",
+  "name": "GeneXus Common Patterns",
+  "repository": {
+    "procedural": {
+      "patterns": [
+        {
+          "include": "#standard_functions"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#variables"
+        },
+        {
+          "include": "#constants"
+        },
+        {
+          "include": "#comments"
+        }
+      ]
+    },
+    "subs": {
+      "begin": "(?=(?i:sub)\\s+[\\w\\. '\"$]+)",
+      "end": "(?i:endsub)",
+      "endCaptures": {
+        "0": {
+          "name": "storage.modifier.event.gx"
+        }
+      },
+      "name": "meta.event.gx",
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "storage.modifier.event.gx"
+            },
+            "2": {
+              "name": "entity.name.type.event.gx"
+            }
+          },
+          "match": "(?i:(sub))\\s+([\\w\\. '\"$]+)",
+          "name": "meta.event-head.gx"
+        },
+        {
+          "include": "source.gx.common#procedural"
+        }
+      ]
+    },
+    "standard_functions": {
+      "patterns": [
+        {
+          "match": "\\b(?i:(count|error|msg|noaccept|noprompt|serial|sum|today))\\b",
+          "name": "entity.name.function.gx"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "match": "\\b(?i:(and|do|case|endcase|otherwise|each|else|enddo|endfor|endif|endnew|for|if|in|inout|new|none|not|or|order|out|parm|return|when|where|while|composite|endcomposite))\\b",
+          "name": "keyword.control.gx"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "match": "&\\w+\\b",
+          "name": "variable.gx"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "match": "\\b(?i:(true|false|null))\\b",
+          "name": "constant.language.gx"
+        },
+        {
+          "match": "\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)(L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b",
+          "name": "constant.numeric.gx"
+        },
+        {
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.gx"
+            }
+          },
+          "match": "@\"([^\"]|\"\")*\"",
+          "name": "string.quoted.double.literal.gx"
+        },
+        {
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.gx"
+            }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.gx"
+            }
+          },
+          "name": "string.quoted.double.gx",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.gx"
+            }
+          ]
+        },
+        {
+          "begin": "'",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.gx"
+            }
+          },
+          "end": "'",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.gx"
+            }
+          },
+          "name": "string.quoted.single.gx",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.gx"
+            }
+          ]
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "begin": "/\\*",
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.comment.gx"
+            }
+          },
+          "end": "\\*/\\n?",
+          "name": "comment.block.gx"
+        },
+        {
+          "begin": "//",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.gx"
+            }
+          },
+          "end": "$\\n?",
+          "name": "comment.line.double-slash.gx"
+        }
+      ]
+    },
+    "structure_item": {
+      "patterns": [
+        {
+          "match": "([\\w$]+)",
+          "name": "variable.other.property.structure_item.gx"
+        }
+      ]
+    },
+    "structure_level_body": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "meta.level.body.gx",
+      "patterns": [
+        {
+          "include": "#structure_item"
+        },
+        {
+          "include": "#properties_body"
+        },
+        {
+          "include": "#structure_level_body"
+        }
+      ]
+    },
+    "properties_body": {
+      "begin": "\\[",
+      "end": "\\]",
+      "name": "meta.block.properties.gx",
+      "patterns": [
+        {
+          "include": "#properties_body_innards"
+        }
+      ]
+    },
+    "properties_body_innards": {
+      "patterns": [
+        {
+          "include": "#procedural"
+        },
+        {
+          "match": "([\\w$]+)(=)?",
+          "name": "property.gx"
+        }
+      ]
+    }
+  }
+}

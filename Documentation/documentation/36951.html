@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to Deploy an Application to Docker</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?36951,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to Deploy an Application to Docker</h1>
+<!--How to Deploy an Application to Docker--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Use the steps described in this article to easily deploy and run Java, .NET and .NET Core generated applications in a Docker Container.</p>
+
+<p>Note that these steps help you to deploy the generated programs, not the database. To deploy the database refer to <a href="34476.html">Export Reorganization</a>. For further options refer to <a href="32092.html">Application Deployment tool</a>.</p>
+
+<p><strong>Software Requirements:</strong></p>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?39548,," target="_blank">Docker for Windows</a> (*)</li>
+</ul>
+
+<h2><a id="Steps+to+deploy+to+Docker" class="HashLink" href="#Steps+to+deploy+to+Docker">Steps to deploy to Docker</a></h2>
+
+<ol>
+	<li>Before you deploy your application for the first time to a specific target (eg.: production), we recommend creating a new environment in the Knowledge Base so that it:
+	<ul>
+		<li>runs locally in the Tomcat or IIS of the computer used to work with GeneXus and</li>
+		<li>is connected to the target (eg.: production) database</li>
+	</ul>
+	</li>
+	<li>Build All</li>
+	<li>Go to the Build menu and select the <a href="32092.html">Application Deployment tool</a> option</li>
+	<li>In the Deployment screen:
+	<ol>
+		<li>Select the Main objects to be included in the deployment</li>
+		<li>In Target, select the option &quot;Docker Image&quot;</li>
+		<li>Set the following properties as indicated below (All fields have default values):
+		<ol>
+			<li><a href="https://wiki.genexus.com/commwiki/wiki?37047,," target="_blank">Docker base image property</a>: The image that is used as a base to create the new one</li>
+			<li><a href="37048.html">Maintainer name property</a>: The name of the Author of the image; it's set as part of the metadata of the image</li>
+			<li><a href="40607.html">Docker Environment variables property</a>: All the environment variables you wish the image to have already instanced</li>
+			<li><a href="37049.html">Image WebApp location property</a>: The path inside the docker image where the application runs</li>
+			<li><a href="37050.html">Docker image name property</a>: The name of the generated docker image</li>
+		</ol>
+		</li>
+	</ol>
+	</li>
+	<li>Click on the Deploy button to create the Docker Image. The Ouput sends feedback about the process and the location of the generated files.</li>
+</ol>
+
+<p>Now run the following command, in the Windows command prompt, to list the Docker images, including the one you created in the previous steps</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker images</pre>
+
+<h2><a id="Steps+to+run+the+Docker+Image" class="HashLink" href="#Steps+to+run+the+Docker+Image">Steps to run the Docker Image</a></h2>
+
+<h3><a id="Java" class="HashLink" href="#Java">Java</a></h3>
+
+<p>Java environments generate images based on Linux. To run a container based on the previously created image - positioned at the directory where is the Dockerfile - execute the following command. See (<a href='https://docs.docker.com/engine/reference/commandline/run/'>run command</a>).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -p 9999:8080 &lt;Docker image name&gt;</pre>
+
+<p>where:</p>
+
+<ul>
+	<li>--rm indicates that the container is deleted once it is shut down</li>
+	<li>-p 9999:8080 indicates that the port 8080 (Tomcat default) of the container is exposed as 9999 on the host</li>
+	<li>&lt;Docker image name&gt; is the one created in the previous step</li>
+</ul>
+
+<p>After successfully running this command, you can access the application's main object at http://localhost:9999/servlet/&lt;Java package name&gt;.&lt;qualified object's name&gt;.</p>
+
+<h3><a id="C%23" class="HashLink" href="#C%23">C#</a></h3>
+
+<p>C# environments generate images based on Windows. To run a container based on the previously created image, execute the following command - positioned at the directory where is the Dockerfile.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -p 9999:80 &lt;Docker image name&gt;</pre>
+
+<p>where:</p>
+
+<ul>
+	<li>--rm indicates that the container is deleted once it is shut down</li>
+	<li>-p 9999:80 indicates that the port 80 (IIS default) of the container is exposed as 9999 on the host</li>
+	<li>&lt;Docker image name&gt; is the one created in the previous step</li>
+</ul>
+
+<p class="Code">Note: After a while, an error will be shown in the output, but you can ignore it (.ref <a href='https://github.com/Microsoft/aspnet-docker/issues/69'>https://github.com/Microsoft/aspnet-docker/issues/69</a>)</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ERROR ( message:Cannot find requested collection element. )
+Applied configuration changes to section &quot;system.applicationHost/applicationPools&quot; for &quot;MACHINE/WEBROOT/APPHOST&quot; at configuration commit path &quot;MACHINE/WEBROOT/APPHOST&quot;
+</pre>
+
+<p>After successfully running this command, you can access the application's main object at http://localhost:9999/&lt;qualified object's name&gt;.aspx.</p>
+
+<ul>
+</ul>
+
+<h3><a id="NET+Core" class="HashLink" href="#NET+Core">NET Core</a></h3>
+
+<p>.NET Core environments generate images based on Linux. To run a container based on the previously created image, execute the following command.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker run --rm -p 9999:80 &lt;Docker image name&gt;</pre>
+
+<p>where:</p>
+
+<ul>
+	<li>--rm indicates that the container is deleted once it is shut down</li>
+	<li>-p 9999:80 indicates that the port 80 (web default) is exposed as 9999 on the host</li>
+	<li>&lt;Docker image name&gt; is the one created in the previous step</li>
+</ul>
+
+<p>After successfully running this command, you can access the application's main object at http://localhost:9999/&lt;qualified object's name&gt;.aspx.</p>
+
+<h3><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h3>
+
+<ul>
+	<li>Using default Docker base images
+	<ul>
+		<li><a href="8079.html">Protocol specification property</a> must not be set to HTTPS in .NET and .NET Core</li>
+		<li>Sites are accessed via HTTP</li>
+	</ul>
+	</li>
+	<li>Deployment package (war) created in Java is compatible with Tomcat 8.x</li>
+	<li>Deployment package created in .NET or .NET Core is compatible with IIS 8 (or higher)</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?36955,," target="_blank">Troubleshooting deployment to Docker Containers</a></li>
+	<li><a href="42073.html">Application Deployment MSBuild tasks</a></li>
+</ul>
+
+<h2><a id="FAQ" class="HashLink" href="#FAQ">FAQ</a></h2>
+
+<p>1) I already have my own images where I want my apps to run. Can I deploy my app to those?</p>
+
+<p>Yes, you can. You can change the default base image to be used by Genexus in the <a href="https://wiki.genexus.com/commwiki/wiki?37047,," target="_blank">Docker base image property</a>. There you can set your own image and the docker client will try to pull it from a registry if it's not available on your computer. Keep in mind that the <a href="37049.html">image WebApp location</a> property might also be necessary to be changed.</p>
+
+<p>(*) As of <a href="https://wiki.genexus.com/commwiki/wiki?45275,," target="_blank">GeneXus 16 upgrade 9</a>, you can generate the dockerfile even without the 'Docker for windows' requirement. For that, use this feature and select the option to deploy to docker as usual. <br />
+A warning will appear 'warning: Dockerfile successfully created but no docker image was generated because Docker client was not found.' in that case.</p>
+
+<p><br />
+</p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="39459.html">Application Configuration using Environment Variables</a></TD><TD><a href="32092.html">Toc:Application Deployment tool</a></TD></TR><TR><TD><a href="45309.html">Considerations for building and deploying applications to containers</a></TD><TD><a href="44673.html">Continuous Deployment</a></TD></TR><TR><TD><a href="42079.html">Deploy Application Targets</a></TD><TD><a href="40607.html">Docker Environment variables property</a></TD></TR><TR><TD><a href="37050.html">Docker image name property</a></TD><TD><a href="37049.html">Docker Image WebApp location property</a></TD></TR><TR><TD><a href="37048.html">Maintainer name property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/02/21 07:30 PM</em></font></td></TR></table></font>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using Devices Registration Service for Push Notifications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18149,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using Devices Registration Service for Push Notifications</h1>
+<!--HowTo: Using Devices Registration Service for Push Notifications--><div class="TableWikiBody" id="tblwikibody"><p>Every time an end-user executes a GeneXus application that has <a href="49799.html">Enable Notifications property</a> enabled, the service configured in the <a href="22981.html">Registration Handler property</a> is automatically executed in order to register and store the device information to be used in the future to send messages to the device.</p>
+
+<p>A <a href="6293.html">Procedure object</a> called <em>NotificationsRegistrationHandler</em> is included as a sample of this service. You can find it in the <a href="3210.html">KB Explorer</a> under <strong>Root Module &gt;  GeneXus &gt; SD &gt; Notifications </strong>with a typical implementation.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Rules:
+   parm(in:&amp;DeviceType, in:&amp;DeviceId, in:&amp;DeviceToken, in:&amp;DeviceName);
+
+Code: 
+   for each
+      where DeviceType = &amp;DeviceType
+      where DeviceId  = &amp;DeviceId   
+      DeviceToken = &amp;DeviceToken    
+      DeviceName = &amp;DeviceName      
+   when none
+      new
+         DeviceType  = &amp;DeviceType
+         DeviceId = &amp;DeviceId
+         DeviceToken = &amp;DeviceToken
+         DeviceName = &amp;DeviceName
+      endnew
+   endfor
+</pre>
+
+<p>The <a href="6862.html">Parm rule</a> must have these four parameters in order to retrieve the device information.</p>
+
+<ul>
+	<li>&amp;DeviceType : SmartDeviceType</li>
+	<li>&amp;DeviceId : Character(128)</li>
+	<li>&amp;DeviceToken : Character(1000)</li>
+	<li>&amp;DeviceName :Character(128).</li>
+</ul>
+
+<p>After the execution of the service, information like the following is registered:</p>
+
+<ul>
+	<li><strong>DeviceType</strong> :<br />
+	   iOS or Android</li>
+	<li><strong>DeviceId</strong> :<br />
+	   8bb3ud27c7cce885b1c41a3cf5f5bd3m4b22w96d</li>
+	<li><strong>DeviceToken</strong> :<br />
+	When the <a href="33670.html">Notifications Provider property</a> has a value different from &quot;None&quot;, this token contains information about the device in a JSON format.<br />
+	An example of these data (using OneSignal as Notification Provider) look as follows:<br />
+	   {<br />
+	       &quot;DeviceToken&quot;: &quot;PJy0nafLvZiXvbGlmYuidCpA7JY5ryuW30KoQmpOs=&quot;,<br />
+	       &quot;DeviceId&quot;: &quot;8bb3ud27c7cce885b1c41a3cf5f5bd3m4b22w96d&quot;,<br />
+	       &quot;DeviceType&quot;: 1,<br />
+	       &quot;NotificationPlatform&quot;: &quot;OneSignal&quot;, <br />
+	       &quot;NotificationPlatformId&quot;: fb508412-2f91-46b1-90e1-f052247d1f8c<br />
+	   }</li>
+</ul>
+
+<p style="margin-left: 40.0px;">*If the DBMS is <em>MySql</em>, <em>DeviceToken</em> must be defined as <em>VarChar(1000)</em>, not Char(1000), otherwise it won't record the entire Token</p>
+
+<p style="margin-left: 40.0px;">If no Notification Provider is used, the token should look as follows:<br />
+    PJy0nafLvZiXvbGlmYuidCpA7JY5ryuW30KoQmpOs=</p>
+
+<ul>
+	<li><strong>DeviceName</strong> :<br />
+	   iPhone Mary</li>
+</ul>
+
+<p>With this information, you can start <a href="33687.html">sending</a> messages to registered devices (those that use your application).</p>
+
+<h3><a id="Note+" class="HashLink" href="#Note+">Note </a></h3>
+
+<ul>
+	<li>If you have a completely offline application and you need this Registration Handler procedure to be generated offline exclusively, set <a href="11872.html">Main property</a> = False and <a href="20911.html">Connectivity Support property</a> = Offline</li>
+	<li>Device registration does not work if the developer is prototyping with KBN (Knowledge Base Navigator) or simulators.</li>
+	<li>The Registration Handler service is called when the application is opened.</li>
+</ul>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="17451.html">HowTo: Configuring Push Notifications in iOS Applications</a><br />
+<a href="18147.html">HowTo: Configuring Push Notifications in Android Applications</a></p>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<ul>
+	<li>Android devices are not being registered
+	<ul>
+		<li><span style="color: rgb(38,38,38);font-family: arial , sans-serif;line-height: 16.0px;">Android Sender Id and/or Android Sender API Key properties from the main object are not set.</span></li>
+		<li><span style="color: rgb(38,38,38);font-family: arial , sans-serif;line-height: 16.0px;">Simulators without </span><span style="color: rgb(38,38,38);font-family: arial , sans-serif;line-height: 16.0px;">Google Play Services don't support Firebase, so they are not being registered. Use devices instead.</span></li>
+	</ul>
+	</li>
+</ul>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18147.html">HowTo: Configuring Push Notifications in Android Applications</a></TD></TR><TR><TD><a href="17451.html">HowTo: Configuring Push Notifications in iOS Applications</a></TD><TD><a href="30621.html">HowTo: Push Notifications using external provider</a></TD></TR><TR><TD><a href="19945.html">Push Notifications in Native Mobile Applications</a></TD></TR><TR><TD><a href="22981.html">Registration Handler property</a></TD><TD><a href="39412.html">RemoteNotificationResult external object</a></TD><TD><a href="39399.html">RemoteNotifications external object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 12/16/21 04:41 PM</em></font></td></TR></table></font>

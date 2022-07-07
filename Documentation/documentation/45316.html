@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Userinfo GAM Service</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45316,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Userinfo GAM Service</h1>
+<!--Userinfo GAM Service--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>It's a REST service to obtain the user's information.</p>
+
+<p>Through the service /oauth/gam/userinfo it is possible to obtain the user's information.<br />
+Before running the service, authentication is required. To this end, you must obtain an Oauth 2.0 token through the service <a href="45320.html">access_token</a>. The service is then invoked through the GET or POST methods.</p>
+
+<h3><a id="Endpoint" class="HashLink" href="#Endpoint">Endpoint</a></h3>
+
+<p>$ServerURL/oauth/gam/userinfo</p>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h3>
+
+<p>For this to work, a certain configuration is needed at the level of the GAM Application where the service is configured:</p>
+
+<p><img src="./images/45317.png" id="45317" class="WikiImage"/></p>
+
+<ul>
+	<li>
+	<p class="Code">&amp;GAMApplication.ClientAllowRemoteAuthentication = True. (Although GAM requests that a ClientCallbackURL and a ClientLocalLoginURL be indicated, they will not be used in this case.)</p>
+	</li>
+	<li>
+	<p class="Code">&amp;GAMApplication.ClientAllowGetUserRoles = True. (If you want to get the user's roles.)</p>
+	</li>
+	<li>
+	<p class="Code">&amp;GAMApplication.ClientAllowGetUserAdditionalData = True. (To obtain the <a href="https://wiki.genexus.com/commwiki/wiki?19639,," target="_blank">dynamic attributes of the user.</a>)</p>
+	</li>
+</ul>
+
+<h3><a id="GET" class="HashLink" href="#GET">GET</a></h3>
+
+<p>In this case, the authentication token (&amp;access_token) goes in the header.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;method = !&quot;GET&quot;
+&amp;headername = &quot;Authorization&quot;
+&amp;headervalue = &quot;OAuth &quot; + &amp;access_token
+
+&amp;getstring = &amp;urlbase + &quot;/oauth/gam/userinfo&quot;
+
+&amp;httpclient.AddHeader(&amp;headername, &amp;headervalue)
+&amp;httpclient.AddHeader(&quot;GeneXus-Agent&quot;,&quot;SmartDevice Application&quot;)
+&amp;httpclient.Execute(&amp;method, &amp;getstring)
+
+&amp;httpstatus = &amp;httpclient.StatusCode
+&amp;result = &amp;httpclient.toString()
+</pre>
+
+<h3><a id="POST" class="HashLink" href="#POST">POST</a></h3>
+
+<p>In this case, the authentication token (&amp;access_token) goes in the body.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;method = !&quot;POST&quot;
+
+&amp;getstring = &amp;urlbase + &quot;/oauth/gam/userinfo&quot;
+
+&amp;httpclient.AddHeader(&quot;GeneXus-Agent&quot;, &quot;SmartDevice Application&quot;)
+&amp;httpclient.AddVariable(!&quot;access_token&quot;, &amp;access_token)
+&amp;httpclient.Execute(&amp;method, &amp;getstring)
+
+&amp;httpstatus = &amp;httpclient.StatusCode
+&amp;result = &amp;httpclient.toString()
+</pre>
+
+<h3><a id="Response" class="HashLink" href="#Response">Response</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{
+    &quot;guid&quot;:&quot;139f4332-3f40-47b0-8fb4-ee7b3dbddc4f&quot;,
+    &quot;username&quot;:&quot;admin&quot;,
+    &quot;email&quot;:&quot;admin&quot;,
+    &quot;verified_email&quot;:true,
+    &quot;first_name&quot;:&quot;Administrator&quot;,
+    &quot;last_name&quot;:&quot;User&quot;,
+    &quot;external_id&quot;:&quot;&quot;,
+    &quot;birthday&quot;:&quot;2000-01-01&quot;,
+    &quot;gender&quot;:&quot;N&quot;,
+    &quot;url_image&quot;:&quot;https://&quot;,
+    &quot;url_profile&quot;:&quot;&quot;,
+    &quot;phone&quot;:&quot;+598&quot;,
+    &quot;address&quot;:&quot;.&quot;,
+    &quot;city&quot;:&quot;.&quot;,
+    &quot;state&quot;:&quot;.&quot;,
+    &quot;post_code&quot;:&quot;.&quot;,
+    &quot;language&quot;:&quot;Eng&quot;,
+    &quot;timezone&quot;:&quot;.&quot;,
+    &quot;CustomInfo&quot;:&quot;&quot;,
+    &quot;roles&quot;:[&quot;is_gam_administrator&quot;]
+}
+</pre>
+
+<p></p>
+
+<p></p>
+
+<p class="Code"></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

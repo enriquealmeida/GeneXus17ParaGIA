@@ -1,0 +1,177 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Sub Extra Grids Event Load" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="iGenObj" Type="DVelop.Patterns.WorkWithPlus.IGeneratedObject" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="grids" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="paginationBarSettings" Type="DVelop.Patterns.WorkWithPlus.SettingsPaginationBarActionElement" %>
+<%@ Property Name="isWizardStep" Type="System.Boolean" %>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+<%
+	if (Object.TypeName == "SDPanel")
+	{
+		return;
+	}
+
+	foreach (IGrid grid in grids)
+    {
+%>
+
+Event <%= grid.GetControlName() %>.Load
+
+<%= grid.GetLoadCode(wwInstance, iGenObj) %>
+<%@ CallSubTemplate SubLinkAttributes Attributes='grid.GetAllAttributesAndVariablesOfThisGrid(true, true)' LinkAssocToImage='false' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+<%
+		if (grid.HasMultiRowActions())
+		{
+			if (grid.IsGXUIMultiRowSelectionAndCheckAll())
+			{
+%>
+	&<%= grid.GetControlName() %>Selected = &<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>					
+<%			}
+			else
+			{	
+%>
+	&<%= grid.GetControlName() %>Selected = false
+<%
+			}
+		}
+
+		if (grid is GridGeneralElement)
+		{
+			foreach (VariableElement var in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+			{
+				if (var.GetLoadCode() != "")
+				{
+%>
+	<%= var.GetLoadCode() %>
+<%		
+				}
+			}
+		}
+		else if (grid is FreeStyleGridWPElement)
+		{
+			FreeStyleGridWPElement freeStyleGrid = (FreeStyleGridWPElement)grid; 	
+			foreach (WebComponentElement webComp in freeStyleGrid.AllWebComponents())
+			{
+%>		
+	<%= webComp.GetCreateWebComponentCall() %>
+<%
+			}
+		}
+		if (isWizardStep && grid.HasMultiRowActions())
+		{
+			string equalsCondition = "";
+			bool hasEditableVariable = false;
+			foreach (IAttributesItem attItem in grid.GetAllAttributesAndVariablesOfThisGrid(true, true))
+			{
+				if (attItem is VariableElement && !((VariableElement)attItem).IsReadOnly())
+				{
+					hasEditableVariable = true;
+					if (((VariableElement)attItem).GetLoadCode() == "")
+					{
+%>
+	<%= attItem.Name %><%= ((VariableElement)attItem).eDBType == Artech.Genexus.Common.eDBType.Boolean ? " = False" : ".SetEmpty()" %>
+<%
+					}
+				}
+				else
+				{
+					if (equalsCondition != "")
+					{
+						equalsCondition += Environment.NewLine + "\t\t\tAND ";
+					}
+					equalsCondition += "&" + grid.GetControlName() + "SelectedRow." + attItem.Id + " = " + attItem.Name;
+				}
+			}
+
+%>
+	For &<%= grid.GetControlName() %>SelectedRow in &WizardData.<%= ((StepElement)iGenObj).Name %>.<%= grid.GetControlName() %>
+		If <%= equalsCondition %>
+			&<%= grid.GetControlName() %>Selected = True
+<%
+			if (hasEditableVariable)
+			{
+				foreach (IAttributesItem attItem in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+				{
+					if (!((VariableElement)attItem).IsReadOnly())
+					{
+%>
+			<%= attItem.Name %> = &<%= grid.GetControlName() %>SelectedRow.<%= attItem.Id %>
+<%
+					}
+				}
+			}
+%>
+			Exit
+		EndIf
+	EndFor
+<%
+		}
+%>
+<%= Indentation.Indent(grid.GetConditionalFormattingCode(), 1) %>
+EndEvent
+
+<%
+	}
+
+    foreach (IGrid grid in grids)
+    {
+		if (grid.HasMultiRowActions())
+		{
+			string selectedRowsName, selectedRowsNameInit;
+			if (isWizardStep)
+			{
+				selectedRowsName = "WizardData." + ((StepElement)iGenObj).Name + "." + grid.GetControlName();
+				selectedRowsNameInit = ".Clear()";
+			}
+			else
+			{
+				selectedRowsName = grid.GetControlName() + "SelectedRows";
+				selectedRowsNameInit = " = new()";
+			}
+%>
+Sub 'Load<%= grid.GetControlName() %>SelectedRows'
+	&<%= selectedRowsName %><%= selectedRowsNameInit %>
+	For Each Line in <%= grid.GetControlName() %>
+		If (&<%= grid.GetControlName() %>Selected)
+			&<%= grid.GetControlName() %>SelectedRow = new()
+
+<%
+			foreach (IAttributesItem attItem in grid.GetAllAttributesAndVariablesOfThisGrid(true, true))
+			{
+%>
+			&<%= grid.GetControlName() %>SelectedRow.<%= attItem.Id %> = <%= attItem.Name %>
+<%
+			}
+%>
+
+			&<%= selectedRowsName %>.Add(&<%= grid.GetControlName() %>SelectedRow)
+		Endif
+	Endfor
+<%
+			if (grid.IsGXUIMultiRowSelectionAndCheckAll())
+			{
+%>
+	&<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %> = False
+<%		
+			}
+%>
+EndSub
+
+<%
+		}
+		if (grid.IncludePagBar())
+		{
+%>
+
+<%= paginationBarSettings.GetPaginationBarCode(grid) %>
+
+<%
+		}
+	}
+%>

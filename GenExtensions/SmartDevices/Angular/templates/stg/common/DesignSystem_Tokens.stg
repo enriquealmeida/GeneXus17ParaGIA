@@ -1,0 +1,63 @@
+delimiters "$", "$"
+
+g_dso_tokens(page, gx) ::= 
+<<
+$page.Tokens:g_dso_token_group()$
+
+// prefers-color-scheme
+$page.PrefersColorScheme.Tokens:g_dso_tokens_color_scheme(); separator="\n"$
+>>
+
+g_dso_tokens_color_scheme(colorScheme) ::=
+<<
+@media (prefers-color-scheme: $colorScheme$) {
+	$page.Tokens:{ tokenGroup | $if(tokenGroup.ColorScheme.(colorScheme))$$g_dso_token_group(tokenGroup, true)$$endif$ }$
+}
+>>
+
+g_dso_token_group(tokenGroup, excludeColorScheme=false) ::= 
+<<
+$if (tokenGroup.Values)$
+$g_dso_token_group_selector(tokenGroup.Options, tokenGroup.OptionsType, tokenGroup.ColorScheme.Value, excludeColorScheme)$ {
+	$g_dso_token_group_body(tokenGroup.Values)$
+}
+$endif$
+>>
+
+g_dso_token_group_selector(options, optionsType, colorScheme, excludeColorScheme) ::=
+<%
+$if (colorScheme)$
+$if (excludeColorScheme)$
+:not([data-gx-ds-opt-color-scheme])
+$else$
+$(g_dso_token_option_type.(page.PrefersColorScheme.OptionType.(colorScheme)))("color-scheme", colorScheme)$
+$endif$
+$endif$
+
+$if (options)$
+$options.keys:{ k | $(g_dso_token_option_type.(optionsType.(k)))(k, options.(k))$}$
+$elseif(!colorScheme)$
+:root
+$endif$
+%>
+
+g_dso_token_group_selector_option(name, value) ::=
+<%
+[data-gx-ds-opt-$name$="$value$" i]
+%>
+
+g_dso_token_group_selector_option_default(name, value) ::=
+<%
+:is($g_dso_token_group_selector_option(name, value)$, :not([data-gx-ds-opt-$name$]))
+%>
+
+g_dso_token_group_body(values) ::= 
+<<
+$values.keys:{ k | --$k$: $values.(k)$;};separator="\n"$
+>>
+
+g_dso_token_option_type ::=
+[
+	"default":"g_dso_token_group_selector_option_default",
+	"standard":"g_dso_token_group_selector_option"
+]

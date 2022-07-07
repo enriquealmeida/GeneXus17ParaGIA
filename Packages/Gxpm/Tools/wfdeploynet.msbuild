@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Deploy">
+	<PropertyGroup>
+		<UnzipExe>$(MSBuildProjectDirectory)\Unzip.exe</UnzipExe>
+		<LibDir>$(BinDir)</LibDir>
+		<StaticDir>$(ModelDir)</StaticDir>
+		<SharedDir>$(StaticDir)\Shared</SharedDir>
+		<VersionFile>B01.WFVer</VersionFile>
+		<RuntimeTranslation>false</RuntimeTranslation>
+		<GXRootDir>$(MSBuildProjectDirectory)\..\..\..</GXRootDir>
+		<GXNetDir>$(GXRootDir)\gxnet</GXNetDir>
+		<GXModuleDir>$(GXRootDir)\Modules</GXModuleDir>
+		<GAMVersion></GAMVersion>
+	</PropertyGroup>
+
+	<Target Name="CreateDirectories" >
+		<MakeDir Directories="$(ModelDir);$(BinDir);$(StaticDir);$(SharedDir)" />
+		<MakeDir Directories="$(LibDir)" Condition="'$(LibDir)' != ''" />
+	</Target>
+
+	<Target Name="CopyApi" DependsOnTargets="CreateDirectories">
+		<Copy SourceFiles="$(MSBuildProjectDirectory)\..\WFApi\wapi.dll" DestinationFolder="$(LibDir)" SkipUnchangedFiles="true" />
+	</Target>
+
+	<ItemGroup>
+		<VersionFilePath Include="$(ModelDir)\$(VersionFile)" />
+		<VersionFileContent Include="." />
+		<VersionFiles Include="$(ModelDir)\*.WFVer" />
+	</ItemGroup>
+
+	<Target Name="CopyQueryFiles" DependsOnTargets="CreateDirectories" Condition="'$(PlatformDir)' != ''">
+		<CreateItem Include="$(GXNetDir)\QueryViewer\bin\*.dll">
+			<Output TaskParameter="Include" ItemName="gxpl_dlls"/>		  
+		</CreateItem>
+		<Copy SourceFiles="@(gxpl_dlls)" DestinationFolder="$(BinDir)" SkipUnchangedFiles="true" />
+	</Target>
+	
+	<Target Name="CopyGAMModuleFiles" DependsOnTargets="CreateDirectories" Condition="'$(PlatformDir)' != ''">
+		<CreateItem Include="$(GXModuleDir)\GeneXusSecurity_$(GAMVersion).opc">
+			<Output TaskParameter="Include" ItemName="GAMModule"/>	  
+		</CreateItem>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "@(GAMModule)" Platforms\CSharpWeb\*.dll -d "$(BinDir)"'/>
+	</Target>	
+	
+	<Target Name="CopyClientFiles" DependsOnTargets="CopyQueryFiles" Condition="'$(PlatformDir)' != ''">
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" bin\*.* -d "$(BinDir)"'/>
+		<Delete Files="$(StaticDir)\gxflowimages.txt" ContinueOnError="true"/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" resources\*.* -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -o "$(PlatformDir)\WFRuntime.zip" private\*.* -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -o "$(MSBuildProjectDirectory)\..\Resources\GXflowResources.zip" -x *.db -d "$(StaticDir)"'/>
+		<Delete Files="$(ModelDir)\gxflowimages.txt" Condition="'$(StaticDir)' != '$(ModelDir)'" ContinueOnError="true"/>
+		<Copy SourceFiles='$(StaticDir)\GXflowImages.txt' DestinationFolder='$(ModelDir)' Condition="'$(StaticDir)' != '$(ModelDir)'" />
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -o "$(MSBuildProjectDirectory)\..\Resources\gxflowui.zip" -x *.db -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)"  -o "$(MSBuildProjectDirectory)\..\Resources\DynamicForm.zip" -x *.db -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -o "$(MSBuildProjectDirectory)\..\Resources\CKEditor.zip" -d "$(StaticDir)"'/>
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -o "$(MSBuildProjectDirectory)\..\Resources\ext.zip"  -x *.db -d "$(SharedDir)"'/>		
+		<Exec IgnoreExitCode="true" Command='"$(UnzipExe)" -o "$(MSBuildProjectDirectory)\..\Protection\NetProt.zip" -d "$(LibDir)"' />
+		
+		<CreateItem Include="$(MSBuildProjectDirectory)\..\Documents\dotNet\FullTextSearch\*.dll">
+			<Output TaskParameter="Include" ItemName="FullTextLibs"/>
+		</CreateItem>
+		<Copy SourceFiles='@(FullTextLibs)' DestinationFolder='$(BinDir)'/>
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\Documents\dotNet\PKI\GXflow.PKI.Server.dll' DestinationFolder='$(BinDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\GXflow.Programs.WFHttpHandlerFactory.dll' DestinationFolder='$(BinDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\dotNet\GXflow.Programs.Rules.dll' DestinationFolder='$(BinDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\dotNet\CycleParser.dll' DestinationFolder='$(BinDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\dotNet\ISO8601Lib.dll' DestinationFolder='$(BinDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\RuleEvaluator\dotNet\Antlr4.Runtime.Standard.dll' DestinationFolder='$(BinDir)' />
+		<Copy SourceFiles='$(MSBuildProjectDirectory)\..\WFCache\dotNet\wfcache.dll' DestinationFolder='$(BinDir)' />
+		<Delete Files="@(VersionFiles)" />
+		<WriteLinesToFile File="@(VersionFilePath)" Lines="@(VersionFileContent)" Overwrite="true" Condition="'$(VersionFile)' != ''" />
+	</Target>
+
+	<Target Name="CopyMessages" DependsOnTargets="CreateDirectories">
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.js -d "$(StaticDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+		<Exec IgnoreExitCode="false" Command='"$(UnzipExe)" -j -o "$(PlatformDir)\WFRuntime.zip" messages\*.dll -x *.js -d "$(BinDir)"' Condition="'$(RuntimeTranslation)'=='false'" />
+	</Target>
+
+	<Target Name="Deploy">
+		<CallTarget Targets="CopyApi" />
+		<CallTarget Targets="CopyGAMModuleFiles" />		
+		<CallTarget Targets="CopyClientFiles" />
+	</Target>
+</Project>

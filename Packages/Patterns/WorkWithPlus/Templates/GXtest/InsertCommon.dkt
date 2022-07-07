@@ -1,0 +1,49 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="Insert Common Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="gridLevelName" Type="System.String" %>
+<%@ SubTemplate Name="IncludedTestCase" File="IncludedTestCase.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DummyEvent" File="DummyEvent.dkt" MergeProperties="True"%>
+<%
+	int levelIndex = -1;
+	bool isGridLevel = false;
+	IEnumerator<TransactionLevel> iterator =  myInstance.Transaction.Transaction.Structure.GetLevels().GetEnumerator();
+	while (iterator.MoveNext())
+	{
+		Artech.Genexus.Common.Parts.TransactionLevel level = iterator.Current;
+		string levelName = TransactionHelper.GetFullLevelName(level,myInstance.GXTest.DataPoolName);
+		string firstLevelAttributeName = TransactionHelper.GetFirstAttributeNameFromLevel(level);
+		
+		if (level!= myInstance.Transaction.Transaction.Structure.Root) // Not First Level
+		{
+			gridLevelName = WebFormHelper.GetLevelControlTypeName(Object,level.Name,basicElements);
+			isGridLevel = WebFormHelper.IsAttributeUsedInGridLevel(firstLevelAttributeName,basicElements);
+		}
+		levelIndex = isGridLevel?1:0;
+		string levelOutput = FileHelper.GenerateLevelTestCase(Object,Part,model,myInstance,level,levelName,gridLevelName,levelIndex.ToString(),firstLevelAttributeName,basicElements,GXTestConstants.GridLevelInsertTemplate);
+		string levelNameDefault = string.Format("{0}_{1}_{2}",levelName,level.Name,GXTestConstants.WWInsertAction);
+		if (isGridLevel)
+		{
+			string completeLevelOutput = FileHelper.GenerateCompleteTestCase(Object,Part,model,levelOutput);
+			FileHelper.GenerateTestCaseInFile(Object,model,myInstance,completeLevelOutput,levelNameDefault);	
+%>
+<%@ CallSubTemplate DummyEvent IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+</Node>
+<%@ CallSubTemplate IncludedTestCase repetionNumber='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumn='GXTestConstants.DataPoolRowCount' testCaseName='levelNameDefault' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<Node Object="<%=Object.Name%>" ObjectType="<%=Object.TypeDescriptor.Name%>" title="<%=Object.Description%> <%=GXTestConstants.WWInsertAction%> after">
+<%@ CallSubTemplate DummyEvent IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+		else
+		{
+%>
+<%=levelOutput%>
+<%
+		}
+	}
+%>

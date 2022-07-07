@@ -1,0 +1,243 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tab Web Form" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Include Name="SearchButton.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Patterns.WorkWith.WorkWithInstance" %>
+<%@ Property Name="GridObject" Type="Artech.Patterns.WorkWith.IGridObject" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<Part type="<%= PartType.WebForm %>">
+	<Source><![CDATA[<%
+
+	WorkWithSettings settings = Instance.Settings;
+
+	bool hasFilters = (GridObject.Filter != null && GridObject.Filter.Attributes.Count > 0);
+	ActionElement search = SearchButton.Prepare(Object, GridObject);
+
+	// Dummy vars
+	bool needCurrentPage = false;
+
+%>
+<BODY>
+	<%= WebForm.BeginTable("Table", settings.Theme.ViewTable, 0, 0) %>
+<%
+	if (GridObject.Description != String.Empty)
+	{
+%>
+		<TR>
+			<TD>
+				<%= WebForm.TextBlock("TitleText", settings.Theme.Subtitle, GridObject.Description) %>
+			</TD>
+		</TR>
+<%
+	}
+	
+	if (hasFilters || GridObject.Orders.NeedsChoice)
+	{
+%>
+		<TR>
+			<TD>
+				<%= WebForm.BeginTable(Constants.SearchTableName, String.Empty) %>
+<%
+		if (GridObject.Orders.NeedsChoice)
+		{
+%>
+					<TR>
+						<TD>
+							<%= WebForm.TextBlock("OrderedText", settings.Theme.PlainText, settings.Labels.OrderedBy) %>
+						</TD>
+						<TD>
+							<%= WebForm.Variable(OrdersElement.OrderVariable) %>
+						</TD>
+<%
+			if (search != null && !hasFilters)
+			{
+				// Search is normally next to filters, but since there are none (and there is an order combo) it goes here.
+%>
+						<TD>
+							<%= search.ToHtml() %>
+						</TD>
+<%
+			}
+%>
+					</TR>
+<%
+		}
+
+		if (hasFilters)
+		{
+			foreach (FilterAttributeElement filterVar in GridObject.Filter.Attributes)
+			{
+				bool isLastFilter = (GridObject.Filter.Attributes.IndexOf(filterVar) == GridObject.Filter.Attributes.Count - 1);
+
+				// ControlInfo fvControlInfo = new ControlInfo(filterVar);
+%>
+					<TR>
+						<TD>
+							<%= WebForm.TextBlock("FilterText" + filterVar.Name, settings.Theme.PlainText, filterVar.Description) %>
+						</TD>
+						<TD>
+							<%= WebForm.Variable(filterVar.Name) %>
+						</TD>
+<%
+				if (isLastFilter && search != null)
+				{
+%>
+						<TD>
+							<%= search.ToHtml() %>
+						</TD>
+<%
+				}
+%>
+					</TR>
+<%
+			}
+		}
+%>
+					<TR>
+						<TD>
+							<%= WebForm.TextBlock("TableSeparator", settings.Theme.Separator, " ") %>
+						</TD>
+					</TR>
+				<%= WebForm.EndTable() %>
+			</TD>
+		</TR>
+<%		
+	}
+%>
+		<TR>
+			<TD>
+<%
+	if (needCurrentPage || GridObject.Actions.Insert != null || GridObject.Actions.Export != null)
+	{
+%>			
+				<%= WebForm.BeginTable("TableGridContainer", settings.Theme.TableGridContainer, 0, 0) %>
+					<TR>
+						<TD>
+<%
+		if (needCurrentPage)
+		{
+%>
+							<%= WebForm.Variable("CurrentPage") %>
+<%
+
+		}
+
+		if (GridObject.Actions.Export != null)
+		{
+%>
+							<%= GridObject.Actions.Export.ToHtml() %> 
+							<%-- ImageAction.Export(node, "CtrlExport", Constants.EventExport).ToHtml() --%>
+<%
+		}
+		   		
+		if (GridObject.Actions.Insert != null)
+		{
+%>
+						</TD>
+						<TD align="right" colSpan="1">
+							<%= GridObject.Actions.Insert.ToHtml() %>
+<%
+		}
+%>		
+						</TD>
+					</TR>
+					<TR>
+						<TD colSpan="2" vAlign="top">
+<%
+	}
+
+	// Use custom render if instructed.
+	Dictionary<string, object> gridProperties = new Dictionary<string, object>();
+	if (!String.IsNullOrEmpty(settings.Grid.CustomRender))
+		gridProperties[Artech.Genexus.Common.Properties.HTMLSFL.CustomRender] = settings.Grid.CustomRender;
+
+%>
+							<%= WebForm.BeginGrid(Constants.GridName, settings.Theme.Grid, null, GridObject.Orders.Condition, null, settings.Grid.BackColorStyleEnum, settings.Grid.CellSpacing, settings.Grid.CellPadding, gridProperties) %>
+
+<%
+	if (GridObject.Actions.MultiRowActions.Count > 0)
+	{
+		// Checkbox is first column.
+%>
+								<%= WebForm.GridVariable("Selected", null, "") %>
+<%
+	}
+
+	foreach (ActionElement inGridAction in GridObject.Actions.GridActions)
+	{
+		// InGrid actions go next.
+%>
+								<%= inGridAction.ToHtml() %>
+<%
+	}
+
+	// Then, grid attributes and variables.
+	if (GridObject.Attributes != null)
+	{
+		foreach (IAttributesItem gridItem in GridObject.Attributes)
+		{
+%>
+								<%= WebFormScript.GridColumn(gridItem) %>
+<%
+		}
+	}
+%>	
+							<%= WebForm.EndGrid() %>
+<%
+	if (needCurrentPage || GridObject.Actions.Insert != null || GridObject.Actions.Export != null)
+	{
+%>
+						</TD>
+					</TR>
+				<%= WebForm.EndTable() %>
+<%
+	}
+%> 
+			</TD>
+		</TR>
+<%
+	if (GridObject.Actions.Count > 0)
+	{
+%>
+		<%-- Action Buttons --%>
+		<TR>
+			<TD>
+<%
+		foreach (ActionElement action in GridObject.Actions.StandaloneCustomActions)
+		{
+%>
+				<%= action.ToHtml() %>
+<%
+		}
+%>
+			</TD>
+		</TR>
+<%
+	}
+%>
+	<%= WebForm.EndTable() %>
+
+<%-- "Hidden" attributes - sometimes necessary for GX to infer the correct navigation scheme. --%>
+<%
+	foreach (ParameterElement parameter in GridObject.Parameters)
+	{
+		if (!Variables.IsVariableName(parameter.Name) && 
+			GridObject.Attributes != null &&
+			GridObject.Attributes.FindAttribute(parameter.Name) == null &&
+			parameter.AttributeExistsInModel(Object.Model))
+		{
+			// Always use edits (they are hidden).
+%>
+	<%= WebFormScript.HiddenAttribute(parameter.Name) %>
+<%
+		}
+	}
+%>
+</BODY>]]>
+	</Source>
+</Part>

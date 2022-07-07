@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>CryptoSymmetricEncrypt data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33461,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">CryptoSymmetricEncrypt data type</h1>
+<!--CryptoSymmetricEncrypt data type--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Enables the encryption and decryption of text using a symmetrical algorithm (DES, Rijndael, TripleDES), using CBC mode (Cipher Block Chaining). </p>
+
+<p>The Create method allows us to specify the algorithm used in encrypting the text. This allows us to choose the encryption algorithm without the need to add a new data type.</p>
+
+<h3><a id="CryptoSymmetricEncrypt+Methods" class="HashLink" href="#CryptoSymmetricEncrypt+Methods">CryptoSymmetricEncrypt Methods</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>Name</strong></td>
+			<td style="vertical-align: top;"><strong>Description</strong></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Encrypt(</strong>text:String<strong>)</strong></td>
+			<td style="vertical-align: top;">Encrypts the given text using symmetric cryptography according to the chosen algorithm, the key and the initialization vector (IV).</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Decrypt(</strong>text:String<strong>)</strong></td>
+			<td style="vertical-align: top;">Decrypts the given encrypted string using the specified algorithm, the key and the initialization vector (IV).</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Properties" class="HashLink" href="#Properties">Properties</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Algorithm:</strong>CryptoAlgorithmEncrypt  </td>
+			<td>Specifies the encryption algorithm to be used.</td>
+		</tr>
+		<tr>
+			<td><strong>Key</strong>:String</td>
+			<td>Encryption key must be base-64 encoded. If no key is provided, it is generated automatically upon creating the instance (required when decrypting).</td>
+		</tr>
+		<tr>
+			<td><strong>IV</strong>:String</td>
+			<td>Encryption initialization vector must be base-64 encoded. If no initialization vector is provided, it is generated automatically upon creating the instance (required when decrypting).</td>
+		</tr>
+		<tr>
+			<td><strong>KeySize</strong>:Numeric</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><strong>BlockSize</strong>:Numeric</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: The <em>Key</em> and <em>IV</em> (Initialization Vector) properties must be encoded using the Base64 format.<br />
+The reason for this requirement is that, internally, the encryption algorithm uses an array of bytes, which cannot always be represented as a String (it can have non-printable characters)..</div>
+</p>
+
+<h3><a id="Example+" class="HashLink" href="#Example+">Example   </a></h3>
+
+<h4><a id="A.+How+to+encrypt+a+text+using+a+symmetrical+algorithm." class="HashLink" href="#A.+How+to+encrypt+a+text+using+a+symmetrical+algorithm.">A. How to encrypt a text using a symmetrical algorithm.</a></h4>
+
+<p>In the example below, the text contained in variable &amp;text is encrypted using the TripleDES algorithm.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// Make sure to use a String coded as Base64
+&amp;CryptoEncrypt.Key =&quot;alNZVUNUc2hxeDBrT3VEczU4TnNoYjFPa1pqN21oMVM=&quot; //CryptoEncrypt is of CryptoSymmetricEncrypt type
+&amp;CryptoEncrypt.Algorithm = CryptoEncryptAlgorithm.TripleDES
+&amp;result = &amp;CryptoEncrypt.Encrypt(&amp;Text) //The text is encrypted and the result obtained.</pre>
+
+<h4><a id="B.+How+to+de-encrypt+an+encrypted+text+with+a+symmetrical+algorithm." class="HashLink" href="#B.+How+to+de-encrypt+an+encrypted+text+with+a+symmetrical+algorithm.">B. How to de-encrypt an encrypted text with a symmetrical algorithm.</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Text = &amp;CryptoEncrypt.Decrypt(&amp;EncryptedText) //CryptoEncrypt is of CryptoSymmetricEncrypt type
+//Process Errors
+msg(format(&quot;Error %1 %2&quot;, &amp;Cryptoencrypt.ErrCode.ToString(), &amp;Cryptoencrypt.ErrDescription))</pre>
+
+<h4><a id="C.+How+to+encrypt+a+text+using+a+symmetrical+algorithm+without+specifying+a+KEY+and+IV." class="HashLink" href="#C.+How+to+encrypt+a+text+using+a+symmetrical+algorithm+without+specifying+a+KEY+and+IV.">C. How to encrypt a text using a symmetrical algorithm without specifying a KEY and IV.</a></h4>
+
+<p>In the example below, the text contained in variable &amp;text is encrypted using the Rijndael algorithm.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CryptoEncrypt= New()
+&amp;CryptoEncrypt.BlockSize = 128
+&amp;CryptoEncrypt.KeySize = 256
+&amp;CryptoEncrypt.Algorithm = CryptoEncryptAlgorithm.Rijndael
+&amp;D_text2 = &amp;CryptoEncrypt.Encrypt(&amp;text)
+&amp;D_Key = &amp;CryptoEncrypt.Key.ToString()
+&amp;IV = &amp;CryptoEncrypt.IV.ToString()</pre>
+
+<p>it is important to notice that after the Encrypt method, the developer must save the values of the automatic generated Key and IV to be able to decrypt the text in the future.</p>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li>Smart Devices Supported algorithms:<br />
+	- AES/CBC/NoPadding (128)<br />
+	- AES/CBC/PKCS5Padding (128)<br />
+	- AES/ECB/NoPadding (128)<br />
+	- AES/ECB/PKCS5Padding (128)<br />
+	- DES/CBC/NoPadding (56)<br />
+	- DES/CBC/PKCS5Padding (56)<br />
+	- DES/ECB/NoPadding (56)<br />
+	- DES/ECB/PKCS5Padding (56)<br />
+	- DESede/CBC/NoPadding (168)<br />
+	- DESede/CBC/PKCS5Padding (168)<br />
+	- DESede/ECB/NoPadding (168)<br />
+	- DESede/ECB/PKCS5Padding (168)<br />
+	- RSA/ECB/PKCS1Padding (1024, 2048)<br />
+	- RSA/ECB/OAEPWithSHA-1AndMGF1Padding (1024, 2048)<br />
+	- RSA/ECB/OAEPWithSHA-256AndMGF1Padding (1024, 2048)</li>
+</ul>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Platform </strong></td>
+			<td>Web(.NET,Java), Smart Devices (iOS, Android)</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This data type is available as of <a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a>.<br />
+For Smart Devices enviroment, is available as of <a href="https://wiki.genexus.com/commwiki/wiki?38023,," target="_blank">Genexus 15 Upgrade 10</a> for iOS and <a href="https://wiki.genexus.com/commwiki/wiki?38845,," target="_blank">GeneXus 15 Upgrade 11</a> for Android.</p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22980.html">Toc:Cryptography data types</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

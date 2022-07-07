@@ -1,0 +1,171 @@
+delimiters "$", "$"
+import "PanelUIModel.stg"
+import "Types.stg"
+import "actions.stg"
+import "expressions.stg"
+import "PanelComponent_Load.stg"
+import "PanelComponent_Controllers.stg"
+
+panelTypeToActionsTemplate ::= [
+	"list":			"g_list_panel_actions",
+	"detail":		"g_detail_panel_actions",
+	"section":		"g_section_panel_actions",
+	default:		"g_panel_actions"
+]
+
+g_component(page, gx)::=<<
+$component(page, gx)$
+>>
+
+g_init_appbar(fullname, caption, layout, actionBar) ::= <<
+bindAppBar_$layout.LayoutId$(navigationStyle: NavigationStyle) {
+  this.uiModel.$actionBar.ControlName$.navigationStyle = navigationStyle;
+  this.uiModel.ctrlApplicationbar.showBackButton = this.nvg.canGoBack()
+  this.uiModel.$actionBar.ControlName$.actionItems = [];
+  $actionBar.Action:{actionItem| $g_init_appbar_item(fullname, actionItem, actionBar)$}$
+  this.uiModel.$actionBar.ControlName$.onBackButtonClick = () => this.callAction(this.__Cancel);
+  this.appBarService.bind( this.showAsCard, this.uiModel.$actionBar.ControlName$);
+}
+
+$g_init_appbar_initfn(layout)$
+
+$g_init_appbar_resetfn(layout)$
+
+>>
+
+g_init_appbar_initfn(layout) ::=<%
+$init_appbar_initfn(layout)$
+%>
+
+g_init_appbar_resetfn(layout) ::=<<
+resetAppBar_$layout.LayoutId$() {
+}
+>>
+
+g_init_appbar_item(fullname, actionItem, actionBar) ::= <<
+$if (actionItem.HasImage)$
+this.uiModel.$actionItem.UIElementControlName$.iconSrc = this.getImageSource('$actionItem.image$');
+$endif$
+$if (actionItem.ActionElement)$
+this.uiModel.$actionItem.UIElementControlName$.onClick = () => this.callAction(this.$actionItem.ActionElement$);
+$elseif (actionItem.InlineExecuteExpression.ExprType)$
+this.uiModel.$actionItem.UIElementControlName$.onClick = () => $actionItem.InlineExecuteExpression:g_expression()$;
+$endif$
+this.uiModel.$actionItem.UIElementControlName$.id = '$fullname$_$actionItem.ControlName$';
+this.uiModel.$actionBar.ControlName$.actionItems.push( this.uiModel.$actionItem.UIElementControlName$)
+>>
+
+g_dataprovider_reference(data) ::= <%
+$if (data.GenerateDataStructure)$
+, $g_dataprovider_type_name(data)$
+$endif$
+%>
+
+g_panel_layout_variant(variant) ::= <<
+$panel_layout_variant(variant)$
+>>
+
+g_component_section_actions(page) ::= <%
+$(panelTypeToActionsTemplate.(page.PanelType))(page)$
+%>
+
+g_list_panel_actions(page) ::= <%
+%>
+
+g_detail_panel_actions(page) ::= <<
+  $page.sections.section:g_detail_panel_actions_navigate();separator="\r\n"$
+>>
+
+g_detail_panel_actions_navigate(section) ::=
+<<
+$if(section.NavigateAction)$
+navigateTo$section.FullName$() {
+  const __aSt = this.startAction();
+  this.nvg.navigate(['$section.RoutingPath$' $g_route_parameters(section)$], __aSt);
+  this.endAction(__aSt);
+}
+$endif$
+>>
+
+g_section_panel_actions(page) ::= <%
+%>
+
+g_panel_actions(page) ::= <%
+%>
+
+g_prompt_action(prompt) ::= <<
+$if (prompt.Name)$
+async $prompt.Name$() : Promise<any> {
+  const __aSt = this.startAction();
+  const result = await this.nvg.navigate(['$prompt.TargetRoute$' $g_route_parameters(prompt)$], __aSt);
+  $prompt.OutputParameters.Parameter:{p|$p.Expression:g_expression()$ = result.$p.Name$;}$
+  $g_prompt_action_result(prompt.AfterService)$ 
+  this.endAction(__aSt);
+}
+$endif$
+>>
+
+g_prompt_action_result(afterService) ::= <<
+const afterResult = await this.panelService.get$afterService.Name$($afterService.Inputs.parameter:{p|$p.Expression:g_expression()$};separator=", "$);
+$afterService.Outputs.parameter: {p|$p.Expression:g_expression()$ = afterResult[$i0$]};separator="\r\n"$;
+>>
+
+g_panel_superclass( page) ::= <%
+$if (page.BcDataType)$
+BcPanelComponent<$g_type_name(page.BcDataType)$, $g_type_name(page.BcServiceType)$>
+$else$
+PanelComponent
+$endif$
+%>
+
+g_component_init( page) ::= <%
+  $component_init( page)$
+%>
+
+g_component_refresh( page) ::= <%
+  $component_refresh( page)$
+%>
+
+g_component_init_start( page) ::= <%
+$if(page.Parameters)$
+$page.Parameters.Parameter:g_param_tovar();separator="\r\n"$
+$endif$
+%>
+
+g_component_init_statements( page) ::= <%
+%>
+
+g_component_load_bc(data) ::= <%
+$if (data.BcDataType)$
+this.initBC(this.nvg.getAppExtras('bc'), $data:g_call_parameters()$);
+$endif$
+$data.BcsInDataprovider:g_init_bcinstance()$
+%>
+
+g_param_tovar(parameter) ::= <<
+$parameter.expression:g_expression()$ = $g_convert_to( {VarChar}, parameter.GeneratorType, {this.nvg.getParam('$gx.ToLower.(parameter.Name)$', params, $parameter.Position$)})$ || $g_type_ctor(parameter.GeneratorType)$;
+>>
+
+g_init_bcinstance( bcToInitialize) ::= <<
+$bcToInitialize.BcInstanceExpression:g_expression()$ = $bcToInitialize.EntityBcExpression:g_expression()$;
+>>
+
+g_navigationstyle_event(nvgStyle) ::= <<
+$if (nvgStyle.StartEvent)$
+if (this.activatedRoute.snapshot.url.length === 0) {
+  this._globalevents.publish('$nvgStyle.StartEvent$');
+}
+$endif$
+>>
+
+g_component_state_parameters(x) ::= <%
+$if (x.IsStateMember && x.IsParameter)$
+  '$x.Name$',
+$endif$
+%>
+
+g_component_state_fields(x) ::= <%
+$if (x.IsStateMember && !x.IsParameter)$
+  '$x.Name$',
+$endif$
+%>

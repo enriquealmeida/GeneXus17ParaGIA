@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>For In Array/Collection Command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8585,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">For In Array/Collection Command</h1>
+<!--For In Array/Collection Command--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><div class="Section1">To allow scanning an array of one or more dimensions or a structured data type collection.
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><b>For </b><i><b>&amp;</b>Var</i><b> in </b><i><b>&amp;</b>Variable()</i><br />
+    <i>code</i><br />
+<b>Endfor</b></p>
+
+<p><b>Where:</b><br />
+<b>&amp;</b><i>Var</i><br />
+Specifies a variable that must have the same data type of the <i>Array()</i>.<br />
+<br />
+<b>&amp;</b><i>Variable()</i><br />
+Details a variable based on an array of one or more dimensions, or a structured data type collection.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>Allows processing or scanning any array or structured data type collection variable.<br />
+<br />
+<b>Notes:</b></p>
+
+<ul>
+	<li>It is not possible to modify the array values in the scanning. This means that changes in the <i>&amp;Var </i>value, in the structure scope, do not affect the corresponding Variable value or vice versa.</li>
+	<li>It is not possible to obtain the vector position during the scanning. This is possible if a variable as a counter is defined.</li>
+	<li>It is possible to nest these structures to scan several Variables (arrays or collections). This takes into account when a Subroutine, that also has a For In &amp;Variable, is called within the structure.</li>
+	<li>Like in <a href="24744.html">For Each command</a> or <a href="8582.html">Do While</a>, it is possible to include commands that &quot;break&quot; the scanning, such as <a href="8590.html">Exit command</a> or <a href="https://wiki.genexus.com/commwiki/wiki?31353,," target="_blank">Return command</a>.</li>
+</ul>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Suppose the following code, for an array of one dimension:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for &amp;var in &amp;arr()
+   … // code
+endfor </pre>
+
+<p>The previous code stores each value of the array in the <i>&amp;Var</i> variable. In case of one dimension vectors, the code is expanded to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;x = 1
+Do while &amp;x &lt;= rows(&amp;arr())
+   &amp;var = &amp;array(&amp;x)
+    ... // code
+   &amp;x += 1
+Enddo  </pre>
+
+<p>In case of two-dimensional arrays, the command is analog:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for &amp;var in &amp;arr2()
+   … // code
+endfor
+</pre>
+
+<p>With &amp;arr2, the expanded code would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;x = 1
+Do while &amp;x &lt;= rows(&amp;arr2())
+   &amp;y = 1
+    Do while &amp;y &lt;= cols(&amp;arr2())
+       &amp;var = &amp;arr2( &amp;x, &amp;y)
+        ... // code
+       &amp;y += 1
+    Enddo
+    &amp;x += 1
+Enddo
+</pre>
+
+<p>In case of SDT collection</p>
+
+<table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><font size="2"><span style="color: black;">Name</span></font></td>
+			<td><font size="2"><span style="color: black;">Collection</span></font></td>
+			<td><font size="2"><span style="color: black;">ItemName</span></font></td>
+		</tr>
+		<tr>
+			<td><font size="2"><span style="color: black;">SDT01</span></font></td>
+			<td><font size="2"><span style="color: black;">True</span></font></td>
+			<td><font size="2"><span style="color: black;">SDT01Item</span></font></td>
+		</tr>
+		<tr>
+			<td><font size="2"><span style="color: black;">    Itm1</span></font></td>
+		</tr>
+		<tr>
+			<td><font size="2"><span style="color: black;">    Itm2</span></font></td>
+		</tr>
+		<tr>
+			<td><font size="2"><span style="color: black;">    …</span></font></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+The code would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for &amp;item in &amp;collection
+  … 
+endfor
+</pre>
+
+<p>With &amp;collection is a variable based on “SDT01” Structure Data type collection, and &amp;item is based on “SDT01.SDT01Item” type.</p>
+
+<p>The expanded code would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;x = 1
+Do while &amp;x &lt;= &amp;collection.count
+   &amp;item.Itm1 = &amp;collection.item(&amp;x).Itm1
+   &amp;item.Itm2 = &amp;collection.item(&amp;x).Itm2
+   ... // code
+   &amp;x += 1
+Enddo
+
+</pre>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><b>Objects:</b> <a href="6293.html">Procedures</a>, <a href="1908.html">Transactions</a>, <a href="6916.html">Web Panels</a><br />
+<b>Languages:</b> .NET, Ruby (up to GeneXus X Evolution 3), Java, RPG, Cobol</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="8582.html">Do While Command</a></p>
+
+<p></p>
+
+<p></p>
+
+
+<p><br />
+<br />
+</p>
+</div>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="10662.html">Code Snippets</a></TD><TD><a href="8582.html">Do While command</a></TD><TD><a href="10725.html">HowTo: Creating a Code Snippet</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

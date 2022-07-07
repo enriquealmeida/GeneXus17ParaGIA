@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Auto-register anonymous user - SD usage example</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19911,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Auto-register anonymous user - SD usage example</h1>
+<!--Auto-register anonymous user - SD usage example--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	This example describes the use of <a href="19395.html">Auto-Register Anonymous Users</a> for developing an application for the users of a library. Its main functionalities include: showing books, novels, etc. by different criteria (date published, author, etc.), keeping record of lists of favorites, read or to be read, receiving different notifications and buying books. The idea is also to obtain information on the user profiles for informing statistics referred, among other things, to reading habits, preferences, etc.</p>
+<p>
+	Since applications that require a registry as the first step necessary are usually rejected, it was decided that the design would allow for all its functionalities to be totally anonymous (without registries) to the extent possible. Users must register only when it is absolutely necessary (such as in the case of purchases made).</p>
+<p>
+	The design guideline &quot;anonymous user to the largest extent possible&quot; implies a number of technical challenges. How could non-registered users subscribe to &quot;monthly news&quot;, for example? or What or who is to be considered the subscriber?</p>
+<p>
+	The following example is based on the fact that the application will have, whenever necessary, access to a <a href="19888.html">GeneXus Access Manager</a> user identifier. The use of Auto-register anonymous user will guarantee this possibility.</p>
+<h3>
+	Developing the solution</h3>
+<p>
+	The first object in the application will be a dashboard with True value for <a href="7407.html">Main program property</a> (Main Dashboard), where different Action Items are defined to call each object in the application.<br />
+	Also, there is a transaction like the one below that allows the possibility of relating a user to a book for which there is an interest for receiving news, reviews, etc.</p>
+<p>
+	<img src="./images/19827.png" id="19827" class="WikiImage"/></p>
+<p>
+	Note that the user is identified in the transaction with the GAMUserGUID attribute of the GAMGUID type.<br />
+	There is a SD panel where the user can select preferences. This is the SubscribeNovel object containing a grid, which is loaded through the call to a dataprovider. What should be pointed out in the example is that a 'subscribe' event is invoked for each line selected from the grid, which calls a <a href="14573.html">REST Web Services</a> to perform the subscription (the entry in the table associated to the previously mentioned transaction).</p>
+<p>
+	<img src="./images/19828.png" id="19828" class="WikiImage"/></p>
+<p>
+	The &quot;SubscribeNovel&quot; object is invoked from the application’s main menu (Dashboard1 object) shown below.</p>
+<p>
+	<img src="./images/19829.png" id="19829" class="WikiImage"/></p>
+<p>
+	Note that the value of <a href="https://wiki.genexus.com/commwiki/wiki?19912,," target="_blank">Auto-Register Anonymous User Property</a> in the dashboard object is True, to accept the access of &quot;anonymous&quot; users to the various options in the dashboard and the objects in the calls tree of such options.<br />
+	Likewise, the dashboard includes a login option in case the user decides to perform actions that will require a non-anonymous user.</p>
+<p>
+	When the auto-registered user accesses the &quot;SubscribeNovel&quot; option, a record is created for that user in the GAM’s user table, with an assigned <a href="21842.html">GUID</a>.<br />
+	The book preferences selection made by the &quot;anonymous&quot; user in the &quot;SubscribeNovel&quot; SD panel will be recorded in the &quot;Subscriptions&quot; table under the GUID assigned to the anonymous user.<br />
+	Upon registering in the GAM (<a href="https://wiki.genexus.com/commwiki/wiki?19913,," target="_blank">GAM Registration</a>), the user applies the same GUID of the anonymous user for the registered user, so the information entered by the previous one will be the same for this one.</p>
+<p>
+	To put it in other words, in the case of a SD panel with query regarding the subscriptions of the logged in user, the preferences declared by the anonymous user prior to registration will be the ones shown for the user registered.</p>
+<p>
+	We can see below how to view the user subscriptions.</p>
+<p>
+	Supposing that we have a SD panel called &quot;MySubscriptions&quot; like the one below, which loads on a grid the subscriptions of the user logged in.</p>
+<p>
+	<img src="./images/19830.png" id="19830" class="WikiImage"/></p>
+<p>
+	Note that the grid has the &quot;Authorized&quot; value associated in the DataSelector property. It is a DataSelector containing a condition for filtering only the logged in users (see image below),</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAMUserGUID = GetUser()</pre>
+<p>
+	where GAMUserGUID is one of the grid’s columns (the objective is to filter by that attribute).<br />
+	GetUser is a procedure that returns the <a href="21842.html">GUID</a> of the user logged in:</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GamuserGUID = GAMUser.GetId()</pre>
+<p>
+	<img src="./images/19831.png" id="19831" class="WikiImage"/></p>
+<h3>
+	Note</h3>
+<p>
+	There are different ways for identifying the user that is logged in (see <a href="16534.html">GAM API: How to reference GAM users</a>). Considering that users may access as anonymous, the most appropriate way is to obtain their GUID.</p>
+<p>
+	</p>
+<p>
+	</p>
+<br />   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="19909.html">Auto-register anonymous user - How it works</a></TD><TD><a href="19910.html">Auto-register anonymous user - How to identify auto-registered users</a></TD></TR><TR><TD><a href="19395.html">Auto-Register Anonymous Users</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

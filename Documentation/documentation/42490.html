@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Relative Timer control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42490,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Relative Timer control</h1>
+<!--Relative Timer control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This article describes how to configure a control on the screen to count down to an event that will take place in the future or to express the time elapsed after the start of an event. For example, suppose it is 3 p.m. and an event is programmed for 4 p.m. You need to add a countdown that shows the number of minutes left for the event to begin. Also, if the event is currently taking place, you may want to show, for example, the time elapsed since the beginning of the event.</p>
+
+<p>You can achieve this by defining an attribute or variable based on the <a href="7370.html">DateTime data type</a> and setting its Control Type property = Relative Timer.</p>
+
+<p>You must assign a DateTime value to the attribute/variable, with which the control is initialized when the count is started. </p>
+
+<h3><a id="Properties" class="HashLink" href="#Properties"><strong>Properties</strong></a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong><a href="42530.html">Format</a></strong></td>
+			<td>Style with which the time interval will be displayed.</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42251.html">Units</a></strong></td>
+			<td>Time units used to display the time interval.</td>
+		</tr>
+		<tr>
+			<td nowrap="nowrap"><strong><a href="42252.html">Most Representative Unit Only</a></strong></td>
+			<td>Indicates whether only the most significant unit of time should be displayed (truncating).</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42253.html">Counting Type</a></strong></td>
+			<td>Sets if the Relative Timer control will make a countdown, count the elapsed time, or both.</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42254.html">Prefix Text</a></strong></td>
+			<td>Text that precedes the relative time.</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42255.html">Suffix Text</a></strong></td>
+			<td>Text to be displayed after the relative time.</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42256.html">Maximum Seconds</a></strong></td>
+			<td>Sets a number of seconds such that when the counter becomes equal to or greater than it, the text set in the Maximum Text property is shown.</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42257.html">Maximum Text</a></strong></td>
+			<td><br />
+			Text to display after the elapse of the interval in seconds set in the Maximum Seconds property, since the start time.</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42258.html">Minimum Seconds</a></strong></td>
+			<td>Sets a number of seconds such that when the counter becomes equal to or lower than it, the text set in the Minimum Text property is shown.</td>
+		</tr>
+		<tr>
+			<td><strong><a href="42259.html">Minimum Text</a></strong></td>
+			<td>Text to display after the elapse of the interval in seconds set in the Minimum Seconds property.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Themes" class="HashLink" href="#Themes"><strong>Themes</strong></a></h3>
+
+<p>It applies to the properties of the Attribute theme class.</p>
+
+<h3><a id="Events" class="HashLink" href="#Events"><strong>Events</strong></a></h3>
+
+<p><strong>TimerStatusChanged</strong></p>
+
+<p>This event is triggered when any of the following conditions are met:</p>
+
+<ul>
+	<li>When the control starts to be executed.</li>
+	<li>Relative time elapsed; that is to say, when the target time is reached, this event will be executed. </li>
+	<li>The Maximum Seconds value has been reached.</li>
+	<li>The Minimum Seconds value has been reached.</li>
+</ul>
+
+<h3><a id="Sample" class="HashLink" href="#Sample"><strong>Sample</strong></a></h3>
+
+<p>Create a <a href="24829.html">Panel object</a> with a variable based on the <a href="7370.html">DateTime data type</a>. Set the variable Control Type property = Relative Timer.</p>
+
+<p>Program the Panel Start event as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    &amp;RelativeTimer    = Now()
+    &amp;RelativeTimer    = &amp;RelativeTimer.AddMinutes(15) 
+EndEvent</pre>
+
+<p>When executing the application, you will see the following:</p>
+
+<p><img src="./images/42753.gif" id="42753" class="WikiImage"/></p>
+
+<p>Suppose that once the countdown reaches zero, a text must appear indicating that the event is currently taking place. To achieve this, you have to use the TimerStatusChanged event associated with the control.</p>
+
+<p>Add the third line of code to the Start event, as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    &amp;RelativeTimer = Now()
+    &amp;RelativeTimer = &amp;RelativeTimer.AddMinutes(15)
+    &amp;TimerStarted    = False
+EndEvent</pre>
+
+<p>Program the TimerStatusChanged event associated with the control as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &amp;RelativeTimer.TimerStatusChanged
+    Composite
+        If &amp;TimerStarted = False
+          //The control start to be executed
+            &amp;TimerStarted = True
+        Else
+            &amp;RelativeTimer.PrefixText = 'Live Now'
+        EndIf
+    EndComposite
+EndEvent    </pre>
+
+<h4><a id="TimerStatusChanged+event+explanation" class="HashLink" href="#TimerStatusChanged+event+explanation">TimerStatusChanged event explanation</a></h4>
+
+<p>This event is executed and &amp;TimerStarted = False. So, you enter the if statement, the counter starts counting, and the value of &amp;TimerStarted is changed to True. When the counter reaches zero, the event will be triggered again, this time entering the else statement. So, the text 'Live Now' is assigned to the control's Prefix Text property.</p>
+
+<p>When executing the application, you will see the following:</p>
+
+<p><img src="./images/42813.gif" id="42813" class="WikiImage"/></p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="42253.html">Counting Type property</a></TD><TD><a href="42530.html">Format property (for att/var with Control Type=Relative Timer)</a></TD></TR><TR><TD><a href="42256.html">Maximum Seconds property</a></TD><TD><a href="42257.html">Maximum Text property</a></TD><TD><a href="42258.html">Minimum Seconds property</a></TD><TD><a href="42259.html">Minimum Text property</a></TD></TR><TR><TD><a href="42252.html">Most Representative Unit Only property</a></TD><TD><a href="42254.html">Prefix Text property</a></TD><TD><a href="42255.html">Suffix Text property</a></TD></TR><TR><TD><a href="42251.html">Units property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/07/20 09:17 PM</em></font></td></TR></table></font>

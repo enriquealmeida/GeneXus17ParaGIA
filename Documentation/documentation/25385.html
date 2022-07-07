@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Single Sign On in applications using GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25385,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Single Sign On in applications using GAM</h1>
+<!--Single Sign On in applications using GAM--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This functionality solves the problem of providing centralized authentication for different, distributed web applications - <a href='http://en.wikipedia.org/wiki/Single_sign-on'>SSO</a>.</p>
+
+<p>In the case of two or more GeneXus web applications that run in the same browser, the user will only need to authenticate once when the first application that requires authentication prompts to log in.</p>
+
+<p>While the session is valid, the user will not need to enter his credentials again, even after switching to another web application. The login will be valid for all web applications running in the same browser instance (in different tabs).</p>
+
+<p><strong>Summary</strong></p>
+
+<p><ul><li><a class="HashLink" href="#How+it+works">How it works</a></li><li><a class="HashLink" href="#Steps+to+configure+SSO+using+GAM">Steps to configure SSO using GAM</a></li><ul><li><a class="HashLink" href="#Environment+setup">Environment setup</a></li></ul></li><li><a class="HashLink" href="#SSO+execution+flow">SSO execution flow</a></li><li><a class="HashLink" href="#Logout+behavior+in+applications+using+SSO">Logout behavior in applications using SSO</a></li><li><a class="HashLink" href="#Implementation+Details">Implementation Details</a></li><li><a class="HashLink" href="#Additional+Information">Additional Information</a></li></ul></ul></p>
+
+<h2><a id="How+it+works" class="HashLink" href="#How+it+works">How it works</a></h2>
+
+<p>In this scenario, all the web applications involved need to use <a href="19888.html">GeneXus Access Manager</a>, and one of them should be configured as the Identity Provider (the server that owns the user identities and credentials. It's who the user authenticates with.).</p>
+
+<p>GAM, which is the Identity Provider, will be used to authenticate the other applications (the same that happens with Facebook, Twitter, and Google, all of which are identity providers).</p>
+
+<p>Consider a scenario with three web applications: App1, App2, and App3. Let App2 be the Identity Provider application.<br />
+The following diagram shows the flow as the user tries to execute a private object of any of the other applications. </p>
+
+<p><img src="./images/25386.png" id="25386" class="WikiImage"/></p>
+
+<p>In the diagram, the user tries to execute a private object of App1, and this redirects to the Identity Provider application - App2 (Step 1 and 2 of the diagram).<br />
+Then, the user is shown the login screen and after entering his credentials, there is an automatic redirect to App1.</p>
+
+<p>After logging in to App1, if the user tries to execute a private object of App3 from the same web browser, it redirects to the Identity Provider App2. If the session is valid (there is already a valid session for that user), then the login is not shown to the end user, and he has access to App3. See the following diagram:</p>
+
+<p><img src="./images/25387.png" id="25387" class="WikiImage"/></p>
+
+<p>Note that this is very similar to what happens with Facebook and Twitter. When the user logs into any of those sites, the applications that use them as identity providers use the same valid session if they run in the same browser.</p>
+
+<h2><a id="Steps+to+configure+SSO+using+GAM" class="HashLink" href="#Steps+to+configure+SSO+using+GAM">Steps to configure SSO using GAM</a></h2>
+
+<p>The configuration of SSO consists of configuring the GAM on the server as well as the GAM on the clients so that the clients can authenticate to the server.<br />
+On the server, you need to define a <a href="15910.html">GAM application</a> that must have the same credentials as the GAM application on the client. On the client, you need to define the GAM Remote Authentication type, which we explain below.</p>
+
+<p>1. Configure the GAM Identity Provider</p>
+
+<p><span style="line-height: 1.2em;">2. Configure the Client Applications</span></p>
+
+<p><span style="line-height: 1.2em;">For steps 1 and 2 see </span><a href="25355.html">GAM Remote Authentication Type</a></p>
+
+<p>3. Configure the GAM Login object in the client applications</p>
+
+<p>In each client application, the <a href="https://wiki.genexus.com/commwiki/wiki?15590,," target="_blank">Login Object for Web property</a> can be set to <em>GAMSSOLogin</em> object. This object checks if the user has a valid session. If not, it triggers the remote login mechanism. It is distributed with the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>.</p>
+
+<h5><img src="./images/28059.png" id="28059" class="WikiImage"/><br />
+Login object for web property</h5>
+
+<h3><a id="Environment+setup" class="HashLink" href="#Environment+setup">Environment setup</a></h3>
+
+<p>One possibility is to have one GAM database for each of the client applications, and one for the Identity Provider. Another, is to have only one GAM database and a different Repository for each.</p>
+
+<p>Using <a href="https://wiki.genexus.com/commwiki/wiki?38845,," target="_blank">GeneXus 15 Upgrade 11</a> or higher, you have another way to model this solution, that is to have only one GAM database and only one GAM repository for all of them. See SAC <a href='https://www.genexus.com/developers/websac?en,,,43517'>43517</a> for more information on this topic. In this case, you have to use <a href="https://wiki.genexus.com/commwiki/wiki?24241,," target="_blank">GAM impersonation</a>.</p>
+
+<h2><a id="SSO+execution+flow" class="HashLink" href="#SSO+execution+flow">SSO execution flow</a></h2>
+
+<p><span style="line-height: 20.8px;">One possibility is to configure <a href="https://wiki.genexus.com/commwiki/wiki?15590,," target="_blank">Login Object for Web property</a> = <em>GAMSSOLogin.</em></span></p>
+
+<p><span style="line-height: 20.8px;">In that case, when the user tries to execute a private object, the <em>GAMSSOLogin</em> object is automatically executed. </span><span style="line-height: 1.6em;"><em>GAMSSOLogin</em> checks if the user has a valid local session, if not, it executes a Remote Authentication.</span></p>
+
+<p><span style="line-height: 1.6em;">Note that the GAMSSOLogin object has the following code, which is valid only if you have only one </span><a href="25355.html">GAM Remote Authentication Type</a> defined in the Repository.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAMRepository.LoginGAMRemote()</pre>
+
+<p>In case that you have more than one <a href="25355.html">GAM Remote Authentication Type</a> defined, you have to change the code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMLoginAdditionalParameters.AuthenticationTypeName =  &quot;gam-remote-2&quot;
+&amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;GAMLoginAdditionalParameters, &amp;GAMErrors )</pre>
+
+<p><span style="line-height: 1.6em;">Remote Authentication consists of connecting to the Identity Provider to obtain a valid session for the user if it exists, or showing a login window for the user to enter his credentials. </span></p>
+
+<p>The login shown to the user, in this case, is the object specified under <em>Local Login URL</em> - in the server configuration (<sup>1</sup>). In general, the<em> GAMRemoteLogin</em> is used for that purpose.</p>
+
+<p><img src="./images/28084.png" id="28084" class="WikiImage"/></p>
+
+<p>When the user has a valid session provided by the Identity Provider application, it redirects straight to the client application.</p>
+
+<p> </p>
+
+<p>Another possibility is to configure <span style="line-height: 20.8px;"><a href="https://wiki.genexus.com/commwiki/wiki?15590,," target="_blank">Login Object for Web property</a> = <em>GAMExampleLogin</em>.</span></p>
+
+<p>In this case, the <em>GAMExampleLogin</em> object is executed automatically when a private object is accessed. The user can authenticate using the local GAM; or the Remote Authentication using the icon designed for that.</p>
+
+<p><img src="./images/28085.png" id="28085" class="WikiImage"/></p>
+
+<p> </p>
+
+<ul>
+	<li>When the user authenticates to the Identity Provider for the first time, he is registered in the GAM database of the client application using the same GAMUser GUID identifier that is used in the GAM database of the Identity provider.</li>
+	<li>The password is not stored in the client GAM database, and the password policies that apply are the policies of the GAM database of the server application.</li>
+</ul>
+
+<h2><a id="Logout+behavior+in+applications+using+SSO" class="HashLink" href="#Logout+behavior+in+applications+using+SSO">Logout behavior in applications using SSO</a></h2>
+
+<p>For X Evolution 3 and previous versions, the GAMRepository.Logout() method performs a logout local to the client. In the server, the session continues to be valid until the logout is executed there.</p>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?27605,," target="_blank">GeneXus 15</a> the Logout has three different behaviors to configure, see <a href="32336.html">Logout options for Single Sign On using GAM</a></p>
+
+<h2><a id="Implementation+Details" class="HashLink" href="#Implementation+Details">Implementation Details</a></h2>
+
+<ul>
+	<li>The mechanism used in this solution is based on Oauth 2.0.</li>
+	<li>Since GeneXus 15 upgrade 2 GAM implements SSO in SD applications also. </li>
+</ul>
+
+<h2><a id="Additional+Information" class="HashLink" href="#Additional+Information">Additional Information</a></h2>
+
+<p>(1) <a href="25355.html">GAM Remote Authentication Type</a><br />
+(2) <a href="25538.html">Managing Roles in applications using SSO</a><br />
+(3) <a href="https://wiki.genexus.com/commwiki/wiki?28106,," target="_blank">GAM SSO flow of execution</a><br />
+(4) <a href="https://wiki.genexus.com/commwiki/wiki?28089,," target="_blank">HowTo: Implement SSO for applications that do not use GAM</a></p>
+
+<p><br />
+ </p>
+
+<p><br />
+</p>
+
+<p> </p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25355.html">GAM Remote Authentication Type</a></TD></TR><TR><TD><a href="44833.html">GAM Remote Rest Authentication type (Oauth 2.0)</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="38116.html">HowTo: Emulating SSO without using GAM remote authentication</a></TD></TR><TR><TD><a href="32336.html">Logout options for Single Sign On using GAM</a></TD><TD><a href="25538.html">Managing Roles in applications using SSO</a></TD><TD><a href="30495.html">Multi-tenant GAM applications using Single Sign On</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

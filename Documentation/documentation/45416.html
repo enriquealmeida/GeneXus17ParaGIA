@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to Deploy an Application to a Kubernetes cluster</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45416,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to Deploy an Application to a Kubernetes cluster</h1>
+<!--How to Deploy an Application to a Kubernetes cluster--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Kubernetes has become the de facto standard Docker containers orchestrator. It is so popular and such a great solution for application deployment that all the major cloud providers have a solution for deploying a Kubernetes cluster.</p>
+
+<ul>
+	<li>Microsoft: <a href='https://azure.microsoft.com/en-us/services/kubernetes-service/'>Azure Kubernetes Service (AKS)</a></li>
+	<li>Google: <a href='https://cloud.google.com/kubernetes-engine'>Google Kubernetes Engine (GKE)</a></li>
+	<li>Amazon: <a href='https://aws.amazon.com/eks/'>Elastic Kubernetes Service (EKS)</a></li>
+	<li>IBM: <a href='https://cloud.ibm.com/kubernetes/catalog/about'>Cloud Kubernetes Service</a> </li>
+</ul>
+
+<p>For more information about Kubernetes, read <a href='https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/'>What is Kubernetes</a>.</p>
+
+<p>Kubernetes is based on a metadata file that describes the desired state of an application. This state is declared in a <a href='https://yaml.org/'>YAML</a> file.</p>
+
+<p>GeneXus creates this YAML file based on your application needs. Here's what you need to know.</p>
+
+<h3><a id="Architecture" class="HashLink" href="#Architecture">Architecture</a></h3>
+
+<p>Below is a little diagram of what we want to achieve.</p>
+
+<p> </p>
+
+<p><img src="./images/45748.png" id="45748" class="WikiImage"/></p>
+
+<p>You can see there's a Load Balancer redirecting your traffic load to the nodes of your app. These nodes are all exactly the same; it is the same Docker Image of your app, initialized n times. By default, GeneXus generates 2 instances, but you can change that in the deployment properties.</p>
+
+<p>Also, if you wish so, GeneXus deploys another container with a <a href="https://wiki.genexus.com/commwiki/wiki?45467,," target="_blank">Redis</a> server. This allows the application to save the session on that Redis server, so if you don't have server affinity or if one of your nodes (or pods) goes down, your clients can reach a new node without losing their session.</p>
+
+<p>Keep in mind there's no database container deployed here. You will have to manage the database yourself. Every cloud provider has good scalable solutions for relational databases.</p>
+
+<h3><a id="GeneXus+Deployment" class="HashLink" href="#GeneXus+Deployment">GeneXus Deployment</a></h3>
+
+<p>Like any other deployment in GeneXus, the starting point is the <a href="38886.html">Deployment Unit object</a>, and since Kubernetes is based on Docker containers you need to create the Docker Image of your application first. So, you need to select Docker Image as your deployment target in the <a href="32092.html">Application Deployment tool</a>.</p>
+
+<p>There are a few properties specific for Kubernetes under the Docker Image deployment target.</p>
+
+<ul>
+	<li>Generate Kubernetes metadata: Tells the Deploy Engine to generate the above-mentioned YAML file with the necessary metadata for a Kubernetes cluster.</li>
+	<li>Kubernetes Namespace: It is a good practice to create your own <a href='https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'>Namespace</a> inside the cluster for your application and not use the default Namespace.</li>
+	<li>Pod labels: It is a common practice to add labels to your pods. For example, if you want to create a <a href='https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#canary-deployments'>Canary Deployment</a>.</li>
+	<li>Initial replicas: Kubernetes allows you to easily spin up many instances of your application; this property tells the cluster how many instances of your application will have to be running all the time. For high availability purposes, more than one is always desired.</li>
+	<li>Exposed service type: There are a few differences between hosting a cluster in a Cloud Provider or in a local dev machine using Docker Client or Minikube. Cloud Providers provide a Load Balancer, so you'll need to set this value when thinking about deploying to a production environment, but NodePort is needed if you want to test your solution in your local cluster (more on how to do this later on).</li>
+	<li>Enable Redis session management: Session management should be used in OutProc mode in a Cloud Native application. This property will also deploy a Redis container in your cluster that will allow your app to have a distributed session management system.</li>
+</ul>
+
+<p>         <img src="./images/46703.png" id="46703" class="WikiImage"/></p>
+
+<p>Also, keep in mind that if you use blob files, images, or audios, they must be stored in a <a href="31121.html">Storage Provider</a> solution. Since at any given time any node of the cluster can go down, you cannot rely on the local File System of your containers. More information at <a href="45291.html">Load balancing considerations</a>.</p>
+
+<h3><a id="Let%27s+do+this%21" class="HashLink" href="#Let%27s+do+this%21">Let's do this!</a></h3>
+
+<p>To deploy an application on a Kubernetes cluster, follow the steps below:</p>
+
+<ol>
+	<li>Build and run your application to test it in a local environment. </li>
+	<li>Create your Deployment Unit; that is, the main programs and services your application will hold.</li>
+	<li>Check the deployment properties and make sure 'Generate Kubernetes metadata' and 'Enable Redis session management' are set to True. </li>
+	<li>Test this deployment locally first, so select NodePort in the Exposed service type property.</li>
+	<li>Make sure you set the Docker image name property <sup>(1)</sup> with something you can push to a Docker Registry, like <a href='https://hub.docker.com'>Docker Hub</a>. </li>
+	<li>Hit Deploy... and let's pause for a minute.</li>
+</ol>
+
+<p>Here's what happens when you hit the Deploy button. The first two steps are regular deployment application, there's nothing special here. The deployment engine generates the gxdproj file with the objects that need to be deployed and then a war or zip file gets created with the files involved with those objects.</p>
+
+<p>After that, the engine creates a Dockerfile and uses it to build the Docker Image. It will also generate the Kubernetes metadata file for your app, another one for the Redis service, and another one for the Namespace creation. Why three files if it could all be appended into a single file? Because most certainly your app metadata file will evolve in the future and you will eventually apply many versions of that file. The Redis and the Namespace files will be applied only once.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Generating Kubernetes metadata file
+Kubernetes metadata file succesfully generated at 'C:\Models\TestDeploy\TestDeploy\NetCoreSQLServer003\Deploy\DOCKER\context\K8s-DeploymentUnit1-App.yaml'
+Make sure you push the sjuarez2020/test:2.0 Docker image to a reachable Docker registry (eg. 'docker push sjuarez2020/test:2.0')</pre>
+
+<p>       7. Tag and then Push (<sup>2</sup>) the image to a Docker Registry. If you have set the right values under Docker image name (<sup>1</sup>), you should simply run the suggested command; in this case:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+docker push sjuarez2020/test:2.0</pre>
+
+<p>      8. You're all set to spin up the cluster. Open a CMD window and go where the metadata file was generated (also described in the Output Window) and execute the following commands:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&gt;kubectl apply -f K8s-test1app-Namespace.yaml
+namespace/test1app created
+
+&gt;kubectl apply -f K8s-test1app-Redis.yaml
+service/gx-redis-svc created
+deployment.apps/gx-redis-app created
+
+&gt;kubectl apply -f K8s-DeploymentUnit1-App.yaml
+service/deploymentunit1-svc created
+deployment.apps/deploymentunit1-app created
+</pre>
+
+<p>Keep in mind DeploymentUni1 is the name of the selected Deployment Unit, so it could be different in your case; and &quot;test1app&quot; is the Kubernetes namespace configured in the Deployment Unit options (see the image above in this document).</p>
+
+<p>It's useful to have the Kubernetes Dashboard (<sup>3</sup>) installed, so you can check if the deployment has been done successfully, or if any error has been thrown and needs your attention.</p>
+
+<p>     9. Test the app. In order to access an object of your application, you need to know where it has been exposed (remember to add the -n flag if you added a custom namespace):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&gt;kubectl get svc -n test1app
+</pre>
+This will show every service in your cluster. Pay attention to the one named after your Deployment Unit followed by app-service.
+
+<p><img src="./images/45746.png" id="45746" class="WikiImage"/></p>
+
+<p>This tells you that your service is being exposed at localhost, port 31754. So, going to htttp://localhost:31754 in your browser will get you there.</p>
+
+<p>Keep in mind you also need to add the specific object you want to reach. It could be adding just the name of the object plus the .aspx extension for .NET Core, or servlet/packagename for Java.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+http://localhost:31754/sessiontester.aspx
+
+http://localhost:30118/servlet/com.k8stest.sessiontester
+</pre>
+
+<p><h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p> This feature is available since <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a>.</p>
+
+<p></p>
+</p>
+
+<h3><a id="References" class="HashLink" href="#References">References</a></h3>
+
+<ul>
+	<li>(<sup>1</sup>) Docker Image name: See <a href='https://docs.docker.com/get-started/part3/#create-a-docker-hub-repository-and-push-your-image'>this</a> reference for more information.</li>
+	<li>(<sup>2</sup>) <a href='https://docs.docker.com/engine/reference/commandline/push/'>Docker push command</a></li>
+	<li>(<sup>3</sup>) <a href='https://github.com/kubernetes/dashboard'>Kubernetes Dashboard</a>.</li>
+</ul>
+
+<h3><a id="Additional+information" class="HashLink" href="#Additional+information">Additional information</a></h3>
+
+<ul>
+	<li><a href='https://github.com/sebagomez/gx-k8s-gug'>https://github.com/sebagomez/gx-k8s-gug</a></li>
+	<li><a href='https://github.com/genexuslabs/gx29-kubernetes-sample'>https://github.com/genexuslabs/gx29-kubernetes-sample</a></li>
+	<li><a href="46730.html">How to: Deploy a Kubernetes cluster to AKS</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD><TD><a href="45309.html">Considerations for building and deploying applications to containers</a></TD><TD><a href="46594.html">Expanded DevOps with GeneXus 17</a></TD></TR><TR><TD><a href="46595.html">Flexibility and Quality with Genexus 17</a></TD><TD><a href="46730.html">How to: Deploy a Kubernetes cluster to AKS</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/02/20 06:03 PM</em></font></td></TR></table></font>

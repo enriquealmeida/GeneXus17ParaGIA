@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>My first Offline Native Mobile application</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20249,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">My first Offline Native Mobile application</h1>
+<!--My first Offline Native Mobile application--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document is a step by step explanation of how to create a simple native offline application with GeneXus.</p>
+
+<p><strong>Before</strong> starting with the tutorial, please check that the <a href="22259.html">prerequisites</a> are correctly installed, as also it is recommended you to briefly look at the <a href="22228.html">Offline Applications overview</a> and the <a href="22221.html">Offline Native Mobile applications architecture</a> documents for better understanding of how the Offline applications works.</p>
+
+<p>In this sample, the application uses a local SQLite database on the device and communicates via REST services with a <a href="https://wiki.genexus.com/commwiki/wiki?2892,," target="_blank">NET Generator</a> web server, which persists data on an MSSQLServer database, to perform synchronization processes. If you are using another web generator, like the Java Generator, or another <a href="https://wiki.genexus.com/commwiki/wiki?9518,," target="_blank">DBMS</a>, the steps are the same but the prerequisites may change.</p>
+
+<h3><a id="Step+1%3A+Create+a+new+Knowledge+Base" class="HashLink" href="#Step+1%3A+Create+a+new+Knowledge+Base">Step 1: Create a new Knowledge Base</a></h3>
+
+<p>Open GeneXus and create a <a href="9596.html">new Knowledge Base</a>. Select your preferred Prototyping Environment.</p>
+
+<p><img src="./images/37362.png" id="37362" class="WikiImage"/></p>
+
+<h3><a id="Step+2%3A+Model+the+application" class="HashLink" href="#Step+2%3A+Model+the+application">Step 2: Model the application</a></h3>
+
+<p>Create the Customer and Company <a href="1908.html">Transaction object</a>s with the following structure:</p>
+
+<p><img src="./images/32436.png" id="32436" class="WikiImage"/></p>
+
+<p>Please <strong>note</strong> that <a href="14610.html">predefined domains</a> were used for certain attributes and, in both Transactions. <strong>Note</strong> that each identifier attribute is based on the GUID data type with the <a href="40892.html">Autogenerate Guid property</a> set to True.</p>
+
+<h3><a id="Step+3%3A+Apply+the+Work+With+pattern" class="HashLink" href="#Step+3%3A+Apply+the+Work+With+pattern">Step 3: Apply the Work With pattern</a></h3>
+
+<p><a href="15975.html">Apply the Work With pattern</a> on both transactions. To do so, for each Transaction, click on the <strong>Patterns</strong> tab, then choose <strong>Work With</strong> tab, and check the checkbox as shown below and save:</p>
+
+<p><img src="./images/32437.png" id="32437" class="WikiImage"/></p>
+
+<h3><a id="Step+4%3A+Customize+some+layouts+%28Optional%29" class="HashLink" href="#Step+4%3A+Customize+some+layouts+%28Optional%29">Step 4: Customize some layouts (Optional)</a></h3>
+
+<p>Once the Work With pattern is applied to both transactions, you are free to modify their Layouts, Events, and many other components.<br />
+In this step, some little changes are made on the List layout of the Work With applied to the Customer Transaction in order to show more information when displaying the customers.</p>
+
+<p>From the Toolbox, drag &amp; drop the control <strong>Attribute/variable</strong> in order to insert attributes you want to see on the Customer list screen. For example, CustomerEmail:</p>
+
+<p><img src="./images/32438.png" id="32438" class="WikiImage"/></p>
+
+<p>You can remove the label of the attribute by setting the <strong>Label position</strong> property value to &quot;None&quot;:</p>
+
+<p><img src="./images/32439.png" id="32439" class="WikiImage"/></p>
+
+<h3><a id="Step+5%3A+Create+the+main+Menu+of+the+application" class="HashLink" href="#Step+5%3A+Create+the+main+Menu+of+the+application">Step 5: Create the main Menu of the application</a></h3>
+
+<p>Create a <a href="16321.html">Menu object</a> called Menu.</p>
+
+<p><img src="./images/32440.png" id="32440" class="WikiImage"/></p>
+
+<p>This object is like a menu; you can use it to call the Work With objects created in the previous Steps. To do this: right-click in the <strong>Items</strong> option to add actions to the Menu. You must select the WorkWith&lt;<em>TransactionName&gt;</em> objects from the <a href="9889.html">Select Object dialog</a>:</p>
+
+<p><img src="./images/32441.png" id="32441" class="WikiImage"/></p>
+
+<p>When you select a WorkWith&lt;<em>TransactionName</em>&gt; object, the associated Event to this action is generated automatically:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'WorkWithCustomer'
+     WorkWithCustomer.Customer.List()
+EndEvent
+
+Event 'WorkWithCompany'
+     WorkWithCompany.Company.List()
+EndEvent</pre>
+
+<h3><a id="Step+6%3A+Shift+your+application+to+the+offline+architecture" class="HashLink" href="#Step+6%3A+Shift+your+application+to+the+offline+architecture">Step 6: Shift your application to the offline architecture</a></h3>
+
+<p>Change the <a href="20911.html">Connectivity Support property</a> of the Menu object to &quot;Offline&quot;. This step is crucial, it means a huge change in the application architecture. If you want to learn more about this, read the <a href="22221.html">Offline Native Mobile applications architecture</a> document.</p>
+
+<p><img src="./images/32443.png" id="32443" class="WikiImage"/></p>
+
+<h3><a id="Step+7%3A+Edit+the+Native+Mobile+Generator+Preferences" class="HashLink" href="#Step+7%3A+Edit+the+Native+Mobile+Generator+Preferences">Step 7: Edit the Native Mobile Generator Preferences</a></h3>
+
+<p>Change the <a href="14451.html">Native Mobile Generator</a> Preferences to choose how is your application built.</p>
+
+<p>You can build and run your application in any of the platforms mentioned in the <a href="22259.html">Offline Applications Requirements</a> document.<br />
+However, in this example, it is shown how to build your offline application for an <a href="14453.html">Android</a> device. In order to follow this sample, edit the Native Mobile Generator Preferences like in the image below:</p>
+
+<ul>
+	<li>Generate Android: True (default)</li>
+	<li>Generate iOS: False</li>
+	<li>Main Platform: Android</li>
+	<li>Android SDK directory: Select your Android SDK directory (which is: the directory where you have installed the program)</li>
+	<li>JDK Directory: Select your JDK directory.</li>
+</ul>
+
+<p><img src="./images/32444.png" id="32444" class="WikiImage"/></p>
+
+<p><strong>Important note</strong>: Because the <a href="22237.html">Offline Native Mobile applications</a> are fully generated in native code, the applications must be compiled and installed on Devices or Simulators of the corresponding platforms. This means that the <a href="18653.html">KBN</a> application does not work with <a href="22237.html">Offline applications</a>.</p>
+
+<h3><a id="Step+8%3A+Deploy+your+application+to+the+cloud+%28Optional%29" class="HashLink" href="#Step+8%3A+Deploy+your+application+to+the+cloud+%28Optional%29">Step 8: Deploy your application to the cloud (Optional)</a></h3>
+
+<p>If your computer and the Device are not on the same network, and/or you prefer a simpler solution for wireless prototyping, you can <strong><a href="18250.html">deploy your app to the cloud</a></strong> (this option is recommended for your first deploy). To do this, go to the Generator properties, and set the value &quot;Yes&quot; to the &quot;Deploy to cloud&quot; property, as shown below:</p>
+
+<p><img src="./images/32445.png" id="32445" class="WikiImage"/></p>
+
+<h3><a id="Step+9%3A+Build+your+application" class="HashLink" href="#Step+9%3A+Build+your+application">Step 9: Build your application</a></h3>
+
+<p>Press <strong>F8</strong> to call the &quot;build all&quot; command and build the entire application. This step is <strong>necessary</strong>, at least for the first time you build your application.</p>
+
+<p><strong>Note</strong>: If you have skipped the Step 8, as it is the first time you build the application, GeneXus needs to know the database connection information.</p>
+
+<p>The following output is shown, as well as the <a href="31023.html">Impact Analysis</a>, indicating which tables must be created on the database. Click on the &quot;Create&quot; button in order to create them.</p>
+
+<p><img src="./images/32446.png" id="32446" class="WikiImage"/></p>
+
+<p>Once the Menu object called &quot;Menu&quot; is built, a new object appears right below the Menu: it is the <a href="22509.html">Offline Database object</a>. This object is in charge of selecting which tables are being created in the local database of the device once the application is installed, as also this object properties can manage how is the <a href="22269.html">Data Synchronization</a> done, among other features.</p>
+
+<p>In the build process, after the <a href="22509.html">Offline Database object</a> appears, the <a href="23568.html">Offline Database Object Navigation Report</a> is shown, giving to you all the related information about the tables which are going to be synchronized in the device with respect to the server.</p>
+
+<p><img src="./images/32447.png" id="32447" class="WikiImage"/></p>
+
+<h3><a id="Step+10%3A+Run+your+application%21" class="HashLink" href="#Step+10%3A+Run+your+application%21">Step 10: Run your application!</a></h3>
+
+<p>Once the &quot;build all&quot; process finishes, to run your application in your Android Device or Android Emulator, first right-click the &quot;Menu&quot; <a href="16321.html">Menu object</a> and set it as the <a href="5393.html">Startup Object</a>.</p>
+
+<p>Finally, press <strong>F5</strong> and the application is going to be installed in the Android Device or Android Emulator. This depends on whether the Android Device is plugged into the computer or not.</p>
+
+<h3><a id="How+does+this+application+work%3F" class="HashLink" href="#How+does+this+application+work%3F">How does this application work?</a></h3>
+
+<p>As mentioned at the beginning of this document, this application uses a local database in order to work. This means that all data the application uses is from the local database. In addition, all insertions, deletions, and updates are made in the local database.</p>
+
+<p>The first time the application is installed, the local database is created inside the Device. After that, a reception synchronization process is executed in order to receive all data from the server and store that data into the device. Once both, the device and the server, are synchronized, you are free to use the application either the device has connected to the internet or not.</p>
+
+<h4><a id="But+what+happens+if+data+is+modified+while+the+device+is+connected+to+the+internet%3F" class="HashLink" href="#But+what+happens+if+data+is+modified+while+the+device+is+connected+to+the+internet%3F">But what happens if data is modified while the device is connected to the internet?</a></h4>
+
+<p>The device always applies changes in the local database, but at the same time, it inserts events that represent those modifications into an auxiliary table in the local database. After that, and because the <a href="https://wiki.genexus.com/commwiki/wiki?23392,," target="_blank">Send Changes property</a> of the <a href="22509.html">Offline Database object</a> is set to &quot;When connected&quot; by default, the device sends those events to the server via REST services in order to apply the same changes in the server-side.</p>
+
+<h4><a id="And+what+happens+if+data+is+modified+while+the+device+is+disconnected+from+the+internet%3F" class="HashLink" href="#And+what+happens+if+data+is+modified+while+the+device+is+disconnected+from+the+internet%3F">And what happens if data is modified while the device is disconnected from the internet?</a></h4>
+
+<p>Like when the device is indeed connected, every modification is inserted as an event in the auxiliary table in the local database. But because the device has no connection to the internet, it keeps stacking all events into that auxiliary table. All these events are sent to the server once the device is again connected, and another modification is made, or next time the application starts again.</p>
+
+<h4><a id="When+does+the+device+receive+modifications+made+in+the+server%3F" class="HashLink" href="#When+does+the+device+receive+modifications+made+in+the+server%3F">When does the device receive modifications made in the server?</a></h4>
+
+<p>By default, the device receives data from the server every time it starts up. However, this behavior can be customized by changing the <a href="22223.html">Data Receive Criteria property</a> from the <a href="25196.html">Offline Database Object properties</a>.</p>
+
+<h4><a id="Keep+learning" class="HashLink" href="#Keep+learning">Keep learning</a></h4>
+
+<p>You can learn more about how synchronization works by reading the <a href="22267.html">Automatic Offline Data Synchronization</a> document and the <a href="22269.html">Data Synchronization</a> document for more advanced concepts.</p>
+
+<h3><a id="What+is+next" class="HashLink" href="#What+is+next">What is next</a></h3>
+
+<p>The first recommendation is to read the whole Table of Contents of the <a href="22228.html">Offline Native Mobile Applications</a>, paying special attention to the <a href="22221.html">Offline Native Mobile applications architecture</a> and the <a href="22262.html">Offline Native Mobile Applications Generation</a> documents.</p>
+
+<p>After that, you can try to create a new Knowledge Base from some of the Offline applications samples:</p>
+
+<ul>
+	<li><a href="23672.html">Sales</a> (Available in GeneXus Start Page)</li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?24355,," target="_blank">Survey</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?22550,," target="_blank">EventDay</a> using the Offline branch</li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?20698,," target="_blank">Sales with manual synch example</a> for manual synchronization</li>
+</ul>
+
+<p>Or if you already have an online application and you want to convert it into Offline, please read the <a href="24591.html">HowTo: Converting online applications into offline applications</a> document to get started.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<ul>
+	<li>The offline local database, which is inside the device or emulator, is not reorganized. Therefore, if you make any change to the data model which affects the offline application database, the application re-creates the database, loosing all stored data ( with exception of Pending Events: see the <a href="22509.html">Offline Database object</a>).</li>
+	<li>Most of the times, starting by developing a simple Online application might be easier and faster to prototype. Once it is ready, you are free to <a href="24591.html">convert your application from Online to Offline</a>.</li>
+	<li>This sample application uses autonumbered primary keys, but not by setting its <a href="6798.html">Autonumber property</a>=Yes. On the other hand, primary keys are defined based on the <a href="31772.html">GUID data type</a> (with Autogenerate) in order to avoid possible conflicts on the server-side when sending changes. To learn more about this, please read the <a href="23543.html">Automatically generated identifiers synching conflicts</a> article.</li>
+</ul>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>See the <a href="20287.html">Offline Native Mobile Applications Common Issues</a></p>
+
+<h3><a id="Download+the+XPZ" class="HashLink" href="#Download+the+XPZ">Download the XPZ</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?25372,," target="_blank">My First Offline Model</a></p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<ul>
+	<li><a href="22228.html">Offline Native Mobile Applications</a></li>
+	<li><a href="22507.html">Offline Native Mobile Applications Scenarios</a></li>
+	<li><a href="22269.html">Data Synchronization</a></li>
+	<li><a href="23558.html">HowTo: Using the Connectivity Support property</a></li>
+	<li><a href="24591.html">HowTo: Converting online applications into offline applications</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/04/21 02:35 PM</em></font></td></TR></table></font>

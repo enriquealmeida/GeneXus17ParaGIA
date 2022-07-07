@@ -1,0 +1,140 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Append transaction redirection" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="DynamicFilters" Type="DynamicFilterAttributesElement" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="SetFilterDsc" Type="System.Boolean" %>
+&GridState.DynamicFilters.Clear()
+<%
+	SettingsTemplateElement template = Instance.GetAppropiateTemplate();
+	bool includeNamesInSDTGridState = Settings.IncludeNamesInSDTGridState;
+	for (int i = 1; i <= DynamicFilters.MaxFilters; i++)
+	{
+		if (DynamicFilters.MaxFilters > 1 || Settings.StandardFilters.IsDynFiltersClearFilterVisibilityAlways())
+		{
+			if (i == 1)
+			{
+%>
+If not &DynamicFiltersIgnoreFirst
+<%
+			}
+			else
+			{
+%>
+If &DynamicFiltersEnabled<%= i.ToString() %>
+<%
+			}
+		}
+%>
+	&GridStateDynamicFilter = new()
+	&GridStateDynamicFilter.Selected = &DynamicFiltersSelector<%= i.ToString() %>
+	Do Case
+<%
+		bool addNotEmptyCondition = true;
+		int filterIndex = 0;
+		bool atLeastOneHasRange = false;
+		foreach (IFilter filter in DynamicFilters.Items)
+		{
+			bool addNotEmptyConditionInThisFilter = filter.Condition.ToLower().Contains(" when ") && filter.Default.Trim() == "";
+			addNotEmptyCondition = addNotEmptyCondition && (addNotEmptyConditionInThisFilter || !TableAttributeElement.IsEDBTypeText(filter.eDBType));
+			string emptyCondition = "&" + filter.Name + i;
+			if (filter is FilterAttributeMultipleGeneralElement)
+			{
+				emptyCondition += "Values.Count = 0";
+			}
+			else if (filter.IsDVCombo_Multiple())
+			{
+				emptyCondition += ".Count = 0";
+			}
+			else
+			{
+				emptyCondition += ".IsEmpty()";
+				if (filter.HasRange() || filter.HasRangeOperator())
+				{
+					emptyCondition = "(" + emptyCondition + " AND " + filter.RangeVariableName + i + ".IsEmpty())";
+				}
+			}
+%>
+		Case &DynamicFiltersSelector<%= i.ToString() %> = <%= includeNamesInSDTGridState ? "!'" + filter.Name.ToUpper() + "'" : filterIndex.ToString() %><%= addNotEmptyConditionInThisFilter ? " AND not " + emptyCondition : "" %>
+<%
+			if (filter.IsDVCombo() && !((IItemWithControlInfo)filter).ControlLoadDynamically && LoadDVComboProcedureHelper.HasDescription((IItemWithControlInfo)filter))
+			{
+%>
+			WWP_GridStateAddComboDynFilterValue(&GridStateDynamicFilter, <%= WorkWithStringValues.StringWithQuotes(SetFilterDsc ? filter.Description : "") %>,  &<%= filter.Name + i %>.To<%= ((IItemWithControlInfo)filter).ControlAllowMultipleSelection ? "Json" : "String" %>(), &<%= filter.Name %>_Data, <%= ((IItemWithControlInfo)filter).ControlAllowMultipleSelection.ToString() %>)
+<%
+			}
+			else
+			{
+				if (SetFilterDsc)
+				{
+%>
+			&GridStateDynamicFilter.Dsc = <%= WorkWithStringValues.StringWithQuotes(filter.Description) %>
+<%
+				}
+				if (filter.IsDVCombo_Multiple())
+				{
+%>
+			&GridStateDynamicFilter.Value = &<%= filter.Name + i %>.ToJson()
+<%
+				}
+				else if (filter is FilterAttributeMultipleGeneralElement)
+				{
+%>
+			&GridStateDynamicFilter.Value = &<%= filter.Name + i %>Values.To<%= template.SerializationFormat %>()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null)
+					{
+%>
+			&GridStateDynamicFilter.ValueTo = &<%= filter.Name + i %>Descriptions.To<%= template.SerializationFormat %>()
+<%
+					}
+				}
+				else
+				{
+%>
+			&GridStateDynamicFilter.Value = <%= filter.VariableName + i %>.ToString()
+<%
+				}
+				if (filter.HasOperators())
+				{
+%>
+			&GridStateDynamicFilter.Operator = &DynamicFiltersOperator<%= i.ToString() %>
+<%
+				}
+				if (filter.HasRange() || filter.HasRangeOperator())
+				{
+					atLeastOneHasRange = true;
+%>
+			&GridStateDynamicFilter.ValueTo = <%= filter.RangeVariableName + i %>.ToString()
+<%
+				}
+			}
+			filterIndex++;
+		}
+%>
+	EndCase
+<%
+		if (addNotEmptyCondition)
+		{
+%>
+	If <%= DynamicFilters.MaxFilters > 1 ? "&DynamicFiltersRemoving OR " : "" %>not &GridStateDynamicFilter.Value.IsEmpty()<%= atLeastOneHasRange ? " OR not &GridStateDynamicFilter.ValueTo.IsEmpty()" : "" %>
+		&GridState.DynamicFilters.Add(&GridStateDynamicFilter)
+	EndIf
+<%
+		}
+		else
+		{
+%>
+	&GridState.DynamicFilters.Add(&GridStateDynamicFilter)
+<%
+		}
+		if (DynamicFilters.MaxFilters > 1 || Settings.StandardFilters.IsDynFiltersClearFilterVisibilityAlways())
+		{
+%>
+EndIf
+<%
+		}
+	}
+%>

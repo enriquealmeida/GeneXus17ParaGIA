@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Max, Min Formulas</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6502,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Max, Min Formulas</h1>
+<!--Max, Min Formulas--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Max and Min are <a href="5868.html">Aggregate Formulas</a>.</p>
+
+<h2><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h2>
+
+<p>{<strong>Max</strong> | <strong>Min</strong>}<strong>(</strong> <em>&lt;expressionToBeMaxOrMin&gt;</em><strong>,</strong> <em>&lt;aggregateCondition&gt;</em><strong>,</strong> <em>&lt;defaultValue&gt; </em><strong>,</strong> <em>&lt;returnedAttributeValue&gt;</em> <strong>)  </strong>[ <strong>if</strong> <em>&lt;triggeringCondition&gt;</em> ]</p>
+
+<p>where:</p>
+
+<p><em>&lt;expressionToBeMaxOrMin&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is the expression whose resultant value will be maximized/minimized, among the records fulfilling the <em>&lt;aggregateCondition&gt;</em>. It may contain attributes (even formula attributes), constants and variables (variables are allowed only in <a href="6441.html">inline formulas</a>)</p>
+
+<p><em>&lt;aggregateCondition&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is a combination of a search condition with a <a href="5271.html">Data Selector</a> invocation. Both parts are optional:</p>
+
+<p style="margin-left: 40.0px;">[<em>&lt;SearchCondition&gt;</em>] [<strong>USING</strong> <em>&lt;DataSelector&gt;</em> '<strong>(</strong>' <em>&lt;Parameter&gt;<sub>1</sub></em><strong>,</strong> <em>&lt;Parameter&gt;<sub>2</sub></em><strong>,</strong> <em>&lt;Parameter&gt;<sub>n</sub></em> '<strong>)</strong>']</p>
+
+<p style="margin-left: 40.0px;"><em>&lt;SearchCondition&gt;</em></p>
+
+<p style="margin-left: 80.0px;">Is the condition that records must verify to be considered in the aggregation. It may contain attributes, constants and variables (user variables are allowed only in <a href="6441.html">inline formulas</a>, GeneXus standard variables in <a href="6440.html">global formulas</a> and inline formulas).<em> </em></p>
+
+<p><em>&lt;defaultValue&gt;</em></p>
+
+<p style="margin-left: 40.0px;"><span style="line-height: 1.6em;">Is the returned value when no records match the </span><em>&lt;aggregateCondition&gt;</em><span style="line-height: 1.6em;">. It is a constant and it is optional.</span></p>
+
+<p><em>&lt;returnedAttributeValue&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Attribute whose value is returned by the formula when it finds records that fulfill the <em>&lt;aggregateCondition&gt; </em>and after maximizing/minimizing the <em>&lt;expressionToBeMaxOrMin&gt;. </em></p>
+
+<p><em style="line-height: 1.6em;">&lt;triggeringCondition&gt;</em></p>
+
+<p style="margin-left: 40.0px;">Is the condition that determines if the formula must be triggered or not. It is optional. The only attributes allowed are those belonging to the contextual table (that the formula attribute would belong to if it were stored) and its extended.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example"><span style="line-height: 1.2em;">Ex</span><span style="line-height: 1.2em;">ample</span></a></h3>
+
+<p><span style="line-height: 1.2em;">Having the following two transactions: Flight to store the general information about flights (like its description and prices by date), and FlightInstance to store the actual information of a certain flight: </span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Flight {</strong>
+<em>       FlightId*</em>
+<em>       FlightDescription
+       </em><strong>Prices</strong>
+          { <em>FlightDate*</em>
+<em>            FlightPrice </em>}}
+
+<strong>FlightInstance {</strong>
+<em>       FlightInstanceNumber*</em>
+<em>       FlightId</em>
+<em>       FlightDescription</em>
+<em>       FlightInstanceDate</em>
+<em>      </em><strong><em> FlightInstancePrice</em> = max(<em>FlightDate, FlightDate</em> &lt;= <em>FlightInstanceDate</em>, 0, <em>FlightPrice</em>)}</strong></pre>
+
+<p>Look at the following image, which shows the <em>FlightInstancePrice</em> attribute being defined as a Max <a href="6440.html">global formula</a> using the GeneXus formula editor:</p>
+
+<p><img src="./images/5875.jpg" id="5875" class="WikiImage"/></p>
+
+<p><span style="line-height: 1.6em;">The <a href="6347.html">base table</a> of the formula, that is, the</span><span style="line-height: 1.6em;"> navigated table in order to make the calculation is: FLIGHTPRICES.</span></p>
+
+<p>The formula has a context: the FLIGHTINSTANCE table, this means when the formula is triggered, we are positioned on that table. More precisely: on one of its records, with a certain <em>FlightInstanceNumber</em> value. Thus, at the moment the formula is going to be evaluated, it already knows all the FLIGHTINSTANCE table (and its extended) attributes for this record. Among them, <em>FlightId</em> and <em>FlightInstanceDate</em>. </p>
+
+<p><span style="line-height: 1.6em;">Therefore, not all the records that fulfill the explicit aggregate condition &quot;FlightDate &lt;= FlightInstanceDate&quot; will be considered for the maximization, but only those that correspond to the flight, that is, the <em>FlighId</em> of the FLIGHTINSTANCE record. </span></p>
+
+<p>Thus, all records considered will verify, also: FLIGHTPRICES.<em>FlightId = </em>FLIGHTINSTANCE.<em>FlightId</em></p>
+
+<p>In sum, the max formula will navigate the FLIGHTPRICES table filtering the records that verify the <strong><em>&lt;aggregateCondition&gt;</em> </strong>(<em>FlightDate</em> &lt;= <em>FlightInstanceDate</em>)<strong> </strong>and also applying the <strong>automatic filter inferred by GeneXus</strong> (FLIGHTINSTANCE.<em>FlightId</em> = FLIGHTPRICES.<em>FlightId); </em>then,<em> </em>for the selected records that fulfill both mentioned filters, the <em>&lt;expressionToBeMaxOrMin&gt;</em><strong> </strong>will be maximized (this means that the record which has the <em>FlightDate </em>maximum value will be chosen) and the <em><strong>&lt;</strong>r</em><strong><em>eturnedAttributeValue&gt;</em> </strong>associated<strong> </strong>to that record<strong> </strong>will be returned as the formula result (<em>FlightPrice</em>). If none record fulfill both filters, then 0 (the <em>&lt;defaultValue&gt;</em>) will be returned.</p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5868.html">Aggregate Formulas</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/04/21 04:58 PM</em></font></td></TR></table></font>

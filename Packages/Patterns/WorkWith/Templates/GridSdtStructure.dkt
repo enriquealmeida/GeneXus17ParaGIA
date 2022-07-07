@@ -1,0 +1,34 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Selected Objects SDT" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	WorkWithInstance wwInstance = WorkWithInstance.FastLoad(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+	string sdtName = Object.Name;
+
+%>
+<Part type="<%= PartType.SDTStructure %>">
+	<Level Name="<%= sdtName %>">
+		<LevelInfo guid="<%= Guid.NewGuid() %>" name="<%= sdtName %>">
+			<Properties>
+				<Property><Name>AttCollection</Name><Value>True</Value></Property>
+			</Properties>
+		</LevelInfo>
+<%
+	foreach (IAttributesItem gridItem in gridObject.Attributes)
+	{
+%>
+		<Item guid="<%= Guid.NewGuid() %>" name="<%= gridItem.Id %>">
+			<Properties><Property><Name><%= Properties.ATT.BasedOn %></Name><Value><%= gridItem.BasedOn %></Value></Property></Properties>
+		</Item>
+<%
+	}
+%>
+	</Level>
+</Part>

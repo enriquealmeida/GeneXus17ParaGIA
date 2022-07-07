@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Udp method</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?3964,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Udp method</h1>
+<!--Udp method--><div class="TableWikiBody" id="tblwikibody"><p>Calls a <a href="1866.html">GeneXus object</a> that returns a value.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><em>&amp;VariableName</em>|<em>AttributeName </em>=<em>ObjectName</em>.<strong>Udp</strong><strong>(</strong>[<em>par<sub>1</sub></em>, .... , <em>par<sub>N</sub></em>]<strong>)</strong></p>
+
+<p><strong>Where:</strong><br />
+<em>&amp;VariableName</em><br />
+     Is the name of a -local and temporary- variable defined in the caller object. It will receive the data returned by the invoked object (<em>ObjectName</em>).</p>
+
+<p><em>AttributeName</em><br />
+     Is a valid attribute name defined in the <a href="1836.html">Knowledge Base</a>. It will receive the data returned by the invoked object (<em>ObjectName).</em></p>
+
+<p><em>ObjectName</em><br />
+     Is the name of the object you want to invoke.</p>
+
+<p><em>par<sub>1</sub>, …, par<sub>N</sub></em><br />
+     Are optional parameters that can be sent to the called object. They can be attributes, variables, fixed values, or expressions.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>In general, the Udp (User Defined Procedure) method is used to call <a href="6293.html">Procedures</a> and <a href="5270.html">Data Providers</a>. When these objects are called, they can return data by returning the control to the caller after their execution. The objects that have UI, in Web environments, don't return the control to the caller.</p>
+
+<p>The Udp method can be written in different sections of the caller object, depending on whether the caller is a <a href="1908.html">Transaction</a>, a <a href="6916.html">Web Panel</a>, a <a href="6293.html">Procedure</a>, etc. If the caller is a Procedure, the Udp method must be included in some line of its source. If the caller object is a Transaction, the invocation can be included in its Rules section as well as inside an event, depending on the requirement, etc. Furthermore, the Udp method can be used in the definition of a <a href="6440.html">formula attribute</a>.</p>
+
+<p>Depending on the context where the invocation is defined, you must decide if it is more appropriate receiving the result in a certain attribute, or in a variable.</p>
+
+<p>The syntax of the Udp method allows you to omit the dot and the Udp, and the invocation will be the same.</p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p><strong>1)</strong> In the following example, a Procedure called GetDiscount is called using the Udp method (the dot and the Udp method were omitted because they are optional):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;discount= GetDiscount(CustomerId,FlightId); //Rule defined in a Transaction object
+
+Parm(CustomerId,FlightId,&amp;discount); //Rule defined in the GetDiscount Procedure
+</pre>
+
+<p>It is not important to know details of what the GetDiscount procedure performs. Given the name of the Procedure, the fact that it returns a value and the name of the variable that receives the value returned by the Procedure, you can conclude that:</p>
+
+<ul>
+	<li>the Procedure will return a discount</li>
+	<li>two pieces of data are sent to the Procedure: a customer identifier and a flight identifier</li>
+	<li>the Procedure will use that data and assess and calculate whatever is necessary to return a discount</li>
+</ul>
+
+<p>It is important to observe how the Parm rule is declared in the called object.</p>
+
+<p>In the rules section of the GetDiscount Procedure, the <a href="6862.html">Parm rule</a> is declared with the three parameters.</p>
+
+<p>The term “parameters” refers to data sent and received between two objects, where one object calls the other one. Referring to parameters, you can talk in general, regardless of whether you send or receive variables, attributes or fixed values.</p>
+
+<p>Let’s now see how this works: the two parameters sent, are received in order. And the third parameter defined in the <a href="6862.html">Parm rule</a>, corresponds to the one that its value is calculated (or obtained) in the Procedure and assigned to the &amp;discount variable which is before the equal sign in the invocation.</p>
+
+<p>In this example, the two sent parameters are attributes, because the Procedure is invoked from a Transaction, and so, in that context, the customer identifier value and the flight identifier value are stored in attributes.</p>
+
+<p><strong>2)</strong> The only difference that this example presents with the previous example is that the result returned by the Procedure invoked with the Udp method is assigned to an attribute.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;discount= GetDiscount(CustomerId,FlightId); //Rule defined in a Transaction object
+Parm(CustomerId,FlightId,&amp;discount); //Rule defined in the GetDiscount Procedure</pre>
+
+<p>It is important to consider that an attribute can be assigned with a value, only in the rules section of a Transaction or inside a <a href="24744.html">For Each command</a> in a Procedure.</p>
+
+<p>GeneXus offers other possibilities to update the database, but the assignment of values directly to attributes is only allowed only in those cases.</p>
+
+<p><strong>3)</strong> In the following example, the same Procedure is invoked in the definition of a formula:</p>
+
+<p><img src="./images/24309.png" id="24309" class="WikiImage"/></p>
+
+<p>Since the CustomerDiscount attribute has a formula definition, it is a virtual attribute (in other words, the attribute doesn't exist in the database). Its value is calculated every time, by executing the calculation —or in this case by executing the Procedure— specified in the formula definition.</p>
+
+<p>The attributes sent as parameters to the Procedure must have value (more specifically, they must belong to the <a href="6029.html">Extended Table</a> of the table associated to the Transaction level where the formula attribute is present).</p>
+
+<p>In spite of omitting the Udp method, the procedure is executed using it, because an output value is returned by the Procedure, and it is assigned to the formula attribute (the procedure must have its <a href="6862.html">Parm rule</a> defined with three parameters and the last parameter is the one returned and assigned to the formula attribute).</p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: It is important to assume that the invoked Procedure not only access to the extended table of the CustomerDiscount attribute, but it access to other tables also to calculate the discount (because if all the involved attributes to calculate the discount belong to the extended table of the CustomerDiscount attribute, it is unnecessary to invoke a Procedure and the calculation must be defined directly in the formula editor).</div>
+
+<p><strong>4) </strong>In the following example, a <a href="5270.html">Data Provider object</a> is called with the Udp method (although it is omitted) without sending parameters to it:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;FranceCustomers=DataProviderCustomersFromFrance()</pre>
+
+<p>The Data Provider loads a <a href="10021.html">variable based on a Structured Data Type</a> which is a collection. After that, the collection can be iterated to process each element, or showed, etc.</p>
+
+<p><strong>Important consideration: </strong>Even though the Data Provider is invoked with the Udp method (it is omitted but used, because the object returns data), the Data Provider hasn't got a Parm rule defined because no parameters are sent to it (so, it doesn't receive parameters), and with respect to the returned data, the Data Providers have a property called <strong>Output </strong>to set in it, the data type of the data that returns.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="16224.html">Call method</a></p>
+
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus/genexus-16-course-analyst/communication-between-objects-gx15?p=5256'>Communication between objects</a></p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="16224.html">Call method</a></TD><TD><a href="6292.html">Data Provider: Input</a></TD><TD><a href="8220.html">Definition of type of parameters received (in, out, inout)</a></TD></TR><TR><TD><a href="6359.html">For in Command</a></TD><TD><a href="6714.html">New command</a></TD><TD><a href="6862.html">Parm rule</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/20/22 02:13 PM</em></font></td></TR></table></font>

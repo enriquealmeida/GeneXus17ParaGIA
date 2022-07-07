@@ -1,0 +1,95 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="View Abstract Form" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Assembly Name="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Import Namespace="Artech.Patterns.WorkWithDevices.Copy" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+
+	EntityProviderInstance epInstance = EntityProviderInstance.Load(Instance);
+	EntityProviderSettings settings = epInstance.Settings;
+
+	ViewElement view = epInstance.GetElement<ViewElement>(Element);
+	SelectionElement selection = view.Parent.Selection;
+
+	int visibleAttributes = view.FixedData != null ? view.FixedData.Attributes.VisibleAttributesCount : 0;
+
+	ResponsiveSizes mainTableSizes = Concepto.Patterns.EntityProvider.Helpers.ViewAbstractForm.MainTableResponsiveSizes(visibleAttributes, true, DefaultFormHelper.FormTemplate.Fiori);
+	ResponsiveSizes tabTableSizes = Concepto.Patterns.EntityProvider.Helpers.ViewAbstractForm.TabTableResponsiveSizes(visibleAttributes);
+	ResponsiveSizes tableTopSizes = Concepto.Patterns.EntityProvider.Helpers.ViewAbstractForm.TableTopResponsiveSizes(DefaultFormHelper.FormTemplate.Fiori);
+%>
+<%= WebMultiForm.BeginMultiForm(1) %>
+	<%-- Main form --%>
+	<%= WebMultiForm.BeginLayoutForm(1) %>
+		<%= WebLayout.BeginLayout() %>
+			<%= WebLayout.BeginResponsiveTable(mainTableSizes, Constants.MainTable, "WWAdvancedViewContainer") %>
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebLayout.BeginResponsiveTable(tableTopSizes, "TableTop1", "ViewTableTopSearch") %>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.TextBlock("ViewTitle", settings.Theme.Subtitle, view.Description) %>
+								<%= WebLayout.EndTableCell() %>			
+							<%= WebLayout.EndTableRow() %>		
+			<%
+				if (view.FixedData != null)
+				{
+					int i = 1;
+					foreach (IAttributesItem fixedAtt in view.FixedData.Attributes.VisibleAttributes)
+					{
+			%>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.BeginResponsiveTable(tabTableSizes, "TabTable_" + i++, "ViewTable") %>
+										<%= WebLayout.BeginTableRow() %>
+											<%= WebLayout.BeginTableCell() %>
+												<%= WebFormScript.Item(fixedAtt, true, true) %>
+											<%= WebLayout.EndTableCell() %>
+										<%= WebLayout.EndTableRow() %>
+						
+									<%= WebLayout.EndResponsiveTable() %>
+								<%= WebLayout.EndTableCell() %>					
+							<%= WebLayout.EndTableRow() %>
+				<%	}					
+				}
+					
+					Dictionary<string, object> tabProperties = new Dictionary<string, object>();
+					tabProperties[Artech.Patterns.WorkWithDevices.Copy.InstanceAttributes.LayoutTab.HistoryManagement] = false;
+			%>							
+						<%= WebLayout.EndResponsiveTable() %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebLayout.BeginTab(Constants.TabName, "WWTab", tabProperties) %>
+			<%
+					foreach (TabElement tab in view.Tabs)
+					{ 
+			%>
+							<%= WebLayout.BeginTabPage(tab.Code, tab.Name) %>
+								<%= WebLayout.BeginResponsiveTable(Concepto.Patterns.EntityProvider.Helpers.AbstractForm.SimpleResponsiveSizesHelper(1, 1), "Table" + tab.Code, "TabsFormContainer") %>
+									<%= WebLayout.BeginTableRow() %>
+										<%= WebLayout.BeginTableCell() %>
+											<%= WebLayout.WebComponent(tab.Code + "WC", null) %>
+										<%= WebLayout.EndTableCell() %>
+									<%= WebLayout.EndTableRow() %>
+								<%= WebLayout.EndResponsiveTable() %>
+							<%= WebLayout.EndTabPage() %>
+			<%
+					}
+			%>
+						<%= WebLayout.EndTab() %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>						
+			<%= WebLayout.EndResponsiveTable() %>
+		<%= WebLayout.EndLayout() %>
+	<%= WebMultiForm.EndLayoutForm() %>
+<%= WebMultiForm.EndMultiForm() %>

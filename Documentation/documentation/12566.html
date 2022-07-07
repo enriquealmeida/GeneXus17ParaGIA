@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Conditional Orders and Filters</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?12566,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Conditional Orders and Filters</h1>
+<!--Conditional Orders and Filters--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><span style="font-family: Verdana;">In GeneXus it is possible to condition both the filters (usually known as filter conditions or constraints) and the orders indicated in the objects or in the Grid controls, using the WHEN clause. <br />
+This will allow having a better performance in the queries that include several search criteria, since it is possible to coordinate the search order with the suitable conditions. </span></p>
+
+<p><span style="font-size: larger;"><b><span style="font-family: Verdana;">Description</span></b></span></p>
+
+<p><u><b><span style="font-family: Verdana;">Filter Conditions </span></b></u><br />
+<br />
+<span style="font-family: Verdana;">It is possible to condition the filters specified at the For Each command level, for the general Conditions of an object or a Grid. Thus, when a condition takes place this filter will be applied. If the condition applied to the constraint does not take place, the filter is not considered. <br />
+The conditions’ syntax (WHERE, etc.) in GeneXus is the following: </span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Condition [WHEN &lt;Constraint&gt;];
+</pre>
+
+<p><span style="font-family: Verdana;">Where:<br />
+<br />
+<i>Condition</i> is a GeneXus condition.<br />
+<i>Constraint</i> is the condition that enables Condition.<br />
+<br />
+Conditional filter conditions are additions (with AND) among them, and it is possible that no constraint applies, if all the corresponding conditions are false.<br />
+To generate a conditional constraint as such, you must be in a Client/Server architecture and the DBMS that is being used must be able to “evaluate” the Condition ;i.e.: GeneXus must know how to write the Condition in the language of the DBMS used.<br />
+<br />
+If it cannot be generated as such (because the destination generator does not support it or because the condition cannot be written in the DBMS language), it will be transformed into a “standard” filter substituting the WHEN by an OR.  Besides, the following code message will be generated in the navigation report: <b>spc0053 -‘Unsupported conditional constraint &quot;%1&quot; changed to standard constraint %2.’</b>-</span><br />
+ </p>
+
+<p><u><i>Navigation List </i></u></p>
+
+<p><br />
+<span style="font-family: Verdana;">When defining a conditional filter, the navigation report shows it as a conditional constraint and it does not take part in the determination of the Start From/LoopWhile.<br />
+<br />
+E.g.:</span><br />
+<br />
+<img src="./images/12567.JPG" id="12567" class="WikiImage"/></p>
+
+<p><u><span style="font-family: Verdana;"><i>Generated Statements </i></span></u><br />
+<br />
+<span style="font-family: Verdana;">The statements generated for the conditional filters are similar to the ones generated for the standard filters (without the WHEN clause). The main difference is that, having all the possible strings, only the corresponding ones, according to the conditions, are concatenated. Besides, the variables values are instantiated. <br />
+<br />
+Example :</span><br />
+ </p>
+
+<ul>
+	<li>The filter <b>CusAddr &gt;= &amp;CusAddr or not null(&amp;CusAddr)</b> generates the statement:<br />
+	<span style="font-family: Verdana;">SELECT <i>CusAddr</i>, <i>CusNam</i>, <i>CusId</i> FROM <i>CUSTOMERS</i> (NOLOCK) WHERE <i>CusAddr</i> = ? or   (?=' ') ORDER BY </span><i><span style="font-family: Verdana;">CusId</span></i></li>
+	<li><span style="font-family: Verdana;">If this filter becomes conditional: <b>CusAddr &gt;= &amp;CusAddr WHEN not null(&amp;CusAddr)</b> the statement generated will be:</span>
+	<ul>
+		<li><span style="font-family: Verdana;">When the &amp;CusAddr variable is null:<br />
+		SELECT <i>CusAddr</i>, <i>CusNam</i>, <i>CusId</i> FROM <i>CUSTOMERS </i>(NOLOCK) ORDER BY </span><i><span style="font-family: Verdana;">CusId</span></i></li>
+		<li><span style="font-family: Verdana;">When the  &amp;CusAddr variable has some value:<br />
+		SELECT <i>CusAddr</i>, <i>CusNam</i>, <i>CusId</i> FROM <i>CUSTOMERS</i> FROM<span style="font-style: italic;"> </span><i>CLIENTES</i> (NOLOCK) WHERE </span><i><span style="font-family: Verdana;">CusAddr</span></i><span style="font-family: Verdana;"> = 'Miguelete 1234' ORDER BY </span><i><span style="font-family: Verdana;">CliId</span></i></li>
+	</ul>
+	</li>
+</ul>
+
+<p> </p>
+
+<p><span style="font-family: verdana;"><a href="5868.html">Aggregate Formulas</a> do not support conditional filters</span></p>
+
+<p><u><b><span style="font-family: Verdana;">Conditional orders </span></b></u><br />
+<br />
+<span style="font-family: Verdana;">It is possible to specify alternative navigation orders, depending on the application requirements. The corresponding syntax is:  </span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+[ORDER] &lt;OrderAttList&gt; [WHEN &lt;Constraint1&gt;]
+[ORDER] &lt;OrderAttList1&gt; [WHEN &lt;Constraint2&gt;]
+...
+</pre>
+
+<p><i><span style="font-family: Verdana;">&lt;OrderAttListX&gt;</span></i><span style="font-family: Verdana;"> is a list of attributes delimited by spaces or commas that indicate the navigation order. If you want a descending order by some of the attributes, you must put brackets round it.<br />
+<i>&lt;ConstraintX&gt;</i> is the condition enabling the corresponding &lt;OrderAttList&gt;.<br />
+<br />
+If none of the Constraints is true and there is not an unconditional Order (without the WHEN clause), the navigation order is undefined. In this case, undefined means that it can vary from DBMS to DBMS, even in successive executions. <br />
+If more than one of the Constraints is true, you must take the order of the first ORDER clause defined. For this reason, this should be the preferred order for the queries.<br />
+<br />
+If conditional orders are specified but the generator does not support this, the navigation order will be the one specified as unconditional order. If there is not an specified unconditional order, it will be the primary key of the base table of the group. Besides, the following code message will be generated in the navigation chart: <b>spc0054 -‘ Unsupported conditional order %2. Using default order in %1.’</b>-.<br />
+<br />
+Conditional orders are not supported with Breaks. The following code message will be generated in the navigation chart: <b>spc0055 -‘ Conditional order in group starting at line %1  not allowed (Break group).’</b>-.<br />
+<br />
+<u><b>General considerations </b></u></span><br />
+ </p>
+
+<ul>
+	<li><span style="font-family: Verdana;">They only apply to generators using SQL as method to access the database.</span></li>
+	<li><span style="font-family: Verdana;">If the Constraint has attributes, they are considered as instantiated. I.e.: the Constraint is evaluated before starting the navigation and it does not change during it.  </span></li>
+</ul>
+
+<p><span style="font-family: Verdana;">Performance.<br />
+Due to the implementation procedure used, the groups with conditional order or filters are not expected to be used within loops with high level of occurrences. This may cause performance problems since the SQL statements are dynamically built and the time devoted to the “analysis” that must be performed by the DBMS in each execution may be quite long for these situations. Apart from the above mentioned, we expect important improvements in the performance of queries of the type: “tell me what data do you have and I search it”, since, with the suitable conditions, filters can be coordinated with the search order.<br />
+ <br />
+<span style="font-size: larger;"><b>Examples</b></span></span></p>
+
+<p><u><b><span style="font-family: Verdana;">Example 1</span></b></u><br />
+<br />
+<span style="font-family: Verdana;">There follows an example of a filter condition: </span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ClienteNombre LIKE &amp;ClienteNombre
+          WHEN NOT null(&amp;ClienteNombre);
+ClienteCedula &gt;= &amp;ClienteCedula
+          WHEN NOT null( &amp;ClienteCedula);
+</pre>
+
+<p><span style="font-family: Verdana;">The previous code is interpreted as follows:<br />
+If the <i>&amp;ClienteNombre</i> variable has some value, GeneXus will apply the filter: <i>ClienteNombre LIKE &amp;ClienteNombre</i>. Besides, if the <i>&amp;ClienteCedula</i> variable has some value, it will also apply the filter: <i>ClienteCedula &gt;= &amp;ClienteCedula</i>, in and AND relation with the other filters.<br />
+If no variable has value, no filter will be applied.<br />
+ <br />
+<u><b>Example 2</b></u></span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each ClienteNombre WHEN NOT null(&amp;ClienteNombre)
+          Order ClienteCedula WHEN NOT null( &amp;ClienteCedula)
+          ...
+Endfor
+</pre>
+
+<p><span style="font-family: Verdana;">In this For Each, the navigation will be performed ordered by <i>ClienteNombre</i> if the <i>&amp;ClienteNombre</i> variable has some value. If it does not have any value, the order will be by <i>ClienteCedula</i> if <i>&amp;ClienteCedula</i> has some value. If none of the previous conditions occurs, the navigation will be performed in an undefined order. </span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each ClienteNombre WHEN NOT null(&amp;ClienteNombre)
+          Order ClienteCedula WHEN NOT null( &amp;ClienteCedula)
+          Order ClienteId
+          ...
+Endfor
+</pre>
+
+<p><span style="font-family: Verdana;">In this second For Each of the example, the navigation orders are the same as the ones of the first one, but for the case where none of the Conditions occurs because there is an unconditional Order. In this case, the navigation is performed by the unconditional Order.  </span></p>
+
+<p><span style="font-size: larger;"><b><span style="font-family: Verdana;">Scope</span></b></span><br />
+<br />
+<span style="font-family: Verdana;"><strong>Objects:</strong> Work Panels, Web Panels, Procedures, Reports<br />
+<strong>DBMS:</strong> DB2/UDB, Informix, Oracle, SQL Server</span></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9763.html">Conditions property</a></TD><TD><a href="5312.html">Data Selectors in For Each command</a></TD><TD><a href="26285.html">Database performance from the GeneXus perspective</a></TD></TR><TR><TD><a href="24744.html">For Each command</a></TD><TD><a href="8578.html">Where clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

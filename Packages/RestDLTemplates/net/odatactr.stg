@@ -1,0 +1,370 @@
+group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities, dps, apis, sdts, gx)::=<<
+$header(hostinfo, entities, dps, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities, dps, apis, sdts, gx)::=<<
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Http;
+using System.Web.OData;
+using GeneXus.Programs;
+using System.Runtime;
+using System.Runtime.Serialization;
+using System.Xml.Serialization;
+using GeneXus.Utils;
+using GeneXus.Application;
+using System.Web.OData.Query;
+using System.Web.Http.Filters;
+using System.Threading.Tasks;
+using GeneXus.Http;
+using GeneXus.Data.NTier;
+using System.Reflection;
+using Microsoft.OData.UriParser;
+using System.Net.Http;
+using System.Net;
+
+namespace GeneXus.OData
+{
+    public abstract class GXODataController<T, C, BC> : ODataController where T: GxSilentTrnSdt, new() where BC: IGxSilentTrn, new()
+    {
+
+        protected IGxContext oDataContext;
+        public abstract T entityRead(T sdt_item, C item);
+        public abstract C entityInstance(T sdt_item);
+
+        protected GXODataController() {            
+            oDataContext = new GxContext();
+            DataStoreUtil.LoadDataStores(oDataContext);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            oDataContext.CloseConnections();                
+            base.Dispose(disposing);
+        }
+
+        public T getItem(C item)
+        {
+            T sdt_item = Activator.CreateInstance(typeof(T), new object[] { oDataContext }) as T;
+            sdt_item = entityRead(sdt_item,  item);
+            return sdt_item;
+        }
+
+        public IQueryable<C> getList(ODataQueryOptions opts)
+        {
+            BC bc = new BC();
+            bc.initialize();
+            int m_skip = (opts.Skip != null) ? opts.Skip.Value : 0;
+            int m_top = (opts.Top != null) ? opts.Top.Value : 0;
+            GXBCCollection<T> sdtList = new GXBCCollection<T>();
+            if (opts.Filter != null)
+            {
+                string fieldName = "";
+                string parValue = "";
+                String mthName = "";
+                try
+                {
+                    GXVisitor<object> visitor = new GXVisitor<object>();
+                    opts.Filter.FilterClause.Expression.Accept(visitor);                
+                    FilterValue filter = visitor.filterValueList[0];                   
+                    if (filter.FunctionName != null && filter.FunctionName.Equals("contains"))
+                    {
+                        fieldName = filter.Parameters[0].FieldName;
+                        parValue = filter.Parameters[1].Value;
+                        mthName = "GetBy" + fieldName;
+                    }
+                    else if (filter.ComparisonOperator != null && (filter.ComparisonOperator == "Equal"))
+                    {
+                        fieldName = filter.FieldName;
+                        parValue = filter.Value;
+                        mthName = "GetBy" + fieldName;
+                    }
+                    else if (filter.ComparisonOperator != null && (filter.ComparisonOperator == "GreaterThan"))
+                    {
+                        fieldName = filter.FieldName;
+                        parValue = filter.Value;
+                        mthName = "GetNext";
+                    }
+                    else if (filter.ComparisonOperator != null && (filter.ComparisonOperator == "LessThan"))
+                    {
+                        fieldName = filter.FieldName;
+                        parValue = filter.Value;
+                        mthName = "GetPrev";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Microsoft.OData.ODataException("The value for OData query '\$filter' is invalid", ex);
+                }
+                try
+                {                    
+                    MethodInfo methodInfo = typeof(BC).GetMethod(mthName);
+                    if (methodInfo != null)
+                    {
+                        ParameterInfo[] parameters = methodInfo.GetParameters();
+                        Object parObject = ODataUtils.convertParam(parValue, parameters[0]);
+                        sdtList = (GXBCCollection<T>)methodInfo.Invoke(bc, new object[] { parObject , m_skip, m_top});
+                    }
+                }
+                catch (Exception ex) {
+                    throw new Microsoft.OData.ODataException("Not Implemented", ex);
+                }                                
+            }
+            else
+            {
+                MethodInfo methodInfo = typeof(BC).GetMethod("GetAll");
+                if (methodInfo != null)
+                {
+                    ParameterInfo[] parameters = methodInfo.GetParameters();
+                    if (parameters.Length == 2)
+                    {
+                        sdtList = (GXBCCollection<T>)methodInfo.Invoke(bc, new object[] { m_skip, m_top });
+                    }
+
+                }
+            }
+            List<C> entityList = new List<C>();
+            foreach (T item in sdtList)
+            {
+                entityList.Add(entityInstance(item));
+            }
+            IQueryable<C> result = entityList.AsQueryable();
+            return result;
+        }
+
+        /*
+        public IHttpActionResult patchItem(T sdt_item, Delta<C> personas_delta)
+        {
+            if (sdt_item.Success())
+            {
+                C item = entityInstance(sdt_item);
+                personas_delta.Patch(item);
+                return saveItem(sdt_item, item);
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+        */
+
+        public IHttpActionResult putItem(T sdt_item, C update)
+        {
+            if (sdt_item.Success())
+            {
+                return saveItem(sdt_item, update);
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        public IHttpActionResult saveItem(T sdt_item, C item)
+        {
+            sdt_item = entityRead(sdt_item, item);
+            sdt_item.Save();
+            if (sdt_item.Success())
+            {
+                ((GXHttpHandler)sdt_item.trn).context.CommitDataStores();
+                return Updated(item);
+            }
+            else
+            {
+                return Conflict();
+            }
+        }
+
+        public IHttpActionResult insertItem(C item)
+        {
+            GxSilentTrnSdt sdt_item = getItem(item);
+            sdt_item.Save();
+            if (sdt_item.Success())
+            {
+                ((GXHttpHandler)sdt_item.trn).context.CommitDataStores();
+                return Created(item);
+            }
+            else
+            {
+                return Conflict();
+            }
+        }
+
+        public IHttpActionResult deleteItem(GxSilentTrnSdt sdt_item)
+        {            
+            if (sdt_item.Success())
+            {
+                sdt_item.Delete();
+                if (sdt_item.Success())
+                {
+                    ((GXHttpHandler)sdt_item.trn).context.CommitDataStores();
+                    return StatusCode(HttpStatusCode.NoContent);
+                }
+            }
+            return NotFound();
+        }
+
+
+    }
+    //
+
+    public static class ODataUtils {
+        public static object convertParam(String parValue, ParameterInfo param) {
+            Type t = param.ParameterType;
+            if (t.Equals(typeof(Int16))) {
+                return Int16.Parse(parValue);
+            }
+            else if (t.Equals(typeof(Int32))) {
+                return Int32.Parse(parValue);
+            }
+            else if (t.Equals(typeof(DateTime))) {
+                return DateTime.Parse(parValue);
+            }
+            else if (t.Equals(typeof(String))) {
+                return parValue;
+            }
+            else if (t.Equals(typeof(Double))) {
+                return Double.Parse(parValue);
+            }
+            return null;
+        }
+    }
+
+	// Helper class for not found response
+
+	public class ReplaceNullContentWithNotFoundAttribute : EnableQueryAttribute
+    {
+		public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext)
+		{
+			base.OnActionExecuted(actionExecutedContext);
+			HttpResponseMessage httpResponseMessage = actionExecutedContext.Response;
+			if (httpResponseMessage.IsSuccessStatusCode && IsContentMissingValue(httpResponseMessage))
+			{
+				actionExecutedContext.Response = actionExecutedContext.Request.CreateResponse(HttpStatusCode.NotFound);
+			}
+		}
+
+		private static bool IsContentMissingValue(HttpResponseMessage httpResponseMessage)
+		{
+			var objectContent = httpResponseMessage.Content as ObjectContent;
+			if (objectContent == null)
+			{
+				return false;
+			}
+			var type = GetType(objectContent);
+            return type == typeof(SingleResult<>) && objectContent.Value == null;
+		}
+
+		private static Type GetType(ObjectContent objectContent)
+		{
+			var type = objectContent.ObjectType;
+			if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            {
+                var genericTypeDefinition = type.GetGenericTypeDefinition();
+				type = genericTypeDefinition;
+            }
+			return type;
+		}
+	}
+
+    // Visitor Helper Classes
+
+
+    public class FilterValue
+    {
+        public string ComparisonOperator { get; set; }
+        public string Value { get; set; }
+        public string FieldName { get; set; }
+        public string LogicalOperator { get; set; }
+        public string FunctionName { get; set; }
+        public List<FilterValue> Parameters { get; set; }
+        public FilterValue rightSide { get; set; }
+        public FilterValue leftSide { get; set; }
+    }
+    public class GXVisitor<TSource> : QueryNodeVisitor<TSource>
+      where TSource : class
+    {
+        public List<FilterValue> filterValueList = new List<FilterValue>();
+        FilterValue current = new FilterValue();
+
+        public GXVisitor()
+        {
+            filterValueList.Add(current);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nodeIn"></param>
+        /// <returns></returns>
+        public override TSource Visit(BinaryOperatorNode nodeIn)
+        {
+            if (nodeIn.OperatorKind == BinaryOperatorKind.And
+                || nodeIn.OperatorKind == BinaryOperatorKind.Or)
+            {
+                current.LogicalOperator = nodeIn.OperatorKind.ToString();
+                //filterValueList.Add(current);
+                FilterValue returnFilter = current;
+                FilterValue leftSide = new FilterValue();
+                FilterValue rightSide = new FilterValue();
+                current.leftSide = leftSide;
+                current.rightSide = rightSide;
+                current = rightSide;
+                nodeIn.Right.Accept(this);
+                current = leftSide;
+                nodeIn.Left.Accept(this);
+                current = returnFilter;
+            }
+            else
+            {
+                current.ComparisonOperator = nodeIn.OperatorKind.ToString();
+                nodeIn.Right.Accept(this);
+                nodeIn.Left.Accept(this);
+            }
+            return current as TSource;
+        }
+
+        public override TSource Visit(ConvertNode nodeIn)
+        {
+            nodeIn.Source.Accept(this);
+            return current as TSource;
+        }
+
+        public override TSource Visit(SingleValueFunctionCallNode nodeIn)
+        {
+            List<FilterValue> parms = new List<FilterValue>();
+            current.FunctionName = nodeIn.Name;
+            current.Parameters = parms;
+            FilterValue returnFilter = current;
+            //filterValueList.Add(current);
+            foreach (QueryNode node in nodeIn.Parameters)
+            {
+                current = new FilterValue();
+                node.Accept(this);
+                parms.Add(current);
+            }
+            return returnFilter as TSource;
+        }
+
+        public override TSource Visit(SingleValuePropertyAccessNode nodeIn)
+        {
+            current.FieldName = nodeIn.Property.Name;
+            return current as TSource;
+        }
+
+        public override TSource Visit(ConstantNode nodeIn)
+        {
+            current.Value = nodeIn.LiteralText;
+            return current as TSource;
+        }
+
+    }
+
+}
+>>

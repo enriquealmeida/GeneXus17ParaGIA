@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Integrated Security by Domain</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50682,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Integrated Security by Domain</h1>
+<!--Integrated Security by Domain--><div class="TableWikiBody" id="tblwikibody"><p>In this article, you will learn how to configure the Integrated Security by Domain feature.</p>
+
+<p>Integrated Security by Domain is provided for cases where you have several applications under the same domain and subdomain, and it is essential for them to function.</p>
+
+<p>Its use is recommended when some of the domain applications do not require user authentication and the content of a <a href="24829.html">Panel</a> simply varies when there is an authenticated user. These applications have Panels with the property <a href="15214.html">Integrated Security Level property</a> = None, so they can be accessed by everyone regardless if they are authenticated or not.</p>
+
+<p>Integrated Security by Domain is implemented using a cookie called GAMIntSecByDomain. At login, when this property is enabled and configured in Server Mode, the cookie will be generated at Domain level.</p>
+
+<p>To use this functionality, the following GeneXus Modules must be included in all knowledge bases:</p>
+
+<ul>
+	<li>    <a href="43980.html">GeneXus JWT Module</a></li>
+	<li>    <a href="43917.html">GeneXus Cryptography Module</a></li>
+	<li>    <a href="47252.html">SecurityAPICommons Module</a></li>
+</ul>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h3>
+
+<p>The following configuration is required for each application in which we want to use this functionality (Server and Clients).<br />
+To do so, go to the GAM backend &gt; Settings &gt; Repository Configuration &gt; Sessions and select the Enable Integrated Security by Domain property.</p>
+
+<p><img src="./images/50683.jpg" id="50683" class="WikiImage"/></p>
+
+<p>Next, the following properties will be displayed:</p>
+
+<p><img src="./images/50690.jpg" id="50690" class="WikiImage"/></p>
+
+<ul>
+	<li class="Code"><strong>Integrated Security by Domain mode</strong>: it must be configured in Server mode for the Identity provider (application that requires authentication), and as Client in all the applications that will use this session.</li>
+	<li class="Code"><strong>Integrated Security by Domain JWT secret</strong>: this is the symmetric hexadecimal key used to sign the token sent (256 bits is the default value).</li>
+	<li class="Code"><strong>Integrated Security by Domain AES encryption key</strong>: it is the hexadecimal key of the AES encryption algorithm; different lengths–128, 192 or 256 bits–can be used (recommended: 256 bits).</li>
+</ul>
+
+<p class="Code">This functionality must also be activated in the clients, which have a method that validates the cookie and returns True if there is an authenticated user in the domain:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAMRepository.ValidIntegratedSecurityByDomain(out:&amp;UserGUID, out:&amp;GAMErrorCollection): Boolean
+</pre>
+
+<p>The GUID of the authenticated user in the domain is returned in &amp;UserGUID. With this, for example, the user's data can be obtained:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+If <strong>not </strong>&amp;UserGUID.isEmpty()<strong>
+      </strong>&amp;GAMUser.Load(&amp;UserGUID)
+      &amp;UserEmail = &amp;GAMUSer.Email
+Endif</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="49956.html">GeneXus 17 Upgrade 9</a>.</p>
+
+<p><br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/04/22 07:25 PM</em></font></td></TR></table></font>

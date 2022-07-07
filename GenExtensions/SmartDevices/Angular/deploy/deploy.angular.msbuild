@@ -1,0 +1,21 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+
+  <Target Name="Build" Inputs="@(ArtifactDeploy);$(ProjectRootDirectory);$(DeployFullPath)" Outputs="%(ArtifactDeploy.Identity);$(ProjectRootDirectory);$(DeployFullPath);%(Identity).Dummy"> 
+  
+	  <Message Text="Executing npm install for '%(ArtifactDeploy.Identity)' Angular Application... " Importance="high"/>    
+
+    <PropertyGroup>
+		  <AngularProjectName>%(ArtifactDeploy.Identity)</AngularProjectName>
+		  <AngularProjectFolder>$(AngularProjectName.Replace(".", "_"))</AngularProjectFolder>
+      <AngularBuildConfiguration>--configuration production</AngularBuildConfiguration>
+	  </PropertyGroup>
+    
+    <Exec Command="npm install" WorkingDirectory="$(ProjectRootDirectory)\$(AngularProjectFolder)"/>
+    
+    <Message Text="Building '%(ArtifactDeploy.Identity)' Angular Application... " Importance="high"/>
+
+    <Exec Command="ng build $(AngularBuildConfiguration) --output-path=$(DeployFullPath)\%(ArtifactDeploy.Identity)" WorkingDirectory="$(ProjectRootDirectory)\$(AngularProjectFolder)"/>
+  
+  </Target>
+
+</Project>

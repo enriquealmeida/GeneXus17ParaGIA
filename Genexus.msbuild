@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project DefaultTargets="Initialize;Open;Specify;Generate" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Import Project="$(GXInstall)\Genexus.Tasks.targets"/>
+
+	<Target Name="SetAppInfo">
+		<SetProductInfo Info="$(ProductInfo)" DefaultRWDTheme="$(DefaultTheme)" Condition="'$(ProductInfo)' != ''" />
+	</Target>
+	<Target Name="SetCatalogFile">
+		<SetCatalog FilePath="$(PackagesCatalog)" Condition="'$(PackagesCatalog)' != ''"/>
+	</Target>
+	<Target Name="Initialize" DependsOnTargets="SetAppInfo;SetCatalogFile"/>
+	
+	<Target Name="Open" DependsOnTargets="Initialize">
+		<OpenKnowledgeBase  Directory="$(KBPath)"  TargetModelId="$(TargetModelId)" Output="IDE" EventsSuspended="True" StateGuid="$(StateGuid)" DatabaseUser  ="$(DatabaseUser)" DatabasePassword ="$(DatabasePassword)" AutoUpdate="False" />
+	</Target>
+	<Target Name="Wait">
+		<BuildWait MutexName="$(MutexName)" SegmentName="$(SegmentName)"/>
+	</Target>
+	<Target Name="SpecifierDaemon">
+		<SpecifierDaemon MutexName="$(MutexName)" SegmentName="$(SegmentName)" GXProcessId="$(GXProcessId)"/>
+	</Target>
+	<Target Name="GeneratorDaemon">
+		<GeneratorDaemon MutexName="$(MutexName)" SegmentName="$(SegmentName)" GXProcessId="$(GXProcessId)" Model="$(ModelId)" GenId="$(GenId)"/>
+	</Target>
+	<Target Name="CreateDB">
+		<CreateDatabaseOnly FromModel="$(FromModelId)" Model="$(ModelId)"/>
+	</Target>
+	<Target Name="ImpactDB">
+		<ImpactDatabaseOnly FromModel="$(FromModelId)" Model="$(ModelId)" Force="$(Force)"/>
+	</Target>
+	<Target Name="SpecifyAll">
+		<SpecifyAllOnly Model="$(ModelId)" Options="$(Options)"/>
+	</Target>
+	<Target Name="SpecifyOne">
+		<SpecifyOneOnly Model="$(ModelId)" Options="$(Options)" ObjectNames="$(ObjectNames)"/>
+	</Target>
+	<Target Name="Generate">
+		<GenerateOnly Model="$(ModelId)"/>
+	</Target>
+	<Target Name="Navigation">
+		<NavigationOnly Model="$(ModelId)" ModelInfo="$(ModelInfoId)" Options="$(Options)" ObjectNames="$(ObjectNames)"/>
+	</Target>
+</Project>

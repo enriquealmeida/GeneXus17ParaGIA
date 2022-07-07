@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>SFTP Client</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44966,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">SFTP Client</h1>
+<!--SFTP Client--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: This is part of <a href="44965.html">GeneXus SFTP Module</a>  and implements a restricted client for the SFTP Protocol..</div>
+</p>
+
+<h2><a id="Connect" class="HashLink" href="#Connect">Connect</a></h2>
+
+<p>It establishes the SSH connection to the server using the authentication method defined on the SDT SftpOptions.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Connect(SftpOptions)</pre>
+
+<ul>
+	<li>Input SftpOptions: SDT SftpOtptions with authentication configuration preloaded</li>
+	<li>Returns: Boolean true if the connection was successful.</li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;success = &amp;SftpClient.Connect(&amp;SftpOptions)</pre>
+
+<h2><a id="Get" class="HashLink" href="#Get">Get</a></h2>
+
+<p>Downloads a file from the remote SFTP server to the client's machine using an already open connection.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Get(remoteFilePath, localDirectory)</pre>
+
+<ul>
+	<li>Input remoteFilePath: VarChar(256), path relative to the working directory (pwd) including filename and extension.</li>
+	<li>Input localDirectory: VarChar(256), an absolute local path to save the downloaded file.</li>
+	<li>Returns: Boolean true if the operation was successful.</li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;success = &amp;SftpClient.Get(&quot;/sftpfolder/samplefile.txt&quot;, &quot;C:\Temp\&quot;)</pre>
+
+<h2><a id="Put" class="HashLink" href="#Put">Put</a></h2>
+
+<p>Uploads a file from the local client's machine to the SFTP server using an already open connection.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Put(localFilePath, remoteDirectory)</pre>
+
+<ul>
+	<li>Input localFilePath - VarChar(256), absolute local path to the file including filename and extension.</li>
+	<li>Input remoteDirectory - VarChar(256), path relative to the working directory (pwd).</li>
+	<li>Returns: Boolean true if the operation was successful.</li>
+</ul>
+
+<p>Example.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;success = &amp;SftpClient.Put(&quot;C:\Temp\samplefile.txt&quot;, &quot;/sftpfolder&quot;)</pre>
+
+<h2><a id="GetWorkingDirectory" class="HashLink" href="#GetWorkingDirectory">GetWorkingDirectory</a></h2>
+
+<p>Returns the default remote server working directory (command pwd).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GetWorkingDirectory()</pre>
+
+<ul>
+	<li>Returns VarChar(256) </li>
+</ul>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;directory = &amp;SftpClient.GetWorkingDirectory()</pre>
+
+<h2><a id="Disconnect" class="HashLink" href="#Disconnect">Disconnect</a></h2>
+
+<p>Closes the SFTP connection.</p>
+
+<p>It is mandatory as good programming practice after finishing using the channel and as a security measure.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Disconnect()</pre>
+
+<ul>
+	<li>It does not receive any parameters and does not return any value.</li>
+</ul>
+
+<p>Example</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SftpClient.Disconnect()</pre>
+
+<h2><a id="How+to+Download+a+File" class="HashLink" href="#How+to+Download+a+File">How to Download a File</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SftpOptions.Host = &quot;172.16.4.5&quot;
+&amp;SftpOptions.User = &quot;dummyuser&quot;
+&amp;SftpOptions.Port = 22
+&amp;SftpOptions.Password = &quot;dummypass&quot;
+&amp;SftpOptions.AllowHostKeyChecking = true
+&amp;SftpOptions.KeyPath = &quot;C:\Temp\keys\private_key.pem&quot;
+&amp;SftpOptions.KeyPassword= &quot;dummykeypass&quot;
+&amp;SftpOptions.KnownHostsPath = &quot;C:\Temp\known_hosts&quot;
+
+&amp;success = &amp;SftpClient.Connect(&amp;sftpOptions)
+&amp;var_error = false
+
+if (&amp;success = true)
+    &amp;getsuccess = &amp;SftpClient.Put(&quot;C:\temp\testfile.txt&quot;, &quot;/sftptest&quot;)
+    if (&amp;getsuccess = false)
+        &amp;var_error=true
+    endif
+else
+    &amp;var_error=true
+endif
+
+&amp;SftpClient.Disconnect()
+
+if (&amp;var_error = true)
+    if(&amp;SftpClient.HasError())
+        msg(&quot;Error. Code: &quot; + &amp;SftpClient.GetErrorCode() + &quot;Description: &quot; + &amp;SftpClient.GetErrorDescription())
+    endif
+endif</pre>
+
+<h2><a id="How+to+Upload+a+file" class="HashLink" href="#How+to+Upload+a+file">How to Upload a file</a></h2>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SftpOptions.Host = &quot;172.16.4.5&quot;
+&amp;SftpOptions.User = &quot;dummyuser&quot;
+&amp;SftpOptions.Port = 22 
+&amp;SftpOptions.Password = &quot;dumypass&quot;
+&amp;SftpOptions.AllowHostKeyChecking = true
+&amp;SftpOptions.KeyPath = &quot;C:\Temp\keys\private_key.pem&quot;
+&amp;SftpOptions.KeyPassword= &quot;dummykeypass&quot;
+&amp;SftpOptions.KnownHostsPath = &quot;C:\Temp\known_hosts&quot;
+
+&amp;success = &amp;SftpClient.Connect(&amp;sftpOptions)
+&amp;var_error = false
+
+if (&amp;success = true)
+    &amp;putsuccess = &amp;SftpClient.Put(&quot;C:\temp\testfile.txt&quot;, &quot;/sftptest&quot;)
+    if (&amp;putsuccess = false)
+        &amp;var_error=true
+    endif
+else
+    &amp;var_error=true
+endif
+
+&amp;SftpClient.Disconnect()
+
+if (&amp;var_error = true)
+    if(&amp;SftpClient.HasError())
+        msg(&quot;Error. Code: &quot; + &amp;SftpClient.GetErrorCode() + &quot;Description: &quot; + &amp;SftpClient.GetErrorDescription())
+    endif
+endif
+
+</pre>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! These are just working examples, do not hardcode passwords or keys.</span></span></span></p>
+
+<p> </p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 10/23/20 09:55 PM</em></font></td></TR></table></font>

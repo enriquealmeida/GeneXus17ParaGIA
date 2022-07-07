@@ -1,0 +1,830 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="RegularFiltersLoadState" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="TotalAmountOfRegularFilters" Type="System.Int32" %>
+<%@ Property Name="FiltersAddFixedFilters" Type="List<System.Collections.IEnumerable>" %>
+<%@ Property Name="TitlesWithFilters" Type="List<IAttributesItem>" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="IsWebPanelLoad" Type="System.Boolean" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+<%@ Property Name="UseDDOTFMultiple" Type="System.Boolean" %>
+<%@ Property Name="PrintFilters" Type="System.Boolean" %>
+<%@ Property Name="HasConditionalFormattingFilters" Type="System.Boolean" %>
+<%@ Property Name="SourceType" Type="System.Int32" %>
+<%@ Property Name="Grid" Type="DVelop.Patterns.WorkWithPlus.IGrid" %>
+<%	
+	WorkWithPlusSettings settings = Instance.Settings;
+	SettingsTemplateElement template = Instance.GetAppropiateTemplate();
+	bool isExcelSourceType = (SourceType == 1);
+	bool isPDFSourceType = (SourceType == 2);
+	bool hasTitleFilter = TitlesWithFilters != null && TitlesWithFilters.Count > 0;
+	bool isPrompt = GridObject.IsPrompt();
+	int parametersToLoad = 0;
+	bool sendParametersBySession = settings.Grid.IsSendGridStateToProceduresBySession();
+
+	if ((hasTitleFilter || sendParametersBySession) && !IsWebPanelLoad)
+	{
+		foreach (ParameterElement parameter in GridObject.GetParameters())
+		{
+			if (!isPrompt || ((PromptParameterElement)parameter).Type == "In")
+			{
+				parametersToLoad++;
+			}
+		}
+	}
+	if (settings.IncludeNamesInSDTGridState)
+	{
+		if (settings.Grid.SaveGridLoadSaveCompatible)
+		{
+%>
+If &GridState.FilterValues.Count >= <%= TotalAmountOfRegularFilters + parametersToLoad %> AND &GridState.FilterValues.Item(1).Name.IsEmpty()
+<%
+			int index = 1;
+			foreach (System.Collections.IEnumerable filtersList in FiltersAddFixedFilters)
+			{
+			foreach (IFilter filterAtt in filtersList) 
+			{
+%>
+	&GridState.FilterValues.Item(<%= index %>).Name = !"<%= filterAtt.Name.ToUpper() %>"
+<%
+				index++;
+			}
+			}
+			if (hasTitleFilter)
+			{
+				foreach (IAttributesItem itemAux in TitlesWithFilters)
+				{
+					if (!(itemAux is IFilterableByTitle && ((IFilterableByTitle)itemAux).IsIncludeTitleFilterTrue()))
+					{
+						continue;
+					}
+					IFilterableByTitle item = (IFilterableByTitle)itemAux;
+					
+					string name = item.ControlName.TrimStart('&');
+					if (TitleFilterProcedureHelper.ConsiderFilterCondition(item))
+					{
+%>
+	&GridState.FilterValues.Item(<%= index %>).Name = !"TF<%= name.ToUpper() %>"
+<%
+						index++;
+					}
+					if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+					{
+%>
+	&GridState.FilterValues.Item(<%= index %>).Name = !"TF<%= name.ToUpper() %>_SEL"
+<%
+						index++;
+					}
+				}
+			}
+			if ((hasTitleFilter || sendParametersBySession) && parametersToLoad > 0)
+			{
+				foreach (ParameterElement parameter in GridObject.GetParameters())
+				{
+					if (!isPrompt || ((PromptParameterElement)parameter).Type == "In")
+					{
+						string parmVarName = "&" + (isPrompt && !parameter.Name.StartsWith("&") ? "In" : "") + parameter.Name.TrimStart('&');
+%>
+	&GridState.FilterValues.Item(<%= index %>).Name = !"PARM_<%= parmVarName.ToUpper() %>"
+<%
+						index++;
+					}
+				}
+			}
+%>
+EndIf
+<%
+		}
+%>
+For &GridStateFilterValue in &GridState.FilterValues
+	Do Case
+<%
+		bool hasFilterDVCombo = false;
+		foreach (System.Collections.IEnumerable filtersList in FiltersAddFixedFilters)
+		{
+		foreach (IFilter filterAtt in filtersList) 
+		{
+%>
+		Case &GridStateFilterValue.Name = !"<%= filterAtt.Name.ToUpper() %>"
+<%
+			bool isFilterDVCombo = filterAtt is IItemWithControlInfo && LoadDVComboProcedureHelper.IsIAttributeItemDVelopCombo((IItemWithControlInfo)filterAtt);
+			hasFilterDVCombo = hasFilterDVCombo || isFilterDVCombo;
+			if (filterAtt is FilterAttributeMultipleGeneralElement)
+			{
+%>
+			<%= filterAtt.VariableName %>.From<%= template.SerializationFormat %>(&GridStateFilterValue.Value)
+<%
+				bool addDDOSet = IsWebPanelLoad && ((FilterAttributeMultipleGeneralElement)filterAtt).IsTypeDropDownSelector();
+				if (addDDOSet)
+				{
+%>
+			DDO_FilterMultiple<%= filterAtt.Name %>.SelectedValue_set = &<%= filterAtt.Name %>Values.ToJson()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filterAtt).HasFixedDescriptionsToLoad())
+					{
+%>
+			Do 'Load<%= filterAtt.Name %>DescriptionsFromValues'
+<%
+					}
+				}
+				if (((FilterAttributeMultipleGeneralElement)filterAtt).DescriptionsAttribute != null)
+				{
+%>
+			&<%= filterAtt.Name %>Descriptions.From<%= template.SerializationFormat %>(&GridStateFilterValue.ValueTo)
+<%
+					if (addDDOSet)
+					{
+%>
+			DDO_FilterMultiple<%= filterAtt.Name %>.SelectedText_set = &<%= filterAtt.Name %>Descriptions.ToJson()
+<%
+					}
+				}
+			}
+			else if (isFilterDVCombo && ((IItemWithControlInfo)filterAtt).ControlAllowMultipleSelection)
+			{
+%>
+			<%= filterAtt.VariableName %>.FromJson(&GridStateFilterValue.Value)
+<%
+			}
+			else
+			{
+%>
+			<%= filterAtt.VariableName %>.FromString(&GridStateFilterValue.Value)
+<%
+			}
+			if (filterAtt.HasOperators())
+			{
+%>
+			<%= filterAtt.GetOperatorVariableName() %> = &GridStateFilterValue.Operator
+<%
+				if (filterAtt.HasRangeOperator())
+				{
+%>
+			<%= filterAtt.RangeVariableName %>.FromString(&GridStateFilterValue.ValueTo)
+<%
+				}
+				if (IsWebPanelLoad && filterAtt is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterAtt).HasUpdateFilterTypeSub())
+				{
+%>
+			Do 'Update<%= filterAtt.Name %>OperatorValues'
+<%
+				}
+			}
+			else if (filterAtt.HasRange())
+			{
+%>
+			<%= filterAtt.RangeVariableName %>.FromString(&GridStateFilterValue.ValueTo)
+<%
+			}
+			else if (PrintFilters && (isExcelSourceType || isPDFSourceType) && filterAtt.IsDVCombo() && (((IItemWithControlInfo)filterAtt).ControlAllowMultipleSelection && ((IItemWithControlInfo)filterAtt).ControlInputDS != AttributeElement.ControlInputDSValue.FixedValues || LoadDVComboProcedureHelper.HasDescription((IItemWithControlInfo)filterAtt)))
+			{
+				if (((IItemWithControlInfo)filterAtt).ControlLoadDynamically)
+				{
+					if (isPDFSourceType)
+					{
+%>
+			&<%= filterAtt.Name %>Description = <%= LoadDVComboProcedureHelper.GetProcedureCall(Instance, (IItemWithControlInfo)filterAtt, "'GET_DSC" + (((IItemWithControlInfo)filterAtt).ControlAllowMultipleSelection || ((IItemWithControlInfo)filterAtt).Style != "Regular" ? "_TEXT" : "") + "'", "&" + filterAtt.Name + ".To" + (((IItemWithControlInfo)filterAtt).ControlAllowMultipleSelection ? "Json()" : "String()"), null) %>
+<%
+					}
+				}
+				else
+				{
+%>
+			&<%= filterAtt.Name %>Description = &GridStateFilterValue.ValueTo
+<%
+				}
+			}
+		}
+		}
+		string ddoMultipleSelectedText = "", ddoMultipleSelectedValue = "", ddoMultipleFilteredText = "", ddoMultipleFilteredTextTo = "", ddoMultipleSelectedFixedFilter = "";
+		if (hasTitleFilter)
+		{
+			if (IsWebPanelLoad 
+				&& HasConditionalFormattingFilters
+				&& ((GridGeneralElement)Grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.AddTagColumn
+				&& ((GridGeneralElement)Grid).ConditionalFormatting.IsPositionFirst)
+			{
+				int operIndex = 1;
+				foreach (DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ICondFormattingItem item in ((GridGeneralElement)Grid).ConditionalFormatting.CondFormattingItems)
+				{
+					ddoMultipleSelectedText += " + !'|' + ";
+					ddoMultipleSelectedValue += " + !'|' + ";
+					ddoMultipleFilteredText += " + !'|' + ";
+					ddoMultipleFilteredTextTo += " + !'|' + ";
+					ddoMultipleSelectedFixedFilter += " + !'|' + ";
+					if (UseDDOTFMultiple)
+					{
+						ddoMultipleSelectedFixedFilter += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(null, false, "&GridConditionalFormattingFilter <> " + operIndex, "!'" + operIndex + "'");
+					}
+					operIndex++;
+				}
+			}
+			bool includeSortableByTitleInDropDownOptions = GridObject.Orders.HasTitleOrdering && settings.Grid.IsIncludeSortableByTitleInDropDownOptionsAlways();
+			foreach (IAttributesItem itemAux in TitlesWithFilters)
+			{
+				if (UseDDOTFMultiple)
+				{
+					if (!itemAux.Visible)
+					{
+						continue;
+					}
+
+					if (itemAux is IFilterableByTitle && ((IFilterableByTitle)itemAux).IsIncludeTitleFilterTrue()
+						|| itemAux is ISortableByTitle && (includeSortableByTitleInDropDownOptions || ((ISortableByTitle)itemAux).AllowGrouping) && ((ISortableByTitle)itemAux).IsSortableByTitle()
+						|| itemAux is ISortableByTitle && ((ISortableByTitle)itemAux).IsFixFixable() && ((IGrid)itemAux.Parent).HasColumnsSelectorWithRG())
+					{
+						ddoMultipleSelectedText += " + !'|' + ";
+						ddoMultipleSelectedValue += " + !'|' + ";
+						ddoMultipleFilteredText += " + !'|' + ";
+						ddoMultipleFilteredTextTo += " + !'|' + ";
+						ddoMultipleSelectedFixedFilter += " + !'|' + ";
+					}
+					
+					if (!(itemAux is IFilterableByTitle && ((IFilterableByTitle)itemAux).IsIncludeTitleFilterTrue()))
+					{
+						continue;
+					}
+				}
+				IFilterableByTitle item = (IFilterableByTitle)itemAux;
+
+				string name = item.ControlName.TrimStart('&');
+				string tfName = "&TF" + name;
+				string indent = "";
+				bool considerFilterCondition = TitleFilterProcedureHelper.ConsiderFilterCondition(item);
+				bool hasPredefinedOperatorNotCondFormatting = item.PredefinedOperators != null && item.PredefinedOperators[0].Type == FilterAttributeOperatorElement.TypeValue.PredefinedOperator;
+				if (considerFilterCondition || item.PredefinedOperators != null)
+				{
+%>
+		Case &GridStateFilterValue.Name = !"TF<%= name.ToUpper() %>"
+<%
+					if (item.PredefinedOperators != null)
+					{
+						indent = "\t\t";
+%>
+			&TF<%= name %>Operator = &GridStateFilterValue.Operator
+<%
+						if (considerFilterCondition || hasPredefinedOperatorNotCondFormatting)
+						{
+%>
+			Do Case
+<%
+							if (considerFilterCondition)
+							{
+%>
+				Case &TF<%= name %>Operator = 0
+<%
+							}
+						}
+					}
+				}
+				if (considerFilterCondition)
+				{
+%>
+<%= indent %>			&TF<%= name %>.FromString(&GridStateFilterValue.Value)
+<%
+					if (item.IsSearchBoxRange())
+					{
+%>
+<%= indent %>			&TF<%= name %>_To.FromString(&GridStateFilterValue.ValueTo)
+<%
+					}
+					if (IsWebPanelLoad)
+					{
+						bool isDateTime;
+						string searchBoxType = TitleFilterProcedureHelper.GetSearchBoxType(item, out isDateTime);
+						bool itemIsCharacter = (searchBoxType == "Character");
+						if (!UseDDOTFMultiple)
+						{
+%>
+<%= indent %>			If not &TF<%= name %>.IsEmpty()
+<%
+						}
+						if (searchBoxType == "Date" && isDateTime)
+						{
+%>
+<%= indent %>				&DDO_<%= name %>AuxDate = &TF<%= name %>
+<%
+							if (!UseDDOTFMultiple)
+							{
+%>
+<%= indent %>				DDO_<%= name %>.FilteredText_set = &DDO_<%= name %>AuxDate<%= settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()" %>
+<%
+							}
+							else
+							{
+								ddoMultipleFilteredText += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(item, itemIsCharacter, (item.PredefinedOperators != null ? "not " + tfName + "Operator.IsEmpty() OR " : "") + tfName + ".IsEmpty()", "&DDO_" + name + "AuxDate" + (settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()"));
+							}
+						}
+						else if (!UseDDOTFMultiple)
+						{
+%>
+<%= indent %>				DDO_<%= name %>.FilteredText_set = &TF<%= name %><%= itemIsCharacter ? "" : (searchBoxType == "Date" && settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()") %>
+<%
+						}
+						else
+						{
+							ddoMultipleFilteredText += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(item, itemIsCharacter, (item.PredefinedOperators != null ? "not " + tfName + "Operator.IsEmpty() OR " : "") + tfName + ".IsEmpty()", tfName + (itemIsCharacter ? "" : (searchBoxType == "Date" && settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()")));
+						}
+						if (!UseDDOTFMultiple)
+						{
+%>
+<%= indent %>			EndIf
+<%
+						}
+						if (item.IsSearchBoxRange())
+						{
+							if (!UseDDOTFMultiple)
+							{
+%>
+<%= indent %>			If Not &TF<%= name %>_To.IsEmpty()
+<%
+							}
+							if (searchBoxType == "Date" && isDateTime)
+							{
+%>
+<%= indent %>				&DDO_<%= name %>AuxDateTo = &TF<%= name %>_To
+<%
+								if (!UseDDOTFMultiple)
+								{
+%>
+<%= indent %>				DDO_<%= name %>.FilteredTextTo_set = &DDO_<%= name %>AuxDateTo<%= settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()" %>
+<%
+								}
+								else
+								{
+									ddoMultipleFilteredTextTo += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(item, itemIsCharacter, (item.PredefinedOperators != null ? "not " + tfName + "Operator.IsEmpty() OR " : "") + tfName + "_To.IsEmpty()", "&DDO_" + name + "AuxDateTo" + (settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()"));
+								}
+							}
+							else if (!UseDDOTFMultiple)
+							{
+%>
+<%= indent %>				DDO_<%= name %>.FilteredTextTo_set = &TF<%= name %>_To<%= itemIsCharacter ? "" : (searchBoxType == "Date" && settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()") %>
+<%
+							}
+							else
+							{
+								ddoMultipleFilteredTextTo += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(item, itemIsCharacter, (item.PredefinedOperators != null ? "not " + tfName + "Operator.IsEmpty() OR " : "") + tfName + "_To.IsEmpty()", tfName + "_To" + (itemIsCharacter ? "" : (searchBoxType == "Date" && settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()")));
+							}
+							if (!UseDDOTFMultiple)
+							{
+%>
+<%= indent %>			EndIf
+<%
+							}
+						}
+					}
+				}
+				if (item.PredefinedOperators != null)
+				{
+					int operIndex = 1;
+					foreach (FilterAttributeOperatorElement oper in item.PredefinedOperators)
+					{
+						if (IsWebPanelLoad && UseDDOTFMultiple)
+						{
+							ddoMultipleSelectedFixedFilter += (operIndex > 1 ? " + " : "") + TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(item, false, tfName + "Operator <> " + operIndex, "!" + WorkWithStringValues.StringWithQuotesFirstSingleColon(oper.PredefinedOperator.Replace("|", "\\|")));
+						}
+						if (oper.Type == FilterAttributeOperatorElement.TypeValue.PredefinedOperator)
+						{
+%>
+				Case &TF<%= name %>Operator = <%= operIndex %>
+<%
+							if (IsWebPanelLoad && !UseDDOTFMultiple)
+							{
+%>
+					DDO_<%= name %>.SelectedFixedFilter = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(oper.PredefinedOperator) %>
+<%
+							}
+%>
+					&TF<%= name %> = <%= oper.FixedValue %>
+<%
+							if (oper.IsCustomTypeFixedRange())
+							{
+%>
+					&TF<%= name %>_To = <%= oper.FixedValueTo %>
+<%
+							}
+						}
+						operIndex++;
+					}
+				}
+				if (hasPredefinedOperatorNotCondFormatting || considerFilterCondition && item.PredefinedOperators != null)
+				{
+%>
+			EndCase
+<%
+				}
+				if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+				{
+%>
+		Case &GridStateFilterValue.Name = !"TF<%= name.ToUpper() %>_SEL"
+<%
+					if (item.AllowMultipleSelection)
+					{
+%>
+			&TF<%= name %>_SelsJson = &GridStateFilterValue.Value
+			&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson)
+<%
+					}
+					else
+					{
+%>
+			&TF<%= name %>_Sel.FromString(&GridStateFilterValue.Value)
+<%
+					}
+					if (IsWebPanelLoad)
+					{
+						bool itemIsCharacter = TitleFilterProcedureHelper.IsSelectedItemTypeCharacter(item);
+						bool isItemCheckBoxWithEmptyValue = TitleFilterProcedureHelper.IsItemCheckBoxWithEmptyValue(item);
+						if (!UseDDOTFMultiple)
+						{
+%>
+			If not &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()" %>
+				DDO_<%= name %>.SelectedValue_set = &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "sJson" : (itemIsCharacter && !isItemCheckBoxWithEmptyValue ? "" : ".ToString()") %>
+<%
+						}
+						else
+						{
+							ddoMultipleSelectedValue += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(item, itemIsCharacter, tfName + "_Sel" + (item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()"), tfName + "_Sel" + (item.AllowMultipleSelection ? "sJson" : (itemIsCharacter && !isItemCheckBoxWithEmptyValue ? "" : ".ToString()")));
+						}
+						if (TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(item))
+						{
+							if (item.AllowMultipleSelection)
+							{
+								//TODO:hacer
+								//DDO_<= name >.SelectedText_set = ''
+							}
+							else
+							{
+%>
+				&TF<%= name %>_SelDsc = &GridStateFilterValue.ValueTo
+<%
+								if (!UseDDOTFMultiple)
+								{
+%>
+				DDO_<%= name %>.SelectedText_set = &TF<%= name %>_SelDsc
+<%
+								}
+								else
+								{
+									ddoMultipleSelectedText += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(item, itemIsCharacter, tfName + "_Sel" + (item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()"), "&TF" + name + "_SelDsc");
+								}
+							}
+						}
+						else if (!item.AllowMultipleSelection && item.IsDataListDynamic() && item.eDBType != Artech.Genexus.Common.eDBType.Boolean && TitleFilterProcedureHelper.IsTypeDynamicWithFixedValues(item))
+						{
+							string getSelectedTextFromFixedValues = TitleFilterProcedureHelper.GetSelectedTextFromFixedValues(item, UseDDOTFMultiple, tfName + "_Sel" + (item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()") , ref ddoMultipleSelectedText);
+							if (!string.IsNullOrEmpty(getSelectedTextFromFixedValues))
+							{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(getSelectedTextFromFixedValues, 4) %>
+<%
+							}
+						}
+						if (!UseDDOTFMultiple)
+						{
+%>
+			EndIf
+<%
+						}
+					}
+				}
+			}
+			if (IsWebPanelLoad 
+				&& HasConditionalFormattingFilters
+				&& ((GridGeneralElement)Grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.AddTagColumn
+				&& !((GridGeneralElement)Grid).ConditionalFormatting.IsPositionFirst)
+			{
+				int operIndex = 1;
+				foreach (DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ICondFormattingItem item in ((GridGeneralElement)Grid).ConditionalFormatting.CondFormattingItems)
+				{
+					ddoMultipleSelectedText += " + !'|' + ";
+					ddoMultipleSelectedValue += " + !'|' + ";
+					ddoMultipleFilteredText += " + !'|' + ";
+					ddoMultipleFilteredTextTo += " + !'|' + ";
+					ddoMultipleSelectedFixedFilter += " + !'|' + ";
+					if (UseDDOTFMultiple)
+					{
+						ddoMultipleSelectedFixedFilter += TitleFilterProcedureHelper.UseDDOMultiple_GetSetIif(null, false, "&GridConditionalFormattingFilter <> " + operIndex, "!'" + operIndex + "'");
+					}
+					operIndex++;
+				}
+			}
+		}
+		if (HasConditionalFormattingFilters)
+		{
+%>
+		Case &GridStateFilterValue.Name = !"GRIDCFFILTER"
+			&GridConditionalFormattingFilter.FromString(&GridStateFilterValue.Value)
+<%
+		}
+		if ((hasTitleFilter || sendParametersBySession) && parametersToLoad > 0)
+		{
+			foreach (ParameterElement parameter in GridObject.GetParameters())
+			{
+				if (!isPrompt || ((PromptParameterElement)parameter).Type == "In")
+				{
+					string parmVarName = "&" + (isPrompt && !parameter.Name.StartsWith("&") ? "In" : "") + parameter.Name.TrimStart('&');
+%>
+		Case &GridStateFilterValue.Name = !"PARM_<%= parmVarName.ToUpper() %>"
+			<%= parmVarName %>.FromString(&GridStateFilterValue.Value)
+<%
+				}
+			}
+		}
+%>
+	EndCase
+EndFor
+<%
+		if (hasTitleFilter && UseDDOTFMultiple)
+		{
+			string[] ddoSelNames = new string[] {"SelectedText_set", "SelectedValue_set", "FilteredText_set", "FilteredTextTo_set", "SelectedFixedFilter"};
+			int ddoSelIndex = 0;
+			foreach (string ddoSelText in new string[] {ddoMultipleSelectedText, ddoMultipleSelectedValue, ddoMultipleFilteredText, ddoMultipleFilteredTextTo, ddoMultipleSelectedFixedFilter})
+			{
+				if (ddoSelText.Replace(" + !'|' + ", "") != "")
+				{
+%>
+DDO_Grid.<%= ddoSelNames[ddoSelIndex] %> = <%= ddoSelText.Substring(10).Trim(' ', '+').Replace("' +  + !'", "") %>
+<%
+				}
+				ddoSelIndex++;
+			}
+		}
+		if (hasFilterDVCombo && IsWebPanelLoad)
+		{
+			foreach (System.Collections.IEnumerable filtersList in FiltersAddFixedFilters)
+			{
+				foreach (IFilter filterAtt in filtersList) 
+				{
+					if (filterAtt is IItemWithControlInfo && LoadDVComboProcedureHelper.IsIAttributeItemDVelopCombo((IItemWithControlInfo)filterAtt))
+					{
+%>
+Do 'LoadCombo<%= filterAtt.Name%>'
+<%
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		ParametersElement parameters = GridObject.GetParameters();
+%>
+If &GridState.FilterValues.Count >= <%= TotalAmountOfRegularFilters + parametersToLoad %>
+<%
+		int index = 1;
+		foreach (System.Collections.IEnumerable filtersList in FiltersAddFixedFilters)
+		{
+		foreach (IFilter filterAtt in filtersList) 
+		{
+%>
+	<%= filterAtt.VariableName %>.From<%= filterAtt is FilterAttributeMultipleGeneralElement ? template.SerializationFormat : "String" %>(&GridState.FilterValues.Item(<%= index %>).Value)
+<%
+			if (filterAtt is FilterAttributeMultipleGeneralElement)
+			{
+				bool addDDOSet = IsWebPanelLoad && ((FilterAttributeMultipleGeneralElement)filterAtt).IsTypeDropDownSelector();
+				if (addDDOSet)
+				{
+%>
+	DDO_FilterMultiple<%= filterAtt.Name %>.SelectedValue_set = &<%= filterAtt.Name %>Values.ToJson()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filterAtt).HasFixedDescriptionsToLoad())
+					{
+%>
+	Do 'Load<%= filterAtt.Name %>DescriptionsFromValues'
+<%
+					}
+				}
+				if (((FilterAttributeMultipleGeneralElement)filterAtt).DescriptionsAttribute != null)
+				{
+%>
+	&<%= filterAtt.Name %>Descriptions.From<%= template.SerializationFormat %>(&GridState.FilterValues.Item(<%= index %>).ValueTo)
+<%
+					if (addDDOSet)
+					{
+%>
+	DDO_FilterMultiple<%= filterAtt.Name %>.SelectedText_set = &<%= filterAtt.Name %>Descriptions.ToJson()
+<%
+					}
+				}
+			}
+			if (filterAtt.HasOperators())
+			{
+%>
+	<%= filterAtt.GetOperatorVariableName() %> = &GridState.FilterValues.Item(<%= index %>).Operator
+<%
+				if (filterAtt.HasRangeOperator())
+				{
+%>
+	<%= filterAtt.RangeVariableName %>.FromString(&GridState.FilterValues.Item(<%= index %>).ValueTo)
+<%
+				}
+				if (IsWebPanelLoad && filterAtt is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterAtt).HasUpdateFilterTypeSub())
+				{
+%>
+	Do 'Update<%= filterAtt.Name %>OperatorValues'
+<%
+				}
+			}
+			else if (filterAtt.HasRange())
+			{
+%>
+	<%= filterAtt.RangeVariableName %>.FromString(&GridState.FilterValues.Item(<%= index %>).ValueTo)
+<%
+			}
+			index++;
+		}
+		}
+		if (hasTitleFilter)
+		{
+			foreach (IAttributesItem itemAux in TitlesWithFilters)
+			{
+				if (!(itemAux is IFilterableByTitle && ((IFilterableByTitle)itemAux).IsIncludeTitleFilterTrue()))
+				{
+					continue;
+				}
+				IFilterableByTitle item = (IFilterableByTitle)itemAux;
+				string name = item.ControlName.TrimStart('&');
+				string indent = "";
+				bool considerFilterCondition = TitleFilterProcedureHelper.ConsiderFilterCondition(item);
+				if (item.PredefinedOperators != null && item.PredefinedOperators.Count > 0 && item.PredefinedOperators[item.PredefinedOperators.Count - 1].Type != FilterAttributeOperatorElement.TypeValue.PredefinedOperator)
+				{
+					throw new Exception("Only PredefinedOperator are allowed in Grid with 'IncludeNamesInSDTGridState=False'");
+				}
+				if (item.PredefinedOperators != null)
+				{
+%>
+	&TF<%= name %>Operator = &GridState.FilterValues.Item(<%= index %>).Operator
+	Do Case
+<%
+					indent = "\t\t";
+					if (considerFilterCondition)
+					{
+%>
+		Case &TF<%= name %>Operator = 0
+<%
+					}
+				}
+				if (considerFilterCondition)
+				{
+%>
+<%= indent %>	&TF<%= name %>.FromString(&GridState.FilterValues.Item(<%= index %>).Value)
+<%
+					if (item.IsSearchBoxRange())
+					{
+%>
+<%= indent %>	&TF<%= name %>_To.FromString(&GridState.FilterValues.Item(<%= index %>).ValueTo)
+<%
+					}
+					if (IsWebPanelLoad)
+					{
+						bool isDateTime;
+						string searchBoxType = TitleFilterProcedureHelper.GetSearchBoxType(item, out isDateTime);
+						bool itemIsCharacter = (searchBoxType == "Character");
+%>
+<%= indent %>	If not &TF<%= name %>.IsEmpty()
+<%
+						if (searchBoxType == "Date" && isDateTime)
+						{
+%>
+<%= indent %>		&DDO_<%= name %>AuxDate = &TF<%= name %>
+<%= indent %>		DDO_<%= name %>.FilteredText_set = &DDO_<%= name %>AuxDate<%= settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()" %>
+<%
+						}
+						else
+						{
+%>
+<%= indent %>		DDO_<%= name %>.FilteredText_set = &TF<%= name %><%= itemIsCharacter ? "" : (searchBoxType == "Date" && settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()") %>
+<%
+						}
+%>
+<%= indent %>	EndIf
+<%
+						if (item.IsSearchBoxRange())
+						{
+%>
+<%= indent %>	If Not &TF<%= name %>_To.IsEmpty()
+<%
+							if (searchBoxType == "Date" && isDateTime)
+							{
+%>
+<%= indent %>		&DDO_<%= name %>AuxDateTo = &TF<%= name %>_To
+<%= indent %>		DDO_<%= name %>.FilteredTextTo_set = &DDO_<%= name %>AuxDateTo<%= settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()" %>
+<%
+							}
+							else
+							{
+%>
+<%= indent %>		DDO_<%= name %>.FilteredTextTo_set = &TF<%= name %>_To<%= itemIsCharacter ? "" : (searchBoxType == "Date" && settings.UseCharToDateProc ? ".ToFormattedString()" : ".ToString()") %>
+<%
+							}
+%>
+<%= indent %>	EndIf
+<%
+						}
+					}
+					index++;
+				}
+				if (item.PredefinedOperators != null)
+				{
+					int operIndex = 1;
+					foreach (FilterAttributeOperatorElement oper in item.PredefinedOperators)
+					{
+%>
+				Case &TF<%= name %>Operator = <%= operIndex %>
+<%
+						if (IsWebPanelLoad)
+						{
+%>
+					DDO_<%= name %>.SelectedFixedFilter = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(oper.PredefinedOperator) %>
+<%
+						}
+%>
+					&TF<%= name %> = <%= oper.FixedValue %>
+<%
+						if (oper.IsCustomTypeFixedRange())
+						{
+%>
+					&TF<%= name %>_To = <%= oper.FixedValueTo %>
+<%
+						}
+						operIndex++;
+					}
+%>
+			EndCase
+<%
+				}
+				if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+				{
+					if (item.AllowMultipleSelection)
+					{
+%>
+	&TF<%= name %>_SelsJson = &GridState.FilterValues.Item(<%= index %>).Value
+	&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson)
+<%
+					}
+					else
+					{
+%>
+	&TF<%= name %>_Sel.FromString(&GridState.FilterValues.Item(<%= index %>).Value)
+<%
+					}
+					if (IsWebPanelLoad)
+					{
+						bool itemIsCharacter = TitleFilterProcedureHelper.IsSelectedItemTypeCharacter(item);
+						bool isItemCheckBoxWithEmptyValue = TitleFilterProcedureHelper.IsItemCheckBoxWithEmptyValue(item);
+%>
+	If not &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()" %>
+		DDO_<%= name %>.SelectedValue_set = &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "sJson" : (itemIsCharacter && !isItemCheckBoxWithEmptyValue ? "" : ".ToString()") %>
+<%
+						if (TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(item))
+						{
+							if (item.AllowMultipleSelection)
+							{
+								//TODO:hacer
+								//DDO_<= name >.SelectedText_set = ''
+							}
+							else
+							{
+%>
+		&TF<%= name %>_SelDsc = &GridState.FilterValues.Item(<%= index %>).ValueTo
+		DDO_<%= name %>.SelectedText_set = &TF<%= name %>_SelDsc
+<%
+							}
+						}
+						else if (!item.AllowMultipleSelection && item.IsDataListDynamic() && item.eDBType != Artech.Genexus.Common.eDBType.Boolean && TitleFilterProcedureHelper.IsTypeDynamicWithFixedValues(item))
+						{
+							string dummyStr = "";
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(TitleFilterProcedureHelper.GetSelectedTextFromFixedValues(item, false, null, ref dummyStr), 2) %>
+<%
+						}
+%>
+	EndIf
+<%
+					}
+					index++;
+				}
+			}
+			if (parametersToLoad > 0)
+			{
+				foreach (ParameterElement parameter in parameters)
+				{
+					if (!isPrompt || ((PromptParameterElement)parameter).Type == "In")
+					{
+						string parmVarName = "&" + (isPrompt && !parameter.Name.StartsWith("&") ? "In" : "") + parameter.Name.TrimStart('&');
+%>
+	<%= parmVarName %>.FromString(&GridState.FilterValues.Item(<%= index %>).Value)
+<%
+						index++;
+					}
+				}
+			}
+		}
+%>
+EndIf
+<%
+	}
+%>

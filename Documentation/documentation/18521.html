@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Security Policies</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18521,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Security Policies</h1>
+<!--GAM - Security Policies--><div class="TableWikiBody" id="tblwikibody"><p>The following are some of the properties grouped by <a href="19888.html">GeneXus Access Manager</a> Security Policies (GAMSecurityPolicy GAM object):</p>
+
+<ul>
+	<li><a href="18577.html">Oauth token expire (minutes)</a></li>
+	<li><a href="19324.html">Oauth token maximum renovations</a></li>
+	<li><a href="18942.html">Minimum Time to Change Passwords Security Policy</a></li>
+	<li><a href="18579.html">Maximum Password History Entries</a></li>
+	<li><a href="18939.html">Allow Multiple Concurrent Web Sessions Security Policy Property</a></li>
+	<li><a href="16338.html">Web Session timeout</a></li>
+	<li>MinimumNumericCharactersPassword</li>
+	<li>MinimumUpperCaseCharactersPassword</li>
+	<li>MinimumSpecialCharactersPassword</li>
+</ul>
+
+<p>A GAM User can be assigned a security policy, as well as <a href="17569.html">roles</a> can be assigned a security policy also. Besides, a default security policy can be set for the <a href="17568.html">GAM Repository</a>.</p>
+
+<p>The GAM security policies can be defined using <a href="15935.html">GAM Web Backoffice</a>, or programmatically using the <a href="16535.html">GAM API</a>. Using Web Backoffice the interface to add or update a security policy looks like the following figure:</p>
+
+<p><img src="./images/18522.png" id="18522" class="WikiImage"/></p>
+
+<h6><a id="Figure+1.+Interface+to+add+or+update+Security+Policies" class="HashLink" href="#Figure+1.+Interface+to+add+or+update+Security+Policies">Figure 1. Interface to add or update Security Policies</a></h6>
+
+<p>The decision on which security policy will be assigned to a user in runtime depends on the following precedence:</p>
+
+<h4><a id="+1.+The+security+policy+associated+to+the+user." class="HashLink" href="#+1.+The+security+policy+associated+to+the+user.">  1. The security policy associated to the user.</a></h4>
+
+<p>Each GAM user can have one security policy associated to him, or none.</p>
+
+<p>Using GAM Web Backoffice go to WW Users, and edit the user properties (as shown in figure 2) to change his security policy.</p>
+
+<p><img src="./images/18523.png" id="18523" class="WikiImage"/></p>
+
+<h6><a id="Figure+2." class="HashLink" href="#Figure+2.">Figure 2.</a></h6>
+
+<p>Programmatically, you can get the security policy of the user with SecurityPolicyId property of GAMUser object.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;User.Load(&amp;UserId) //&amp;User is GAMUser object, &amp;UserId is GAMGUID data type
+&amp;SecurityPolicyId   = &amp;User.SecurityPolicyId //&amp;SecurityPolicyId is GAMKeyNumShort data type.</pre>
+
+<h4><a id="+2.+If+the+user+has+no+Security+Policy+associated%2C+the+Security+Policy+associated+to+the+Main+Role+of+the+user." class="HashLink" href="#+2.+If+the+user+has+no+Security+Policy+associated%2C+the+Security+Policy+associated+to+the+Main+Role+of+the+user.">  2. If the user has no Security Policy associated, the Security Policy associated to the Main Role of the user.</a></h4>
+
+<p>If the user has no security policy, the policy taken in runtime will be the one associated to his Main Role. See <a href="21643.html">GAM: Main Role of a user</a> for more information.<br />
+By editing the user properties in WW Users, you can see his main role (it's the only one which has no possibility to be set as Main Role).</p>
+
+<p><img src="./images/18525.png" id="18525" class="WikiImage"/></p>
+
+<h6><a id="Figure+3.+Main+Role+of+the+User%2C+in+this+example+it%27s+%22Role1%22.+" class="HashLink" href="#Figure+3.+Main+Role+of+the+User%2C+in+this+example+it%27s+%22Role1%22.+">Figure 3. Main Role of the User, in this example it's "Role1". </a></h6>
+
+<p>By editing the role's properties, you can see the security policy of the role (which can be "none").</p>
+
+<p><img src="./images/18524.png" id="18524" class="WikiImage"/></p>
+
+<h6><a id="Figure+4.+Security+Policy+assigned+to+a+role" class="HashLink" href="#Figure+4.+Security+Policy+assigned+to+a+role">Figure 4. Security Policy assigned to a role</a></h6>
+
+<p>You can get the security policy of the role with SecurityPolicyId property of GAMRole object.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Role.Load(&amp;Id)//&amp;Role is GAMRole, &amp;Id is GAMKeyNumLong
+&amp;SecPolId = &amp;Role.SecurityPolicyId //&amp;SecPolId is GAMKeyNumShort data type</pre>
+
+<h4><a id="+3.+If+none+of+the+previous%2C+the+default+security+policy+of+the+Repository." class="HashLink" href="#+3.+If+none+of+the+previous%2C+the+default+security+policy+of+the+Repository.">  3. If none of the previous, the default security policy of the Repository.</a></h4>
+
+<p>If the user has no security policy assigned, neither a main role, the security policy taken is the Default Security Policy of the Repository.</p>
+
+<h6><img src="./images/18526.png" id="18526" class="WikiImage"/><br />
+<br />
+Figure 5. Default Security Policy of the Repository</h6>
+
+<p>The property DefaultSecurityPolicyId of GAMRepository object tells the default security policy of the repository.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Repository.Load(&amp;Id) //&amp;Repository is GAMRepository, &amp;Id is GAMKeyNumLong data type
+&amp;DefaultSecurityPolicyId  = &amp;Repository.DefaultSecurityPolicyId //&amp;DefaultSecurityPolicyId is GAMKeyNumShort data type</pre>
+
+<p> </p>
+
+<h3><a id="Notes%3A" class="HashLink" href="#Notes%3A">Notes:</a></h3>
+
+<ul>
+	<li>When setting a value higher than 0 for the property MinimumSpecialCharactersPassword, the following regular expression is used:</li>
+</ul>
+
+<p style="margin-left: 40.0px;">&amp;UserPassword.Matches<font size="2"></font>(!"[^\d\w]")<font size="2"></font></p>
+
+<p style="margin-left: 40.0px;">Which means:</p>
+
+<p style="margin-left: 40.0px;">\w <font size="2"></font>[a-zA-Z0-9_] <font size="2"></font>(literal or digit or underscore)<br />
+\d<font size="2"></font> [0-9]<font size="2"></font> (digit)<br />
+^ not <br />
+<br />
+So the regular expression means all that is NOT \d\w</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="17569.html">GAM - Roles</a><br />
+<a href="15912.html">GAM - Permissions</a><br />
+<a href="16338.html">Security Session Management in Applications using GAM</a></p>
+
+<p><br />
+</p>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18939.html">Allow Multiple Concurrent Web Sessions Security Policy Property</a></TD><TD><a href="29701.html">Creating the GAM repository for the first time from GeneXus</a></TD></TR><TR><TD><a href="25355.html">GAM - GAMRemote Authentication Type</a></TD><TD><a href="18682.html">GAM - Multiple Repositories Scenarios</a></TD><TD><a href="17568.html">GAM - Repository</a></TD><TD><a href="15935.html">Category:GAM - Web Backoffice</a></TD></TR><TR></TR><TR><TD><a href="21643.html">GAM: Main Role of a user</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD><TD><a href="14978.html">GeneXus Access Manager architecture for Native Mobile applications</a></TD></TR><TR><TD><a href="43218.html">GetSTSAuthorizationAccessToken method of GAMRepository Object</a></TD><TD><a href="18574.html">Going into production: checklist for Applications using GAM</a></TD></TR><TR><TD><a href="15387.html">HowTo: Filtering Data by User Using the GAM API</a></TD><TD><a href="18579.html">Maximum Password History Entries</a></TD><TD><a href="18942.html">Minimum Time to Change Passwords Security Policy</a></TD></TR><TR><TD><a href="18577.html">Oauth token expire (minutes)</a></TD><TD><a href="19324.html">Oauth token maximum renovations</a></TD><TD><a href="16338.html">Security Session Management in Applications using GAM</a></TD></TR><TR><TD><a href="21042.html">Users enabled or disabled in the GAM Repository</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 05:34 PM</em></font></td></TR></table></font>

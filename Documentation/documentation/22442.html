@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Server.Socket external object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22442,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Server.Socket external object</h1>
+<!--Server.Socket external object--><div class="TableWikiBody" id="tblwikibody"><p>The purpose of using Sockets is to allow executing actions in real time so that the server sends content to the browser without being solicited by the client, and vice-versa.</p>
+
+<p>Therefore, the user doesn't need to refresh the web browser or the app (the clients) to get the information in real time. For example online chat/messaging systems and monitoring consoles.</p>
+
+<p>To use Sockets in web, you must configure the <a href="22449.html">Web User Experience property</a> to &quot;Smooth&quot;.</p>
+
+<h2><a id="Server.Socket+API" class="HashLink" href="#Server.Socket+API">Server.Socket API</a></h2>
+
+<p>The Server.Socket API consists of the Server.Socket <a href="https://wiki.genexus.com/commwiki/wiki?5670,," target="_blank">external object</a> and the NotificationInfo SDT.</p>
+
+<h3><a id="Server.Socket+External+Object" class="HashLink" href="#Server.Socket+External+Object">Server.Socket External Object</a></h3>
+
+<p>An external object called Server.Socket exposes all the methods and properties needed for this functionality.</p>
+
+<p><img src="./images/46266.png" id="46266" class="WikiImage"/></p>
+
+<h4><a id="Server.Socket+external+object+methods" class="HashLink" href="#Server.Socket+external+object+methods">Server.Socket external object methods</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Method</strong></td>
+			<td><strong>Description</strong></td>
+			<td><strong>Most common use case</strong></td>
+		</tr>
+		<tr>
+			<td>Server.Socket.Notify(NotificationInfo sdtNotification): Numeric</td>
+			<td>Send a notification to the user who originated the action. It is valid during the entire session.</td>
+			<td>Give feedback to a user when a submitted procedure has finished - if the submit action has been executed from the user's session.</td>
+		</tr>
+		<tr>
+			<td>Server.Socket.NotifyClient(String clientId, NotificationInfo sdtNotification ): Numeric</td>
+			<td>Send a notification to a given user.</td>
+			<td>To implement a chat, only some users will receive the notification.</td>
+		</tr>
+		<tr>
+			<td>Server.Socket.Broadcast(NotificationInfo sdtNotification)</td>
+			<td>Send a notification to all connected users.</td>
+			<td>To send an alert to all users.</td>
+		</tr>
+		<tr>
+			<td>Server.Socket.NotifyClientText(String clientId, String Message ): Numeric</td>
+			<td>Send a &quot;raw&quot; message to a specific client.</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h4><a id="Server.Socket+external+object+properties" class="HashLink" href="#Server.Socket+external+object+properties">Server.Socket external object properties</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td>Server.Socket.ClientId: String</td>
+			<td>Get the ClientId of the current session.</td>
+		</tr>
+		<tr>
+			<td>ErrCode</td>
+			<td>Error Code</td>
+		</tr>
+		<tr>
+			<td>ErrDescription</td>
+			<td>Error Message</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h4><a id="Server.Socket+methods+-+Error+Codes" class="HashLink" href="#Server.Socket+methods+-+Error+Codes">Server.Socket methods - Error Codes</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td>0</td>
+			<td>OK</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>Could not start WebSocket Server</td>
+		</tr>
+		<tr>
+			<td>2</td>
+			<td>WebSocket Session not found</td>
+		</tr>
+		<tr>
+			<td>3</td>
+			<td>WebSocket Session is closed or invalid</td>
+		</tr>
+		<tr>
+			<td>4</td>
+			<td>Message could not be delivered to client</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="NotificationInfo+Structured+Data+Type" class="HashLink" href="#NotificationInfo+Structured+Data+Type">NotificationInfo Structured Data Type</a></h3>
+
+<p>The NotificationInfo SDT is provided to specify the notification information that will be sent to the above methods (Notify, NotifyClient, BroadCast) of the Socket.Server external object.</p>
+
+<p><img src="./images/32304.PNG" id="32304" class="WikiImage"/></p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td>Id</td>
+			<td>By identifying the notification, the developer is able to specify which control has to capture it.</td>
+		</tr>
+		<tr>
+			<td>Object</td>
+			<td>By specifying this property, the developer can determine which object has to listen to this notification (especially in case of Broadcast)</td>
+		</tr>
+		<tr>
+			<td>Message</td>
+			<td>Message of the notification.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="Examples" class="HashLink" href="#Examples">Examples</a></h2>
+
+<h3><a id="Example%3A+How+to+send+a+notification+to+everyone+%28Broadcast%29" class="HashLink" href="#Example%3A+How+to+send+a+notification+to+everyone+%28Broadcast%29">Example: How to send a notification to everyone (Broadcast)</a></h3>
+
+<p>Suppose that you are implementing a messaging system where you need to notify any post made by a user. In this case, we load the NotificationInfo SDT with the data of the post message. Next, we use the Server.Socket external object to broadcast the message.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+//&amp;NotificationInfo is NotificationInfo SDT data type. &amp;PostId is the identifier of the post.
+
+&amp;NotificationInfo.Id=&amp;PostId.ToString()
+//The following is an SDT where data to be notified is loaded. You can send any data because it is sent in json format. First load an SDT with this data.
+&amp;commentNotificationInfo.PostId = &amp;PostId
+&amp;commentNotificationInfo.PostCommentContent = &amp;PostCommentContent
+
+//Now assign the data to be sent to the NotificationInfo SDT in json format.
+&amp;NotificationInfo.Message=&amp;commentNotificationInfo.ToJson()
+&amp;socket.Broadcast(&amp;NotificationInfo) //&amp;socket is Server.Socket external object data type</pre>
+
+<h3><a id="Example%3A+How+to+receive+the+notification" class="HashLink" href="#Example%3A+How+to+receive+the+notification">Example: How to receive the notification</a></h3>
+
+<p>In the web object that will receive the notification, use the OnMessage event that receives a variable based on the NotificationInfo SDT data type. The notification information will be processed there.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event OnMessage(&amp;NotificationInfo)
+for each line
+  if (&amp;NotificationInfo.Id=&amp;postid.ToString())
+   //processs the notification data
+  endif
+endfor
+Endevent</pre>
+
+<h3><a id="Example%3A+How+to+send+a+notification+to+a+specific+client" class="HashLink" href="#Example%3A+How+to+send+a+notification+to+a+specific+client">Example: How to send a notification to a specific client</a></h3>
+
+<p>Consider a system where only a specific client has to be notified. This client is identified by using the ClientId property of the Server.Socket external object.</p>
+
+<p>Below is the web panel that receives the notification. In the start event, we save the &amp;clientId so we can identify the session afterward.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    &amp;clientId = &amp;socket.ClientId
+   //save the information of the client: RegisteredClientId = &amp;clientId//
+Endevent</pre>
+
+<p>In the procedure that sends the notification, we get the &amp;ClientId (that may have been saved in the database). The Notifyclient method is executed by passing the &amp;ClientId as a parameter, so only that client will receive the message.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ClientId = RegisteredClientId
+&amp;NotificationInfo.Id=&amp;cont.ToString()
+&amp;NotificationInfo.Message=&quot;El mensaje &quot; + &amp;cont.ToString() + &quot;cliente &quot; + &amp;ClientId
+&amp;socket.NotifyClient(&amp;ClientId, &amp;NotificationInfo) 
+</pre>
+
+<p>Note: As since GeneXus 15 upgrade 3, you can use the <a href="20198.html">ClientInformation.Id Property</a> instead of using &amp;socket.ClientId.</p>
+
+<h3><a id="As+in+the+previous+example%2C+the+web+panel+that+receives+the+message+has+to+implement+the+OnMessage+Event." class="HashLink" href="#As+in+the+previous+example%2C+the+web+panel+that+receives+the+message+has+to+implement+the+OnMessage+Event.">As in the previous example, the web panel that receives the message has to implement the OnMessage Event.</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event onmessage(&amp;notificationInfo)
+    //Do something with the &amp;notificationInfo
+endevent</pre>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>Remember that the broadcast method should only be executed when the message is public because it is sent to all the browser instances which are subscribed to the notification event.</p>
+
+<h3><a id="Note+%232" class="HashLink" href="#Note+%232">Note #2</a></h3>
+
+<p>The same user event (even if it has different parameters) will be executed on the server only once in a range less than 100ms (<a href='https://www.genexus.com/developers/websac?es,,,48220'>SAC #48220</a>)</p>
+
+<h3><a id="Requirements" class="HashLink" href="#Requirements">Requirements</a></h3>
+
+<p>See <a href="27740.html">Web Notifications and Progress UC requirements</a></p>
+
+<p><a href='http://caniuse.com/#feat=websockets'>Here</a> is a list of Web Browsers that support web sockets. Note that Web Notifications can be received on Smart Device Apps using the <a href="16186.html">Component Domain</a>, taking into account the OS version indicated in the link. For Smart Devices Applications, you may use it in conjunction with the Client.Socket External Object.</p>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<ul>
+	<li>The following line can be added at the end of the gxgral.js file &quot;gx.dbg.enabled = true;&quot; in order to get additional information in the javascript console.</li>
+	<li>Warning Message: &quot;Warning: WebNotifications are not supported with &quot;Web User Experience&quot;: &quot;Previous versions&quot;. You must use Smooth.&quot;. Web Notifications are only supported with <a href="22449.html">Web User Experience property</a>: &quot;Smooth&quot;.</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?21082,," target="_blank">Html5 Web Notifications User Control</a><br />
+<a href="22527.html">HowTo:Develop a messaging web page</a><br />
+<a href="33633.html">HowTo: Receiving and processing a notification message from an external app</a></p>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?31559,," target="_blank">HowTo: Using WebNotifications for a Specific Client</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46255.html">KB:Chatbot : handover to a human agent</a></TD><TD><a href="41299.html">Client.Socket External Object</a></TD><TD><a href="20198.html">ClientInformation.Id Property</a></TD></TR><TR></TR><TR></TR><TR><TD><a href="30900.html">GeneXus 17 hardware and software requirements</a></TD><TD><a href="48113.html">GeneXus 17 hardware and software requirements (Upgrade 3 or prior)</a></TD><TD><a href="31268.html">GeneXus Core module</a></TD></TR><TR></TR><TR><TD><a href="33633.html">HowTo: Receiving and processing a notification message from an external app</a></TD><TD><a href="22527.html">HowTo:Develop a messaging web page</a></TD><TD><a href="45291.html">Load balancing considerations</a></TD></TR><TR><TD><a href="22555.html">Load Command and Load Method in User Events</a></TD><TD><a href="27158.html">KB:OnlineShop (Shopping cart sample)</a></TD><TD><a href="41042.html">Process procedure</a></TD><TD><a href="39341.html">Progress external object</a></TD></TR><TR><TD><a href="27740.html">Web Notifications and Progress UC requirements</a></TD><TD><a href="22449.html">Web User Experience property</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/30/21 11:50 AM</em></font></td></TR></table></font>

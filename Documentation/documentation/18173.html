@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Permissions Over a User Action in SD Objects</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18173,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Permissions Over a User Action in SD Objects</h1>
+<!--Permissions Over a User Action in SD Objects--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h4><a id="Purpose" class="HashLink" href="#Purpose">Purpose</a></h4>
+
+<p>Regarding the <a href="14981.html">Smart Devices Architecture</a>, actions programmed by GeneXus users are translated into REST calls in general.</p>
+
+<p>The procedures called inside user actions are automatically set as <a href="14573.html">REST Web Services</a>.</p>
+
+<p>In this paper, we show how to manage permissions taking this fact into account.</p>
+
+<p>We also show how to group permissions to make the permissions management easier.</p>
+
+<h4><a id="Problem+description" class="HashLink" href="#Problem+description">Problem description</a></h4>
+
+<p>In case you program a call to a procedure from an <a href="24829.html">Panel object</a>, <a href="https://wiki.genexus.com/commwiki/wiki?46149,," target="_blank">Menu for Smart Devices object (GeneXus 16)</a>, or <a href="15974.html">Work With for Smart Devices object</a> the procedure is automatically set as a REST.<br />
+<br />
+If you want to make this object private (the execution of the object) as well as the procedure itself, you need to take into account that the REST web service needs to be protected also (independently from the SD object).</p>
+
+<p>Suppose in this case that you have a <a href="24829.html">Panel object</a> which lists all the &quot;Literary Styles&quot; an editorial works with, so the SD panel layout consists on a grid where the &quot;Literary Styles&quot; are loaded using a <a href="5270.html">Data Provider object</a> programmed by the GeneXus user.</p>
+
+<p><img src="./images/18174.png" id="18174" class="WikiImage"/></p>
+
+<h6><a id="Figure+1.+SD+panel+which+loads+data+using+a+Data+Provider" class="HashLink" href="#Figure+1.+SD+panel+which+loads+data+using+a+Data+Provider">Figure 1. SD panel which loads data using a Data Provider</a></h6>
+
+<p>In the SD panel grid we have an action where the user can subscribe to receive any news about the selected &quot;Literary Style&quot;, so the grid has an action in each line, and the SD Panel´s complete code is as follows:</p>
+
+<p><img src="./images/18175.png" id="18175" class="WikiImage"/></p>
+
+<h6><a id="Figure+2.+SD+panel+which+includes+an+action+in+each+line+of+the+grid%2C+and+the+code+associated+with+it" class="HashLink" href="#Figure+2.+SD+panel+which+includes+an+action+in+each+line+of+the+grid%2C+and+the+code+associated+with+it">Figure 2. SD panel which includes an action in each line of the grid, and the code associated with it</a></h6>
+
+<p><strong>Note:</strong></p>
+
+<p>1. The procedure &quot;SubscribetoNovels&quot; is exposed as rest web service automatically, when you specify the SD panel object. See the properties of the procedure in the following figure.</p>
+
+<p><img src="./images/18176.png" id="18176" class="WikiImage"/></p>
+
+<h6><a id="Figure+3.+REST+Procedure+properties" class="HashLink" href="#Figure+3.+REST+Procedure+properties">Figure 3. REST Procedure properties</a></h6>
+
+<p>2. The Data Provider used to load the grid with the &quot;Literary Styles&quot; is not set automatically as REST, and doesn´t need to be exposed as it. The difference is that the Data Provider is called from a server-side event, and the procedure is not. See <a href="https://wiki.genexus.com/commwiki/wiki?17517,," target="_blank">Start and Load Events in Smart Devices</a> for details.</p>
+
+<h4><a id="Solution+to+the+problem+exposed" class="HashLink" href="#Solution+to+the+problem+exposed">Solution to the problem exposed</a></h4>
+
+<p>The goal is to make these objects (SD panel and procedure) private and make GAM check that the final user has permissions to execute them, so follow these steps:<br />
+<br />
+1. <a href="15214.html">Integrated Security Level Property</a> has to be set to &quot;Authorization&quot; for both, the SD panel and the procedure (or inherit the environment property value where it has to be set to &quot;Authorization&quot;).</p>
+
+<p>2. Regarding the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> of the SD panel (figure 1) configure a role that includes this permission prefix with the desired <a href="https://wiki.genexus.com/commwiki/wiki?20603,," target="_blank">Permission Access Type</a>.<br />
+Regarding the permission prefix of the procedure (see figure 3), configure a role which includes this permission. See figure 4.<br />
+<br />
+<img src="./images/18177.png" id="18177" class="WikiImage"/></p>
+
+<h6><a id="Figure+4.+Permissions+of+the+role" class="HashLink" href="#Figure+4.+Permissions+of+the+role">Figure 4. Permissions of the role</a></h6>
+
+<p>Any user which has this role (figure 5), will have access rights to execute the SD panel as well to execute the action &quot;Subscribe&quot;.</p>
+
+<p><img src="./images/18178.png" id="18178" class="WikiImage"/></p>
+
+<h6><a id="Figure+5.+Role+of+the+user" class="HashLink" href="#Figure+5.+Role+of+the+user">Figure 5. Role of the user</a></h6>
+
+<p><strong>Note:</strong></p>
+
+<p>1. The permission associated to the Rest web service is called by default &lt;permission_prefix&gt;_services_execute. See <a href="17916.html">Automatic Permissions generated by GeneXus</a> for details.</p>
+
+<p>2. You can combine the <a href="https://wiki.genexus.com/commwiki/wiki?20603,," target="_blank">Permission Access Type</a> of the permissions in order to allow or deny the execution of the action.</p>
+
+<h4><a id="How+to+make+the+management+easier" class="HashLink" href="#How+to+make+the+management+easier">How to make the management easier</a></h4>
+
+<p>If you want to manage both objects as a whole, that is that if a user is allowed to execute the list he will also be allowed to execute the action, you can manage both permissions at the same time, in the following way:</p>
+
+<p>1. Define a custom permission named &quot;mypermissionsubscrip&quot; for instance, where their children must be the following permissions:</p>
+
+<p>- SubscribeNovel_execute<br />
+- SubscribeToNovels_services_execute</p>
+
+<p>The permission has to be defined for the SD application (the <a href="15912.html">permissions</a> are defined for each <a href="15910.html">Application</a>). </p>
+
+<p>See the figure below:</p>
+
+<p><img src="./images/18179.png" id="18179" class="WikiImage"/></p>
+
+<h6><a id="Figure+6.+Create+custom+permission+at+the+application+level" class="HashLink" href="#Figure+6.+Create+custom+permission+at+the+application+level">Figure 6. Create custom permission at the application level</a></h6>
+
+<p>2. Add the corresponding permissions (SubscribeNovel_execute and  SubscribeToNovels_services_execute) as children of the custom permission &quot;mypermissionsubscrip&quot;.</p>
+
+<h6><img src="./images/18182.png" id="18182" class="WikiImage"/><br />
+Figure 7. Add children to this permission</h6>
+
+<p>3. Add the custom permission &quot;mypermissionsubscrip&quot; to the role.</p>
+
+<h6><img src="./images/18183.png" id="18183" class="WikiImage"/><br />
+Figure 8. Add the custom permission to a role, and define the access type of this permission in the role. The children inherit the access type of its father</h6>
+
+<p>As the children inherit the access type from their parent, changes in the parent reflect in the children unless the children lose the inheritance. This is very helpful when all the permissions of the group have the same access type (allow, deny, restricted) so can be managed from their parent. See <a href="https://wiki.genexus.com/commwiki/wiki?18536,," target="_blank">GAM : Grouping of permissions</a> for details on this topic.</p>
+
+<h4><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h4>
+
+<p><a href="15912.html">GAM Permissions</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?18536,," target="_blank">GAM : Grouping of permissions</a><br />
+<a href="17664.html">Full Control Permissions and inheritance</a><br />
+<a href="17569.html">GAM Roles</a><br />
+<a href="17583.html">GAM Authorization Scenarios</a></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br />
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17583.html">GAM Authorization Scenarios</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

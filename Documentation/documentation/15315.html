@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Procedures as REST: Using SDT as input to the procedure</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15315,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Procedures as REST: Using SDT as input to the procedure</h1>
+<!--Procedures as REST: Using SDT as input to the procedure--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In a real-life situation, you will probably need to provide feedback about the operation to the user, so you can use a <a href="https://wiki.genexus.com/commwiki/wiki?7344,," target="_blank">Business Component</a> to perform actions in the database tables and return the operation results to the caller consumer.</p>
+
+<p>In the example, &quot;AddCustomer&quot; Procedure is declared as REST web service in GeneXus.</p>
+
+<ul>
+	<li>Expose as web service = true</li>
+	<li>Rest protocol = true</li>
+</ul>
+
+<p><img src="./images/15318.png" id="15318" class="WikiImage"/></p>
+
+<p>It receives an SDT as parameter, containing the information of the customer to be added to the Customer table.<br />
+Also, it returns the error and warning messages in the variable &amp;messages, in order to be able to provide feedback about the operation to the user.</p>
+
+<p>IMPORTANT NOTE: Rest procedures can receive any type of parameters: simple or SDTs, collections or not.</p>
+
+<p>Parm Rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;Customersdt,out:&amp;messages);
+
+</pre>
+
+<p>Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer.Load(&amp;Customersdt.CustomerId)
+
+if &amp;Customer.Fail()
+ &amp;Customer = new()
+ &amp;Customer.CustomerId = &amp;Customersdt.CustomerId
+endif
+
+&amp;Customer.CustomerName = &amp;Customersdt.CustomerName
+&amp;Customer.CustomerBirthDate = &amp;Customersdt.CustomerBirthDate
+&amp;Customer.CustomerPayDate = &amp;Customersdt.CustomerPayDate
+&amp;customer.CustomerPhoto = &amp;customersdt.CustomerPhoto
+
+&amp;customer.Save()
+&amp;messages = &amp;customer.GetMessages()
+commit</pre>
+
+<p><br />
+Variable &amp;Customersdt is based on Customersdt Structured Data Type:</p>
+
+<p><img src="./images/15320.png" id="15320" class="WikiImage"/></p>
+
+<p>A GeneXus client for this REST procedure would be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Host = &amp;host
+&amp;httpclient.Port = &amp;port
+&amp;httpclient.BaseUrl = &amp;baseurl
+
+&amp;body = '{&quot;Customersdt&quot;:' + &amp;customersdt.ToJson() + '}'
+ 
+&amp;httpclient.AddHeader('Content-type','application/json')
+&amp;httpclient.AddString(&amp;body)
+
+&amp;httpclient.Execute('POST','AddCustomer')</pre>
+
+<p>Then process the HTTP Client response.</p>
+
+<p>NOTE:</p>
+
+<p>1. The BaseURL for calling REST procedures is &lt;webappname&gt;/rest.<br />
+2. Note that the HTTP request is in Json format. Since the procedure receives an SDT (<a href="https://wiki.genexus.com/commwiki/wiki?1878,," target="_blank">Structured Data Type</a>), the Json expected is preceded by the name of the SDT, which has to be in the same casing as the parameter of the procedure (&amp;Customersdt).<br />
+So, the HTTP Request is as follows:<br />
+<br />
+{&quot;Customersdt&quot;:{&quot;CustomerId&quot;:129,&quot;CustomerName&quot;:&quot;Rodolfo&quot;,&quot;CustomerBirthDate&quot;:&quot;1976-08-05&quot;,&quot;CustomerPayDate&quot;:&quot;1976-08-05T00:31:00&quot;,&quot;CustomerPhoto&quot;:&quot;12356&quot;}}</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="28213.html">Rest web services in GeneXus</a></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="15314.html">HowTo: Consuming a Procedure exposed as a Rest service</a></TD><TD><a href="15316.html">Procedures as REST: Sending blob data as input to the procedure</a></TD><TD><a href="28213.html">Toc:Rest web services in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

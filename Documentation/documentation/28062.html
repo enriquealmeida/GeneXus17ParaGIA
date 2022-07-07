@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Dynamic Transactions</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?28062,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Dynamic Transactions</h1>
+<!--Toc:Dynamic Transactions--><div class="TableWikiBody" id="tblwikibody"><p>Dynamic Transactions are those <a href="1908.html">Transactions</a> that are defined with the aim of having data queried at runtime (views in the database are created by GeneXus) instead of having associated physical tables.</p>
+
+<p>This kind of definition is very powerful because it offers total flexibility to freely define queries that can be executed not only by executing the Transactions forms but also by making reference to them as <a href="25418.html">Base Transaction</a> in <a href="24744.html">For Each command</a>s, <a href="5270.html">Data Providers</a> and Grids in <a href="6916.html">Web Panels</a> and <a href="24829.html">Panels</a>. In addition to this, it is possible to apply the Work With <a href="2814.html">Patterns</a> to Dynamic Transactions. Furthermore, the Dynamic Transactions attributes can be used as regular attributes in Printblocks, Conditions, etc., in a transparent way regardless of not having neither physical tables nor physical fields associated with these Transactions.</p>
+
+<p>A Transaction is set as Dynamic by setting its object properties:</p>
+
+<ol>
+	<li><a href="29597.html">Data Provider</a> = True</li>
+	<li><a href="29584.html">Used To</a> = Retrieve Data</li>
+</ol>
+
+<p>In consequence of setting the <a href="29597.html">Data Provider property</a> = True, GeneXus automatically creates a Data Provider named TransactionName_DataProvider with its source initialized with the Transaction’s structure, and you only have to complete that initialized source in order to define the desired data to be loaded into the Dynamic Transaction attributes.</p>
+
+<p>As a consequence of setting the <a href="29584.html">Used To</a> = Retrieve Data, GeneXus understands that the Transaction is Dynamic. Therefore, it will not create physical table(s) associated with said Transaction. Instead, <strong>GeneXus will create a view in the database.</strong></p>
+
+<h3><a id="Examples+of+use+to+understand+the+concept" class="HashLink" href="#Examples+of+use+to+understand+the+concept">Examples of use to understand the concept</a></h3>
+
+<p>Suppose that a company sells products and offers services. It could be an automotive company or any other kind of company.</p>
+
+<p>As you can see below, two Transactions have been defined: Product and Service, to record products and services respectively.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product
+{
+   ProductId*
+   ProductDescription
+   ProductStock
+   ProductExpirationDate
+}
+
+Service
+{
+   ServiceId*
+   ServiceDescription
+   ServiceHoursDuration
+}</pre>
+
+<p>There are many ways to model this reality, where a company sells products and services. In this case, it was chosen to define two independent Transactions, to design that they are two different concepts.</p>
+
+<p>The objective is to have together all the data of all the products and services for whatever is needed; for example, to list in alphabetical order all the things (both products and services) the company offers.</p>
+
+<p>To solve the union in a very easy way, our approach is to define a Dynamic Transaction, for example, named SaleItem as shown:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SaleItem
+{   
+    SaleItemId*
+    SaleItemType*
+    SaleItemDescription
+}
+</pre>
+
+<p>Note that the key of the SaleItem Transaction is a compound key. It has been defined this way because our objective is to load, in its attributes, the data of all the products and the data of all the services. So, to be able to coexist products and services with the same identifier value, each sales item has a compound key: SaleItemId*, SaleItemType*, so that we can assign in SaleItemType a “P” for products and an “S” for services as part of the key.</p>
+
+<p>Then, by setting the SaleItem transaction properties:</p>
+
+<ul>
+	<li>Data Provider=True</li>
+	<li>Used To=Retrieve Data</li>
+</ul>
+
+<p>GeneXus understands that it must not create any physical table associated with that transaction, and creates a Data Provider named SaleItem_DataProvider with its source initialized with the transaction’s structure:</p>
+
+<p><img src="./images/36189.png" id="36189" class="WikiImage"/></p>
+
+<p>The next step is to complete this Data Provider with the data required to load in the attributes of the SaleItem Transaction:</p>
+
+<p><img src="./images/36193.png" id="36193" class="WikiImage"/></p>
+
+<p>In the above Data Provider, the code block offered by default was copied and pasted below. In the first code structure, all the Products were retrieved and assigned as Sale items, and in the second one, all the Services were retrieved and assigned as Sale items. Once the SaleItem Transaction is modeled with its associated Data Provider, it’s possible to work on the Transaction, as usual, executing its form and viewing all the sale items and/or referencing it as &lt;base Transaction&gt; and/or naturally using its attributes in other objects.</p>
+
+<p>Look at the following Procedure that prints all the sale items offered by the automotive company ordered alphabetically. You can see that all the concepts are used as usual, despite the fact that the SaleItem Transaction is Dynamic.</p>
+
+<p><img src="./images/36194.png" id="36194" class="WikiImage"/></p>
+
+<p>As mentioned before, you could choose to define a Web Panel using the Dynamic Transaction attributes as well as apply all the GeneXus features naturally.</p>
+
+<p>Now, suppose that the automotive company has the following requirement: They want only one grid in the invoice’s form when an invoice is entered (they do not want two independent grids with Products in one and Services in the other in the invoice). This can be modeled without any problem since the primary key of a Dynamic Transaction (in this case SaleItemId*, SaleItemType*) can be a foreign key in another Transaction (in the example, in the invoice’s lines):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Invoice
+{
+ InvoiceId*
+ InvoiceDate
+ CustomerId
+ CustomerName
+ Line
+ { 
+   SaleItemId*
+   SaleItemType*
+   SaleItemDescription
+   InvoiceLineQuantity
+ }
+}
+</pre>
+
+<p>The following image shows the form of the Invoice Transaction at runtime. Note that the grid contains four sale items (three are services and one is a product). You can also see the selection list of sale items.</p>
+
+<p><img src="./images/36229.png" id="36229" class="WikiImage"/></p>
+
+<p>Note: This is a small example that does not solve the issue of the prices of products and services. Suppose that prices for products and services are recorded by date respectively and they are obtained in the invoice.</p>
+
+<h3><a id="Why+is+it+advantageous+to+define+Dynamic+Transactions%3F" class="HashLink" href="#Why+is+it+advantageous+to+define+Dynamic+Transactions%3F">Why is it advantageous to define Dynamic Transactions?</a></h3>
+
+<ul>
+	<li>Because they offer the benefit of working with the Transaction/Attribute paradigm, instead of defining local solutions (for example with <a href="2427.html">SDTs</a> and Data Providers, or Procedures, or defining the same filters in several objects or a Data Selector). In other words, a Transaction is a global and powerful definition in a Knowledge Base. So, if a concept exists, it can be represented by defining a Dynamic Transaction (thus, a view will be created instead of a physical table in the database) and it will be used as usual.</li>
+	<li>They allow describing realities and intentions with flexibility.</li>
+	<li>Simplify programming.</li>
+	<li>When a Dynamic Transaction ceases to be dynamic, then a <a href="5288.html">Reorganization</a> happens in the upcoming database impact: The physical table is created but not empty. On the other hand, the view is executed and the new physical table is initialized with the view execution result. (Note: This does not happen with <a href="36732.html">Dynamic Transactions that receive parameters</a>).</li>
+</ul>
+
+<h3><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h3>
+
+<ul>
+	<li>Dynamic Transactions can not have parallel Transactions in the KB. In other words, a necessary requirement for defining a Transaction as Dynamic is that its primary key must be different from other Transactions' primary keys.</li>
+	<li>Not all Transactions can be defined as Dynamic Transactions. Some restrictions apply: the Data Provider query can be represented as a View. If that's not the case, the Specification will report an error.</li>
+	<li>Variables are not allowed to be used in Data Providers associated with Dynamic Transactions. Functions that can not be evaluated by the server, either.</li>
+	<li>Dynamic Transactions are calculated and resolved at reorganization time. At that moment a CREATE VIEW is performed in the database and that is fixed. At generation time or runtime, the Data Store values are not taken into account, nor changes made in the web.config file.</li>
+</ul>
+
+<h3><a id="Performance" class="HashLink" href="#Performance">Performance</a></h3>
+
+<p>GeneXus creates an SQL View for these Transactions, and usually, the DBMS is capable of deploying a wide array of optimization strategies to ensure good performance.</p>
+
+<hr />
+<ul>
+	<li><a href="36273.html">Dynamic Transactions Samples</a></li>
+	<li><a href="28656.html">Dynamic Transactions that update data</a></li>
+	<li><a href="36732.html">Dynamic Transactions that receive parameters</a>
+	<ul>
+		<li><a href="45622.html">Temporal Data using Dynamic Transactions</a></li>
+	</ul>
+	</li>
+</ul>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/30/22 02:54 PM</em></font></td></TR></table></font>

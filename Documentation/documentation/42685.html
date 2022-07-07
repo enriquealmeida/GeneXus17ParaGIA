@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GeneXusCryptography Module Asymmetric</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42685,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GeneXusCryptography Module Asymmetric</h1>
+<!--GeneXusCryptography Module Asymmetric--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: This is part of <a href="43917.html">GeneXus Cryptography Module</a>.</div>
+</p>
+
+<h2><a id="Asymmetric+Cryptography" class="HashLink" href="#Asymmetric+Cryptography">Asymmetric Cryptography</a></h2>
+
+<p>It is also known as <u>Public Key Cryptography</u>.</p>
+
+<p>The main characteristic of asymmetric cryptography is that it uses a pair of mathematically bound keys; one of them is known as a private key and the other as a public key. Public keys are derived from private keys but private keys cannot be derived from public keys.</p>
+
+<p>It can be used for the same things as symmetric cryptography plus digital signing, as encryption mechanisms are slower and more limited than symmetric encryption schemas.</p>
+
+<p>The most commonly used types of key pairs are RSA and ECDSA and differ on the mathematical basis for the key pair generation which gives them some proper properties.</p>
+
+<p><strong><span style="color: rgb(255,0,0);">The private key must be kept secret</span></strong>; this key is not shared under any circumstances, as nobody needs it for anything and nobody should ask for it (unless it is just for testing and is not official).</p>
+
+<p>The public key is meant to be shared with everyone with whom a communication channel will be established. It is usually distributed on digital certificates for which the standard is X509 using PKI (Public Key Infrastructure). </p>
+
+<p>Encryption can be done with a private key and then decrypted with a public key or vice versa, depending on the purpose of the encryption or the place of each in the communication. If the message is encrypted with a private key, everyone who has the public key can decrypt it. If the message is encrypted with the public key, only the owner of that key will be able to decrypt the messages because he is the only one who has or knows the private key. Some communication schemes are defined where someone encrypts with a public key and then decrypts with his private key or vice versa, or they are mixed with previous or later signatures. </p>
+
+<p>A message is always <u>signed with the private key</u> and <u>verified with the public key</u>.</p>
+
+<h3><a id="Public+Key+Infrastructure" class="HashLink" href="#Public+Key+Infrastructure">Public Key Infrastructure</a></h3>
+
+<p>A system is implemented on the Internet where trustworthy third parties called Certificate Authorities (CAs) are widely known and trusted. The goal of the CA is to validate the identity of a certificate's owner. </p>
+
+<p>The process goes as follows:</p>
+
+<ul>
+	<li>A person or company creates a key pair and sends the public key (on a certificate) to a CA along with other validating identity information for the CA to verify that the person or company actually is who the certificate says he is.</li>
+	<li>The CA creates a certificate with the public key and the other required data and signs it with its own private key.</li>
+</ul>
+
+<p>CA public keys are publicly known and some of them come preinstalled on commonly used software. This way, CA signatures can be verified by anyone and a chain of trust is established. Trusting the CA means trusting the certificates that are signed by that CA. Certificates can then contain a chain of certificates representing a hierarchical chain of trust.</p>
+
+<h3><a id="Key+pair+generation" class="HashLink" href="#Key+pair+generation">Key pair generation</a></h3>
+
+<p>The key pair can be generated locally with some tools, the most popular of which is <a href='https://www.openssl.org/'>OpenSSL</a>.</p>
+
+<p>Anyone can create, sign, and distribute a certificate, but most people will not trust it and software will not trust it by default, either. This type of certificate is known as self-signed and is commonly used for testing.</p>
+
+<p>When the key pair is generated, the encryption and signing algorithms are established along with the hash algorithm that will be used to generate and verify signatures. The signature will always be verified using the algorithms preestablished on the certificate.</p>
+
+<h3><a id="Digital+signature" class="HashLink" href="#Digital+signature">Digital signature</a></h3>
+
+<p><u>NIST definition</u>:</p>
+
+<p><em>&quot;Digital signatures are used to provide assurance of origin authentication and data integrity. These assurances are sometimes extended to provide assurance that a party in a dispute (the signatory) cannot repudiate (i.e., refute) the validity of a signed document; this is commonly known as non-repudiation&quot; </em><a href='https://www.nist.gov/publications/transitioning-use-cryptographic-algorithms-and-key-lengths'>Source</a> </p>
+
+<p>The messages to sign are usually too big for these types of algorithms so, what is done is actually calculate the hash digest of the message (with a secure hashing function) and sign the digest, not the actual message. That is why a hash function must be established and respected on the certificates.</p>
+
+<h4><a id="NIST+Recommendations+%28March+21%2C+2019%29" class="HashLink" href="#NIST+Recommendations+%28March+21%2C+2019%29">NIST Recommendations <span style="font-size: small;"><span style="font-family: courier new;">(March 21, 2019)</span></span></a></h4>
+
+<table align="center" border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<thead>
+		<tr>
+			<th scope="col">Digital Signature Process</th>
+			<th scope="col">Domain Parameters</th>
+			<th scope="col">Status</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td rowspan="2">
+			<p style="text-align: center;">Digital Signature</p>
+
+			<p style="text-align: center;">Generation</p>
+			</td>
+			<td>
+			<p>ECDSA: len(n) &lt; 224</p>
+
+			<p>RSA: len(n) &lt; 2048</p>
+			</td>
+			<td>Disallowed</td>
+		</tr>
+		<tr>
+			<td>
+			<p>ECDSA: len(n) ≥ 224</p>
+
+			<p>RSA: len(n) ≥ 2048</p>
+			</td>
+			<td>Acceptable</td>
+		</tr>
+		<tr>
+			<td rowspan="2">
+			<p style="text-align: center;">Digital Signature</p>
+
+			<p style="text-align: center;">Verification</p>
+			</td>
+			<td>
+			<p>ECDSA: 160 ≤ len(n) &lt; 224</p>
+
+			<p>RSA: 1024 ≤ len(n) &lt; 2048</p>
+			</td>
+			<td>Legacy use</td>
+		</tr>
+		<tr>
+			<td>
+			<p>ECDSA: len(n) ≥ 224</p>
+
+			<p>RSA: len(n) ≥ 2048</p>
+			</td>
+			<td>Acceptable</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><u>Definition of status approval terms</u></p>
+
+<ul>
+	<li><u>Acceptable</u>: is used to mean that the algorithm and key length in a FIPS or SP is safe to use; no security risk is currently known when used in accordance with any associated guidance.</li>
+	<li><u>Deprecated</u>: means that the algorithm and key length may be used, but the user must accept some security risk. </li>
+	<li><u>Disallowed</u>: means that the algorithm or key length is no longer allowed for cryptographic protection.</li>
+</ul>
+
+<h3><a id="Useful+tools%3A" class="HashLink" href="#Useful+tools%3A">Useful tools:</a></h3>
+
+<ul>
+	<li><a href='https://www.openssl.org/'>OpenSSL</a></li>
+	<li><a href='https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/certutil'>CertUtil</a></li>
+	<li><a href='https://keystore-explorer.org/'>KeyStore Explorer</a></li>
+	<li><a href='https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html'>Java KeyTool</a></li>
+</ul>
+
+<h3><a id="Useful+readings" class="HashLink" href="#Useful+readings">Useful readings</a></h3>
+
+<ul>
+	<li><a href='https://www.owasp.org/index.php/Testing_for_Weak_Encryption_(OTG-CRYPST-004)'>Testing for weak encryption (OWASP)</a></li>
+	<li><a href='https://www.nist.gov/publications/transitioning-use-cryptographic-algorithms-and-key-lengths'>NIST Transitioning the Use of Cryptographic Algorithms and Key Lengths</a></li>
+</ul>
+
+<p> </p>
+
+<p><br />
+</p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43918.html">Asymmetric Key Management</a></TD><TD><a href="43917.html">GeneXus Cryptography Module</a></TD><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

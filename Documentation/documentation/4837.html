@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Blocking clause in a 'For each' command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?4837,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Blocking clause in a 'For each' command</h1>
+<!--Blocking clause in a 'For each' command--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><div style="display: none;"> </div>
+
+<div style="display: none;"> </div>
+
+<p>When throughput is an issue and you need to <strong>update</strong> or <strong>delete</strong> a large number of records, reducing the number of roundtrips to the DBMS may be the answer. See an overview at <a href="5572.html">Blocking Data Updates</a>.</p>
+
+<p class="MsoNormal"><span lang="ES">The differences in p</span><span lang="ES">erformance between optimized update/delete, single-record update/delete and block update/delete are quite important. </span><span lang="ES">Optimized update/delete </span><span lang="ES">usually delivers the </span><span lang="ES">best performance, as it only requires one trip to the server. The worst case is usually single-record update/delete, as it requires as many as two roundtrips to the server for every record involved. Block update/delete is usually a good alternative to single-record update/delete if optimization is not possible.</span></p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p>The Blocking clause in a For Each group, as described below, activates update and/or delete blocking in a For Each command. The NumericExpression specifies the number of records in each block</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+   [Order ... ] [Where ... ] [defined by ... ]
+<b>   [Blocking</b> <i>NumericExpression</i>]
+    ...
+   /* Delete Code */ 
+   /* Update Code */ 
+When None
+   /* When none code */
+EndFor</pre>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+    Where Att1 &lt; Value1
+          Blocking 100
+          Att2 = Value2 
+    When none 
+         msg(&quot;...&quot;)
+EndFor</pre>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>When the Blocking clause is specified, the code generator will be similar to the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+     Add record to block (Update or delete code)
+     NumberOfRecordsUpd += 1 or NumberOfRecordsDel += 1 (dependant of Update or Delete code)
+     If NumberOfRecordsUpd = NumericExpression
+        Update Record Block 
+        NumberOfRecordsUpd = 0
+     EndIf
+     If NumberOfRecordsDel &gt;= NumericExpression
+        Delete Record Block 
+        NumberOfRecordsDel = 0
+     EndIf
+  When none      
+     /* Here goes When none */
+EndFor</pre>
+
+<ul>
+	<li>If Blocking is specified and no updates and/or deletes are performed, it will be ignored.</li>
+	<li>Block size applies to deletes and updates. You cannot specify a different number for each.</li>
+	<li>Implementation uses different blocks for updates and deletes. One may be filled before the other. For example, there may be 5 updates and only 1 delete executed. If the Block size is, say, 5, then the update block is sent to the server but the delete block is not.</li>
+	<li>Executing a Commit within the scope of the group causes all pending updates/deletes to be sent to the server. That is, do <strong>not</strong> issue a Commit command for every record processed, as Blocking will not make any difference in <font color="#000000" face="Arial" size="2"><span style="font-size: 10.0pt;font-family: Arial;">performance</span></font>.</li>
+	<li>Executing a Rollback within the scope of the group causes all pending to be <strong>cleared</strong>, so they will never be sent to the server.</li>
+</ul>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p>This clause is not supported by the following platforms:  </p>
+
+<ul>
+	<li>Java - Db2 udb</li>
+	<li>Net - MySql</li>
+	<li>Net - Informix</li>
+	<li>Net - Postgresql</li>
+	<li>NetCore - Postgresql</li>
+</ul>
+
+<p><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="26285.html">Database performance from the GeneXus perspective</a></TD><TD><a href="6828.html">Delete command</a></TD><TD><a href="24744.html">For Each command</a></TD></TR><TR><TD><a href="6714.html">New command</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/25/20 01:41 PM</em></font></td></TR></table></font>

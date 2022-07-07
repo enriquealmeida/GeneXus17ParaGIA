@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Database Reorganization cases where a temporary table is created</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19529,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Database Reorganization cases where a temporary table is created</h1>
+<!--Database Reorganization cases where a temporary table is created--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The cases requiring the creation of a temporary table when executing a database reorganization are those that cannot be solved only with SQL statements. The generator used to run the database reorganization will create and execute a conversion program during the reorganization; these reorganizations are detailed <a href="3154.html">here</a>.</p>
+
+<p>You will identify these kind of database reorganizations in the IAR (Impact Analysis Report); for these cases a temporary table will be created and a GeneXus program or SQL statement will be used to copy the data to the new structures.</p>
+
+<p>Each table conversion will generate a &lt;TableName&gt;conversion file detailing the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CREATE TABLE [GXA0001] ( .... )
+Run conversion program for table &lt;TableName&gt;
+DROP TABLE [&lt;TableName&gt;]
+CALL sp_rename('[GXA0001]', '&lt;TableName&gt;')
+ALTER TABLE [&lt;TableName&gt;] ....</pre>
+
+<p><strong>Note</strong>: in this case the database reorganization sample is associated to SQLServer, you will notice some differences when executing with other DBMS.<br />
+In short the database reorganization does the following:</p>
+
+<ul>
+	<li>A temporary table <em>GXA0001</em> is created with the new table structure.</li>
+	<li>A conversion program is executed to populate the temporary structure.</li>
+	<li>The old table &quot;Tablename&quot; is deleted.</li>
+	<li>The temporary table is renamed with the correct &quot;TableName&quot;.</li>
+	<li>The table restrictions are set.</li>
+</ul>
+
+<p>The generator will create and execute the conversion program during the database reorganization using the following pattern for each table:</p>
+
+<p><em>&lt;TableName&gt;conversion.cs</em> for C# generator.<br />
+<em>&lt;TableName&gt;conversion.java</em> for Java generator.<br />
+<em>&lt;TableName&gt;conversion.rb</em> for Ruby generator.</p>
+
+<h2><a id="Samples" class="HashLink" href="#Samples"><strong>Samples</strong></a></h2>
+
+<h3><a id="1.+Adding+a+BLOB+attribute+to+a+transaction+%28using+SQLServer+until+version+X+Evolution+2+upgrade+3%29" class="HashLink" href="#1.+Adding+a+BLOB+attribute+to+a+transaction+%28using+SQLServer+until+version+X+Evolution+2+upgrade+3%29">1. Adding a BLOB attribute to a transaction (using SQLServer until version X Evolution 2 upgrade 3)</a></h3>
+
+<p><span style="line-height: 20.800001px;">Note: </span><span style="line-height: 20.8px;">Since version X Evolution 2 Upgrade 3</span><span style="line-height: 20.800001px;">, this reorg has been optimized, and an &quot;Alter table&quot; is used instead of creating a temporal table (see SAC #32631 for more information) </span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CREATE TABLE [GXA0001] (
+  [Transaction1Id]       SMALLINT     NOT NULL,
+  [Transaction1Num]   SMALLINT     NOT NULL,
+  [Transaction1Blob]     VARBINARY(MAX)     NOT NULL)
+
+Run conversion program for table Transaction1
+
+DROP TABLE [Transaction1]
+
+CALL sp_rename('[GXA0001]', 'Transaction1')
+
+ALTER TABLE [Transaction1]
+ADD     PRIMARY KEY ( [Transaction1Id] )
+</pre>
+
+<h3><a id="2.+Altering+the+key+of+the+table%2C+when+any+other+field+accepts+nulls+of+the+DBMS." class="HashLink" href="#2.+Altering+the+key+of+the+table%2C+when+any+other+field+accepts+nulls+of+the+DBMS.">2. Altering the key of the table, when any other field accepts nulls of the DBMS.</a></h3>
+
+<p>When the key of the table Transaction1 wants to be modified (for example changing a N(5) to a N(6)), an alter table cannot be performed. In this case, a temporary table is created, and the data is copied to the temporary table in an optimized way:</p>
+
+<p>INSERT INTO GXA0001 (a, b, c) SELECT a, b, c FROM Transaction1</p>
+
+<p>If the table Transaction1 has an attribute which has <a href="7642.html">Nullable property - Attribute</a> = TRUE, this optimization cannot be done so the copy is done defining a cursor for querying the data from one table (Transaction1) and another cursor for inserting in the other table.</p>
+
+<ul>
+</ul>
+
+<h3><a id="3.+The+significant+attribute+or+table+name+length+is+extended" class="HashLink" href="#3.+The+significant+attribute+or+table+name+length+is+extended">3. The significant attribute or table name length is extended</a></h3>
+
+<p>For example, you decided to modify the following:</p>
+
+<ul>
+	<li><a href="7248.html">Significant attribute name length property</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?7249,," target="_blank">Significant Table Name Length Property</a></li>
+</ul>
+
+<p>The reorganization consists of:</p>
+
+<ul>
+	<li>Create a temporary table with the new attribute name length</li>
+	<li>Copy records from the old table to the new temporary one</li>
+	<li>Rename the table to the new name</li>
+	<li>Update table integrity restrictions</li>
+</ul>
+
+<h3><a id="Other+cases" class="HashLink" href="#Other+cases">Other cases</a></h3>
+
+<ul>
+	<li>Changing the property nullable from yes to no</li>
+	<li>Case of Informix  - when the rgz0005 is given</li>
+	<li>Case of Oracle  - when more than a table is navigated to load data of a table</li>
+	<li>Case of Informix - when the table to be loaded has to navigate itself</li>
+</ul>
+
+<p></p>
+
+<p></p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="3154.html">Features of Reorganizations</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

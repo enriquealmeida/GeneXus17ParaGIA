@@ -1,0 +1,718 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Association WP Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%
+
+	AssociationElement association = wwInstance.GetElement<AssociationElement>(Element);
+	string orderClause = association.GetOrderClause();
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	SettingsTemplateElement template = wwInstance.GetAppropiateTemplate();
+
+	if (!TransactionElement.IsBusinessComponent(association.RelationTransaction.Transaction))
+	{
+		throw new Exception("The relation transaction must be a Business Component.");
+	}
+
+	string relationTrnName = association.RelationTransaction.Transaction.Name;
+	bool orderList = association.OrderList != AssociationElement.OrderListValue.False;
+	
+	List<IActionElement> standaloneActionsWithSecurityCheck = new List<IActionElement>();
+	List<IActionElement> actions = association.Table.AllActions();
+	foreach (IActionElement action in actions)
+	{
+		if (action.HasStandaloneCondition())
+		{
+			standaloneActionsWithSecurityCheck.Add(action);
+		}
+	}
+    bool addAttSecurityCode, addAttVisibleConditionCode, otherControlVisibleCondition;
+    association.Table.AddShowAttSecurityCode(out addAttSecurityCode, out addAttVisibleConditionCode, out otherControlVisibleCondition);
+%>
+Event Start
+<%@ CallSubTemplate SubLoadContext Settings='settings' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' SecurityFunction='association.GetSecurityFunctionKey()' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	string generalInitializationCode = association.Table.GetGeneralInitializationCode(Object);
+	if (generalInitializationCode != "")
+	{
+%>
+
+<%= Indentation.Indent(generalInitializationCode, 1) %>
+<%
+	}
+%>
+	If &HttpRequest.Method = HttpMethod.Get
+		For Each<%= settings.IsOptimizationNumber(11) ? " " + wwInstance.Transaction.TransactionName : "" %>
+<%
+	int index = 0;
+	foreach (string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+	{
+%>
+			Where <%= association.Info.BaseTableKeyAttributes[index] %> = &<%= relationKeyBaseAttribute %>
+<%
+		index++;
+	}
+	if (association.Info.SameSourceAndTargetTable)
+	{
+		foreach (IAttributesItem att in association.Table.GetTableAttributes())
+		{
+%>
+			&DisplayData_<%= att.Name %> = <%= att.Name %>
+<%
+		}
+	}
+%>
+		When None
+			msg('<%= settings.Labels.RecordNotFound %>')
+		EndFor
+
+		For Each<%= (!string.IsNullOrEmpty(association.Info.RelatedTrnLevel) ? " " + association.Info.RelatedTrnLevel : "") + orderClause %>
+<%
+	if (association.AssociatedRecordsCondition != "")
+	{
+%>
+			Where <%= association.AssociatedRecordsCondition %>
+<%
+	}
+	if (association.Info.RelatedTableKeyAttribute != association.Info.RelationKeyRelatedAttribute)
+	{
+%>
+			&<%= association.Info.RelationKeyRelatedAttribute %> = <%= association.Info.RelatedTableKeyAttribute %>
+<%
+	}
+%>
+			&Exist = false
+			For Each<%= (settings.IsOptimizationNumber(11) ? " " + association.RelationTransaction.TransactionName : "") %>
+<%
+	foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+	{
+%>
+				Where <%= relationKeyBaseAttribute %> = &<%= relationKeyBaseAttribute %>
+<%
+	}
+	if(association.Info.RelatedTableKeyAttribute != association.Info.RelationKeyRelatedAttribute)
+	{
+%>
+				Where <%= association.Info.RelationKeyRelatedAttribute %> = &<%= association.Info.RelationKeyRelatedAttribute %>
+<%
+	}
+%>
+				&Exist = true
+			EndFor
+			&Description = <%= association.Info.RelatedTableDescriptionExpressionString %>
+			If &Exist
+<%
+	if (association.IsOrderListOrderProgrammatically())
+	{
+%>
+				&InsertIndex = 1
+				Do while &InsertIndex <= &AddedDscList.Count AND &AddedDscList.Item(&InsertIndex) < &Description
+					&InsertIndex = &InsertIndex + 1
+				EndDo
+				&AddedKeyList.Add(<%= association.Info.RelatedTableKeyAttribute %>, &InsertIndex)
+				&AddedDscList.Add(&Description, &InsertIndex)
+<%
+	}
+	else
+	{
+%>
+				&AddedKeyList.Add(<%= association.Info.RelatedTableKeyAttribute %>)
+				&AddedDscList.Add(&Description)
+<%
+	}
+%>
+			Else
+<%
+	if(association.OrderList == AssociationElement.OrderListValue.OrderProgrammatically)
+	{
+%>
+				&InsertIndex = 1
+				Do while &InsertIndex <= &NotAddedDscList.Count AND &NotAddedDscList.Item(&InsertIndex) < &Description
+					&InsertIndex = &InsertIndex + 1
+				EndDo
+				&NotAddedKeyList.Add(<%= association.Info.RelatedTableKeyAttribute %>, &InsertIndex)
+				&NotAddedDscList.Add(&Description, &InsertIndex)
+<%
+	}
+	else
+	{
+%>
+				&NotAddedKeyList.Add(<%= association.Info.RelatedTableKeyAttribute %>)
+				&NotAddedDscList.Add(&Description)
+<%
+	}
+%>
+			EndIf			
+		EndFor
+		Do 'SaveLists'
+	EndIf
+<%
+	if (!(settings.IsOptimizationNumber(7) && association.IsWebUserExperienceSmooth()))
+	{
+%>
+	&AddedKeyListXml.Visible = false
+	&NotAddedKeyListXml.Visible = false
+	&AddedDscListXml.Visible = false
+	&NotAddedDscListXml.Visible = false
+	
+<%
+	}
+%>
+<%
+	if (addAttSecurityCode || addAttVisibleConditionCode || otherControlVisibleCondition)
+	{
+%>
+	Do 'AttributesSecurityCode'
+<%
+	}
+	List<IAttributesItem> tableAttributesAndVariables = association.Table.GetTableAttributesAndVariables();
+	bool hasRequiredAtts = false;
+	foreach (IAttributesItem item in tableAttributesAndVariables)
+	{
+		if (!item.Visible)
+		{
+%>
+	<%= item.ControlName %>.Visible = False
+<%
+		}
+		else if (!hasRequiredAtts && item.GetIsRequired())
+		{
+			hasRequiredAtts = true;
+		}
+	}
+	foreach (WebComponentElement webComp in association.Table.AllWebComponents(false))
+	{
+%>
+	<%= webComp.GetCreateWebComponentCall()%>
+<%		
+	}
+	foreach (IActionElement action in actions)
+	{
+		string initCode = action.InitializationCode();
+		if (initCode != String.Empty)
+		{
+%>
+<%= Indentation.Indent(initCode, 1) %>
+<%
+		}
+	}
+%>	
+	
+EndEvent
+
+Event Refresh
+
+<%
+	foreach (IActionElement action in standaloneActionsWithSecurityCheck)
+	{
+%>
+<%= Indentation.Indent(action.EnableDisableCodeOutsideGrid(), 1) %> 
+<%
+	}
+
+	bool isSmooth = DVelop.Patterns.WorkWithPlus.Object_Utilities.VersionsHelper.IsSmooth(association);
+	if (isSmooth)
+	{
+%>
+	Do 'UpdateAssociationVariables'
+
+EndEvent
+
+Sub 'UpdateAssociationVariables'
+<%
+	}
+%>
+
+	Do 'LoadLists'
+	&<%= association.Info.AssociatedRecordsVariable %>.Clear()
+	&<%= association.Info.NotAssociatedRecordsVariable %>.Clear()
+	&i = 1
+	For &<%= association.Info.RelationKeyRelatedAttribute %> in &AddedKeyList
+		&Description = &AddedDscList.Item(&i)
+		&<%= association.Info.AssociatedRecordsVariable %>.AddItem(&<%= association.Info.RelationKeyRelatedAttribute %>, &Description.Trim())
+		&i += 1
+	EndFor
+	&i = 1
+	For &<%= association.Info.RelationKeyRelatedAttribute %> in &NotAddedKeyList
+		&Description = &NotAddedDscList.Item(&i)
+		&<%= association.Info.NotAssociatedRecordsVariable %>.AddItem(&<%= association.Info.RelationKeyRelatedAttribute %>, &Description.Trim())
+		&i += 1
+	EndFor
+
+<%
+	if (isSmooth)
+	{
+%>
+
+EndSub
+
+<%
+	}
+	else
+	{
+%>
+
+EndEvent
+
+<%
+	}
+%>
+
+Event Enter
+	
+	Do 'LoadLists'
+	&i = 1
+	&Success = true
+	For &<%= association.Info.RelationKeyRelatedAttribute %> in &AddedKeyList
+		If &Success
+			&Exist = false
+			For Each<%= (settings.IsOptimizationNumber(11) ? " " + association.RelationTransaction.TransactionName : "") %>
+<%
+	foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+	{
+%>
+				Where <%= relationKeyBaseAttribute %> = &<%= relationKeyBaseAttribute %>
+<%
+	}
+%>
+				Where <%= association.Info.RelationKeyRelatedAttribute %> = &<%= association.Info.RelationKeyRelatedAttribute %>
+				&Exist = true
+			EndFor
+			If not &Exist
+				&<%= relationTrnName %> = new()
+<%
+	foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+	{
+%>
+				&<%= relationTrnName %>.<%= relationKeyBaseAttribute %> = &<%= relationKeyBaseAttribute %>
+<%
+	}
+%>
+				&<%= relationTrnName %>.<%= association.Info.RelationKeyRelatedAttribute %> = &<%= association.Info.RelationKeyRelatedAttribute %>
+				&<%= relationTrnName %>.Save()
+				If not &<%= relationTrnName %>.Success()
+					&Success = false
+				EndIf
+			EndIf
+		EndIf
+		&i += 1
+	EndFor
+	&i = 1
+	For &<%= association.Info.RelationKeyRelatedAttribute %> in &NotAddedKeyList
+		If &Success
+			&Exist = false
+			For Each<%= (settings.IsOptimizationNumber(11) ? " " + association.RelationTransaction.TransactionName : "") %>
+<%
+	foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+	{
+%>
+				Where <%= relationKeyBaseAttribute %> = &<%= relationKeyBaseAttribute %>
+<%
+	}
+%>
+				Where <%= association.Info.RelationKeyRelatedAttribute %> = &<%= association.Info.RelationKeyRelatedAttribute %>
+				&Exist = true
+			EndFor
+			If &Exist
+				&<%= relationTrnName %> = new()
+<%
+	string bcLoadList = "";
+	foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in association.RelationTransaction.Transaction.Structure.Root.PrimaryKey)
+	{
+		bcLoadList += ", &" + trnAtt.Name;
+	}
+	bcLoadList = bcLoadList.Substring(2);
+%>
+				&<%= relationTrnName %>.Load(<%= bcLoadList %>)
+				If &<%= relationTrnName %>.Success()
+					&<%= relationTrnName %>.Delete()
+				EndIf
+				If not &<%= relationTrnName %>.Success()
+					&Success = false
+				EndIf
+			EndIf
+		EndIf
+		&i += 1
+	EndFor
+	If &Success
+		Commit
+		<%= template.GetReturnExpression() %>
+	else
+		Do 'Show Error Messages'
+	EndIf
+
+EndEvent
+
+Sub 'Show Error Messages'
+
+	For &Message in &<%= relationTrnName %>.GetMessages()
+		If &Message.Type = MessageTypes.Error
+			msg(&Message.Description)
+		EndIf
+	EndFor
+	
+EndSub
+
+Event 'Disassociate Selected'
+
+	Do 'DisassociateSelected'
+	
+EndEvent
+
+Event 'Associate selected'
+
+	Do 'AssociateSelected'
+	
+EndEvent
+
+Event 'Associate All'
+
+	Do 'AssociateAll'
+<%
+	if (isSmooth)
+	{
+%>
+	Do 'UpdateAssociationVariables'
+<%
+	}
+%>
+	
+EndEvent
+
+Sub 'LoadLists'
+
+	If not &AddedKeyListXml.IsEmpty()
+		&AddedDscList.From<%= template.SerializationFormat %>(&AddedDscListXml)
+		&AddedKeyList.From<%= template.SerializationFormat %>(&AddedKeyListXml)
+	EndIf
+	If not &NotAddedKeyListXml.IsEmpty()
+		&NotAddedKeyList.From<%= template.SerializationFormat %>(&NotAddedKeyListXml)
+		&NotAddedDscList.From<%= template.SerializationFormat %>(&NotAddedDscListXml)
+	EndIf
+	
+EndSub
+
+Sub 'SaveLists'
+
+	If &AddedKeyList.Count > 0
+		&AddedKeyListXml = &AddedKeyList.To<%= template.SerializationFormat %>()
+		&AddedDscListXml = &AddedDscList.To<%= template.SerializationFormat %>()
+	else
+		&AddedKeyListXml = ''
+		&AddedDscListXml = ''
+	EndIf
+	If &NotAddedKeyList.Count > 0
+		&NotAddedKeyListXml = &NotAddedKeyList.To<%= template.SerializationFormat %>()
+		&NotAddedDscListXml = &NotAddedDscList.To<%= template.SerializationFormat %>()
+	else
+		&NotAddedKeyListXml = ''
+		&NotAddedDscListXml = ''
+	EndIf
+	
+EndSub
+
+Sub 'AssociateAll'
+
+	Do 'LoadLists'
+	&i = 1
+<%
+	if(orderList)
+	{
+%>
+	&InsertIndex = 1
+<%
+	}
+%>
+	For &<%= association.Info.RelationKeyRelatedAttribute %> in &NotAddedKeyList
+		&Description = &NotAddedDscList.Item(&i)
+<%
+	if(orderList)
+	{
+%>
+		Do while &InsertIndex <= &AddedDscList.Count AND &AddedDscList.Item(&InsertIndex) < &Description
+			&InsertIndex = &InsertIndex + 1
+		Enddo
+		&AddedKeyList.Add(&<%= association.Info.RelationKeyRelatedAttribute %>, &InsertIndex)
+		&AddedDscList.Add(&Description, &InsertIndex)
+<%
+	}
+	else
+	{
+%>
+		&AddedKeyList.Add(&<%= association.Info.RelationKeyRelatedAttribute %>)
+		&AddedDscList.Add(&Description)
+<%
+	}
+%>
+		&i = &i + 1
+	EndFor
+	&NotAddedKeyList.Clear()
+	&NotAddedDscList.Clear()
+	Do 'SaveLists'
+	
+EndSub
+
+Event 'Disassociate All'
+	
+	Do 'AssociateAll'	
+<%
+	if (association.UseCloneInDisassociateAll())
+	{
+%>
+	&NotAddedKeyList = &AddedKeyList.Clone()
+	&NotAddedDscList = &AddedDscList.Clone()
+<%
+	}
+	else
+	{
+%>
+	&NotAddedKeyList.Clear()
+    &NotAddedDscList.Clear()
+    For &i = 1 to &AddedKeyList.Count
+		&NotAddedKeyList.Add(&AddedKeyList.Item(&i))
+        &NotAddedDscList.Add(&AddedDscList.Item(&i))
+    EndFor
+<%
+	}
+%>
+	&AddedDscList.Clear()
+	&AddedKeyList.Clear()
+	Do 'SaveLists'
+<%
+	if (isSmooth)
+	{
+%>
+	Do 'UpdateAssociationVariables'
+<%
+	}
+%>
+	
+EndEvent
+
+Event &<%= association.Info.AssociatedRecordsVariable %>.DblClick
+	Do 'DisassociateSelected'
+EndEvent
+
+Event &<%= association.Info.NotAssociatedRecordsVariable %>.DblClick
+	Do 'AssociateSelected'
+EndEvent
+
+<%
+	foreach (IActionElement action in actions)
+    {
+		string eventCode = action.Event();
+		if (eventCode != String.Empty)
+		{
+%>
+<%= eventCode %>
+<%
+		}
+	}
+	if (association.GetStandardAction(StandardAction.Search) != null)
+	{
+%>
+
+Event 'DoSearch'
+	
+	Do 'LoadLists'
+	
+	&NotAddedKeyList.Clear()
+	&NotAddedDscList.Clear()
+	
+	Do 'LoadSearch'
+	
+	Do 'SaveLists'
+
+<%
+	if (isSmooth)
+	{
+%>
+	Refresh
+<%
+	}
+%>	
+EndEvent
+
+Sub 'LoadSearch'
+	
+	For Each<%= (!string.IsNullOrEmpty(association.Info.RelatedTrnLevel) ? " " + association.Info.RelatedTrnLevel : "") + orderClause %>
+<%
+	if (association.AssociatedRecordsCondition != "")
+	{
+%>
+		Where <%= association.AssociatedRecordsCondition %>
+<%
+	}
+	foreach (string filterCond in association.GetFiltersConditions())
+	{
+%>
+		Where <%= filterCond %>
+<%
+	}
+%>		
+		&i = &AddedKeyList.IndexOf(<%= association.Info.RelationKeyRelatedAttribute %>)
+		If &i = 0
+			&Description = <%= association.Info.RelatedTableDescriptionExpressionString %>
+<%
+	if(association.OrderList == AssociationElement.OrderListValue.OrderProgrammatically)
+	{
+%>
+			&InsertIndex = 1
+			Do while &InsertIndex <= &NotAddedDscList.Count AND &NotAddedDscList.Item(&InsertIndex) < &Description
+				&InsertIndex = &InsertIndex + 1
+			EndDo
+			&NotAddedKeyList.Add(<%= association.Info.RelatedTableKeyAttribute %>, &InsertIndex)
+			&NotAddedDscList.Add(&Description, &InsertIndex)
+<%
+	}
+	else
+	{
+%>
+			&NotAddedKeyList.Add(<%= association.Info.RelationKeyRelatedAttribute %>)
+			&NotAddedDscList.Add(&Description)
+<%
+	}
+%>
+		Endif
+	EndFor
+
+EndSub
+
+<%
+	}
+%>
+
+Sub 'AssociateSelected'
+	Do 'LoadLists'
+	&i = 1
+	For &<%= association.Info.RelationKeyRelatedAttribute %> in &NotAddedKeyList
+		If &<%= association.Info.RelationKeyRelatedAttribute %> = &<%= association.Info.NotAssociatedRecordsVariable %>
+			Exit
+		EndIf
+		&i = &i + 1
+	EndFor
+	If &i <= &NotAddedKeyList.Count
+		&Description = &NotAddedDscList.Item(&i)
+<%
+	if(orderList)
+	{
+%>
+		&InsertIndex = 1
+		Do while &InsertIndex <= &AddedDscList.Count AND &AddedDscList.Item(&InsertIndex) < &Description
+			&InsertIndex = &InsertIndex + 1
+		Enddo
+		&AddedKeyList.Add(&<%= association.Info.NotAssociatedRecordsVariable %>, &InsertIndex)
+		&AddedDscList.Add(&Description, &InsertIndex)
+<%
+	}
+	else
+	{
+%>
+		&AddedKeyList.Add(&<%= association.Info.NotAssociatedRecordsVariable %>)
+		&AddedDscList.Add(&Description)
+<%
+	}
+%>
+		&NotAddedKeyList.Remove(&i)
+		&NotAddedDscList.Remove(&i)
+		Do 'SaveLists'
+	EndIf
+<%
+	if (isSmooth)
+	{
+%>
+	Do 'UpdateAssociationVariables'
+<%
+	}
+%>
+EndSub
+
+Sub 'DisassociateSelected'
+	Do 'LoadLists'
+	&i = 1
+	For &<%= association.Info.RelationKeyRelatedAttribute %> in &AddedKeyList
+		If &<%= association.Info.RelationKeyRelatedAttribute %> = &<%= association.Info.AssociatedRecordsVariable %>
+			exit
+		EndIf
+		&i = &i + 1
+	EndFor
+	If &i <= &AddedKeyList.Count
+		&Description = &AddedDscList.Item(&i)
+<%
+	if(orderList)
+	{
+%>
+		&InsertIndex = 1
+		Do while &InsertIndex <= &NotAddedDscList.Count AND &NotAddedDscList.Item(&InsertIndex) < &Description
+			&InsertIndex = &InsertIndex + 1
+		Enddo
+		&NotAddedKeyList.Add(&<%= association.Info.AssociatedRecordsVariable %>, &InsertIndex)
+		&NotAddedDscList.Add(&Description, &InsertIndex)
+<%
+	}
+	else
+	{
+%>
+		&NotAddedKeyList.Add(&<%= association.Info.AssociatedRecordsVariable %>)
+		&NotAddedDscList.Add(&Description)
+<%
+	}
+%>
+		&AddedKeyList.Remove(&i)
+		&AddedDscList.Remove(&i)
+		Do 'SaveLists'
+	EndIf
+<%
+	if (isSmooth)
+	{
+%>
+	Do 'UpdateAssociationVariables'
+<%
+	}
+%>
+EndSub
+<%
+	if (hasRequiredAtts)
+	{
+%>
+<%= TableVariableElement.GetRequiredFieldsValidationSub(association.Table, settings) %>
+<%
+	}
+
+	if (addAttSecurityCode || addAttVisibleConditionCode || otherControlVisibleCondition)
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+
+<%
+	if (addAttSecurityCode || addAttVisibleConditionCode)
+	{
+%>
+<%= Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, association.Table.GetAllAttributesAndVariables(true, true), true, true), 1) %>
+
+<%
+	}
+	if (otherControlVisibleCondition)
+	{
+%>
+<%= Indentation.Indent(GeneralTableElement.GetControlVisibleConditionsCode(association.Table), 1) %>
+
+<%
+	}
+%>
+
+EndSub
+<%
+	}
+%>
+<%= association.Table.GetGeneralEventsAndSubs() %>

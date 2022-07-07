@@ -1,0 +1,101 @@
+apply plugin: 'com.android.application'
+
+android {
+	compileSdkVersion android_build.compile_sdk
+
+	defaultConfig {
+		applicationId "$Main.AndroidPackageName$"
+		versionCode $Main.AndroidVersionCode$
+		versionName "$Main.AndroidVersionName$"
+		minSdkVersion android_build.min_sdk
+		targetSdkVersion android_build.target_sdk
+
+$if(Main.MultiDexBuild)$
+		multiDexEnabled true
+		multiDexKeepFile file('multidex-config.txt')
+$endif$
+$if(Main.HasAssociatedUITests)$
+		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+$endif$
+	}
+
+	signingConfigs {
+		release {
+			storeFile file(String.valueOf(System.getenv("KEYSTORE_FILE")))
+			storePassword System.getenv("KEYSTORE_PASSWORD")
+			keyAlias System.getenv("KEY_ALIAS")
+			keyPassword System.getenv("KEY_PASSWORD")
+		}
+	}
+
+	buildTypes {
+$if(Main.ObfuscateApplication)$
+		all {
+			minifyEnabled true
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+		}
+$endif$
+		release {
+			signingConfig signingConfigs.release
+		}
+	}
+
+	compileOptions {
+		sourceCompatibility android_build.java_version
+		targetCompatibility android_build.java_version
+	}
+
+	packagingOptions {
+		exclude 'META-INF/proguard/androidx-annotations.pro'
+	}
+
+	lintOptions {
+		disable "Instantiatable"
+	}
+	
+}
+
+dependencies {
+	$Main.AndroidLibraryModules: { module |$if(module.DependencyType)$ $module.DependencyType$ '$module.Data.GroupId$:$module.Data.Name$:$module.Version$'$endif$}; separator="\r\n"$
+	implementation fileTree(dir: 'libs', include: ['*.jar'])
+	$if(Main.UsePdfReports)$
+	implementation ('com.genexus:gxandroidreports:$Main.AndroidReportsVersion$') 	{
+		// exclude gxandroid already added 		
+		exclude group: 'com.genexus', module: 'gxandroid'
+		// exclude bouncycastle from gxcommon, cause compilation error.
+		exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'
+ 		// avoid duplicate class error, might be caused by xml-apis and stax-api
+		exclude group: 'stax', module: 'stax-api'
+		exclude group: 'xpp3'
+	}
+	$endif$
+	$if(Main.MultiDexBuild)$
+	implementation 'androidx.multidex:multidex:2.0.1'
+	$endif$
+	$if(Main.UseGeographyDataTypes)$
+	implementation 'org.locationtech.jts:jts-core:1.17.1'
+	$endif$
+	$if(IsHuawei)$
+		$if(Main.UseHuaweiAnalytics)$
+	implementation ('com.genexus.android:HMSAnalytics:$Main.GenexusComponentsVersion$')
+		$endif$
+		$if(Main.UseHuaweiNotifications)$
+	implementation ('com.genexus.android:HMSOneSignalModule:$Main.GenexusComponentsVersion$')
+		$endif$
+		$if(Main.UseHuaweiInAppBilling)$
+	implementation ('com.genexus.android:HMSInAppBillingLib:$Main.GenexusComponentsVersion$')
+		$endif$
+		$if(Main.UseHuaweiMaps)$
+	implementation ('com.genexus.android:HMSMapKitLib:$Main.GenexusComponentsVersion$')
+		$endif$
+	$endif$
+}
+
+$Main.AndroidLibraryModules: { module |$if(module.Data.GradleExtensionFile)$apply from: rootProject.file('$Main.QualifiedPath$/$module.Data.GradleExtensionFile$') $endif$}; separator="\r\n"$
+
+$if(IsHuawei)$
+apply from: rootProject.file('$Main.QualifiedPath$/hmscore.gradle')
+$if(Main.UseHuaweiInAppBilling)$
+apply from: rootProject.file('$Main.QualifiedPath$/hmsInAppBilling.gradle')
+$endif$
+$endif$

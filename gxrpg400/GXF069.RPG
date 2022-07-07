@@ -1,0 +1,52 @@
+ *****************************************************
+ * GXFBTS (BUILDS TIME-STAMP): YMDHMSTOT(Y,M,D[,H[,M[,S]]])
+ * PARAMETERS: (I) $DTYN N(4,0) YYYY
+ *             (I) $DTMN N(2,0) MM
+ *             (I) $DTDN N(2,0) DD
+ *             (I) $DTHN N(2,0) HH
+ *             (I) $DTNN N(2,0) MM
+ *             (I) $DTSN N(2,0) SS
+ *             (O) $GXTS DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *             (O) $GXOUT N(1,0)
+ * IF ERROR RETURNS: NULLVALUE(DATE) OR NULLVALUE(TIME)
+ *                   $GXOUT=0
+ *****************************************************
+C           GXFBTS    BEGSR
+ * IF YEAR < 100 ADJUSTS IT WITH YEAR-LIMIT
+C           $DTFN     IFNE 0
+C           $DTYN     ANDLT100
+C                     Z-ADD$DTYN     $F5102
+C                     EXSR GXF2Y4
+C                     Z-ADD$F5102    $DTYN
+C                     ENDIF
+ * TEST VALID DATE
+C                     MOVE $DTFC     $GXDTE
+C                     EXSR GXFTDT
+C           $GXOUT    IFEQ 0
+C                     Z-ADD0         $DTFN
+C                     Z-ADD0         $F6901  10
+C                     ELSE
+C                     Z-ADD1         $F6901
+C                     ENDIF
+ * TEST VALID TIME
+C           $DTHN     IFLT 0
+C           $DTHN     ORGT 23
+C           $DTMN     ORLT 0
+C           $DTMN     ORGT 59
+C           $DTSN     ORLT 0
+C           $DTSN     ORGT 59
+C                     Z-ADD0         $DTTN
+C                     Z-ADD0         $F6902  20
+C                     ELSE
+C                     Z-ADD1         $F6902
+C                     ENDIF
+ * DATE-TIME TO TIME-STAMP
+C                     EXSR GXDTTS
+ * SETS ERROR FLAG
+C           $F6901    IFEQ 0
+C           $F6902    OREQ 0
+C                     Z-ADD0         $GXOUT
+C                     ELSE
+C                     Z-ADD1         $GXOUT
+C                     ENDIF
+C                     ENDSR

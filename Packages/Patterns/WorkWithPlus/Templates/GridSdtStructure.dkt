@@ -1,0 +1,57 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Selected Objects SDT" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	IGrid grid;
+	if(Element.Name == "grid")
+	{
+		grid = wwInstance.GetElement<IGrid>(Element);
+	}
+	else
+	{
+		IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+		grid = gridObject.GetGrid();
+	}
+	
+	string sdtName = Object.Name;
+
+%>
+<Part type="<%= PartType.SDTStructure %>">
+	<Level Name="<%= sdtName %>">
+		<LevelInfo guid="<%= Guid.NewGuid() %>" name="<%= sdtName %>">
+			<Properties>
+				<Property><Name>AttCollection</Name><Value>True</Value></Property>
+			</Properties>
+		</LevelInfo>
+<%
+	foreach (IAttributesItem gridItem in grid.GetAllAttributesAndVariablesOfThisGrid(true, true))
+	{
+		if (!(gridItem is VariableElement) || ((VariableElement)gridItem).IsDataTypeBasedOn())
+		{
+%>
+		<Item guid="<%= Guid.NewGuid() %>" name="<%= gridItem.Id %>">
+			<Properties><Property><Name><%= Properties.ATT.BasedOn %></Name><Value><%= gridItem.BasedOn %></Value></Property></Properties>
+		</Item>
+<%
+		}
+		else
+		{
+			System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+			doc.LoadXml(((VariableElement)gridItem).GetDefinitionNotIsDataTypeBasedOn());
+%>
+		<Item guid="<%= Guid.NewGuid() %>" name="<%= gridItem.Id %>">
+			<%= doc.FirstChild.LastChild.OuterXml %>
+		</Item>
+<%
+		}
+	}
+%>
+	</Level>
+</Part>

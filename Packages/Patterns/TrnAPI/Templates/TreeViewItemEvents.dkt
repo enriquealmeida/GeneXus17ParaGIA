@@ -1,0 +1,76 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Selected Objects SDT" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Concepto.Patterns.TrnAPI" %>
+<%@ Import Namespace="Concepto.Patterns.TrnAPI" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	TrnAPIInstance trnAPIInstance = new TrnAPIInstance(Instance);
+	TrnAPISettings catSettings = trnAPIInstance.Settings;
+%>
+<Part type="<%= PartType.Events %>">
+<Source><![CDATA[Event Start
+	&treeNodeCollectionData = <%= trnAPIInstance.ParentObject.Name %>Catalog.udp(0)
+	If &treeNodeCollectionData.Count=0
+		TextBlock4.Visible = 1
+		TextBlock4.Caption = "<%= catSettings.Labels.InsertNewCategory %>"
+		TextBlock4.Link = Link( <%= trnAPIInstance.TransactionsName.Category  %>)
+	EndIf	
+EndEvent
+
+Event treeview1.NodeClicked 
+	&IdVal = Val(&selectedTreeNode.Id)
+	
+	If &selectedTreeNode.Link.Trim()=""
+		WebComp1.Object = Create(<%= trnAPIInstance.ParentObject.Name %>By<%= trnAPIInstance.TransactionsName.Category %>WC, &IdVal)
+	
+		For Each where <%= trnAPIInstance.AttributesName.CategoryId %>=  &IdVal
+			&<%= trnAPIInstance.AttributesName.CategoryName %> = <%= trnAPIInstance.AttributesName.CategoryName %>
+		EndFor	
+		
+		TextBlock1.Caption = "<%= catSettings.Labels.ViewTrn %> " + &<%= trnAPIInstance.AttributesName.CategoryName %>.Trim() 
+<%	if (WebPanel.ResolveName(Object.Module, "View" + trnAPIInstance.TransactionsName.Category) != null)
+	{	%>
+		Textblock1.Link = Link( <%= "View" + trnAPIInstance.TransactionsName.Category  %>, &IdVal)
+<%	}
+	else
+	{	%>	
+		Textblock1.Link = Link( <%= trnAPIInstance.TransactionsName.Category  %>, "viewer" ,&IdVal)
+<%	}	%>	
+		
+		TextBlock2.Caption = "<%= catSettings.Labels.AssignItemsTo %> " + &<%= trnAPIInstance.AttributesName.CategoryName %>.Trim() 
+
+		TextBlock2.Visible = 1
+		TextBlock3.Visible = 0
+		TextBlock3.Caption = "<%= catSettings.Labels.AssignedItemsTo %> " + &<%= trnAPIInstance.AttributesName.CategoryName %>.Trim() 
+		TextBlock4.Visible = 0
+	EndIf
+	
+EndEvent
+
+Event TextBlock2.Click 
+	If (Textblock2.Visible=1)	
+		&IdVal = Val(&selectedTreeNode.Id)
+		WebComp1.Object = Create( <%= trnAPIInstance.TransactionsName.CategoryItem %>WC , &IdVal)
+		Textblock2.Visible= 0
+		TextBlock3.Visible = 1
+		TextBlock4.Visible = 0
+	EndIf
+EndEvent
+
+Event TextBlock3.Click 
+	If (Textblock3.Visible=1)	
+		&IdVal = Val(&selectedTreeNode.Id)
+		WebComp1.Object = Create( <%= trnAPIInstance.ParentObject.Name %>By<%= trnAPIInstance.TransactionsName.Category %>WC , &IdVal)
+		Textblock3.Visible= 0
+		TextBlock2.Visible = 1
+		TextBlock4.Visible = 0
+	EndIf
+EndEvent
+
+
+]]></Source>
+</Part>

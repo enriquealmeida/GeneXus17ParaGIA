@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Order Clause Specification</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5100,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Order Clause Specification</h1>
+<!--Order Clause Specification--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h3><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h3>
+
+<p>GeneXus determines the navigation required for each database access level of an object. That is, for each:</p>
+
+<ul>
+	<li><a href="24744.html">For Each command</a>,</li>
+	<li><a href="25082.html">Data provider Group statement</a>,</li>
+	<li>Data selector used in a <a href="8578.html">Where clause</a> with the <strong>'in' operator</strong>:
+	<ul>
+		<li><a href="5312.html">in a For each</a>, as well as</li>
+		<li><a href="6501.html">in a Data provider group</a></li>
+	</ul>
+	</li>
+	<li><a href="24817.html">Grid control</a>.</li>
+</ul>
+
+<p>Among other things, the navigation establishes which tables the attributes must be obtained from and, usually, in <strong>what order</strong> the resulting tuples (records) must be processed/returned. This order is determined on the basis of:</p>
+
+<ul>
+	<li>the specification performed by the developer (Order clause, rule or property) and</li>
+	<li>internal optimization algorithms.</li>
+</ul>
+
+<p><span style="line-height: 1.6em;">With the order clause (rule or property), the developer indicates the order in which he or she wants records to be processed and retrieved, and they will. But to perform the actual processing, the Specifier could alter that clause, supplemented with contextual info (if there exists defined indexes, conditions for equality, etc) in order to be more performant, although DBMS itself ends up being the one who decides the execution plan. Nevertheless, it is important to understand the data will be retrieved in the explicit order.</span></p>
+
+<p>The aim of this document is to show the different options available to GeneXus at specification time for determining the actual <strong>order</strong> the mentioned database access levels are scanned in.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>As a basic principle, we should bear in mind that GeneXus will try to find the best possible order so that the <strong>restrictions by equality</strong> applied to the level (For Each command, Data Provider group, Data Selector used with 'in' operator, grid with Base Table) are optimizable.</p>
+
+<p>Therefore, the following information is taken into account when determining the level's Order:</p>
+
+<ul>
+	<li>the <strong>attributes</strong> of the <a href="6075.html">Order clause</a> specified by the user</li>
+	<li>the <strong>restrictions</strong> that apply to the level:
+	<ul>
+		<li>attributes instanced by parameter</li>
+		<li>attributes instanced in the context (such as higher level for eachs, groups, grids)</li>
+		<li>explicit conditions (such as 'where' conditions whether for eachs or groups, or 'conditions' properties whether grids or data selectors or 'conditions' selector whether general conditions)</li>
+	</ul>
+	</li>
+	<li>the existence of <strong>indexes</strong> on such attributes.</li>
+</ul>
+
+<p>In this sense, the order to be considered for the generated statement will be determined as described below, with two different cases being distinguished:</p>
+
+<h3><a id="Order+specified+in+the+object+level" class="HashLink" href="#Order+specified+in+the+object+level">Order specified in the object level</a></h3>
+
+<p>('Order' clause in the For Each or Data Provider Group, 'Orders' node in Data Selector, 'Order' property in the Grid): the level will be ordered by those attributes, whether or not there is an index for them.</p>
+
+<p>Additionally, if there are implicit conditions (e.g.: attributes in the parm, attributes instanced by nested navigation levels) or explicit conditions ('Where' clause, 'Condition' property, etc. ) <strong>by equality</strong>, they will be considered in order to analyze whether or not there is an index containing those attributes plus the attributes of the Order. If an index exists, these attributes will be added to the Order list so that such index will be considered instead.</p>
+
+<p>That is, it tries to find <strong>the best index</strong> to cover the filter conditions evenly. In this way, the query is optimized, and the order requested by the user is maintained.</p>
+
+<h3><a id="Order+not+specified+in+the+object+level" class="HashLink" href="#Order+not+specified+in+the+object+level">Order not specified in the object level</a></h3>
+
+<p>In this case, <strong>if optimizable conditions exist for that database access level</strong>, that means, there is an index for the attributes of the conditions (only <strong>equally</strong> conditions are considered, that excludes &lt;,&gt;,=&lt;, =&gt; operators), the Order will ultimately be determined by these attributes.</p>
+
+<p><strong>If no index matching the conditions exists</strong> (that is, the scan cannot be optimized according to the level conditions), then the order will be determined by the attributes of the Primary Key.</p>
+
+<p>If a <a href="24592.html">Unique Clause</a> (distinct) or <a href="15589.html">Server Paging</a> is used, please read the Considerations section below.</p>
+
+<h4><a id="Notes%3A" class="HashLink" href="#Notes%3A">Notes:</a></h4>
+
+<ul>
+	<li>Although for SQL generators the DBMS itself resolves the most appropriate access plan, this information will influence its determination.</li>
+	<li>If you do not wish to establish a particular order for scanning and prefer to delegate this task to the DBMS, use the <a href="8619.html">Order None clause</a>. </li>
+</ul>
+
+<h3><a id="Important+advice" class="HashLink" href="#Important+advice">Important advice</a></h3>
+
+<p>If a particular order is important to you, you should specify the attributes in the order clause.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>If we have the transaction structure:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Country    //first level</strong>
+{
+   CountryId*
+   CountryName
+   <strong>City    //second level</strong>
+   {
+      CityId*
+      CityName
+   }
+}</pre>
+
+<p>and the following For Each ordered by Cities and filtering by Country:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each order CityId
+Where CountryId = 1
+...
+Endfor</pre>
+
+<p>In this case the navigation is the following:</p>
+
+<p><img src="./images/5059.jpg" id="5059" class="WikiImage"/></p>
+
+<p>As shown in the navigation list, the CountryId attribute is being added to the Order specified by the user. The result of the query is exactly the same but optimized.</p>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<h4><a id="About+the+information+in+the+navigation+list" class="HashLink" href="#About+the+information+in+the+navigation+list"><strong>About the information in the navigation list</strong></a></h4>
+
+<p>Each level's navigation list may include the name of an index in addition to the order attributes.  This information is only useful for non-SQL generators (RPG, Cobol, VB-Access, VFP-DBF), where it is necessary to indicate the index to optimize the query. However, as stated above, for SQL generators the DBMS will decide the best access plan on the basis of the attributes participating in the select (among them, the Order attributes).</p>
+
+<h4><a id="Several+optimizable+conditions" class="HashLink" href="#Several+optimizable+conditions"><strong>Several optimizable conditions</strong></a></h4>
+
+<p>In determining the Order, explicit conditions prevail over implicit conditions, if they are different and there is an index for each one of them.</p>
+
+<h4><a id="Order+in+Breaks" class="HashLink" href="#Order+in+Breaks"><strong>Order in Breaks</strong></a></h4>
+
+<p>To determine the Order in the Breaks, the Order of the two For Each commands it is formed by must be considered first (they are concatenated in a special way, taking into consideration repeated attributes and attributes with constant values). Once the Order of the Break has been determined, it will be optimized as in the other cases, by searching for the best index considering the conditions of the level.</p>
+
+<h4><a id="Server+Paging" class="HashLink" href="#Server+Paging"><strong>Server Paging</strong></a></h4>
+
+<p>Records have to be processed in a specific order when <a href="15589.html">Server Paging</a> is used. If the order is not set explicitly, the specifier does it implicitly. <sup>1</sup></p>
+
+<p>When using PostgreSQL as DBMS, if the navigation uses Server Paging optimization, then the Order clause must contain attributes that belong to a Candidate key.<br />
+So if the attributes that make up the Order do not contain attributes of a Candidate key, the specifier implicitly sets an order composed of those specified attributes, plus the ones of the Base Table Primary key. <sup>2</sup> </p>
+
+<h4><a id="Unique+%2F+distinct+clauses" class="HashLink" href="#Unique+%2F+distinct+clauses"><strong>Unique / distinct clauses</strong></a></h4>
+
+<p>If a <a href="24592.html">Unique Clause</a> (or distinct) is present and no order specified explicitly, the specifier tries to set implicitly an order composed by the attributes of the unique/distinct clause. If no order that is compatible with a defined index is found, order NONE is chosen (since this is not an option if Server Paging is used, records are ordered by some of the attributes of the Unique clause in that case). <sup>1</sup></p>
+
+<p> </p>
+
+<p><sup>1 </sup>These statements are valid as of <a href="https://wiki.genexus.com/commwiki/wiki?28251,," target="_blank">GeneXus X Evolution 3 Upgrade 4</a></p>
+
+<p><sup>2</sup> This statement is valid as of <a href="https://wiki.genexus.com/commwiki/wiki?36355,," target="_blank">GeneXus 15 Upgrade 7</a>. This is necessary in order to avoid the issue reported in the <a href='https://www.genexus.com/developers/websac?es,,,41039'>SAC #41039</a>.</p>
+
+<p> </p>
+
+<p></p>
+
+<p><span style="line-height: 1.6em;"></span></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+
+<p></p>
+
+<p><br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="26285.html">Database performance from the GeneXus perspective</a></TD><TD><a href="7178.html">Navigation Reports for Procedures, Web Panels and Data Providers</a></TD></TR><TR><TD><a href="6075.html">Order clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	package="com.genexus.android.location">
+
+	<!-- gps not required -->
+	<uses-feature android:name="android.hardware.location.gps" android:required="false"/>
+
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+	<!-- Required for foreground services on P+. -->
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+<!--	This permission is added in Template because the "Use background location" property must be turned on-->
+<!--	<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />-->
+
+	<application>
+		<receiver android:name="com.genexus.android.location.application.CoreBootReceiverLocation" android:exported="false">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</receiver>
+
+		<receiver
+			android:name="com.genexus.android.location.geolocation.geofence.GeofenceBroadcastReceiver"
+			android:enabled="true"
+			android:exported="true" />
+		<service
+			android:name="com.genexus.android.location.geolocation.geofence.GeofenceTransitionsJobIntentService"
+			android:exported="true"
+			android:permission="android.permission.BIND_JOB_SERVICE" />
+
+<!--		 Foreground services in Q+ require type.-->
+		<service
+			android:name="com.genexus.android.location.geolocation.tracking.DefaultLocationUpdatesService"
+			android:enabled="true"
+			android:exported="false"/>
+<!--		 android:foregroundServiceType="location"-->
+	</application>
+</manifest>

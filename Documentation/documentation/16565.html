@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Mapping Application Users to GAM Users - Using ExternalID GAMUser property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16565,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Mapping Application Users to GAM Users - Using ExternalID GAMUser property</h1>
+<!--HowTo: Mapping Application Users to GAM Users - Using ExternalID GAMUser property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Warning: The solution explained in this document can only be used when GAM Authentication Type is <a href="20703.html">GAM Local</a>.<br />
+It is not useful when the <a href="16508.html">GAM Authentication Types</a> are Facebook, Google, or external because in these cases the ExternalID field of GAM User table is reserved. It stores the ID given by the external authentication provider.</p>
+
+<p>This is a possible solution to the problem presented at <a href="16552.html">HowTo: Mapping Application Users to GAM Users</a>.</p>
+
+<p>Given that the User is identified in the application's tables using any attribute -such as &quot;UserIdentification&quot; attribute- here we show how to store this information in the ExternalID field of the GAM User table, to match the application users to the GAM users.</p>
+
+<p>In this case, we don't need to make any reorganization to our application tables (unlike the solution explained in <a href="https://wiki.genexus.com/commwiki/wiki?19643,," target="_blank">HowTo: Mapping Application Users to GAM - Adding a secondary attribute referencing the GAMUser</a>).</p>
+
+<p>It consists in saving the &quot;UserIdentification&quot; information in the ExternalID field each time the user is registered and retrieving the data when the user logs in, to have the &quot;UserIdentification&quot; in the application User table.</p>
+
+<h3><a id="How+to+update+the+ExternalID+of+a+GAM+User" class="HashLink" href="#How+to+update+the+ExternalID+of+a+GAM+User">How to update the ExternalID of a GAM User</a></h3>
+
+<p>Suppose you already have the application User table and you want to duplicate the users in a GAM database, mapping them using the ExternalID of GAM.</p>
+
+<p>1. You need to run a procedure that scans the application User table and updates the information in a GAM database table (inserts the users in a GAM Repository).</p>
+
+<p>For each user in the application Users table, there will be a GAM User, whose ExternalID will be the UserIdentification in the application User table.</p>
+
+<p>So, the idea is to store, in the<em> ExternalID </em>property of the GAMUser, the PK of the application User table in the application - Usercod in this sample.<br />
+<br />
+The procedure code would be similar to the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each UserCod
+    &amp;User.GUID = &amp;UserId  //&amp;User is GAMUser data type, &amp;UserId is GAMGUID data type
+    &amp;User.Name      = UserName
+    &amp;User.FirstName = UserFirstName
+    &amp;User.LastName  = UserLastName
+    &amp;User.Password  = UserPassword
+    &amp;User.EMail     = UserEmail
+    &amp;User.ExternalId = UserCod.ToString().Trim()
+    
+    &amp;User.Save()
+    
+    if &amp;User.Success()
+        msg('User added to GAM Repository: ' + &amp;User.Name)
+    else
+        &amp;GAMErrors = &amp;User.GetErrors() //&amp;GAMErrors is collection of GAMError data type
+        do 'ProcessErrors'
+    endif
+Endfor
+
+Commit
+
+Sub 'ProcessErrors'
+    For &amp;GAMError in &amp;GAMErrors
+        Msg(Format(&quot;%1 (GAM%2)&quot;, &amp;GAMError.Message, &amp;GAMError.Code))       
+    EndFor
+EndSub</pre>
+
+<p>2. To keep the users duplicated in the application's database and in the GAM database, you need to update both, when the user registers or updates his data. This is very similar to what is explained in <a href="https://wiki.genexus.com/commwiki/wiki?19643,," target="_blank">HowTo: Mapping Application Users to GAM - Adding a secondary attribute referencing the GAMUser</a>.<br />
+<br />
+Note that &quot;GAMExampleEntryUser webpanel&quot; (which belongs to GAM Example library) shows a way to add users to GAM Repository using an ExternalID (which have to be filled in with the User Identification in the application Users table).<br />
+<br />
+<img src="./images/16566.png" id="16566" class="WikiImage"/></p>
+
+<p>If the GAM backend is used to manage the user's information, the web panels should be changed to update the user's information in the application database, and in the GAM database, referencing the <em>ExternalID</em> property with the corresponding value as explained before.</p>
+
+<h3><a id="How+to+retrieve+user+information%3A+GetExternalId+method+of+GAMUser+object" class="HashLink" href="#How+to+retrieve+user+information%3A+GetExternalId+method+of+GAMUser+object">How to retrieve user information: GetExternalId method of GAMUser object</a></h3>
+
+<p>The GetExternalId method of GAMUser object allows getting the value stored in the ExternalID field of the GAM User table.</p>
+
+<p>Consider a scenario where users only see the information that corresponds to them; for instance, only the &quot;TourReservations&quot; related to them.</p>
+
+<p>You can use a procedure that obtains the &quot;UserCode&quot; from the GAMUser who is logged in:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;UserIdentification = GAMUser.GetExternalId()
+&amp;UserCod =  &amp;UserIdentification.ToNumeric()
+
+parm(out:&amp;UserCod);
+</pre>
+
+<p>Then in the WWTourReservation, you can filter data using that procedure:</p>
+
+<p><img src="./images/16567.png" id="16567" class="WikiImage"/></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="15387.html">HowTo: Filtering Data by User Using the GAM API</a><br />
+<a href="16552.html">HowTo: Mapping Application Users to GAM Users</a><br />
+<a href="16534.html">GAM API: How to reference GAM users</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="16534.html">GAM API: How to reference GAM users</a></TD><TD><a href="16552.html">HowTo: Mapping Application Users to GAM Users</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

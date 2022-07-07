@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Copy table groups property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?7973,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Copy table groups property</h1>
+<!--Copy table groups property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td>Controls the optimization when the copy tables pattern is detected.  <h3><a id="Values" class="HashLink" href="#Values">Values</a></h3>
+
+<p> <table style="border-style: none;border-collapse: collapse;"><tbody><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Always                                                      </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All detected patterns for copying are optimized even though there exists a unique index defined in GeneXus. </td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>If no unique index                                          </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">All detected patterns whose New group’s base table do not include the definition of a unique index (primary key or candidate) in GeneXus are optimized. This is the default value.</td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Never                                                       </strong></td><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;">Patterns for copying are never detected.</td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>Use Environment property value                              </strong></td></tr></tbody></table></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>The idea is to detect what table information is being copied to another table and generate an INSERT w/SUBSELECT to avoid traffic. Reorganization programs could make frequent use of this command.</p>
+
+<p>The programming pattern that needs to be detected is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+   [where Condition]
+   [defined by Att1, Att2, …]
+    New|XNew
+       &amp;Var|Attribute=<i>Attribute<sub>1
+        ...   ...   ...
+</sub></i>
+    EndNew|EndXNew
+EndFor</pre>
+
+<h4><a id="+Conditions%3A+" class="HashLink" href="#+Conditions%3A+"><b> </b>Conditions:<b> </b></a></h4>
+
+<ul>
+	<li>
+	<p>Both tables (for each’s and new’s base table) need to be on the same DBMS. Optimizations, for example, between local and remote tables are not possible.</p>
+	</li>
+	<li>
+	<p>This behavior depends on the <b>Initialize not reference attribute</b> property.<br />
+	  - When set to <b>Yes</b>, all base table attributes should be referenced in order to do a subselect.<br />
+	  - When set to <b>No</b>, fields should allow nulls.</p>
+	</li>
+	<li>
+	<p>The fields that originate assignments must be stored in the base table corresponding to the superior for each group. On the other hand, assigned target fields must be stored in the New|XNew group’s base table.</p>
+	</li>
+	<li>
+	<p>The New|XNew group cannot include <b>When Duplicate</b>. This means that duplicates need to be managed or the possibility of defining a condition to accept duplicate keys is defined.</p>
+	</li>
+	<li>
+	<p>The DBMS must support the INSERT w/SUBSELECT command. There are some that support it but there are restrictions. For example, ORACLE supports the command if references to Long Varchar attributes (TEXT in ORACLE) are not made.</p>
+	</li>
+	<li>
+	<p> The length of target fields must be greater than or equal to their source fields in order to avoid value overflows. DBMSs generally abort the entire process being executed; GeneXus tolerates them by truncating or generating an internal overflow that does not abort.</p>
+	</li>
+</ul>
+
+<h4><a id="Notes%3A" class="HashLink" href="#Notes%3A">Notes:</a></h4>
+
+<ul>
+	<li>
+	<p>When <b>Always value</b> is specified, the generated programs <b>can cancel</b> when executed as they try to add a record with a duplicate key.</p>
+	</li>
+	<li>Important: When <b>Never value</b> is specified, it affects the performance of <b>reorganization</b> programs as it inhibits their optimization.</li>
+</ul>
+
+<p>This property also exists at an <b>object level</b>. The property at a model level applies to the entire model, unlike object properties that only apply to the specific object in which they are specified. Also, the property at an object level has priority over the ones specified at the environment level.</p></p>
+ <h3><a id="wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes" class="HashLink" href="#wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes"><a href="17719.html">How to apply changes</a></a></h3>
+
+<p> To apply changes made by this property, do a Re-Build All.</p>
+ <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Objects:</strong> Procedure<br /><strong>Platforms:</strong> Web(.Net, Java)<br /></p>
+ <h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p> <p><a href="7946.html">Initialize not referenced attributes property</a></p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 02:15 PM</em></font></td></TR></table></font>

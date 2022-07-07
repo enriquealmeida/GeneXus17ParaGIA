@@ -1,0 +1,176 @@
+delimiters "$", "$"
+
+grid_smart(grid) ::= <<
+<gx-grid-smart-css
+   style="--gx-grid-css-items:$grid.SmartGridInfo.RowsPerDirection$; 
+   $if(grid.SmartGridInfo.MinSize) $
+        --gx-grid-css-min-size:$grid.SmartGridInfo.MinSize$;
+        --gx-grid-css-max-size:$grid.SmartGridInfo.MaxSize$;
+   $endif$
+   "
+   item-layout-mode="$grid.SmartGridInfo.LayoutMode$"
+   direction="$grid.Direction$"
+   $if(grid.SmartGridInfo.SnapToGrid)$
+   snap-to-grid
+   $endif$
+   $g_grid_component_atts_common(grid)$
+  >
+  $g_grid_template_smart(grid)$
+  $g_grid_initial_loading_feedback_layout(grid)$
+  $g_empty_grid_layout(grid)$
+</gx-grid-smart-css>
+$grid.Filter:g_filters()$
+>>
+
+grid_component_atts_common(grid) ::= <<
+#$grid.ControlName$ 
+$g_test_data(grid.ControlName)$
+$g_class_property(grid, grid.Class, "control")$
+$g_visible_property(grid, grid.Visible)$
+$g_invisible_mode_attr(grid)$
+$if(grid.AutoGrow)$
+auto-grow="true"
+$endif$
+$if(grid.DataProvider)$
+[loadingState]='$grid.BindingInfo.UIEntityCollectionExpression:g_expression()$.loadingState || false'    
+$endif$
+[recordCount]="$grid.BindingInfo.DataBinding:g_expression()$.length"
+>>
+
+grid_template_smart(grid) ::= <<
+  $if(grid.VirtualScroll)$
+  <virtual-scroller 
+        #$grid.ControlName$_VScroll
+        [bufferAmount]="50" 
+        slot="grid-content"
+     $if(grid.SmartGridInfo.IsHorizontal)$
+        horizontal="true"
+     $endif$
+        [items]="$grid.GridControllerExpression:g_expression()$.gridData\$ | async">
+  $else$
+  <div slot="grid-content">
+  $endif$
+    $g_grid_draw_data(grid)$
+  $if(grid.DataProvider)$
+    <gx-grid-infinite-scroll
+                 threshold="150px"
+             $if(grid.VirtualScroll)$
+                 viewport-selector="virtual-scroller"
+             $endif$
+                 [itemCount]="$grid.BindingInfo.DataBinding:g_expression()$.length" (gxInfinite)="this.fetchNextPage$grid.ControlName$(\$event)">
+             <gx-grid-infinite-scroll-content>
+                $g_grid_inifinite_loading_feedback_layout(grid)$
+             </gx-grid-infinite-scroll-content>
+    </gx-grid-infinite-scroll>
+  $endif$
+  $if(grid.VirtualScroll)$
+  </virtual-scroller>
+  $else$
+  </div>
+  $endif$
+>>
+
+grid_draw_data(grid) ::= <<
+<ng-container $g_grid_iterator(grid)$>
+   $grid:g_template()$
+ </ng-container>
+>>
+
+grid_iterator(grid) ::= <%
+$if (grid.IsRoot)$
+  $if (grid.VirtualScroll)$ 
+  *ngFor="let $grid.BindingInfo.DataBindingItem:g_expression()$ of $grid.ControlName$_VScroll.viewPortItems; trackBy:$grid.GridControllerExpression:g_expression()$.identify $grid_index(grid)$"
+  $else$
+  *ngFor="let $grid.BindingInfo.DataBindingItem:g_expression()$ of $grid.GridControllerExpression:g_expression()$.gridData\$ | async; trackBy:$grid.GridControllerExpression:g_expression()$.identify $grid_index(grid)$"
+  $endif$
+$else$
+  *ngFor="let $grid.BindingInfo.DataBindingItem:g_expression()$ of $grid.BindingInfo.DataBinding:g_expression()$; trackBy:$grid.GridControllerExpression:g_expression()$.identify $grid_index(grid)$"
+$endif$ 
+%>
+
+grid_index(grid) ::= <%
+  $if(!grid.IsIndexedInContent)$
+    ; index as $grid.BindingInfo.DataBindingIx$
+  $endif$
+%>
+
+grid_layout_template(grid, table) ::= <%
+$if(table.IsRootLayout)$
+$g_table(table, false):grid_smart_cell(grid, table)$
+$else$
+$g_table(table, g_grid_table_extras(grid, table))$
+$endif$
+%>
+
+grid_smart_cell(body, grid, table) ::=
+<<
+<gx-grid-smart-cell
+  $g_class_property(grid, grid.Class, "control")$
+  [isRowEven]="$grid.BindingInfo.DataBindingIx$ % 2 === 0" 
+  $table.LayoutAttributes$
+  $table.ShowHorizontalLine:{ value | show-horizontal-line="$value$"}$
+  $g_grid_table_extras(grid, table)$
+>
+  $body$
+</gx-grid-smart-cell>
+>>
+
+grid_click(grid) ::= <<
+$if(grid.DefaultAction || grid.LayoutsAndSelection.HasSelection)$
+(click)="$g_set_actioncontext(grid)$ $grid.ControlName$Action( $grid.BindingInfo.DataBindingIx$, $g_grid_click_action(grid.DefaultAction)$); \$event.stopPropagation()"
+data-has-action=""
+$endif$
+>>
+
+grid_initial_loading_feedback_layout(grid) ::= <<
+<div class="loading-container" slot="grid-empty-loading-placeholder">
+  <gx-loading presented></gx-loading>
+</div>
+>>
+
+grid_inifinite_loading_feedback_layout(grid) ::= <<
+<div class="loading-container">
+  <gx-loading presented></gx-loading>
+</div>
+>>
+
+empty_grid_layout(grid) ::= <<
+<div slot="grid-content-empty">
+  <gx-grid-empty-indicator
+  $if (grid.EmptyDataSetText)$
+      text="$g_translate(grid.EmptyDataSetText)$"
+      text-class="$grid.EmptyDataSetTextClass$"
+  $endif$
+  $if (grid.EmptyDataSetBackground)$
+      image="{{getImageSource('$grid.EmptyDataSetBackground$')}}"
+      image-class="$grid.EmptyDataSetBackgroundClass$"
+  $endif$
+    >
+  </gx-grid-empty-indicator>  
+</div>
+>>
+
+grid_map(grid) ::= <<
+<gx-map
+  #$grid.ControlName$ 
+  $g_assign_html_property({center}, grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, {mapCenter})$
+  $g_assign_html_property({zoom}, grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, {mapZoom})$
+  $g_assign_html_property_or_default({selectionLayer}, grid.UIModelInfo.UIElementContextExpression, grid.UIElementControlName, {selectionLayer}, "", {$grid.SDMapsSelectionLayer$})$
+  $grid.UIActionsInfo.ControlValueChangedAction:g_event_binding( {selectionChange}, grid )$
+  $grid.UIActionsInfo.ControlValueChangingAction:g_event_binding( {selectionInput}, grid )$
+  map-type="$gx.ToLower.(grid.SDMapsMapType)$"
+  watch-position="$grid.SDMapsShowMyLocation$"
+>
+    <ng-container $g_grid_iterator(grid)$>
+      $if(grid.SDMapsLocationExpression.ExprType)$
+      <ng-container *ngIf="$grid.SDMapsLocationExpression:g_expression()$ !== ''">
+        <gx-map-marker [coords]="$g_data_binding_conversion("", grid.SDMapsLocationExpression.ExprDataType, {$grid.SDMapsLocationExpression:g_expression()$})$">
+          <div style="position:absolute;display:hidden">
+            $grid:g_template()$        
+          </div>
+        </gx-map-marker>
+      </ng-container>
+      $endif$
+    </ng-container>
+</gx-map>
+>>

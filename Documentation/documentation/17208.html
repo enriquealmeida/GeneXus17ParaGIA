@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Twitter Authentication Type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17208,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Twitter Authentication Type</h1>
+<!--GAM - Twitter Authentication Type--><div class="TableWikiBody" id="tblwikibody"><p>In order to authenticate to Twitter, through <a href="14960.html">GAM</a> just follow these steps.</p>
+
+<p><ul><li><a class="HashLink" href="#Setup">Setup</a></li><ul><li><a class="HashLink" href="#Step+1.+Create+a+Twitter+application">Step 1. Create a Twitter application</a></li><li><a class="HashLink" href="#Step+2.+Define+Twitter+Authentication+Type">Step 2. Define Twitter Authentication Type</a></li></ul></li><li><a class="HashLink" href="#Twitter+Login">Twitter Login</a></li><li><a class="HashLink" href="#Web+Applications">Web Applications</a></li><li><a class="HashLink" href="#Native+Mobile+Applications">Native Mobile Applications</a></li><ul><li><a class="HashLink" href="#Important+considerations+for+Apple+apps">Important considerations for Apple apps</a></li><li><a class="HashLink" href="#Notes%3A">Notes:</a></li></ul></li><li><a class="HashLink" href="#See+Also">See Also</a></li></ul></ul></p>
+
+<h3><a id="Setup" class="HashLink" href="#Setup">Setup</a></h3>
+
+<h4><a id="Step+1.+Create+a+Twitter+application" class="HashLink" href="#Step+1.+Create+a+Twitter+application">Step 1. Create a Twitter application</a></h4>
+
+<p>You need to create a &quot;Twitter application&quot; in Twitter site and obtain Consumer Key and Consumer Secret for that application.</p>
+
+<p>Go to the Application Management page of Twitter for developers (https://apps.twitter.com/) and create a new application, considering the following settings:</p>
+
+<h5><img src="./images/40517.png" id="40517" class="WikiImage"/><br />
+Figure 1. Configuring Twitter Application: Settings</h5>
+
+<p><strong>Important</strong>: Set Callback URL = http://&lt;domain&gt;/oauth/gam/callback</p>
+
+<p>and WEB SITE to your domain (eg.: apps5.genexus.com).</p>
+
+<h5><img src="./images/17213.png" id="17213" class="WikiImage"/><br />
+Figure 2. Configuring Twitter Application: Keys and Access Tokens</h5>
+
+<h4><a id="Step+2.+Define+Twitter+Authentication+Type" class="HashLink" href="#Step+2.+Define+Twitter+Authentication+Type">Step 2. Define Twitter Authentication Type</a></h4>
+
+<p>Define &quot;Twitter Authentication Type&quot; using the <a href="14960.html">GAM</a> backend (<a href="16508.html">Authentication Types link</a>).</p>
+
+<p>Enter Consumer Key and Consumer Secret obtained in Twitter developers site.</p>
+
+<p><img src="./images/39436.png" id="39436" class="WikiImage"/></p>
+
+<h5><a id="Figure+2.+Configuring+Twitter+Authentication+in+GAM+backend." class="HashLink" href="#Figure+2.+Configuring+Twitter+Authentication+in+GAM+backend.">Figure 2. Configuring Twitter Authentication in GAM backend.</a></h5>
+
+<p><strong>Important note</strong></p>
+
+<p>About the CallBack URL configuration in GAM backend. You just need to enter the domain of the server running the application.<br />
+It isn't necessary to enter the complete site URL, but in case you enter it, do not include the &quot;/servlet&quot; in java.</p>
+
+<h3><a id="Twitter+Login" class="HashLink" href="#Twitter+Login">Twitter Login</a></h3>
+
+<p>Twitter Authentication Type can be used in Web Applications and in Native Mobile applications also.</p>
+
+<h3><a id="Web+Applications" class="HashLink" href="#Web+Applications">Web Applications</a></h3>
+
+<p>See the <a href="https://wiki.genexus.com/commwiki/wiki?39427,," target="_blank">GAMExampleLogin object</a>t for details about how the login is executed.</p>
+
+<h3><a id="Native+Mobile+Applications" class="HashLink" href="#Native+Mobile+Applications">Native Mobile Applications</a></h3>
+
+<p>In the case of Native Mobile applications, you need to add an event in the login object to authenticate using Twitter.<br />
+The logic inside the event associated will include a call to a method of <a href="31350.html">Actions external object</a>, named &quot;LoginExternal&quot;.</p>
+
+<p>The first parameter is based on the GAMAuthenticationTypes domain, and its value should be &quot;Twitter&quot;.<br />
+The &amp;User and &amp;password parameters are ignored in this case.<br />
+The &amp;LoginExternalAdditionalParameters has an &quot;AuthenticationTypeName&quot; property where you can set the name of the Authentication Type. This is due to the fact that more than one Twitter Authentication Type can be defined in the Repository.</p>
+
+<pre>
+Event 'Twitter'
+    Composite
+        &amp;LoginExternalAdditionalParameters.AuthenticationTypeName    = !&quot;Twitterb&quot;  
+      GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.Twitter, &amp;User, &amp;Password, &amp;LoginExternalAdditionalParameters)
+      Return
+    EndComposite
+EndEvent</pre>
+
+<p>Another way to program the Twitter login, when you only have one Twitter Authentication Type in the repository, is the following (without passing the &amp;LoginExternalAdditionalParameters):</p>
+
+<pre>
+Event 'Twitter'
+    Composite
+        GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.Twitter, &amp;User, &amp;Password)
+        Return
+    EndComposite
+EndEvent</pre>
+
+<p>See <a href="19269.html">GAM Login Method</a> for details.</p>
+
+<h4><a id="Important+considerations+for+Apple+apps" class="HashLink" href="#Important+considerations+for+Apple+apps">Important considerations for Apple apps</a></h4>
+
+<p>It's necessary to configure Twitter consumer Key and Twitter consumer secret properties. See <a href="26947.html">Twitter Consumer Key and Twitter Consumer Secret property using GAM</a> for additional information.</p>
+
+<h4><a id="Notes%3A" class="HashLink" href="#Notes%3A">Notes:</a></h4>
+
+<p>1. Twitter API needs the SITE URL to be public and without any port, so if your application is hosted under port 8080 for example, you need to use any kind of proxy or similar (like Apache web server) in order to use port 80. For more details see the additional information at the bottom of this page. <br />
+2. The first time a user logs in to Twitter he will probably need to complete a form where he has to enter his e-mail.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="26947.html">Twitter Consumer Key and Twitter Consumer Secret property using GAM</a><br />
+<a href="29007.html">GAM - Facebook Authentication Type</a><br />
+<a href="29013.html">GAM - Google Authentication Type</a></p>
+
+<p>   </p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31350.html">Actions external object</a></TD><TD><a href="29007.html">GAM - Facebook Authentication Type</a></TD><TD><a href="29013.html">GAM - Google Authentication Type</a></TD></TR><TR><TD><a href="16508.html">GAM Authentication Types</a></TD></TR><TR><TD><a href="20020.html">GAM Google Authentication Type (X Evolution 3 upgrade 3 or prior)</a></TD></TR><TR></TR><TR></TR><TR><TD><a href="22082.html">GAM Users</a></TD><TD><a href="18920.html">GAM: "User Missing Required Data" Form</a></TD></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD><TD><a href="17141.html">Prototyping applications with Facebook or Twitter Authentication locally</a></TD></TR><TR><TD><a href="17191.html">Testing Facebook / Twitter authentication for SD applications using Android Emulator</a></TD></TR><TR><TD><a href="17148.html">Testing Facebook / Twitter authentication for WEB - NET applications</a></TD><TD><a href="26947.html">Twitter Consumer Key and Twitter Consumer Secret property using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/27/22 06:34 PM</em></font></td></TR></table></font>

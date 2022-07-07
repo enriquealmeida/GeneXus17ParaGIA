@@ -1,0 +1,608 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" >
+
+	<Import Project="$(GX_PROGRAM_DIR)\Packages\Gxpm\Platforms\GeneXus.CSharp.WorkflowEngine.targets"/>
+	<Import Project="$(GX_PROGRAM_DIR)\Packages\Gxpm\Platforms\GeneXus.CSharp.WorkflowClient.targets"/>
+	<Import Project="$(GX_PROGRAM_DIR)\Library\GAM\GAM_Backend\Net\GAM_Backend.targets" Condition="'$(IncludeGAMBackend)' == 'true'"/>
+
+	<PropertyGroup>
+		<binPath>bin</binPath>
+		<BaseUrl>localhost</BaseUrl>
+		<WebConfigTemplate>$(ApplicationServerTemplate)</WebConfigTemplate>
+		<DeployBinPath>$(DeployFullPath)\$(binPath)</DeployBinPath>
+	</PropertyGroup>
+
+	<Target Name="GetStandardFiles" Condition="'$(Incremental)' != 'true'">
+		<ItemGroup Label="ConfigFiles" Condition="'$(ConfigSupport)' == 'true'">
+			<ConfigFile Include="$(RootModulePath)\web.config" />
+			<ConfigFile Include="$(RootModulePath)\log.config" />
+			<ConfigFile Include="$(RootModulePath)\log.console.config" />
+		</ItemGroup>
+
+		<ItemGroup Label="Base Classes">
+			<LibFile Include="$(RootModulePath)\$(binPath)\$(Namespace).Common.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\GxClasses.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Buffers.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Memory.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Runtime.CompilerServices.Unsafe.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Numerics.Vectors.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\GxXsl.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\GxEncrypt.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\GxCryptographyCommon.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\GxCryptography.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\ManagedFusion.Rewriter.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\Microsoft.IdentityModel.JsonWebTokens.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\Microsoft.IdentityModel.Logging.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\Microsoft.IdentityModel.Tokens.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.IdentityModel.Tokens.Jwt.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Net.Http.WinHttpHandler.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Memory.dll"/>
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Runtime.CompilerServices.Unsafe.dll"/>
+			<LibFile Include="$(RootModulePath)\$(binPath)\System.Numerics.Vectors.dll"/>
+			<LibFile Include="$(RootModulePath)\$(binPath)\nustache.core.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\log4net.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\Jayrock-JSON.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\TZ4Net.dll" />
+			<LibFile Include="$(RootModulePath)\$(binPath)\GxPdfReportsCS.dll" Condition=" '$(PDFSupport)' == 'true' " />
+			<LibFile Include="$(RootModulePath)\$(binPath)\itextsharp.dll" Condition=" '$(PDFSupport)' == 'true' " />
+			<LibFile Include="$(RootModulePath)\$(binPath)\iTextAsian.dll" Condition=" '$(PDFSupport)' == 'true' " />
+		</ItemGroup>
+
+		<ItemGroup>
+			<ExternalObjectImplementation Include="@(ExternalObjectFile -> '$(RootModulePath)\$(binPath)\%(Identity)')" />
+		</ItemGroup>
+
+		<PropertyGroup>
+			<ThemesDeployPath>$(DeployFullPath)\themes</ThemesDeployPath>
+			<ExternalObjectsPath>$(DeployBinPath)</ExternalObjectsPath>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<LocationXmlDestination>$(DeployFullPath)</LocationXmlDestination>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<PdfSupportDestination>$(DeployFullPath)</PdfSupportDestination>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<SearchableDestination>$(DeployBinPath)</SearchableDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<SearchableLib Include="$(RootModulePath)\$(binPath)\GxSearch.dll" />
+			<SearchableLib Include="$(RootModulePath)\$(binPath)\Lucene.Net.dll" />
+			<SearchableLib Include="$(RootModulePath)\$(binPath)\Lucene.Net.Contrib.Highlighter.dll" />
+			<SearchableLib Include="$(RootModulePath)\$(binPath)\Lucene.Net.Contrib.Memory.dll" />
+			<SearchableLib Include="$(RootModulePath)\$(binPath)\Lucene.Net.Contrib.SpellChecker.dll" />
+		</ItemGroup>
+
+		<PropertyGroup>
+			<DatabaseDriverDestination>$(DeployBinPath)</DatabaseDriverDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\GxEnterpriseConnect.dll" Condition="'$(SAPHana)' == 'true'"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\GxSapConnector.dll" Condition="'$(SAPHana)' == 'true'"/>
+		</ItemGroup>
+		<ItemGroup Condition="'$(MySQL)' == 'true' AND '$(AdoNetProvider)'!='MySQLConnector'">
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\MySQLDriverCS.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\libmysql.dll"/>
+		</ItemGroup>
+		<ItemGroup Condition="'$(MySQL)' == 'true' AND '$(AdoNetProvider)'=='MySQLConnector'">
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\MySqlConnector.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\System.Threading.Tasks.Extensions.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\System.Memory.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\System.Numerics.Vectors.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\System.Runtime.CompilerServices.Unsafe.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\System.Buffers.dll"/>
+		</ItemGroup>
+		<ItemGroup Condition="'$(Postgresql)' == 'true'">
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\Npgsql.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\System.Threading.Tasks.Extensions.dll"/>
+			<DatabaseDriver Include="$(RootModulePath)\$(binPath)\System.Runtime.CompilerServices.Unsafe.dll"/>
+		</ItemGroup>
+			
+		<PropertyGroup>
+			<NotificationDestination>$(DeployBinPath)</NotificationDestination>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<SDNotificationLib Include="$(RootModulePath)\$(binPath)\Artech.Genexus.SDAPI.dll"/>
+			<SDNotificationLib Include="$(RootModulePath)\private\notifications.json">
+				<RelativeTargetDir>$(DeployFullPath)\private</RelativeTargetDir>
+			</SDNotificationLib>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<MailLibDestination>$(DeployBinPath)</MailLibDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<MailLib Include="$(RootModulePath)\$(binPath)\GxMail.dll"/>
+			<MailLib Include="$(RootModulePath)\$(binPath)\Org.Mentalis.Security.dll"/>
+			<MailLib Include="$(RootModulePath)\$(binPath)\OpenPop.dll"/>
+			<MailLib Include="$(RootModulePath)\$(binPath)\MailKit.dll"/>
+			<MailLib Include="$(RootModulePath)\$(binPath)\MimeKit.dll"/>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<OfflineDestination>$(DeployBinPath)</OfflineDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<OfflineLib Include="$(RootModulePath)GeneXus\SD\Synchronization\OfflineEventReplicator.svc" Condition="'$(DeployOfflineReplicator)' == 'true'">
+				<RelativeTargetDir>$(DeployFullPath)\GeneXus\SD\Synchronization\</RelativeTargetDir>
+			</OfflineLib>
+			<OfflineLib Include="$(RootModulePath)\$(binPath)\System.Data.SQLite.dll" />
+			<OfflineLib Include="$(RootModulePath)\$(binPath)\x86\SQLite.Interop.dll">
+				<RelativeTargetDir>$(OfflineDestination)\x86</RelativeTargetDir>
+			</OfflineLib>
+			<OfflineLib Include="$(RootModulePath)\$(binPath)\x64\SQLite.Interop.dll">
+				<RelativeTargetDir>$(OfflineDestination)\x64</RelativeTargetDir>
+			</OfflineLib>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<GAMDestination>$(DeployBinPath)</GAMDestination>
+			<GAMBAckendSourcePath>$(RootModulePath)</GAMBAckendSourcePath>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<GAMConfig Include="$(RootModulePath)\application.gam">
+				<RelativeTargetDir>$(DeployFullPath)</RelativeTargetDir>
+			</GAMConfig>
+			<GAMConfig Include="$(RootModulePath)\connection.gam">
+				<RelativeTargetDir>$(DeployFullPath)</RelativeTargetDir>
+			</GAMConfig>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<OfficeDestination>$(DeployBinPath)</OfficeDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<OfficeLib Include="$(RootModulePath)\$(binPath)\EPPlus.dll" />
+			<OfficeLib Include="$(RootModulePath)\$(binPath)\GxExcelI.dll" />
+			<OfficeLib Include="$(RootModulePath)\$(binPath)\GxOffice2.dll" />
+			<OfficeLib Include="$(RootModulePath)\$(binPath)\GXOFFICE2Lib.dll" />
+			<OfficeLib Include="$(RootModulePath)\$(binPath)\Interop.GXOFFICE2Lib.dll" />
+		</ItemGroup>
+
+		<PropertyGroup>
+			<CMDDestination>$(DeployBinPath)</CMDDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<CMDFile Include="$(RootModulePath)\client.exe.config"/>
+			<CMDFile Include="$(RootModulePath)\$(binPath)\Interop.SQLDMO.dll"/>
+		</ItemGroup>
+
+		<ItemGroup>
+			<UCFile Include="$(RootModulePath)\%(UserControlFolder.Identity)\**\*.*" >
+				<UCFolder>%(UserControlFolder.Identity)</UCFolder>
+				<RelativeTargetDir>$(DeployFullPath)\$(StaticDir)\%(UserControlFolder.Identity)</RelativeTargetDir>
+			</UCFile>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<CSDestination>$(DeployBinPath)</CSDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<CSFile Include="$(RootModulePath)CloudServices.config">
+				<RelativeTargetDir>$(DeployFullPath)</RelativeTargetDir>
+			</CSFile>
+		</ItemGroup>
+		
+		<ItemGroup Label="URLRewrite Files">
+			<RewriteFile Include="$(RootModulePath)*.rewrite">
+				<RelativeTargetDir>$(DeployFullPath)</RelativeTargetDir>
+			</RewriteFile>
+			<RewriteFile Include="$(RootModulePath)rewrite.config" Condition="Exists('$(RootModulePath)\rewrite.config')">
+				<RelativeTargetDir>$(DeployFullPath)</RelativeTargetDir>
+			</RewriteFile>
+		</ItemGroup>	
+
+		<PropertyGroup>
+			<CBDestination>$(DeployBinPath)</CBDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<CBFile Include="$(RootModulePath)GXCF_Chatbots.config">
+				<RelativeTargetDir>$(DeployFullPath)</RelativeTargetDir>
+			</CBFile>
+			<CBFile Include="$(RootModulePath)\$(binPath)\GXWebSocket.dll"/>
+			<CBFile Include="$(RootModulePath)\$(binPath)\Microsoft.WebSockets.dll"/>
+		</ItemGroup>
+		
+		<PropertyGroup>
+			<CSRefDirectory>$(RootModulePath)</CSRefDirectory>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<SAPDestination>$(DeployBinPath)</SAPDestination>
+		</PropertyGroup>
+		<ItemGroup>
+			<EOSAP Include="@(ExternalObjectFile)" Condition="'%(Identity)' == 'GxEnterpriseConnect.dll'" />
+			<SAPFile Include="$(RootModulePath)$(binPath)\sapnco.dll"/>
+			<SAPFile Include="$(RootModulePath)$(binPath)\sapnco_utils.dll"/>
+		</ItemGroup>
+
+		<PropertyGroup>
+			<UCviewDestination>$(DeployFullPath)\gxusercontrols</UCviewDestination>
+		</PropertyGroup>
+
+	</Target>
+
+	<Target Name="GetResourcesFiles">
+		<ItemGroup Label="Languages">
+			<ResourceFile Include="@(Language -> '$(RootModulePath)$(binPath)\messages.%(MessageCode).dll')" />
+		</ItemGroup>
+		<ItemGroup Label="Images">
+			<ResourceFile Include="$(RootModulePath)\$(ResourcesPrefix)Images.txt" >
+				<RelativeTargetDir>$(RootModulePath)</RelativeTargetDir>
+			</ResourceFile>
+		</ItemGroup>
+	</Target>
+
+	<Target Name="CopyQueryViewerStatic" Condition="'$(IncludeQueryViewer)' == 'true'">
+		<Message Text="CopyingQueryViewerResources" Importance="high" />
+		<ItemGroup Label="QueryViewerResources" >
+			<QVResource Include="$(WebPath)\private\$(Namespace).QueryViewerQueries.xml" Condition="Exists('$(WebPath)\private\$(Namespace).QueryViewerQueries.xml')"/>
+			<QVResource Include="$(WebPath)\private\$(Namespace).QueryViewerObjects.xml" Condition="Exists('$(WebPath)\private\$(Namespace).QueryViewerObjects.xml')"/>
+			<QVResource Include="$(WebPath)\private\$(Namespace).QueryViewerSecurity.xml" Condition="Exists('$(WebPath)\private\$(Namespace).QueryViewerSecurity.xml')"/>
+			<QVResource Include="$(WebPath)\private\$(Namespace).DashboardViewerObjects.xml" Condition="Exists('$(WebPath)\private\$(Namespace).DashboardViewerObjects.xml')"/>
+			<QVResource Include="$(WebPath)\private\QueryViewerQueries.xsd"/>
+			<QVResource Include="$(WebPath)\private\QueryViewerObjects.xsd"/>
+			<QVResource Include="$(WebPath)\private\QueryViewerSecurity.xsd"/>
+			<QVResource Include="$(WebPath)\private\DashboardViewerObjects.xsd"/>
+			<QVResource Include="$(WebPath)\private\Interfaces\*.*"/>
+			<QVResource Include="$(WebPath)\gxqueryviewerforsd.js" Condition="Exists('$(WebPath)\gxqueryviewerforsd.js')"/>
+		</ItemGroup>
+		<ItemGroup>
+			<QVResource Condition="'%(QVResource.RelativeTargetDir)' == ''">
+				<QVRelativeTargetDir>$([System.String]::new('%(RelativeDir)').Substring($([MSBuild]::Add($(WebPath.Length), 1))))</QVRelativeTargetDir>
+			</QVResource>
+		</ItemGroup>
+
+		<ItemGroup>
+			<QVResource Include="$(WebPath)\$(binPath)\agxpl_get.dll" >
+				<QVRelativeTargetDir>bin\</QVRelativeTargetDir>
+			</QVResource>
+			<QVResource Include="$(WebPath)\$(binPath)\gxqueryviewerforsd.dll" >
+				<QVRelativeTargetDir>bin\</QVRelativeTargetDir>
+			</QVResource>
+			<QVResource Include="$(WebPath)\$(binPath)\ExternalObjects.dll" >
+				<QVRelativeTargetDir>bin\</QVRelativeTargetDir>
+			</QVResource>
+			<QVResource Include="$(WebPath)\$(binPath)\QueryViewer.Services.Common.dll" >
+				<QVRelativeTargetDir>bin\</QVRelativeTargetDir>
+			</QVResource>
+			<QVResource Include="$(WebPath)\$(binPath)\QueryViewer.Services.HttpHandlerFactory.dll" >
+				<QVRelativeTargetDir>bin\</QVRelativeTargetDir>
+			</QVResource>
+
+		</ItemGroup>
+
+		<Copy SourceFiles="@(QVResource)" DestinationFiles="@(QVResource -> '$(DeployFullPath)\%(QVRelativeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+	</Target>
+
+	<Target Name="CopyObjectLibs"  DependsOnTargets="GetObjectFiles;GetWorkflowEngineItems;GetWorkflowClientItems;GetStandardFiles;CheckNeededSupport">
+
+		<ItemGroup>
+			<LibFile Condition="'%(LibFile.Extension)' == '.js'">
+				<RelativeTargetDir>$(StaticDir)\%(LibFile.RelativeTargetDir)</RelativeTargetDir>
+			</LibFile>
+		</ItemGroup>
+
+		<Message Text="CopyingConfigFiles" Importance="high"/>
+
+		<Copy SourceFiles="@(ConfigFile)" DestinationFolder="$(DeployFullPath)" Condition="'%(ConfigFile.RelativeTargetDir)' == ''" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(ConfigFile)" DestinationFiles="@(ConfigFile->'%(RelativeTargetDir)\%(Filename)%(Extension)')" Condition="'%(ConfigFile.RelativeTargetDir)' != ''" SkipUnchangedFiles="true"/>
+
+		<Copy SourceFiles="@(LibFile)" DestinationFiles="@(LibFile -> '$(DeployFullPath)\$(binPath)\%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="'%(LibFile.RelativeTargetDir)' == ''"/>
+
+		<Copy SourceFiles="@(LibFile)" DestinationFiles="@(LibFile -> '$(DeployFullPath)\%(RelativeTargetDir)\%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="'%(LibFile.RelativeTargetDir)' != ''" />
+
+	</Target>
+
+	<Target Name="CopyModules" Condition="'$(Incremental)' != 'true'">
+		<Copy SourceFiles="@(ModuleData -> '$(RootModulePath)\$(binPath)\%(Value)')" DestinationFiles="@(ModuleData -> '$(DeployFullPath)\$(binPath)\%(Value)')" Condition="'%(ModuleData.Name)' == 'AssemblyName'" SkipUnchangedFiles="true"/>
+	</Target>
+
+	<Target Name="CopyResourcesFiles"  DependsOnTargets="GetResourcesFiles" Condition="'$(Incremental)' != 'true'">
+		<Message Text="CopyingResources" Importance="high"/>
+
+		<Copy SourceFiles="@(ResourceFile)" DestinationFiles="@(ResourceFile -> '$(DeployFullPath)\$(binPath)\%(Filename)%(Extension)')" SkipUnchangedFiles="true"
+					Condition="'%(ResourceFile.RelativeTargetDir)' == ''" />
+
+		<Copy SourceFiles="@(ResourceFile)" DestinationFiles="@(ResourceFile -> '$(DeployFullPath)\%(Filename)%(Extension)')" SkipUnchangedFiles="true"
+					Condition="'%(ResourceFile.RelativeTargetDir)' != ''" />
+	</Target>
+
+	<Target Name="GenerateWebConfig" DependsOnTargets="CheckNeededSupport" Condition="'$(ConfigSupport)' == 'true'">
+		<Error Condition="'$(WebConfigTemplate)' == ''" Text="RequiredParameterMissing{ApplicationServerTemplate}" />
+		<Error Condition="!Exists('$(WebConfigTemplate)')" Text="CouldNotFindWebConfigTemplate{$(ApplicationServer)}{$(WebConfigTemplate)}" />
+
+		<Message Text="GeneratingWebConfig" Importance="high"/>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/configSections">
+			<Output TaskParameter="Result" PropertyName="ConfigSections" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<ConfigSections Include="ConfigSections">
+				<Value>$(ConfigSections)</Value>
+			</ConfigSections>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/appSettings">
+			<Output TaskParameter="Result" PropertyName="AppSettings" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<AppSettings Include="AppSettings">
+				<Value>$(AppSettings)</Value>
+			</AppSettings>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/log4net">
+			<Output TaskParameter="Result" PropertyName="Logging" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<Logging Include="Logging">
+				<Value>$(Logging)</Value>
+			</Logging>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/languages">
+			<Output TaskParameter="Result" PropertyName="Languages" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<Languages Include="Languages">
+				<Value>$(Languages)</Value>
+			</Languages>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/system.web/trace">
+			<Output TaskParameter="Result" PropertyName="Trace" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<Trace Include="Trace">
+				<Value>$(Trace)</Value>
+			</Trace>
+		</ItemGroup>
+
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/system.web/customErrors">
+			<Output TaskParameter="Result" PropertyName="CustomErrors" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<CustomErrors Include="CustomErrors">
+				<Value>$(CustomErrors)</Value>
+			</CustomErrors>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/system.web/httpRuntime">
+			<Output TaskParameter="Result" PropertyName="HttpRuntime" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<HttpRuntime Include="HttpRuntime">
+				<Value>$(HttpRuntime)</Value>
+			</HttpRuntime>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/system.web/httpCookies">
+			<Output TaskParameter="Result" PropertyName="HttpCookies" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<httpCookies Include="HttpCookies">
+				<Value>$(HttpCookies)</Value>
+			</httpCookies>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/system.web/sessionState">
+			<Output TaskParameter="Result" PropertyName="SessionState" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<sessionState Include="SessionState">
+				<Value>$(SessionState)</Value>
+			</sessionState>
+		</ItemGroup>
+
+		<XmlPeek XmlInputPath="$(DeployFullPath)\web.config"
+				 Query="configuration/system.webServer/staticContent">
+			<Output TaskParameter="Result" PropertyName="StaticContent" />
+		</XmlPeek>
+
+		<ItemGroup>
+			<StaticContent Include="StaticContent">
+				<Value>$(StaticContent)</Value>
+			</StaticContent>
+		</ItemGroup>
+
+		<ItemGroup>
+			<Service Include="@(LibFile)" Condition="'%(LibFile.IsRest)' == 'true' and '%(LibFile.Extension)' == '.svc'" >
+				<Name>%(LibFile.Name)</Name>
+			</Service>
+		</ItemGroup>
+
+		<Message Text="Service: %(Service.Identity)" Importance="low"/>
+
+		<ItemGroup>
+			<BC Include="@(Transaction)" Condition="'%(Transaction.BC)' == 'true' and '%(Transaction.IsRest)' == 'true'" >
+				<Name>$([System.String]::new('%(Transaction.Filename)').ToLower())</Name>
+			</BC>
+			<APIObj Include="@(API)" Condition="'%(API.IsRest)' == 'true'" >
+				<Name>$([System.String]::new('%(API.Filename)').ToLower())</Name>
+			</APIObj>
+		</ItemGroup>
+
+		<ItemGroup>
+			<Service Include="null" Condition="'@(Service)' == ''"></Service>
+			<HasBCs Include="true" Condition="'@(BC->Count())' > 0"></HasBCs>
+			<BC Include="null" Condition="'@(BC)' == ''"></BC>
+			<SDService Include="null" Condition="'@(SDService)' == ''"></SDService>
+			<HasAPIs Include="true" Condition="'@(APIObj->Count())' > 0"></HasAPIs>
+			<APIObj Include="null" Condition="'@(APIObj)' == ''"></APIObj>
+		</ItemGroup>
+
+		<GenerateFromTemplate
+			TemplateGroupFile="$(WebConfigTemplate)"
+			TemplateName="generateConfig"
+			Properties="
+				DisplayName=$(ProjectName);
+				Namespace=$(Namespace);
+				IntegratedSecurity=$(IntegratedSecurity);
+				RestEnabled=$(RestSupport);
+				APIRestSupport=$(APIRestSupport);
+				SDEnabled=$(SDSupport);
+				HttpsEnabled=$(Https);
+				IncludeQueryViewer=$(IncludeQueryViewer);
+				WebNotificationSupport=$(WebNotificationSupport);
+				HasWorkflow=$(HasWorkflow);
+				HasBC=$(HasBCs);
+				HasAPIs=$(HasAPIs);
+				ChatbotSupport=$(ChatbotSupport);
+				DeployOfflineReplicator=$(DeployOfflineReplicator)"
+			Items="@(ConfigSections);@(AppSettings);@(Logging);@(Languages);@(Trace);@(CustomErrors);@(HttpRuntime);@(StaticContent);@(Model);@(Service);@(BC);@(APIObj);@(SDService);@(HttpCookies);@(SessionState)"
+			ItemTypes="@(ConfigSections -> 'ConfigSections');@(AppSettings -> 'AppSettings');@(Logging -> 'Logging');@(Languages -> 'Languages');@(Trace -> 'Trace');@(CustomErrors -> 'CustomErrors');@(HttpRuntime -> 'HttpRuntime');@(StaticContent -> 'StaticContent');@(Model -> 'Model');@(Service -> 'Services[]');@(BC -> 'BCs[]');@(APIObj -> 'APIObjs[]');@(SDService -> 'SDServices[]');@(HttpCookies -> 'HttpCookies');@(SessionState -> 'SessionState')"
+			OutputFile="$(DeployFullPath)\web.config" />
+
+		<Exec Command="&quot;$(WebPath)\UpdConfigWeb.exe&quot; &quot;$(WebPath)\webconfig.deploy&quot; &quot;$(DeployFullPath)\web.config&quot;" ConsoleToMsBuild="true" Condition="Exists('$(WebPath)\webconfig.deploy')" />
+
+	</Target>
+
+	<Target Name="FixSecureSettings" AfterTargets="CommonCopy" Condition="'$(Incremental)' != 'true' AND '$(ApplicationKey)' != ''">
+
+		<Message Text="ApplyingSecuredKeys" Importance="high"/>
+
+		<SecureConfig ConfigFile="$(DeployFullPath)\web.config"
+					  GenexusDir="$(GX_PROGRAM_DIR)"
+					  Generator="$(Generator)"
+					  PrivatePath="$(DeployFullPath)\private"
+					  ApplicationKey="$(ApplicationKey)"
+					  KeysTargetPath="$(DeployFullPath)"
+					  SiteKey="$(SiteKey)" Condition="Exists('$(DeployFullPath)\web.config') OR Exists('$(DeployFullPath)\bin\client.exe.config')"/>
+
+		<Csc Sources="$(DeployFullPath)\KeyResolver.cs" Resources="$(DeployFullPath)\KeyResolver.resources" TargetType="library" OutputAssembly="$(DeployFullPath)\bin\KeyResolver.dll" NoLogo="true" EchoOff="true" StandardOutputImportance="normal" Condition="Exists('$(DeployFullPath)\KeyResolver.cs')" />
+
+		<!-- Delete temp files -->
+		<Delete Files="$(DeployFullPath)\KeyResolver.txt;$(DeployFullPath)\KeyResolver.resources;$(DeployFullPath)\KeyResolver.cs" />
+
+	</Target>
+
+	<Target Name="GetObjectFiles" DependsOnTargets="CreateObjects">
+		<Message Text="AnalyzingFiles" Importance="high"/>
+
+		<GetCSharpObjectFiles
+			Objects="@(WebPanel);@(Procedure);@(Transaction);@(DataProvider);@(SDService);@(Grid);@(File);@(API)"
+			EnvironmentPath="$(NormalizedSourcePath)"
+			PackageName="$(PackageName)"
+			Generator="$(Generator)"
+			ModelId="$(ModelId)"
+			Incremental="$(Incremental)"
+			SourceFiles="$(SourceFiles)"
+			IsCMD="$(IsCMD)"
+			DeploymentUnit="$(DeploymentUnit)">
+			<Output TaskParameter="Files" ItemName="LibFile"/>
+			<Output TaskParameter="UserControlFolders" ItemName="UserControlFolder"/>
+			<Output TaskParameter="PDFSupport" PropertyName="PDFSupport"/>
+			<Output TaskParameter="SearchableSupport" PropertyName="SearchableSupport"/>
+			<Output TaskParameter="MailSupport" PropertyName="MailSupport"/>
+			<Output TaskParameter="OfficeSupport" PropertyName="OfficeSupport"/>
+			<Output TaskParameter="GeographySupport" PropertyName="GeographySupport"/>
+			<Output TaskParameter="FileSupport" PropertyName="FileSupport"/>
+			<Output TaskParameter="SDNotificationSupport" PropertyName="SDNotificationSupport"/>
+			<Output TaskParameter="WebNotificationSupport" PropertyName="WebNotificationSupport"/>
+			<Output TaskParameter="CryptoSupport" PropertyName="CryptoSupport"/>
+			<Output TaskParameter="ModuleInfo" ItemName="ModuleData"/>
+			<Output TaskParameter="CMDSupport" PropertyName="CMDSupport"/>
+			<Output TaskParameter="FrontEndSupport" PropertyName="FrontEndSupport"/>
+			<Output TaskParameter="ConfigSupport" PropertyName="ConfigSupport"/>
+			<Output TaskParameter="ChatbotSupport" PropertyName="ChatbotSupport"/>
+		</GetCSharpObjectFiles>
+
+		<PropertyGroup Condition="'$(FrontEndSupport)' == 'true'">
+			<CopyStaticFiles>true</CopyStaticFiles>
+		</PropertyGroup>
+
+		<PropertyGroup Condition="'$(Incremental)' == 'true'">
+			<ConfigSupport>false</ConfigSupport>
+			<CopyStaticFiles>false</CopyStaticFiles>
+		</PropertyGroup>
+
+	</Target>
+
+	<Target Name="ZipDeploy">
+		<CreateItem Include="$(DeployFullPath)\**\*.*" >
+			<Output ItemName="ZipFiles" TaskParameter="Include"/>
+		</CreateItem>
+		<Zip ZipFileName="$(DeployFileFullPath)\$(ProjectName).zip" WorkingDirectory="$(DeployFullPath)" Files="@(ZipFiles)" />
+		<Message Text="ApplicationSuccessfullyPackaged{FS:$(DeployFileFullPath)\$(ProjectName).zip}" Importance="high"/>
+
+	</Target>
+
+	<!-- REORGANIZATION -->
+
+	<Target Name="PrepareReorgFiles">
+		<ItemGroup>
+			<ReorgFile Include="$(RootModulePath)$(binPath)\messages.*.dll" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\client.exe.config" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\Reor.exe" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\reor.exe.config" Condition="Exists('$(RootModulePath)$(binPath)\reor.exe.config')"/>
+			<ReorgFile Include="$(RootModulePath)$(binPath)\GxClasses.dll" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\GxEncrypt.dll" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\GxCryptographyCommon.dll" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\application.key" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\Runx86.exe" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\Runx86.exe.config" Condition="Exists('$(RootModulePath)$(binPath)\Runx86.exe.config')" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\log4net.dll" />
+			<ReorgFile Include="$(RootModulePath)$(binPath)\Reorganization.dll" />
+		</ItemGroup>
+
+		<ItemGroup>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\GxEnterpriseConnect.dll" Condition="'$(SAPHana)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\GxSapConnector.dll" Condition="'$(SAPHana)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\Npgsql.dll" Condition="'$(PostgreSQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\MySQLDriverCS.dll" Condition="'$(MySQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\libmysql.dll" Condition="'$(MySQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\MySqlConnector.dll" Condition="'$(MySQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\System.Threading.Tasks.Extensions.dll" Condition="'$(MySQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\System.Memory.dll" Condition="'$(MySQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\System.Numerics.Vectors.dll" Condition="'$(MySQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\System.Runtime.CompilerServices.Unsafe.dll" Condition="'$(MySQL)' == 'true'"/>
+			<ReorgDriver Include="$(RootModulePath)\$(binPath)\System.Buffers.dll" Condition="'$(MySQL)' == 'true'"/>
+		</ItemGroup>
+
+	</Target>
+
+	<Target Name="ZipReorg" AfterTargets="ExportReorganization">
+		<CreateItem Include="$(TempDir)\*.*" >
+			<Output ItemName="ZipFiles" TaskParameter="Include"/>
+		</CreateItem>
+		<Zip ZipFileName="$(ReorgDestination)\$(FileName)" WorkingDirectory="$(TempDir)" Files="@(ZipFiles)" />
+		<RemoveDir Directories="$(TempDir)"/>
+		<Message Text="ReorganizationSuccessfullyExported{$(ReorgDestination)\$(FileName)}" Importance="high" />
+	</Target>
+
+	<Target Name="ScriptedTasks">
+		<!-- Tasks like configs fixes should be done here -->
+	</Target>
+
+	<Target Name="PrepareFiles" DependsOnTargets="CopyObjectLibs;CopyModules;CopyStatic;CopyResourcesFolder;CopyQueryViewerStatic;CopyResourcesFiles;GenerateWebConfig;CommonCopy"/>
+	<Target Name="CreatePackage" DependsOnTargets="ValidateDeployment;CheckCSharpRequirements;PrepareFiles;BeforePackaging;ScriptedTasks;ZipDeploy" />
+
+	<Target Name="CheckCSharpRequirements" DependsOnTargets="CheckRequirements">
+		<!-- TODO: Fill with requirements -->
+	</Target>
+
+</Project>

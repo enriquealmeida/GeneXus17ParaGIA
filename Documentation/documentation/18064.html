@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Manage Execute Permissions on WWSD LIST and SD Panels</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18064,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Manage Execute Permissions on WWSD LIST and SD Panels</h1>
+<!--HowTo: Manage Execute Permissions on WWSD LIST and SD Panels--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h3><a id="Problem+to+solve" class="HashLink" href="#Problem+to+solve">Problem to solve</a></h3>
+
+<ul>
+	<li>Manage permissions to view the list, and detail of the items of the list of a <a href="15974.html">Work With for Smart Devices object</a> object.</li>
+	<li>Manage permissions to execute a <a href="24829.html">Panel object</a>.</li>
+</ul>
+
+<h3><a id="Solution" class="HashLink" href="#Solution">Solution</a></h3>
+
+<p>This example consists on giving execute permissions to a WWSD List and its detail (see <a href="15974.html">Work With Pattern for Smart Devices (WWSD)</a>). The idea for SD panels is the same.</p>
+
+<p><strong>Important Note:</strong> In this version it´s not possible to manage the List and Detail permissions independently (as well as all the sections of the Detail) That is to say, the permissions apply to all or none of them as a group.</p>
+
+<p>Suppose you have a &quot;Novels&quot; transaction, where <a href="https://wiki.genexus.com/commwiki/wiki?9413,," target="_blank">Work With Pattern for Smart Devices</a> has been applied. The purpose is to allow only authorized users to see the &quot;Novels&quot; List and view the detail.</p>
+
+<p>1. Set <a href="14706.html">Enable Integrated Security Property</a> = TRUE and <a href="15214.html">Integrated Security Level Property</a> = Authorization.</p>
+
+<h6><img src="./images/18067.png" id="18067" class="WikiImage"/><br />
+Figure 1.</h6>
+
+<p>2. Define a <a href="17569.html">Role</a> where the <a href="15912.html">Permission</a> is defined with the corresponding <a href="https://wiki.genexus.com/commwiki/wiki?20603,," target="_blank">Permission Access Type</a>. The permission is &lt;prefix&gt;_execute where prefix is the <a href="https://wiki.genexus.com/commwiki/wiki?17571,," target="_blank">Permission Prefix</a> specified for the WWSD object.</p>
+
+<h6><img src="./images/18068.png" id="18068" class="WikiImage"/><br />
+Figure 2.</h6>
+
+<p>As a result, only users who have this role can execute the &quot;Work With Devices Novels&quot; Object in order to display the list of Novels and view the detail of each of them.</p>
+
+<h6><img src="./images/18075.png" id="18075" class="WikiImage"/><br />
+Figure 3. User´s role which allows to execute Work With Devices Novels</h6>
+
+<h6><img src="./images/18076.png" id="18076" class="WikiImage"/><br />
+Figure 4. Execution GAMSDLogin</h6>
+
+<h6><img src="./images/18077.png" id="18077" class="WikiImage"/><br />
+Figure 5.Execution Work With Devices Novels</h6>
+
+<h3><a id="What+happens+with+wiki%3F16321%2CCategory%253AMenu%2Bobject+Dashboard+Objects%3F" class="HashLink" href="#What+happens+with+wiki%3F16321%2CCategory%253AMenu%2Bobject+Dashboard+Objects%3F">What happens with <a href="16321.html">Dashboard Objects</a>?</a></h3>
+
+<p>In case of Dashboards, the permissions are not verified, that´s why the only available values for <a href="15214.html">Integrated Security Level Property</a> are &quot;none&quot;, and &quot;Authentication&quot; in this case.</p>
+
+<p>If you configure &quot;Authentication&quot; value in this property for Dashboard objects, the behavior is not the same as the behavior for SD panels or WWSD panels: when trying to execute the Dashboard for the first time, the <a href="https://wiki.genexus.com/commwiki/wiki?16589,," target="_blank">Login Object for SD</a> will execute. But in the next executions, the validity of session is not checked for Dashboards, so the login object will display again only when the user tries to execute another private object which is called from the Dashboard.</p>
+
+<p>Example: Suppose you have the following Dashboard object, with three items :</p>
+
+<h6><img src="./images/18069.png" id="18069" class="WikiImage"/><br />
+Figure 6. Dashboard at design</h6>
+
+<h6><img src="./images/18073.png" id="18073" class="WikiImage"/><br />
+Figure 7. Dashboard at execution</h6>
+
+<p>These objects (SDPanel1, WorkWithDevicesNovels and WorkWithDevicesAuthor) check permissions independently, depending on the settings of <a href="15214.html">Integrated Security Level Property</a> for each object.</p>
+
+<p>If <a href="15214.html">Integrated Security Level Property</a> = none, Authentication is not required to execute this object.</p>
+
+<p>If <a href="15214.html">Integrated Security Level Property</a> = Authentication, only authenticated users can execute the object. The Authentication will be checked the first time when executing the Dashboard, afterwards (when session times out), Authentication is checked when this object is executed.</p>
+
+<p>If <a href="15214.html">Integrated Security Level Property</a> = Authorization, only authenticated and authorized users can execute the object. The Authentication will be checked the first time when executing the Dashboard, afterwards (when session times out), Authentication is checked when this object is executed.</p>
+
+<p>Any combination is valid.</p>
+
+<p>If the three of them require Authorization, you need to define a Role where the corresponding permissions are defined, with the desired <a href="https://wiki.genexus.com/commwiki/wiki?20603,," target="_blank">Permission Access Type</a>.</p>
+
+<p>If the user is not authorized to execute &quot;WorkWithDevicesAuthor&quot; the following error will display on the screen:</p>
+
+<h6><img src="./images/18078.png" id="18078" class="WikiImage"/><br />
+Figure 8. Permission Denied on Work WithDevices Author</h6>
+
+<p>Otherwise, the execution can be redirected to the object specified in <a href="https://wiki.genexus.com/commwiki/wiki?20018,," target="_blank">Not Authorized Object for SD property</a>.</p>
+
+<p>After configuring the permissions on the user´s role, as the following figure shows:</p>
+
+<h6><img src="./images/18079.png" id="18079" class="WikiImage"/><br />
+Figure 9. user' srole permissions for executing WorkWithDevicesAuthor</h6>
+
+<p>The user will be able to execute WorkWithDevicesAuthor:</p>
+
+<h6><img src="./images/18080.png" id="18080" class="WikiImage"/><br />
+Figure 10. Executing of WorkWithDevicesAuthor</h6>
+
+<p>And also, execute the Detail and all its Sections:</p>
+
+<h6><img src="./images/18081.png" id="18081" class="WikiImage"/><br />
+Figure 11. Naviganting the detail of WorkWithDevicesAuthor</h6>
+
+<p>Note that the _same permission_ allows the user to execute the Detail and all the sections inside the Detail (view Section General and Section Novels), see the pattern design in the following figure:</p>
+
+<h6><img src="./images/18082.png" id="18082" class="WikiImage"/><br />
+Figure 12. WorkWithDevicesAuthor Pattern design</h6>
+
+<p><strong>Note:</strong></p>
+
+<p>Note that the actions in WWSD panels (insert, update, delete) are related directly to the Business Component associated to the WWSD and not the WWSD itself. That means that, if you apply Work With Pattern for Smart Devices to a transaction (&quot;Novels&quot;), the &quot;Novels&quot; transaction is automatically saved as Business Component exposed as <a href="14573.html">REST Web Services</a>. In order to control permissions over the actions insert, update, delete, you need to declare permissions over the Business Component itself. See <a href="17935.html">How to: Permissions in SD applications, CRUD restricted</a> and <a href="17943.html">How to: Permissions in SD applications, WW and CRUD restricted</a> for details.</p>
+
+<p>The permissions over the list and view of the item´s list is managed in the WWSD object as shown in this paper.</p>
+
+<h4><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h4>
+
+<p><a href="15912.html">GAM Permissions</a><br />
+<a href="17664.html">Full Control Permissions and inheritance</a><br />
+<a href="17569.html">GAM Roles</a><br />
+<a href="17583.html">GAM Authorization Scenarios</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17583.html">GAM Authorization Scenarios</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

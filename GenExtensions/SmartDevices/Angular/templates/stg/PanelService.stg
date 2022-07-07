@@ -1,0 +1,146 @@
+delimiters "$", "$"
+
+import "Types.stg"
+import "Expressions.stg"
+
+
+serverCallModeToTemplate ::= [
+  "dataprovider":  "g_action_services_dp",
+  default: "g_action_services_proc"
+]
+
+g_service(page, gx)::=<<
+$g_service_imports(page, gx)$
+
+
+$page.Imports:g_imports();separator="\r\n"$
+
+$g_service_class_attributes()$
+export class $page.FullName$Service extends PanelService {
+
+  $g_service_constructor(page.Data)$
+
+  $page.Data:g_getDataMethod()$
+
+  // Actions
+  $page.Actions.CallToServices:g_action_services()$
+
+}
+
+// Data structures
+$page.Data:g_createDataStructure()$
+
+>>
+
+g_action_services(stmt) ::= <%
+  $(serverCallModeToTemplate.(stmt.CallMode))(stmt)$
+%>
+
+g_action_services_proc(stmt) ::=<<
+async $gx.CallToObjectName.(stmt.TargetName)$($g_action_service_call_parameters(stmt.InputParameters)$) : Promise<any> {
+    $g_body_parameters(stmt.InputParameters)$
+    try {
+      var response = await EndpointConnector.postData(this.http, Settings.SERVICE_API_ENDPOINT + "$gx.CallToObjectName.(stmt.TargetRoute)$", body $stmt:g_convert_from_server_spec()$);
+      return response;
+    }
+	catch(error)
+    {
+      return this.handleError(error);
+    }
+}
+
+>>
+
+g_action_services_dp(stmt) ::=<<
+async $gx.CallToObjectName.(stmt.TargetName)$($g_action_service_call_parameters(stmt.InputParameters)$) : Promise<any> {
+    $g_body_parameters(stmt.InputParameters)$
+    try {
+      var response = await EndpointConnector.getData(this.http, Settings.SERVICE_API_ENDPOINT + "$gx.CallToObjectName.(stmt.TargetRoute)$"$stmt:{dt|$g_get_input_parameters(dt,i0)$}$);
+      return response;
+    }
+	catch(error)
+    {
+      return this.handleError(error);
+    }
+}
+
+>>
+
+g_convert_from_server_spec(stmt) ::=<%
+$if (stmt.ConvertFromServer)$
+, { $stmt.ConvertFromServer:{c|'$c.Name$':{isCollection:$c.IsCollection$, type:$c.GeneratorType:g_type_name()$\}};separator=","$ }
+$endif$
+%>
+
+g_action_service_call_parameters(parameters) ::=<<
+$parameters.Parameter:{ parameter | $parameter.Name$?:any};separator=", "$
+>>
+
+g_body_parameters(parameters) ::=<<
+let body = {
+  $parameters.Parameter:g_body_parameter();separator=",\r\n"$
+};
+>>
+
+g_body_parameter( parameter) ::=<%
+$if (parameter.MustConvertToSerialize)$
+$parameter.Name$: $g_convert_to_serializable_type( parameter.GeneratorType, parameter.Name)$
+$else$
+$parameter.Name$: $parameter.Name$
+$endif$
+%>
+
+g_getDataMethod(data) ::=<<
+$if (!data.OnlyDefinition)$
+$if(data.CacheEnabled)$
+get$data.ProviderName$_Cacheable( $data:g_declare_parameters()$): Observable<$data.GeneratorType:g_type_name()$> {
+$g_get_data_content_observable_cacheable(data)$
+}
+get$data.ProviderName$( $data:g_declare_parameters()$): Observable<$data.GeneratorType:g_type_name()$> {
+$g_get_data_content_observable_non_cacheable(data)$
+}
+$else$
+async get$data.ProviderName$( $data:g_declare_parameters()$): Promise<$data.GeneratorType:g_type_name()$> {
+$g_get_data_content(data)$
+}
+$endif$
+$endif$
+
+>>
+
+g_dp_request_parameters(data, ix) ::=<%
++ "?gxid="+this.getGxid($ix$)
+$if(data.Parameters)$
+$data.Parameters.Parameter:{ p |+ "&$p.Name$="+$g_convert_to( p.GeneratorType, {VarChar}, p.Name)$}$
+
+$endif$
+%>
+
+g_get_input_parameters(data, ix) ::=<%
++ "?gxid="+this.getGxid($ix$)
+$if(data.Parameters)$
+$data.InputParameters.Parameter:{ p |+ "&$p.Name$="+$g_convert_to( p.GeneratorType, {VarChar}, p.Name)$}$
+
+$endif$
+%>
+
+g_data(page, gx) ::=<< 
+export interface $page.Data.ProviderName$Data {
+  $page.Data.Attribute:g_declare_item()$
+  $page.Data.Variable:g_declare_item()$
+}
+>>
+
+g_createDataStructure(data) ::=<<
+$if (data.GenerateDataStructure)$
+export class $data:g_dataprovider_type_name()$ {
+  $data.Attribute:g_declare_item()$
+  $data.Variable:g_declare_item_var()$
+
+  constructor() {
+    $data.Attribute:g_init_item()$
+    $data.Variable:g_init_item()$
+  }
+}
+$endif$
+>>

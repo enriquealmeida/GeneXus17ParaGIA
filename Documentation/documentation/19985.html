@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Setting user permissions using remote licenses</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19985,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Setting user permissions using remote licenses</h1>
+<!--Setting user permissions using remote licenses--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In some situations when you run GeneXus or the GeneXus License Manager using remote licenses, an error message: Access Denied is showed.<br />
+While the causes may be different in each case, this document is a summary of a few steps to verify/perform in practice that have resolved most of the cases.</p>
+
+<h3><a id="Cases" class="HashLink" href="#Cases">Cases</a></h3>
+
+<p><strong>A)</strong> CASE OF License Server and PCs in the same Windows DOMAIN</p>
+
+<ol>
+	<li>Verify that both the PCs and the SERVER are on the same Windows DOMAIN.</li>
+	<li>If the SERVER has Windows Firewall active, add in exceptions:
+	<ul>
+		<li style="margin-left: 40.0px;">TCP port 135 (DCOM)</li>
+		<li style="margin-left: 40.0px;">The Protsrv.exe application (is in: common files\Artech\gxprot1)</li>
+	</ul>
+	</li>
+	<li>If your PC has Windows Firewall active: add in exceptions TCP port 135 (DCOM).</li>
+	<li>In the CLIENT add in the Access Permissions section of dcomcnfg.exe, Remote Access permission to the Anonymous Logon user of Edit Limits. (See ref 2).
+	<ul>
+		<li style="margin-left: 40.0px;">To access the tab &quot;Access Permissions&quot; once executed dcomcnfg.exe, expand the section &quot;Component Services&quot; -&gt; &quot;Computers&quot; -&gt; &quot;My Computer&quot;, right click and select &quot;My Computer&quot;. After this step can already solve the problem. Otherwise, proceed to the next step.</li>
+		<li style="margin-left: 40.0px;">NOTE: In Windows 7 and Vista must run the Gxlmgr with &quot;Run as administrator&quot;.</li>
+	</ul>
+	</li>
+	<li>Add the network users that get the licenses on group &quot;Artech Remote Protection Users&quot; or &quot;GeneXus Remote Protection Users&quot; in the Windows user group of the SERVER.</li>
+	<li>If using Windows Server 2012 R2 or higher, add the network users to the group &quot;Distributed COM Users&quot; too.</li>
+	<li>If that still gives Access Denied, remove the PC of the domain and add it back (this may involve restart the PC). This has solved many of these problems.
+	<ul>
+		<li style="margin-left: 40.0px;">Apparently in some cases trust relationship between the PC and the SERVER is not well established. When you add it again the problem is solved.</li>
+	</ul>
+	</li>
+	<li>If this does not work, check the net properties of machine. If you changed the IP, check that the DNS is updated, etc.</li>
+</ol>
+
+<p><strong>B) </strong>CASE OF License Server and PCs in the same WORKGROUP</p>
+
+<ol>
+	<li>Verify that both the PCs and the SERVER are in the same WORKGROUP.</li>
+	<li>If the SERVER has Windows Firewall active, add in exceptions:
+	<ul>
+		<li style="margin-left: 40.0px;">a. TCP port 135 (DCOM)</li>
+		<li style="margin-left: 40.0px;">b. The Protsrv.exe application (is in: common files\Artech\gxprot1)</li>
+	</ul>
+	</li>
+	<li>Define in the SERVER the users that will connect to it (same user and pass). When defining the user, check the option &quot;Password never expires&quot;.
+	<ul>
+		<li style="margin-left: 40.0px;">Pay attention that the user is not blocked. (See ref 3)</li>
+	</ul>
+	</li>
+	<li>If the PC has Windows Firewall active: add in exceptions TCP port 135 (DCOM).</li>
+	<li>In the CLIENT add in the Access Permissions section of dcomcnfg.exe, Remote Access permission to the Anonymous Logon user of Edit Limits. (See ref 2).
+	<ul>
+		<li style="margin-left: 40.0px;">After this step can already solve the problem. Otherwise, proceed to the next step.</li>
+	</ul>
+	</li>
+	<li>Add the network users that get the licenses on group &quot;Artech Remote Protection Users&quot; or &quot;GeneXus Remote Protection Users&quot; in the Windows user group of the SERVER. (alternatively, add the user &quot;Everyone&quot;) (See ref 1)</li>
+	<li>If using Windows Server 2012 R2 or higher, add the network users to the group &quot;Distributed COM Users&quot; too.</li>
+	<li>If this does not work, check the net properties of machine. If you changed the IP, check that the DNS is updated, etc.</li>
+</ol>
+
+<h3><a id="References" class="HashLink" href="#References">References</a></h3>
+
+<ul>
+	<li><strong>(ref 1) </strong>Adding the user &quot;Everyone&quot; in the group does not mean that it will accept any user, but those that are defined on that machine, so it is important the step 2.</li>
+</ul>
+
+<ul>
+	<li><strong>(ref 2)</strong> In some situations it was found that giving permissions to the anonymous user only &quot;Remote Permissions&quot; need not be replicated the user in the server (steps 4 and 5). The only downside is that you will not see the products in the License Manager, but GX works. In Win 7 or XP to set the DCOM permissions must execute: Dcomcnfg/MyComputer/Properties/COM security/Edit Limits.</li>
+</ul>
+
+<ul>
+	<li><strong>(ref 3)</strong> In some cases, changing this option on the Windows Explorer of the SERVER: &quot;Tools -&gt; Folder Options -&gt; View -&gt; Advanced Settings: Option&quot; Use simple file sharing (recommended) &quot; leaving it unchecked, does not require steps 4 and 5.</li>
+</ul>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?12481,," target="_blank">Access Denied when using remote licenses - Solution</a></p>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?12482,," target="_blank">Enabling centralized licenses scheme - checklist</a></p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p> </p>
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="7353.html">GeneXus Protection Manual</a></TD><TD><a href="42990.html">GXflow license troubleshooting</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/15/20 02:31 PM</em></font></td></TR></table></font>

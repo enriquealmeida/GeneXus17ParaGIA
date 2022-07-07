@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Event Triggering Order in Panels</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17614,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Event Triggering Order in Panels</h1>
+<!--Event Triggering Order in Panels--><div class="TableWikiBody" id="tblwikibody"><p><b>User system</b> <a href="17042.html">events</a> have their own triggering order, according to each event and the instructions that compose them. System events such as <strong>Start</strong>, <strong>Refresh,</strong> and <strong>Load</strong> are always executed on the server, and user events are usually executed on the client unless a round trip to the server is required. For example:</p>
+
+<pre>
+Event 'Message'
+    Interop.Msg(&amp;MsgText)
+EndEvent</pre>
+
+<p>Here you have a user event corresponding to an action on the form, the Message button.  It is made up of a single instruction that doesn't require server services.</p>
+
+<p>However, in the example below access to the server is required because the call to a Procedure is always executed there.</p>
+
+<pre>
+Event 'Message'
+    Composite
+       Interop.Msg(&amp;MsgText)
+       UpdateLog.Call(&amp;MsgText)
+    EndComposite
+EndEvent</pre>
+
+<h3><a id="Event+triggering+sequence" class="HashLink" href="#Event+triggering+sequence">Event triggering sequence</a></h3>
+
+<p>Regardless of the above, basically the event triggering sequence in a Panel (either <a href="15984.html">Work With for SD List</a> or <a href="24829.html">Panel object</a>) is as mentioned in <a href="17042.html">Native Mobile Applications Events</a>:</p>
+
+<p><a href="24044.html">ClientStart</a> (List)  //since Xev3 version<br />
+<strong>Start</strong><br />
+<strong>Refresh </strong><br />
+<strong>Load</strong> (if there is any non-SDT-based grid on the layout)</p>
+
+<p>If the Panel corresponds to the <a href="15985.html">Work With Detail</a> with N sections, the events will be triggered as follows: First, <strong>Detail</strong> system events will be triggered (i.e. Start, Refresh and Load events associated to the Detail node of the WWSD). After that, depending on the sections:</p>
+
+<ul>
+	<li>If the sections are displayed as <a href="15847.html">Tabs</a>, each section is activated when the tab is first selected (or at startup for the first tab). So, its system events are triggered. After navigating the tab you can select it again, but none of the System Events will be executed for that section (since it is already &quot;online&quot;). If you exit the containing object and press Back this will execute all the System Event tabs again.</li>
+	<li>If the sections are displayed as <a href="15847.html">Links</a>, each section is activated (and so system events are triggered) when the link is executed.</li>
+	<li>If the sections are displayed <a href="15847.html">Inline</a>, each section is activated in an indeterminate (and possibly concurrent) order.</li>
+	<li>When invoking a <strong>BC</strong> in insert, update or Delete mode (WWSD.Detail.Insert() / WWSD.Detail.Update(pk) / WWSD.Detail.Delete(pk)), this won't execute neither the Start nor the Refresh event (the default rules for the BC itself will be applied instead). However, the <strong>Detail Start</strong> event will be executed.</li>
+</ul>
+
+<p>Schematically, that is:</p>
+
+<p>ClientStart (Detail) //since Xev3 version<br />
+<strong>Start</strong> (Detail)<br />
+<strong>Refresh</strong> (Detail)<br />
+<strong>Load</strong> (Detail, if there is any non-SDT-based grid)<br />
+    ClientStart (Section 1) //since Xev3 version<br />
+    <strong>Start</strong>  (Section 1)<br />
+    <strong>Refresh</strong> (Section 1)<br />
+    <strong>Load</strong> (Section 1, if there is any non-SDT-based grid)<br />
+    …<br />
+    ClientStart (Section n) //since X Evo3 version<br />
+    <strong>Start</strong> (Section n)<br />
+    <strong>Refresh</strong> (Section n)<br />
+    <strong>Load</strong> (Section n, if there is any non-SDT-based grid)</p>
+
+<p>executing the Section m ClientStart-Start-Refresh-Load sequence under the above considerations.</p>
+
+<p>After loading the screen, the user is ready to interact. What happens when the user triggers an action (client event)? The associated code is executed on the client-side, that is, in the device, unless a roundtrip to the server is required (for example, when a procedure must be invoked). In any case, system events are not executed (unless they are explicitly required through the Refresh command).</p>
+
+<h3><a id="What+happens+when+the+Refresh+command+is+reached+inside+an+event%3F" class="HashLink" href="#What+happens+when+the+Refresh+command+is+reached+inside+an+event%3F">What happens when the Refresh command is reached inside an event?</a></h3>
+
+<p>Depending on the <a href="18602.html">caching</a> settings it is decided whether the device should go and retrieve data from the server.</p>
+
+<p>After going to the server, if there are no changes in the server data, nothing is brought back to the client. Otherwise, the <strong>Refresh</strong> and <strong>Load</strong> (if there is a non-SDT-based grid) events are executed.</p>
+
+<p>What if the Refresh command is executed on a client event of a <strong>Detail</strong> section? The system events for the <strong>Detail</strong> node will be executed, as well as the sections that were previously activated (except for those <a href="15847.html">Inline</a>, that will be activated at any time, as mentioned above).</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="17042.html">Native Mobile Applications Events</a><br />
+<a href="24234.html">Server-side Events in Native Mobile Applications</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?8195,," target="_blank">Refresh event</a><br />
+<a href="8188.html">Load event</a></p>
+
+<p></p>
+
+<p></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24950.html">Back event</a></TD><TD><a href="24332.html">Client-side Events in Native Mobile Applications</a></TD></TR><TR><TD><a href="24044.html">ClientStart event</a></TD></TR><TR><TD><a href="22676.html">ControlValueChanged event</a></TD><TD><a href="35768.html">ControlValueChanging event</a></TD><TD><a href="24807.html">Determining the Base Table for the Form and Grid in Panels</a></TD></TR><TR><TD><a href="8188.html">Load event</a></TD></TR><TR><TD><a href="17042.html">Category:Native Mobile Applications Events</a></TD><TD><a href="25060.html">Refresh command in Panels</a></TD></TR><TR><TD><a href="29811.html">SD Component control</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/03/22 07:56 PM</em></font></td></TR></table></font>

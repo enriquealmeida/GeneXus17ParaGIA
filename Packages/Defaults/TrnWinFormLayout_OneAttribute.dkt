@@ -1,0 +1,50 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template for One Attribute" %>
+<%@ SubTemplate Name="WinFormLayoutButton" File="TrnWinFormLayout_Button.dkt" MergeProperties="True" %>
+<%@ Property Name="helper" Type="Artech.Genexus.Common.Helpers.TemplateHelper" %>
+<%@ Property Name="att" Type="TransactionAttribute" %>
+<%@ Property Name="Counters" Type="Dictionary<string,int>"%>
+<%@ Property Name="getButton" Type="System.Boolean" %>
+<%@ Property Name="descAttNames" Type="IDictionary<TransactionAttribute,Artech.Genexus.Common.Objects.Attribute>" %>
+<%
+	Size attSize = helper.UISettings.GetControlSize(att);
+	if (helper.CurrentPoint.Y + attSize.Height <= helper.UISettings.MaximumControlAttributeBottom)
+	{
+		Artech.Genexus.Common.Objects.Attribute attName;
+		if (!descAttNames.TryGetValue(att, out attName))
+			attName = att.Attribute;
+
+		bool useContextualTitle = (att.Parent != null && att.Parent.AssociatedTable != null && att.IsLocal);
+
+		string captionProperty = "Title";
+		if (useContextualTitle)
+			captionProperty = "ContextualTitle";
+
+		string captionPropertyValue = attName.Title;
+		if (useContextualTitle)
+			captionPropertyValue = attName.ContextualTitleProperty;
+
+		// Don't show the get button.
+		getButton = false;
+		Size labelSize = helper.UISettings.GetLabelSize(captionPropertyValue + "W");
+%>
+		<%= WinForm.Label("Label" + att.Name, null, helper.CurrentPoint, labelSize, String.Format("={0}.{1}", attName.Name, captionProperty)) %>
+<%
+		helper.CurrentPoint.X = helper.UISettings.FormInsets.Left + helper.MaxLabels + helper.UISettings.LabelInsets.Right;
+%>	
+		<%= WinForm.Attribute(att.Name, null, helper.CurrentPoint) %>
+	
+<%
+		helper.MaxX = Math.Max(helper.MaxX, helper.CurrentPoint.X + attSize.Width);
+		 
+		helper.CurrentPoint.X = helper.UISettings.FormInsets.Left ;
+		helper.CurrentPoint.Y = helper.CurrentPoint.Y + attSize.Height + helper.UISettings.FieldInsets.Bottom;
+%>	
+<%
+		if (getButton)
+		{
+%>
+<%@ CallSubTemplate WinFormLayoutButton ControlClass=""BtnGet"" ControlName=""btn_get"" ControlCaption=""GX_BtnGet"" ControlEvent=""Get"" %>
+<%
+		}
+	}
+%>

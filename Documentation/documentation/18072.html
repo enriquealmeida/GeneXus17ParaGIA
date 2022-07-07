@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>External Object for iOS Devices</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18072,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">External Object for iOS Devices</h1>
+<!--External Object for iOS Devices--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Suppose we want to add a new feature to the iOS environment to show a 'non intrusive' message to the user.</p>
+
+<p>You can create a <a href="6148.html">Native External Object</a> within GeneXus; publish the desired method and properties to be called and do the implementation to integrate with the iOS platform.</p>
+
+<p>Below there is a walkthrough you can follow to create an External object for the <a href="14917.html">iOS platform</a>.</p>
+
+<p>You could use external implementations such as <a href='https://cocoapods.org/pods/Toast-Swift'>Toast-Swift</a> or create your own. In this example we will create our own implementation to show a <em>Toast</em> message using a label and an animation.</p>
+
+<p><div style="background-color: rgb(204,255,204);border-left: 6.0px solid rgb(0,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Info</strong>:  There is a living code sample for the external object in this document that can be found on GitHub. Take a look at <a href="38277.html">Smart Devices Extensions Repository Sample</a> .</div>
+</p>
+
+<h3><a id="Create+an+External+Object" class="HashLink" href="#Create+an+External+Object">Create an External Object</a></h3>
+
+<p>Create a new <em>native object</em> called <em>BasicExternalObject</em>.</p>
+
+<p><img src="./images/38278.gif" id="38278" class="WikiImage"/></p>
+
+<p>Add a new method called <em>Hello</em> with the following values:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Is Static: True
+</pre>
+
+<p>Add a second method called <em>Message</em> with an Character argument.</p>
+
+<p>Once the external object is saved, you can use it with the following syntax:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+BasicExternalObject.Hello()
+BasicExternalObject.Message(&amp;text)
+</pre>
+
+<p>Now, we have to do some implementation to actually get this working.</p>
+
+<p>You need to create an <a href="36340.html">extension library</a> where you declare your implementation details, dependencies and so on.</p>
+
+<h3><a id="Create+the+Xcode+project+for+the+External+Object%27s+implementation" class="HashLink" href="#Create+the+Xcode+project+for+the+External+Object%27s+implementation">Create the Xcode project for the External Object's implementation</a></h3>
+
+<p>Please <a href="32508.html">follow this document to create the Xcode project</a>.</p>
+
+<h3><a id="Mapping+the+External+Object+with+an+implementation+File" class="HashLink" href="#Mapping+the+External+Object+with+an+implementation+File">Mapping the External Object with an implementation File</a></h3>
+
+<p>During execution, the GeneXus iOS application does not know the <em>External Object</em> implementation class, just the External Object method executed with its arguments.</p>
+
+<p>The iOS External Object developer <u>must</u> provide a binding for a class which actually resolves the method execution.</p>
+
+<p>Create a swift class named <em>SampleExtensionLibrary</em> with the following code; you are registering your External Object:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+import GXCoreBL
+@objc(SampleExtensionLibrary)
+public class SampleExtensionLibrary: NSObject, GXExtensionLibraryProtocol {
+    public func initializeExtensionLibrary(withContext context: GXExtensionLibraryContext) {
+        GXActionExternalObjectHandler.register(BasicExternalObject.self, forExternalObjectName:BasicExternalObject.classIdentifier)
+    }
+}</pre>
+
+<p>Then you need to actually implement the external object methods and properties so create a <em>BasicExternalObject</em> swift class.</p>
+
+<h3><a id="Implementation+Class" class="HashLink" href="#Implementation+Class">Implementation Class</a></h3>
+
+<p>Notice the class must inherit from <em>GXActionExternalObjectHandler</em> and the following methods <u>must</u> be implemented:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+override public class func handleActionExecutionUsingMethodHandlerSelectorNamePrefix() -&gt; Bool {}
+@objc public func gxActionExObjMethodHandler_Message(_ parameters: [Any])
+@objc public func gxActionExObjMethodHandler_Hello()
+</pre>
+
+<p>Your implementation methods will vary depending on the method names associated to your External Object. Notice <em>Message</em> and <em>Hello</em> are related to this External Object definition. As a rule, the pattern you need to follow to implement the associated methods are:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+@objc &lt;ClassVisibiliy&gt; func gxActionExObjMethodHandler_&lt;ExternalObjectMethodName&gt;(_ parameters: [Any])
+</pre>
+
+<p>where:</p>
+
+<ul>
+	<li>ClassVisibiliy: is related to the visibility assigned to your class.</li>
+	<li>ExternalObjectMethodName: method name that must match the External Object definition.</li>
+	<li>The method's parameter is optional, and should be added only when the method has parameters (note that the Hello method in this external object does not have parameters).</li>
+</ul>
+
+<p>The minimal implementation for the class would be:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+public static let classIdentifier = &quot;BasicExternalObject&quot;
+
+override public class func handleActionExecutionUsingMethodHandlerSelectorNamePrefix() -&gt; Bool {
+     return true
+}
+
+@objc public func gxActionExObjMethodHandler_Message(_ parameters: [Any]) {
+    if let error = self.validateNumber(ofParametersReceived: UInt(parameters.count), expected: 1) {
+        self.onFinishedExecutingWithError(error)
+        return
+    }
+        
+    guard let message = self.stringParameter(self.actionDescParametersArray![0], fromValue: parameters[0]) else {
+        self.onFinishedExecutingWithDefaultError()
+        return
+    }
+        
+    self.showToast(message: message)
+    self.onFinishedExecutingWithSuccess()
+}
+
+@objc public func gxActionExObjMethodHandler_Hello() {
+    let hello = &quot;Hello World!&quot;
+    self.showToast(message: hello)
+    self.onFinishedExecutingWithSuccess()
+}</pre>
+
+<p>The method to show the toast message should be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+private func showToast(message : String) {
+    // Ideas from https://stackoverflow.com/questions/31540375/how-to-toast-message-in-swift
+    // First get the controller and its view
+    if let rootController = GXExecutionEnvironmentHelper.keyWindow?.rootViewController {
+        // Build the Toast sample
+        let size = rootController.view.frame.size
+        let toastLabel = UILabel(frame: CGRect(x: (size.width)/2 - 75, y: (size.height) - 100, width: 150, height: 35))
+        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        toastLabel.textColor = UIColor.white
+        toastLabel.textAlignment = .center;
+        toastLabel.font = UIFont(name: &quot;Montserrat-Light&quot;, size: 12.0)
+        toastLabel.text = message
+        toastLabel.alpha = 1.0
+        toastLabel.layer.cornerRadius = 10;
+        toastLabel.clipsToBounds  =  true
+        
+        rootController.view.addSubview(toastLabel)
+        
+        UIView.animate(withDuration: 4.0, delay: 0.1, options: .curveEaseOut, animations: {
+            toastLabel.alpha = 0.0
+        }, completion: {(isCompleted) in
+            toastLabel.removeFromSuperview()
+        })
+    }
+}</pre>
+
+<h4><a id="Implementation+details" class="HashLink" href="#Implementation+details">Implementation details</a></h4>
+
+<p>The GeneXus iOS application will call the <em>handleActionExecutionUsingMethodHandlerSelectorNamePrefix </em>method whenever it finds an action that calls the external object, to check if the action can be handled. Then depending on the method executed it will automatically bind to your implementation:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+gxActionExObjMethodHandler_&lt;ExternalObjectMethodName&gt;()</pre>
+
+<p>if the method does not have parameters, or otherwise:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+gxActionExObjMethodHandler_&lt;ExternalObjectMethodName&gt;(_ parameters: [Any])</pre>
+
+<p>The first part of the method's implementation verifies that the number of parameters is as expected, and then try to read the parameter value.</p>
+
+<p>Then comes the actual implementation. In relation to the<em> Toast</em> sample, the actual implementation is done on the <em>showToast</em> function.</p>
+
+<p>Done! You are now ready to test your iOS <em>BasicExternalObject</em> external object with the two available methods.</p>
+
+<h4><a id="Properties" class="HashLink" href="#Properties">Properties</a></h4>
+
+<p>In the example above, the External Object does not implement any properties, but if it had, they would be handled as if they were methods. That is, the property's getter will be called as:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+gxActionExObjMethodHandler_&lt;ExternalObjectPropertyName&gt;()</pre>
+
+<p>The property's setter must have a 'set' prefix before the property name in the function definition (this prefix must be in lowercase), and will receive a parameter with the value to set:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+gxActionExObjMethodHandler_<span style="color: rgb(255,0,0);">set</span>&lt;ExternalObjectPropertyName&gt;(_ parameters: [Any])</pre>
+
+<h3><a id="Important%21" class="HashLink" href="#Important%21">Important!</a></h3>
+
+<p>Make sure each External Object method calls the <i>onFinishedExecutingWithSuccess</i>, so the base class can call any other object to finish the method execution. For errors use <em>onFinishedExecutingWithError</em> function.</p>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<p>Use Xcode to debug the application calling the External object methods.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="26936.html">HowTo: create an External Object which triggers GeneXus events in iOS</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?48112,," target="_blank">iOS Flexible Client Deprecations</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="35408.html">Background Modes property</a></TD><TD><a href="6148.html">External Object: Native Object</a></TD></TR><TR><TD><a href="17880.html">External Objects for Smart Devices</a></TD><TD><a href="32508.html">Framework template for iOS User Controls or External Objects</a></TD><TD><a href="26936.html">HowTo: create an External Object which triggers GeneXus events in iOS</a></TD></TR><TR><TD><a href="33805.html">HowTo: Migrate an External Object for iOS from Evolution 3 to GeneXus 15</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/26/21 04:01 PM</em></font></td></TR></table></font>

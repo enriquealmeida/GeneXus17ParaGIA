@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Apple Authentication type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44478,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Apple Authentication type</h1>
+<!--GAM - Apple Authentication type--><div class="TableWikiBody" id="tblwikibody"><p>The Apple Authentication type is supported for all platforms - Web and Mobile (iOS and Android). In this article we explain the steps needed to follow in order to configure your application to login using Apple.</p>
+
+<p>To login with Apple, you need a Smart Devices app generated for iOS, having these properties in the main SD object:</p>
+
+<ul>
+	<li><a href="30100.html">Development Team ID property</a></li>
+	<li><a href="44467.html">Enable Sign in with Apple property</a></li>
+</ul>
+
+<p>Then, verify the <a href="37617.html">Apple Bundle Identifier property</a>, which in this example is &quot;com.genexus.testAppleSignIn.&quot;</p>
+
+<p>The configuration is done in two parts:</p>
+
+<p><ul><li><a class="HashLink" href="#Apple+backend%3A+Application+Registration">Apple backend: Application Registration</a></li><li><a class="HashLink" href="#GAM+backend">GAM backend</a></li><ul><li><a class="HashLink" href="#Authentication+for+iOS">Authentication for iOS</a></li><li><a class="HashLink" href="#Authentication+Type+for+Web+and+Android+apps">Authentication Type for Web and Android apps</a></li></ul></li><li><a class="HashLink" href="#Availability">Availability</a></li><li><a class="HashLink" href="#Notes">Notes</a></li></ul></ul></p>
+
+<h3><a id="Apple+backend%3A+Application+Registration" class="HashLink" href="#Apple+backend%3A+Application+Registration">Apple backend: Application Registration</a></h3>
+
+<p>On the <a href='https://developer.apple.com/'>Apple developer site</a> (To follow this steps you need to be admin or account holder):</p>
+
+<ol>
+	<li>Access <strong>Certificate Ids &amp; Profiles</strong> through the menu.<br />
+	Then go to <strong>Identifiers</strong> and search for the application by filtering through your Apple Bundle Identifier.<br />
+	Verify that your app is marked as &quot;Enable as primary app Id.&quot;<br />
+	<img src="./images/44480.png" id="44480" class="WikiImage"/><img src="./images/44481.png" id="44481" class="WikiImage"/><br />
+	 </li>
+	<li>Create a new identifier of type &quot;Services Id&quot;<br />
+	<br />
+	<img src="./images/44482.png" id="44482" class="WikiImage"/><br />
+	<img src="./images/44495.png" id="44495" class="WikiImage"/><br />
+	 </li>
+	<li>Enter an identifier name that is similar to the &quot;Apple Bundle Identifier&quot; (for easy identification) and a description. Check &quot;Sign In with Apple&quot; and click on the Configure button.<br />
+	<br />
+	<img src="./images/44496.png" id="44496" class="WikiImage"/><br />
+	 </li>
+	<li>In the &quot;Primary App Id&quot; combo select your app (check that the Apple &quot;Bundle Identifier&quot; matches yours).<br />
+	<br />
+	<img src="./images/44497.png" id="44497" class="WikiImage"/><br />
+	<br />
+	In Domains enter the domain of the application. If the domain was not previously verified for the Apple Development Team, it is necessary to verify it; the instructions to do so are on the same screen (via apple-developer-domain-association.txt file). For more information, see the <a href='https://help.apple.com/developer-account/#/dev1c0e25352'>Apple documentation</a> on this topic.<br />
+	<br />
+	<img src="./images/44498.png" id="44498" class="WikiImage"/><br />
+	<br />
+	In callback URL configure the following:<br />
+	<br />
+	<strong>&lt;URLbase&gt;/&lt;web app&gt;/oauth/gam/callback</strong><br />
+	<br />
+	Next, press Continue. In the screen &quot;Register a services ID&quot; that is displayed, press the Register button.<br />
+	<br />
+	<img src="./images/44499.png" id="44499" class="WikiImage"/><br />
+	<br />
+	To verify the process, you can go to the Identifiers option again, filtering by services ID.<br />
+	 </li>
+	<li>Create and download an Apple private key.<br />
+	For the menu go to the item Keys.<br />
+	<br />
+	<img src="./images/44500.png" id="44500" class="WikiImage"/><br />
+	<br />
+	Give the key a name.<br />
+	<br />
+	<img src="./images/44501.png" id="44501" class="WikiImage"/><br />
+	<br />
+	Check Sign In with Apple and click the configure button. In the Configure Key screen, you must select the &quot;Primary App&quot; Id created previously. Click on Save and then Continue.<br />
+	<br />
+	<img src="./images/44502.png" id="44502" class="WikiImage"/><br />
+	<br />
+	Click on Register. That leaves the private key available for a one-time download.<br />
+	Save the &quot;Key ID&quot; of the created key:<br />
+	<br />
+	<img src="./images/44494.png" id="44494" class="WikiImage"/><br />
+	 </li>
+	<li>Generate client secrets for the web application (and Android) and the iOS native application using the <a href="https://wiki.genexus.com/commwiki/wiki?44503,," target="_blank">client_secret.rb</a> program. It is a prerequisite of this step to have the gem &quot;jwt&quot; installed.<br />
+	To install it, execute the following: <strong>gem install jwt.</strong><br />
+	<br />
+	Complete the fields in the &quot;client_secret.rb&quot; program:<br />
+	<br />
+	key_file : the path to the private key file that was downloaded from the Apple website. It is recommended to have it in the same directory as the program.<br />
+	key_id : &quot;Key ID&quot; of the created key. It is obtained from the Apple website (step 5 of this document) or also from the original name of the downloaded private key file.<br />
+	team_id : ID of the development team (same value as in <a href="30100.html">Development Team ID property</a>)<br />
+	app_client_id : iOS application bundle identifier (<a href="37617.html">Apple Bundle Identifier property</a>)<br />
+	server_client_id: bundle identifier of the services ID type created previously (step 3 of this document).</li>
+</ol>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+     Example:
+
+     key_file     = 'AuthKey_LAXKCWQ5D7.p8'
+     key_id         = 'LAXKCWQ5D7'
+     team_id     = 'xxxxxxxx'
+     app_client_id         = 'com.genexus.testAppleSignIn'
+     server_client_id     = 'com.genexus.TestAppleSignIn-server'</pre>
+
+<p id="tw-target-text">          Execute the program:</p>
+
+<p><strong>          ruby client_secret.rb</strong></p>
+
+<p>          The output of this step (iOS native token and Web token) will be the client secrets for the authentication types to be used in the GAM backend configuration.</p>
+
+<h3><a id="GAM+backend" class="HashLink" href="#GAM+backend">GAM backend</a></h3>
+
+<p>Depending on your app  - native iOS or other (web or Android), the configuration of the Apple ID Authentication Type should be different. </p>
+
+<h4><a id="Authentication+for+iOS" class="HashLink" href="#Authentication+for+iOS">Authentication for iOS</a></h4>
+
+<p>This type of authentication has to be used from the iOS app.</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  Sign In With Apple is available as of iOS 13 and above. For prior iOS versions, you have to use it as if it was authenticating in Web or Android.</div>
+</p>
+
+<p>Configure the following:</p>
+
+<p>Client ID: the value found at the <a href="37617.html">Apple Bundle Identifier property</a> of the iOS application.<br />
+Client Secret: the one generated in the last step (6) with the name of &quot;iOS native token.&quot;</p>
+
+<p><img src="./images/44508.png" id="44508" class="WikiImage"/></p>
+
+<p>The code in GeneXus should be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Login Apple'
+ composite
+    &amp;LoginExternalAdditionalParameters = new()
+    &amp;LoginExternalAdditionalParameters.AuthenticationTypeName = !&quot;apple id sd&quot;  //here the name of the Authentication Type you've defined.
+    Actions.LoginExternal(GAMAuthenticationTypes.Apple, !&quot;&quot;,!&quot;&quot;,&amp;LoginExternalAdditionalParameters)
+    return
+ Endcomposite
+Endevent</pre>
+
+<h4><a id="Authentication+Type+for+Web+and+Android+apps" class="HashLink" href="#Authentication+Type+for+Web+and+Android+apps">Authentication Type for Web and Android apps</a></h4>
+
+<p>This type of authentication is the one that should be used from an Android app or from Web. It should also be used in iOS for versions older than iOS 13.<br />
+<br />
+Client ID: the bundle identifier of type Services ID created in step 3 above.<br />
+Client Secret: The one generated in step 6 above with the name of &quot;Web token.&quot;</p>
+
+<p><img src="./images/44509.png" id="44509" class="WikiImage"/></p>
+
+<p>The login in Android apps is web:</p>
+
+<p><img src="./images/44616.png" id="44616" class="WikiImage"/></p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?43978,," target="_blank">GeneXus 16 upgrade 6</a></p>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li>It is possible to get the full name and email from a user. However, users can select the option to use a forwarder, instead of their real email.</li>
+	<li>If you want the users to be impersonated to the GAM local users, configure <a href="https://wiki.genexus.com/commwiki/wiki?24241,," target="_blank">GAM Impersonation</a> to local in the GAM Apple Authentication type.</li>
+	<li>The information of the user is sent only once for the application and the device. If you are testing and need the information to be sent again, you can go to this <a href='https://appleid.apple.com/account/manage'>link</a>, then to &quot;security,&quot; &quot;manage,&quot; and in the popup window select your application to stop using Apple ID.<br />
+	<img src="./images/44555.png" id="44555" class="WikiImage"/><br />
+	Next, select &quot;stop using Apple ID&quot;<br />
+	<img src="./images/44556.png" id="44556" class="WikiImage"/><br />
+	The next time the user logs in will be as the first one.</li>
+</ul>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44467.html">Enable Sign in with Apple property</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="46593.html">Integration and Evolution with GeneXus 17</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/25/22 06:41 PM</em></font></td></TR></table></font>

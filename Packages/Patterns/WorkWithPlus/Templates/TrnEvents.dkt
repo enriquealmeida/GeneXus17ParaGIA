@@ -1,0 +1,715 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Transaction events" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers"%>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="AppendRedirection" File="AppendRedirection.dkt" MergeProperties="True" %>
+<%
+	WorkWithPlusSettings settings = Instance.Settings;
+	SettingsTemplateElement template = Instance.GetAppropiateTemplate();
+%>
+Event Start
+<%@ CallSubTemplate SubLoadContext Settings='settings' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' Object='Instance.ParentObject' SecurityFunction='Instance.Transaction.GetSecurityFunctionKey()' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+<%
+	string generalInitializationCode = Instance.Transaction.Table.GetGeneralInitializationCode(Instance.ParentObject);
+	if (generalInitializationCode != "")
+	{
+%>
+<%= Indentation.Indent(generalInitializationCode, 1) %>
+<%
+	}
+	bool isFiori = false;
+	Transaction transaction = Instance.Transaction.Transaction;
+    bool isAdvancedOrGAM = settings.Security.IsAdvancedOrGAM();
+    bool addAttSecurityCode = Instance.Transaction.Table.AddShowEditAttSecurityCode();
+	bool addHiddenVars = !(settings.IsOptimizationNumber(7) && Instance.Transaction.IsWebUserExperienceSmooth());
+	if (settings.Security.IsTypeAdvanced())
+	{
+		string advancedSecurityCodeForModes = Instance.Transaction.GetAdvancedSecurityCodeForModes();
+		if (advancedSecurityCodeForModes != "")
+		{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(advancedSecurityCodeForModes, 1) %>
+
+<%
+		}
+	}
+	bool WebTagInTransaction = false;
+	bool isBC = TransactionElement.IsBusinessComponent(transaction);
+	if (!isBC)
+	{
+		WebTagInTransaction = true;
+	}
+	bool hasVisibleOrReqConditionalAttsAndVar = false, hasVisibleConditionalControls = false;
+	Instance.Transaction.HasVisibleOrReqConditional(out hasVisibleOrReqConditionalAttsAndVar, out hasVisibleConditionalControls);
+
+	if (addAttSecurityCode)
+	{
+		foreach (string varName in Instance.Transaction.Table.GetVariablesForVisibleConditionAttsWithSecurityInSeparateCode())
+		{
+				if (!WebTagInTransaction)
+				{
+%>
+    [web]
+    {
+<%
+					WebTagInTransaction = true;	 
+				}
+%>	
+	&<%= varName %>.Visible = False
+	&<%= varName %> = False
+<%
+		}
+		if (isBC && WebTagInTransaction)
+		{
+%>
+	}
+<%
+			WebTagInTransaction = false;
+		}
+	}
+	if (addAttSecurityCode || hasVisibleOrReqConditionalAttsAndVar || hasVisibleConditionalControls)
+	{
+%>
+	Do 'AttributesSecurityCode'
+
+<%
+	}
+	
+	if (Instance.IsAfterInsertStayInTransaction())
+	{
+		if (isBC)
+		{
+%>
+	[web]
+	{
+<%
+		}
+%>	
+	&ReturnURL = &WebSession.Get(!'<%= transaction.Name %>_ReturnURL').Trim()
+<%
+		if (addHiddenVars)
+		{
+%>
+	&ReturnURL.Visible = False
+<%
+		}
+%>
+	&WebSession.Remove(!'<%= transaction.Name %>_ReturnURL')
+<%
+		if (isBC)
+		{
+%>
+	}
+<%
+		}
+%>	
+<%
+	}
+	List<IAttributesItem> tableAttsAndVars = Instance.Transaction.Table.GetTableAttributesAndVariables();
+	if (Instance.Transaction.UseTransactionContextMerged())
+	{
+%>
+	&TrnContext.From<%= template.SerializationFormat %>(&WebSession.Get(!"TrnContext"))
+<%		if (TransactionUtilities.HasContextAttributes(transaction))
+		{
+%>
+	If (&TrnContext.TransactionName = &Pgmname and &Mode = TrnMode.Insert)
+		For &TrnContextAtt in &TrnContext.Attributes
+<%			bool first = true;
+			foreach (TransactionAttribute icAtt in TransactionUtilities.ContextAttributes(transaction))
+			{
+				if (first)
+				{
+%>
+			Do Case
+<%					first = false;
+				}
+%>
+				// When inserting with instantiated <%= icAtt.Name %>
+				Case &TrnContextAtt.AttributeName = !"<%= icAtt.Name %>"
+					&Insert_<%= icAtt.Name %>.FromString(&TrnContextAtt.AttributeValue)
+<%
+				IAttributesItem attItem = TableAttributeElement.GetIAttributeItem(tableAttsAndVars, "Combo_" + icAtt.Name);
+				if (attItem != null && attItem is AttributeElement && attItem.IsControlInfoDefCustom() && attItem.ControlType == "DVelop Combo")
+				{
+					if (((ITrnAttribute)attItem).IsNoAcceptDefault())
+					{
+						if (isBC)
+						{
+%>
+					[web]
+					{
+<%
+						}
+%>
+					If not &Insert_<%= attItem.Name %>.IsEmpty()
+						&Combo<%= attItem.Name %> = &Insert_<%= attItem.Name %>
+						Combo_<%= attItem.Name %>.SelectedValue_set = <%= TableAttributeElement.GetIAttributeItemStringValue("&Combo" + attItem.Name, attItem.eDBType, false) %>
+<%
+						if (attItem.ControlLoadDynamically && attItem.ControlInputDS == "Attributes" && attItem.ControlInputValue != null && attItem.ControlInputDescription != null)
+						{
+%>
+						&Combo_DataJson = <%= LoadDVComboProcedureHelper.GetProcedureCall(Instance, attItem, "!'GET'", "&TrnContextAtt.AttributeValue", null) %>
+						Combo_<%= attItem.Name %>.SelectedText_set = &ComboSelectedText
+<%
+						}
+%>
+						Combo_<%= attItem.Name %>.Enabled = False
+					EndIf
+<%
+						if (isBC)
+						{
+%>
+					}
+<%
+						}
+					}
+				}
+			}
+			if (!first)
+			{
+%>
+			Endcase
+<%
+			}	%>
+		Endfor
+	Endif
+<%		}
+    }
+%>
+	
+<%
+	foreach (IAttributesItem item in tableAttsAndVars)
+	{
+		if (!item.Visible)
+		{
+			if (!WebTagInTransaction)
+			{
+%>            
+    [web]
+    {
+<%
+				WebTagInTransaction = true;	 
+            }
+%>	
+	<%= item.ControlName %>.Visible = False
+<%
+		}
+	}
+	foreach (FreeStyleGridGeneralElement fsGrid in Instance.Transaction.Table.GetAllFreeStyleGrids())
+	{
+		foreach (IAttributesItem item in fsGrid.GetAllAttributesAndVariablesOfThisGrid(true, true))
+		{
+			if (!item.Visible)
+			{
+				if (!WebTagInTransaction)
+				{
+%>            
+    [web]
+    {
+<%
+					WebTagInTransaction = true;	 
+				}
+%>	
+	<%= item.ControlName %>.Visible = False
+<%
+			}
+		}
+	}
+	
+	foreach (IGrid grid in Instance.Transaction.Table.AllGrids())
+	{
+		if (grid is GridLevelElement && ((GridLevelElement)grid).HasTitlesCategory())
+		{
+			if (!WebTagInTransaction)
+			{
+%>            
+    [web]
+    {
+<%
+				WebTagInTransaction = true;	 
+			}
+%>
+	<%= grid.GetControlName() %>_TitlesCategories.GridInternalName = <%= grid.GetControlName() %>.InternalName
+<%
+		}
+	}
+	
+
+	bool first2 = true;
+	List<IActionElement> actions = Instance.Transaction.Table.AllActions();
+	foreach (IActionElement action in actions)
+	{
+		if (action.IncludeDisabledImage())
+		{
+			if (!WebTagInTransaction)
+			{
+%>            
+    [web]
+    {
+<%
+				WebTagInTransaction = true;	 
+			}
+			if (first2)
+			{
+				first2 = false;
+%>
+	If (&Mode = TrnMode.Insert)
+<%
+			}
+%>
+		<%= action.ControlName() %>Disabled.Visible = False
+<%
+		}
+    }    
+    if (!first2)
+    {
+%>
+	Endif
+<%
+    }
+
+	foreach (IActionElement action in actions)
+	{
+		string initCode = action.InitializationCode();
+		bool isComboAction = (action is ActionGroupGeneralElement);
+		if (initCode != String.Empty)
+		{
+			if (isComboAction && !WebTagInTransaction)
+			{
+%>            
+    [web]
+    {
+<%
+				WebTagInTransaction = true;	
+			}
+%>
+<%= Indentation.Indent(initCode, 1) %>
+<%
+		}
+		if (isAdvancedOrGAM)
+		{
+			string code = null;
+			if (isComboAction)
+			{
+				if (((ActionGroupGeneralElement)action).IsTypeGXActionGroup())
+				{
+					code = Instance.Transaction.GetActionEnableDisableCodeOutsideGrid((ActionGroupGeneralElement)action);
+				}
+			}
+			else
+			{
+				code = Instance.Transaction.GetActionEnableDisableCodeOutsideGrid((ActionElement)action);
+			}
+			if (!string.IsNullOrEmpty(code))
+			{
+				if (!WebTagInTransaction)
+				{
+%>            
+    [web]
+    {
+<%
+					WebTagInTransaction = true;	
+				}
+%>
+<%= Indentation.Indent(code, 1) %>
+<%
+			}
+		}
+	}
+   
+	foreach (WebComponentElement webComp in Instance.Transaction.Table.AllWebComponents(false))
+	{
+		if (!WebTagInTransaction)
+		{
+%>            
+    [web]
+    {
+<%
+			WebTagInTransaction = true;	 
+		}
+%>
+	<%= webComp.GetCreateWebComponentCall() %>
+<%
+    }
+	if (Instance.HasCopyRecordAction())
+	{
+		if (!WebTagInTransaction)
+		{
+%>            
+    [web]
+    {
+<%
+			WebTagInTransaction = true;	 
+		}
+%>
+	If &Mode = TrnMode.Insert
+		&<%= transaction.Name %>CopyRecord<%= template.SerializationFormat %> = &WebSession.Get(!'<%= transaction.Name %>CopyRecord')
+		If &<%= transaction.Name %>CopyRecord<%= template.SerializationFormat %>.Trim() <> ''
+			&<%= transaction.Name %>CopyRecord.From<%= template.SerializationFormat %>(&<%= transaction.Name %>CopyRecord<%= template.SerializationFormat %>)
+			&WebSession.Remove(!'<%= transaction.Name %>CopyRecord')
+<%
+		foreach (Artech.Genexus.Common.Objects.Attribute att in Instance.Transaction.GetCopyRecordAttributes())
+		{
+%>
+			&<%= att.Name %>InitialValue =  &<%= transaction.Name %>CopyRecord.<%= att.Name %>
+<%
+		}
+%>
+		EndIf
+	EndIf         
+<%
+	}
+	if (isFiori && Instance.Transaction.IsSplitScreen())
+	{
+		if (!WebTagInTransaction)
+		{
+%>            
+    [web]
+    {
+<%
+			WebTagInTransaction = true;	 
+		}
+%>
+<%= Indentation.Indent(ViewElement.GetSplitScreenStartEventCode(Instance, false), 1) %> 
+<%
+	}
+	if (isBC && WebTagInTransaction)
+	{
+%>
+	}	
+<%	
+	}
+%>
+
+EndEvent
+
+Event After Trn
+<%
+	if (Instance.IncludeAuditing())
+	{
+		string ACTab = "";
+		string auditCondition = Instance.GetAuditingCondition();
+		if(auditCondition != "")
+		{
+			ACTab = "	";
+%>
+	if <%= auditCondition %>
+<%
+		}
+%>		
+	<%= ACTab %>AuditTransaction.Call(&AuditingObject,&pgmname)	
+<%
+		if(auditCondition != "")
+		{
+%>
+	endif
+<%
+		}
+	}
+	string notifAfterTrn = Instance.Transaction.Notifications.GetAfterTrnCode();
+	if(!string.IsNullOrEmpty(notifAfterTrn))
+	{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(notifAfterTrn, 1) %>
+<%
+	}
+
+	if (isBC)
+    {
+%>
+   [web]
+   {
+<%
+	}
+	if (Instance.Transaction.SupportDVelopComboInsertion)
+	{
+		Artech.Genexus.Common.Objects.Attribute levelDscAtt = (Instance.Level.DescriptionAttribute != null ? Instance.Level.DescriptionAttribute.Attribute : null);
+		foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in transaction.Structure.Root.PrimaryKey)
+		{
+%>
+    &WebSession.Set(!'<%= trnAtt.Name.ToUpper() %>', <%= TableAttributeElement.GetIAttributeItemStringValue(trnAtt.Name, trnAtt.Attribute.Type, false) %>)
+<%
+			if (levelDscAtt != null && levelDscAtt.Name == trnAtt.Name)
+			{
+				levelDscAtt = null;
+			}
+		}
+		if (levelDscAtt != null)
+		{
+%>
+    &WebSession.Set(!'<%= levelDscAtt.Name.ToUpper() %>', <%= TableAttributeElement.GetIAttributeItemStringValue(levelDscAtt.Name, levelDscAtt.Type, false) %>)
+<%
+		}
+	}
+	if (!isFiori && Instance.Transaction.IsSplitScreen())
+	{
+		string trnAssociatedTable = transaction.Structure.Root.AssociatedTable.Name.ToLower();
+		bool isSplitScreenWithTabs = Instance.Level.Selection.IsSplitScreenWithTabs;
+%>
+	Do Case
+		Case &Mode = TrnMode.Insert
+<%
+		ViewElement splitScreenView = null;
+		string viewParms = null;
+		if (settings.StandardActions.Display.IsAutolinkBehaviorGoToView())
+		{
+			splitScreenView = (Instance.Level.View != null ? Instance.Level.View : (Instance.Level.ExtraViews.Count > 0 ? Instance.Level.ExtraViews[0] : null));
+		}
+		if (splitScreenView != null)
+		{
+			viewParms = splitScreenView.Parameters.List();
+			viewParms += (viewParms != "" ? ", " : "") + "''";
+		}
+		else
+		{
+			viewParms = StandardActionElement.GetTransactionCallParameters(Instance.Level.Selection, StandardAction.Display, false);
+		}
+		
+%>
+			&DetailWCInfo.Link = <%= splitScreenView != null ? splitScreenView.ObjectName : transaction.Name %>.Link(<%= viewParms %>)
+<%
+		if (isSplitScreenWithTabs)
+		{
+%>
+			&DetailWCInfo.Title = <%= Instance.Level.Selection.SplitScreenTabCaption %>
+<%
+		}
+%>
+			GlobalEvents.<%= isSplitScreenWithTabs ? "SplitScreenWithTabs_UpdateTab" : "SplitScreen_LoadDetail" %>(SplitScreen_Action.RecordCreated, &DetailWCInfo, true, !'<%= trnAssociatedTable %>')
+		Case &Mode = TrnMode.Update
+<%
+		if (isSplitScreenWithTabs)
+		{
+%>
+			&DetailWCInfo.Link = <%= splitScreenView != null ? splitScreenView.ObjectName : transaction.Name %>.Link(<%= viewParms %>)
+			&DetailWCInfo.Title = <%= Instance.Level.Selection.SplitScreenTabCaption %>
+			GlobalEvents.SplitScreenWithTabs_UpdateTab(SplitScreen_Action.RecordUpdated, &DetailWCInfo, true, !'<%= trnAssociatedTable %>')
+<%
+		}
+		else
+		{
+%>
+			GlobalEvents.SplitScreen_LoadDetail(SplitScreen_Action.GoBack, &DetailWCInfo, true, !'<%= trnAssociatedTable %>')
+<%
+		}
+%>
+		Case &Mode = TrnMode.Delete
+			&DetailWCInfo.Link = <%= splitScreenView != null ? splitScreenView.ObjectName : transaction.Name %>.Link(<%= viewParms %>)
+			GlobalEvents.<%= isSplitScreenWithTabs ? "SplitScreenWithTabs_UpdateTab" : "SplitScreen_LoadDetail" %>(SplitScreen_Action.RecordDeleted, &DetailWCInfo, true, !'<%= trnAssociatedTable %>')
+<%
+		if (!isSplitScreenWithTabs)
+		{
+%>
+		Otherwise
+			GlobalEvents.SplitScreen_LoadDetail(SplitScreen_Action.GoBack, &DetailWCInfo, false, !'<%= trnAssociatedTable %>')
+<%
+		}
+%>
+	EndCase
+<%
+		if (isSplitScreenWithTabs)
+		{
+%>
+	WWPUtilities.CurrentTab_Return()
+	&CurrentTab_ReturnUrl = WWPUtilities.CurrentTab_ReturnUrl
+	If not &CurrentTab_ReturnUrl.IsEmpty()
+		Link(&CurrentTab_ReturnUrl)
+	EndIf
+<%
+		}
+	}
+	else
+	{
+	System.Boolean [] insertRedirectionAdded = new System.Boolean[1];
+	System.Boolean [] updateRedirectionAdded = new System.Boolean[1];
+	System.Boolean [] deleteRedirectionAdded = new System.Boolean[1];
+%>
+<%@ CallSubTemplate AppendRedirection Mode='"Insert"' Option='Instance.AfterInsert' RedirectAdded='insertRedirectionAdded' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate AppendRedirection Mode='"Update"' Option='Instance.AfterUpdate' RedirectAdded='updateRedirectionAdded' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate AppendRedirection Mode='"Delete"' Option='Instance.AfterDelete' RedirectAdded='deleteRedirectionAdded' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%	
+	bool allRedirectsAdded = insertRedirectionAdded[0] && updateRedirectionAdded[0] && deleteRedirectionAdded[0];
+	if (!allRedirectsAdded)
+	{
+		if (Instance.IsAfterDeleteReturnToCaller())
+		{
+			SelectionElement element;
+			if(Instance.Transaction.UseTransactionContextMerged() && TransactionUtilities.CanRedirectToSelection(Instance, out element))
+			{
+%>
+	If (&Mode = TrnMode.Delete and not &TrnContext.CallerOnDelete)
+		<%= element.ObjectName %>.Call(<%= element.Parameters.List() %>)
+	Endif
+<%
+			}
+		}
+		if (Instance.IsAfterInsertStayInTransaction() && Instance.IsAfterUpdateReturnToCaller())
+		{
+%>
+	If &Mode = TrnMode.Update and not &ReturnURL.IsEmpty()
+		Link(&ReturnURL)
+	EndIf
+<%
+		}
+		if (Instance.IsAfterDeleteNothing() || Instance.IsAfterInsertNothing() || Instance.IsAfterUpdateNothing())
+		{
+			string modeCondition = "";
+			if (!insertRedirectionAdded[0] && !Instance.IsAfterInsertNothing())
+			{
+				modeCondition += " OR &Mode = TrnMode.Insert";
+			}
+			if (!updateRedirectionAdded[0] && !Instance.IsAfterUpdateNothing())
+			{
+				modeCondition += " OR &Mode = TrnMode.Update";
+			}
+			if (!deleteRedirectionAdded[0] && !Instance.IsAfterDeleteNothing())
+			{
+				modeCondition += " OR &Mode = TrnMode.Delete";
+			}
+			if (modeCondition.Length > 0)
+			{
+%>
+
+	If <%= modeCondition.Substring(4) %>
+		<%= template.GetReturnExpression() %>
+	EndIf
+<%
+			}
+		}
+		else
+		{
+%>
+
+	<%= template.GetReturnExpression() %>
+<%
+		}
+	}
+	}
+	if (isBC)
+    {
+%>
+   }
+<%	}
+%>
+EndEvent
+
+<%
+	foreach (IActionElement action in actions)
+    {
+		string eventCode = action.Event();
+		if (eventCode != String.Empty)
+		{
+%>
+<%= eventCode %>
+<%
+		}
+	}
+
+	if (Instance.IsAfterInsertStayInTransaction() || Instance.Transaction.IsSplitScreen())
+	{
+%>
+Event 'Cancel'
+<%
+		if (isBC)
+		{
+%>
+[web]
+{
+<%
+		}
+		if (Instance.Transaction.IsSplitScreen())
+		{
+			if (Instance.Level.Selection.IsSplitScreenWithTabs)
+			{
+%>
+	WWPUtilities.CurrentTab_Return()
+	&CurrentTab_ReturnUrl = WWPUtilities.CurrentTab_ReturnUrl
+	If not &CurrentTab_ReturnUrl.IsEmpty()
+		Link(&CurrentTab_ReturnUrl)
+	EndIf
+	If &Mode = TrnMode.Insert
+		GlobalEvents.SplitScreenWithTabs_UpdateTab(SplitScreen_Action.RecordCreationCanceled, &DetailWCInfo, false, !'<%= transaction.Structure.Root.AssociatedTable.Name.ToLower() %>')
+	EndIf
+<%
+			}
+			else
+			{
+%>
+	GlobalEvents.SplitScreen_LoadDetail(SplitScreen_Action.GoBack, &DetailWCInfo, false, !'<%= transaction.Structure.Root.AssociatedTable.Name.ToLower() %>')
+<%
+			}
+		}
+		else
+		{
+%>
+	if not &ReturnURL.IsEmpty()
+		Link(&ReturnURL)
+	Else
+		<%= template.GetReturnExpression() %>
+	Endif
+<%
+		}
+		if (isBC)
+		{
+%>
+}
+<%
+		}
+%>
+
+EndEvent
+<%
+	}
+
+	if (addAttSecurityCode || hasVisibleOrReqConditionalAttsAndVar || hasVisibleConditionalControls)
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+
+<%
+		if (isBC)
+		{
+%>
+[web]
+{
+<%
+		}
+		if (addAttSecurityCode || hasVisibleOrReqConditionalAttsAndVar)
+		{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, Instance.Transaction.Table.GetAllAttributesAndVariables(true, true), true, false), 1) %>
+<%
+		}
+		if (hasVisibleConditionalControls)
+		{
+			string visCode = Instance.Transaction.Table.GetTrnTablesConditionalInitialValue();
+			if (visCode != "")
+			{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(visCode, 1) %>
+<%
+			}
+		}
+		if (isBC)
+		{
+%>
+}
+<%
+		}
+%>
+
+EndSub
+<%
+	}
+%>
+<%= Instance.Transaction.Table.GetGeneralEventsAndSubs() %>

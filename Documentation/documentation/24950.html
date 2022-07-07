@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Back event</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?24950,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Back event</h1>
+<!--Back event--><div class="TableWikiBody" id="tblwikibody"><p>Sometimes in your applications, you need to change the flow of execution. Suppose you have a &quot;wizard&quot; inside your application, the user should not be able to go back to the different steps of the &quot;wizard&quot; as (s)he moves forward. In order to accomplish this, GeneXus provides a variety of events to manage the application flow, among which is the Back event.</p>
+
+<p>Back event is a system event that defines an action to be performed when the back button is pressed. It is commonly used to change back button behavior or prompt a confirm dialog before calling the previous <a href="24829.html">panel</a>.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p>Event <strong>Back</strong><br />
+<em>        &lt;Event_code&gt;</em><br />
+EndEvent</p>
+
+<h3><a id="iOS+Limitations" class="HashLink" href="#iOS+Limitations">iOS Limitations</a></h3>
+
+<ul>
+	<li>The body of the Back event is restricted to:
+	<ol style="margin-left: 40.0px;">
+		<li>Leaving it empty for disabling the back button.</li>
+		<li>Programming a <a href="https://wiki.genexus.com/commwiki/wiki?31353,," target="_blank">Return command</a> <strong>only </strong>(available as of <a href="https://wiki.genexus.com/commwiki/wiki?34646,," target="_blank">GeneXus 15 Upgrade 5</a>), no other code allowed.</li>
+	</ol>
+	<br />
+	The reason for this limitation is that Apple does not allow the developer to change the default behavior of a back action (e.g. display a message before back).<br />
+	 </li>
+	<li>As of <a href="46068.html">GeneXus 17</a>, the limitation above does not apply when the panel is called with <a href="25322.html">CallType.Popup</a> and CallTargetSize different than Large (that is, when it has value Small, Medium or Default).<br />
+	In that case, Apple does allow the developer to control how the call is ended, and it is allowed to have a fully supportive Back event.<br />
+	 </li>
+	<li>When a UI object is called with <a href="25323.html">CallOption.Target = 'Blank'</a>, ensure that the object does not contain an action on the top-left side of the Application Bar (i.e. Position property = Custom (iOS) and top-left alignment) because the back button will be positioned in that place <sup>(1)</sup>. If the developer situates a custom button in that place, the back button (and its swipe right gesture) will be disabled and it is the responsibility of the developer to implement the &quot;back action&quot; when it is desired.<br />
+	<strong>Notes</strong>:<br />
+	<sup>(1)</sup> By default as of <a href="https://wiki.genexus.com/commwiki/wiki?34646,," target="_blank">GeneXus 15 Upgrade 5</a>, previous versions do not display the back button in that case.</li>
+</ul>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>: All examples work as described in Android and on iOS when the above limitations do not apply, but only examples 1) and 2) always work in iOS.</div>
+</p>
+
+<h4><a id="1%29+Disable+the+back+button." class="HashLink" href="#1%29+Disable+the+back+button.">1) Disable the back button.</a></h4>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Back
+EndEvent</pre>
+
+<h4><a id="2%29+Change+the+default+behavior+of+the+back+action+by+using+the+return+command." class="HashLink" href="#2%29+Change+the+default+behavior+of+the+back+action+by+using+the+return+command.">2) Change the default behavior of the back action by using the return command.</a></h4>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Back
+    Return
+EndEvent</pre>
+
+<h4><a id="3%29+Display+a+confirm+dialog+before+canceling+the+action." class="HashLink" href="#3%29+Display+a+confirm+dialog+before+canceling+the+action.">3) Display a confirm dialog before canceling the action.</a></h4>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Back
+    Composite
+      Confirm(&quot;Are you sure you want to return?&quot;) 
+      Actions.Cancel()
+    EndComposite
+EndEvent
+</pre>
+
+<h4><a id="4%29+Call+a+Panel+for+Smart+Devices+on+Back." class="HashLink" href="#4%29+Call+a+Panel+for+Smart+Devices+on+Back.">4) Call a Panel for Smart Devices on Back.</a></h4>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Back
+      SDPanel.Call()
+EndEvent</pre>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li>If you are trying to skip panels that had been already done on a wizard, it is recommended to use <a href="25322.html">CallOptions.Type = Replace</a> on the caller, instead of calling a panel on the Back event. With that you optimize the usage of the application stack, replacing old panels with new ones when navigating through the application.<br />
+	 </li>
+	<li>When the Back event is not implemented, on each platform it behaves by default as an execution of the <a href="31350.html">SDActions.Cancel()</a> method. In such case, the subsequent code of the caller object won't be executed.<br />
+	 </li>
+	<li>In contrast to the above point, if the Back event is implemented by using the <a href="https://wiki.genexus.com/commwiki/wiki?31353,," target="_blank">Return command</a>, the subsequent code of the caller object will be executed. For example, suppose you have two panels, A and B, and the panel A calls to panel B as follows.</li>
+</ul>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event 'Call_B' // 
+  // ... do something before calling B
+  B.Call()
+  msg(&quot;After calling B&quot;)
+  // ... do something else after calling B
+EndEvent</pre>
+
+<p style="margin-left: 40.0px;">If there is no Back event implemented on B or it is implemented by using the <a href="31350.html">SDActions.Cancel()</a> method, the message after the calling will not be executed. But if the Back event is implemented by using the <a href="https://wiki.genexus.com/commwiki/wiki?31353,," target="_blank">Return command</a>, the message will be displayed on the A panel.</p>
+
+<ul>
+	<li>Since GeneXus 16 Upgrade 3, the behavior of the back button has been changed for iOS. Now when tapping the default back button, it will cancel the actions still executing in the SDPanel. See <a href='https://www.genexus.com/developers/websac?es,,,45225'>SAC#45225</a>.</li>
+	<li>The code after Return command will not be executed. </li>
+</ul>
+
+<p style="margin-left: 40.0px;"> </p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td> <a href="15974.html">Work With for Smart Devices object</a>, <a href="24829.html">Panel for Smart Devices</a></td>
+		</tr>
+		<tr>
+			<td><strong>Languages </strong></td>
+			<td>.NET, Java</td>
+		</tr>
+		<tr>
+			<td><strong>Platforms</strong></td>
+			<td>Android, iOS</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="17042.html">Native Mobile Applications Events</a></li>
+	<li><a href="24234.html">Server-side Events in Native Mobile Applications</a></li>
+	<li><a href="17614.html">Event Triggering Order in Native Mobile Applications</a></li>
+</ul>
+
+<p><span style="line-height: 1.6em;"></span><br />
+<span style="line-height: 1.6em;"></span><br />
+</p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24332.html">Client-side Events in Native Mobile Applications</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 12/28/21 06:36 PM</em></font></td></TR></table></font>

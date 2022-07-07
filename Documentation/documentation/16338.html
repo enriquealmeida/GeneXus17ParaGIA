@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Security Session Management in Applications using GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16338,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Security Session Management in Applications using GAM</h1>
+<!--Security Session Management in Applications using GAM--><div class="TableWikiBody" id="tblwikibody"><p><a href="19888.html">GAM</a> solves authentication and authorization issues for GeneXus applications (web applications or Smart Device applications).</p>
+
+<p>The purpose of this document is to briefly explain the main concepts around session management used by this kind of applications.</p>
+
+<p>There are two types of "sessions" used for solving security mechanisms, depending on the type of application (referring to applications using GAM):</p>
+
+<h3><a id="Web+Sessions" class="HashLink" href="#Web+Sessions">Web Sessions</a></h3>
+
+<p>In Web applications, "web sessions" are used to store all the information needed to solve authentication problems (remain authenticated as long as the session does not expire).</p>
+
+<h4><a id="How+to+change+Web+Session+timeout+%3A" class="HashLink" href="#How+to+change+Web+Session+timeout+%3A">How to change Web Session timeout :</a></h4>
+
+<p>Web Session timeout has to be configured for each <a href="18521.html">GAM Security Policy</a> using the WebSessionTimeOut property of GAMSecurityPolicy external object.<br />
+See the following code as an example, where the security policy is loaded, and its session timeout is changed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SecurityPolicy.Load(&amp;Id)  //&amp;Id belongs to GAMKeyNumLong domain
+&amp;SecurityPolicy.WebSessionTimeOut     = &amp;WebSessionTimeOut //&amp;SecurityPolicy is GAMSecurityPolicy data type. &amp;WebSessionTimeOut is N(4).</pre>
+
+<p>Using the <a href="15935.html">Web Backoffice</a> you can configure the session timeout by executing the GAMExampleEntrySecurityPolicy web panel (which is part of the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>):</p>
+
+<h5><img src="./images/16341.png" id="16341" class="WikiImage"/><br />
+Figure 1.</h5>
+
+<p><strong>Note: </strong></p>
+
+<p>The Web Session Timeout configured in the Security Policy has to be less than or equal to the Session Timeout configured in the Web Server.</p>
+
+<h3><a id="Local+Session+for+Smart+Devices" class="HashLink" href="#Local+Session+for+Smart+Devices">Local Session for Smart Devices</a></h3>
+
+<p>In smart device applications, there is a "local session" stored in the device (the client tier) with the access_token that enables communication with <a href="14573.html">REST Web Services</a> which require authentication (see <a href="16052.html">Secure Native Mobile applications architecture</a> for more information).<br />
+Unlike web applications, where authentication is checked via web sessions only, smart device applications cache a "local session" that stores the access_token which makes communication possible between the application installed on the device and the REST web services residing on the server. In this case, the authorization mechanism is based on <a href='http://oauth.net/'>Oauth</a>.</p>
+
+<h4><a id="Behavior+of+%22local+session%22" class="HashLink" href="#Behavior+of+%22local+session%22">Behavior of "local session"</a></h4>
+
+<p>In order to connect to a secure smart device application, the end user will need an authorized username / password. These credentials will be used together with the <a href="https://wiki.genexus.com/commwiki/wiki?21454,," target="_blank">Client Id and Client Secret information</a> downloaded to the device when the application is installed, in order to establish the first connection to the server application.</p>
+
+<p>When the user tries to connect to the application, a login is displayed. The first time he tries to connect, a POST is made to the server using username, password, client_id, and client_secret, and the HTTP Response returns an access_token which will be used for the length of the connection.</p>
+
+<p>This access_token is stored in the device, and can either remain unchanged while the user is connected, or be reset regularly depending on the value of the <a href="18577.html">Token expire (minutes)</a> property (available as an option of the Security Policy, see Figure 2).<br />
+The access_token is stored in the device cache, and while it's valid (the user does not log out) the end user will not be prompted with the login again.</p>
+
+<p>The local session is eliminated when the user logs out from the application.</p>
+
+<h5><img src="./images/16342.png" id="16342" class="WikiImage"/><br />
+Figure 2.</h5>
+
+<h3><a id="Notes%3A" class="HashLink" href="#Notes%3A"><strong>Notes:</strong></a></h3>
+
+<p>1. The time expiration criteria for "Oauth Token Expire" is different from the web session expiration timeout. The latter involves idle time, and the former is related to elapsed time.</p>
+
+<p>2. Remember that all the Security Policies and Repository configuration can be done through the <a href="16535.html">GAM API</a>.<br />
+Ex: The following code creates a Security Policy and sets SessionTimeout and Oauth Token Expire.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SecurityPolicy.Id = &amp;Id  //&amp;SecurityPolicy is GAMSecurityPolicy Type
+&amp;SecurityPolicy.Name     = "TESTSecurityPolicy"
+&amp;SecurityPolicy.WebSessionTimeOut   = 10 
+&amp;SecurityPolicy.OauthTokenExpire  = 15
+&amp;SecurityPolicy.Save()
+if &amp;SecurityPolicy.Success()
+  commit
+else
+  &amp;Errors = &amp;SecurityPolicy.GetErrors() //&amp;Errors is GAMError collection type
+  For &amp;Error in &amp;Errors
+   Msg(Format("%1 (GAM%2)", &amp;Error.Message, &amp;Error.Code))
+  EndFor
+endif</pre>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="16052.html">Secure Native Mobile applications architecture</a><br />
+<a href="16414.html">Anonymous Sessions in GAM - Web Applications</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18521.html">GAM - Security Policies</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="18574.html">Going into production: checklist for Applications using GAM</a></TD></TR><TR><TD><a href="18577.html">Oauth token expire (minutes)</a></TD><TD><a href="19324.html">Oauth token maximum renovations</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 01:58 PM</em></font></td></TR></table></font>

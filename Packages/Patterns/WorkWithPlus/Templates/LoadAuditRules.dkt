@@ -1,0 +1,23 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Export Procedure Rules" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace ="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace ="Artech.Common.Collections" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	Transaction transaction = wwInstance.Transaction.Transaction;
+	string parm = "parm(in:&SaveOldValues, inout:&AuditingObject, ";
+	foreach (TransactionAttribute att in transaction.Structure.Root.PrimaryKey)
+	{
+		parm += "in: &" + att.Attribute.Name + ", ";
+	}
+	parm += "in:&ActualMode);";
+%>
+<%= parm %>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Image data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15204,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Image data type</h1>
+<!--Image data type--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The purpose of this data type is to store or reference any type of image files (jpg, bmp, png, etc).</p>
+
+<p>Images can be stored in any of the databases supported by GeneXus without having to specify the file name or type (jpg, bmp, etc.).</p>
+
+<p>An image can be loaded from both an image predefined in the <a href="2428.html">KB</a> (using the FromImage method) and a URL (local or remote using the FromURL method). If the value sent to FromURL is a remote URL, the image will be downloaded and saved in the DB upon making an Insert. If what is needed is just a reference to the Image stored in a local or remote location, the ImageURI property has to be assigned.</p>
+
+<p>Therefore, any image can be displayed by dragging any variable or attribute defined with the Image data type to the form. In other words, GeneXus performs the image rendering without any intervention from the user.</p>
+
+<h3><a id="Properties" class="HashLink" href="#Properties">Properties</a></h3>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 1000.0px;">
+	<tbody>
+		<tr>
+			<td>ImageName</td>
+			<td>Gets the image name (Character).</td>
+		</tr>
+		<tr>
+			<td>ImageType</td>
+			<td>Gets the Image Type. The Image Type Domain is the extension of the image. For example: jpg, ico, png, etc.</td>
+		</tr>
+		<tr>
+			<td>ImageURI</td>
+			<td>
+			<p>Sets/Gets the Image URL</p>
+
+			<div class="im" style="color: rgb(80,0,80);">
+			<p><b>Set</b></p>
+
+			<p>You can set a relative path, which will be resolved with the current host.</p>
+
+			<p>You can set an absolute path to an external image on the web.</p>
+			</div>
+
+			<p>You can set a local path by using file:// protocol</p>
+
+			<p>When you set the ImageURI property, the internal Blob with the image will be set to empty.</p>
+
+			<div class="im" style="color: rgb(80,0,80);">
+			<p>For example:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;image.FromImage(myImageWillbeErasedInNextLine)
+&amp;image.ImageURI = &quot;http://www.myimages/image.jpg&quot;</pre>
+
+			<p>In this case, image.jpg will be the image in the data.</p>
+
+			<p><b>Get:</b></p>
+
+			<p>GeneXus always returns the absolute URL to the image.</p>
+			</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>*These properties are inaccessible by Smart Devices events</p>
+
+<h3><a id="Methods" class="HashLink" href="#Methods">Methods</a></h3>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 1000.0px;">
+	<tbody>
+		<tr>
+			<td>FromImage(<i>imageobjectname</i>)</td>
+			<td>
+			<p>Loads the current instance with the image given in the Image Object parameter</p>
+
+			<p>After calling this method the ImageURI property has the following value:</p>
+
+			<p>&lt;imageobjectname&gt;.&lt;extension&gt;</p>
+
+			<p>The &lt;imageobjectname&gt;.&lt;extension&gt; is calculated by GeneXus depending on the theme and language.</p>
+			</td>
+		</tr>
+		<tr>
+			<td>FromURL(<i>imageURL</i>)</td>
+			<td>
+			<p>Loads the current instance with the image given in the <em>ImageURL</em> parameter.</p>
+
+			<p>This indicates that the internal Blob holding the image must be loaded from the URI indicated in the <em>ImageURL</em> parameter.</p>
+
+			<p>After calling this method, the ImageURI property has the absolute URL to the image.</p>
+
+			<p>For example:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;image.FromURL('www.myimage.com/company.jpg')
+msg(&amp;image.ImageURI)  // will print www.myimage.com/company.jpg</pre>
+
+			<p><strong>Note:</strong> The image will be downloaded from the URL specified and will be automatically stored in the database (applies only to attributes).</p>
+			</td>
+		</tr>
+		<tr>
+			<td>SetEmpty/IsEmpty</td>
+			<td>Returns True if there aren´t an image or a reference to an a stored image.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<h4><a id="1.+Structuring" class="HashLink" href="#1.+Structuring">1. Structuring</a></h4>
+
+<p>A company wants to save photos of its employees; to do so, you only have to write the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+EmployeeId     Numeric(4.0)
+EmployeeName   Character
+EmployeeImage  Image
+</pre>
+
+<p>In the EmployeImage field, any type of photos can be saved (jpg, png, etc).</p>
+
+<h4><a id="2.+Inserting+an+image+into+the+DB+from+an+existing+image+in+my+KB" class="HashLink" href="#2.+Inserting+an+image+into+the+DB+from+an+existing+image+in+my+KB">2. Inserting an image into the DB from an existing image in my KB</a></h4>
+
+<p>The FromImage method can only be used when extracting an image from a known KB. Suppose you have an image in your KB called CompanyNameImage.</p>
+
+<p>So, you write the following code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Company.CompanyId = 1
+&amp;Company.CompanyLogo.FromImage(CompanyNameImage)
+&amp;Company.Save()</pre>
+
+<h4><a id="3.+Inserting+an+image+into+the+DB+from+an+existing+URL" class="HashLink" href="#3.+Inserting+an+image+into+the+DB+from+an+existing+URL">3. Inserting an image into the DB from an existing URL</a></h4>
+
+<p>Suppose you have an image in your file system or in a web URL and you want to store it in your database. Your image is <a>file:///c:/myfolder/logo.jpg</a> (the URL must be accessible from your server if it is a local URL).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Company.CompanyId = 1
+&amp;Company.CompanyLogo.FromURL('file:///c:/myfolder/logo.jpg')
+&amp;Company.Save()</pre>
+
+<h4><a id="4.+Inserting+a+reference+into+the+DB+from+an+external+image" class="HashLink" href="#4.+Inserting+a+reference+into+the+DB+from+an+external+image">4. Inserting a reference into the DB from an external image</a></h4>
+
+<p>You want to reference an external image:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Company.CompanyId = 1
+&amp;Company.CompanyLogo.ImageURI = 'http://www.events.genexus.com/gxdis/style000001/s/00000000160000003715.jpg'
+&amp;Company.Save()</pre>
+
+<h4><a id="5.+How+to+convert+from+Blob+to+Image+in+your+DB" class="HashLink" href="#5.+How+to+convert+from+Blob+to+Image+in+your+DB">5. How to convert from Blob to Image in your DB</a></h4>
+
+<p>Most likely, you have many Blob attributes in your DB to store images and you want to start using the new data type.</p>
+
+<p>The only thing you have to do is change the type from Blob to Image in your attribute definition and GeneXus will perform a reorganization, taking into account the FileType, FileTypeAttribute and FileNameAttribute properties.</p>
+
+<h4><a id="6.+How+to+convert+from+Blob+to+Image+and+vice+versa+programmatically" class="HashLink" href="#6.+How+to+convert+from+Blob+to+Image+and+vice+versa+programmatically">6. How to convert from Blob to Image and vice versa programmatically</a></h4>
+
+<p>You can directly assign a Blob to an Image and vice versa. Remember that the conversion from Blob to Image will work depending on the kind of mime type of your Blob and the FileType, FileTypeAttribute and FileNameAttribute properties. In some cases, it may happen that the image is not displayed in the user interface.</p>
+
+<h4><a id="7.+How+to+convert+from+Char+VarChar+to+Image+in+my+DB" class="HashLink" href="#7.+How+to+convert+from+Char+VarChar+to+Image+in+my+DB">7. How to convert from Char|VarChar to Image in my DB</a></h4>
+
+<p>In some cases we could have a Character attribute in our DB with URL. What would happen if you wanted to start using the new image data type without losing your existing data?</p>
+
+<p>GeneXus supports the reorganization from Char|VarChar to Image and vice versa.</p>
+
+<h3><a id="Image+in+data+base" class="HashLink" href="#Image+in+data+base">Image in data base</a></h3>
+
+<p>The image is stored in the data base as 2 separate fields. One is a Blob, and the other is a string with same name and postfix &quot;_GXI&quot;. The composition of this field is explained in <a href='http://www2.gxtechnical.com/portal/hgxppredirect.aspx?15,26,0,,,31266'>SAC 31266</a>.</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 300.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td>Attributes, Variables</td>
+		</tr>
+		<tr>
+			<td><strong>Languages</strong></td>
+			<td>.NET, Java, Ruby (up to GeneXus X Evolution 3), Visual FoxPro (up to GeneXus X Evolution 3)</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="39415.html">Image manipulation API</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31350.html">Actions external object</a></TD><TD><a href="30041.html">Audio external object</a></TD><TD><a href="6704.html">Blob data type</a></TD></TR><TR><TD><a href="40420.html">BlobFile data type</a></TD><TD><a href="31296.html">Camera external object</a></TD><TD><a href="40171.html">Classify procedure</a></TD></TR><TR><TD><a href="31276.html">Contacts external object</a></TD><TD><a href="20117.html">Customization of Multimedia Fields</a></TD><TD><a href="40654.html">Data Type Filter property</a></TD><TD><a href="7232.html">Data Type property</a></TD></TR><TR><TD><a href="6779.html">Data types list</a></TD><TD><a href="46871.html">DesignOps - Guide for designers</a></TD><TD><a href="40177.html">DetectFaces procedure</a></TD><TD><a href="40178.html">DetectObjects procedure</a></TD></TR><TR><TD><a href="40179.html">DetectScene procedure</a></TD><TD><a href="31120.html">External Storage for Multimedia</a></TD><TD><a href="38432.html">Facebook external object</a></TD><TD><a href="9644.html">FromURL method</a></TD></TR><TR><TD><a href="17823.html">HowTo: Use the Image Map Control</a></TD></TR><TR><TD><a href="26933.html">HowTo: Using PhotoLibrary external object for Smart Devices</a></TD><TD><a href="45373.html">Image Annotations</a></TD></TR><TR><TD><a href="39415.html">Image manipulation API</a></TD><TD><a href="20460.html">Image theme-class</a></TD><TD><a href="5952.html">Impact Analysis Error Codes and Messages</a></TD></TR><TR><TD><a href="45291.html">Load balancing considerations</a></TD><TD><a href="22543.html">Manual Synchronization Code Sample</a></TD><TD><a href="44940.html">Maximum Upload Size property</a></TD><TD><a href="24115.html">Medium Image Upload Size property</a></TD></TR><TR><TD><a href="40180.html">OCR procedure</a></TD><TD><a href="39397.html">PhotoLibrary external object</a></TD><TD><a href="42213.html">Pin Image Attribute property</a></TD><TD><a href="42214.html">Pin Image Field Specifier property</a></TD></TR><TR><TD><a href="32755.html">Purpose Strings properties group</a></TD><TD><a href="29800.html">Share external object</a></TD><TD><a href="24116.html">Small Image Upload Size property</a></TD></TR><TR><TD><a href="39432.html">Twitter external object</a></TD><TD><a href="32213.html">Using appcfg to upload an application to Google App Engine</a></TD><TD><a href="17812.html">Visible property (in run-time for Smart Devices)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

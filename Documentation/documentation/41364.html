@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Manage the Context of the conversation through the Chatbot API</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?41364,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Manage the Context of the conversation through the Chatbot API</h1>
+<!--HowTo: Manage the Context of the conversation through the Chatbot API--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The following API allows managing the <a href="39351.html">Context</a> values of a chatbot conversation. It consists of API methods to get, add, and update the Context values of a specific conversation as well as all the conversations that are active.</p>
+
+<p>This is very useful to avoid having to call a service every time you need some values that should be persisted in the conversation. For instance, some information is specific to a conversation, such as a User's account data (name, ID, and other information needed), and should be maintained during the conversation without the need to call any service or prompt the user to enter it.</p>
+
+<p>Another example is the information which is global to all conversations. Consider the following example where modifying the context parameters may affect all the chatbots behavior: the human fallback. In this example, it is offer to users the possibility to speak with a person only if there is a connected official to be able to assist them. To avoid calling a service that returns the number of connected officials to find out if it is possible to speak to a person, you can set that amount globally for the context of all conversations. So, when there are changes in the status of those officials, there would be no need to go and query that service.</p>
+
+<p><ul><li><a class="HashLink" href="#User+Context+Management">User Context Management</a></li><ul><li><a class="HashLink" href="#Get">Get</a></li><li><a class="HashLink" href="#Set">Set</a></li><li><a class="HashLink" href="#Clean">Clean</a></li><li><a class="HashLink" href="#Example+">Example </a></li></ul></li><li><a class="HashLink" href="#Global+Context+Management">Global Context Management</a></li><ul><li><a class="HashLink" href="#Get">Get</a></li><li><a class="HashLink" href="#Set">Set</a></li><li><a class="HashLink" href="#Clean">Clean</a></li><li><a class="HashLink" href="#Example">Example</a></li></ul></li><li><a class="HashLink" href="#Implementation+Details">Implementation Details</a></li></ul></ul></p>
+
+<h2><a id="User+Context+Management" class="HashLink" href="#User+Context+Management">User Context Management</a></h2>
+
+<h3><a id="Get" class="HashLink" href="#Get">Get</a></h3>
+
+<p>It allows getting the context value for a specific conversation.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ParameterValue = Chatbot.Context.GetUserContextValue(&amp;Instance, &amp;UserGuid, &amp;Parameter, &amp;Messages)</pre>
+
+<p>Where</p>
+
+<ul>
+	<li>&amp;Instance is a character parameter that denotes the <a href="37113.html">Conversational Flows object</a> name</li>
+	<li>&amp;UserGuid. It's a GUID variable, which identifies the user of the chatbot. See the GetUserId procedure included in the Data folder (under the <a href="39998.html">Chatbot Generator resources</a> CommonChatbots module) which includes an example assigning a hard-coded sample user. </li>
+	<li>&amp;Parameter is a character value. </li>
+	<li>&amp;ParameterValue is a character value.</li>
+	<li>&amp;Messages is Messages Data type. See <a href="42695.html">Chatbot Generator common errors and solutions</a> to have details about the values which can take the &amp;Messages parameter.</li>
+</ul>
+
+<h3><a id="Set" class="HashLink" href="#Set">Set</a></h3>
+
+<p>Set the context value for a specific conversation.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Chatbot.Context.SetUserContextValue(&amp;Instance, &amp;UserGuid, &amp;Parameter, &amp;ParameterValue)</pre>
+
+<p>Note: SetUserContextValue cannot be used inside a Conversational object.</p>
+
+<h3><a id="Clean" class="HashLink" href="#Clean">Clean</a></h3>
+
+<p>Clean all the context content, for a specific conversation.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Chatbot.Context.CleanUserContext(&amp;Instance, &amp;UserGuid)</pre>
+
+<h3><a id="Example+" class="HashLink" href="#Example+">Example </a></h3>
+
+<p>I. The information of the user' profile (i.e: name, address, phone) can be obtained at login. Then, you can set there all the information in the user's context.</p>
+
+<p>That information can be retrieved afterwards, when it's needed, for example, in any <a href="38189.html">Conversational Object</a>.</p>
+
+<p>II. You can pass information from one Flow to another, by the user's context parameters retrieval. Suppose, for example, that you have a <a href="38959.html">User Input</a> to ask for the User Identification in a Flow. In a <a href="38189.html">Conversational Object</a> of another Flow, you can get that information if it's necessary.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ParameterValue = Chatbot.Context.GetUserContextValue(&amp;Instance, &amp;UserGuid, !&quot;UserIdentification&quot;,&amp;Messages)</pre>
+
+<h2><a id="Global+Context+Management" class="HashLink" href="#Global+Context+Management">Global Context Management</a></h2>
+
+<h3><a id="Get" class="HashLink" href="#Get">Get</a></h3>
+
+<p>Get the context value set for all the conversations.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ParameterValue = Chatbot.Context.GetContextValue(&amp;Instance, &amp;Parameter, &amp;Messages)</pre>
+
+<h3><a id="Set" class="HashLink" href="#Set">Set</a></h3>
+
+<p>Set a context value, valid for all the conversations.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Chatbot.Context.SetContextValue(&amp;Instance, &amp;Parameter, &amp;ParameterValue)</pre>
+
+<h3><a id="Clean" class="HashLink" href="#Clean">Clean</a></h3>
+
+<p>Clean all the context content valid for all conversations.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Chatbot.Context.CleanContext(&amp;Instance)</pre>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Consider a <a href="38531.html">Flow</a> where the user asks for the availability of free tickets for an activity or a trip.</p>
+
+<p>The response to the user is the available quota.</p>
+
+<p><img src="./images/41368.png" id="41368" class="WikiImage"/></p>
+
+<p>That information is updated through a web service which is called from a Backend, where the following code is executed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Instance = !&quot;Citizen&quot;
+Chatbot.Context.SetContextValue(&amp;Instance, !&quot;quota&quot;, &amp;value)</pre>
+
+<p>In the <a href="38189.html">Conversational Object</a> of the Flow, the value of &amp;quota is obtained and returned as an out parameter:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Instance = !&quot;Citizen&quot;   
+&amp;Parameter = !&quot;quota&quot;         
+&amp;quota = Chatbot.Context.GetContextValue(&amp;Instance, &amp;Parameter, &amp;Messages)
+&lt;Rules&gt;
+parm(out:&amp;quota);
+</pre>
+
+<h2><a id="Implementation+Details" class="HashLink" href="#Implementation+Details">Implementation Details</a></h2>
+
+<p><br />
+The context information is stored in the GXChatMessage table that is provided by default with the Chatbot Generator (as part of its <a href="39998.html">resources</a>). In turn, the user has two procedures in the CommonChatbots module (GetContext and SetContext), which are the ones that update / get the context from this table. Those procedures can be edited: if you do not want to store the data in the way provided, it is possible to change it.</p>
+
+<p>Global context information is handled in the cache, as well as the user information when a conversation does not yet exist for that user. For example, when the user logs in, and you get the user's profile data, that information can be stored in the context even though the user hasn't started to chat yet. </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46255.html">KB:Chatbot : handover to a human agent</a></TD><TD><a href="39351.html">Chatbot Context</a></TD></TR><TR><TD><a href="42695.html">Chatbot Generator common errors and solutions</a></TD><TD><a href="39998.html">Chatbot Generator resources update</a></TD><TD><a href="38520.html">Toc:Chatbots in GeneXus</a></TD></TR><TR><TD><a href="42594.html">Validation Procedure property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/28/21 03:29 PM</em></font></td></TR></table></font>

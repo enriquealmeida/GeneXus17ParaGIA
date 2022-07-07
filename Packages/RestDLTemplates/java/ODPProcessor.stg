@@ -1,0 +1,101 @@
+﻿group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities,  dpfunctions, apis, sdts, gx)::=<<
+$header(hostinfo, entities,  dpfunctions, apis, sdts, gx)$
+>>
+
+header(hostinfo, entities,  dpfunctions, apis, sdts, gx)::=<<
+
+package $hostinfo.package$;
+
+import java.io.InputStream;
+import java.net.*;
+import java.util.List;
+import java.util.Locale;
+
+import com.genexus.internet.*;
+import com.genexus.*;
+
+import org.apache.olingo.commons.api.data.*;
+import org.apache.olingo.commons.api.ex.ODataRuntimeException;
+import org.apache.olingo.commons.api.format.ContentType;
+import org.apache.olingo.commons.api.http.HttpHeader;
+import org.apache.olingo.commons.api.http.HttpStatusCode;
+import org.apache.olingo.server.api.*;
+import org.apache.olingo.server.api.serializer.*;
+import org.apache.olingo.server.api.uri.*;
+import org.apache.olingo.commons.api.edm.*;
+import org.apache.olingo.server.api.processor.*;
+
+public class GxPrimitiveProcessor implements PrimitiveProcessor {
+
+    private OData odata;
+    private GxODataLayer dataLayer;
+    private ServiceMetadata serviceMetadata;
+
+    public GxPrimitiveProcessor(GxODataLayer dataLayer) {
+        this.dataLayer = dataLayer;
+    }
+
+    public void init(OData odata, ServiceMetadata serviceMetadata) {
+        this.odata = odata;
+        this.serviceMetadata = serviceMetadata;
+    }
+
+	public void readPrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
+                          throws ODataApplicationException, SerializerException {
+
+         List<UriResource> resourceParts = uriInfo.getUriResourceParts();
+         UriResourceEntitySet uriEntityset = (UriResourceEntitySet) resourceParts.get(0);
+         EdmEntitySet edmEntitySet = uriEntityset.getEntitySet();
+        
+		 List<UriParameter> keyPredicates = uriEntityset.getKeyPredicates();
+
+         UriResourceProperty uriProperty = (UriResourceProperty) resourceParts.get(resourceParts.size() -1);
+         EdmProperty edmProperty = uriProperty.getProperty();
+         String edmPropertyName = edmProperty.getName();
+        
+		 EdmPrimitiveType edmPropertyType = (EdmPrimitiveType) edmProperty.getType();
+
+         Entity entity = this.dataLayer.readEntityData(edmEntitySet, keyPredicates);
+         if (entity == null) { 
+			// Not found
+		    throw new ODataApplicationException("Entity not found",
+                         HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
+         }
+
+         Property property = entity.getProperty(edmPropertyName);
+         if (property == null) {
+              throw new ODataApplicationException("Property not found",
+                         HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
+         }
+
+         Object value = property.getValue();
+         if (value != null) {
+
+              ODataSerializer serializer = odata.createSerializer(responseFormat);
+              ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).navOrPropertyPath(edmPropertyName).build();
+              PrimitiveSerializerOptions options = PrimitiveSerializerOptions.with().contextURL(contextUrl).build();
+              SerializerResult serializerResult = serializer.primitive(serviceMetadata, edmPropertyType, property, options);
+              InputStream propertyStream = serializerResult.getContent();
+
+              response.setContent(propertyStream);
+              response.setStatusCode(HttpStatusCode.OK.getStatusCode());
+              response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+		}
+		else{
+               response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());
+		}
+	}
+
+	public void deletePrimitive(ODataRequest request,ODataResponse response,UriInfo uriInfo) {
+	
+	}
+
+	public void updatePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat, ContentType responseFormat) {
+	
+	}
+}
+>>

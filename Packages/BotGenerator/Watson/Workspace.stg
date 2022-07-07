@@ -1,0 +1,143 @@
+delimiters "$", "$"
+
+init(ws, today)::=<<
+{
+	"name": "$ws.Name$",
+	"created": "$today$",
+	"intents": [ 
+		$defaultFallbackIntent()$,	
+		$ws.WatsonIntents:{intent|$intent(intent)$};separator="\r\n,"$ 
+	],
+	"entities": [ $ws.WatsonEntitiesToJson:{entity|$entity(entity)$};separator="\r\n,"$ ],
+	"language": "$ws.InternalInstanceLanguageTag$",
+	"metadata": null,
+	"description": "$ws.Name$",
+	"dialog_nodes": [
+	$ws.WatsonDialogs:{dialog|$dialog(dialog)$};separator=",\r\n"$,
+	$anything_else(ws)$
+	],
+	"workspace_id": "$ws.Id$",
+	"counterexamples": [],
+	"system_settings": 
+	{
+		$disambiguation(ws)$
+	}
+}
+>>
+
+disambiguation(ws)::=<<
+"disambiguation": 
+{
+	"prompt": "$ws.DisambiguationMessage$",
+	"enabled": $ws.IsDisambiguationEnabled$,
+	"randomize": true,
+	"suggestion_text_policy": "title",
+	"none_of_the_above_prompt": "$ws.DisambiguationCancellationMessage$"
+}
+>>
+
+entity(entity)::=<<
+	{
+		"type": null,
+		"entity": "$entity.Name$",
+		"source": $NullIfEmptyString(entity.Source)$,
+		"values": [ $entity.Values:{value|$values(value)$};separator="\r\n,"$ ],
+		"created": "$today$",
+		"updated": "$today$",
+		"open_list": false,
+		"description": "$entity.Description$",
+		"fuzzy_match": $entity.FuzzyMatch$
+	}
+
+>>
+
+defaultFallbackIntent()::=<<
+	{
+		"intent": "gx_anything_else",
+		"created": "$today$",
+		"updated": "$today$",
+		"examples": [],
+		"description": "gx_anything_else"
+	}
+
+>>
+
+intent(intent)::=<<
+	{
+		"intent": "$intent.Name$",
+		"created": "$today$",
+		"updated": "$today$",
+		"examples": [ $intent.DialogsTriggers:{example|$intent_example(example)$};separator="\r\n,"$ ],
+		"description": "$intent.Name$"
+	}
+
+>>
+
+intent_example(example)::=<<
+		{
+			"text": "$example.Message$",
+			"created": "$today$",
+			"updated": "$today$"
+		}
+
+>>
+
+dialog(dialog)::=<<
+{
+	$if(dialog.DigressionValue)$"digress_in": "$dialog.DigressionValue$",$endif$
+	"go_to": $if(dialog.Goto)$$dialog_goto(dialog.Goto)$$else$null$endif$,
+	"output": $if(dialog.Output)${ "text" : {"values":[$dialog_output(dialog.Output)$], "selection_policy": "random"}}$else$null$endif$,
+	"parent": $NullIfEmptyString(dialog.Parent)$,
+	"context": $if (dialog.context)$$dialog_context(dialog.context)$$else$null$endif$,
+	"created": "$today$",
+	"updated": "$today$",
+	"metadata": $NullIfEmptyString(dialog.Metadata)$,
+	"conditions": "$dialog.Conditions$",
+	"description": "$dialog.Description$",
+	"dialog_node": "$dialog.DialogNode$",
+	"previous_sibling": $NullIfEmptyString(dialog.PreviousSibling)$,
+	"disambiguation_opt_out": $if(dialog.IsDisambiguationDialog)$false$else$true$endif$,
+	"user_label": "$dialog.DialogNodeDescription$"
+}
+>>
+
+dialog_context(context)::=<<
+	{
+		$context.Props:{property|"$property$": $EmptyStringIfNull(context.Props.(property))$};separator=",\r\n"$
+	}
+>>
+
+dialog_output(output)::=<<
+	$output.Text:{message|$messages(message)$};separator=","$
+>>
+
+messages(message)::=<<
+	"$message$"
+>>
+dialog_goto(goto)::=<<
+	{
+		"return": $NullIfEmptyString(goto.Return)$,
+		"selector": $NullIfEmptyString(goto.Selector)$,
+		"dialog_node": $NullIfEmptyString(goto.DialogNode)$
+	}
+>>
+
+EmptyStringIfNull(value)::=<<
+$if(value)$$value$$else$""$endif$
+>>
+
+NullIfEmptyString(value)::=<%
+$if(value)$"$value$"$else$null$endif$
+%>
+
+NullIfEmpty(value)::=<%
+$if(value)$$value$$else$null$endif$
+%>
+
+values(value)::=<<
+	{
+        "value": "$value.Value$",
+        "metadata": null,
+        "synonyms": [$value.Synonyms:{syn|"$syn$"};separator="\r\n,"$]
+	}
+>>

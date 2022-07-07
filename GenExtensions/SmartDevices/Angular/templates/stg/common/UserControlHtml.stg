@@ -1,0 +1,74 @@
+delimiters "$", "$"
+
+partTypeHandler ::= [
+  "Variable":     "g_render_variable",
+  "Event":        "g_render_event",
+  "Text":         "g_render_text",
+  "Section":      "g_render_section",
+  "EndSection":   "g_render_end_section",
+  "DataBinding":  "g_render_data_binding",
+  default:        "g_render_default"
+]
+
+eventReservedName ::= [
+    "gxClick": "click",
+    default: key
+]
+
+g_page(page, gx)::=<<
+$page.TemplateParts : { part | $g_render_part(part, gx)$}$
+>>
+
+g_render_part(part, gx) ::=<<
+$(partTypeHandler.(part.PartType))(part, gx)$
+>>
+
+g_render_variable(part, gx) ::=<%
+$if (part.IsInterpolated)$
+{{ $g_render_resolve_variable(part.Path, part.Context)$ }}
+$else$
+$g_render_resolve_variable(part.Path, part.Context)$
+$endif$
+%>
+
+g_render_text(part, gx) ::=<<
+$part.Text$
+>>
+
+g_render_event(part, gx) ::=<<
+($g_uc_eventname(part.ComponentEventName)$)="this.$part.ComponentEventHandler$(\$event)"
+>>
+
+g_render_section(part, gx) ::=<<
+<ng-template ngFor let-$part.ItemName$ [ngForOf]="arrayify($g_render_resolve_variable(part.Section, part.Context)$)">
+  $part.Parts : { childPart | $g_render_part(childPart, gx)$}$
+>>
+
+g_render_end_section(part, gx) ::=<<
+</ng-template>
+>>
+
+g_render_resolve_variable(variableName, context)::=<%
+resolveVariable('$variableName$', [$reverse(context) : { contextItem | $contextItem$};separator=", "$])
+%>
+
+g_render_data_binding(part, gx) ::=<%
+$if (part.IsDefault)$
+[(ngModel)]="databindingvalue"
+(ngModelChange)="handledatabindingvalueChange(\$event)"
+$else$
+[$part.Property$]="databindingvalue" 
+(input)="
+  databindingvalue = \$event.target.$part.Property$;
+  handledatabindingvalueChange(databindingvalue);
+"
+$endif$
+%>
+
+g_render_default(part, gx) ::=<<
+<!-- Unhandled template part ($part.PartType$) -->
+>>
+
+g_uc_eventname(evtName) ::= <%
+$eventReservedName.(evtName)$
+%>

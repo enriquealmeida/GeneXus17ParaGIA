@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Security Web Development tips</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31506,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Security Web Development tips</h1>
+<!--Security Web Development tips--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>There are some tips and things to consider, regarding security, when developing a web application.<br />
+In this document, we gather some of them.</p>
+
+<h2><a id="Overview" class="HashLink" href="#Overview">Overview</a></h2>
+
+<p>There are three types of actions that can be made to handle a security risk in a GeneXus application. In most cases, the three of them play an important role in the development and distribution of a secure web application.</p>
+
+<ul>
+	<li>
+	<h4><a id="Actions+handled+by+GeneXus" class="HashLink" href="#Actions+handled+by+GeneXus">Actions handled by GeneXus</a></h4>
+	</li>
+</ul>
+
+<p>These are actions automatically handled by GeneXus at generation time. Some examples are as follows: GeneXus generates parameterized SQL sentences to avoid SQL injection. Also, it generates automatic security checks for each HTTP Post to detect whether read-only data has been changed. </p>
+
+<ul>
+	<li>
+	<h4><a id="Things+to+be+considered+by+the+GeneXus+user" class="HashLink" href="#Things+to+be+considered+by+the+GeneXus+user">Things to be considered by the GeneXus user</a></h4>
+	</li>
+</ul>
+
+<p>User actions when programming in GeneXus. These actions should be taken into account by the GeneXus developer when performing development tasks.</p>
+
+<ul>
+	<li>
+	<h4><a id="User+actions+outside+GeneXus" class="HashLink" href="#User+actions+outside+GeneXus">User actions outside GeneXus</a></h4>
+	</li>
+</ul>
+
+<p>These actions are the responsibility of the people in charge of infrastructure (for example, server configuration).</p>
+
+<h2><a id="Rationale" class="HashLink" href="#Rationale">Rationale</a></h2>
+
+<p>Although GeneXus handles many actions automatically, the developer has to consider some aspects regarding security, and they both have to be combined to obtain a web application where no security fails can be found.</p>
+
+<p>First of all, you must read <a href="https://wiki.genexus.com/commwiki/wiki?21889,," target="_blank">Managing OWASP 2013 Top 10 Security Risks in GeneXus Applications</a>, <a href="https://wiki.genexus.com/commwiki/wiki?39915,," target="_blank">Managing OWASP Top 10 2017 in GeneXus Applications</a></p>
+
+<h3><a id="Protecting+sensitive+data+used+client+side" class="HashLink" href="#Protecting+sensitive+data+used+client+side">Protecting sensitive data used client side</a></h3>
+
+<p>Sometimes, sensitive data (such as credit cards, user IDs, etc) need to be exposed because they are used to perform some actions on the client-side.<br />
+Here we focus on the scenario where this data is not expected to be entered or modified by the user. If it is, other security mechanisms should be considered, such as having a login process and using secure channel communication.</p>
+
+<p>The data that is transmitted from the client to the server should always be validated server-side.<br />
+The <a href="8068.html">Encrypt URL parameters property</a> is only used for masking the parameters, and should not be used as the basis of security features.</p>
+
+<p>Besides, the validation of data input is not enough if it's done client side. Client side validations are for the purpose of making a more usable UI.</p>
+
+<p>There are three types of data:</p>
+
+<ol>
+	<li>Data that can be modified by the client. This scenario is out of the scope of this section.<br />
+	 </li>
+	<li>Data that should be shown to the client, but cannot be modified.<br />
+	<br />
+	For example, in a funds transfer, the sender's account is shown to the user, so he can select from a combo box the account from where to make the transfer. However, the information should be checked server side again, to verify that the account belongs to the user who is logged in. The <span style="background-color: rgb(245,246,245);">GeneXus user is responsible for performing this </span>check.<br />
+	 </li>
+	<li>Data that should neither be visible nor modifiable by the client. <br />
+	<br />
+	For example, when transferring data that is needed to perform an action, but that the user shouldn't be allowed to access, even for reading. This kind of data must not be included in the form. The <a href="8849.html">Visible property</a> is a UI property and should not be used for security purposes. It should only be used in the user interface. Even though the data is included in the form and hidden, it is persisted in the HTML, so it's accessible.<br />
+	<br />
+	This data shouldn't be retrieved in user events of the web panel. Nevertheless, related security improvements have been done in <a href="https://wiki.genexus.com/commwiki/wiki?33413,," target="_blank">GeneXus X Evolution 3 Upgrade 13</a> and <a href="https://wiki.genexus.com/commwiki/wiki?33278,," target="_blank">GeneXus 15 Upgrade 3</a> (<a href='https://www.genexus.com/developers/websac?en,,,40775&quot;'>SAC #40775</a>). Procedures or data providers accessing it should be used instead. </li>
+</ol>
+
+<p>Let's call the issues 2 and 3 &quot;read-only sensitive data issues&quot;.</p>
+
+<h3><a id="Some+tips+on+the+read-only+sensitive+data" class="HashLink" href="#Some+tips+on+the+read-only+sensitive+data">Some tips on the read-only sensitive data</a></h3>
+
+<p>1. When the data is part of the parameters of the web panel, consider using the IN operator in the <a href="6862.html">Parm rule</a>.</p>
+
+<p>The IN operator prevents the developer from changing the parameters by code. Besides, in runtime, the IN parameters cannot be changed in transit, otherwise, if someone tries to do it, an <strong>HTTP 403 error</strong> is thrown. This is valid for data which is displayed on the screen or not.</p>
+
+<p>Notes:<br />
+For Smooth <a href="22449.html">Web User Experience</a> this is available as since GeneXus 15.<br />
+In the case of GeneXus Evolution 3 and Previous Versions Compatible Web User Experience see <a href='https://www.genexus.com/developers/websac?en,,,39716;;'>SAC #39716</a>.</p>
+
+<p>2. Regarding read-only data on the screen which is not modifiable, GeneXus adds automatic security checks in Web Transactions and Web Panels (including Web Components and Master Pages), which prevent read-only sensitive data from being changed. If it is changed, the POST is canceled and throws an HTTP 403 error.<br />
+In Web transactions, the condition for an attribute to be considered as read-only sensitive data is to have: </p>
+
+<ul>
+	<li>An unconditional <a href="6856.html">NoAccept rule</a> for this attribute or</li>
+	<li>A <a href="6856.html">NoAccept rule</a> conditioned to the mode (the mode is received as a parameter)</li>
+	<li>The transaction's key must not be included in the form.</li>
+</ul>
+
+<p>If the web transaction adds a noaccept <span style="background-color: rgb(245,246,245);">rule</span><span style="background-color: rgb(245,246,245);"> </span>and the attribute is enabled in any event, the following spec message could be thrown, warning that an HTTP 403 error may be thrown at runtime: <strong> spc0204</strong> : ''Enabled'' property assignment over attribute %1%2 conflicts with ''%3'' rule.'</p>
+
+<p>In Web Panels, any variable which participates in a rule like the following:  noaccept(&amp;var) is checked to not change in runtime. The same happens to read-only controls (controls which have <a href="8826.html">ReadOnly property</a> = Yes at design-time).</p>
+
+<p>For these security checks, we use a session key that is the same as the one taken from the <a href="8068.html">Encrypt URL parameters property</a> when it's set to Session Key value.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="25356.html">Security concerns in Smooth models</a><br />
+<a href="24746.html">GeneXus Access Manager (GAM)</a><br />
+Troubleshooting: <a href='https://www.genexus.com/developers/websac?en,,,41179;;'>SAC 41179</a></p>
+
+<p>   </p>
+<br />
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25356.html">Security concerns in Smooth models</a></TD></TR><TR><TD><a href="45483.html">What is error 403?</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

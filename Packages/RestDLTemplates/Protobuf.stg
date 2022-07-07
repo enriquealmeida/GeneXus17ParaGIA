@@ -1,0 +1,110 @@
+group ApiDocYaml;
+
+delimiters "$", "$"
+
+init(hostinfo, entities,  apis, sdts, gx)::=<<
+$header(hostinfo, entities,   apis, sdts, gx)$
+>>
+
+header(hostinfo, entities,  apis, sdts, gx)::=<<
+
+syntax = "proto3";
+
+$apis:{api| $api_proto(api, gx)$};separator="\n"$
+
+$sdts:{item| $sdt_proto_def(item,gx)$};separator="\n"$
+>>
+
+api_proto(api, gx)::=<<
+option java_multiple_files = true;
+option java_outer_classname = "$gx.ToLower.(api.Name)$Proto";
+option csharp_namespace = "$hostinfo.netnamespace$";
+option java_package = "$hostinfo.package$$api.ModulePoint$.grpc";
+
+$if (api.HasDateTime)$import "google/protobuf/timestamp.proto";$endif$
+$if (api.HasEmptyGrpcParameter)$import "google/protobuf/empty.proto";$endif$
+
+package $api.GrpcNameSpace$;
+
+service $api.Name$ {
+  $api.EntryPointMethods:{mth|rpc $mth.GrpcName$ ( $if (mth.HasInParameters)$$gx.ToProper.(mth.GrpcName)$Request$else$google.protobuf.Empty$endif$ ) returns ( $if (mth.HasOutParameters)$$gx.ToProper.(mth.GrpcName)$Reply$else$google.protobuf.Empty$endif$); };separator="\n"$
+}
+
+$api.EntryPointMethods:{mth|$mthrequest(mth,gx)$};separator="\n"$
+
+$api.EntryPointMethods:{mth|$mthreply(mth,gx)$};separator="\n"$
+
+>>
+
+mthrequest(mth,gx)::=<<
+$if (mth.HasInParameters)$
+message $gx.ToProper.(mth.GrpcName)$Request {
+  $ep_inputpars(mth,gx)$
+}
+$endif$
+>>
+
+mthreply(mth,gx)::=<<
+$if (mth.HasOutParameters)$
+message $gx.ToProper.(mth.GrpcName)$Reply {
+  $ep_outputpars(mth,gx)$
+}
+$endif$
+>>
+
+ep_inputpars(mth, gx)::=<<
+$mth.InParameters:{parameter|$dec_ep_parameter(parameter,gx)$ = $i$; };separator="\n"$
+>>
+
+ep_outputpars(mth,gx)::=<< 
+$mth.OutParameters:{parameter|$dec_ep_parameter(parameter,gx)$ = $i$;};separator="\n"$
+>>
+
+dec_ep_parameter(parameter, gx)::=<<
+$if (parameter.IsCollection)$repeated $endif$$parameter.GrpcType$ $gx.ToLower.(parameter.Name)$
+>>
+
+sdt_proto_def(item, gx)::=<<
+message $item.Name$$if(item.SDT.IsCollection)$_$item.SDT.CollectionItemName$$endif$Sdt {
+  $sdt_definition(item, gx)$
+}
+$sub_sdt_definition(item,gx)$
+>>
+
+sdt_definition(entity, gx)::=<<
+$if (entity.SDT && entity.SDT.IsCollection)$$sdt_def_collection(entity, entity.SDT, gx)$$endif$
+$if (entity.SDT && !entity.SDT.IsCollection)$$sdt_def_simple(entity.FullName, entity.SDT, gx)$$endif$
+>>
+
+sdt_def_collection(entity, level, gx)::=<<
+$sdt_def_fields(level, gx)$
+$if (level.SubLevels)$$level.SubLevels:{item| $sdt_sublevel(item.FullName, item, gx, length(level.Attributes), i)$};separator="\n"$$endif$
+>>
+
+sdt_def_simple(fullname, level, gx)::=<<
+$sdt_def_fields(level, gx)$
+$if (level.SubLevels)$$level.SubLevels:{item| $sdt_sublevel(item.FullName, item, gx, length(level.Attributes), i)$};separator="\n"$$endif$
+>>
+
+sdt_def_fields(level, gx)::=<<
+$level.Attributes:{parameter| $parameter.GrpcType$ $parameter.LowerName$ = $i$;};separator="\n"$
+>>
+
+sdt_sublevel( fullname, item, gx, init, step)::=<<
+repeated $item.Name$Sub $gx.ToLower.(item.Name)$ = $gx.Add.(init)$$gx.Add.(step)$$gx.Add.("=")$ ;
+>>
+
+sub_sdt_definition( entity, gx)::=<<
+$if (entity.SDT)$$sub_sdt_def_levels(entity.SDT, gx)$$endif$
+>>
+
+sub_sdt_def_levels( level, gx)::=<<
+$if (level.SubLevels)$$level.SubLevels:{item| $sub_sdt_def_one_level(item.FullName, item, gx)$};separator="\n"$$endif$
+>>
+
+sub_sdt_def_one_level(fullname, level, gx)::=<<
+message $level.Name$Sub {
+  $sdt_def_simple(fullname, level, gx)$
+}
+$if (level.SubLevels)$$level.SubLevels:{item| $sub_sdt_def_one_level(item.FullName, item, gx)$};separator="\n"$$endif$
+>>

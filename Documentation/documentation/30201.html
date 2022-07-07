@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using Global Events in Smart Device applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?30201,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using Global Events in Smart Device applications</h1>
+<!--HowTo: Using Global Events in Smart Device applications--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Usually, in smart device applications, an end-user executes a certain sequence of actions on a panel whose effect should alter the information displayed on another panel once the end-user access it. Here the primary activity is the reaction to the receipt of semantically significant signals (a.k.a. 'events'). This goal can be achieved in GeneXus through the <a href="31164.html">Global Events</a> concept.</p>
+
+<h2><a id="Steps+to+use+them" class="HashLink" href="#Steps+to+use+them">Steps to use them</a></h2>
+
+<p>1) Look for the <a href="31169.html">GlobalEvents external object</a>, under <em>GeneXus/Common</em> folder in the Root Module of the Knowledge Base.<br />
+<img src="./images/30352.png" id="30352" class="WikiImage"/></p>
+
+<p>2) In the Events section, create as many events as you need simply by pressing &quot;Enter&quot; on the node. For each of them you must do two things:</p>
+
+<ul>
+	<li>Set the <strong>Internal Name</strong> property for the new event<br />
+	<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  If you want to trigger this event from an offline procedure you must set the <strong>iOS External Name</strong> and <strong>Android External Name</strong> properties with the same value in lowercase.</div>
+</li>
+	<li>Ensure you have the <strong>Is static</strong> property to <strong>True</strong>.</li>
+</ul>
+
+<p>Optionally, you can enter a parameter sequence and the <a href="25813.html">Domain</a> each one belongs to.</p>
+
+<p><img src="./images/30353.png" id="30353" class="WikiImage"/></p>
+
+<p>3) Once the events are created, you can call or catch them from Panels or Work With for Smart Devices objects, as shown in the Usage Example section below.</p>
+
+<h2><a id="Usage+example" class="HashLink" href="#Usage+example">Usage example</a></h2>
+
+<p>Suppose you have two independent Panels for Smart Devices called “Sender” and “Receiver”. The “Sender” will send information to the “Receiver” to update its data. The following table shows how they interact in this simple example.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="text-align: center;border-bottom: 1.0px solid black;"><strong>SENDER<br />
+			(trigger)</strong></td>
+			<td style="text-align: center;border-bottom: 1.0px solid black;"><strong>RECEIVER<br />
+			(handler)</strong></td>
+		</tr>
+		<tr>
+			<td>- Send a signal</td>
+			<td>- Show how many times it receives the signal</td>
+		</tr>
+		<tr>
+			<td>- Send a Numeric and a String value entered by the user   </td>
+			<td>- Show the last Numeric and String values received</td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><img src="./images/30355.png" id="30355" class="WikiImage"/></td>
+			<td style="text-align: center;"><img src="./images/30356.png" id="30356" class="WikiImage"/></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;vertical-align: top;">
+			<pre class="Code" style="text-align: left;">
+Event 'Signal'
+    GlobalEvents.AnEvent()
+Endevent
+
+Event 'Send'
+   GlobalEvents.AnEventParm(&amp;Numeric,&amp;String)
+Endevent</pre>
+			</td>
+			<td style="text-align: center;vertical-align: top;">
+			<pre class="Code" style="text-align: left;">
+Event ClientStart
+    &amp;Count = 0
+Endevent
+
+Event GlobalEvents.AnEvent()
+    &amp;Count += 1
+Endevent
+
+Event GlobalEvents.AnEventParm(&amp;OneNumeric,&amp;OneString)
+    Composite
+        &amp;Numeric = &amp;OneNumeric
+        &amp;String = &amp;OneString
+    EndComposite
+EndEvent</pre>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Once the “Sender” and “Receiver” panels are designed, you need to create a new panel with two <a href="29811.html">components</a> and embed the panels in them to see the results in-line.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="text-align: center;border-bottom: 1.0px solid black;"><strong>In-line view</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><img src="./images/30357.png" id="30357" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+The final behavior (in an Android device) will be as follows:<br />
+<img src="./images/30358.gif" id="30358" class="WikiImage"/></p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Objects </strong></td>
+			<td><a href="24829.html">Panel for Smart Devices</a>, <a href="15974.html">Work With for Smart Devices</a>, <a href="6293.html">Offline Procedure object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Generators </strong></td>
+			<td>SmartDevices(Android,iOS)</td>
+		</tr>
+		<tr>
+			<td><strong>Connectivity </strong></td>
+			<td>Online, Offline</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This feature is available as from <a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a>.</p>
+
+<ul>
+	<li>Support for triggering global events from Offline procedures in Smart Devices applications is available as of <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a>.</li>
+</ul>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31268.html">GeneXus Core module</a></TD><TD><a href="31164.html">Global Events</a></TD></TR><TR><TD><a href="29811.html">SD Component control</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

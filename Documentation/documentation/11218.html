@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>My first BPM Application</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?11218,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">My first BPM Application</h1>
+<!--My first BPM Application--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>By means of the following example, it is explained that it is a Workflow.</p>
+
+<p>Topic: Booking flight tickets. This process is: Enter the reservation data through an operator; if the customer is not registered, the system automatically does it. Next, an availability check is made and if the result of this check is positive, the process is completed. Otherwise, the control is returned to the first item, where the details can be changed.</p>
+
+<p>This simplified example has only a few steps, but they are well communicated, diagramed and consistent. Here lies the importance of a Workflow: to automate controls that can be automated, with the least possible intervention from programmers. By following simple steps, a developer can build robust Workflow applications in <a href="https://wiki.genexus.com/commwiki/wiki?35351,," target="_blank">GeneXus</a></p>
+
+<p>In sum, the idea behind a Workflow process is that a tight integration of the available tools (<a href="https://wiki.genexus.com/commwiki/wiki?35351,," target="_blank">GeneXus</a> tools, in this case) can provide seamless collaboration among all the information systems of a company, thus accelerating management processes and driving the business forward in a dynamic, vertical manner.</p>
+
+<p>Here you have a simple, practical example that illustrates the steps needed to complete it:</p>
+
+<ul>
+	<li>Creating process objects</li>
+	<li>Creating the activity diagram that models the process</li>
+	<li>Associating objects to the diagram</li>
+	<li>Running the process</li>
+</ul>
+
+<p>This is a simple example that shows you how to use GXflow within the IDE. It represents a simplified process for booking airline tickets, which consists of entering the reservation details into the system, with the operator registering any customer that is not registered. If the customer is registered already, the control will go straight to checking availability. If the reservation is available, the process ends, and if it's not available, the flow will return to where the reservation was entered to update the data.</p>
+
+<h4><a id="Step+1%3A+Creating+the+objects+that+will+be+part+of+the+process" class="HashLink" href="#Step+1%3A+Creating+the+objects+that+will+be+part+of+the+process">Step 1: Creating the objects that will be part of the process</a></h4>
+
+<p>Two transactions will be needed: Reservation and Customer.</p>
+
+<h5><a id="Reservation+Transaction" class="HashLink" href="#Reservation+Transaction">Reservation Transaction</a></h5>
+
+<p><img src="./images/43734.png" id="43734" class="WikiImage"/></p>
+
+<p>Notes: Note also that the CustomerId attribute is defined to allow nulls, which is necessary for the example to work properly, also ReservationId is auto number.</p>
+
+<p><em>Rules</em></p>
+
+<p>Rule to make the ReservationAvailable attribute invisible, as this attribute is used when the reservation is already entered and you want to indicate whether it's available or not.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ReservationAvailable.Visible = False If Insert;
+
+</pre>
+
+<h5><a id="Customer+Transaction" class="HashLink" href="#Customer+Transaction">Customer Transaction</a></h5>
+
+<p><img src="./images/43735.png" id="43735" class="WikiImage"/></p>
+
+<p>CustomerId is Autonumber</p>
+
+<h5><a id="AssignToCustomer+Procedure" class="HashLink" href="#AssignToCustomer+Procedure">AssignToCustomer Procedure</a></h5>
+
+<p>We have the following procedure: Once the reservation and user are entered, it assigns that reservation to that user.</p>
+
+<p><em>Rules</em></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:&amp;ReservationId, in:&amp;CustomerId);</pre>
+
+<p><em>Variables</em></p>
+
+<p>ReservationId (based on the ReservationId attribute)</p>
+
+<p>CustomerId (based on the CustomerId attribute)</p>
+
+<p><em>Code</em></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each Reservation 
+     Where ReservationId = &amp;ReservationId
+     CustomerId = &amp;CustomerId
+Endfor</pre>
+
+<h4><a id="Step+2%3A+Creating+the+activity+diagram+that+models+the+process" class="HashLink" href="#Step+2%3A+Creating+the+activity+diagram+that+models+the+process">Step 2: Creating the activity diagram that models the process</a></h4>
+
+<p>To add an activity diagram all we have to do is add the <a href="16486.html">Business Process Diagram object</a>, like we do with any other object.</p>
+
+<p><img src="./images/43737.png" id="43737" class="WikiImage"/></p>
+
+<p>Step 3: Associating the objects to the diagram</p>
+
+<p>To mark the beginning of the process, we drag a <a href='None Start Event in BPD'>None Start Event</a> symbol.</p>
+
+<p>The first associated object will be the Reservation transaction. To associate it, drag it from the Folder View to the line that connects the Start and End connectors in the diagram.</p>
+
+<p>Or, drag a <a href="17495.html">User Task</a> from the <a href="16487.html">Toolbox</a>, to to the properties windows and press the button in the <a href="11884.html">Application property</a>.</p>
+
+<p><img src="./images/11219.jpg" id="11219" class="WikiImage"/></p>
+
+<p>Relevant data with the same name and data type as the transaction's primary key is created right after the project is added. This data, just like the rest of the relevant information, will be known throughout the flow.</p>
+
+<p>The second step consists of adding the conditional that defines whether or not the customer is registered and associated with the reservation transaction. To do so, add the exclusive gateway symbol from the diagram toolbar (by default it is located on the right-hand side of the screen), as shown in the figure below.</p>
+
+<p><img src="./images/43738.png" id="43738" class="WikiImage"/></p>
+
+<p>Once the gateway has been inserted, we have to define the condition that will make the flow follow the usual course or follow the alternative course to register a customer. First, we need to add the Customer transaction to the diagram and connect it with the conditional's alternative route, as follows:</p>
+
+<p><img src="./images/11221.png" id="11221" class="WikiImage"/></p>
+
+<p>Note: To connect the gateway with the 'Customer' task, click the right-hand side of the conditional and drag the arrow to the left-hand side of the task. Its type is defined in the route properties.</p>
+
+<p>To complete the conditional we have to define the condition that will make the flow follow one route or the other. To this end, the IDE offers a condition editor that allows you to express conditions based on attributes and relevant data. Double-click the edge that connects the customer record and enters the following expression:</p>
+
+<p><img src="./images/7559.png" id="7559" class="WikiImage"/></p>
+
+<p>By defining this condition, non-registered customers (customerId = 0) are registered.</p>
+
+<p>Next, following the usual flow, the Reservation transaction is added again. This task evaluates whether the reservation is available to be issued; we'll change its name by pressing F2 button.</p>
+
+<p><img src="./images/11222.png" id="11222" class="WikiImage"/></p>
+
+<p>Now select the connector that goes to ReservationAvailability, go to properties and in Condition type select &quot;Default&quot;</p>
+
+<p><img src="./images/43776.png" id="43776" class="WikiImage"/></p>
+
+<p>Netx, Double-clicking the gateway symbol displays a summary of the conditions, as shown in the figure below:</p>
+
+<p><img src="./images/43778.png" id="43778" class="WikiImage"/></p>
+
+<p>Once the reservation availability has been determined, another gateway must be defined as follows to evaluate the condition:</p>
+
+<p><img src="./images/43766.png" id="43766" class="WikiImage"/></p>
+
+<p>If the reservation is available, the process is finished. If it's not available, the flow goes back to the initial task in order to change the reservation details.</p>
+
+<p>To complete the flow, we have to define the alternative course to be followed when the customer is not registered. So, after registering the customer, we have to assign him or her to the reservation and check availability. To do so, we need to add the procedure previously created (AssignToCustomer) and the connection routes as follows:</p>
+
+<p><img src="./images/43777.png" id="43777" class="WikiImage"/></p>
+
+<p>Once the procedure is added to the diagram, the parameter rule (parm) is automatically evaluated. If attributes or variables with the same name and type as the relevant data are found, they will be instantiated with their values. In this case, the <strong>&amp;ReservationId</strong> and <strong>&amp;CustomerId</strong> variables will be associated with the values of the corresponding relevant data.</p>
+
+<h4><a id="Step+4%3A+Running+the+process" class="HashLink" href="#Step+4%3A+Running+the+process">Step 4: Running the process</a></h4>
+
+<p>Lastly, the process is run. Before running the process for the first time, do a <strong>Build All</strong> (Build command menu option). Right-click the diagram listed in the Folder View and press the 'RUN'.</p>
+
+<p><img src="./images/5515.jpg" id="5515" class="WikiImage"/></p>
+
+<p>Next, GeneXus performs the necessary actions to run this diagram and show the changes made. The steps that follow are:</p>
+
+<ul>
+	<li>Update workflow objects</li>
+	<li>Specify objects</li>
+	<li>Generate objects</li>
+	<li>Compile workflow objects</li>
+	<li>Impact the diagram on the database</li>
+</ul>
+
+<p>Whether or not all these steps are performed will depend on the changes made; that is to say, a change in the diagram will cause all its objects to be specified, generated and compiled, impacting the diagram.</p>
+
+<p>A browser will be automatically opened with the application as shown in the figure below:</p>
+
+<p><img src="./images/43767.png" id="43767" class="WikiImage"/></p>
+
+<p>When the prototyper is executed, a new instance of the process to be prototyped is generated. It allows the developer to perform all the steps without defining roles or assigning them to the user that is prototyping.</p>
+
+<p>Below is the process flow for both cases: the first case corresponds to a customer that has to be registered, and the second case corresponds to a customer that is already registered in the system.</p>
+
+<h4><a id="Case+1%3A+When+the+user+needs+to+be+registered" class="HashLink" href="#Case+1%3A+When+the+user+needs+to+be+registered">Case 1: When the user needs to be registered</a></h4>
+
+<p>The reservation details are entered and the CustomerId field is left blank (the customer is not registered yet).</p>
+
+<p><img src="./images/43771.png" id="43771" class="WikiImage"/></p>
+
+<p>Next, we have to register the customer.</p>
+
+<p><img src="./images/43772.png" id="43772" class="WikiImage"/></p>
+
+<p><img src="./images/43773.png" id="43773" class="WikiImage"/></p>
+
+<p>Once the reservation and customer are registered, the procedure that assigns the customer to the reservation is automatically executed.</p>
+
+<p>To end the process we have to define whether the reservation is available or not.</p>
+
+<p><img src="./images/43774.png" id="43774" class="WikiImage"/></p>
+
+<p><img src="./images/43775.png" id="43775" class="WikiImage"/></p>
+
+<h4><a id="Case+2%3A+When+the+customer+is+already+registered" class="HashLink" href="#Case+2%3A+When+the+customer+is+already+registered">Case 2: When the customer is already registered</a></h4>
+
+<p>We create a new task as shown in the figure below and enter the reservation details including the customer, who in this case is registered in the system.</p>
+
+<p><img src="./images/43779.png" id="43779" class="WikiImage"/></p>
+
+<p>Next, the reservation is set to 'not available' and the flow returns to the beginning where the reservation data can be changed.</p>
+
+<p>Download <a href="https://wiki.genexus.com/commwiki/wiki?43781,," target="_blank">TicketReservation.xpz</a></p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="3913.html">Structure Editor</a></p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="20955.html">Beginners in GeneXus BPM Suite</a></TD><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR><TR><TD><a href="25683.html">HowTo: Setting up an independent Data Store for Workflow tables</a></TD><TD><a href="20951.html">Looking for help in GeneXus BPM Suite and GXflow?</a></TD></TR><TR><TD><a href="25115.html">Model Automation</a></TD><TD><a href="25071.html">Modeling with GeneXus</a></TD><TD><a href="25422.html">My first BPM Application for Smart Devices</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

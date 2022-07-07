@@ -1,0 +1,84 @@
+apply from: rootProject.file('kotlin-library.gradle')
+apply plugin: plugin.junit5
+
+android {
+    defaultConfig {
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+            jniLibs.srcDirs = ['jniLibs']
+        }
+
+        androidTest.setRoot('androidTest')
+
+        test.setRoot('test')
+
+        // Move the build types to build-types/<type>
+        debug.setRoot('build-types/debug')
+        release.setRoot('build-types/release')
+    }
+}
+
+dependencies {
+    api (deps.gxstdclasses_android)  {
+        // exclude libraries from gxcryptocommon
+        exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'
+        exclude group: 'org.apache.santuario', module: 'xmlsec'
+        // avoid duplicate class error, might be caused by xml-apis and stax-api
+        exclude group: 'stax', module: 'stax-api'
+		exclude group: 'xpp3'
+    }
+	// add explicit reference to commons io, version 2.2 needed until api 26
+	// Android need version 2.2 until api 26, where java.nio is added
+	implementation deps.commons_io
+
+    implementation deps.androidx.app_compat
+    implementation deps.androidx.customtabs
+    implementation deps.androidx.design
+    implementation deps.androidx.exif
+	implementation deps.androidx.lifecycle.process
+
+    implementation deps.play_services.base
+
+    implementation (deps.simple_xml) {
+        exclude group: 'stax'
+        exclude group: 'xpp3'
+    }
+    implementation deps.gson
+    implementation deps.picasso
+    implementation deps.rounded_imageview
+	implementation deps.shortcut_badger
+	implementation deps.svg
+
+	// okhttp references
+	implementation deps.okhttp
+	implementation deps.okhttp_urlconnection
+
+    compileOnly project(':SqlDroidBase')
+
+    implementation files('libs/youtube-android-player-api-1.2.2.jar')
+
+	testImplementation project(':UnitTestingUtils')
+    testImplementation deps.testing.truth
+    testImplementation deps.testing.mockito
+	testImplementation deps.testing.mockito_kt
+    testImplementation deps.testing.robolectric
+    testImplementation deps.testing.test_core
+	testImplementation deps.testing.junit_vintage
+	testImplementation deps.testing.junit5
+	testImplementation deps.testing.junit5_params
+	testImplementation deps.testing.json
+	testRuntimeOnly deps.testing.junit5_rt
+    androidTestImplementation deps.testing.truth
+    androidTestImplementation deps.testing.runner
+    androidTestImplementation deps.testing.rules
+}

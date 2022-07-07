@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GXflow centralized licenses configuration (GXflow on Linux)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?21728,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GXflow centralized licenses configuration (GXflow on Linux)</h1>
+<!--GXflow centralized licenses configuration (GXflow on Linux)--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document helps you to set up a GXflow Application (that runs on Linux) to use licenses from a GeneXus Protection Server (that runs on Windows). As stated in <a href="37204.html">this document</a>, this protection method is used primarily for prototyping purposes; for production purposes a Native protection method is the most (or only) suitable. </p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  If you are in <a href="https://wiki.genexus.com/commwiki/wiki?36355,," target="_blank">GeneXus 15 Upgrade 7</a> or lower, read <a href="https://wiki.genexus.com/commwiki/wiki?37734,," target="_blank">How to configure GXflow running in Linux using licenses from a Windows server (X Evolution 3)</a>.</div>
+</p>
+
+<p>So to configure a GXflow Application that runs in Linux to use the protection system from a Windows server, follow these steps:</p>
+
+<h3 style="text-align: justify;"><a id="Step+1+%E2%80%93+Install+GeneXus+Protection+Server" class="HashLink" href="#Step+1+%E2%80%93+Install+GeneXus+Protection+Server">Step 1 – Install GeneXus Protection Server</a></h3 style="text-align: justify;">
+
+<p style="text-align: justify;">Install the latest <a href="https://wiki.genexus.com/commwiki/wiki?18887,," target="_blank">GeneXus Protection Server</a> version on a Windows Server. This server will centralize GeneXus licenses products.</p>
+
+<h3 style="text-align: justify;"><a id="Step+2+%E2%80%93+Configure+the+GeneXus+License+Manager" class="HashLink" href="#Step+2+%E2%80%93+Configure+the+GeneXus+License+Manager">Step 2 – Configure the GeneXus License Manager</a></h3 style="text-align: justify;">
+
+<p style="text-align: justify;">Download the files from <a href='http://www2.gxtechnical.com/portal/hgxpp001.aspx?15,8,77,O,E,0,,4141'>here</a>.<br />
+On the Linux server where the application is running install the GeneXus License Manager. You need to unzip the LinuxCSProt.zip file (located in Packages\Gxpm\Protection\Linux under GeneXus installation folder) into a directory, for example, gxprot. The License Manager must be configured via command line options; check Annex I for further detail on License Manager Options. The location for the Protection server is stored in a file called protect.properties (same as Protect.ini in Windows environments); which is used by the Web application and License Manager to locate the Protection Server.</p>
+
+<p style="text-align: justify;">To set the Protection Server location, execute the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java -Dgxprotect.dir=/gxprot/license –jar licmgr.jar -s server.host=localhost user.domain=localhost user.id=test user.pwd=test123</pre>
+
+<p style="text-align: justify;">where:</p>
+
+<ul>
+	<li style="text-align: justify;"><em>-Dgxprotect.dir</em>: System Property to set the path where the protect.properties file will be generated.</li>
+	<li style="text-align: justify;"><em>server.host</em>: IP or hostname where the GeneXus Protection server is executing.</li>
+	<li style="text-align: justify;"><em>user.domain</em>: Windows domain to be used to authenticate with.</li>
+	<li style="text-align: justify;"><em>user.id</em>: User to be used to authenticate with.</li>
+	<li style="text-align: justify;"><em>user.pwd</em>: Password to be used to authenticate with.</li>
+</ul>
+
+<p style="text-align: justify;">You don't need to set all properties at once; you can execute the same command several times with different parameters. The specified user to access the server must have security permissions to access the server via DCOM.</p>
+
+<h3 style="text-align: justify;"><a id="Step+3+%E2%80%93+Configure+the+application+to+use+the+Windows+Protection+Server" class="HashLink" href="#Step+3+%E2%80%93+Configure+the+application+to+use+the+Windows+Protection+Server">Step 3 – Configure the application to use the Windows Protection Server</a></h3 style="text-align: justify;">
+
+<p style="text-align: justify;">Open <a href="37207.html">GXflow license manager</a> and configure the Remote location settings.</p>
+
+<h3 style="text-align: justify;"><a id="Annex+I+%E2%80%93+License+Manager+Options" class="HashLink" href="#Annex+I+%E2%80%93+License+Manager+Options">Annex I – License Manager Options</a></h3 style="text-align: justify;">
+
+<p style="text-align: justify;">Whenever you run the License Manager you must reference a System Property as a parameter, for example:</p>
+
+<p style="text-align: justify;">java –Dgxprotect.dir=”gxprot” –jar licmgr.jar</p>
+
+<p style="text-align: justify;">It is recommended to explicitly set the directory that will be used to save the properties file. When using the license manager it is advisable to use a system property &quot;gxprotect.dir&quot;. License Manager available options are:</p>
+
+<p><img src="./images/15075.jpg" id="15075" class="WikiImage"/></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR><TR><TD><a href="19848.html">HowTo: Deploying a Workflow-based Application</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

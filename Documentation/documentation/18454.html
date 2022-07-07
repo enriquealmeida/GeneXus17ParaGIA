@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GXflow - GAM Integration</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18454,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GXflow - GAM Integration</h1>
+<!--GXflow - GAM Integration--><div class="TableWikiBody" id="tblwikibody"><p>When GXflow is integrated with <a href="24746.html">GeneXus Access Manager (GAM)</a>, all user and role management (regarding security issues) are delegated to GAM. Even if GAM stores the information on Roles and Users, that information is stored in the GXflow tables as well.</p>
+
+<p>As a consequence, Users and Roles have to be synchronized from GAM to GXflow or vice versa, to guarantee the right flow of the application. Roles are necessary for the GeneXus IDE to be assigned to Tasks. Users and roles need to be synchronized in GAM to handle the application security, and in the GXflow tables to assign the different scheduled tasks.</p>
+
+<p>Synchronization can be made globally (synchronize a group of users and roles and their relation in any direction: from GXflow to GAM or vice versa), or it can be made interactively.</p>
+
+<div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,235,59);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning:</strong> When you integrate GXflow with GAM, it will use only one kind of authentication, the one set as default in the repository configuration. Remember that GAM with Custom Authentication checks external credentials (e.g. through <a href="https://wiki.genexus.com/commwiki/wiki?29473,," target="_blank">LDAP</a>). If you use the <a href="https://wiki.genexus.com/commwiki/wiki?11364,," target="_blank">Workflow APIs</a> for managing users must ensure that they are provided by the <em>credentials provider</em>.</div>
+
+<p> </p>
+
+<h2><a id="Global+Synchronization+of+Users+and+Roles" class="HashLink" href="#Global+Synchronization+of+Users+and+Roles">Global Synchronization of Users and Roles</a></h2>
+
+<h3><a id="1.+User+synchronization" class="HashLink" href="#1.+User+synchronization">1. User synchronization</a></h3>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" class="code" style="width: 800.0px;">
+	<tbody>
+		<tr>
+			<td style="border-bottom: 1.0px solid black;width: 400.0px;"><strong>From GAM to GXflow</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>From GXflow to GAM</strong></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;">1. When you assign the role &quot;GXflow public&quot; to a user from GAM backoffice or using GAM API then this user is created in the GXflow database also.</td>
+			<td style="vertical-align: top;">1. Users, roles, and their relations are synchronized to GAM by running the <em>apwfmigrateuserstogam</em> procedure (manual synchronization).</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;">2. Users are globally synchronized to GXflow by running the <em>apwfsynchronizegamusers</em> procedure (manual synchronization).</td>
+			<td style="vertical-align: top;">2. Synchronization is <span style="line-height: 20.8px;">automatically</span><span style="line-height: 20.8px;"> </span><span style="line-height: 1.6em;">executed in the Build process.</span><br />
+			<em>=== Migrate workflow users to GAM started ==========<br />
+			.....<br />
+			Migrate workflow users to GAM Success</em></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><strong>Notes</strong></p>
+
+<ul>
+	<li><strong>Limitation</strong>: When a GAM username is modified, GXflow treats it as a new user during the synchronization. In such a case, both usernames will coexist in GXFlow (the recently updated and the old one), but only the recently updated will correspond to the GAM user.</li>
+</ul>
+
+<p> </p>
+
+<h3><a id="2.+Role+Synchronization" class="HashLink" href="#2.+Role+Synchronization">2. Role Synchronization</a></h3>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="width: 800.0px;">
+	<tbody>
+		<tr>
+			<td style="border-bottom: 1.0px solid black;width: 400.0px;"><strong style="line-height: 20.8px;">From GAM to GeneXus IDE</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>From GeneXus IDE to GAM</strong></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;">1. When the Knowledge Base is opened, Roles created, updated or deleted in the GAM will be created, updated or deleted in the GeneXus IDE.<br />
+			You can see the roles through the <a href="17839.html">Workflow Preferences</a> &gt;<br />
+			<a href="11864.html">BPD Roles</a> option. In this case, GAM to GeneXus synchronization is automatically performed when the KB is opened.</td>
+			<td style="vertical-align: top;">1. The automatic synchronization of Roles from GeneXus to GAM is done:
+			<ul>
+				<li>the first time the KB is opened,</li>
+				<li>at Build all,</li>
+				<li>at Rebuild all, </li>
+				<li>at deployment.</li>
+			</ul>
+			You will notice the following messages on the Build output:<br />
+			<em>===Export roles to GAM started ===<br />
+			.....<br />
+			Role RoleName1 successfully exported<br />
+			Role RoleName2 successfully exported<br />
+			.....<br />
+			Export roles to GAM Success</em>
+
+			<p style="line-height: 20.8px;">2. Manual synchronization of roles can <span style="line-height: 20.8px;">only</span><span style="line-height: 20.8px;"> </span><span style="line-height: 20.8px;">be done by running the </span><em style="line-height: 20.8px;">apwfmigraterolestogam</em><span style="line-height: 20.8px;"> procedure.</span><br />
+			This is available since GeneXus X Evolution 3 Upgrade 5.</p>
+			</td>
+		</tr>
+		<tr>
+			<td>2. Synchronization can also be forced using the option Tools -&gt; <a href="17111.html">Workflow Tools</a> -&gt; <span style="line-height: 20.8px;"><a href="18462.html">Synchronize GAM roles option</a></span></td>
+			<td>3. Synchronization can also be forced using the option Tools -&gt; <a href="17111.html">Workflow Tools</a> -&gt; <a href="18462.html">Synchronize GAM roles option</a></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><strong>Notes</strong></p>
+
+<ul>
+	<li>To disable automatic synchronization, you can use the config.gx (If the file doesn´t exist, you need to create the file in the Model directory) with the <em style="line-height: 1.6em;">DisableGamRolesSync </em>property = True.</li>
+</ul>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h2><a id="How+to+run+a+manual+synchronization" class="HashLink" href="#How+to+run+a+manual+synchronization">How to run a manual synchronization</a></h2>
+
+<p>The procedure apwfmigraterolestogam migrates the Rol information from the GXflow database to the GAM database. </p>
+
+<p>The procedure apwfmigrateuserstogam migrates the User information and also the Roles assigned to the user from the GXflow database to the GAM database. Also adds automatically the Rol GXflow Public to the user in the GAM database.</p>
+
+<p>The procedure apwfsynchronizegamusers takes all the users defined in the GAM database which has the role GXflow Public and updates the user information and role assignment from the GAM database to the GXflow database. </p>
+
+<p><strong>To run a manual synchronization, use the following command lines:</strong></p>
+
+<h3><a id="Net" class="HashLink" href="#Net">Net</a></h3>
+
+<p>The synchronization procedures are located in the \bin folder. You may run them as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+C:\Models\...\CSharpModel\web&gt;bin\apwfmigraterolestogam.exe
+
+C:\Models\...\CSharpModel\web&gt;bin\apwfmigrateuserstogam.exe
+
+C:\Models\...\CSharpModel\web&gt;bin\apwfsynchronizegamusers.exe</pre>
+
+<h3><a id="Java" class="HashLink" href="#Java">Java</a></h3>
+
+<p>The synchronization procedures are located in the &lt;application&gt;\WEB-INF\classes\com\gxflow folder. To run them, set the current working directory to &quot;\classes&quot; level folder and execute them as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+C:\..\&lt;application&gt;\WEB-INF\classes&gt;java -cp &quot;.;..\lib\*&quot; com.gxflow.apwfmigraterolestogam
+
+C:\..\&lt;application&gt;\WEB-INF\classes&gt;java -cp &quot;.;..\lib\*&quot; com.gxflow.apwfmigrateuserstogam
+
+C:\..\&lt;application&gt;\WEB-INF\classes&gt;java -cp &quot;.;..\lib\*&quot; com.gxflow.apwfsynchronizegamusers
+</pre>
+
+<p style="line-height: 20.8px;">When using Java, make sure you have the connection.gam file under C:\..\&lt;application&gt;\WEB-INF\classes. Otherwise, these error messages will be displayed:</p>
+
+<pre class="Code" style="line-height: 20.8px;">
+&quot;Invalid GAM repository, GXflow roles required&quot; error or &quot;Error 2: Repository not found. Please contact the application administrator&quot;.
+​​​​​​java -cp &quot;.;..\lib\*&quot; com.gxflow.apwfsynchronizegamusers
+Invalid GAM repository, GXflow roles required
+java -cp &quot;.;..\lib\*&quot; com.gxflow.apwfmigraterolestogam
+Role: GXflow Public
+Error 30: The connection to GAM was not found. Please contact the application administrator.
+Role: All
+</pre>
+
+<p style="line-height: 20.8px;">See <a href="https://wiki.genexus.com/commwiki/wiki?29534,," target="_blank">Troubleshooting the GXflow-GAM manual synchronization</a>  </p>
+
+<p style="line-height: 20.8px;"> </p>
+
+<h2><a id="Interactive+synchronization+of+Users+and+Roles" class="HashLink" href="#Interactive+synchronization+of+Users+and+Roles">Interactive synchronization of Users and Roles</a></h2>
+
+<p>In versions older than <a href="https://wiki.genexus.com/commwiki/wiki?29463,," target="_blank">GeneXus X Evolution 3 Upgrade 6</a>, you need to use both the <a href="17230.html">GXflow API</a> and the <a href="16535.html">GAM API</a> to handle users and roles.</p>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?29463,," target="_blank">GeneXus X Evolution 3 Upgrade 6</a>, the GXflow API to handle users and roles directly impacts on GAM users and roles. See <a href="https://wiki.genexus.com/commwiki/wiki?29508,," target="_blank">GXFlow API integrated to GAM</a>. As a consequence, you just need to use the GXflow API of the GXflow management console.</p>
+
+<h3><a id="User+Nomination" class="HashLink" href="#User+Nomination">User Nomination</a></h3>
+
+<p style="line-height: 20.8px;">You can add users and roles from the GAM back office. Note that, when adding the &quot;GXflow Public&quot; role to a user, GXflow will try a user nomination during the login operation for that user (if the user has not been nominated yet).</p>
+
+<h4 style="line-height: 20.8px;"><a id="Notes%3A" class="HashLink" href="#Notes%3A"><strong>Notes:</strong></a></h4 style="line-height: 20.8px;">
+
+<p style="line-height: 20.8px;">Since <a href="https://wiki.genexus.com/commwiki/wiki?33798,," target="_blank">GeneXus 15 Upgrade 4</a>:</p>
+
+<ul>
+	<li style="line-height: 20.8px;">
+	<p>When adding the &quot;GXflow Public&quot; role to a user, it is created and if there is a nominated license available, it is tried to be nominated, too. In the case that a user is not created and you use the <a href="https://wiki.genexus.com/commwiki/wiki?29508,," target="_blank">GXFlow API integrated to GAM</a> or during the login operation, it will be created (if it does not exist) and attempted to be nominated.</p>
+	</li>
+	<li style="line-height: 20.8px;">Every CRUD operation over users and roles in GAM Backend are automatically reflected in GXFlow Client, and vice versa. If you use previous GeneXus versions you are restricted to handle users and roles manually by using <a href="https://wiki.genexus.com/commwiki/wiki?29508,," target="_blank">GXFlow API integrated to GAM</a>.</li>
+</ul>
+
+<h2 style="line-height: 20.8px;"><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h2 style="line-height: 20.8px;">
+
+<p style="line-height: 20.8px;"><a href="33095.html">GXflow - GAM Initialization</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?29533,," target="_blank">GXflow Custom Client with GAM</a><br />
+<a href="11607.html">Business Process Deployer</a></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43858.html">Aspects to consider when using GeneXus BPM Suite with GAM</a></TD><TD><a href="25704.html">Backend</a></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR><TR><TD><a href="33095.html">GXflow - GAM Initialization</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/07/22 02:13 PM</em></font></td></TR></table></font>

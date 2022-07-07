@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  $if(Main.AllowArbitraryLoads)$
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system" />
+    </trust-anchors>
+  </base-config>
+  $endif$
+  $Main.AppExceptionDomains:{ domain |
+  <domain-config cleartextTrafficPermitted="true">
+       <domain includeSubdomains="$domain.IncludeSubdomains$">$domain.DomainName$</domain>
+  </domain-config>
+  }$
+  $if(Main.HasPinSet)$
+  <domain-config>
+    <domain includeSubdomains="true">$Main.ServicesUrlHost$</domain>
+    <pin-set>
+  $Main.PinSetDigestList:{ pin |
+      <pin digest="SHA-256">$pin$</pin>
+}$    </pin-set>
+  </domain-config>
+  $endif$
+</network-security-config>

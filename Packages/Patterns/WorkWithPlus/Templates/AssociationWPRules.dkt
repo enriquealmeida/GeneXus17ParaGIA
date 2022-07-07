@@ -1,0 +1,24 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Association WP Rules" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	AssociationElement association = wwInstance.GetElement<AssociationElement>(Element);
+
+	if (!TransactionElement.IsBusinessComponent(association.RelationTransaction.Transaction))
+	{
+		throw new Exception("The relation transaction must be a Business Component.");
+	}
+	string generalRules = association.Table.GetGeneralRules();
+	if (generalRules != "")
+	{
+%>
+<%= generalRules %>
+<%
+	}
+%>
+Parm(in:&<%= string.Join(", in:&", association.Info.RelationKeyBaseAttributes.ToArray()) %>);

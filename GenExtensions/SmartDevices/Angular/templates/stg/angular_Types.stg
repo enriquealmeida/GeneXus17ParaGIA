@@ -1,0 +1,67 @@
+delimiters "$", "$"
+
+importTypeToLocationMap ::= [
+  "UIListElementItem": "app/gx/ui/model/ui-list",
+  default: false
+]
+
+import_location(v) ::= <%
+  $v.GeneratorType:g_type_location()$
+%>
+
+import_from(type_to_import) ::= <%
+  $importTypeToLocationMap.(type_to_import)$
+%>
+
+init_item_with_ctor(item) ::= <%
+$if (item.IsInputParameter)$
+  this.$item.Name$ = !params ? this.$item.Name$ : $g_item_ctor(item)$;
+$else$
+  this.$item.Name$ = $g_item_ctor(item)$;
+$endif$
+%>
+
+properties_definitions(item) ::=<%
+$if (item.GeneratorType)$
+  $if (item.IsParameter)$
+    $parameter_decorator(item)$
+  $endif$
+  $if (item.UserControls)$
+    $declare_usercontrol_property(item)$
+  $else$
+    $g_declare_item(item)$
+  $endif$
+$endif$
+%>
+
+declare_usercontrol_property(item) ::= <<
+
+private m_$item.Name$: $g_type_name(item.GeneratorType)$;
+
+get $item.Name$() {
+  return this.m_$item.Name$;
+}
+
+set $item.Name$(value) {
+  this.m_$item.Name$ = value;
+  $item.UserControls: {ucRef | this.uiModel.$ucRef.ControlName$.$ucRef.Property$ = value;};separator="\n"$
+}
+
+update$item.Name$Bindings() {
+  const value = this.m_$item.Name$;
+  this.m_$item.Name$ = $g_type_ctor(item.GeneratorType)$;;
+  Object.assign(this.m_$item.Name$, value)
+  $item.UserControls: {ucRef | this.uiModel.$ucRef.ControlName$.$ucRef.Property$ = this.m_$item.Name$;};separator="\n"$
+}
+
+>>
+
+parameter_decorator(item) ::= <<
+@Input('$gx.ToLower.(item.Name)$') 
+
+>>
+
+declare_item(item) ::=<<
+$item.Name$: $g_type_name_or_alias(item.GeneratorType)$;
+
+>>

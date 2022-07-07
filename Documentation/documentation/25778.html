@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Display a menu in a responsive application</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25778,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Display a menu in a responsive application</h1>
+<!--HowTo: Display a menu in a responsive application--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>For GeneXus 15, see <a href="25631.html">Action Group Control for the Web</a>.</p>
+
+<h2><a id="C%E2%80%8Challenge" class="HashLink" href="#C%E2%80%8Challenge">C‌hallenge</a></h2>
+
+<p>In a <a href="https://wiki.genexus.com/commwiki/wiki?25157,," target="_blank">RWD</a>, wide screens have plenty of space to display a menu, and that's why it is shown on the left or right <span style="line-height: 1.6em;">side of the web page. However, in small screens (like phone screens) the contents of the web page and the </span><span style="line-height: 1.6em;">menu may not be appropriate to be displayed together.</span></p>
+
+<p>So, in the case of extra small screens (&lt;768px), by using a button or an image the user can make the menu appear smoothly on one side of the screen, <span style="line-height: 1.6em;">overlapping with what is shown in the page. </span><span style="line-height: 1.6em;">After selecting a menu option, the menu disappears, and the page shows the information according to the user's selection.</span></p>
+
+<p>The button to make the menu appear is the same button used to make it disappear from the screen.</p>
+
+<p>In the <a href="https://wiki.genexus.com/commwiki/wiki?25937,," target="_blank">GeneXus Evolution 3 Web Laboratory</a>, the menu is shown on the left side of the screen; in the case of wide screens:</p>
+
+<p><img src="./images/25779.png" id="25779" class="WikiImage"/></p>
+
+<p>When the web page is displayed in cell phone screens, there is a button in the top right corner of the screen for the user to call the menu.</p>
+
+<p><img src="./images/25780.png" id="25780" class="WikiImage"/></p>
+
+<p>When the user clicks on the button, the menu appears on the left, overlapping with the contents of the page:</p>
+
+<p><img src="./images/25781.png" id="25781" class="WikiImage"/></p>
+
+<p>The <a href="25475.html">Work With for Web</a> Pattern generates this solution for the case of work with objects that have many filter options.<br />
+The same happens with default prompts that have filters and ordering conditions.</p>
+
+<h5><img src="./images/25782.png" id="25782" class="WikiImage"/><br />
+Light CRM WW Meetings in Wide Screens</h5>
+
+<h5><img src="./images/25783.png" id="25783" class="WikiImage"/><br />
+Light CRM WW Meetings in phone screens</h5>
+
+<h2><a id="Implementation+of+the+solution" class="HashLink" href="#Implementation+of+the+solution">Implementation of the solution</a></h2>
+
+<p>The following example is an automatically generated prompt for the Countries transaction. The <a href="25209.html">Abstract layout</a> of the prompt is shown in the picture below.</p>
+
+<p><img src="./images/25784.png" id="25784" class="WikiImage"/></p>
+
+<p>Note that:</p>
+
+<p>1.The left side <a href="24961.html">Responsive Table</a> is called &quot;AdvancedContainer&quot; and contains the different filters for <span style="line-height: 1.6em;">the selection list. </span><br />
+<span style="line-height: 1.6em;">The AdvancedContainer table is going to be shown by default only for small screen devices and bigger (&gt;=768px), not for extra </span><span style="line-height: 1.6em;">small screen devices (like phones).</span></p>
+
+<p>In the case of phones, the user will have the &quot;Toggle&quot; button to press and make the AdvancedContainer <span style="line-height: 1.6em;">table appear.</span></p>
+
+<h5><span style="line-height: 1.2em;"><img src="./images/25785.png" id="25785" class="WikiImage"/></span><br />
+<span style="line-height: 1.2em;">Abstract Layout prompt: properties of the Toggle button</span></h5>
+
+<p>So, the toggle button is visible only for extra small screens.<br />
+The following pictures show how the <a href="https://wiki.genexus.com/commwiki/wiki?25478,," target="_blank">Responsive Sizes property (X Evolution 3)</a> is configured to achieve the desired behavior.</p>
+
+<h5><img src="./images/25786.png" id="25786" class="WikiImage"/><br />
+Abstract Layout prompt: Responsive table for phone screens</h5>
+
+<h5><img src="./images/25787.png" id="25787" class="WikiImage"/><br />
+Abstract Layout prompt: Responsive table for small and bigger screens</h5>
+
+<p>2. The following code is associated with &quot;T<span style="line-height: 1.6em;">oggle&quot; on click event:</span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Toggle'
+    if AdvancedContainer.Class = ThemeClass:AdvancedContainer
+        AdvancedContainer.Class = ThemeClass:AdvancedContainer + !&quot; &quot; + ThemeClass:AdvancedContainerVisible
+        BtnToggle.Class += !&quot; &quot; + ThemeClass:BtnToggleActive
+    else
+        AdvancedContainer.Class = ThemeClass:AdvancedContainer
+        BtnToggle.Class = ThemeClass:BtnToggle
+    endif
+Endevent</pre>
+
+<p>When the Toggle button class is AdvancedContainer, the AdvancedContainerVisible <a href="6420.html">Theme</a> class is added to the list of classes of the <span style="line-height: 1.6em;">AdvancedContainer table.</span></p>
+
+<p>On the contrary, when the class is AdvancedContainerVisible, the AdvancedContainer class is associated with it.</p>
+
+<p>The effect is that the table appears and disappears when the button is clicked.</p>
+
+<p>The AdvancedContainerVisible and AdvancedContainer classes are predefined classes, descendants of the Table class, and can be edited in the Flat Theme, which is used for <a href="25159.html">Responsive Web Applications</a>.</p>
+
+<p>Basically, the AdvancedContainerVisible and AdvancedContainer class properties are as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span style="line-height: 1.6em;">.AdvancedContainerVisible{
+</span><span style="line-height: 1.6em;">        box-shadow: 2px 1px 2px 0px rgba(0,0,0,0.15);
+        </span><strong style="line-height: 1.6em;">left: -15px;</strong><span style="line-height: 1.6em;">}</span></pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+.AdvancedContainer,.AdvancedContainerVisible{
+    background-color: #fff;
+     -moz-transition: left 0.5s ease-in-out 0s;
+     -webkit-transition: left 0.5s ease-in-out 0s;
+     -ms-transition: left 0.5s ease-in-out 0s;
+    <strong> transition: left 0.5s ease-in-out 0s;</strong><span style="line-height: 1.6em;">}</span></pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+.AdvancedContainer{
+        <strong>bottom: 0px;
+        left: -265px;</strong>
+        position: absolute;
+        top: -15px;
+        width: 230px;}</pre>
+
+<p>Additionally, the AdvancedContainer responsive table has the Cell Class property set to &quot;PromptAdvancedBarCell&quot;, which is a class with the following settings:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+.PromptAdvancedBarCell
+    {
+        bottom: 0px;
+        margin-top: 10px;
+        position: absolute;
+        top: 0px;
+        z-index: 1;}</pre>
+
+<p>Note:</p>
+
+<ul>
+	<li>For a customized example, it may be necessary to adjust the settings of the left property, and the z-Index <span style="line-height: 1.6em;"><a href='http://en.wikipedia.org/wiki/Cascading_Style_Sheets'>CSS</a> property of the AdvancedContainerVisible class.</span></li>
+	<li><span style="line-height: 1.6em;">The CSS transition is defined as a </span><a href="25303.html">Custom property</a><span style="line-height: 1.6em;">.</span></li>
+</ul>
+
+<h2><a id="Download+sample" class="HashLink" href="#Download+sample">Download sample</a></h2>
+
+<p>The <a href="https://wiki.genexus.com/commwiki/wiki?22592,," target="_blank">LightCRM</a> is a sample KB where you can find the WW pattern applied to all the web transactions, and the prompts that have filters and ordering conditions are examples where the menu displays differently depending on the screen size.</p>
+
+<h2><a id="See+Also" class="HashLink" href="#See+Also"><span style="line-height: 1.6em;">See Also</span></a></h2>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?25649,," target="_blank">Look and feel of responsive web applications</a></p>
+
+<p><br />
+<br />
+</p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25514.html">Arranging the layout in a RWA</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

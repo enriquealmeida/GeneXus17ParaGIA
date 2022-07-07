@@ -1,0 +1,109 @@
+delimiters "$", "$"
+
+import "TypeConversions.stg"
+
+g_component_name(generatorType) ::= <%
+$gx.GetTypeComponent.(generatorType)$
+%>
+
+g_type_name(generatorType) ::= <%
+$gx.GetTypeName.(generatorType)$
+%>
+
+g_type_ctor(generatorType) ::= <%
+$gx.GetTypeCtor.(generatorType)$
+%>
+
+g_type_location(generatorType) ::= <%
+$gx.GetTypeLocation.(generatorType)$
+%>
+
+g_imports( v) ::=<%
+import { $g_import_comp_with_alias(v)$ } from '$g_import_prefix()$$v.GeneratorType:g_type_location()$';
+%>
+
+g_import_comp_with_alias(v) ::= <%
+$strip([gx.GetTypeComponent.(v.GeneratorType), gx.GetTypeAlias.(v.GeneratorType)]);separator=" as "$
+%>
+
+g_declare_item_var(item) ::=<<
+$g_declare_item_decorator(item)$$g_declare_item(item)$
+
+>>
+
+g_declare_item(item) ::=<<
+$item.Name$: $g_type_name(item.GeneratorType)$;
+>>
+
+g_init_state_item(item) ::= <<
+$if(item.IsStateMember)$
+$g_init_item_with_ctor(item)$
+$endif$
+>>
+
+g_init_component_item(item) ::= <<
+$if(!item.IsStateMember)$
+$g_init_item_with_ctor(item)$
+$endif$
+>>
+
+g_init_item(item) ::=<<
+this.$item.Name$ = $g_type_ctor(item.GeneratorType)$;
+
+>>
+
+g_init_item_with_ctor(item) ::= <%
+$if (item.IsParameter)$
+  this.$item.Name$ = !params ? this.$item.Name$ : $g_item_ctor(item)$;
+$else$
+  this.$item.Name$ = $g_item_ctor(item)$;
+$endif$
+%>
+
+g_item_ctor(item) ::= <%
+$if (item.Ctor)$
+  $item.Ctor$
+$else$
+  $g_type_ctor(item.GeneratorType)$
+$endif$
+%>
+
+g_properties_definitions(item) ::=<<
+$if (item.GeneratorType)$
+$   if (item.IsParameter)$
+@Input('$gx.ToLower.(item.Name)$') 
+$   endif$
+$   if (item.UserControls)$
+private m_$item.Name$: $g_type_name(item.GeneratorType)$;
+
+get $item.Name$() {
+  return this.m_$item.Name$;
+}
+
+set $item.Name$(value) {
+  this.m_$item.Name$ = value;
+  $item.UserControls: {ucRef | this.uiModel.$ucRef.ControlName$.$ucRef.Property$ = value;};separator="\n"$
+}
+$   else$
+$       g_declare_item(item)$
+$   endif$
+$else$
+$endif$
+>>
+
+g_variable_definitions( v) ::=<%
+$if (v.GeneratorType)$
+$if (v.IsParameter)$
+@Input()
+$endif$
+let $g_declare_item(v)$
+$endif$
+%>
+
+g_dataprovider_type_name(data) ::= <%
+$if (data.IsCollection)$
+    $data.ItemGeneratorType:g_type_name()$
+$else$
+    $data.GeneratorType:g_type_name()$
+$endif$
+%>

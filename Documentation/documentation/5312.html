@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Data Selectors in For Each command</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5312,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Data Selectors in For Each command</h1>
+<!--Data Selectors in For Each command--><div class="TableWikiBody" id="tblwikibody"><p>There are two ways to use <a href="5271.html">Data Selectors</a> in <a href="24744.html">For Each command</a>:</p>
+
+<ol>
+	<li>Through the &quot;USING&quot; clause.</li>
+	<li>Through the &quot;IN&quot; operator in the Where clause.</li>
+</ol>
+
+<p>Depending on how they are used, the attributes included in the Data Selector definition are involved or not in determining the <a href="6347.html">Base Table</a> of the For Each command.</p>
+
+<h3><a id="1.+%27USING%27+clause" class="HashLink" href="#1.+%27USING%27+clause">1. 'USING' clause</a></h3>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax"><strong>Syntax</strong></a></h4>
+
+<p>For Each USING <i>DataSelectorName</i>([parm1 [,parm2 [, ..] ] ])<br />
+...<br />
+EndFor</p>
+
+<h4><a id="Examples" class="HashLink" href="#Examples">Examples</a></h4>
+
+<p>A) For each USING ActiveCustomers()<br />
+...<br />
+EndFor</p>
+
+<p>The &quot;ActiveCustomers&quot; Data Selector definition is as follows:</p>
+
+<p><img src="./images/6215.JPG" id="6215" class="WikiImage"/></p>
+
+<p>B) For Each USING InvoicesByDate(<em>&amp;FromDate</em>, <em>&amp;ToDate</em>)<br />
+....<br />
+EndFor</p>
+
+<p>The &quot;InvoicesByDate&quot; Data Selector definition is as follows:</p>
+
+<p><img src="./images/6216.JPG" id="6216" class="WikiImage"/></p>
+
+<h4><a id="Features" class="HashLink" href="#Features">Features</a></h4>
+
+<p>When invoking a Data Selector through the &quot;USING&quot; clause in a For Each, the Data Selector doesn't have an associated navigation (it doesn't have a base table by itself). At specification time, the Data Selector definition is combined with the For Each definition to determine the table that will be navigated, taking into account the attributes of both definitions. In addition:</p>
+
+<ul>
+	<li>If the For Each and the Data Selector have Conditions, both are considered&lt;</li>
+	<li>If the For Each and the Data Selector have Order clause(s), the resulting Order will be a combination of them. The For Each order has priority, so in the event that GeneXus discards a Data Selector Order, a warning spc0135 will be triggered at specification time</li>
+</ul>
+
+<p>Suppose you have the following For Each that invokes the &quot;ActiveCustomers&quot; Data Selector through the USING clause:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each Using ActiveCustomers()
+    Where <em>CountryName</em> = &quot;Uruguay&quot;
+          ...
+EndFor </pre>
+
+<p>This is expanded at specification time to:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each 
+    Where <em>CustomerStatus</em> = &quot;Active&quot;
+    Where <em>CountryName</em> = &quot;Uruguay&quot;
+          ...
+EndFor</pre>
+
+<p>Note: if you invoke the Data Selector within the For Each (above example), performance is the same as if you wrote both Where clauses within the For Each.</p>
+
+<p><img src="./images/13238.JPG" id="13238" class="WikiImage"/><br />
+<b>Navigation Report: the Data Selector is not detailed.</b></p>
+
+<p>Suppose you have defined a For Each sentence that contains conditional orders + one unconditional order ('default' order), and it invokes a Data Selector through the &quot;USING&quot; clause. As the <a href="24744.html">For Each command</a> only accepts one 'default' order, the specification's result will be the For each with its conditional orders + Data Selector conditional orders + the For Each 'default' order (the Data Selector 'default' order will be discarded, and the navigation report will show a spc0135 warning).</p>
+
+<h3><a id="2.+%27IN%27+Operator+in+the+Where+clause" class="HashLink" href="#2.+%27IN%27+Operator+in+the+Where+clause">2. 'IN' Operator in the Where clause</a></h3>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p>For Each<br />
+Where [not] &lt;attribute&gt; IN <i>DataSelectorName</i>([parm1 [,parm2 [, ..] ] ])<br />
+EndFor</p>
+
+<h4><a id="Example" class="HashLink" href="#Example"><strong>Example</strong></a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    Where <em>CustomerId</em> IN InvoicesByDate(<em>&amp;FromDate</em>,<em>&amp;ToDate</em>)
+          ...
+Endfor</pre>
+
+<h4><a id="Features" class="HashLink" href="#Features">Features</a></h4>
+
+<p>When invoking a Data Selector through the &quot;IN&quot; operator in the For Each Where clause, the Data Selector <strong>has a base table by itself</strong>. This means that a SELECT sentence will be generated for the Data Selector definition, which will be a different and independent SELECT from the SELECT sentence that will be generated in relation to the For Each.</p>
+
+<p>Up to <a href="https://wiki.genexus.com/commwiki/wiki?34646,," target="_blank">GeneXus 15 Upgrade 5</a>, the attribute that precedes the &quot;IN&quot; operator must belong to the extended table of the Data Selector base table. In the above example, <em>CustomerId</em> belongs to the extended table of INVOICE, which is the &quot;InvoicesByDate&quot; Data Selector base table. Since GeneXus 15 upgrade #6 the attribute associated to the &quot;IN&quot; operator does not necessarily need to belong to the extended table. The following specification is valid where there is no relationship between tables Customer and Provider.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each Where CustomerId In ProviderIds()
+    ...
+EndFor</pre>
+
+<p>ProviderIds Data Selector specification is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Defined by: ProviderId</pre>
+
+<p>Notice the usage of the <em>Defined by</em> clause. The resulting SQL statement is similar to the following where there is no relationship between tables Power and User.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SELECT.... FROM [Customer] WITH
+WHERE [CustomerId] IN (SELECT [ProviderId] FROM [Provider])</pre>
+
+<p>The Data Selector query will return a collection of values corresponding to the same definition as the attribute which precedes the IN operator. In the above example, the Data Selector returns “a customers list” with invoices in the given range.</p>
+
+<p>So, the For Each base table is determined by taking into account only the For Each attributes (Data Selector attributes are not considered). The For Each will navigate its <a href="6347.html">base table</a> and <a href="6029.html">extended table</a>, filtering the records which contain a customer of the customers list returned by the Data Selector.</p>
+
+<p>In other words, in the above example, the Data Selector will return what you need as long as the attribute to the left belongs to the extended table of the Data Selector base table. The internal mechanism of the extraction operation is not important; what's important is that you can declare a Data Selector and it can be called by any other object.</p>
+
+<p><img src="./images/13240.JPG" id="13240" class="WikiImage"/><br />
+<b>Navigation Report: the Data Selector is not detailed.</b></p>
+
+<p>Some doubts may arise in relation to the order displayed in the Navigation Report, as the order specified in the Data Selector is InvoiceDate and the order detailed in the Navigation Report is CustomerId. Actually, the latter corresponds to the order of the For Each command. The Data Selector, whose navigation is not detailed by GeneXus, accesses through InvoiceDate.</p>
+
+<h3><a id="Advanced+notes" class="HashLink" href="#Advanced+notes"><strong>Advanced notes</strong></a></h3>
+
+<p>The Data Selector's navigation will be generated as a subselect of the For Each select. So, if the Data Selector has its own conditions, they must be evaluated in the server by the DMBS. Taking this into account, the following error/warnings could appear at specification time:</p>
+
+<ul>
+	<li>spc0053 Conditional constraint %1 cannot be generated in group starting at line n. Changed to standard constraint.</li>
+</ul>
+
+<p>If the Data Selector has a <a href="12566.html">conditional constraint</a>, it will be automatically changed to a standard constraint.</p>
+
+<ul>
+	<li>spc0144 Condition %1 found in DataSelector %2 cannot be evaluated in server.</li>
+</ul>
+
+<p>There are still some <a href="https://wiki.genexus.com/commwiki/wiki?1999,," target="_blank">functions</a> that cannot be evaluated in the server.</p>
+
+<h3><a id="Compound+Keys+considerations" class="HashLink" href="#Compound+Keys+considerations">Compound Keys considerations</a></h3>
+
+<p>The &quot;IN&quot; Operator takes into account the attribute preceding the &quot;IN&quot; clause; if you want to filter using a compound key you will need to create a new redundant formula attribute with the concatenation needed. Using the above example, suppose you want to add multi-tenant support; a possible design is to add a TenantId* (key composition) attribute as part of all tables. To use the <em>In</em> operation you will need to create a TenantIdCustomerId redundant attribute to do the filter.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    Where TenantIdCustomerId IN InvoicesByDate(&amp;FromDate,&amp;ToDate)
+          ...
+Endfor</pre>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="5386.html">Data Selectors in Grids</a><br />
+<a href="5432.html">Data Selectors in Aggregations</a><br />
+<a href="6501.html">Data Selectors in Data Providers</a><br />
+<a href="5312.html">Data Selectors in For Each command</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?5775,," target="_blank">Data Selectors in Web Panels</a><br />
+<a href="15984.html">Work With for Smart Devices List Node</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?16337,," target="_blank">Entry Panels as Filters for a List in Smart Devices</a></p>
+
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus/genexus-16-course-analyst/data-selectors-v16?p=5414'>Data Selectors</a></p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25082.html">Data provider Group statement</a></TD><TD><a href="5271.html">Category:Data Selector object</a></TD></TR><TR><TD><a href="5361.html">Data Selector property</a></TD><TD><a href="5432.html">Data Selectors in Aggregations</a></TD><TD><a href="6501.html">Data Selectors in Data Providers</a></TD><TD><a href="5312.html">Data Selectors in For Each command</a></TD></TR><TR><TD><a href="5386.html">Data Selectors in Grids</a></TD><TD><a href="24744.html">For Each command</a></TD></TR><TR><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="11688.html">IN Operator</a></TD><TD><a href="5100.html">Order Clause Specification</a></TD></TR><TR><TD><a href="6432.html">Specification Codes from spc0050 to spc0099</a></TD><TD><a href="6433.html">Specification Codes from spc0100 to spc0149</a></TD><TD><a href="8578.html">Where clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/24/21 07:36 PM</em></font></td></TR></table></font>

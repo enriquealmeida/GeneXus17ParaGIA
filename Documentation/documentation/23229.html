@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component Save method</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?23229,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component Save method</h1>
+<!--Business Component Save method--><div class="TableWikiBody" id="tblwikibody"><p>Executes something equivalent to what happens when the user presses the confirm button in a <a href="1908.html">Transaction</a> Form.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p>&amp;VbleBasedOnBC.<strong>Save()</strong></p>
+
+<p><strong>Where:</strong><br />
+<em>&amp;VbleBasedOnBC</em><br />
+     Is a variable defined in a GeneXus object, based on a Business Component.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>As this method is applied to a variable based on a <a href="5846.html">Business Component</a>, the formulas and rules defined in the Transaction are triggered and the referential integrity is checked, before saving physically the involved data.</p>
+
+<p>It can be used to insert and update physically.</p>
+
+<p>GeneXus understands the Save method is used to insert if you assign values to the <a href="2276.html">properties of a variable</a> based on a Business Component and execute the Save method to the variable, but you haven't instantiated data in memory previously by using the <a href="23211.html">Load method</a>.</p>
+
+<p>On the other hand, if you apply the Load method to the Business Component variable to instantiate certain data in memory first, and you assign values to the properties of the Business Component variable and save after that, GeneXus understands you are updating the data you have loaded as a first step.</p>
+
+<p>It's essential to know that the Save method is only valid to be applied to Business Component variables of the Transaction first <a href="42569.html">level</a>. This is easy to be understood since the behavior is the same, as the Confirm button offers in a Transaction Form: when it is pressed, it saves all the data present in the form (belonging to all the Transaction levels).</p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p>Suppose you define the following Transaction as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+  CustomerId*     (Autonumber property = True)
+  CustomerName
+  CustomerAddress
+  CustomerPhone
+  CustomerEmail
+  CustomerAddedDate
+  CustomerTotalMiles
+}</pre>
+
+<p>Customer rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Default(CustomerAddedDate,&amp;today);</pre>
+
+<p>Thus, a Business Component data type of the Customer Transaction is automatically created in the <a href="1836.html">Knowledge Base</a> and you are able to define in any object, a variable of the new type created. So, in any object define a variable named &amp;Customer based on the Customer type.</p>
+
+<p><strong>1) </strong>The following code (defined for example in a <a href="6664.html">Procedure Source</a> or inside an event in a <a href="6916.html">Web Panel object</a>) is inserting a customer:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+  &amp;Customer.CustomerName = 'Mary'
+  &amp;Customer.CustomerLastName = 'Brown'
+  &amp;Customer.CustomerAddress = '767 5th Avenue'
+  &amp;Customer.CustomerEmail = 'mbrown@gmail.com'
+  &amp;Customer.save()
+  if &amp;Customer.success()
+     commit
+  else
+     rollback
+  endif </pre>
+
+<p><br />
+<strong>2)</strong> The following code (defined for example in a Procedure Source or inside an event in a Web Panel) is updating a customer:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+  &amp;Customer.Load(8)
+  &amp;Customer.CustomerEmail = 'marybrown@gmail.com'
+  &amp;Customer.save()
+  if &amp;Customer.success()
+     commit
+  else
+     rollback
+  endif</pre>
+
+<p> </p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="2279.html">Error handling in Business Components</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5846.html">Toc:Business Component</a></TD><TD><a href="2282.html">Business Component - Publication as Web Service</a></TD><TD><a href="23401.html">Business Component Check method</a></TD></TR><TR><TD><a href="23402.html">Business Component Fail method</a></TD><TD><a href="23475.html">Business Component GetMessages method</a></TD><TD><a href="23211.html">Business Component Load method</a></TD><TD><a href="23790.html">Business Component Mode method</a></TD></TR><TR><TD><a href="9548.html">Business Component property</a></TD><TD><a href="2278.html">Business Component samples</a></TD><TD><a href="23404.html">Business Component Success method</a></TD><TD><a href="31703.html">Business Components - Differences between the Save method and the Insert and Update methods</a></TD></TR><TR><TD><a href="2279.html">Error handling in Business Components</a></TD><TD><a href="5310.html">Using Data Providers in Other GX Objects</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/15/22 03:28 PM</em></font></td></TR></table></font>

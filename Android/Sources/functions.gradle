@@ -1,0 +1,30 @@
+// Declare git functions
+ext.gitSha = {
+	def p = 'git rev-parse --short HEAD'.execute([], project.rootDir)
+	p.waitFor()
+	if (p.exitValue() != 0) {
+		def errorMessage = p.errorStream.text
+		if (errorMessage.contains('Not a git repository')) {
+			return "UNVERSIONED"
+		} else {
+			throw new RuntimeException(errorMessage)
+		}
+	}
+
+	return p.text.trim()
+}
+
+ext.gitTimestamp = {
+	def p = 'git log -n 1 --format=%at'.execute([], rootDir)
+	p.waitFor()
+	if (p.exitValue() != 0) {
+		def errorMessage = p.errorStream.text
+		if (errorMessage.contains('Not a git repository')) {
+			return 0
+		} else {
+			throw new RuntimeException(errorMessage)
+		}
+	}
+
+	return p.text.trim()
+}

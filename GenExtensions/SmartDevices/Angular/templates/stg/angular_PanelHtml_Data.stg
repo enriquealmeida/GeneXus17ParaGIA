@@ -1,0 +1,155 @@
+delimiters "$", "$"
+
+celldata_edit_basic(data) ::= <<
+<gx-edit
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  $g_enabled_property(data, data.Enabled)$
+  type="$data.InputType$"
+  $g_multiline_property(data)$
+  placeholder="$data.InviteMessage$"
+  $g_data_binding(data, { })$
+  $data.TriggerAction:g_celldata_edit_action()$
+  $g_touch_event_binding(data)$
+  $g_enter_event_binding(data)$
+  $data.UIActionsInfo.ControlValueChangedAction:g_event_binding( {change}, data )$
+  $g_line_clamp_attribute(data)$
+  area="field"
+>
+  $data.TriggerAction:g_celldata_edit_action_button()$
+</gx-edit>
+>>
+
+celldata_checkbox(data) ::= <<
+<gx-checkbox
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  [checkedValue]="$data.CustomProperties.({@ControlCheckValue})$"
+  [unCheckedValue]="$data.CustomProperties.({@ControlUnCheckValue})$"
+  [(ngModel)]="$data.BindingInfo.DataBinding:g_expression()$"
+  $data.UIActionsInfo.ControlValueChangedAction:g_event_binding( {change}, data )$
+  $g_assign_html_property_or_default("caption", data.UIModelInfo.UIElementContextExpression, data.UIElementControlName, data.UIModelInfo.CaptionProperty, "'", data.CustomProperties.({@ControlTitle}))$
+  ngDefaultControl
+  [attr.readonly]="$data.IsReadonlyExpression:g_expression()$"
+  $g_enabled_property(data, data.Enabled)$
+  area="field"
+>
+</gx-checkbox>
+>>
+
+celldata_image(data) ::= <<
+$if (data.IsReadonly)$
+<gx-image
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  [autoGrow]="$data.AutoGrow$"
+  $g_enabled_property(data, data.Enabled)$
+  $g_visible_property(data, data.Visible)$
+  [src]="$data.BindingInfo.DataBinding:g_expression()$ | imageToURL:this.app.uiContextKey"
+  $html_att_value("alt", data.AlternateText)$
+  $g_touch_event_binding(data)$
+  $g_invisible_mode_attr(data)$
+>
+</gx-image>
+$else$
+<gx-form-field
+  $g_class_property(data, data.Class, "control")$
+  $g_visible_property(data, data.Visible)$
+  $g_invisible_mode_attr(data)$
+  labelCaption="$g_translate(data.LabelCaption)$"
+  $g_labelposition_property(data)$
+  >
+  <gx-image-upload
+    $g_html_id(data.ControlName)$ 
+    $g_test_data(data.ControlName)$
+    $g_class_property(data, data.Class, "control")$
+    [autoGrow]="$data.AutoGrow$"
+    $g_enabled_property(data, data.Enabled)$
+    [src]="$data.BindingInfo.DataBinding:g_expression()$ | imageToURL:this.app.uiContextKey"
+    [readonly]="$data.IsReadonlyExpression:g_expression()$"
+    labelText="$g_translate(data.LabelCaption)$" 
+    $g_uploadservice_property(data)$
+    (onImageChanged)="$data.BindingInfo.DataBinding:g_expression()$ = createImageFromURL(\$event)"
+    $g_touch_event_binding(data)$
+    $html_att_value("alt", data.AlternateText)$
+    $data.UIActionsInfo.ControlValueChangedAction:g_event_binding( {change}, data )$
+  ></gx-image-upload>
+</gx-form-field>
+$endif$
+>>
+
+celldata_combo(data) ::= <<
+<gx-select
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  area="field"
+  placeholder="$data.InviteMessage$"
+  $g_data_binding(data, {$data.UIActionsInfo.ControlValueChangedAction:g_event_binding_call(data)$; })$
+  $g_enabled_property(data, data.Enabled)$
+  >
+  <gx-select-option value="{{$g_data_binding_conversion( data.InputType, data.BindingInfo.DataBinding.ExprDataType, {itm[0]})$}}" *ngFor="let itm of $data.UIModelInfo.UIElementContextExpression:g_expression()$.$data.UIElementControlName$?.items;">{{itm[1]}}</gx-select-option>
+</gx-select>
+>>
+
+celldata_combo_option(data, option) ::= <%%>
+
+celldata_switch(data) ::= <<
+<gx-switch
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(cell.Data, cell.Data.Class)$
+  $g_visible_property(cell.Data, cell.Data.Visible)$
+  [ngModel]="$data.BindingInfo.DataBinding:g_expression()$"
+  $if(!data.IsReadonly)$
+  (ngModelChange)="$data.BindingInfo.DataBinding:g_expression()$ = $g_convert_to( {VarChar}, data.BindingInfo.DataBinding.ExprDataType, {\$event})$; $data.UIActionsInfo.ControlValueChangingAction:g_event_binding_call(data)$"
+  $endif$
+  ngDefaultControl
+  [attr.readonly]="$data.IsReadonlyExpression:g_expression()$"
+  $g_enabled_property(cell.Data, data.Enabled)$
+  $g_touch_event_binding(data)$
+  $data.UIActionsInfo.ControlValueChangedAction:g_event_binding( {change}, data )$
+  area="field">
+</gx-switch>
+>>
+
+celldata_wheel_range(data) ::= <<
+$g_celldata_edit(data)$
+>>
+
+celldata_datetime(data) ::= <<
+$g_celldata_control(data, "Genexus.UI.Controls.DateTime")$
+>>
+
+celldata_password(data) ::= <<
+<gx-password-edit
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  $g_data_binding(data, { })$
+  $data.UIActionsInfo.ControlValueChangedAction:g_event_binding( {change}, data )$
+  $g_enabled_property(data, data.Enabled)$
+  placeholder="$data.InviteMessage$"
+  area="field"
+  show-reveal-button="$data.ShowPasswordHint$"
+  reveal-button-text-on="Reveal password"
+  reveal-button-text-off="Hide password">
+  </gx-password-edit>
+>>
+
+celldata_geolocation(data)::=<<
+<gx-geolocation
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_enabled_property(cell.Data, data.Enabled)$
+  [coords]="$data.BindingInfo.DataBinding:g_expression()$"
+  [readonly]="$data.IsReadonly$"
+  (onGeolocationChanged) = "$data.BindingInfo.DataBinding:g_expression()$ = \$event;"
+  $g_touch_event_binding(data)$
+  $data.UIActionsInfo.ControlValueChangedAction:g_event_binding( {onGeolocationChanged}, data )$
+  area="field">
+</gx-geolocation>
+>>

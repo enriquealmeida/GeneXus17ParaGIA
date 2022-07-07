@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Using Data Providers in Other GX Objects</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?5310,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Using Data Providers in Other GX Objects</h1>
+<!--Using Data Providers in Other GX Objects--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As you may already know, the <a href="41037.html">output of a Data Provider</a> is an <a href="10021.html">SDT</a> or <a href="5846.html">BC</a> (that could be later -even immediately- converted to another format such as XML). The only output formats supported are SDT and BC. However, not only a simple SDT or BC can be returned, but also a collection of them.</p>
+
+<p>Using a Data Provider in another <a href="1866.html">GeneXus objects</a> is similar to using a Procedure that returns an SDT or BC to the caller.</p>
+
+<p><a id="idExample"> </a></p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>An easy way to implement an <a href="https://wiki.genexus.com/commwiki/wiki?2337,," target="_blank">RSS</a> feed is defining a Procedure that calls a Data Provider to populate the data and returns an XML with the RSS format:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;rss = rss() // RSS() is a DP that load the data
+&amp;response.addstring(&amp;rss.toxml(true))</pre>
+
+<p>Notes:</p>
+
+<ul>
+	<li>the proc must be defined as Main with Call Protocol HTTP.</li>
+	<li>&amp;rss is of type <a href="https://wiki.genexus.com/commwiki/wiki?6898,," target="_blank">RSS SDT</a>.</li>
+	<li>&amp;response is of type HTTPResponse.</li>
+</ul>
+
+<h3><a id="When+the+output+is+a+Business+Component" class="HashLink" href="#When+the+output+is+a+Business+Component">When the output is a Business Component</a></h3>
+
+<p>Usually, the Data Provider Output is an SDT, but some times it is very convenient to use a <a href="5846.html">Business Component</a> as the Output. For example for the following Data Provider 'CustomersProvider'  the Output is the 'Customer' BC, the 'Collection' property is set to 'True', and the 'Collection Name' property is set as 'customers' (exactly the name given to the root Group in the Source).</p>
+
+<p><img src="./images/5974.jpg" id="5974" class="WikiImage"/></p>
+
+<p>Notes</p>
+
+<ul>
+	<li>Given this DP will return more than one Customer, the 'Collection' property is set to 'True', and the 'Collection Name' property is set as 'customers' (exactly the name given to the root Group in the Source).</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+customers
+{
+  customer
+  {
+     CustomerId = 400
+     CustomerName = 'Mike Hemingway'
+  }
+  customer
+  {
+     CustomerId = 401
+     CustomerName = 'Jeniffer Faulkner'
+  }
+}</pre>
+
+<p>So, in a procedure, we could define a '&amp;myCustomersBC' variable with 'Customer' BC data type and with the 'Collection' property set to True (see <a href="6352.html">Collection variables</a>):</p>
+
+<p><img src="./images/5975.jpg" id="5975" class="WikiImage"/><br />
+<br />
+Then, inside the object we could write:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;myCustomersBC = CustomersProvider()
+
+For &amp;customer in &amp;myCustomersBC
+    &amp;customer.Save()
+endfor</pre>
+
+<p>That is, the two-item collection returned by the 'CustomerProvider' Data Provider is scanned and each time, in the '&amp;customer' variable (of the 'Customer' BC data type) each item is loaded and a Save is done, having a new record on the database customers table.</p>
+
+<p><font size="2"><strong>Important</strong>:<br />
+The Data Provider only fills the associated structure of the BC, as would be done by hand in a Procedure, so that, the resulting BC mode is 'INSERT'. In other words, a Data Provider cannot make a 'LOAD' operation. That is to say, the</font><a href="23229.html">Save() method</a><font size="2"> applied to the BC returned by a Data Provider will attempt to create <strong>new records</strong> in the database.</font></p>
+
+<p>It isn't necessary to define the '&amp;myCustomersBC' variable, you just can write (see <a href="6359.html">For in command</a>):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;customer in CustomersProvider()
+       &amp;customer.Save()​
+​​​​​​endfor</pre>
+
+<p><a id="idParameters"> </a></p>
+
+<h3><a id="Parameters" class="HashLink" href="#Parameters">Parameters</a></h3>
+
+<p>The Data Provider also supports receiving parameters (all parameters are &quot;IN&quot; parameters).</p>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CustomerId = 1
+&amp;Tabs = Tabs(&amp;CustomerId)</pre>
+
+<p>Suppose that you define a &amp;Tabs variable of TABS type, which is an SDT associated with the <a href="41037.html">Output property</a> of the Data Provider named &quot;Tabs&quot;.</p>
+
+<h3><a id="How+to+work+with+the+items+of+a+collection+returned+by+a+Data+Provider" class="HashLink" href="#How+to+work+with+the+items+of+a+collection+returned+by+a+Data+Provider">How to work with the items of a collection returned by a Data Provider</a></h3>
+
+<p><a id="idOutputCollection"> </a></p>
+
+<p>You just write the following: </p>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;Var in Dataprovider(parameters list)
+    &amp;Var.SomeElement
+Endfor</pre>
+</div>
+
+<div>
+<div id="result_box">This avoids having to define a <a href="6352.html">collection variable</a> and writing the following:</div>
+</div>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Collection = Dataprovider(parameters list)
+
+For &amp;Var in &amp;Collection
+    &amp;Var.SomeElement
+<span style="FONT-SIZE: 11.0pt;"><font size="2">Endfor</font></span>
+</pre>
+</div>
+
+<div>See also <a href="6359.html">For in Command</a>.</div>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<div>Another example could be to show a tree from a transaction structure through an SDT.</div>
+
+<div>
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ TreeNodeCollection
+{
+TreeNode
+  where CategoryParentId = &amp;CategoryId when not &amp;CategoryId.IsEmpty()   
+  {
+  Id = CategoryId.ToString()
+  Name = CategoryName
+  Nodes = CategoriesDP(CategoryId)
+ }
+ TreeNode
+  where CategoryId = &amp;CategoryId
+  {
+  Id = CategoryItemId.ToString()
+  Name = CategoryItemName  
+ }
+}</pre>
+</div>
+</div>
+
+<div><br />
+</div>
+
+<div></div>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="41179.html">Collection property</a></TD><TD><a href="5270.html">Category:Data Provider object</a></TD><TD><a href="6310.html">Example: 'CustomersProvider' Data Provider</a></TD></TR><TR><TD><a href="41037.html">Output property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

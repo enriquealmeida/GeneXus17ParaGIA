@@ -1,0 +1,78 @@
+group CommonComponents;
+delimiters "$", "$"
+
+generateForm(kbObject, attributes, line, isCollection)::=<<
+<GxMultiForm rootId="1" version="html:15.0.0;layout:16.0.0">
+  <Form id="1" type="layout">
+    <detail>
+      <layout>
+        <table controlName="MainTable" tableType="Responsive" responsiveSizes="[{&quot;scale&quot;:&quot;xs&quot;,&quot;rows&quot;:[[{&quot;width&quot;:50,&quot;offset&quot;:25}]]},{&quot;scale&quot;:&quot;sm&quot;,&quot;rows&quot;:[[{&quot;width&quot;:50,&quot;offset&quot;:25}]]},{&quot;scale&quot;:&quot;md&quot;,&quot;rows&quot;:[[{&quot;width&quot;:50,&quot;offset&quot;:25}]]},{&quot;scale&quot;:&quot;lg&quot;,&quot;rows&quot;:[[{&quot;width&quot;:50,&quot;offset&quot;:25}]]}]">
+          $if(isCollection)$<row>
+            <cell>
+              <grid controlName="Grid$kbObject$" collection="&amp;$kbObject$" PATTERN_ELEMENT_CUSTOM_PROPERTIES="&lt;Properties&gt;&lt;Property&gt;&lt;Name&gt;SflRender&lt;/Name&gt;&lt;Value&gt;HorizontalGrid&lt;/Value&gt;&lt;/Property&gt;&lt;/Properties&gt;">
+                <table controlName="Grid$kbObject$Table" tableType="Tabular" responsiveSizes="[]">
+                  $attributes:{attribute|$outAtts(attribute, line)$};separator=""$
+                </table>
+              </grid>
+            </cell>
+          </row>
+		  $else$
+		 $attributes:{attribute|$outAtts(attribute, line)$};separator="\r\n"$$endif$
+        </table>
+      </layout>
+    </detail>
+  </Form>
+</GxMultiForm>
+>>
+
+generateEvents(kbObject, parameters, action, isSearch, pks)::=<<
+Event Start
+$if(isSearch)$
+for each $kbObject$ 
+	where $parameters:{variable|$webParameters(variable)$};separator=" AND "$
+		&$kbObject$Line.Load($pks:{key|$loadPks(key)$};separator=", "$)
+		&$kbObject$.Add(&$kbObject$Line)
+endfor
+$else$
+	&$kbObject$ = $action$($parameters:{parameter|$callingParameters(parameter)$};separator=","$)
+$endif$
+Endevent
+>>
+
+generateRules(parameters)::=<<
+parm($parameters:{parameter|$parameters(parameter)$};separator=","$);
+>>
+
+kbAttributes(attribute, line)::=<<
+<item>
+	<data attribute="&amp;$line$" fieldSpecifier="$attribute$" readonly="True" />
+</item>
+>>
+
+outAtts(attribute, line)::=<<
+<row><cell hAlign="Center"><data $if(isCollection)$controlName="ctl$attribute$"$endif$ attribute="&amp;$kbObject$" fieldSpecifier="$if(isCollection)$item(0).$endif$$attribute$" labelPosition="None" readonly="True" /></cell></row>
+>>
+
+levelAttributes(level, line)::=<<
+<item>
+	<simplegrid controlName="Grid1" collection="&amp;$line$.$level.Name$">
+		$level.Attributes:{attribute|$levelAttribute(level, line, attribute)$};separator="\r\n"$
+	</simplegrid>
+</item>
+>>
+
+levelAttribute(level, line, attribute)::=<<
+<item attribute="&amp;$line$" fieldSpecifier="$level.Name$.item(0).$attribute$" PATTERN_ELEMENT_CUSTOM_PROPERTIES="&lt;Properties&gt;&lt;Property&gt;&lt;Name&gt;ColReadOnly&lt;/Name&gt;&lt;Value&gt;True&lt;/Value&gt;&lt;/Property&gt;&lt;/Properties&gt;" />
+>>
+
+parameters(parameter)::=<<
+in:&$parameter$
+>>
+
+webParameters(parameter)::=<<
+&$parameter$ = $parameter$
+>>
+
+callingParameters(parameter)::=<<
+&$parameter$
+>>

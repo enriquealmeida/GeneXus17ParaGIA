@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?9548,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component property</h1>
+<!--Business Component property--><div class="TableWikiBody" id="tblwikibody"> Allows the Transaction to be executed in a 'silent' mode (without showing its form) in order to update the database from any object.  <h3><a id="Values" class="HashLink" href="#Values">Values</a></h3>
+
+<p> <div style="overflow-x:auto"><table style="border-style: none;border-collapse: collapse;"><tbody><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>False                                                       </strong></td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>True                                                        </strong></td></tr></tbody></table></div></p>
+ <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Objects:</strong> <a href="1908.html">Transaction</a><br /><strong>Generators:</strong> <a href="38604.html">.NET</a>, <a href="2892.html">.NET Framework</a>, <a href="14453.html">Android</a>, <a href="14917.html">Apple</a>, <a href="12258.html">Java</a><br /></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>The great advantage that the use of a Business Component provides is that you can update the database from any GeneXus object, and the same controls that are performed when the <a href="1908.html">Transaction</a> is executed will be done.</p>
+
+<p>The default value for this property is False. <br />
+<br />
+When you set the Business Component property of a Transaction = True, a new data type named with the same name of the Transaction is created in the <a href="1836.html">Knowledge Base</a>, and variables based on that new data type may be defined in any object.</p>
+
+<p>For example, suppose you define the Customer Transaction as Business Component (by setting its Business Component property = True):</p>
+
+<p><img src="./images/23116.png" id="23116" class="WikiImage"/></p>
+
+<p>Once you set this property to True, a Business Component data type named Customer is automatically created in the Knowledge Base. Then, you will be able to define in any object a variable based on the new data type, as the following image shows (in the example in a <a href="6916.html">Web Panel</a>):</p>
+
+<p><img src="./images/23117.png" id="23117" class="WikiImage"/></p>
+
+<p>The variables based on a Business Component data type (as &amp;customer in this example), have got a set of <a href="2276.html">properties</a> that correspond to the Transaction attributes (so that you can assign them values).</p>
+
+<p>Also, a set of <a href="2277.html">methods</a> is available to apply to Business Components variables (in order to execute operations in the database as insertions, updates, etc.).</p>
+
+<p>Important: After assigning values to the properties of a Business Component variable and executing methods to update the database, it is necessary to write explicitly the <a href="7964.html">Commit command</a> in the code, wherever you consider that all the operations made to the database make a complete <a href="7963.html">Logical Unit of Work (LUW)</a>.</p></p>
+ <h3><a id="Run-time%2FDesign-time" class="HashLink" href="#Run-time%2FDesign-time">Run-time/Design-time</a></h3>
+
+<p> This property applies only at design-time.</p>
+ <h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p> <p>Suppose the Customer Transaction shown above contains defined the following rule:</p>
+
+<p><img src="./images/23170.png" id="23170" class="WikiImage"/> </p>
+
+<p>and assume the CustomerId attribute has got its <a href="6798.html">Autonumber property</a> set to True.</p>
+
+<p>The following code (included in the events section of the Web Panel where the &amp;customer variable is defined) is inserting a customer by assigning values to the &amp;customer variable properties (it means, the customer attributes), then the <a href="23229.html">Save method</a> is applied to the variable, and finally, the commit command is executed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Insert customer'
+
+ &amp;Customer=new() //in this case, the new operator can be omitted, but if more than one customer is inserted, it must be used
+ &amp;Customer.CustomerName = 'John'
+ &amp;Customer.CustomerLastName = 'Smith'
+ &amp;Customer.CustomerAddress = '165 Ocean Drive'
+ &amp;Customer.CustomerEmail = 'jsmith@hotmail.com'
+ &amp;Customer.Save()
+ if &amp;Customer.Success() 
+   commit 
+ else 
+   msg(&amp;Customer.GetMessages().ToJson()) 
+ endif
+
+EndEvent</pre>
+
+<p><strong>Several explanations related to the previous code:</strong></p>
+
+<p>When the <a href="23229.html">Save method</a> is executed:<br />
+- The default rule defined in the Customer transaction rule is triggered, so the CustomerAddedDate attribute is assigned.<br />
+- The CustomerId attribute is autonumbered.<br />
+- The CustomerPhone was not assigned, so, the attribute in the table will not contain a value (it will be empty).<br />
+- If the Transaction had had the CountryId attribute and/or the CityId attribute as foreign keys, and you assign by error values to them that not exist in the corresponding tables, when the Save method try to record, it fails.<br />
+- The mode changes to update, and the records keep instantiated in memory.<br />
+- After applying a method to access the database, it is recommended always <a href="2279.html">handle the errors</a>.</p>
+
+<p>Since GeneXus 15 you can also use the <a href="31695.html">Insert method</a> instead of the Save method to solve the same customer insertion, as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Insert customer'
+
+ &amp;Customer=new() //in this case, the new operator can be omitted, but if more than one customer is inserted, it must be used 
+ &amp;Customer.CustomerName = 'John' 
+ &amp;Customer.CustomerLastName = 'Smith' 
+ &amp;Customer.CustomerAddress = '165 Ocean Drive' 
+ &amp;Customer.CustomerEmail = 'jsmith@hotmail.com' 
+ if &amp;Customer.Insert() 
+  commit 
+ else
+  msg(&amp;Customer.GetMessages().ToJson()) 
+ endif 
+
+EndEvent
+</pre></p>
+ <h3><a id="wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes" class="HashLink" href="#wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes"><a href="17719.html">How to apply changes</a></a></h3>
+
+<p> <div class="TableWikiBody" id="tblwikibody"><p>To apply the corresponding changes when the property value is configured, rebuild all the <a href="1908.html">Transaction objects</a>.</p></div></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17719.html">Applying property changes</a></TD><TD><a href="31018.html">Automatic data population associated to transactions - FAQ</a></TD><TD><a href="5846.html">Toc:Business Component</a></TD></TR><TR><TD><a href="2282.html">Business Component - Publication as Web Service</a></TD><TD><a href="23238.html">Business Component Delete method</a></TD><TD><a href="23402.html">Business Component Fail method</a></TD><TD><a href="23475.html">Business Component GetMessages method</a></TD></TR><TR><TD><a href="23804.html">Business Component GetOldValues method</a></TD><TD><a href="31695.html">Business Component Insert method</a></TD><TD><a href="31697.html">Business Component InsertOrUpdate method</a></TD><TD><a href="23790.html">Business Component Mode method</a></TD></TR><TR><TD><a href="2278.html">Business Component samples</a></TD><TD><a href="23229.html">Business Component Save method</a></TD><TD><a href="23404.html">Business Component Success method</a></TD><TD><a href="23483.html">Business Component ToXml method</a></TD></TR><TR><TD><a href="31696.html">Business Component Update method</a></TD><TD><a href="2276.html">Business Component variables properties</a></TD><TD><a href="38337.html">Creating Unit Tests</a></TD></TR><TR><TD><a href="48121.html">Creating Unit Tests (GeneXus 17 upgrade 3 or prior)</a></TD><TD><a href="2279.html">Error handling in Business Components</a></TD><TD><a href="39153.html">Unit Testing for Data Providers</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/09/22 04:00 PM</em></font></td></TR></table></font>

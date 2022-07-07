@@ -1,0 +1,481 @@
+delimiters "$", "$"
+import "Types.stg"
+import "expressions.stg"
+import "PanelHtml_Events.stg"
+import "PanelHtml_Properties.stg"
+
+singleControlImplementation ::= [
+"Rating":					"g_celldata_rating",
+"Image":					"g_celldata_image",
+"SDWheel-Values":			"g_celldata_combo",
+"SDWheel-Range":			"g_celldata_edit",
+"SDWheel-Attributes":		"g_celldata_dyncombo",
+"SDWheel-DataProvider":		"g_celldata_dyncombo",
+"Edit":						"g_celldata_edit",
+"Combo Box":				"g_celldata_combo",
+"Dynamic Combo Box":		"g_celldata_dyncombo",
+"HideCode":		            "g_celldata_hidecode",
+"SuggestIncremental":       "g_celldata_suggest_incremental",
+"SuggestOnRequest":		    "g_celldata_suggest_onrequest",
+"DateTime":					"g_celldata_datetime",
+"Date":						"g_celldata_datetime",
+"Label":					"g_celldata_label",
+"Video":					"g_celldata_video",
+"VideoControl":				"g_celldata_video",
+"Audio":					"g_celldata_audio",
+"GeneXus.Geolocation":		"g_celldata_geolocation",
+"GeneXus.Address":			"g_celldata_edit",		// TODO: Map to address location
+"GeneXus.Component":		"g_celldata_component",
+"GeneXus.Html":				"g_celldata_html",
+"GeneXus.Email":			"g_celldata_edit",
+"GeneXus.Url":				"g_celldata_edit",
+"GeneXus.Phone":			"g_celldata_edit",
+"Radio Button":				"g_celldata_radiobutton",
+"Check Box":				"g_celldata_checkbox",
+"check box":				"g_celldata_checkbox",
+"SD LinearGauge":			"g_celldata_lineargauge",
+"SDPhysicalMeasure":		"g_celldata_physicalmeasure",
+"SDChronometer":			"g_celldata_chronometer",
+"SDSwitch":					"g_celldata_checkbox",	// "g_celldata_switch",
+"SDGeoLocation":			"g_celldata_geolocation",
+"SDFileControl":			"g_celldata_file",
+"SD Advanced Image":        "g_celldata_image",
+default:					"g_celldata_custom" // anything else
+]
+
+labelPositions ::= [
+"Top": "top",
+"Right": "right",
+"Bottom": "bottom",
+"Left": "left",
+"Float": "top",
+"None": "none",
+default: "left"
+]
+
+radioDirection ::= [
+"Horizontal": "horizontal",
+"Vertical": "vertical",
+default: "vertical"
+]
+
+g_cell_data(cell) ::= <<
+$if (cell.Data.UseFormField)$
+<gx-form-field
+  $g_class_property(cell.Data, cell.Data.Class)$
+  $g_visible_property(cell.Data, cell.Data.Visible)$
+  $g_invisible_mode_attr(cell.Data)$
+  labelCaption="$g_translate(cell.Data.LabelCaption)$"
+  label-position="$labelPositions.(cell.Data.LabelPosition)$"
+  >
+  $(singleControlImplementation.(cell.Data.ControlType))(cell.Data)$
+</gx-form-field>
+$else$
+$(singleControlImplementation.(cell.Data.ControlType))(cell.Data)$
+$endif$
+>>
+
+g_celldata_label(data) ::= <<
+>>
+
+g_celldata_custom(data) ::= <<
+$if (data.IsUserControl)$
+$g_usercontrol(data.UserControl, data.DataBinding)$
+$else$
+<gx-message data-info="$data.ControlName$">Control '$data.ControlType$' of field '$data.DataBinding:g_expression()$' not available yet</gx-message>
+$endif$
+>>
+
+g_visibility(visible) ::=<<
+$if(!visible)$ hidden: 'true'$endif$
+>>
+
+g_celldata_geolocation(data)::=<<
+<gx-geolocation
+  $g_html_id(data.ControlName)$
+  $g_enabled_property(cell.Data, data.Enabled)$
+  [coords]="$data.DataBinding:g_expression()$"
+  [readonly]="$data.IsReadonly$"
+  (onGeolocationChanged) = "$data.DataBinding:g_expression()$ = \$event;"
+  $g_touch_event_binding(data)$
+  $data.ControlValueChangedAction:g_event_binding( {onGeolocationChanged}, data )$
+  area="field">
+</gx-geolocation>
+>>
+
+g_celldata_edit(data) ::= <<
+$if (data.IsPassword)$
+  $g_celldata_password(data)$
+$else$
+  $g_celldata_edit_basic(data)$
+$endif$
+>>
+
+g_celldata_edit_basic(data) ::= <<
+<gx-edit
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  type="$data.InputType$"
+  $g_multiline_property(data)$
+  placeholder="$data.InviteMessage$"
+  $g_data_binding(data, { })$
+  $data.TriggerAction:g_celldata_edit_action()$
+  $g_touch_event_binding(data)$
+  $g_enter_event_binding(data)$
+  $data.ControlValueChangedAction:g_event_binding( {change}, data )$
+  $g_line_clamp_attribute(data)$
+  area="field"
+>
+  $data.TriggerAction:g_celldata_edit_action_button()$
+</gx-edit>
+>>
+
+g_celldata_edit_action(dataAction) ::= <<
+[showTrigger]="true"
+(gxTriggerClick)="callAction($dataAction$); \$event.stopPropagation()"
+>>
+
+g_celldata_edit_action_button(dataAction) ::= <<
+<img slot="trigger-content" src="images\prompt.gif"/>
+>>
+
+g_celldata_chronometer(data) ::= <<
+<gx-chronometer
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  [(ngModel)]="$data.DataBinding:g_expression()$"
+  $data.ControlValueChangedAction:g_event_binding( {ngModelChange}, data )$
+  ngDefaultControl  
+  $g_timer_event_binding(data)$
+  $g_custom_string_property(data, "state", "SDChronometerState", "state")$
+  $g_custom_numeric_property(data, "interval", "SDChronometerTickInterval", "interval")$
+  $g_custom_numeric_property(data, "maxValue", "SDChronometerMaxValue", "maxValue")$
+  $g_custom_string_property(data, "maxValueText", "SDChronometerMaxValueText", "maxValueText")$
+  $g_visible_property(cell.Data, cell.Data.Visible)$
+  [cssClass]="'$data.Class$'"
+  [attr.readonly]="true"
+  unit="s"
+></gx-chronometer>
+>>
+
+g_celldata_switch(data) ::= <<
+<gx-switch
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  $g_class_property(cell.Data, cell.Data.Class)$
+  $g_visible_property(cell.Data, cell.Data.Visible)$
+  [ngModel]="$data.DataBinding:g_expression()$"
+  $if(!data.IsReadonly)$
+  (ngModelChange)="$data.DataBinding:g_expression()$ = $g_convert_to( {VarChar}, data.DataBinding.ExprDataType, {\$event})$; $data.ControlValueChangingAction:g_event_binding_call(data)$"
+  $endif$
+  ngDefaultControl
+  $g_enabled_property(cell.Data, data.Enabled)$
+  $g_touch_event_binding(data)$
+  $data.ControlValueChangedAction:g_event_binding( {change}, data )$
+  area="field">
+</gx-switch>
+>>
+
+g_promptCall(data)::=<<
+$if (data.IsPrompt)$
+<button class="promptCall prompt-$data.Mode$" data-gx-action="$data.PromptCall$" />
+$endif$
+>>
+
+g_celldata_lineargauge(data) ::= <<
+<gx-lineargauge  
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  $g_visible_property(data, data.Visible)$
+  [gxModel]="$data.DataBinding:g_expression()$"
+  >
+  </gx-lineargauge>
+>>
+
+g_celldata_physicalmeasure(data) ::= <<
+$g_celldata_control(data, "Genexus.UI.Controls.PhysicalMeasure")$
+>>
+
+g_celldata_image(data) ::= <<
+$if (data.IsReadonly)$
+<gx-image
+  $g_html_id(data.ControlName)$
+  [autoGrow]="$data.AutoGrow$"
+  $g_class_property(data, data.Class)$
+  $g_enabled_property(data, data.Enabled)$
+  $g_visible_property(data, data.Visible)$
+  [src]="$data.DataBinding:g_expression()$ | loadCachedUri | resolveRelativeUrl"
+  $html_att_value("alt", data.AlternateText)$
+  $g_touch_event_binding(data)$
+  $g_invisible_mode_attr(data)$
+>
+</gx-image>
+$else$
+<gx-image-upload
+  $g_html_id(data.ControlName)$ 
+  $g_enabled_property(cell.Data, data.Enabled)$
+  [src]="$data.DataBinding:g_expression()$ | loadCachedUri | resolveRelativeUrl"
+  [readonly]="$data.IsReadonlyExpression:g_expression()$"
+  labelText="$g_translate(data.LabelCaption)$" 
+  (onImageChanged)="$data.DataBinding:g_expression()$ = \$event"
+  $g_touch_event_binding(data)$
+  $html_att_value("alt", data.AlternateText)$
+  $data.ControlValueChangedAction:g_event_binding( {change}, data )$
+></gx-image-upload>
+$endif$
+>>
+
+g_celldata_combo(data) ::= <<
+<gx-select
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  area="field"
+  $g_data_binding(data, {$data.ControlValueChangedAction:g_event_binding_call(data)$; })$
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  >
+  $data.ControlValues: {option | $g_celldata_combo_option(data, option)$};separator="\r\n"$
+</gx-select>
+>>
+
+g_celldata_dyncombo(data) ::= <<
+<gx-select
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  area="field"
+  $g_data_binding(data, {$data.ControlValueChangedAction:g_event_binding_call(data)$; $data.AfterSelectionAction:{action|$action$($data.DataBinding:g_expression()$)}$ })$
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  >
+  <gx-select-option value="{{itm[0]}}" *ngFor="let itm of $data.DataSourceProviderExpression:g_expression()$;">
+    {{itm[1]}}
+  </gx-select-option>
+
+</gx-select>
+>>
+
+g_celldata_hidecode(data) ::= <<
+<gx-edit
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  type="$data.InputType$"
+  placeholder="$data.InviteMessage$"
+  $g_data_binding(data, { })$
+  $g_touch_event_binding(data)$
+  (change)="update_$data.ControlName$(); $data.ControlValueChangedAction:g_event_binding_call( data )$"
+  area="field">
+</gx-edit>
+>>
+
+g_celldata_suggest_incremental(data) ::= <<
+<gx-select 
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  area="field"
+  placeholder="$data.InviteMessage$"
+  suggest="true"
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  $g_data_binding(data, {suggest_$data.ControlName$();})$
+  $g_touch_event_binding(data)$
+  (change)="update_$data.ControlName$(); $data.ControlValueChangedAction:g_event_binding_call( data )$"
+>
+  <gx-select-option *ngFor="let option of $data.DataSourceProviderExpression:g_expression()$">
+    {{ option }}
+  </gx-select-option>
+</gx-select>
+>>
+
+g_celldata_suggest_onrequest(data) ::= <<
+<gx-select 
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  area="field"
+  placeholder="$data.InviteMessage$"
+  suggest="true"
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  $g_data_binding(data, { })$
+  $g_celldata_edit_action({suggest_$data.ControlName$()})$
+  $g_touch_event_binding(data)$
+  (change)="update_$data.ControlName$(); $data.ControlValueChangedAction:g_event_binding_call( data )$"
+>
+  <gx-select-option *ngFor="let option of $data.DataSourceProviderExpression:g_expression()$">
+    {{ option }}
+  </gx-select-option>
+</gx-select>
+>>
+
+g_celldata_combo_option(data, option) ::= <<
+<gx-select-option
+  value="$option.Key$">
+  $option.Value$
+</gx-select-option>
+>>
+
+g_celldata_radiobutton(data) ::= <<
+<gx-radio-group
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  area="field"
+  $g_data_binding(data, {$data.ControlValueChangedAction:g_event_binding_call(data)$; })$
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  direction="$radioDirection.(data.CustomProperties.ControlDirection)$">
+  $data.ControlValues: {option | $g_celldata_radiobutton_option(data, option)$};separator="\r\n"$
+</gx-radio-group>
+>>
+
+g_celldata_radiobutton_option(data, option) ::= <<
+<gx-radio-option
+  caption="$g_translate(option.Value)$"
+  value="$option.Key$">
+</gx-radio-option>
+>>
+
+g_celldata_checkbox(data) ::= <<
+<gx-checkbox
+  $g_html_id(data.ControlName)$
+  [checkedValue]="$data.CustomProperties.({@ControlCheckValue})$"
+  [unCheckedValue]="$data.CustomProperties.({@ControlUnCheckValue})$"
+  [(ngModel)]="$data.DataBinding:g_expression()$"
+  $data.ControlValueChangedAction:g_event_binding( {change}, data )$
+
+  ngDefaultControl
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  area="field"
+>
+</gx-checkbox>
+>>
+
+g_celldata_datetime(data) ::= <<
+$g_celldata_control(data, "Genexus.UI.Controls.DateTime")$
+>>
+
+g_celldata_rating(data) ::= <<
+<gx-rating
+  $g_html_id(data.ControlName)$
+  ngDefaultControl
+  name="$data.ControlName$"
+  [(ngModel)]="$data.DataBinding:g_expression()$"
+  $g_enabled_property(data, data.Enabled)$
+  $g_visible_property(data, data.Visible)$
+  $g_custom_numeric_property(data, "max-value", "RatingMaxValue", "maxValue")$
+  $g_custom_numeric_property(data, "step", "RatingStep", "step")$
+  $data.ControlValueChangedAction:g_event_binding( {ngModelChange}, data )$
+  $data.TriggerAction:g_celldata_edit_action()$>
+</gx-rating>
+>>
+
+g_celldata_password(data) ::= <<
+<gx-password-edit
+  $g_html_id(data.ControlName)$
+  $g_data_binding(data, { })$
+  $data.ControlValueChangedAction:g_event_binding( {change}, data )$
+  $g_enabled_property(data, data.Enabled)$
+  $g_without_form_field_attributes(data)$
+  placeholder="$data.InviteMessage$"
+  area="field"
+  show-reveal-button="$data.ShowPasswordHint$"
+  reveal-button-text-on="Reveal password"
+  reveal-button-text-off="Hide password">
+  </gx-password-edit>
+>>
+
+g_celldata_html(data) ::= <<
+<div
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  [innerHTML]="$data.DataBinding:g_expression()$"
+  $g_touch_event_binding(data)$
+  >
+</div>
+>>
+
+g_celldata_audio(data) ::= <<
+$if(data.IsReadonly)$
+<gx-audio
+  $g_html_id(data.ControlName)$ 
+  $g_enabled_property(cell.Data, data.Enabled)$
+  [src]="$data.DataBinding:g_expression()$ | loadCachedUri | resolveRelativeUrl"
+></gx-audio>
+$else$
+// Audio upload not implemented.
+$endif$
+ >>
+
+g_celldata_component(data)  ::= <<
+<iframe
+  $g_html_id(data.ControlName)$
+  name="$data.ControlName$"
+  $g_enabled_property(data, data.Enabled)$
+  scrolling="no" frameborder="0" style="position: relative; height: 100vh; width: 100%;"
+  [src]="$data.DataBinding:g_expression()$ | resolveRelativeUrl | safe"
+  $g_touch_event_binding(data)$
+  >
+</iframe>
+>>
+
+g_celldata_control(data, controlName) ::= <<
+<span
+  data-not-implemented
+  $g_html_id(data.ControlName)$ 
+  [(ngModel)]="$data.DataBinding:g_expression()$" 
+  enabled="$data.IsReadonly$" 
+  class="$data.Class$" 
+  style="$g_visibility(data.Visible)$" 
+  inviteMessage="$data.InviteMessage$" 
+  labelCaption="$g_translate(data.LabelCaption)$" 
+  labelPosition="$data.LabelPosition$"
+ >
+ </span>
+ >>
+
+g_celldata_video(data)  ::= <<
+$if(data.IsReadonly)$
+<gx-video
+  *ngIf="$data.DataBinding:g_expression()$"
+  $g_html_id(data.ControlName)$ 
+  $g_enabled_property(cell.Data, data.Enabled)$
+  [src]="$data.DataBinding:g_expression()$ | loadCachedUri | resolveRelativeUrl"
+></gx-video>
+$else$
+// Video upload not implemented.
+$endif$
+ >>
+
+html_class(class)::= <<
+class="$class$"
+>>
+
+data_enabled(data)::=<<
+$if(data.IsReadonly)$disabled$endif$
+>>
+
+g_without_form_field_attributes(data) ::=<<
+$if (!data.UseFormField)$
+$g_class_property(data, data.Class)$
+$g_visible_property(data, data.Visible)$
+$g_invisible_mode_attr(data)$
+$endif$
+>>
+
+g_celldata_file(data) ::= <<
+<gx-file-upload
+  $g_html_id(data.ControlName)$ 
+  $g_enabled_property(cell.Data, data.Enabled)$
+  [fileSource]="$data.DataBinding:g_expression()$.uri | loadCachedUri | resolveRelativeUrl"
+  [readonly]="$data.IsReadonly$" 
+  labelText="$g_translate(data.LabelCaption)$" 
+  (onFileChanged)="$data.DataBinding:g_expression()$.uri = \$event"
+  $g_touch_event_binding(data)$
+  $html_att_value("alt", data.AlternateText)$
+  $data.ControlValueChangedAction:g_event_binding( {change}, data )$
+></gx-file-upload>
+>>
+

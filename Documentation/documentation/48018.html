@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Support for Jakarta EE and Java EE</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48018,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Support for Jakarta EE and Java EE</h1>
+<!--Support for Jakarta EE and Java EE--><div class="TableWikiBody" id="tblwikibody"><p>This article describes how GeneXus Java generator adds support for Jakarta EE and what you need to take into account to build and deploy your applications to servlet servers supporting Java EE, Jakarta EE or creating packages that support later to be deployed on any of them.</p>
+
+<h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>Jakarta EE is the evolution of Java EE. Oracle decided to transfer Java EE to an open source foundation (Eclipse Foundation). That transfer involved a name change to Jakarta EE and, most importantly, all the packages of the classes were renamed from javax.* to jakarta.*.</p>
+
+<p>New versions of container servlets already began to implement Jakarta EE, for example Tomcat 10, GlassFish 6.0 and Jetty 11 among others.<br />
+This implies that existing programs have to be recompiled by changing the packages of the used framework classes from javax.* to jakarta.* if they want to be run on the newer versions of the servers.</p>
+
+<h2><a id="Changes+in+the+GeneXus+Java+Generator" class="HashLink" href="#Changes+in+the+GeneXus+Java+Generator">Changes in the GeneXus Java Generator</a></h2>
+
+<p>From <a href="48247.html">GeneXus 17 upgrade 5</a> both versions are supported, so you can choose whether you want to continue executing the code in the new versions of the container servlets or in the ones you have already been running. For this, a refactoring has been carried out in the standard classes and changes in the generated code.</p>
+
+<h3><a id="Standard+classes" class="HashLink" href="#Standard+classes">Standard classes</a></h3>
+
+<p>A refactoring in the <a href="18859.html">GeneXus Standard Classes</a> has been made.</p>
+
+<p>All references to javax packages from the gxclassR.jar JAR have been removed and a new JAR called gxwrappercommon.jar that contains only interfaces that are implemented with</p>
+
+<ul>
+	<li>javax support are now in a new JAR called gxwrapperjavax .jar, and</li>
+	<li>jakarta support are now in a new JAR called gxwrapperjakarta.jar.</li>
+</ul>
+
+<h3><a id="Generated+code" class="HashLink" href="#Generated+code">Generated code</a></h3>
+
+<p>Regarding the generated code, there is a new property <a href="48353.html">Java platform support property</a> in which you will be able to choose if you want to generate for Java EE or Jakarta EE or both.</p>
+
+<h3><a id="Deployment" class="HashLink" href="#Deployment">Deployment</a></h3>
+
+<p>GeneXus from now on, in addition to carrying the JAR gxclassR.jar always carries the JAR gxwrappercommon.jar and, depending on the version of the servlet container you choose, the JAR gxwrapperjavax.jar or gxwrapperjakarta.jar.</p>
+
+<p>New properties <a href="48352.html">Tomcat version property</a> <a href="48354.html">Tomcat path property</a> have been created for managing the deployment to the local tomcat environment.</p>
+
+<h3><a id="Compatibility" class="HashLink" href="#Compatibility">Compatibility</a></h3>
+
+<p>It may happen that, if you had handwritten code that uses some of the standard classes that are now implemented as interfaces in the gxwrappercommon.jar JAR, that you need to fix that code.</p>
+
+<h4><a id="Samples" class="HashLink" href="#Samples">Samples</a></h4>
+
+<p>Here is a pair of samples of code with problems and the code that fixes them:</p>
+
+<p>Old code1:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java javax.servlet.http.HttpServletResponse response = httpContext.getResponse();
+java response.setStatus([!&amp;CodeService!]);</pre>
+
+<p>Fixed code1:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java com.genexus.servlet.http.IHttpServletResponse response = httpContext.getResponse();
+java response.setStatus([!&amp;CodeService!]);</pre>
+
+<p>Old code2:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java bos = new java.io.BufferedOutputStream( respuesta.getOutputStream() );
+</pre>
+
+<p>Fixed code2:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+java bos = new java.io.BufferedOutputStream( respuesta.getOutputStream().getOutputStream() );</pre>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  The fixed code works on both, Jakarta EE and Java EE, the old only worked on Java EE.</div>
+</p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<h2><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h2>
+
+<ul>
+	<li>More about the Java Standard Classes project at <a href='https://github.com/genexuslabs/JavaClasses#genexus-standard-classes-for-java'>https://github.com/genexuslabs/JavaClasses#genexus-standard-classes-for-java</a></li>
+	<li><a href="48353.html">Java platform support property</a></li>
+	<li><a href="48352.html">Tomcat version property</a></li>
+	<li><a href="48354.html">Tomcat path property</a></li>
+	<li><a href="32092.html">Application Deployment tool</a></li>
+</ul>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="48247.html">GeneXus 17 upgrade 5</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/20/21 12:54 PM</em></font></td></TR></table></font>

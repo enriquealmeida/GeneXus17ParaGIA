@@ -1,0 +1,110 @@
+{
+	"scopeName": "source.gx.object-design-system-styles",
+	"name": "GeneXus Design System Styles",
+	"foldingStartMarker": "\\b(#region)\\b",
+	"foldingStopMarker": "\\b(#endregion)\\b",
+	"patterns": [
+		{
+			"include": "source.gx.common#procedural"
+		},
+		{
+			"include": "#design-system-styles"
+		},
+		{
+			"include": "#design-system-styles-region"
+		},
+		{
+			"include": "#design-system-styles-body"
+		}
+	],
+	"repository": {
+		"design-system-styles-body":{
+			"patterns": [
+				{
+					"include": "source.gx.common#procedural"
+				},
+				{
+					"match": "(?<=\\s|^)@(include|media|font-face)(?=\\s|$)",
+					"name": "entity.name.function.gx"
+				},
+				{
+					"match": "((@import) ([^;])*)",
+					"captures": {
+						"1": {
+							"name": "string.quoted.double.literal.gx"
+						},
+						"2": {
+							"name": "keyword.control.gx"
+						}
+					}
+					
+				},
+				{
+					"match": "(\\.[a-zA-Z0-9\\-_]+):",
+					"name": "variable.gx"
+				},
+				{
+					"match": "([a-zA-Z0-9\\-_]+):",
+					"name": "variable.gx"
+				},
+				{
+					"match": "[a-zA-Z0-9\\-_\\s]+(?=(?:(\\s|\n|\r)*({|\\.|>|<|\\+))|$)",
+					"name": "entity.name.type.object.gx"
+				}
+			]
+		},
+		"design-system-styles-region":{
+			"begin": "(?i:#region) ([^;])*",
+			"end": "(?i:(#endregion))",
+			"name": "meta.level.body.gx",
+			"captures": {
+				"0":{
+					"name": "storage.modifier.gx"
+				},
+				"1":{
+					"name": "storage.modifier.gx"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#design-system-styles-body" 
+				},
+				{
+					"include": "#design-system-styles" 
+				}
+			]
+		},
+		"design-system-styles": {
+			"begin": "(?=\\b(?i:styles)\\b\\s*[\\w$]+)",
+			"end": "\\}",
+			"name": "meta.object.gx",
+			"patterns": [
+				{
+					"captures": {
+						"1": {
+							"name": "storage.modifier.gx"
+						},
+						"2": {
+							"name": "entity.name.type.object.gx"
+						}
+					},
+					"match": "\\b(?i:(styles))\\b\\s*([\\w$]+)",
+					"name": "meta.object.identifier.gx"
+				},
+				{
+					"begin": "\\{",
+					"end": "(?=})",
+					"name": "meta.object.body.gx",
+					"patterns": [
+						{
+							"include": "#design-system-styles-body"
+						},
+						{
+							"include": "#design-system-styles-region"
+						}
+					]
+				}
+			]
+		}
+	}
+}

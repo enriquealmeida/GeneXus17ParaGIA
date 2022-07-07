@@ -1,0 +1,32 @@
+delimiters "$", "$"
+
+logicalOperatorsMap ::= [
+  "=" : "==",
+  "and" : "&&",
+  "or" : "||",
+  "not" : "!",
+  "<>" : "!==",
+  default: key
+]
+
+logicalTemplateMap ::= [
+  "Date=Date" : "g_expression_logical_date_eq_date",
+  "Date<>Date" : "g_expression_logical_date_noteq_date",
+  default: "g_expression_logical_default"
+]
+
+g_expression_logical(expression) ::= <<
+$(logicalTemplateMap.({$expression.left.exprDataType:g_type_name()$$expression.operator$$expression.right.exprDataType:g_type_name()$}))(expression)$
+>>
+
+g_expression_logical_date_eq_date(expression) ::= <<
+(TypeConversions.eqDate($g_expression( expression.Left)$, $g_expression(expression.Right)$))
+>>
+
+g_expression_logical_date_noteq_date(expression) ::= <<
+!(TypeConversions.eqDate($g_expression( expression.Left)$, $g_expression(expression.Right)$))
+>>
+
+g_expression_logical_default(expression) ::= <<
+($g_expression( expression.Left)$ $logicalOperatorsMap.(expression.operator)$ $g_expression(expression.Right)$)
+>>

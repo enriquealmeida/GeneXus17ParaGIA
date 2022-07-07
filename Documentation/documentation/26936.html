@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: create an External Object which triggers GeneXus events in iOS</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?26936,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: create an External Object which triggers GeneXus events in iOS</h1>
+<!--HowTo: create an External Object which triggers GeneXus events in iOS--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>This guide explains how to create an External Object that can be called from offline and online code and can trigger a GeneXus Event.</p>
+
+<h2><a id="Getting+started" class="HashLink" href="#Getting+started">Getting started</a></h2>
+
+<p>If you haven't already done so, please read <a href="18072.html">this</a> document first, explaining the basics on how to create an external object for iOS.</p>
+
+<p>You must provide the user-event-callable implementation allong with the offline implementation, so start there first. Then check how to <a href="36340.html">create an extension library</a> as this sample uses it.</p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<p>You will implement a timer in Swift, that is, an external object with a method that receives a number of seconds, a message, and calls a GeneXus event when the time has elapsed, passing the message to the event.</p>
+
+<p>We need:</p>
+
+<ul>
+	<li>A definiiton in GeneXus (External Object)</li>
+	<li>an offline implementation to be called from the generated code</li>
+	<li>a handler to be called from the online code.</li>
+</ul>
+
+<h2><a id="External+Object+definition" class="HashLink" href="#External+Object+definition">External Object definition</a></h2>
+
+<p>This is the external object definition:</p>
+
+<p><img src="./images/26937.png" id="26937" class="WikiImage"/></p>
+
+<p>Make sure you mark the <em>Start</em> method and the <em>Completed</em> event as &quot;static&quot;.</p>
+
+<h2><a id="Offline" class="HashLink" href="#Offline">Offline</a></h2>
+
+<p>Before starting with the implementation, you need to provide some information in the EO definition.</p>
+
+<p><img src="./images/38518.gif" id="38518" class="WikiImage"/></p>
+
+<p>And the Start method:</p>
+
+<p><img src="./images/38519.gif" id="38519" class="WikiImage"/></p>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>Now that everything is in place, you can provide the actual implementation.</p>
+
+<p>First of all, create the TimerEO class as follows:</p>
+
+<h4><a id="TimerEO.swift" class="HashLink" href="#TimerEO.swift">TimerEO.swift</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+import Foundation
+import GXStandardClasses
+
+class TimerEO: GXExternalObjectBase {
+
+    private static let gxServerSideEvent = &quot;Completed&quot;
+
+    private var message: String = &quot;&quot;
+    
+    init(message: String) {
+        self.message = message
+        super.init()
+    }
+
+    static func startTimerWithSeconds( _ seconds: Int, _ message: String) {
+        TimerEO(message: message).startTimer(seconds: seconds)
+    }
+        
+    func startTimer(seconds: Int) {
+        gx_dispatch_sync_on_main_queue({() -&gt; Void in
+            Timer.scheduledTimer(timeInterval: TimeInterval(seconds), target: self, selector: #selector(self.timerDidFinish), userInfo: nil, repeats: false)
+        })
+    }
+
+    open override var externalObjectName: String {
+        return &quot;TimerEO&quot;
+    }
+    
+    // MARK - GeneXus event
+
+    @objc func timerDidFinish(timer: Timer) {
+        self.dispatchExteralObjectEvent(TimerEO.gxServerSideEvent, withParameters: [self.message])
+    }
+}
+</pre>
+
+<h4><a id="A+few+things+to+note%3A" class="HashLink" href="#A+few+things+to+note%3A">A few things to note:</a></h4>
+
+<ol>
+	<li>To simplify the code, there is no error handling. The type of the parameters is not checked in <em>startTimer</em> method, and there is no way to know if the timer was scheduled correctly. You should add error cheching in your EO's actual implementation.</li>
+	<li>The <em>startTimer(seconds:)</em> method creates the timer in the main thread. This is beacuse it may be called on a background thread that finishes before the time has been elapsed, and in that case the event won't be triggered.<br />
+	When implementing your own external object, you may need to do some things on the main thread, but avoid doing this if it is not required.</li>
+	<li>The <em>externalObjectName</em> is required if the external object will trigger some GeneXus events, and should return the name of the EO as defined in GeneXus</li>
+	<li>To trigger the <em>Completed</em> GeneXus event, use the method <em>dispatchExteralObjectEvent</em> defined in the base class.</li>
+</ol>
+
+<p>You are done, when using the Start method from the TimerEO from an offline application, the generated code will directly call the static function <em>startTimerWithSeconds</em>.</p>
+
+<h2><a id="Online+section" class="HashLink" href="#Online+section">Online section</a></h2>
+
+<p>By &quot;online&quot;, we mean an external object that can be called from a user event, whether the object that calls it is online or offline.</p>
+
+<p>As described in <a href="18072.html">External Object for iOS Devices</a>, you need to provide a &quot;mapper&quot; class (TimerEOLibrary.swift) and the implementation for the handler (TimerEOActionHandler.swift).</p>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>Here's the code:</p>
+
+<h4><a id="TimerEOLibrary.swift" class="HashLink" href="#TimerEOLibrary.swift">TimerEOLibrary.swift</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+import GXCoreBL
+
+@objc(TimerEOLibrary)
+public class TimerEOLibrary: NSObject, GXExtensionLibraryProtocol {
+
+    public func initializeExtensionLibrary(withContext context: GXExtensionLibraryContext) {
+
+        GXActionExternalObjectHandler.register(TimerEOActionHandler.self, forExternalObjectName:TimerEOActionHandler.classIdentifier)
+
+    }
+}
+</pre>
+
+<h4><a id="TimerEOActionHandler.swift" class="HashLink" href="#TimerEOActionHandler.swift">TimerEOActionHandler.swift</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+import Foundation
+import GXCoreBL
+
+@objc(TimerEOActionHandler)
+public class TimerEOActionHandler: GXActionExternalObjectHandler {
+
+    public static let classIdentifier = &quot;TimerEO&quot;
+
+    override public class func handleActionExecutionUsingMethodHandlerSelectorNamePrefix() -&gt; Bool {
+        return true
+    }
+    
+    // MARK - External object methods
+    
+    @objc public func gxActionExObjMethodHandler_Start() {
+        let (secs, msg) = self.readParameters()
+        if (secs == nil) {
+            let error = NSError.wrongNumberOfParametersDeveloperError(forMethod: self.actionExObjDesc.actionExternalObjectMethod)
+            self.onFinishedExecutingWithError(error)
+            return
+        }
+        self.handleStartTimerAction(seconds: secs!, message: msg!)
+        self.onFinishedExecutingWithSuccess()
+    }
+
+    //MARK: - Private
+    
+    private func readParameters() -&gt; (Int?, String?) {
+        guard let actionParameterArray = self.actionExObjDesc.actionParametersDescriptor??.actionParametersDescriptors,
+            actionParameterArray.count == 2 else {
+            return (nil, nil)
+        }
+        let seconds = self.readStringParameter(actionParameterArray[0], from: self.contextEntityData())
+        let msg = self.readStringParameter(actionParameterArray[1], from: self.contextEntityData())
+        return (GXUtilities.integerNumber(fromValue: seconds) as? Int, GXUtilities.nonEmptyString(from: msg))
+    }
+        
+    private func handleStartTimerAction(seconds: Int, message: String) {
+        // Start the timer and trigger the user event
+        TimerEO.startTimerWithSeconds(seconds, message)
+        self.onFinishedExecutingWithSuccess()
+    }
+}
+</pre>
+
+<p>The online code uses the <em>gxActionExObjMethodHandler_Start</em> function; gets the parameters and then calls the <em>handleStartTimerAction</em> function which uses the TimerEO implementation already discussed.</p>
+
+<h2><a id="GeneXus+test+objects" class="HashLink" href="#GeneXus+test+objects">GeneXus test objects</a></h2>
+
+<p>To test the implementation, we created the following objects:</p>
+
+<h3><a id="MainTimer+%28Dashboard%29" class="HashLink" href="#MainTimer+%28Dashboard%29">MainTimer (Dashboard)</a></h3>
+
+<h4><a id="Properties" class="HashLink" href="#Properties">Properties</a></h4>
+
+<p>Main program: True</p>
+
+<p>Connectivity Support: Offline</p>
+
+<h4><a id="Events" class="HashLink" href="#Events">Events</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event TimerEO.Completed(&amp;message)
+    msg(&amp;message)
+EndEvent
+
+Event 'StartTimer'
+    TimerEO.Start(5, &quot;TimerEO from user code&quot;)    
+Endevent
+
+Event 'StartTimerProc'
+    StartTimerProc()
+EndEvent</pre>
+
+<h3><a id="StartTimerProc+%28Procedure%29" class="HashLink" href="#StartTimerProc+%28Procedure%29">StartTimerProc (Procedure)</a></h3>
+
+<h4><a id="Source" class="HashLink" href="#Source">Source</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+TimerEO.Start(5, &quot;TimerEO from offline code&quot;)</pre>
+
+<h3><a id="Source+Code" class="HashLink" href="#Source+Code">Source Code</a></h3>
+
+<p>You can download the source code from this sample <a href='http://svn.assembla.com/svn/gxusercontrols/SmartDevices/iOS/TimerEOv15'>here</a>.</p>
+
+<p>Note: you'll need a <a href="https://wiki.genexus.com/commwiki/wiki?27438,," target="_blank">SVN</a> client to donwload the source code, or you can browse it online in the link above.</p>
+
+<h3><a id="Installation" class="HashLink" href="#Installation">Installation</a></h3>
+
+<p>You need <a href="https://wiki.genexus.com/commwiki/wiki?37491,," target="_blank">GeneXus 15 Upgrade 9</a> or higher and copy the TimerEO folder to &quot;GeneXusInstallDir\Libraries\&quot;.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18072.html">External Object for iOS Devices</a></TD><TD><a href="31164.html">Global Events</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

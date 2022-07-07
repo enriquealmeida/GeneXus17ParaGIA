@@ -1,0 +1,36 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="WW Transaction Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%
+	string wwName = selection.ObjectName;
+	KBObject wwObject = WebFormHelper.GetWWObject(model,Object,wwName);	
+
+	string outputFile = string.Empty, templatePath = string.Empty;
+	Artech.Common.Helpers.Templates.Generator.GeneratorParameters parameters = null;
+	System.Collections.Generic.Dictionary<string, System.Object> dictProperties = null;
+	
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Insert))
+	{
+		// Insert
+		templatePath = FileHelper.GetTemplateCompletePath("WWTransactionInsert.dkt");
+		FileHelper.GenerateCRUDFile(Object,Part,myInstance,basicElements,templatePath,selection,GXTestConstants.WWInsertAction);
+	}
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Update))
+	{
+		// Update
+		templatePath = FileHelper.GetTemplateCompletePath("WWTransactionUpdate.dkt");
+		FileHelper.GenerateCRUDFile(Object,Part,myInstance,basicElements,templatePath,selection,GXTestConstants.WWUpdateAction);
+	}
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Delete))
+	{
+		// Delete
+		templatePath = FileHelper.GetTemplateCompletePath("WWTransactionDelete.dkt");
+		FileHelper.GenerateCRUDFile(Object,Part,myInstance,basicElements,templatePath,selection,GXTestConstants.WWDeleteAction);
+	}
+%>

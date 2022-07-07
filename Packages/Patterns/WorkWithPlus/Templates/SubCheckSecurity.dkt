@@ -1,0 +1,97 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prepare Transaction event code" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Settings" Type="WorkWithPlusSettings" %>
+<%@ Property Name="ProgramNameVariable" Type="System.String" %>
+<%@ Property Name="DoNotRedirect" Type="System.Boolean" %>
+<%@ Property Name="SecurityFunction" Type="System.String" %>
+<%
+	SettingsSecurityElement security = Settings.Security;
+	if (String.IsNullOrEmpty(ProgramNameVariable))
+		ProgramNameVariable = "PgmName";
+	if (security.IsTypeSimple())
+	{
+		if (security.SecuritySimple.Check != null && security.SecuritySimple.NotAuthorized != null)
+		{
+			bool closeWEB = false;
+			if (security.SecuritySimple.AddCallsOnlyForWeb
+				&& Object != null && Object is Artech.Genexus.Common.Objects.Transaction
+				&& TransactionElement.IsBusinessComponent((Artech.Genexus.Common.Objects.Transaction)Object))
+			{
+%>
+[web]
+{
+<%
+				closeWEB = true;
+			}
+
+			string securityCustomParams = security.SecuritySimple.CustomParameters();
+			if (securityCustomParams != String.Empty)
+				securityCustomParams += ", ";
+%>
+<%= security.SecuritySimple.CheckName %>.Call(&<%= ProgramNameVariable %>, <%= securityCustomParams %>&IsAuthorized)
+<%
+			if (!DoNotRedirect)
+			{
+%>
+If (not &IsAuthorized)
+	<%= security.SecuritySimple.NotAuthorizedName %>.Call(&<%= ProgramNameVariable %>)
+Endif
+<%
+			}
+			if (closeWEB)
+			{
+%>
+}
+<%
+			}
+		}
+		else
+		{
+%>
+// ERROR: Security check is set to 'Simple' in Work With Settings, but either the 'Check' procedure or the 'Not Authorized' webpanel has not been set.
+<%
+		}
+	}
+	else if (security.IsTypeAdvanced()
+				&& SecurityFunction != null
+				&& SecurityFunction.Trim().Length > 0
+				&& security.SecurityAdvanced.IncludeSecurityCode(Object))
+	{
+		List<string> functionList = SettingsSecurityAdvancedElement.GetFunctionsList(SecurityFunction);
+		if (functionList.Count > 0)
+		{
+			if (functionList.Count > 1)
+			{
+%>
+&SecurityFunctionalityKeys = new()
+<%
+				foreach(string function in functionList)
+				{
+%>
+&SecurityFunctionalityKeys.Add(!'<%= function.Trim() %>')
+<%
+				}
+%>
+&IsAuthorized = <%= security.SecurityAdvanced.CheckByFunctionKeysName %>.Udp(&SecurityFunctionalityKeys)
+<%
+			}
+			else
+			{
+%>
+&IsAuthorized = <%= security.SecurityAdvanced.GetCheckByFunctionKeyNameUdpCall(functionList[0]) %>
+<%
+			}
+		}
+		if (!DoNotRedirect)
+		{
+%>
+If (not &IsAuthorized)
+	<%= security.SecurityAdvanced.NotAuthorizedName %>.Call(&<%= ProgramNameVariable %>)
+Endif
+<%
+		}
+	}
+%>

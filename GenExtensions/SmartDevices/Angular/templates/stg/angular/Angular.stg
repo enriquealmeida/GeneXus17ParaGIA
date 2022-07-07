@@ -1,0 +1,155 @@
+group React;
+
+delimiters "$", "$"
+
+htmlInputConvert ::= [
+  "time":	"g_data_binding_to_model_time",
+  "date":	"g_data_binding_to_model_date",
+  "datetime-local":	"g_data_binding_to_model_datetime",
+  default: "g_data_binding_to_model"
+]
+
+htmlTypeConvert ::= [
+  "GUID": "g_data_binding_to_model_guid",
+  default: "g_data_binding_to_model_default"
+]
+
+g_html_id(id) ::=<<#$id$>>
+
+g_call_action(action) ::=<<  onClick="" >>
+
+g_event_binding(eventName, data) ::=<<($eventName$) = "$data.DataBinding:g_expression()$ = \$event;">>
+
+g_data_binding(data, customChangeAction) ::=<< 
+$g_to_ngmodel(data)$
+$if(!data.IsReadonly)$
+(ngModelChange)="$data.DataBinding:g_expression()$ = $g_convert_to( {VarChar}, data.DataBinding.ExprDataType, {\$event})$; $customChangeAction$ $data.ControlValueChangingAction:g_event_binding_call(data)$"
+$endif$
+ngDefaultControl
+[attr.readonly]="$data.IsReadonlyExpression:g_expression()$"
+>>
+
+
+g_to_ngmodel(data)::= <%
+[ngModel]="$(htmlInputConvert.(data.InputType))(data)$"
+%>
+
+g_data_binding_to_model(data) ::= <%
+$(htmlTypeConvert.({$data.DataBinding.ExprDataType:g_type_name()$}))(data)$
+%>
+
+g_data_binding_to_model_default(data) ::= <%
+$data.DataBinding:g_expression()$
+%>
+
+g_data_binding_to_model_guid(data) ::= <%
+$data.DataBinding:g_expression()$ | guidToString
+%>
+
+g_data_binding_to_model_time(data) ::= <%
+timeToISOString($data.DataBinding:g_expression()$)
+%>
+
+g_data_binding_to_model_date(data) ::= <%
+$data.DataBinding:g_expression()$ | dateToISOString
+%>
+
+g_data_binding_to_model_datetime(data) ::= <%
+$data.DataBinding:g_expression()$ | datetimeToISOString
+%>
+
+g_get_data_content(data) ::=<<
+$if(data.ItemGeneratorType)$
+    $if(data.CacheEnabled)$
+    $g_get_data_content_observable_cacheable(data)$
+    $else$
+    $g_get_data_content_non_cacheable(data)$
+    $endif$
+$else$
+    $g_get_data_content_non_cacheable(data)$
+$endif$
+>>
+
+g_get_data_content_observable_cacheable(data) ::=<<
+    return EndpointConnector.getCacheableDataCollectionForType<$data.EntityItemExpression.exprDataType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.EntityItemExpression.exprDataType:g_type_name()$)
+    .pipe(catchError(err => {
+        this.handleError(err);
+        return throwError("error");
+    }));
+>>
+
+g_get_data_content_observable_non_cacheable(data) ::=<<
+    return EndpointConnector.getDataCollectionForTypeObservable<$data.EntityItemExpression.exprDataType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.EntityItemExpression.exprDataType:g_type_name()$)
+    .pipe(catchError(err => {
+        this.handleError(err);
+        return throwError("error");
+    }));
+>>
+
+g_get_data_content_non_cacheable(data) ::=<<
+  try {
+  $if(data.ItemGeneratorType)$	
+	return await EndpointConnector.getDataCollectionForType<$data.EntityItemExpression.exprDataType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.EntityItemExpression.exprDataType:g_type_name()$);	
+  $else$
+	$if(data.ControlInfo.IsGridControl)$
+	var response = await EndpointConnector.getData(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$);
+    return response as $data.GeneratorType:g_type_name()$
+	$else$
+	$if(data.isCollection)$
+	var response = await EndpointConnector.getData(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$);
+    return response as $data.GeneratorType:g_type_name()$
+	$else$
+    return await EndpointConnector.getDataForType<$data.GeneratorType:g_type_name()$>(this.http, Settings.SERVICE_API_ENDPOINT + "$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$, $data.GeneratorType:g_type_name()$);
+	$endif$
+	$endif$	
+  $endif$
+  }
+  catch (error) {
+    return this.handleError(error);
+  }
+>>
+
+g_service_class_attributes() ::=<<@Injectable()>>
+
+g_service_constructor(data) ::=<<
+  constructor(private http: HttpClient, private _router:Router, private _loginService: LoginService) {
+    super(_router, _loginService);
+  }
+>>
+
+g_import_prefix() ::=<<>>
+
+g_service_imports(page, gx) ::=<<
+import { Injectable } from '@angular/core';
+import { HttpHeaders, HttpClient } from '@angular/common/http';
+import { Router } from "@angular/router";
+
+import { Settings } from 'app/app.settings';
+import { PanelService } from "app/gx/base/panel.service";
+import { EndpointConnector } from "app/gx/base/endpoint.connector";
+import { LoginService } from "app/gx/auth/login.service";
+import { Type, Transform } from 'class-transformer';
+import { Observable, throwError } from "rxjs";
+import { catchError } from 'rxjs/operators';
+>>
+
+
+g_print_bound_attribute(att, bindingExpression, suFix, posFix) ::=<< [$att$] = 'this.$suFix$$bindingExpression$$posFix$' >>
+
+g_print_bound_grid_event(event, gridName, eventName) ::=<< ($event$)='this.$gridName$_$eventName$(\$event)' >>
+
+g_html_iterate_grid(grid) ::=<< 
+  <ng-container *ngFor="let $grid.DataBindingItem:g_expression()$ of $grid.DataBinding:g_expression()$;">
+    $grid:g_template()$
+  </ng-container>
+>>
+
+html_att_value(attName, attValue) ::= <<$if (attValue)$$attName$="$attValue$"$endif$>>
+
+html_css_image_value(attName, attValue) ::= <<$if (attValue)$$attName$="'url(' + getImageSource('$attValue$') + ')'"$endif$>>
+
+html_att_style_element(cssAtt) ::= <<$cssAtt.name$: $cssAtt.value$>>
+
+html_att_style(styleList) ::=  <<$if(styleList)$ style="$styleList:html_att_style_element();separator="; "$; "$endif$>>
+
+html_table_cell_height(cell) ::= <<$html_att_value("max-height", cell.MaxHeight)$ $html_att_value("min-height", cell.MinHeight)$>>

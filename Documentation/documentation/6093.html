@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Working with Grids in Web Panels</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6093,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Working with Grids in Web Panels</h1>
+<!--Working with Grids in Web Panels--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When a grid is included in a form, it means that an undefined quantity of data will be displayed.</p>
+
+<p>There's a grid and there are attributes, so there will necessarily be a base table, that is, the base table with the data that will be browsed in order to find the required information.</p>
+
+<p>If instead of displaying this information on screen, we wanted it listed, we'd create a procedure with a &quot;customer&quot; print block with the CustomerName and CountryName attributes, and in the source we'd program as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+      for each customer
+<span style="line-height: 1.6em;">            print customer</span>
+      endfor</pre>
+
+<p><span style="line-height: 1.6em;">This is similar, except that the For each is implicit, there's no need to specify it. Every grid line loaded is like the print executed in each iteration of the listing's For each command. </span></p>
+
+<p>When GeneXus can automatically determine a table to be browsed in order to load the grid lines, it does so, and in that case you won't need to provide that information. That's why we say there is an &quot;implicit&quot; For each. Later on we'll look at cases where this does not happen this way (grids without a base table).</p>
+
+<p>Look at the example and note that if in the base table there are four records, they'll be loaded one by one.</p>
+
+<p>If we now want the user to be able to filter those customers he/she wants to view, we'll have to involve the variables that we've defined in the fixed part of the form, as we'can see in the image below.</p>
+
+<p><img src="./images/32876.png" id="32876" class="WikiImage"/></p>
+
+<p>There's a property called &quot;Conditions&quot; in the window containing the Grid control properties. By clicking on the combo, an editor will open where you can specify the Boolean conditions the records must comply with in order to be loaded as grid lines.</p>
+
+<p>This is why the &amp;CustomerName and &amp;CountryName attributes have been added to the web panel form, so that the user can enter there the values operating as filters on the data to be displayed. In our case, we've established filters with the <u>like</u> operator. The variables in the flat part of web panels forms are input variables by default. Later on we'll see that, in principle, if they're in grids they'll be output variables by default.</p>
+
+<p>Note that the conditions (separated by “;”) are equivalent to those appearing in the where clauses in a for each (or a Data Provider repetitive group).</p>
+
+<p>Likewise, due to optimization reasons, we can determine —as with a For each— a sorting criterion for the table to be browsed.</p>
+
+<p><strong>Note</strong>: Also, just like in a procedure, not only conditions local to the grid (For each) can be established but also general ones, through the Conditions selector. This will make sense when we have more than one grid (For each), so that we don't have to repeat the same condition every time.</p>
+
+<p>A Grid (with or without a base table) can be loaded in an automatic way once the related filters are executed, depending on the value of the Automatic Refresh property.</p>
+
+<p><img src="./images/32877.png" id="32877" class="WikiImage"/></p>
+
+<p><u>Yes</u>: Grids load automatically. This is the default value.  </p>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h3><a id="Automatic+pagination" class="HashLink" href="#Automatic+pagination"><strong>Automatic pagination</strong></a></h3>
+
+<p>GeneXus performs an automatic pagination if the Rows property of the grid has a value other than zero. The buttons inserted depend on the number of records to be shown and the number of lines of the grid.  </p>
+
+<p><img src="./images/32879.png" id="32879" class="WikiImage"/></p>
+
+<p> </p>
+
+<h3><a id="Automatic+column+sorting" class="HashLink" href="#Automatic+column+sorting"><strong>Automatic column sorting</strong></a></h3>
+
+<p>During the execution of the application, the columns can be sorted without having to program any additional code, just by clicking on the column title: </p>
+
+<p>This functionality is valid for grids in transactions and in web panels.<span style="line-height: 1.6em;">The loaded grid page, is ordered, this is why it doesn't compete with the Order programmed at a grid level.</span></p>
+
+<p><img src="./images/6822.png" id="6822" class="WikiImage"/>   <img src="./images/32848.png" id="32848" class="WikiImage"/></p>
+
+<h3><a id="Drag+%26+Drop+of+columns" class="HashLink" href="#Drag+%26+Drop+of+columns"><strong><span style="line-height: 1.6em;">Drag &amp; Drop of columns</span></strong></a></h3>
+
+<p>During the design of the transaction or of the web panel, columns can be exchanged just by performing a Drag &amp; Drop operation.</p>
+
+<p>When you select the column to be moved, a blue arrow appears indicating the possible places where such column can be inserted. The mouse is positioned on one of those places (Drag), and there you &quot;drop&quot; the column (Drop).</p>
+
+<p><img src="./images/6083.png" id="6083" class="WikiImage"/><br />
+<img src="./images/6085.png" id="6085" class="WikiImage"/></p>
+
+<p>By default, every attribute and variable inside a grid is displayed as text at execution time, which means that they are read-only and can't be changed. However, data can be accepted in grid variables depending on the events programmed in the object. Consider the following situations:</p>
+
+<ol>
+	<li>inside a Web Panel event we're using the For Each line or For each line in command, or</li>
+	<li>in the grid there is a control with an associated click event,</li>
+</ol>
+
+<p>All variables inside the grid become input variables. In this case we can indicate which variables can't be modified by using the NoAccept() rule or changing the Read Only property of the variable inside the grid.</p>
+
+<h4><a id="Associating+Events+to+a+Line" class="HashLink" href="#Associating+Events+to+a+Line">Associating Events to a Line</a></h4>
+
+<p>An event can be associated with any variable or attribute belonging to the grid. It can be done in two different ways:  </p>
+
+<ol>
+	<li>By editing the control properties and defining a user event in the OnClickEvent user event.  </li>
+	<li>By programming the following in the Events section: </li>
+</ol>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event nombreControl.click
+     source code
+EndEvent</pre>
+
+<p>With the second option we don't have to define a user event, but we will program the click event. </p>
+
+<h4><a id="Selecting+Lines" class="HashLink" href="#Selecting+Lines">Selecting Lines</a></h4>
+
+<p>To do so, access the grid properties and set the AllowSelection property to True. In doing so, three more properties are enabled, as follows: </p>
+
+<ul>
+	<li><strong>SelectionColor:</strong> Color that the line will take when the user selects it (clicks on it). </li>
+	<li><strong>AllowHovering:</strong> Ability to change the color of lines when the user passes the mouse over them. </li>
+	<li><strong>HoveringColor:</strong> Color that a line will take when the mouse passes over it.  </li>
+</ul>
+
+<p>In order to select multiple lines of a grid, one way to do it is to add a column with a check box, and program the following in any user event:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each line in grid
+ If &amp;check = ‘Y’
+ ...
+ Endif
+endfor</pre>
+
+<h4><a id="Load+Event+for+Grids" class="HashLink" href="#Load+Event+for+Grids">Load Event for Grids</a></h4>
+
+<p>The scope of the Load Command extends to any event of the web panel, not only Load Events. Hence, you can code the loading of a grid inside any user event of the web panel.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'UserEvent'
+   Grid.load()
+EndEvent</pre>
+
+<h4><a id="Orders+and+Conditions." class="HashLink" href="#Orders+and+Conditions.">Orders and Conditions.</a></h4>
+
+<p>When working with grids in web panels, it is possible to set orders and conditions in order to establish them to grid elements, That is not possible on generated Transaction grids (such as level generated grids), as it is assumed to be showing every element from a record on update or delete mode.</p>
+
+<p>To set them, in Grid properties you can find them under ControlName</p>
+
+<p><img src="./images/32881.png" id="32881" class="WikiImage"/></p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24817.html">Category:Grid control</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

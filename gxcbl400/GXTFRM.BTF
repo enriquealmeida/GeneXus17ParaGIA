@@ -1,0 +1,27 @@
+@ECHO OFF
+gxtff #1.clp #4 QCLSRC
+if errorlevel 1 goto error
+gxtff #2.dds #4 QDDSSRC
+if errorlevel 1 goto error
+gxtff #3.clp #4 QCLSRC
+if errorlevel 1 goto error
+if .%1. == .*INTER. goto inter
+if .%1. == .*NOCOMP. goto end
+echo ÿ
+rmtcmd "sbmjob cmd(call pgm(#5/gxcgcl) parm(#5 #4 #6 #3 #7 #8)) msgq(*NONE) job(#1)" /z
+goto end
+:inter
+echo ÿ
+rmtcmd "call pgm(#5/gxcgcl) parm(#5 #4 #6 #3 #7 #8)" /z
+goto end
+:error
+echo * Could not transfer #1 or #2 or #3.
+if errorlevel 1 if not errorlevel 2 echo * Unexpected error in GXTFF execution.
+if errorlevel 2 if not errorlevel 3 echo * STF not loaded for GXTFF.
+if errorlevel 3 if not errorlevel 4 echo * Error ending transfer in GXTFF.
+if errorlevel 4 if not errorlevel 5 echo * Error opening transfer request in GXTFF.
+if errorlevel 5 if not errorlevel 6 echo * File does not exist in GXTFF.
+:end
+if exist #9 del #9
+gxdelrqd #10 #11 #12
+:eob

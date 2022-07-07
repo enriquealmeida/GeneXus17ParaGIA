@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Geography data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?32408,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Geography data type</h1>
+<!--Geography data type--><div class="TableWikiBody" id="tblwikibody"><p>You can formally represent geographical entities with the Geography data type. This implies that at the database level, geographical information is stored using specific data types supported by different database management systems.</p>
+
+<p>From the Geography data type, the types GeoPoint, GeoLine, and GeoPolygon are derived. These are specialized variants of the Geography data type.</p>
+
+<h3><a id="Use+cases" class="HashLink" href="#Use+cases">Use cases</a></h3>
+
+<h4><a id="Closest+Point" class="HashLink" href="#Closest+Point">Closest Point</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td>
+			<p>Suppose you must store tourist attractions of a city, so you define the following <a href="1908.html">Transaction object</a>:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PlaceID*
+PlaceName --&gt; Character
+PlaceGeo --&gt; Geography
+</pre>
+
+			<p>You then define a Web panel which, given any point and a distance in meters, returns all tourist attractions located within that radius from the point.</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;MyPoint --&gt; Geography
+for each
+     where PlaceGeo.Distance(&amp;MyPoint) &lt; &amp;Distance
+    load
+endfor </pre>
+			</td>
+			<td><img src="./images/32413.png" id="32413" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h4><a id="-+Point+in+a+Polygon" class="HashLink" href="#-+Point+in+a+Polygon">- Point in a Polygon</a></h4>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td>
+			<p>You have defined a Transaction to store the different neighborhoods in the city as follows:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+  
+NeighborhoodId*
+NeighborhoodName --&gt; Character
+NeighborhoodPlace --&gt; Geography
+</pre>
+
+			<p>You then define a <a href="6916.html">Web Panel object</a> which, given a specific tourist attraction, returns the neighborhood or zone where that attraction is located:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each
+      Where NeighborhoodPlace.Intersect(&amp;Mypoint)
+      &amp;NeighborhoodPlace = NeighborhoodPlace
+endfor</pre>
+
+			<p>//&amp;NeighborhoodPlace is of type Geography and is shown in the form</p>
+			</td>
+			<td><img src="./images/32412.png" id="32412" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="Data+Input" class="HashLink" href="#Data+Input">Data Input</a></h3>
+
+<h4><a id="User+Interface" class="HashLink" href="#User+Interface">User Interface</a></h4>
+
+<p>Run the Transaction object and double click</p>
+
+<p>FromString and FromGeoJson are two different methods that load data to the attribute. FromString receives a string in <a href='https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry'>WKT</a> format to load the positions, while FromGeoJson receives a file, in a <a href='https://en.wikipedia.org/wiki/GeoJSON'>GeoJSON</a> format.<br />
+Notice that both format, receive any coordinate in Longitude and Latitude order, it means for example  POINT(Longitude Latitude)</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+New 
+   PlaceId = 1 
+   PlaceName = &quot;Palacio Legislativo&quot; 
+   PlaceGeo = GeoPoint.New(-34.8910275746741, -56.18720064473088)
+endNew
+
+New
+   PlaceId = 2
+   PlaceName = &quot;Golf Club&quot;
+   PlaceGeo.FromWkt(&quot;POINT(-56.163740158081055 -34.92478600243492)&quot;)
+endNew
+
+New
+   PlaceId = 3
+   PlaceName = &quot;Ramirez Beach&quot;
+   PlaceGeo.FromGeoJson('{&quot;type&quot;:&quot;Point&quot;,&quot;coordinates&quot;:[-56.1701774597168,-34.91676309400329]}')
+endnew
+
+New PlaceId = 4
+   PlaceName = &quot;Bulevar Artigas, Boulevard&quot;
+   PlaceGeo.FromString(&quot;LINESTRING(-56.16090774536133 -34.928797162523516, -56.1650276184082 -34.89494244739731)&quot;)
+endnew
+
+New PlaceId = 5   
+   PlaceName = &quot;Constituyente, Avenue&quot;
+   PlaceGeo.FromGeoJson('{ &quot;type&quot;: &quot;LineString&quot;, &quot;coordinates&quot;: [ [ -56.18528366088867, -34.90571271703311 ], [ -56.17850303649902, -34.90641660705113 ], [ -56.15318298339844, -34.9140182347531 ], [ -56.14863395690918, -34.91521472314688 ] ] }')
+endnew
+
+new
+   PlaceId = 6
+   PlaceName = &quot;Cerro, Neighborhood&quot;  
+   PlaceGeo.FromString('POLYGON ((-56.248367 -34.873821, -56.266563 -34.876427, -56.263733 -34.890366, -56.268799 -34.893394, -56.26897 -34.900291, -56.264851 -34.902615, -56.253605 -34.895645, -56.247597 -34.895153, -56.246052 -34.889523, -56.248367 -34.873821, -56.248367 -34.873821))')
+endnew
+
+new
+  PlaceId = 7
+  PlaceName = &quot;Punta Carretas, Neighborhood&quot; 
+    &amp;geojsonbarrio = '{ &quot;type&quot;: &quot;Polygon&quot;,  &quot;coordinates&quot;: [ [ [-56.148808,-34.918453], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.154835,-34.917061' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.156059,-34.916466' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.156250,-34.914318' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.162754,-34.914791' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.162003,-34.921761' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.165714,-34.919930' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.165737,-34.919930' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.168247,-34.919525' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.169598,-34.918205' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.171421,-34.919209' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.172668,-34.919685' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.172558,-34.920406' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.171207,-34.921566' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.171852,-34.924698' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.171249,-34.925278' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.169662,-34.925438' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.165329,-34.927372' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.161766,-34.929379' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.159920,-34.930645' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.157967,-34.927776' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.156445,-34.927177' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.153141,-34.925507' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.151508,-34.924644' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.151489,-34.923008' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.149151,-34.921497' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.148506,-34.921585' + '], ['
+    &amp;geojsonbarrio = &amp;geojsonbarrio + '-56.148808,-34.918453' + '] ] ] }'
+  PlaceGeo.FromGeoJson(&amp;geojsonbarrio)
+endnew
+
+
+</pre>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?32657,," target="_blank">Geography data type Sample</a></p>
+
+<h3><a id="Requirements" class="HashLink" href="#Requirements">Requirements</a></h3>
+
+<h4><a id="-+API+Key" class="HashLink" href="#-+API+Key">- API Key</a></h4>
+
+<p>To see a variable or geographical attribute in the form only one provider is used: GoogleMaps. For this, you must configure an API Key.</p>
+
+<p>In the case of Android apps, you must configure the <a href="19115.html">Android Maps API Key property</a></p>
+
+<p>In the case of Web panels, you must configure the API Key for each control in the form as follows:</p>
+
+<p><img src="./images/32411.png" id="32411" class="WikiImage"/></p>
+
+<p>To obtain an API Key for Javascript, click <a href='http://developers.google.com/maps/documentation/javascript/get-api-key?hl=es'>here</a><br />
+In order to work properly, it highly probably should enable more than one API, for this Key: For Example.: Maps Javascript API, Maps static API, Geocoding API, Geolocation API are common uses</p>
+
+<h4><a id="-+Database+Management+Systems" class="HashLink" href="#-+Database+Management+Systems">- Database Management Systems</a></h4>
+
+<p>SQL Server : Version 2008 or higher is required.<br />
+                      In case of SQL Server 2014 or higher, the SQL Server 2012 Feature pack must be installed on the webserver.</p>
+
+<p>MySQL/MariaDB: Version 5.7.5 or higher.<br />
+                                Version 8.0 is not supported, yet</p>
+
+<p>Oracle: Oracle Locator or Oracle Spatial installed. For Oracle 11.g or higher, it’s already installed by default.</p>
+
+<p>PostgreSQL: It’s necessary to install the extension PosGis from PostgreSQL itself. At the moment of database creation, you must set the value “postgis” in the property “Postgre SQL Extensions” (before executing the reorganization).</p>
+
+<h3><a id="Limitations" class="HashLink" href="#Limitations">Limitations</a></h3>
+
+<p><b>DBMS:</b> In Genexus 15, in DB2 and Informix this functionality is not supported.</p>
+
+<h3><a id="Compatibility" class="HashLink" href="#Compatibility">Compatibility</a></h3>
+
+<p>In previous versions, to represent geographical information some functionalities that will still be available were used, such as:<br />
+- Geolocation Domain<br />
+- External object SDGeolocation<br />
+- User control: MapControl (Web)<br />
+- Control Grid Property: Maps</p>
+
+<h3><a id="Properties" class="HashLink" href="#Properties">Properties</a></h3>
+
+<div style="overflow-x:auto"><table border="1">
+	<tbody>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>Geography</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>Srid </strong></em></td>
+			<td>int</td>
+			<td>Spatial Reference System Identifier (SRID), identifies de reference system for the represented Geographic object.<br />
+			See <a href='https://en.wikipedia.org/wiki/SRID'>https://en.wikipedia.org/wiki/SRID</a></td>
+		</tr>
+		<tr>
+			<td><em><strong>FeatureType</strong></em></td>
+			<td>char</td>
+			<td>String with the type name of the represented Geographic object.<br />
+			Some supported types are POINT, LINE, POLYGON, other supported types can be added in future releases.<br />
+			The empty string represents the null or unsupported object.</td>
+		</tr>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>GeoPoint</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>Srid</strong></em></td>
+			<td>int</td>
+			<td>Spatial Reference System Identifier (SRID), identifies de reference system for the represented Geographic object. See <a href='https://en.wikipedia.org/wiki/SRID'>https://en.wikipedia.org/wiki/SRID</a></td>
+		</tr>
+		<tr>
+			<td><strong><em>Longitude</em></strong></td>
+			<td>int(12,8)</td>
+			<td>Value of the Longitude (horizontal) coordinate for the point</td>
+		</tr>
+		<tr>
+			<td><strong><em>Latitude</em></strong></td>
+			<td>int(12.8)</td>
+			<td>Value of the Latitude (vertical) coordinate for the point</td>
+		</tr>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>GeoLine</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>Srid</strong></em></td>
+			<td>int</td>
+			<td>Spatial Reference System Identifier (SRID), identifies de reference system for the represented Geographic object. See <a href='https://en.wikipedia.org/wiki/SRID'>https://en.wikipedia.org/wiki/SRID</a></td>
+		</tr>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>GeoPolygon</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>Srid</strong></em></td>
+			<td>int</td>
+			<td>Spatial Reference System Identifier (SRID), identifies de reference system for the represented Geographic object. See <a href='https://en.wikipedia.org/wiki/SRID'>https://en.wikipedia.org/wiki/SRID</a></td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="Methods" class="HashLink" href="#Methods">Methods</a></h3>
+
+<div style="overflow-x:auto"><table border="1">
+	<tbody>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>Geography</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>FromWkt (char WKTtext)</strong></em></td>
+			<td>Geography</td>
+			<td>Loads a Geography object represented by the WKT text (<a href='https://en.wikipedia.org/wiki/Well-known_text'>https://en.wikipedia.org/wiki/Well-known_text</a>)</td>
+		</tr>
+		<tr>
+			<td><strong><em>FromString(char String)</em></strong></td>
+			<td>Geography</td>
+			<td>Alias for FromWKT Method</td>
+		</tr>
+		<tr>
+			<td><strong><em>FromGeoJson(Char String) </em></strong></td>
+			<td>Geography</td>
+			<td>Loads a Geography object represented by the GeoJSON text (GeoJSon format spec <a href='http://geojson.org/geojson-spec.html'>http://geojson.org/geojson-spec.html</a>)</td>
+		</tr>
+		<tr>
+			<td><strong><em>ToGeoJson()</em></strong></td>
+			<td>char</td>
+			<td>Serializes the object to GeoJSON representation.</td>
+		</tr>
+		<tr>
+			<td><strong><em>ToWkt()</em></strong></td>
+			<td>char</td>
+			<td>Serializes the object to WKT (Well Known Text) Format</td>
+		</tr>
+		<tr>
+			<td><strong><em>Distance(Geography object)</em></strong></td>
+			<td>int</td>
+			<td>Calculates the distance (in meters ) between the current object and the parameter ( both Geography objects must be GeoPoints or Geography containing a GeoPoint)</td>
+		</tr>
+		<tr>
+			<td><strong><em>Intersect(Geography object))</em></strong></td>
+			<td>boolean</td>
+			<td>Returns true if the Geographic object parameter Intersects or is included in the instance object.</td>
+		</tr>
+		<tr>
+			<td><strong><em>ToGeoPoint(Geography object)</em></strong></td>
+			<td>GeoPoint</td>
+			<td>Converts the Geography to a GeoPoint type (cast)</td>
+		</tr>
+		<tr>
+			<td><strong><em>ToGeoLine(Geography object)</em></strong></td>
+			<td>GeoLine</td>
+			<td>Converts the Geography to a GeoLine type (cast)</td>
+		</tr>
+		<tr>
+			<td><strong><em>ToGeoPolygon(Geography object)</em></strong></td>
+			<td>GeoPolygon</td>
+			<td>Converts the Geography to a GeoPolygon type (cast)</td>
+		</tr>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>GeoPoint</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>FromWkt() </strong></em>...<strong><em>Intersect(GeoPoint)</em></strong></td>
+			<td> </td>
+			<td>All the methods for Geography apply</td>
+		</tr>
+		<tr>
+			<td><strong><em>ToGeography(GeoPoint object)</em></strong></td>
+			<td>Geography</td>
+			<td>Converts the Point to a Geography type (cast)</td>
+		</tr>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>GeoLine</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>FromWkt() </strong></em>...<strong><em>Intersect(GeoLine)</em></strong></td>
+			<td> </td>
+			<td>All the methods for Geography apply, except Distance.</td>
+		</tr>
+		<tr>
+			<td><strong><em>ToGeography(GeoLine object)</em></strong></td>
+			<td>Geography</td>
+			<td>Converts the GeoLine to a Geography type (cast)</td>
+		</tr>
+		<tr>
+			<td style="background-color: rgb(102,204,255);"><strong>GeoPolygon</strong></td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+			<td style="background-color: rgb(102,204,255);"> </td>
+		</tr>
+		<tr>
+			<td><em><strong>FromWkt() </strong></em>...<strong><em>Intersect(GeoPolygon)</em></strong></td>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><strong><em>ToGeography(GeoPolygon object)</em></strong></td>
+			<td>Geography</td>
+			<td>Converts the GeoPolygon to a Geography type (cast)</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+There is also a static version of these methods.<br />
+Note: ToString and FromString Methods are enabled, in Geography datatype, just for compatibility reasons. ToWkt and FromWkt have the same behavior and are recommended to use.  </p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p><b>DBMSs: </b>SQL Server, Oracle, MySQL, SAP Hana, and PostgreSQL.<br />
+<strong>Generators: </strong>.NET, .NET Core, Java, Android, Apple</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?21274,," target="_blank">Map Control</a> <a href="15309.html">Maps Control Type</a> <a href="14644.html">Geolocation domain</a></p>
+
+<p><br />
+<br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="42220.html">Center property</a></TD><TD><a href="42221.html">Custom Center Attribute property</a></TD><TD><a href="42222.html">Custom Center Field Specifier property</a></TD></TR><TR><TD><a href="40763.html">Layers in Maps</a></TD></TR><TR><TD><a href="42209.html">Location Attribute property</a></TD><TD><a href="42210.html">Location Field Specifier property</a></TD><TD><a href="15309.html">Maps Control Type</a></TD><TD><a href="44309.html">Maps External Object</a></TD></TR><TR><TD><a href="40713.html">OData Support in GeneXus</a></TD><TD><a href="39593.html">What is a static method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/30/21 08:25 PM</em></font></td></TR></table></font>

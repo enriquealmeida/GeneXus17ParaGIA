@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Creating SAPUI5 controls in GeneXus</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45691,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Creating SAPUI5 controls in GeneXus</h1>
+<!--Creating SAPUI5 controls in GeneXus--><div class="TableWikiBody" id="tblwikibody"><p id="tw-target-text">This document is intended for developers who already know the <a href="39356.html">User Control object</a> and its basic concepts.</p>
+
+<p>It's possible to create User Control Objects using <a href='https://sapui5.hana.ondemand.com/'>SAPUI5</a>'s XML based language for views in the <a href="39356.html#User+control+object+sections'">&quot;Screen Template&quot;</a> part of the object.<br />
+The target can be specified using <font face="monospace">&quot;target&quot;</font> attribute in the <font face="monospace">Definition </font>tag, in the Properties part:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Definition auto=&quot;false&quot; target=&quot;SAPUI5&quot; render-mode=&quot;first-time&quot;&gt;
+
+</pre>
+
+<p id="tw-target-text">In addition, it is necessary to assign the Base Style of SAPUI5 to the User Control. It's possible using the <a href="40587.html">Base Style property</a>:</p>
+
+<p><img src="./images/45693.png" id="45693" class="WikiImage"/><br />
+ </p>
+
+<h3><a id="Property+binding" class="HashLink" href="#Property+binding">Property binding</a></h3>
+
+<p>A property can be bound to a SAPUI5 control using the double mustache syntax, as in <a href="39541.html">HTML UC objects</a>. For example, here we are binding the SAPUI5 Button's text property to the UC object's Caption property.</p>
+
+<p class="Code"><i>Screen template</i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="monospace">&lt;mvc:View
+  xmlns=&quot;sap.m&quot;
+  xmlns:mvc=&quot;sap.ui.core.mvc&quot;
+  xmlns:core=&quot;sap.ui.core&quot;&gt;
+    &lt;Button type=&quot;Accept&quot; text=&quot;{{Caption}}&quot; /&gt;
+&lt;/mvc:View&gt;</font></pre>
+
+<p> </p>
+
+<h3><a id="Data+bindings+for+control+types" class="HashLink" href="#Data+bindings+for+control+types">Data bindings for control types</a></h3>
+
+<p>For UC objects where &quot;<a href="40584.html">Is Control Type</a>&quot; property is true, the data binding between the screen element and the control's value can be expressed as in <a href="40652.html">HTML UC objects</a>, using {{DataElement}} in the screen template. For example, this code shows how to bind the SAPUI5 Switch's control state property to the UC object's value: </p>
+
+<p class="Code"><i>Screen template</i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="monospace">&lt;mvc:View
+  xmlns:mvc=&quot;sap.ui.core.mvc&quot;
+  xmlns=&quot;sap.m&quot;&gt;
+    &lt;Switch
+      customTextOn=&quot;{{TextOn}}&quot;
+      customTextOff=&quot;{{TextOff}}&quot;
+      {{DataElement:state}}&gt;
+    &lt;/Switch&gt;
+&lt;/mvc:View&gt;</font></pre>
+
+<p> </p>
+
+<h3><a id="Event+handlers" class="HashLink" href="#Event+handlers">Event handlers</a></h3>
+
+<p>SAPUI5 UC objects support defining event handlers, like their standard <a href="https://wiki.genexus.com/commwiki/wiki?40687,," target="_blank">HTML UC objects</a> counterparts. For example, this code shows how to declare an event called <font face="monospace">OnClick</font>, that is called when the <font face="monospace">press</font> event of the SAPUI5 Button control is fired:</p>
+
+<p class="Code"><i>Screen Template</i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="monospace">&lt;mvc:View
+  xmlns=&quot;sap.m&quot;
+  xmlns:mvc=&quot;sap.ui.core.mvc&quot;
+  xmlns:core=&quot;sap.ui.core&quot;&gt;
+    &lt;Button type=&quot;Accept&quot; text=&quot;{{Caption}}&quot; {{OnClick}} /&gt;
+&lt;/mvc:View&gt;</font></pre>
+
+<p class="Code"><i>Properties</i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="monospace">&lt;Definition auto=&quot;false&quot;&gt;
+  &lt;Event Name=&quot;OnClick&quot; On=&quot;press&quot; /&gt;
+  &lt;Property Name=&quot;Caption&quot; Type=&quot;string&quot; Default=&quot;&quot; /&gt;
+&lt;/Definition&gt;</font></pre>
+ 
+
+<h3><a id="Slots" class="HashLink" href="#Slots">Slots</a></h3>
+
+<p>SAPUI5 UC objects support defining <a href="40659.html">slots</a>, but with a slight difference to fully support SAPUI5 view's syntax. To define a slot, first the XHTML namespace must be declared in the view definition, for example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="monospace">&lt;mvc:View
+      xmlns:l=&quot;sap.ui.layout&quot;
+      xmlns:core=&quot;sap.ui.core&quot;
+      xmlns:mvc=&quot;sap.ui.core.mvc&quot;
+==&gt;   xmlns:html=&quot;[http://www.w3.org/1999/xhtml]&quot;
+      xmlns=&quot;sap.m&quot;&gt;</font></pre>
+
+<p class="Code">Then, the slot can be placed like this:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<font face="monospace">&lt;html:slot name=&quot;body&quot; /&gt;</font></pre>
+
+<p> </p>
+
+<h3><a id="AfterSAPUI5Init+scripts" class="HashLink" href="#AfterSAPUI5Init+scripts">AfterSAPUI5Init scripts</a></h3>
+
+<p>A new moment was added for the scripts, called <font face="monospace">AfterSAPUI5Init</font>. Scripts with <font face="monospace">&quot;when='AfterSAPUI5Init'&quot;</font> will be executed once SAPUI5 is loaded and ready.<br />
+ </p>
+
+<h3><a id="Render+mode" class="HashLink" href="#Render+mode">Render mode</a></h3>
+
+<p>As many of SAPUI5 controls are expensive to render, there is a property to specify if the User Control is completely re-rendered after a property change in an event or not. Up until now, User Controls always did a full re-render when a property was changed. The rendering mode can be specified using <font face="monospace">&quot;render-mode&quot;</font> attribute in the <font face="monospace">Definition </font>tag, in the Properties part. The accepted values are <font face="monospace">&quot;first-time</font>&quot; and <font face="monospace">&quot;always&quot;</font> (default). If <font face="monospace">render-mode=&quot;first-time&quot;</font>, the control will be rendered only once, allowing the developer to update the control to reflect changes in an <font face="monospace">&quot;AfterShow&quot;</font> script.</p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46884.html">GeneXus for SAP Systems 17 Release Notes</a></TD><TD><a href="46592.html">Multi-experience with GeneXus 17</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/24/21 01:18 PM</em></font></td></TR></table></font>

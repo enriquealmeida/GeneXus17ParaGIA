@@ -1,0 +1,37 @@
+﻿<%@ Template Language="C#" TargetLanguage="GX" Description="WW Transaction Update Subtemplate" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ SubTemplate Name="UpdateSuccess" File="UpdateSuccess.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SearchSuccess" File="SearchSuccess.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="Header" File="Header.dkt"%>
+<%
+	string wwName = selection.ObjectName;
+	KBObject wwObject = WebFormHelper.GetWWObject(model,Object,wwName);	
+%>
+<%@ CallSubTemplate Header ItemName='"TestCase"' %>
+<GXTestCase>
+<%
+	if (WebFormHelper.IsWWActionEnabled(myInstance, selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Update))
+	{
+%>
+<%@ CallSubTemplate UpdateSuccess wwName='wwName' Object='Object' wwObject='wwObject' model='model' myInstance='myInstance' value='wwName' selection = 'selection' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate SearchSuccess Object='Object' wwObject='wwObject' model='model' wwName='wwName' selection='selection' filtervalue='basicElements.DescriptionAttribute' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+	}
+	else
+	{
+%>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Description%>">
+	<DummyEvent Type="Event"/>
+</Node>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Description%>"/>
+<%
+	}
+%>
+</GXTestCase>

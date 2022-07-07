@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GeneXusCryptography Module Password Derivation</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42690,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GeneXusCryptography Module Password Derivation</h1>
+<!--GeneXusCryptography Module Password Derivation--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This is part of <a href="43917.html">GeneXus Cryptography Module</a></p>
+
+<p>For more information about Password derivation and storage, read the <a href='https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Password_Storage_Cheat_Sheet.md'>OWASP Password Storage Cheat Sheet</a>.</p>
+
+<h2><a id="PasswordDerivationAlgorithm+Domain" class="HashLink" href="#PasswordDerivationAlgorithm+Domain">PasswordDerivationAlgorithm Domain</a></h2>
+
+<p><u>Values</u>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SCrypt, Bcrypt, Argon2</pre>
+
+<h2><a id="Argon2Version+Domain" class="HashLink" href="#Argon2Version+Domain">Argon2Version Domain</a></h2>
+
+<p><u>Values</u>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ARGON2_VERSION_10, ARGON2_VERSION_13</pre>
+
+<h2><a id="Argon2HashType+Domain" class="HashLink" href="#Argon2HashType+Domain">Argon2HashType Domain</a></h2>
+
+<p><u>Values</u>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ARGON2_d, ARGON2_i, ARGON2_id</pre>
+
+<h2><a id="PasswordDerivation" class="HashLink" href="#PasswordDerivation">PasswordDerivation</a></h2>
+
+<p>Implements Password-specific hashing (derivation) functions. It uses Bouncy Castle implementation for the algorithms and therefore has the same limitations and restrictions.</p>
+
+<h3><a id="DoGenerateSCrypt" class="HashLink" href="#DoGenerateSCrypt">DoGenerateSCrypt</a></h3>
+
+<p><span style="font-size: small;"><span style="color: rgb(255,0,0);"><span style="font-family: courier new;">Warning! The </span></span></span><span style="color: rgb(255,0,0);"><span style="font-family: courier new;"><span style="font-size: small;">Scrypt</span></span></span><span style="font-size: small;"><span style="color: rgb(255,0,0);"><span style="font-family: courier new;"> password derivation function is safe to use for key derivation, not for hashing (storing) passwords. It is vulnerable to GPU (or ASIC) brute force attacks since it is widely used in cryptocurrencies. </span></span></span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PasswordDerivation.DoGenerateSCrypt(password, salt, CPUCost, blockSize, parallelization, keyLenght)</pre>
+
+<ul>
+	<li>Input password: Character(100)</li>
+	<li>Input salt: Character(100)</li>
+	<li>Input CPUCost: Numeric(9.0)</li>
+	<li>Input blockSize: Numeric(9.0)</li>
+	<li>Input parallelization: Numeric(9.0)</li>
+	<li>Input keyLenght: Numeric(9.0)</li>
+	<li>Returns: VarChar(256) Base64 encoded</li>
+</ul>
+
+<p><u>SCrypt parameter restrictions</u>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CPUCost <code>(N)</code> - CPU/Memory cost parameter. Must be larger than 1, a power of 2 and less than <code>2^(128 * r / 8)</code>.
+blockSize <code>(r)</code> - the block size, must be &gt;= 1.
+parallelization <code>(p)</code> - Parallelization parameter. Must be a positive integer less than or equal to <code>Integer.MAX_VALUE / (128 * r * 8)</code>.</pre>
+
+<p>Source: <a href='https://www.bouncycastle.org/docs/docs1.5on/org/bouncycastle/crypto/generators/SCrypt.html'>https://www.bouncycastle.org/docs/docs1.5on/org/bouncycastle/crypto/generators/SCrypt.html</a></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Example:
+&amp;PasswordDerivation.DoGenerateSCrypt(&quot;password&quot;, &quot;123456&quot;, 16384, 8, 1, 256)</pre>
+
+<h3><a id="DoGenerateDefaultSCrypt" class="HashLink" href="#DoGenerateDefaultSCrypt">DoGenerateDefaultSCrypt</a></h3>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! This algorithm should not be used with fixed parameters. The adequate parameters should be calculated to fit the hardware and the system's functional requirements.</span></span></span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PasswordDerivation.DoGenerateDefaultSCrypt(password, salt)</pre>
+
+<ul>
+	<li>Input password: Character(100)</li>
+	<li>Input salt: Character(100)</li>
+	<li>Returns: VarChar(256) Base64 encoded</li>
+</ul>
+
+<p><u>It calculates Scrypt algorithm with fixed arbitrary parameters.</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CPUCost <code>(N)</code> - 16384
+blockSize <code>(r)</code> - 8
+parallelization <code>(p)</code> - 1
+keyLenght - 256
+
+​​
+Example:
+&amp;PasswordDerivation.DoGenerateDefaultSCrypt(&quot;password&quot;, &quot;123456&quot;)</pre>
+
+<dl>
+</dl>
+
+<h3><a id="DoGenerateBcrypt" class="HashLink" href="#DoGenerateBcrypt">DoGenerateBcrypt</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PasswordDerivation.DoGenerateBcrypt(password, salt, cost)</pre>
+
+<ul>
+	<li>Input password: Character(100)</li>
+	<li>Input salt: Character(100) hexadecimal</li>
+	<li>Input cost: Numeric(9.0)</li>
+	<li>Returns: VarChar(256) Base64 encoded</li>
+</ul>
+
+<p><u>Bcrypt parameter restrictions:</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<code>password</code> - the password bytes (up to 72 bytes) to use for this invocation.
+<code>salt</code> - the 128 bit salt to use for this invocation.
+<code>cost</code> - the bcrypt cost parameter. The cost of the bcrypt function grows as <code>2^cost</code>. Legal values are 4..31 inclusive.
+output - a 192 bit (24 byte) hash.</pre>
+
+<p>Source: <a href='http://javadox.com/org.bouncycastle/bcprov-jdk15on/1.53/org/bouncycastle/crypto/generators/BCrypt.html'>http://javadox.com/org.bouncycastle/bcprov-jdk15on/1.53/org/bouncycastle/crypto/generators/BCrypt.html</a></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Example:
+&amp;salt = &amp;Hexa.fromHexa(&quot;0c6a8a8235bb90219d004aa4056ec884&quot;)
+&amp;PasswordDerivation.DoGenerateBcrypt(&quot;password&quot;, &amp;salt , 6)</pre>
+
+<h3><a id="DoGenerateDefaultBcrypt" class="HashLink" href="#DoGenerateDefaultBcrypt">DoGenerateDefaultBcrypt</a></h3>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! This algorithm should not be used with fixed parameters. The adequate parameters should be calculated to fit the hardware and the system's functional requirements.</span></span></span></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+PasswordDerivation.DoGenerateDefaultBcrypt(password, salt, cost)</pre>
+
+<ul>
+	<li>Input password: Character(100)</li>
+	<li>Input salt: Character(100) hexadecimal</li>
+	<li>Returns: VarChar(256) Base64 encoded</li>
+</ul>
+
+<p><u>It calculates Bcrypt algorithm with fixed arbitrary parameters.</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+cost - 6
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Example: 
+&amp;salt = &amp;Hexa.fromHexa(&quot;0c6a8a8235bb90219d004aa4056ec884&quot;)
+&amp;PasswordDerivation.DoGenerateDefaultBcrypt(&quot;pasword&quot;, &amp;salt)</pre>
+
+<h3><a id="DoGenerateArgon2" class="HashLink" href="#DoGenerateArgon2">DoGenerateArgon2</a></h3>
+
+<p>(Available since <a href="https://wiki.genexus.com/commwiki/wiki?45624,," target="_blank">GeneXus 16 upgrade 10</a>, just for Java)</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! The adequate parameters should be calculated to fit the hardware and the system's functional requirements.</span></span></span></p>
+
+<pre>
+PasswordDerivation.DoGenerateArgon2(argon2Version, argon2HashType, iterations, memory, parallelism, password, salt, hashLength)</pre>
+
+<ul>
+	<li>Input argon2Version: Argon2Version Domain</li>
+	<li>Input argon2HashType: Argon2HashType Domain</li>
+	<li>Input iterations: Numeric(9) </li>
+	<li>Input memory: Numeric(9) </li>
+	<li>Input parallelism: Numeric(9) </li>
+	<li>Input password: Character(100)</li>
+	<li>Input salt: Character(100) hexadecimal</li>
+	<li>Input hashLength: Numeric(9) bytes</li>
+</ul>
+
+<p><u>Argon2 parameter restrictions</u></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parallelism - must be between 1 and 16777216
+iterations - must be greater than 1
+hashLength - must be greater than 4</pre>
+
+<p> </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Example:
+&amp;PasswordDerivation.DoGenerateArgon2(Argon2Version.ARGON2_VERSION_10, Argon2HashType.ARGON2_d, 1, 4, 1, &quot;password&quot;, &quot;14ae8da01afea8700c2358dcef7c5358d9021282bd88663a4562f59fb74d22ee&quot;, 32)</pre>
+
+<p> </p>
+
+<p><br />
+</p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43917.html">GeneXus Cryptography Module</a></TD><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

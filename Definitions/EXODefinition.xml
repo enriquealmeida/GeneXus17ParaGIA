@@ -1,0 +1,1516 @@
+<?xml version='1.0' encoding='iso-8859-1'?>
+<Content version='148254 $'>
+	<Object id='EXO' inheritance='BASE '>
+		<Group>
+			<Name>Base properties</Name>
+			<Type>Main</Type>
+			<Children>
+				<Prop>
+					<Id>ObjName</Id>
+					<Name>Name</Name>
+					<Description>Name</Description>
+					<Alias>Name</Alias>
+					<Type>Text</Type>
+					<Metadata>
+						<Value name='AfterSetValueHandler'>Artech.Genexus.Common.Resolvers.ObjectNameAfterSetHandler, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='ShouldSerialize'>true</Value>
+						<Value name='FlagSpecificable'></Value>
+						<Value name='FlagSpecificationName'>ObjName</Value>
+						<Value name='FlagAssertSDTProperty'></Value>
+						<Value name='FlagDeklarit'></Value>
+					</Metadata>
+					<Options>
+						<Option type='Required'/>
+						<Option type="Don't serialize"/>
+					</Options>
+				</Prop>
+				<Prop>
+					<Id>ObjDesc</Id>
+					<Name>Description</Name>
+					<Description>Describe the content or purpose of the element</Description>
+					<Alias>Description</Alias>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='On Change'>
+							<Cond>onChange(ObjName)</Cond>
+							<Condition>
+								<Expression>
+									<Type>OnChange</Type>
+									<PropName>ObjName</PropName>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Metadata>
+						<Value name='customDefaultResolver'>Artech.Architecture.Common.Resolvers.ObjectDescriptionResolver, Artech.Architecture.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='ShouldSerialize'>true</Value>
+						<Value name='FlagSpecificable'></Value>
+						<Value name='FlagSpecificationName'>ObjDesc</Value>
+						<Value name='FlagAssertSDTProperty'></Value>
+						<Value name='FlagDeklarit'></Value>
+					</Metadata>
+					<Options>
+						<Option type="Don't serialize"/>
+						<Option type='Dyn Default'/>
+					</Options>
+				</Prop>
+			</Children>
+		</Group>
+		<Group>
+			<Name>ExternalObject</Name>
+			<Type>Main</Type>
+			<Children>
+				<Prop hidden='1'>
+					<Id>ExoIsSap</Id>
+					<Name>IsSap</Name>
+					<Type>Boolean</Type>
+					<Default>false</Default>
+					<Options>
+						<Option type='Not Show'/>
+					</Options>
+				</Prop>
+				<Prop>
+					<Id>ExoType</Id>
+					<Name>Type</Name>
+					<Type>Combo Int</Type>
+					<Default>0</Default>
+					<Values>
+						<Value id='0' desc='Native Object'/>
+						<Value id='1' desc='Stored Procedure'/>
+						<Value id='2' desc='WSDL'/>
+						<Value id='4' desc='Java Session Bean'/>
+						<Value id='5' desc='SAP Connector Interface'/>
+					</Values>
+					<Dependencies>
+						<Depend type='Invalid'>
+							<Value>5</Value>
+							<Cond>value(ExoIsSap) == false</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoIsSap</PropName>
+									<Value>false</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+						<Depend type='Readonly'>
+							<Cond>value(ExoIsSap) == true</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoIsSap</PropName>
+									<Value>true</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Metadata>
+						<Value name='AfterSetValueHandler'>Artech.Genexus.Common.Resolvers.Handlers.ExternalObjectTypeAfterSetValueHandler, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+					</Metadata>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoUseNativeSoap</Id>
+					<Name>Use Native Soap</Name>
+					<Description>Use Native Soap</Description>
+					<Type>Combo</Type>
+					<Default>UMPV</Default>
+					<Values>
+						<Value id='Yes' desc='Yes'/>
+						<Value id='No' desc='No'/>
+						<Value id='UMPV' desc='Use Environment property value'/>
+					</Values>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 2</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>2</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Metadata>
+						<Value name='customVisibleResolver'>Artech.Genexus.Common.Resolvers.Visible.ObjUseNativeSoapVisibleResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+						<Value name='FlagBuildAction'>RebuildAll</Value>
+					</Metadata>
+				</Prop>
+				<Prop>
+					<Id>ObjNamespace</Id>
+					<Name>Namespace</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 0) or ((value(ExoType) == 2) or (value(ExoType) == 5))</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>or</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>2</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>5</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop>
+					<Id>ExoImporterVersion</Id>
+					<Name>ImporterVersion</Name>
+					<Type>Text</Type>
+					<Metadata>
+						<Value name='FlagAssertSDTProperty'></Value>
+					</Metadata>
+					<Options>
+						<Option type='Readonly'/>
+					</Options>
+				</Prop>
+				<Prop>
+					<Id>ExoSourceURI</Id>
+					<Name>SourceURI</Name>
+					<Type>Text</Type>
+					<Metadata>
+						<Value name='FlagAssertSDTProperty'></Value>
+					</Metadata>
+					<Options>
+						<Option type='Readonly'/>
+					</Options>
+				</Prop>
+				<Group hidden='1'>
+					<Id>EXOCLASSSOAPSection</Id>
+					<Name>Soap Information</Name>
+					<Description>Soap Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 2</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>2</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Children>
+						<Prop hidden='1'>
+							<Id>ExoName</Id>
+							<Name>XML Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(ExoType) == 2</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>2</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>XmlName</Value>
+								<Value name='FlagSpecificationName'>XmlName</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>EXOCLASSCSHARPSection</Id>
+					<Name>.NET Framework Information</Name>
+					<Description>.NET Framework Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 0) or (value(ExoType) == 5)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>or</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>5</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Children>
+						<Prop>
+							<Id>ExoNameCSHARP</Id>
+							<Name>.Net External Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(value(ExoType) == 0) or (value(ExoType) == 5)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>5</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExternalNameCSHARP</Value>
+								<Value name='FlagDisplayName'>.NET Framework External Name</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>AssemblyName</Id>
+							<Name>AssemblyName</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or ((value(ExoType) == 0) or ((context(ExoTypeRef) == 5) or (value(ExoType) == 5)))</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ExoType</PropName>
+															<Value>0</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ExoTypeRef</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName>ExoType</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='FlagDisplayName'>.NET Framework Assembly Name</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>ExoConstructorParametersCSHARP</Id>
+							<Name>.Net Constructor Parameters</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or ((value(ExoType) == 0) or ((context(ExoTypeRef) == 5) or (value(ExoType) == 5)))</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ExoType</PropName>
+															<Value>0</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ExoTypeRef</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName>ExoType</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExoConstructorParametersCSHARP</Value>
+								<Value name='FlagDisplayName'>.NET Framework Constructor Parameters</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>EXOCLASSNETCORESection</Id>
+					<Name>.NET Information</Name>
+					<Description>.NET Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 0) or (value(ExoType) == 5)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>or</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>5</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Children>
+						<Prop>
+							<Id>ExoNameNETCORE</Id>
+							<Name>.Net Core External Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(value(ExoType) == 0) or (value(ExoType) == 5)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>5</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.Default.ExternalObjectNetCoreNameDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+								<Value name='ConstantName'>ExternalNameNETCORE</Value>
+								<Value name='FlagDisplayName'>.NET External Name</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>NetCoreAssemblyName</Id>
+							<Name>NetCoreAssemblyName</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or ((value(ExoType) == 0) or ((context(ExoTypeRef) == 5) or (value(ExoType) == 5)))</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ExoType</PropName>
+															<Value>0</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ExoTypeRef</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName>ExoType</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.Default.ExternalObjectNetCoreAssemblyDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+								<Value name='FlagDisplayName'>.NET Assembly Name</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>ExoConstructorParametersNETCORE</Id>
+							<Name>.Net Core Constructor Parameters</Name>
+							<Description>.NET Constructor Parameters </Description>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or ((value(ExoType) == 0) or ((context(ExoTypeRef) == 5) or (value(ExoType) == 5)))</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ExoType</PropName>
+															<Value>0</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ExoTypeRef</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName>ExoType</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.Default.ExternalObjectNetCoreConstructorDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+								<Value name='ConstantName'>ExoConstructorParametersNETCORE</Value>
+								<Value name='FlagDisplayName'>.NET Constructor Parameters</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>EXOCLASSJAVASection</Id>
+					<Name>Java Information</Name>
+					<Description>Java Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(context(ExoTypeRef) == 0) or ((value(ExoType) == 0) or ((context(ExoTypeRef) == 5) or (value(ExoType) == 5)))</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName source='context'>ExoTypeRef</PropName>
+											<Value>0</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>or</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName source='context'>ExoTypeRef</PropName>
+															<Value>5</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ExoType</PropName>
+															<Value>5</Value>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Children>
+						<Prop>
+							<Id>ExoNameJAVA</Id>
+							<Name>Java External Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(value(ExoType) == 0) or (value(ExoType) == 5)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>5</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExternalNameJAVA</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>PackageName</Id>
+							<Name>External Package Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or ((value(ExoType) == 0) or ((context(ExoTypeRef) == 5) or (value(ExoType) == 5)))</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ExoType</PropName>
+															<Value>0</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ExoTypeRef</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName>ExoType</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExoJAVAPackageName</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>ExoConstructorParametersJAVA</Id>
+							<Name>Java Constructor Parameters</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or ((value(ExoType) == 0) or ((context(ExoTypeRef) == 5) or (value(ExoType) == 5)))</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>BooleanExpression</Type>
+													<FirstPart>
+														<Expression>
+															<Type>Comparison</Type>
+															<Operator>Equal</Operator>
+															<PropName>ExoType</PropName>
+															<Value>0</Value>
+														</Expression>
+													</FirstPart>
+													<Operator>or</Operator>
+													<SecondPart>
+														<Expression>
+															<Type>BooleanExpression</Type>
+															<FirstPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName source='context'>ExoTypeRef</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</FirstPart>
+															<Operator>or</Operator>
+															<SecondPart>
+																<Expression>
+																	<Type>Comparison</Type>
+																	<Operator>Equal</Operator>
+																	<PropName>ExoType</PropName>
+																	<Value>5</Value>
+																</Expression>
+															</SecondPart>
+														</Expression>
+													</SecondPart>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExoConstructorParametersJAVA</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>EXOCLASSRUBYSection</Id>
+					<Name>Ruby Information</Name>
+					<Description>Ruby Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(context(ExoTypeRef) == 0) or (value(ExoType) == 0)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName source='context'>ExoTypeRef</PropName>
+											<Value>0</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>or</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Metadata>
+						<Value name='FlagCategories'>Deprecated</Value>
+					</Metadata>
+					<Children>
+						<Prop>
+							<Id>ExoNameRuby</Id>
+							<Name>Ruby External Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(ExoType) == 0</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExternalNameRuby</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>RequireName</Id>
+							<Name>Required file</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or (value(ExoType) == 0)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop>
+							<Id>ExoConstructorParametersRuby</Id>
+							<Name>Ruby Constructor Parameters</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or (value(ExoType) == 0)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExoConstructorParametersRuby</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>EXOCLASSIOSSection</Id>
+					<Name>iOS Information</Name>
+					<Description>iOS Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 0</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>0</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Children>
+						<Prop>
+							<Id>ExoNameIOS</Id>
+							<Name>iOS External Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(ExoType) == 0</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExternalNameIOS</Value>
+								<Value name='FlagDisplayName'>iOS External Name</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>iOSLibraryName</Id>
+							<Name>Library Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or (value(ExoType) == 0)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+						<Prop>
+							<Id>iOSHeaderFileName</Id>
+							<Name>Header File Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or (value(ExoType) == 0)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>EXOCLASSANDROIDSection</Id>
+					<Name>Android Information</Name>
+					<Description>Android Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 0</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>0</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Children>
+						<Prop>
+							<Id>ExoNameANDROID</Id>
+							<Name>Android External Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(ExoType) == 0</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExternalNameAndroid</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>AndroidPackageName</Id>
+							<Name>External Package Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>(context(ExoTypeRef) == 0) or (value(ExoType) == 0)</Cond>
+									<Condition>
+										<Expression>
+											<Type>BooleanExpression</Type>
+											<FirstPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName source='context'>ExoTypeRef</PropName>
+													<Value>0</Value>
+												</Expression>
+											</FirstPart>
+											<Operator>or</Operator>
+											<SecondPart>
+												<Expression>
+													<Type>Comparison</Type>
+													<Operator>Equal</Operator>
+													<PropName>ExoType</PropName>
+													<Value>0</Value>
+												</Expression>
+											</SecondPart>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ExoAndroidPackageName</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Group>
+					<Id>EXOCLASSJSSection</Id>
+					<Name>Javascript Information</Name>
+					<Description>Javascript Information</Description>
+					<Type>Group</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 0</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>0</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+					<Children>
+						<Prop>
+							<Id>ExoNameJS</Id>
+							<Name>Javascript External Name</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(ExoType) == 0</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='customDefaultResolver'>Artech.Genexus.Common.Resolvers.Default.ExternalObjectJSNameDefaultResolver, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</Value>
+								<Value name='ConstantName'>ExternalNameJS</Value>
+							</Metadata>
+						</Prop>
+						<Prop>
+							<Id>ExoReferencedFilesJS</Id>
+							<Name>Javascript Referenced file</Name>
+							<Type>Text</Type>
+							<Dependencies>
+								<Depend type='Apply'>
+									<Cond>value(ExoType) == 0</Cond>
+									<Condition>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>0</Value>
+										</Expression>
+									</Condition>
+								</Depend>
+							</Dependencies>
+							<Metadata>
+								<Value name='ConstantName'>ReferencedFilesJS</Value>
+							</Metadata>
+						</Prop>
+					</Children>
+				</Group>
+				<Prop hidden='1'>
+					<Id>EXOSTOREPROCEDUREDataStore</Id>
+					<Name>Datastore</Name>
+					<Description>Datastore</Description>
+					<Type>Custom</Type>
+					<CustomType>Artech.Genexus.Common.CustomTypes.DataStoreCategoryReference, Artech.Genexus.Common, PublicKeyToken=6f5bf81c27b6b8aa</CustomType>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 1</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>1</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanVersion</Id>
+					<Name>EJB Version</Name>
+					<Type>Combo</Type>
+					<Default>2</Default>
+					<Values>
+						<Value id='2' desc='2.x'/>
+						<Value id='3' desc='3.x'/>
+					</Values>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 4</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>4</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanHomeInterface</Id>
+					<Name>EJB Home Object</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 4) and (value(ExoSessionBeanVersion) == 2)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>4</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>and</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoSessionBeanVersion</PropName>
+											<Value>2</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanRemoteInterface</Id>
+					<Name>EJB Object</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 4</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>4</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanJndiName</Id>
+					<Name>EJB JNDI Name</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 4</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>4</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanJndiProperties</Id>
+					<Name>Specify JNDI context properties</Name>
+					<Type>Combo</Type>
+					<Default>No</Default>
+					<Values>
+						<Value id='No' desc='No'/>
+						<Value id='Yes' desc='Yes'/>
+					</Values>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>value(ExoType) == 4</Cond>
+							<Condition>
+								<Expression>
+									<Type>Comparison</Type>
+									<Operator>Equal</Operator>
+									<PropName>ExoType</PropName>
+									<Value>4</Value>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanJndiINITIAL_CONTEXT_FACTORY</Id>
+					<Name>INITIAL_CONTEXT_FACTORY</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 4) and (value(ExoSessionBeanJndiProperties) == Yes)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>4</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>and</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoSessionBeanJndiProperties</PropName>
+											<Value>Yes</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanJndiPROVIDER_URL</Id>
+					<Name>PROVIDER_URL</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 4) and (value(ExoSessionBeanJndiProperties) == Yes)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>4</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>and</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoSessionBeanJndiProperties</PropName>
+											<Value>Yes</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanJndiSECURITY_PRINCIPAL</Id>
+					<Name>SECURITY_PRINCIPAL</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 4) and (value(ExoSessionBeanJndiProperties) == Yes)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>4</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>and</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoSessionBeanJndiProperties</PropName>
+											<Value>Yes</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+				<Prop hidden='1'>
+					<Id>ExoSessionBeanJndiSECURITY_CREDENTIALS</Id>
+					<Name>SECURITY_CREDENTIALS</Name>
+					<Type>Text</Type>
+					<Dependencies>
+						<Depend type='Apply'>
+							<Cond>(value(ExoType) == 4) and (value(ExoSessionBeanJndiProperties) == Yes)</Cond>
+							<Condition>
+								<Expression>
+									<Type>BooleanExpression</Type>
+									<FirstPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoType</PropName>
+											<Value>4</Value>
+										</Expression>
+									</FirstPart>
+									<Operator>and</Operator>
+									<SecondPart>
+										<Expression>
+											<Type>Comparison</Type>
+											<Operator>Equal</Operator>
+											<PropName>ExoSessionBeanJndiProperties</PropName>
+											<Value>Yes</Value>
+										</Expression>
+									</SecondPart>
+								</Expression>
+							</Condition>
+						</Depend>
+					</Dependencies>
+				</Prop>
+			</Children>
+		</Group>
+	</Object>
+</Content>

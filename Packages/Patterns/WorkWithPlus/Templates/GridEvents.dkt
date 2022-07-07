@@ -1,0 +1,6377 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tabs Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubPrepareTransaction" File="SubPrepareTransaction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubAddressAutoLinkEvent" File="SubAddressAutoLinkEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersAuxiliarEvents" File="DynamicFiltersAuxiliarEvents.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersLoadState" File="DynamicFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersSaveState" File="DynamicFiltersSaveState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersStart" File="DynamicFiltersStart.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DynamicFiltersRefresh" File="DynamicFiltersRefresh.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="RegularFiltersLoadState" File="RegularFiltersLoadState.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubUpdateFilterOperatorValues" File="SubUpdateFilterOperatorValues.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="HierarchyEventsAndSubs" File="HierarchyEventsAndSubs.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubTFOnOptionClicked" File="SubTFOnOptionClicked.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubTFOnOptionClickedFixed" File="SubTFOnOptionClickedFixed.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventStart" File="SubExtraGridsEventStart.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventRefresh" File="SubExtraGridsEventRefresh.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventLoad" File="SubExtraGridsEventLoad.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubExtraGridsEventCalculateTotalizers" File="SubExtraGridsEventCalculateTotalizers.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubGridEventsForEachConditions" File="GridEventsForEachConditions.dkt" MergeProperties="True"%>
+<%
+	WorkWithPlusSettings settings = Settings;
+	SettingsTemplateElement template = Instance.GetAppropiateTemplate();
+	bool includeNamesInSDTGridState =  settings.IncludeNamesInSDTGridState;
+	bool isPrompt = GridObject.IsPrompt();
+	bool isPromptMultiple = isPrompt && ((PromptElement)GridObject).IsTypeMultiple();
+	bool isPromptWithDefaultParmFullLevelKey = isPrompt && (((PromptElement)GridObject).IsDefaultParmFullLevelKey() || ((PromptElement)GridObject).IsDefaultParmFullLevelKeyAtTheEnd());
+	bool isAssociation = GridObject.IsAssociation();
+	bool isGridTab = GridObject.IsGridTab();
+	bool useTransactionContext = (!isPrompt) && (!isAssociation) && template.UseTransactionContext && Instance.HasTransaction();
+	bool needGridState = GridObject.NeedGridState();
+	bool hasSelectAll;
+	bool hasMultiRowActions = SelectionGeneralElement.GridObjectHasMultiRowActions(GridObject, out hasSelectAll);
+	bool addMultiRowSelectedTitleCodeInRefresh = false;
+	List<string> fullLevelKeyAttributeNames = null;
+	bool needOrderChoice = GridObject.Orders.NeedsChoice;
+	bool sendGridStateToProcsBySession = settings.Grid.IsSendGridStateToProceduresBySession();
+	bool hasSomeCustomTitle = false;
+	int colIndex;
+	bool isSplitScreen = (GridObject is SelectionElement && ((SelectionElement)GridObject).IsSplitScreenTemplate);
+	bool isSplitScreenWithTabs = isSplitScreen && ((SelectionElement)GridObject).IsSplitScreenWithTabs;
+	HierarchySettingsElement hierarchySettings = (GridObject is SelectionElement ? ((SelectionElement)GridObject).HierarchySettings : null);
+	ViewElement splitScreenView = null;
+	bool isAutolinkBehaviorGoToView = settings.StandardActions.Display.IsAutolinkBehaviorGoToView();
+	if (isAutolinkBehaviorGoToView)
+	{
+		splitScreenView = (Instance.Level.View != null ? Instance.Level.View : (Instance.Level.ExtraViews.Count > 0 ? Instance.Level.ExtraViews[0] : null));
+	}
+	bool hasSearchAction = (GridObject.GetStandardAction(StandardAction.Search) != null);
+
+	IGrid grid = GridObject.GetGrid();
+	bool hasDVGroup = (grid is GridElement && ((GridElement)grid).HasDVGroup());
+	bool hasDVGroupExpand = hasDVGroup && ((GridGeneralElement)grid).AllowCollapseGroup;
+	bool hasDVGroupFixed = hasDVGroup && ((GridElement)grid).IsGroupTypeFixed();
+	bool hasDVGroupMultipleOptions = hasDVGroup && ((GridElement)grid).IsGroupTypeMultipleOptions();
+	bool multiRowActionsMantainSelected = grid.HasMultiRowActionsMantainingPaging();
+	bool selectAllPages = multiRowActionsMantainSelected && template.SelectAllPages;
+	List<IAttributesItem> allGridAttsAndVars = grid.GetAllAttributesAndVariablesOfThisGrid(true, true);
+	bool hasColumnsSelectorWithRG = grid.HasColumnsSelectorWithRG();
+	bool hasColumnsSelectorWithDDO = hasColumnsSelectorWithRG && settings.StandardActions.EditColumns.IsTypeDropDownButton();
+	bool editColumns_IsSerializationColumnName = settings.IsOptimizationNumber(9);
+	IStandardActionElement editColumns = (hasColumnsSelectorWithRG ? GridObject.GetStandardAction(StandardAction.EditColumns) : null);
+	string columnsSelectorMultiLanguageSupport = "";
+	bool isSmooth = DVelop.Patterns.WorkWithPlus.Object_Utilities.VersionsHelper.IsSmooth(GridObject);
+	string gridNameToHide = isSmooth ? "TableGridWrapper" : "Grid";
+	string gridInsertNameToHide = "TableGridInsertLine";
+	SettingsPaginationBarActionElement paginationBarSettings = null;
+	bool hasTotalizers = grid.HasTotalizers();
+	List<IAttributesItem> attsAndVarsWithTotalizers = null;
+	if (hasTotalizers)
+	{
+		attsAndVarsWithTotalizers = grid.GetAttributesAndVariablessWithTotalizer();
+	}
+
+	if (hasColumnsSelectorWithRG)
+	{
+		columnsSelectorMultiLanguageSupport = "!";
+	}
+	bool IsGXUIMultiRowSelectionAndCheckAll = grid.IsGXUIMultiRowSelectionAndCheckAll();
+	bool gridIsFreeStyleNotColSel = (grid is FreeStyleGridElement);
+	AssociationSelectionElement association = null;
+	string relationTrnName = null;
+	if (isAssociation)
+	{
+		association = (AssociationSelectionElement)GridObject;
+		relationTrnName = association.RelationTransaction.Transaction.Name;
+	}
+	bool alwaysSetBaseTrn = !(GridObject is SelectionElement)
+							&& !(GridObject is GridTabElement)
+							&& settings.IsOptimizationNumber(11);
+	string trnForForEach = Instance.HasTransaction() ? GridObject.GetForEachLevelName(alwaysSetBaseTrn, true) : "";
+
+	DynamicFilterAttributesElement dynamicFilters = GridObject.Table.GetDynamicFilters();
+	bool hasDynamicFilters = (dynamicFilters != null && dynamicFilters.Items.Count > 0);
+	int amountOfFixedFilters = (dynamicFilters != null && dynamicFilters.FixedFilters != null ? dynamicFilters.FixedFilters.Items.Count : 0);
+	bool dynFiltersIsAl = hasDynamicFilters && dynamicFilters.IsAL();
+	bool isTabAndALTabs = (GridObject is ITabElement && ((ViewElement)GridObject.Parent.Parent).Table.IsAL());
+	GridObject.ShowHideGetGridState_Added = false;
+	if (hasDynamicFilters)
+	{
+		dynamicFilters.ShowHideCodedAdded = false;
+	}
+
+	List<IActionElement> allActions = GridObject.AllActions();
+
+	List<IActionElement> standaloneActionsWithSecurityCheck = new List<IActionElement>();
+	foreach (IActionElement action in allActions)
+	{
+		if (action.HasStandaloneCondition())
+			standaloneActionsWithSecurityCheck.Add(action);
+	}
+
+	string columnSelectorSessionKey = GridObject.ObjectName + "ColumnsSelector";
+	string manageFiltersSessionKey = GridObject.ObjectName + "Filters";
+	int index;
+	List<string> inlineSubsToDefine = new List<string>();
+	string customEventCode = null;
+	bool hasExportOrReportAndDyn = false;
+	IStandardActionElement cleanFilters = GridObject.GetStandardAction(StandardAction.CleanFilters);
+	IStandardActionElement manageFilters = GridObject.GetStandardAction(StandardAction.ManageFilters);
+	IStandardActionReportElement exportAction = null, exportReportAction = null, exportCSVAction = null;
+	if (!isPrompt)
+	{
+		exportAction = (IStandardActionReportElement)GridObject.GetStandardAction(StandardAction.Export);
+		exportReportAction = (IStandardActionReportElement)GridObject.GetStandardAction(StandardAction.ExportReport);
+		exportCSVAction = (IStandardActionReportElement)GridObject.GetStandardAction(StandardAction.ExportCSV);
+		if (hasDynamicFilters && (exportAction != null || exportReportAction != null || exportCSVAction != null))
+		{
+			hasExportOrReportAndDyn = true;
+		}
+	}
+	bool hasCopyRecord = Instance.HasTransaction() && GridObject.GetStandardAction(StandardAction.CopyRecord) != null;
+	bool hasCleanFilters = (cleanFilters != null) || (manageFilters != null);
+	bool hasAdvancedSecurity = settings.Security.IsAdvancedOrGAM();
+	ISettingsAdvanceSecurity advSec = hasAdvancedSecurity ? settings.Security.GetAdvancedSecurity() : null;
+    bool addAttSecurityCode, addAttVisibleConditionCode, otherControlVisibleCondition;
+    GridObject.Table.AddShowAttSecurityCode(out addAttSecurityCode, out addAttVisibleConditionCode, out otherControlVisibleCondition);
+	
+	ParametersElement parameters = GridObject.GetParameters();
+
+	List<string> inLineActionPK = null;
+	Artech.Genexus.Common.Objects.Transaction gridTrn = null;
+	if (Instance.HasTransaction() && (GridObject.HasInLineAction || hasCopyRecord || multiRowActionsMantainSelected))
+	{
+		gridTrn = GridObject.Transaction;
+	}
+
+	bool hasInlineResetMode = false;
+	if (GridObject.HasInLineAction)
+	{
+		hasInlineResetMode = DVelop.Patterns.WorkWithPlus.Helpers.InLineActionHelper.HasInlineResetMode(isSmooth);
+		((GridElement)grid).m_GettingGridInsertLineHtml = false;
+		inLineActionPK = new List<string>();
+		foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in gridTrn.Structure.Root.PrimaryKey)
+		{
+			if (parameters == null || parameters.FindParameter(trnAtt.Name) == null)
+			{
+				inLineActionPK.Add(trnAtt.Name);
+			}
+		}
+	}
+	bool hasTitleFilter = GridObject.HasTitleFilter;
+	bool hasTitleFilterAllowMultiple = false;
+	bool hasFilterServiceProc = GridObject.HasFilterServiceProc;
+	List<IAttributesItem> titlesWithFilters = null;
+	bool includeSortableByTitleInDropDownOptions = GridObject.Orders.HasTitleOrdering && settings.Grid.IsIncludeSortableByTitleInDropDownOptionsAlways();
+	bool hasDDOSortedStatus = hasDVGroupMultipleOptions;
+	bool generateDataSelector = DataSelectorHelper.GenerateDataSelector(GridObject, settings);
+	if (hasTitleFilter)
+	{
+		titlesWithFilters = new List<IAttributesItem>();
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+			if (item.Visible)
+			{
+				if (item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue())
+				{
+					titlesWithFilters.Add(item);
+					if (!hasDDOSortedStatus && item is ISortableByTitle && ((ISortableByTitle)item).IsSortableByTitle())
+					{
+						hasDDOSortedStatus = true;
+					}
+				}
+				else if (!hasDDOSortedStatus && includeSortableByTitleInDropDownOptions && item is ISortableByTitle && ((ISortableByTitle)item).IsSortableByTitle())
+				{
+					hasDDOSortedStatus = true;
+				}
+			}
+		}
+	}
+	else if (includeSortableByTitleInDropDownOptions && !hasDDOSortedStatus)
+	{
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+			if (item is ISortableByTitle && ((ISortableByTitle)item).IsSortableByTitle())
+			{
+				hasDDOSortedStatus = true;
+				break;
+			}
+		}
+	}
+	bool useDDOTFMultiple = (hasDDOSortedStatus || hasTitleFilter) && settings.IsOptimizationNumber(8);
+	bool hasTitleSortingNotFS = (GridObject.Orders.HasTitleOrdering && !(grid is FreeStyleGridElement));
+	string gridStateSaveLine;
+	if (settings.Grid.IsSaveGridStateCustom())
+	{
+		gridStateSaveLine = "SaveGridState.Call(&PgmName + !\"" + Constants.SessionKeys.GridState + "\",  &GridState.To" + template.SerializationFormat + "())";
+	}
+	else
+	{
+		gridStateSaveLine = "&Session.Set(&PgmName + !\"" + Constants.SessionKeys.GridState + "\", &GridState.To" + template.SerializationFormat + "())";
+	}
+%>
+Event Start
+
+<%@ CallSubTemplate SubCheckSecurity SecurityFunction='GridObject.GetSecurityFunctionKey()' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	string generalInitializationCode = GridObject.Table.GetGeneralInitializationCode(Object);
+	if (generalInitializationCode != "")
+	{
+%>
+
+<%= Indentation.Indent(generalInitializationCode, 1) %>
+<%
+	}
+	if (addAttSecurityCode || addAttVisibleConditionCode || otherControlVisibleCondition)
+	{
+%>
+
+	Do 'AttributesSecurityCode'
+<%
+	}
+	List<IAttributesItem> tableAttsAndVars = GridObject.Table.GetTableAttributesAndVariables();
+	if (!(isPrompt || isAssociation))
+	{
+%>
+<%@ CallSubTemplate SubLinkAttributes Attributes='tableAttsAndVars' LinkAssocToImage='true' IndentLevel='1' IndentLevelChar='"\t"' %>
+	
+<%
+	}
+	bool isOptimizationNumber7 = settings.IsOptimizationNumber(7);
+	bool isOptimizationNumber10 = settings.IsOptimizationNumber(10);
+	bool addHiddenVars = !(isOptimizationNumber7 && isSmooth);
+	bool hasRequiredAtts = false;
+	foreach (IAttributesItem item in tableAttsAndVars)
+	{
+		if (!item.Visible)
+		{
+%>
+	<%= item.ControlName %>.Visible = False
+<%
+		}
+		else if (!hasRequiredAtts && item.GetIsRequired())
+		{
+			hasRequiredAtts = true;
+		}
+	}
+	if (gridIsFreeStyleNotColSel)
+	{
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+		    if (!item.Visible)
+		    {
+%>
+	<%= item.ControlName %>.Visible = False
+<%
+		    }
+		}
+	}
+	if (addHiddenVars)
+	{
+		foreach (ParmVariableDefinition var in GridObject.Table.GetActionInvisibleParameterVars())
+		{
+%>
+	&<%= var.Name %>.Visible = False
+<%
+		}
+	}
+	if (multiRowActionsMantainSelected)
+	{
+		if (hasSelectAll)
+		{
+%>
+	&SelectAll.Visible = False
+<%
+		}
+		fullLevelKeyAttributeNames = new List<string>();
+		foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in gridTrn.Structure.Root.FullLevelKey)
+		{
+			fullLevelKeyAttributeNames.Add(trnAtt.Name);
+			if (addHiddenVars)
+			{
+%>
+	&<%= trnAtt.Name %>Json.Visible = False
+<%
+			}
+		}
+	}
+	bool transactionPKCompounded = fullLevelKeyAttributeNames != null && fullLevelKeyAttributeNames.Count > 1;
+	string infiniteScrollingType;
+	string pageSize = GridObject.GetPageSize(out infiniteScrollingType);
+	bool isInfiniteScrolling = (infiniteScrollingType != null);
+	if (pageSize != String.Empty)
+	{
+%>
+
+	Grid.Rows = <%= pageSize %>
+<%
+	}
+	if (GridGeneralElement.IncludeGridEmpowerer(grid, settings))
+	{
+%>
+	Grid_Empowerer.GridInternalName = Grid.InternalName
+<%
+		if (hasColumnsSelectorWithDDO)
+		{
+%>
+	DDO_GridColumnsSelector.GridInternalName = Grid.InternalName
+<%
+		}
+	}
+	if (grid is GridGeneralElement && ((GridGeneralElement)grid).HasTitlesCategory())
+	{
+%>
+	Grid_TitlesCategories.GridInternalName = Grid.InternalName
+<%
+	}
+	bool hasConditionalFormattingFilters = grid is GridGeneralElement && ((GridGeneralElement)grid).ConditionalFormatting != null && ((GridGeneralElement)grid).ConditionalFormatting.HasFilter;
+	if (manageFilters != null && !hasConditionalFormattingFilters)
+	{
+%>
+<%= DVelop.Patterns.WorkWithPlus.Helpers.ManageFiltersAction.GetStartEventCode(isTabAndALTabs, GridObject, addHiddenVars) %>
+<%
+	}
+	bool assignGAMOAuthToken = false;
+	bool GamSessionLoaded = false;
+	if (settings.Security.IsTypeGAM() && SettingsSecurityGAMElement.HasTitleFilterIntegratedSecurity(GridObject, Object))
+	{
+		if (!(Instance.ParentObject is Artech.Genexus.Common.Objects.Transaction) && LoadDVComboProcedureHelper.GetAttributesWithDVCombo(GridObject.Table, true).Count > 0)
+		{
+			GamSessionLoaded = true;
+		}
+		else if ((hasTitleFilter || GridObject.HasFilterMultipleDDO) && hasFilterServiceProc)
+		{
+			assignGAMOAuthToken = true;
+			if (GridObject.HasFilterMultipleDDO)
+			{
+				GamSessionLoaded = true;
+%>
+	&GAMSession = GAMSession.Get(&GAMErrors)
+<%
+			}
+		}
+	}
+	bool hasPaging = (pageSize != "0");
+	if (hasDynamicFilters)
+	{
+%>
+
+<%@ CallSubTemplate DynamicFiltersStart DynamicFilters='dynamicFilters' IsTabAndALTabs='isTabAndALTabs' IsSmooth='isSmooth' AssignGAMOAuthToken='assignGAMOAuthToken' %>
+<%
+	}
+	
+	List<IActionElement> actionsToInitialize;
+	if (isSmooth)
+		actionsToInitialize = GridObject.AllActions(false);
+	else
+		actionsToInitialize = allActions;
+	foreach (IActionElement action in actionsToInitialize)
+	{
+		string initCode;
+		if ((initCode = action.InitializationCode()) != String.Empty)
+		{
+%>
+<%= Indentation.Indent(initCode, 1) %>
+<%
+		}
+	}
+	if (hasAdvancedSecurity)
+	{
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+			if (item.Link != null && item.Link.HasAdvancedSecurityCondition())
+			{
+%>
+<%= Indentation.Indent(item.Link.GetAdvancedSecurityInitialization(), 1) %>
+<%
+			}
+		}
+	}
+	
+	List<IRegularFilter> filters = GridObject.GetFilters();
+	int totalAmountOfRegularFilters = filters.Count + amountOfFixedFilters + (hasConditionalFormattingFilters ? 1 : 0);
+	if (hasTitleFilter)
+	{
+		totalAmountOfRegularFilters += titlesWithFilters.Count;
+		foreach (IFilterableByTitle item in titlesWithFilters)
+		{
+			if (TitleFilterProcedureHelper.ConsiderFilterCondition(item)
+				&& TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+			{
+				totalAmountOfRegularFilters++;
+			}
+		}
+	}
+	List<System.Collections.IEnumerable> filtersAddFixedFilters = SelectionGeneralElement.GetFiltersAddFixedFiltersLists(filters, dynamicFilters);
+	foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFilters)
+	{
+		foreach (IFilter filterVar in filtersList)
+		{
+			if (GridObject.HasFilterMultiple && filterVar is FilterAttributeMultipleGeneralElement)
+			{
+				if (((FilterAttributeMultipleGeneralElement)filterVar).IsTypePrompt())
+				{
+					if (addHiddenVars)
+					{
+%>
+	&Prompt<%= filterVar.Name %>ValuesExecutionStep.Visible = False
+<%
+					}
+				}
+				else
+				{
+					if (((FilterAttributeMultipleGeneralElement)filterVar).IsDataListDynamic() && assignGAMOAuthToken)
+					{
+%>
+	DDO_FilterMultiple<%= filterVar.Name %>.GAMOAuthToken = &GAMSession.Token
+<%
+					}
+				}
+			}
+			if (filterVar.AllValue && !filterVar.ControlIsNotCombo())
+			{
+				if (filterVar.Default == String.Empty)
+				{
+%>
+	<%= filterVar.VariableName %> = nullvalue(<%= filterVar.VariableName %>)
+<%
+				}
+			}
+
+			if (filterVar.Default != String.Empty)
+			{
+%>
+	<%= filterVar.VariableName %> = <%= filterVar.Default %>
+<%
+			}
+			if (filterVar is IFilterWithRange && ((IFilterWithRange)filterVar).IsPickerRange()
+				|| filterVar.HasRangeOperatorPickerRange())
+			{
+%>
+	<%= filterVar.Name %>_RangePicker.Attach(&<%= filterVar.Name %>_RangeText.InternalName)
+<%
+				if (filterVar.HasDateRangePickerOptions())
+				{
+%>
+	&<%= filterVar.Name %>_RangePickerOptions = <%= filterVar.GetDateRangePickerOptionsName() %>()
+<%
+				}
+			}
+		}
+	}
+	if (hasTitleFilter)
+	{
+		if (!GamSessionLoaded && assignGAMOAuthToken)
+		{
+				GamSessionLoaded = true;	
+%>
+	&GAMSession = GAMSession.Get(&GAMErrors)
+<%
+		}
+		foreach (IFilterableByTitle item in titlesWithFilters)
+		{
+			string name = item.ControlName.TrimStart('&');
+			if (addHiddenVars)
+			{
+				if (TitleFilterProcedureHelper.ConsiderFilterCondition(item) && !item.IsSearchBoxDateRangePicker())
+				{
+%>
+	&TF<%= name %>.Visible = False
+<%
+					if (item.IsSearchBoxRange())
+					{
+%>
+	&TF<%= name %>_To.Visible = False
+<%
+					}
+				}
+			}
+			if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+			{
+				if (!item.AllowMultipleSelection)
+				{
+					if (addHiddenVars)
+					{
+%>
+	&TF<%= name %>_Sel.Visible = False
+<%
+						if (TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(item))
+						{
+%>
+	&TF<%= name %>_SelDsc.Visible = False
+<%
+						}
+					}
+				}
+				else
+				{
+					hasTitleFilterAllowMultiple = true;
+					if (useDDOTFMultiple && !isSmooth)
+					{
+%>
+	&TF<%= name %>_SelsJson.Visible = False
+<%
+					}
+				}
+			}
+			if (addHiddenVars && item.PredefinedOperators != null)
+			{
+%>
+	&TF<%= name %>Operator.Visible = False
+<%
+			}
+			if (item.IsDataListDynamic() && assignGAMOAuthToken && !useDDOTFMultiple)
+			{
+%>
+	DDO_<%= name %>.GAMOAuthToken = &GAMSession.Token
+<%
+			}
+		}
+	}
+	if ((grid is GridGeneralElement) && (hasTitleSortingNotFS && includeSortableByTitleInDropDownOptions || hasDVGroupMultipleOptions || hasTitleFilter))
+	{
+	if (useDDOTFMultiple)
+	{
+%>
+	DDO_Grid.GridInternalName = Grid.InternalName
+<%
+		if (assignGAMOAuthToken)
+		{
+%>
+	DDO_Grid.GAMOAuthToken = &GAMSession.Token
+<%
+		}
+	} else if (isSmooth)
+	{
+		bool gridInternalNameSet = addHiddenVars;
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+			if (hasTitleFilter && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue()
+					|| hasTitleSortingNotFS && item is ISortableByTitle && (includeSortableByTitleInDropDownOptions && ((ISortableByTitle)item).IsSortableByTitle() || ((ISortableByTitle)item).AllowGrouping))
+			{
+				IFilterableByTitle gridItem = (IFilterableByTitle)item;
+				string name = gridItem.ControlName.TrimStart('&');
+				if (!gridInternalNameSet)
+				{
+					gridInternalNameSet = true;
+%>
+	&Grid_InternalName = Grid.InternalName
+<%
+				}
+				if (addHiddenVars)
+				{
+%>
+	DDO_<%= name %>.TitleControlIdToReplace = Grid.InternalName + !'_<%= name %>'
+	&DDO_<%= name %>TitleControlIdToReplace = DDO_<%= name %>.TitleControlIdToReplace
+	&DDO_<%= name %>TitleControlIdToReplace.Visible = False
+<%
+				}
+				else
+				{
+%>
+	DDO_<%= name %>.TitleControlIdToReplace = &Grid_InternalName + !'_<%= name %>'
+<%
+				}
+			}
+		}
+	}
+	}
+
+	if (GridObject is SelectionGeneralElement && !((SelectionGeneralElement)GridObject).IsWebComponent())
+	{
+%>
+	Form.Caption = <%= ((SelectionGeneralElement)GridObject).GetCaption() %>
+<%
+	}
+
+	// "Hidden" attributes - sometimes necessary for GX to infer the correct navigation scheme.
+	foreach (ParameterElement parameter in SelectionGeneralElement.GetParametersNeddedAsHidden(GridObject))
+	{
+%>
+	<%= parameter.Name %>.Visible = False
+<%
+	}
+
+	if (useTransactionContext)
+	{
+%>
+
+	Do 'PrepareTransaction'
+<%	}
+
+	bool filterWithUpdateFilterTypeSub = false;
+	bool filterHasRangePicker = false;
+	foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFilters)
+	{
+		foreach (IFilter filterVar in filtersList)
+		{
+			if (filterVar is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterVar).HasUpdateFilterTypeSub())
+			{
+				filterWithUpdateFilterTypeSub = true;
+				break;
+			}
+			else if (!filterHasRangePicker && filterVar is IFilterWithRange && ((IFilterWithRange)filterVar).IsPickerRange())
+			{
+				filterHasRangePicker = true;
+			}
+		}
+		if (filterWithUpdateFilterTypeSub)
+		{
+			break;
+		}
+	}
+	
+		
+	if (filterWithUpdateFilterTypeSub)
+	{
+		string doUpdateOperatorsIndent = "";
+		if (!isSmooth)
+		{
+			doUpdateOperatorsIndent = "\t";
+%>
+	If &HTTPRequest.Method = HttpMethod.Get
+<%
+		}
+		foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFilters)
+		{
+			foreach (IFilter filterVar in filtersList)
+			{
+				if (filterVar is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterVar).HasUpdateFilterTypeSub())
+				{
+					if (addHiddenVars)
+					{
+						if (!((FilterAttributeGeneralElement)filterVar).HasSimpleOperator())
+						{
+							if (!((FilterAttributeGeneralElement)filterVar).HasRangeOperatorNotFixed(null))
+							{
+%>
+<%= doUpdateOperatorsIndent %>	&<%= filterVar.Name %>.Visible = False
+<%
+								if (((FilterAttributeGeneralElement)filterVar).HasRangeOperator())
+								{
+%>
+<%= doUpdateOperatorsIndent %>	&<%= filterVar.Name %>_To.Visible = False
+<%
+								}
+							}
+						}
+						else if (((FilterAttributeGeneralElement)filterVar).HasRangeOperator() && !((FilterAttributeGeneralElement)filterVar).HasRangeOperatorNotFixed(null))
+						{
+%>
+<%= doUpdateOperatorsIndent %>	&<%= filterVar.Name %>_To.Visible = False
+<%
+						}
+					}
+%>
+<%= doUpdateOperatorsIndent %>	Do 'Update<%= filterVar.Name %>OperatorValues'
+<%
+				}
+			}
+		}
+		if (doUpdateOperatorsIndent != "")
+		{
+%>
+	EndIf
+<%
+		}
+	}
+	if (needGridState) 
+	{
+		if (isSmooth || !isTabAndALTabs)
+		{
+%>
+	Do 'LoadGridState'
+<%
+		}
+	}
+	else if (hasDynamicFilters && dynamicFilters.MaxFilters > 1)
+	{
+		if (isSmooth)
+		{
+%>
+	Do 'LoadDynFiltersState'
+<%
+		}
+		else if (isTabAndALTabs)
+		{
+%>
+	If Not(&PageAlreadyExecuted)
+		Do 'LoadDynFiltersState'
+	EndIf
+<%
+		}
+		else
+		{
+%>
+	If (&HTTPRequest.Method = HttpMethod.Get)
+		Do 'LoadDynFiltersState'
+	EndIf
+<%
+		}
+	}
+	if (needOrderChoice)
+	{
+		if (GridObject.Orders.IncludeItemInTable())
+		{
+%>
+	<%= OrdersElement.OrderVariableName %>.Clear()
+<%
+			for (int i = 0; i < GridObject.Orders.Orders.Count; i++)
+			{
+%>
+	<%= OrdersElement.OrderVariableName %>.AddItem(<%= (i + 1).ToString() %>, '<%= GridObject.Orders.Orders[i].Name %>')
+<%
+			}
+		}
+		else
+		{
+			if (addHiddenVars || !includeSortableByTitleInDropDownOptions && hasTitleSortingNotFS)
+			{
+%>
+	<%= OrdersElement.OrderVariableName %>.Visible = False
+<%
+			}
+		}
+		if (isSmooth || !isTabAndALTabs)
+		{
+%>
+	If <%= OrdersElement.OrderVariableName %> < 1
+<%
+			if (hasDVGroup && hasDVGroupMultipleOptions && ((GridElement)grid).DefaultDynamicGroup != "")
+			{
+				ISortableByTitle defGroup = ((GridElement)grid).GetDefaultDynamicGroup();
+%>
+		<%= OrdersElement.OrderVariableName %> = <%= defGroup.OrderIndex %>
+		&GroupBy = !'<%= defGroup.ControlName.TrimStart('&') %>'
+<%
+			}
+			else
+			{
+%>
+		<%= OrdersElement.OrderVariableName %> = 1
+<%
+				if (GridObject.Orders.FirstOptionSwapped)
+				{
+%>
+		<%= OrdersElement.OrderDscVariableName %> = True
+<%
+				}
+			}
+				if (hasDDOSortedStatus)
+				{
+%>
+		Do 'SetDDOSortedStatus'
+<%
+				}
+%>
+	EndIf
+<%
+		}
+	}
+	if (manageFilters != null && hasConditionalFormattingFilters)
+	{
+%>
+<%= DVelop.Patterns.WorkWithPlus.Helpers.ManageFiltersAction.GetStartEventCode(isTabAndALTabs, GridObject, addHiddenVars) %>
+<%
+	}
+	if (GridObject.Orders.HasTitleOrdering && (addHiddenVars || !includeSortableByTitleInDropDownOptions && hasTitleSortingNotFS || GridObject.Orders.IncludeItemInTable()))
+	{
+%>
+	<%= OrdersElement.OrderDscVariableName %>.Visible = False
+<%
+	}
+	foreach (WebComponentElement webComp in GridObject.Table.AllWebComponents(false))
+	{
+%>
+	<%= webComp.GetCreateWebComponentCall()%>
+<%
+	}
+	if (isAssociation)
+	{
+		bool hasAttributes = AttributeElement.ListContainsAttribute(tableAttsAndVars);
+		List<IAttributesItem> atts = GridObject.Table.GetTableAttributesAndVariables(true, false);
+		if (hasAttributes)
+		{
+%>
+	For Each<%= settings.IsOptimizationNumber(11) ? " " + Instance.Transaction.TransactionName : "" %>
+<%
+			index = 0;
+			foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+			{
+%>
+		Where <%= association.Info.BaseTableKeyAttributes[index] %> = &<%= relationKeyBaseAttribute %>
+<%
+				index++;
+			}
+
+			foreach (IAttributesItem item in tableAttsAndVars)
+			{
+				if (item is AttributeElement)
+				{
+					if (addAttSecurityCode && item.HasShowSecurityCheck())
+					{
+%>
+		If &<%= item.ControlName %>.Visible
+			&<%= item.ControlName %> = <%= item.ControlName %>
+		EndIf
+<%
+					}
+					else
+					{
+%>
+		&<%= item.ControlName %> = <%= item.ControlName %>
+<%
+					}
+				}
+			}
+%>
+	EndFor
+<%
+			foreach (IAttributesItem item in atts)
+			{
+%>
+	&<%= item.ControlName %>.Enabled = False
+<%
+			}
+		}
+
+		if (addHiddenVars)
+		{
+			foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+			{
+%>
+	&<%= relationKeyRelatedAttribute %>AddedXml.Visible = False
+	&<%= relationKeyRelatedAttribute %>RemovedXml.Visible = False
+<%
+			}
+		}
+	}
+	if (hasMultiRowActions && hasSelectAll)
+	{
+		if (!IsGXUIMultiRowSelectionAndCheckAll)
+		{
+%>
+
+	<%= grid.GetMultiRowSelectedVariableControlName() %>.TitleFormat = 1
+<%
+			if (!isSmooth && !multiRowActionsMantainSelected)
+			{
+%>
+	<%= grid.GetMultiRowSelectedVariableControlName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="Select All" onClick="WWPSelectAll(this, %1);" onMouseOver="WWPSelectAllRemoveParentOnClick(this)" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', !"'<%= grid.GetMultiRowSelectedVariableName().ToUpper() %>'")
+<%
+			}
+			else
+			{
+				addMultiRowSelectedTitleCodeInRefresh = true;
+			}
+		}
+		else
+		{
+%>
+	&<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>.Visible = False
+<%
+		}
+	}
+	if (cleanFilters != null && hasDynamicFilters && dynamicFilters.MaxFilters > 1)
+	{
+		if (dynFiltersIsAl)
+		{
+%>
+	<%= ((ActionElement)cleanFilters).ControlName() %>.JSEvent('onclick', format(!"WWPDynFilterHideAll_AL('%1', <%= dynamicFilters.MaxFilters.ToString() %>, <%= dynamicFilters.FixedFilters != null ? dynamicFilters.FixedFilters.Items.Count : 0 %>)", Table<%= dynamicFilters.Name %>.InternalName))
+<%
+		}
+		else
+		{
+%>
+	<%= ((ActionElement)cleanFilters).ControlName() %>.JSEvent('onclick', !"WWPDynFilterHideAll(<%= dynamicFilters.MaxFilters.ToString() %>)")
+<%
+		}
+	}
+	if (manageFilters != null && manageFilters is ActionElement && ((ActionElement)manageFilters).IsImageTypeGeneralImage() && ((ActionElement)manageFilters).Image != null)
+	{
+%>
+	<%= ((ActionElement)manageFilters).ControlName() %>.Icon = <%= ((ActionElement)manageFilters).ImageName %>.Link()
+<%
+	}
+	IStandardActionElement insertAction = null, updateAction = null, deleteAction = null, displayAction = null, editableGridCancel = null, editableGridConfrim = null;
+	string trnModePrefix = "", trnModeSuffix = "", editableGrid_ModeAuxName = "&EditableGrid_ModeAux";
+	if (GridObject.HasInLineAction)
+	{
+		if (isSmooth)
+		{
+			editableGrid_ModeAuxName = "&EditableGrid_Mode";
+			trnModePrefix = "!'";
+			trnModeSuffix = "'";
+		}
+		editableGridCancel = ((GridGeneralElement)grid).GetStandardAction(StandardAction.EditableGridCancel);
+		editableGridConfrim = ((GridGeneralElement)grid).GetStandardAction(StandardAction.EditableGridConfirm);
+		insertAction = GridObject.Table.GetStandardAction(StandardAction.Insert);
+		if (GridObject.HasInLineInsert && (isSmooth || !isTabAndALTabs))
+		{
+			if (isTabAndALTabs)
+			{
+%>
+	<%= gridInsertNameToHide %>.Visible = False
+<%
+			}
+			else
+			{
+%>
+	If &HTTPRequest.Method = HttpMethod.Get
+		<%= gridInsertNameToHide %>.Visible = False
+	EndIf
+<%
+			}
+		}
+		updateAction = ((GridGeneralElement)grid).AllowSelection ? GridObject.Table.GetStandardAction(StandardAction.Update) : ((GridGeneralElement)grid).GetStandardAction(StandardAction.Update);
+		deleteAction = ((GridGeneralElement)grid).AllowSelection ? GridObject.Table.GetStandardAction(StandardAction.Delete) : ((GridGeneralElement)grid).GetStandardAction(StandardAction.Delete);
+		if (addHiddenVars)
+		{
+%>
+	&EditableGrid_Mode.Visible = False
+<%
+			if (isSmooth)
+			{
+				foreach (string trnAttName in inLineActionPK)
+				{
+%>
+	&<%= trnAttName %>_SelectedLine.Visible = False
+<%
+				}
+			}
+		}
+	}
+	if (hasTitleFilter || includeSortableByTitleInDropDownOptions || hasDVGroupMultipleOptions || GridObject.HasFilterMultipleDDO || hasColumnsSelectorWithDDO)
+	{
+%>
+	&DDO_TitleSettingsIcons = GetWWPTitleSettingsIcons()
+<%
+		if (hasColumnsSelectorWithDDO && editColumns is ActionGroupActionGeneralElement)
+		{
+%>
+	DDO_GridColumnsSelector.TitleControlIdToReplace = <%= editColumns.ControlName() %>.InternalName
+<%
+		}
+	}
+	if (isPromptMultiple)
+	{
+%>
+	If &HTTPRequest.Method = HttpMethod.Get
+<%
+		foreach (PromptParameterElement param in parameters)
+		{
+			if ((param.AttributeBasedOn != null || !Instance.HasTransaction()) && !param.IsTypeIn())
+			{
+%>
+		&Session.Set(&<%= param.Name.TrimStart('&') %>_WSKey + !"AUX", &Session.Get(&<%= param.Name.TrimStart('&') %>_WSKey))
+<%
+			}
+		}
+%>
+	EndIf
+<%
+	}
+	if (hasCopyRecord)
+	{
+%>
+	&Session.Remove(!'<%= gridTrn.Name %>CopyRecord')
+<%
+	}
+	if (grid.IncludePagBar() && grid.IncludeRowsPerPageInPagBar())
+	{
+		if (!isSmooth)
+		{
+%>
+	If &HTTPRequest.Method = HttpMethod.Get
+		GridPaginationBar.RowsPerPageSelectedValue = Grid.Rows
+	EndIf
+<%
+		}
+		else
+		{
+%>
+	GridPaginationBar.RowsPerPageSelectedValue = Grid.Rows
+<%
+		}
+	}
+	string trnCallDisplayModeParameters = null;
+	if (isSplitScreen)
+	{
+		gridTrn = GridObject.Transaction;
+		if (isSplitScreenWithTabs)
+		{
+			string notEmptyCondition = "";
+			foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in gridTrn.Structure.Root.PrimaryKey)
+			{
+				notEmptyCondition += " OR (Not &Selected" + trnAtt.Name + ".IsEmpty())";
+			}
+			notEmptyCondition = notEmptyCondition.Substring(4);
+%>
+	If <%= notEmptyCondition %>
+		For Each <%= gridTrn.Name %>
+<%
+			
+			foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in gridTrn.Structure.Root.PrimaryKey)
+			{
+%>
+			Where <%= trnAtt.Name %> = &Selected<%= trnAtt.Name %>
+<%
+			}
+%>
+
+			&DetailTabCaption = <%= ((SelectionElement)GridObject).SplitScreenTabCaption %>
+		EndFor
+<%
+		}
+		if (isAutolinkBehaviorGoToView)
+		{
+			splitScreenView = (Instance.Level.View != null ? Instance.Level.View : (Instance.Level.ExtraViews.Count > 0 ? Instance.Level.ExtraViews[0] : null));
+			if (splitScreenView != null)
+			{
+				string viewParms = splitScreenView.Parameters.ListWithVariables().Replace("&", "&Selected");
+				viewParms += (viewParms != "" ? ", " : "") + "''";
+				if (isSplitScreenWithTabs)
+				{
+%>
+		&DetailWCLink = <%= splitScreenView.ObjectName %>.Link(<%= viewParms %>)
+		DetailTabsComponent.AddIFrameTab(&DetailWCLink, &DetailTabCaption)
+<%
+				}
+				else
+				{
+%>
+	DetailWC.Object = <%= splitScreenView.ObjectName %>.Create(<%= viewParms %>)
+<%
+				}
+			}
+		}
+		else
+		{
+			trnCallDisplayModeParameters = StandardActionElement.GetTransactionCallParameters(GridObject, StandardAction.Display, true);
+			if (isSplitScreenWithTabs)
+			{
+%>
+		&DetailWCLink = <%= gridTrn.Name %>.Link(<%= trnCallDisplayModeParameters %>)
+		DetailTabsComponent.AddIFrameTab(&DetailWCLink, &DetailTabCaption)
+<%
+			}
+			else
+			{
+%>
+	DetailWC.Object = <%= gridTrn.Name %>.Create(<%= trnCallDisplayModeParameters %>)
+<%
+			}
+		}
+		if (isSplitScreenWithTabs)
+		{
+%>
+	EndIf
+<%
+		}
+	}
+	List<IGrid> extraGrids = GridObject.Table.AllExtraGrids();
+	if (extraGrids.Count > 0)
+	{
+%>	
+<%@ CallSubTemplate SubExtraGridsEventStart grids='extraGrids' actions='null' settings='settings' advancedSecurity='hasAdvancedSecurity' rootTable='null' isSmooth='isSmooth' %>
+<%
+	}
+%>
+	
+EndEvent
+
+<%@ CallSubTemplate SubAddressAutoLinkEvent Attributes='tableAttsAndVars' EventAssocToImage='true' ExtraGrids='extraGrids' %>
+<%
+%>
+<%@ CallSubTemplate SubAddressAutoLinkEvent Attributes='allGridAttsAndVars' EventAssocToImage='false' %>
+<%
+	bool hasAdvancedSecurityAndHidden = hasAdvancedSecurity && advSec.IsAppearanceHidden();
+	List<IActionElement> allActionsOfThisGrid = grid.GetAllActionsOfThisGrid();
+	bool hasDynamicFiltersRefresh = (hasDynamicFilters && dynamicFilters.FiltersWithOperatorVariable() > 1);
+	bool addPaginationBar = grid.IncludePagBar();
+%>
+
+Event <%= GridObject.HasInLineInsert ? "Grid." : "" %>Refresh
+
+<%
+		if (isSmooth && !useDDOTFMultiple && (hasTitleFilter || includeSortableByTitleInDropDownOptions || hasDVGroupMultipleOptions))
+		{
+			foreach (IAttributesItem item in allGridAttsAndVars)
+			{
+				if (hasTitleFilter && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue()
+						|| item is ISortableByTitle && (includeSortableByTitleInDropDownOptions || ((ISortableByTitle)item).AllowGrouping) && ((ISortableByTitle)item).IsSortableByTitle())
+				{
+					IFilterableByTitle gridItem = (IFilterableByTitle)item;
+%>
+	&<%= gridItem.ControlName.TrimStart('&') %>TitleFilterData = new()
+<%
+				}
+			}
+		}
+		if (!isSmooth && isTabAndALTabs)
+		{
+			if (GridObject.HasInLineInsert)
+			{
+%>
+	If Not(&PageAlreadyExecuted)
+		<%= gridInsertNameToHide %>.Visible = False
+	EndIf
+<%
+			}
+			if (needGridState)
+			{
+%>
+	Do 'LoadGridState'
+
+<%
+			}
+		}
+%>
+
+<%@ CallSubTemplate SubLoadContext IndentLevel='1' IndentLevelChar='"\t"' %>
+
+<%
+		if (standaloneActionsWithSecurityCheck.Count > 0)
+		{
+%>
+	Do 'CheckSecurityForActions'
+<%
+		}
+		if (GridObject.HasInLineAction)
+		{
+			foreach (IActionElement action in allActionsOfThisGrid)
+			{
+				if (action.GetName() != StandardAction.EditableGridCancel && action.GetName() != StandardAction.EditableGridConfirm
+					&& !standaloneActionsWithSecurityCheck.Contains(action)
+					&& action.IsControlTypeGeneralImage() && ((ActionElement)action).IsImageTypeGeneralImage()
+					&& (action.GetCondition() == "" || settings.StandardActions.IsDisabledAppearanceHidden()))
+				{
+%>
+	<%= action.ControlName() %>.FromImage(<%= ((ActionElement)action).ImageName %>)
+<%
+				}
+			}
+		}
+		if (manageFilters != null)
+		{
+%>
+
+	Do Case
+		Case &ManageFiltersExecutionStep = 1
+			&ManageFiltersExecutionStep = 2
+		Case &ManageFiltersExecutionStep = 2
+			&ManageFiltersExecutionStep = 0
+			Do 'LoadSavedFilters'
+	EndCase
+<%
+		}
+		if (GridObject.HasFilterMultiple)
+		{
+			foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFilters)
+			{
+			foreach (IFilter filterVar in filtersList)
+			{
+				if (filterVar is FilterAttributeMultipleGeneralElement
+					&& ((FilterAttributeMultipleGeneralElement)filterVar).IsTypePrompt())
+				{
+					string exeStepIndent = "";
+					if (isSmooth)
+					{
+%>
+	If &Prompt<%= filterVar.Name %>ValuesExecutionStep = 2
+<%
+					}
+					else
+					{
+						exeStepIndent = "\t";
+%>
+	Do Case
+		Case &Prompt<%= filterVar.Name %>ValuesExecutionStep = 1
+			&Prompt<%= filterVar.Name %>ValuesExecutionStep = 2
+		Case &Prompt<%= filterVar.Name %>ValuesExecutionStep = 2
+<%
+					}
+%>
+<%= exeStepIndent %>		&Prompt<%= filterVar.Name %>ValuesExecutionStep = 0
+<%= exeStepIndent %>		&<%= filterVar.Name %>Values.FromJson(&Session.Get(&Pgmname + !'<%= filterVar.Name %>Values'))
+<%
+					if (((FilterAttributeMultipleGeneralElement)filterVar).DescriptionsAttribute != null)
+					{
+%>
+<%= exeStepIndent %>		&<%= filterVar.Name %>Descriptions.FromJson(&Session.Get(&Pgmname + !'<%= filterVar.Name %>Descriptions'))
+<%
+					}
+					if (isSmooth)
+					{
+%>
+	EndIf
+<%
+					}
+					else
+					{
+%>
+	EndCase
+<%
+					}
+				}
+			}
+			}
+		}
+		if (hasDynamicFiltersRefresh)
+		{
+%>
+
+<%@ CallSubTemplate DynamicFiltersRefresh DynamicFilters='dynamicFilters' ActualFilter='1' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+		}
+		
+		if (hasDynamicFilters)
+		{
+			for (int i = 1; i <= dynamicFilters.MaxFilters; i++)
+			{
+				foreach (IFilter filter in dynamicFilters.Items)
+				{
+					if (filter is FilterAttributeMultipleGeneralElement
+						&& ((FilterAttributeMultipleGeneralElement)filter).IsTypePrompt())
+					{
+						string exeStepIndent = "";
+						if (isSmooth)
+						{
+%>
+	If &Prompt<%= filter.Name + i %>ValuesExecutionStep = 2
+<%
+						}
+						else
+						{
+							exeStepIndent = "\t";
+%>
+	Do Case
+		Case &Prompt<%= filter.Name + i %>ValuesExecutionStep = 1
+			&Prompt<%= filter.Name + i %>ValuesExecutionStep = 2
+		Case &Prompt<%= filter.Name + i %>ValuesExecutionStep = 2
+<%
+						}
+%>
+<%= exeStepIndent %>		&Prompt<%= filter.Name + i %>ValuesExecutionStep = 0
+<%= exeStepIndent %>		&<%= filter.Name + i %>Values.FromJson(&Session.Get(&Pgmname + !'<%= filter.Name + i %>Values'))
+<%
+						if (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null)
+						{
+%>
+<%= exeStepIndent %>		&<%= filter.Name + i %>Descriptions.FromJson(&Session.Get(&Pgmname + !'<%= filter.Name + i %>Descriptions'))
+<%
+						}
+						if (isSmooth)
+						{
+%>
+	EndIf
+<%
+						}
+						else
+						{
+%>
+	EndCase
+<%
+						}
+					}
+				}
+			}
+		}
+		if (hasDDOSortedStatus && !isSmooth)
+		{
+%>
+	Do 'SetDDOSortedStatus'
+<%
+		}
+
+		if (needGridState || hasFilterServiceProc) 
+		{
+%>
+	Do 'SaveGridState'
+<%
+		}
+%>
+
+<%
+		int includedActions = 0;
+		if (hasColumnsSelectorWithRG)
+		{
+%>
+	
+	If &Session.Get(!'<%= columnSelectorSessionKey %>') <> ''
+		&ColumnsSelectorXML = &Session.Get(!'<%= columnSelectorSessionKey %>')
+		&ColumnsSelector.From<%= template.SerializationFormat %>(&ColumnsSelectorXML)
+<%
+			if (!settings.Grid.SaveGridColumnsState)
+			{
+%>
+		&Session.Remove(!'<%= columnSelectorSessionKey %>')	
+<%
+			}
+%>				
+	Else
+		Do 'InitializeColumnsSelector'
+	EndIf
+<%
+			colIndex = 1;
+			foreach (IAttributesItem item in allGridAttsAndVars)
+			{
+				if (item.Visible)
+				{
+					string visibleStr = settings.ColumnsSelectorOrdered ? ("&ColumnsSelector.Columns.Item(" + colIndex + ").IsVisible") : "False";
+					if (GridObject.HasInLineAction && item is GridAttributeElement && (GridObject.EditableAtts.Contains((GridAttributeElement)item) || GridObject.EditablePKAtts.Contains((GridAttributeElement)item)))
+					{
+						if (((GridAttributeElement)item).Tags != null)
+						{
+%>
+	&<%= item.Name %>WithTags.Visible = <%= visibleStr %><%= settings.ColumnsSelectorOrdered ? " AND (" + (hasInlineResetMode ? "&EditableGrid_ResetMode OR " : "") + "&EditableGrid_Mode = " + trnModePrefix + "TrnMode.Display" + trnModeSuffix + (isSmooth ? " OR &EditableGrid_Mode.IsEmpty()" : "") + ")" : "" %>
+	&<%= item.Name %>_Editable.Visible = <%= visibleStr %><%= settings.ColumnsSelectorOrdered ? " AND (" + (hasInlineResetMode ? "not &EditableGrid_ResetMode AND " : "") + "&EditableGrid_Mode <> "+ trnModePrefix + "TrnMode.Display" + trnModeSuffix + (isSmooth ? " AND not &EditableGrid_Mode.IsEmpty()" : "") + ")" : "" %>
+<%
+						}
+						else
+						{
+%>
+	&<%= item.Name %>_Editable.Visible = <%= visibleStr %>
+<%
+						}
+						if (GridObject.HasInLineInsert)
+						{
+%>
+	&<%= item.Name %>_Editable2.Visible = <%= visibleStr %>
+<%
+						}
+					}
+					else
+					{
+%>
+	<%= (item is IGridAttributesItem && ((IGridAttributesItem)item).Tags != null ? "&" + item.ControlName.TrimStart('&') + "WithTags" : item.ControlName) %>.Visible = <%= visibleStr %>
+<%
+						if (GridObject.HasInLineInsert && item is GridAttributeElement)
+						{
+%>
+	&<%= item.Name %>_Editable2.Visible = <%= visibleStr %>
+<%
+						}						
+					}
+					colIndex++;
+				}
+			}
+			if (!settings.ColumnsSelectorOrdered)
+			{
+%>
+	For &VisibleColumn in &ColumnsSelector.VisibleColumns
+		Do Case
+<%
+			foreach (IAttributesItem item in allGridAttsAndVars)
+			{
+				if (item.Visible)
+				{
+%>
+			Case &VisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+<%
+					if (GridObject.HasInLineAction && item is GridAttributeElement && (GridObject.EditableAtts.Contains((GridAttributeElement)item) || GridObject.EditablePKAtts.Contains((GridAttributeElement)item)))
+					{
+						if (((GridAttributeElement)item).Tags != null)
+						{
+%>
+				&<%= item.Name %>WithTags.Visible = (<%= hasInlineResetMode ? "&EditableGrid_ResetMode OR " : "" %>&EditableGrid_Mode = <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %><%= isSmooth ? " OR &EditableGrid_Mode.IsEmpty()" : "" %>)
+				&<%= item.Name %>_Editable.Visible = (<%= hasInlineResetMode ? "not &EditableGrid_ResetMode AND " : "" %>&EditableGrid_Mode <> <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %><%= isSmooth ? " AND not &EditableGrid_Mode.IsEmpty()" : "" %>)
+<%
+						}
+						else
+						{
+%>
+				&<%= item.Name %>_Editable.Visible = True
+<%
+						}
+						if (GridObject.HasInLineInsert)
+						{
+%>
+				&<%= item.Name %>_Editable2.Visible = True
+<%
+						}
+					}
+					else
+					{
+%>
+				<%= (item is IGridAttributesItem && ((IGridAttributesItem)item).Tags != null ? "&" + item.ControlName.TrimStart('&') + "WithTags" : item.ControlName) %>.Visible = True
+<%
+						if (GridObject.HasInLineInsert && item is GridAttributeElement)
+						{
+%>
+				&<%= item.Name %>_Editable2.Visible = True
+<%
+						}						
+					}
+				}
+			}
+%>
+		EndCase
+	EndFor
+<%
+			}
+		}
+		else if (GridObject.HasInLineAction)
+		{
+			foreach (IAttributesItem item in allGridAttsAndVars)
+			{
+				if (item.Visible && item is GridAttributeElement && ((GridAttributeElement)item).Tags != null && (GridObject.EditableAtts.Contains((GridAttributeElement)item) || GridObject.EditablePKAtts.Contains((GridAttributeElement)item)))
+				{
+%>
+	&<%= item.Name %>WithTags.Visible = <%= (hasInlineResetMode ? "&EditableGrid_ResetMode OR " : "") + "&EditableGrid_Mode = " + trnModePrefix + "TrnMode.Display" + trnModeSuffix + (isSmooth ? " OR &EditableGrid_Mode.IsEmpty()" : "") %>
+	&<%= item.Name %>_Editable.Visible = <%= (hasInlineResetMode ? "not &EditableGrid_ResetMode AND " : "") + "&EditableGrid_Mode <> "+ trnModePrefix + "TrnMode.Display" + trnModeSuffix + (isSmooth ? " AND not &EditableGrid_Mode.IsEmpty()" : "") %>
+<%
+				}
+			}
+		}
+		if (hasTotalizers) // && !generateDataSelector) No funciona sum en refresh
+		{
+%>
+	Do 'InitializeTotalizers'
+<%		
+		}
+		if (isAssociation)
+		{
+%>
+	Do 'Load Lists'
+<%
+		}
+		if (grid is GridGeneralElement)
+		{
+			colIndex = 0;
+			foreach (IAttributesItem item in allGridAttsAndVars)
+			{
+				string colTitle = null;
+				bool hasCustomTitle = false;
+				if (item.Visible)
+				{
+					colIndex++;
+					string name = item.ControlName.TrimStart('&');
+					hasCustomTitle = ((Artech.Genexus.Common.Objects.WebPanel)Object).Variables.GetVariable(name + "ColumnTitle") != null;
+					colTitle = hasCustomTitle ? "&" + name + "ColumnTitle" : WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description);
+					if (hasCustomTitle)
+					{
+						hasSomeCustomTitle = true;
+%>
+	//&<%= name %>ColumnTitle must be set manually at the beginning of this event
+<%
+					}
+				}
+				if (!useDDOTFMultiple && (hasTitleFilter && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue()
+										|| item is ISortableByTitle && (includeSortableByTitleInDropDownOptions || ((ISortableByTitle)item).AllowGrouping) && ((ISortableByTitle)item).IsSortableByTitle()))
+				{
+					IFilterableByTitle gridItem = (IFilterableByTitle)item;
+					string columnName = gridItem.ControlName;
+					string name = columnName.TrimStart('&');
+					if (GridObject.HasInLineAction && gridItem is GridAttributeElement && (GridObject.EditableAtts.Contains((GridAttributeElement)gridItem) || GridObject.EditablePKAtts.Contains((GridAttributeElement)gridItem)))
+					{
+						columnName = "&" + name + "_Editable";
+					}
+					else if (item is IGridAttributesItem && ((IGridAttributesItem)item).Tags != null)
+					{
+						columnName = "&" + name + "WithTags";
+					}
+					string titleControlIdToReplace;
+					if (isSmooth)
+					{
+						if (addHiddenVars)
+						{
+							titleControlIdToReplace = "&DDO_" + name + "TitleControlIdToReplace";
+						}
+						else
+						{
+							titleControlIdToReplace = "&Grid_InternalName";
+						}
+					}
+					else
+					{
+						titleControlIdToReplace = "DDO_" + name + ".TitleControlIdToReplace";
+%>
+	DDO_<%= name %>.TitleControlIdToReplace = Grid.InternalName + !'_<%= name %>'
+<%
+					}
+					if (item is IGridAttributesItem && ((IGridAttributesItem)item).Tags != null && columnName == "&" + name.TrimStart('&') + "_Editable")
+					{
+%>
+	If <%= hasInlineResetMode ? "&EditableGrid_ResetMode OR " : "" %>&EditableGrid_Mode = <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %>
+		&<%= name %>WithTags.TitleFormat = 2
+		&<%= name %>WithTags.Title = format(!"<div class='ColumnSettingsContainer'<%= settings.IsOptimizationNumber(6) ? "" : "'" %>><span>%1</span><div id='%2<%= addHiddenVars ? "" : "_" + name %>'></div>", <%= colTitle %>, <%= titleControlIdToReplace %>)
+	Else
+		<%= columnName %>.TitleFormat = 2
+		<%= columnName %>.Title = format(!"<div class='ColumnSettingsContainer'<%= settings.IsOptimizationNumber(6) ? "" : "'" %>><span>%1</span><div id='%2<%= addHiddenVars ? "" : "_" + name %>'></div>", <%= colTitle %>, <%= titleControlIdToReplace %>)
+	EndIf
+<%
+					}
+					else
+					{
+%>
+	<%= columnName %>.TitleFormat = 2
+	<%= columnName %>.Title = format(!"<div class='ColumnSettingsContainer'<%= settings.IsOptimizationNumber(6) ? "" : "'" %>><span>%1</span><div id='%2<%= addHiddenVars ? "" : "_" + name %>'></div>", <%= colTitle %>, <%= titleControlIdToReplace %>)
+<%
+					}
+				}
+				else if (hasTitleSortingNotFS && !includeSortableByTitleInDropDownOptions && item is ISortableByTitle && !((ISortableByTitle)item).AllowGrouping && ((ISortableByTitle)item).IsSortableByTitle())
+				{
+					int orderIndex = ((ISortableByTitle)item).OrderIndex;
+					string columnName = GridAttributeElement.GetLinkControlName((ISortableByTitle)item, GridObject);
+%>
+	<%= columnName %>.TitleFormat = 2
+<%
+					if (needOrderChoice)
+					{
+%>
+	<%= columnName %>.Title = format(!"<span class='%1' onclick='WWPSortColumn(%2%3%2, %2%4%2, <%= orderIndex %>);' >%5</span>", iif(<%= OrdersElement.OrderVariableName %> = <%= orderIndex %>, iif(<%= OrdersElement.OrderDscVariableName %>, !'GridTitleSortedDsc', !'GridTitleSortedAsc'), !'GridTitleSortable'), !'"', <%= OrdersElement.OrderDscVariableName %>.InternalName, <%= OrdersElement.OrderVariableName %>.InternalName, <%= colTitle %>)
+<%
+					}
+					else
+					{
+%>
+	<%= columnName %>.Title = format(!"<span class='%1' onclick='WWPSortColumn(%2%3%2, %2%2, <%= orderIndex %>);' >%4</span>", iif(<%= OrdersElement.OrderDscVariableName %>, !'GridTitleSortedDsc', !'GridTitleSortedAsc'), !'"', <%= OrdersElement.OrderDscVariableName %>.InternalName, <%= colTitle %>)
+<%
+					}
+				}
+				else if (hasCustomTitle)
+				{
+					string columnName = GridAttributeElement.GetLinkControlName((IAttributesItem)item, GridObject);
+%>
+	<%= columnName %>.Title = <%= colTitle %>
+<%
+				}
+				if (hasCustomTitle)
+				{
+					if (GridObject.HasInLineInsert)
+					{
+%>
+	&<%= ((IAttributesItem)item).ControlName.TrimStart('&') %>_Editable2.Title = <%= colTitle %>
+<%
+					}
+					if (hasColumnsSelectorWithRG && hasColumnsSelectorWithDDO)
+					{
+%>
+	&ColumnsSelector.Columns.Item(<%= colIndex %>).DisplayName = <%= colTitle %>
+<%
+					}
+				}
+			}
+		}
+
+		if (IsGXUIMultiRowSelectionAndCheckAll)
+		{
+%>
+	&<%= grid.GetMultiRowSelectedVariableName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" %1value="Select All" onClick="WWPSelectAllGXUI(%2%3%2);" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', iif(&<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>, !'checked ', ''), !"'", &<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>.InternalName)
+<%
+		}
+		if (GridObject.HasInLineAction)
+		{
+%>
+	If <%= hasInlineResetMode ? "&EditableGrid_ResetMode" : "" %><%= isSmooth ? (hasInlineResetMode ? " OR " : "") + ((GridObject.HasInLineInsert ? "&EditableGrid_IsNotFirst OR " : "") + "&EditableGrid_Mode.IsEmpty()") : "" %>
+		&EditableGrid_Mode = <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %>
+<%
+			if (!isSmooth)
+			{
+%>
+		<%= editableGrid_ModeAuxName %> = &EditableGrid_Mode
+<%
+			}
+			if (hasInlineResetMode)
+			{
+%>
+	Else
+		&EditableGrid_ResetMode = True
+<%
+			}
+%>
+	EndIf
+<%
+			IStandardActionElement insertActionAux = (insertAction != null && (!(insertAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)insertAction).IsTypeGXActionGroup()) && (!hasAdvancedSecurity || insertAction.SecFuntionKey == "" || !advSec.IsAppearanceHidden()) && (insertAction.Condition == "" || !settings.StandardActions.IsDisabledAppearanceHidden())) ? insertAction : null;
+			IStandardActionElement updateActionAux = (updateAction != null && (!(updateAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)updateAction).IsTypeGXActionGroup()) && !(updateAction is StandardActionGridElement) && (!hasAdvancedSecurity || updateAction.SecFuntionKey == "" || !advSec.IsAppearanceHidden()) && (updateAction.Condition == "" || !settings.StandardActions.IsDisabledAppearanceHidden())) ? updateAction : null;
+			IStandardActionElement deleteActionAux = (deleteAction != null && (!(deleteAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)deleteAction).IsTypeGXActionGroup()) && !(deleteAction is StandardActionGridElement) && (!hasAdvancedSecurity || deleteAction.SecFuntionKey == "" || !advSec.IsAppearanceHidden()) && (deleteAction.Condition == "" || !settings.StandardActions.IsDisabledAppearanceHidden())) ? deleteAction : null;
+			IStandardActionElement displayActionAux = (displayAction != null && (!(displayAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)displayAction).IsTypeGXActionGroup()) && !(displayAction is StandardActionGridElement) && (!hasAdvancedSecurity || displayAction.SecFuntionKey == "" || !advSec.IsAppearanceHidden()) && (displayAction.Condition == "" || !settings.StandardActions.IsDisabledAppearanceHidden())) ? displayAction : null;
+			bool ifAdded = false;
+			if (insertActionAux != null || updateActionAux != null || deleteActionAux != null || displayActionAux != null || GridObject.HasInLineInsert)
+			{
+				ifAdded = true;
+%>
+	If <%= editableGrid_ModeAuxName %> = <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %>
+<%
+				if (GridObject.HasInLineInsert)
+				{
+%>
+		<%= gridInsertNameToHide %>.Visible = False
+		<%= gridNameToHide %>.Visible = True
+<%
+				}
+				if (insertActionAux != null || updateActionAux != null || deleteActionAux != null || displayActionAux != null)
+				{
+%>
+<%= Indentation.Indent(StandardActionElement.GetEditableGrid_ShowHideStandardActionCode(insertActionAux, updateActionAux, deleteActionAux, displayActionAux, true), 2) %>
+<%
+				}
+			}
+			insertActionAux = (insertAction != null && (!(insertAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)insertAction).IsTypeGXActionGroup())) ? insertAction : null;
+			updateActionAux = (updateAction != null && (!(updateAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)updateAction).IsTypeGXActionGroup()) && !(updateAction is StandardActionGridElement)) ? updateAction : null;
+			deleteActionAux = (deleteAction != null && (!(deleteAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)deleteAction).IsTypeGXActionGroup()) && !(deleteAction is StandardActionGridElement)) ? deleteAction : null;
+			displayActionAux = (displayAction != null && (!(displayAction is ActionGroupActionGeneralElement) || ((ActionGroupActionGeneralElement)displayAction).IsTypeGXActionGroup()) && !(displayAction is StandardActionGridElement)) ? displayAction : null;
+			if (insertActionAux != null || updateActionAux != null || deleteActionAux != null || displayActionAux != null || addMultiRowSelectedTitleCodeInRefresh)
+			{
+				if (addMultiRowSelectedTitleCodeInRefresh)
+				{
+					addMultiRowSelectedTitleCodeInRefresh = false;
+					if (!multiRowActionsMantainSelected)
+					{
+%>
+	<%= ifAdded ? "\t" : "" %><%= grid.GetMultiRowSelectedVariableControlName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="Select All" onClick="WWPSelectAll(this, %1);" onMouseOver="WWPSelectAllRemoveParentOnClick(this)" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', !"'<%= grid.GetMultiRowSelectedVariableName().ToUpper() %>'")
+<%
+					}
+					else
+					{
+						if (isSmooth)
+						{
+%>
+	<%= ifAdded ? "\t" : "" %><%= grid.GetMultiRowSelectedVariableControlName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="Select All" onchange="$(%1).click();" class="<%= settings.Theme.GridCheckBoxAttribute %>" <%= (GridObject.HasTitleFilter || GridObject.Orders.HasTitleOrdering) ? "" : "onMouseOver=\"WWPSelectAllRemoveParentOnClick(this)\" " %>>', !"'#<%= isGridTab || settings.IsOptimizationNumber(4) ? "\" + &SelectAll.InternalName + !\"" : "vSELECTALL" %>'")
+<%
+						}
+						else
+						{
+%>
+	<%= ifAdded ? "\t" : "" %><%= grid.GetMultiRowSelectedVariableControlName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="Select All" %1 onchange="$(%2).click();" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', iif(&IsSelectAllChecked,'checked',''), !"'#<%= isGridTab || settings.IsOptimizationNumber(4) ? "\" + &SelectAll.InternalName + !\"" : "vSELECTALL" %>'")
+<%
+						}
+					}
+				}
+				if (ifAdded)
+				{
+%>
+	Else
+<%
+				}
+				else
+				{
+					ifAdded = true;
+%>
+	If <%= editableGrid_ModeAuxName %> <> <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %>
+<%
+				}
+%>
+<%= Indentation.Indent(StandardActionElement.GetEditableGrid_ShowHideStandardActionCode(insertActionAux, updateActionAux, deleteActionAux, displayActionAux, false), 2) %>
+<%
+			}
+			if (ifAdded)
+			{
+%>
+	EndIf
+<%
+			}
+		}
+		if (addMultiRowSelectedTitleCodeInRefresh)
+		{
+			if (!multiRowActionsMantainSelected)
+			{
+%>
+	<%= grid.GetMultiRowSelectedVariableControlName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="Select All" onClick="WWPSelectAll(this, %1);" onMouseOver="WWPSelectAllRemoveParentOnClick(this)" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', !"'<%= grid.GetMultiRowSelectedVariableName().ToUpper() %>'")
+<%
+			}
+			else
+			{
+				if (hierarchySettings != null)
+				{
+%>
+	&<%= grid.GetMultiRowSelectedVariableName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="%3" %1 onchange="$(%2).click();" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', iif(&IsSelectAllChecked,'checked',''), !"'#<%= isGridTab || settings.IsOptimizationNumber(4) ? "\" + &SelectAll.InternalName + !\"" : "vSELECTALL" %>'", iif(&IsSelectAllChecked, 'true', 'false'))
+<%
+				}
+				else
+				{
+
+				if (isSmooth)
+				{
+%>
+	<%= grid.GetMultiRowSelectedVariableControlName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="Select All" onchange="$(%1).click();" class="<%= settings.Theme.GridCheckBoxAttribute %>" <%= (GridObject.HasTitleFilter || GridObject.Orders.HasTitleOrdering) ? "" : "onMouseOver=\"WWPSelectAllRemoveParentOnClick(this)\" " %>>', !"'#<%= isGridTab || settings.IsOptimizationNumber(4) ? "\" + &SelectAll.InternalName + !\"" : "vSELECTALL" %>'")
+<%
+				}
+				else
+				{
+%>
+	<%= grid.GetMultiRowSelectedVariableControlName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" value="Select All" %1 onchange="$(%2).click();" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', iif(&IsSelectAllChecked,'checked',''), !"'#<%= isGridTab || settings.IsOptimizationNumber(4) ? "\" + &SelectAll.InternalName + !\"" : "vSELECTALL" %>'")
+<%
+				}
+
+				}
+			}
+		}
+		if (hasMultiRowActions && hasSelectAll && multiRowActionsMantainSelected && hierarchySettings == null)
+		{
+			if (!isSmooth)
+			{
+%>
+	If Not &IsSelectAllChecked
+		&SelectAll = false
+	EndIf
+<%
+			}
+			else
+			{
+%>
+	&SelectAll = false
+<%	
+			}
+		}
+		if (isPromptMultiple)
+		{
+			foreach (PromptParameterElement param in parameters)
+			{
+				if ((param.AttributeBasedOn != null || !Instance.HasTransaction()) && !param.IsTypeIn())
+				{
+%>
+	&<%= param.Name.TrimStart('&') %>Col.FromJson(&Session.Get(&<%= param.Name.TrimStart('&') %>_WSKey + !"AUX"))
+<%
+				}
+			}
+		}
+
+		if (!needGridState && !isSmooth && isTabAndALTabs)
+		{
+%>
+	&PageAlreadyExecuted.Visible = False
+	&PageAlreadyExecuted = True
+<%
+		}
+		if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+		{
+%>
+	Do 'LoadGridSDT'
+<%
+		}
+
+		if (GridObject.Load != "On page load")
+		{
+			if (GridObject.Load == "After filtering")
+			{
+%>
+	&LoadGridData = (<%= (totalAmountOfRegularFilters > 0 ? "&GridState.FilterValues.Count" + (hasDynamicFilters ? " + " : "") : "") + (hasDynamicFilters ? "&GridState.DynamicFilters.Count" : "") %> > 0)
+<%
+			}
+			if (addPaginationBar)
+			{
+%>
+	GridPaginationBar.EmptyGridCaption = iif(&LoadGridData, <%= WorkWithStringValues.StringWithQuotes(grid.EmptyGridCaption != "" ? grid.EmptyGridCaption : settings.StandardActions.PaginationBar.EmptyGridCaption) %>, 'WWP_<%= GridObject.Load == "After filtering" ? "ApplyFilterToShowData" : "PressSearchToShowData" %>')
+<%
+			}
+		}
+		
+		if (addPaginationBar)
+		{
+%>
+	&GridCurrentPage = Grid.CurrentPage
+<%
+			paginationBarSettings = settings.StandardActions.PaginationBar;
+			if (paginationBarSettings.IncludePageSize)
+			{
+%>
+	&GridPageSize = <%= grid.IncludePagBar() && grid.IncludeRowsPerPageInPagBar() ? "Grid.Rows" : pageSize %>
+<%
+			}
+			if (paginationBarSettings.IncludeRecordCount)
+			{
+				if (Instance.HasTransaction() || !string.IsNullOrEmpty(grid.GetSDTCollection()))
+				{
+%>
+	&GridRecordCount = Grid.RecordCount
+<%
+				}
+				else
+				{
+%>
+	//&GridRecordCount has to be loaded manually
+<%
+				}
+			}
+			if (paginationBarSettings.IncludePageCount)
+			{
+				if (Instance.HasTransaction() || !string.IsNullOrEmpty(grid.GetSDTCollection()))
+				{
+%>
+	&GridPageCount = Grid.PageCount
+<%
+				}
+				else
+				{
+%>
+	//&GridPageCount has to be loaded manually
+<%
+				}
+			}
+		}
+		if (addPaginationBar && paginationBarSettings.ShowAppliedFilters)
+		{
+			if (GridObject.Load == "After pressing Search button")
+			{
+%>
+	If &LoadGridData
+		&GridAppliedFilters = WWP_GetAppliedFiltersDescription(&Pgmname)
+	Else
+		&GridAppliedFilters.SetEmpty()
+	EndIf
+<%
+			}
+			else
+			{
+%>
+	&GridAppliedFilters = WWP_GetAppliedFiltersDescription(&Pgmname)
+<%
+			}
+		}
+		if (hasTotalizers)
+		{
+			if (GridObject.Load != "On page load")
+			{
+%>
+	If &LoadGridData
+		Do 'CalculateTotalizers'
+	Else
+		Do 'CalculateTotalizers'
+	EndIf
+<%
+			}
+			else
+			{
+%>
+	Do 'CalculateTotalizers'
+<%
+			}
+		}
+		if (multiRowActionsMantainSelected)
+		{
+			foreach (string attName in fullLevelKeyAttributeNames)
+			{
+%>
+	&<%= attName %>Col.FromJson(&<%= attName %>Json)
+<%
+			}
+		}
+		string conditionalFormattingCode = grid.GetConditionalFormattingRefreshCode();
+		if (!String.IsNullOrEmpty(conditionalFormattingCode))
+		{
+%>
+<%= Indentation.Indent(conditionalFormattingCode, 1) %>
+<%
+		}
+		if (isSmooth && GridObject.HasInLineAction)
+		{
+%>
+<%= Indentation.Indent(StandardActionElement.GetEditableGrid_HideGridActions(allActionsOfThisGrid, isSmooth, hasAdvancedSecurity), 1) %>
+	&EditableGridCancel.Visible = (&EditableGrid_Mode <> !'TrnMode.Display')
+	&EditableGridConfirm.Visible = (&EditableGrid_Mode <> !'TrnMode.Display')
+<%
+		}
+		if (hasDVGroup && GridGroupByHelper.HasTotalizers((GridElement)grid))
+		{
+			if (hasDVGroupFixed)
+			{
+				if (DVelop.Patterns.WorkWithPlus.Helpers.GridGroupByHelper.GetFixedGroupItem((GridElement)grid).eDBType != Artech.Genexus.Common.eDBType.Boolean)
+				{
+%>
+	&GroupOld<%= ((GridElement)grid).GroupField.TrimStart('&').Replace(".", "") %>.SetEmpty()
+<%
+				}
+			}
+			else
+			{
+				foreach (IAttributesItem item in allGridAttsAndVars)
+				{
+					if (item is ISortableByTitle && ((ISortableByTitle)item).AllowGrouping && DVelop.Patterns.WorkWithPlus.Helpers.GridGroupByHelper.GetItemByGroupField((GridElement)grid, (ISortableByTitle)item).eDBType != Artech.Genexus.Common.eDBType.Boolean)
+					{
+%>
+	&GroupOld<%= (((ISortableByTitle)item).GroupField != WorkWithPlusInstance.DEFAULT && ((ISortableByTitle)item).GroupField != "" ? ((ISortableByTitle)item).GroupField : ((IFilterableByTitle)item).ControlName).TrimStart('&') %>.SetEmpty()
+<%
+					}
+				}
+			}
+		}
+		if (hasDVGroup)
+		{
+%>
+	&Grid_GroupCaption.SetEmpty()
+<%
+		}
+		System.Boolean[] hasAnSDTItemTotalizer = new System.Boolean[]{false};
+		if (extraGrids.Count > 0)
+		{
+			//TODO:v14 solo permitir extra cuando no se usa Inline Insert?
+%>	
+<%@ CallSubTemplate SubExtraGridsEventRefresh grids='extraGrids' settings='settings' paginationBarSettings='paginationBarSettings' hasAnSDTItemTotalizer='hasAnSDTItemTotalizer' %>
+<%
+		}
+		bool setFilterDsc = addPaginationBar && paginationBarSettings.ShowAppliedFilters;
+%>
+
+EndEvent
+<%
+	if (GridObject.Load == "After pressing Search button")
+	{
+%>
+
+Event 'DoSearch'
+	&LoadGridData = True
+	Refresh
+EndEvent
+<%
+	}
+	if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+	{
+%>
+Sub 'LoadGridSDT'
+	//<%= grid.GetSDTCollection() %> has to be loaded manually in this subrutine
+<%= Indentation.Indent(DataSelectorHelper.GetSDTBasedGridObjectExampleConditions(GridObject, settings), 1) %>
+<%
+		if (isOptimizationNumber7 && GridObject.Orders.HasTitleOrdering)
+		{
+%>
+<%= Indentation.Indent(GridObject.Orders.TitleSorting_GetSDTGridSort(grid), 1) %>
+<%
+		}
+%>
+EndSub
+<%
+	}
+	if (addPaginationBar)
+	{
+%>
+
+<%= paginationBarSettings.GetPaginationBarCode(grid) %>
+
+<%
+	}
+	if (hasTitleFilter || includeSortableByTitleInDropDownOptions || hasDVGroupMultipleOptions)
+	{
+		if (useDDOTFMultiple)
+		{
+			bool hasRealTitleFilter = false;
+			if (hasConditionalFormattingFilters && ((GridGeneralElement)grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.AddTagColumn)
+			{
+				hasRealTitleFilter = true;
+			}
+			else if (hasTitleFilter)
+			{
+				if (settings.IsOptimizationNumber(9))
+				{
+					foreach (IAttributesItem item in allGridAttsAndVars)
+					{
+						if (item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue())
+						{
+							hasRealTitleFilter = true;
+							break;
+						}
+					}
+				}
+				else
+				{
+					hasRealTitleFilter = true;
+				}
+			}
+			if (hasRealTitleFilter || includeSortableByTitleInDropDownOptions || hasDVGroupMultipleOptions)
+			{
+%>
+
+Event DDO_Grid.OnOptionClicked
+
+	Do Case
+<%
+			if (hasDDOSortedStatus)
+			{
+%>
+		Case DDO_Grid.ActiveEventKey = !'<#OrderASC#>' OR DDO_Grid.ActiveEventKey = !'<#OrderDSC#>'<%= hasDVGroupMultipleOptions ? " OR DDO_Grid.ActiveEventKey = !'<#Group#>'" : "" %>
+<%
+				if (hasDVGroupMultipleOptions)
+				{
+%>
+			If DDO_Grid.ActiveEventKey = !'<#Group#>'<%= needOrderChoice ? " OR &OrderedBy.ToString().Trim() <> DDO_Grid.SelectedValue_get" : "" %>
+				&GroupBy = iif(&GroupBy = DDO_Grid.SelectedText_get, '', DDO_Grid.SelectedText_get)
+			EndIf
+<%
+				}
+				if (needOrderChoice) 
+				{
+%>
+			&OrderedBy.FromString(DDO_Grid.SelectedValue_get)
+<%
+				}
+%>
+			&OrderedDsc = iif(DDO_Grid.ActiveEventKey = !'<#OrderDSC#>'<%= hasDVGroupMultipleOptions ? " OR DDO_Grid.ActiveEventKey = !'<#Group#>' AND &GroupBy.IsEmpty() AND &OrderedDsc" : "" %>, true, false)
+			Do 'SetDDOSortedStatus'
+			Grid.FirstPage()
+<%
+			}
+			if (hasRealTitleFilter)
+			{
+%>
+		Case DDO_Grid.ActiveEventKey = !'<#Filter#>'
+			Do Case
+<%
+				if (hasConditionalFormattingFilters && ((GridGeneralElement)grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.AddTagColumn)
+				{
+%>
+				Case DDO_Grid.SelectedColumn = !'TagColumn'
+					&GridConditionalFormattingFilter.FromString(DDO_Grid.SelectedColumnFixedFilter)
+<%
+				}
+				foreach (IAttributesItem item in allGridAttsAndVars)
+				{
+					if (hasTitleFilter && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue())
+					{
+						IFilterableByTitle gridItem = (IFilterableByTitle)item;
+						string name = gridItem.ControlName.TrimStart('&');
+%>
+				Case DDO_Grid.SelectedColumn = !'<%= name %>'
+<%
+						if (gridItem.PredefinedOperators != null)
+						{
+%>
+					Do Case
+<%@ CallSubTemplate SubTFOnOptionClickedFixed IsDDOMultiple='true' name='name' ddoName='"Grid"' gridItem='gridItem' IndentLevel='4' IndentLevelChar='"\t"' %>
+						Otherwise
+<%@ CallSubTemplate SubTFOnOptionClicked name='name' ddoName='"Grid"' gridItem='gridItem' Settings='settings' IndentLevel='4' IndentLevelChar='"\t"' %>
+					EndCase
+<%
+						}
+						else
+						{
+%>
+<%@ CallSubTemplate SubTFOnOptionClicked name='name' ddoName='"Grid"' gridItem='gridItem' Settings='settings' IndentLevel='2' IndentLevelChar='"\t"' %>
+<%
+						}
+					}
+				}
+%>
+			EndCase
+			Grid.FirstPage()
+<%
+			}
+%>
+	EndCase
+EndEvent
+
+<%
+			}
+		}
+		else
+		{
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+			if (hasTitleFilter && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue()
+					|| item is ISortableByTitle && (includeSortableByTitleInDropDownOptions || ((ISortableByTitle)item).AllowGrouping) && ((ISortableByTitle)item).IsSortableByTitle())
+			{
+				IFilterableByTitle gridItem = (IFilterableByTitle)item;
+				string name = gridItem.ControlName.TrimStart('&');
+%>
+
+Event DDO_<%= name %>.OnOptionClicked
+
+	Do Case
+<%
+				if (((ISortableByTitle)gridItem).IsSortableByTitle())
+				{
+%>
+		Case DDO_<%= name %>.ActiveEventKey = !'<#OrderASC#>'<%= isOptimizationNumber7 ? " OR DDO_" + name + ".ActiveEventKey = !'<#OrderDSC#>'" : "" %>
+<%
+					if (needOrderChoice)
+					{
+%>
+			Do 'ResetDDOSortedStatus'
+<%
+						if (hasDVGroupMultipleOptions && ((ISortableByTitle)gridItem).AllowGrouping)
+						{
+%>
+			&GroupBy = iif(&GroupBy = !'<%= name %>', !'<%= name %>', '')
+<%
+						}
+%>
+			&OrderedBy = <%= ((ISortableByTitle)gridItem).OrderIndex %>
+<%
+					}
+%>
+			&OrderedDsc = <%= isOptimizationNumber7 ? "iif(DDO_" + name + ".ActiveEventKey = !'<#OrderASC#>', false, true)" : "false" %>
+<%
+					if (isOptimizationNumber7)
+					{
+%>
+			DDO_<%= name %>.SortedStatus = iif(DDO_<%= name %>.ActiveEventKey = !'<#OrderASC#>', !'ASC', !'DSC')<%= hasDVGroupMultipleOptions && ((ISortableByTitle)gridItem).AllowGrouping ? " + iif(&GroupBy.IsEmpty(), '', !' GRP')" : "" %>
+<%
+					}
+					else
+					{
+%>
+			DDO_<%= name %>.SortedStatus = <%= hasDVGroupMultipleOptions && ((ISortableByTitle)gridItem).AllowGrouping ? "iif(&GroupBy.IsEmpty(), !'ASC', !'ASC GRP')" : "!'ASC'" %>
+<%
+					}
+%>
+			Grid.FirstPage()
+<%
+					if (isSmooth && addPaginationBar)
+					{
+%>
+			Refresh
+<%
+					}
+					if (!isOptimizationNumber7)
+					{
+%>
+		Case DDO_<%= name %>.ActiveEventKey = !'<#OrderDSC#>'
+<%
+					if (needOrderChoice)
+					{
+%>
+			Do 'ResetDDOSortedStatus'
+<%
+						if (hasDVGroupMultipleOptions && ((ISortableByTitle)gridItem).AllowGrouping)
+						{
+%>
+			&GroupBy = iif(&GroupBy = !'<%= name %>', !'<%= name %>', '')
+<%
+						}
+%>
+			&OrderedBy = <%= ((ISortableByTitle)gridItem).OrderIndex %>
+<%
+					}
+%>
+			&OrderedDsc = true
+			DDO_<%= name %>.SortedStatus = <%= hasDVGroupMultipleOptions && ((ISortableByTitle)gridItem).AllowGrouping ? "iif(&GroupBy.IsEmpty(), !'DSC', !'DSC GRP')" : "!'DSC'" %>
+			Grid.FirstPage()
+<%
+					if (isSmooth && addPaginationBar)
+					{
+%>
+			Refresh
+<%
+					}
+					}
+				}
+				if (hasDVGroupMultipleOptions && ((ISortableByTitle)gridItem).AllowGrouping)
+				{
+%>
+		Case DDO_<%= name %>.ActiveEventKey = !'<#Group#>'
+<%
+					if (needOrderChoice)
+					{
+%>
+			Do 'ResetDDOSortedStatus'
+<%
+					}
+%>
+			&GroupBy = iif(&GroupBy = !'<%= name %>', '', !'<%= name %>')
+<%
+					if (needOrderChoice)
+					{
+%>
+			&OrderedBy = <%= ((ISortableByTitle)gridItem).OrderIndex %>
+<%
+					}
+%>
+			&OrderedDsc = iif(&GroupBy.IsEmpty(), &OrderedDsc, false)
+			DDO_<%= name %>.SortedStatus = iif(&OrderedDsc, !'DSC', !'ASC') + iif(&GroupBy.IsEmpty(), '', !' GRP')
+			Grid.FirstPage()
+<%
+					if (isSmooth && addPaginationBar)
+					{
+%>
+			Refresh
+<%
+					}
+				}
+				if (gridItem.IsIncludeTitleFilterTrue())
+				{
+					if (gridItem.PredefinedOperators != null)
+					{
+%>
+<%@ CallSubTemplate SubTFOnOptionClickedFixed IsDDOMultiple='false' name='name' ddoName='name' gridItem='gridItem' %>
+<%
+					}
+%>
+		Case DDO_<%= name %>.ActiveEventKey = !'<#Filter#>'
+<%@ CallSubTemplate SubTFOnOptionClicked name='name' ddoName='name' gridItem='gridItem' %>
+			Grid.FirstPage()
+<%
+				}
+%>
+	EndCase
+
+EndEvent
+
+<%
+			}
+		}
+		}
+	}
+	
+	if (needOrderChoice && hasDDOSortedStatus && !useDDOTFMultiple)
+	{
+%>
+	
+Sub 'ResetDDOSortedStatus'
+
+<%
+		foreach (IAttributesItem item in allGridAttsAndVars)
+		{
+			if ((hasTitleFilter && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue()
+				|| item is ISortableByTitle && (includeSortableByTitleInDropDownOptions || ((ISortableByTitle)item).AllowGrouping))
+					 && ((ISortableByTitle)item).IsSortableByTitle())
+			{
+%>
+	DDO_<%= ((IFilterableByTitle)item).ControlName.TrimStart('&') %>.SortedStatus = !''
+<%
+			}
+		}
+%>
+
+EndSub
+
+<%
+	}
+	if (hasDDOSortedStatus)
+	{
+%>
+
+Sub 'SetDDOSortedStatus'
+
+<%
+		if (useDDOTFMultiple)
+		{
+%>
+	DDO_Grid.SortedStatus = <%= needOrderChoice ? "&OrderedBy.ToString().Trim() + !'" : "!'-1" %>:' + iif(&OrderedDsc, !'DSC', !'ASC')<%= hasDVGroupMultipleOptions ? " + iif(&GroupBy.IsEmpty(), '', !' GRP')" : "" %>
+<%
+		}
+		else
+		{
+			if (needOrderChoice)
+			{
+%>
+	Do 'ResetDDOSortedStatus'
+	Do Case
+<%
+			}
+			foreach (IAttributesItem item in allGridAttsAndVars)
+			{
+				if (item is ISortableByTitle && ((ISortableByTitle)item).IsSortableByTitle()
+					&& (includeSortableByTitleInDropDownOptions || ((ISortableByTitle)item).AllowGrouping
+						|| hasTitleFilter && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue()))
+				{
+					if (needOrderChoice)
+					{
+%>
+		Case &OrderedBy = <%= ((ISortableByTitle)item).OrderIndex %>
+			DDO_<%= ((ISortableByTitle)item).ControlName.TrimStart('&') %>.SortedStatus = iif(&OrderedDsc, !'DSC', !'ASC')<%= hasDVGroupMultipleOptions && ((ISortableByTitle)item).AllowGrouping ? " + iif(&GroupBy = !'" + ((ISortableByTitle)item).ControlName.TrimStart('&') + "', !' GRP', '')" : "" %>
+<%
+					}
+					else
+					{
+%>
+	DDO_<%= ((IFilterableByTitle)item).ControlName.TrimStart('&') %>.SortedStatus = iif(&OrderedDsc, !'DSC', !'ASC')<%= hasDVGroupMultipleOptions && ((ISortableByTitle)item).AllowGrouping ? " + iif(&GroupBy = !'" + ((ISortableByTitle)item).ControlName.TrimStart('&') + "', !' GRP', '')" : "" %>
+<%
+					}
+				}
+			}
+			if (needOrderChoice)
+			{
+%>
+	EndCase
+<%
+			}
+		}
+%>
+
+EndSub
+
+<%
+	}
+	
+	if (hasColumnsSelectorWithRG)
+	{
+%>
+Sub 'InitializeColumnsSelector'
+	&ColumnsSelector = new WWPColumnsSelector()
+<%
+		bool checkColSelAttsSecurity = ((GridElement)grid).ColumnSelector_AddShowAttSecurityCode();
+		if (settings.ColumnsSelectorOrdered)
+		{
+			colIndex = 1;
+			foreach (IGridAttributesItem item in allGridAttsAndVars)
+			{
+				if (item.Visible)
+				{
+					string indent = "";
+					string secCond = "";
+					bool attHasSecurity = false;
+					bool attHasAdvSecurity = hasAdvancedSecurity && item is IElementWithSecurity && ((IElementWithSecurity)item).HasShowSecurityCheck_RealValue();
+					bool attHasCondition = item is IConditionalVisibility && ((IConditionalVisibility)item).HasVisibleCondition_RealValue();
+					if (attHasAdvSecurity || attHasCondition)
+					{
+						indent = "\t";
+						attHasSecurity = true;
+					
+						if (attHasAdvSecurity)
+						{
+							secCond += advSec.CheckByFunctionKeyName + "(!'" + ((IElementWithSecurity)item).ShowSecFuntionKey + "')";
+							if (attHasCondition)
+							{
+								secCond += " AND ";
+							}
+						}
+						if (attHasCondition)
+						{
+							secCond += "(" + ((IConditionalVisibility)item).GetVisibleCondition() + ")";
+						}
+					}
+					if (attHasSecurity)
+					{
+%>
+	If <%= secCond %>
+<%
+					}
+					if (editColumns_IsSerializationColumnName)
+					{
+%>
+	<%= indent %>WWP_ColumnsSelector_Add(&ColumnsSelector, !<%= WorkWithStringValues.StringWithQuotes(item.ControlName) %>, <%= item.TitleCategory.Trim() != "" ? "!" + WorkWithStringValues.StringWithQuotes(item.TitleCategory.Trim()) : "''" %>, !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>, <%= item.VisibleByDefault.ToString() %>, <%= item.IsFixFixable() && !item.IsFixDefNo() ? (item.IsFixDefYesLeft()? "!'L'" : "!'R'") : "''" %>)
+<%
+					}
+					else
+					{
+%>
+	<%= indent %>WWP_ColumnsSelector_Add(&ColumnsSelector, <%= columnsSelectorMultiLanguageSupport%><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>, <%= item.VisibleByDefault.ToString() %>)
+<%
+					}
+					if (!hasColumnsSelectorWithDDO && hasSomeCustomTitle && ((Artech.Genexus.Common.Objects.WebPanel)Object).Variables.GetVariable(item.ControlName.TrimStart('&') + "ColumnTitle") != null)
+					{
+%>
+	&ColumnsSelector.Columns.Item(<%= colIndex %>).DisplayName = &<%= item.ControlName.TrimStart('&') %>ColumnTitle
+<%
+					}
+					if (attHasSecurity)
+					{
+%>
+	Else
+		WWP_ColumnsSelector_Add(&ColumnsSelector, '', <%= editColumns_IsSerializationColumnName ? "'', '', False, ''" : "False" %>)
+<%
+						if (needGridState && item is IFilterableByTitle && ((IFilterableByTitle)item).IsIncludeTitleFilterTrue() && (attHasCondition || settings.IsOptimizationNumber(9)))
+						{
+							string name = item.ControlName.TrimStart('&');
+							if (TitleFilterProcedureHelper.ConsiderFilterCondition(item))
+							{
+%>
+		&TF<%= name %>.SetEmpty()
+<%
+								if (item.IsSearchBoxRange())
+								{
+%>
+		&TF<%= name %>_To.SetEmpty()
+<%
+								}
+							}
+							if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+							{
+								if (item.AllowMultipleSelection)
+								{
+%>
+		&TF<%= name %>_Sels = new()
+<%
+								}
+								else
+								{
+%>
+		&TF<%= name %>_Sel.SetEmpty()
+<%
+								}
+							}
+							if (item.PredefinedOperators != null)
+							{
+%>
+	&TF<%= name %>Operator.SetEmpty()
+<%
+							}
+						}
+%>
+	EndIf
+<%
+					}
+					colIndex++;
+				}
+			}
+%>
+		
+	&UserCustomValue = LoadColumnsSelectorState.Udp(!'<%= columnSelectorSessionKey %>')
+	If not(&UserCustomValue.IsEmpty())
+		&ColumnsSelectorAux.FromXml(&UserCustomValue)
+		WWP_ColumnSelector_UpdateColumns(&ColumnsSelectorAux, &ColumnsSelector)
+	EndIf
+<%
+		}
+		else
+		{
+%>
+	&UserCustomValue = LoadColumnsSelectorState.Udp(!'<%= columnSelectorSessionKey %>')
+	If not(&UserCustomValue.IsEmpty())
+		&ColumnsSelector.From<%= template.SerializationFormat %>(&UserCustomValue)
+		Do 'UpdateColumns_ColumnsSelector'
+<%
+		if (checkColSelAttsSecurity)
+		{
+%>
+
+		//Check Attributes security
+<%
+			foreach (IWorkWithPlusInstanceElement item in ((GridElement)grid).Items)
+            {
+				bool attHasAdvSecurity = hasAdvancedSecurity && item is IElementWithSecurity && ((IElementWithSecurity)item).HasShowSecurityCheck_RealValue();
+				bool attHasCondition = item is IConditionalVisibility && ((IConditionalVisibility)item).HasVisibleCondition_RealValue();
+                if (attHasAdvSecurity || attHasCondition)
+                {
+					string cond = "";
+					if (attHasAdvSecurity)
+					{
+						cond += "Not " + advSec.CheckByFunctionKeyName + "(!'" + ((IElementWithSecurity)item).ShowSecFuntionKey + "')";
+						if (attHasCondition)
+						{
+							cond = "(" + cond + ") OR ";
+						}
+					}
+					if (attHasCondition)
+					{
+						cond += "Not (" + ((IConditionalVisibility)item).GetVisibleCondition() + ")";
+					}
+					
+%>
+		If <%= cond %>
+			&ColumnName = <%= columnsSelectorMultiLanguageSupport%><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(((IGridAttributesItem)item).Description) %>
+			Do 'RemoveColumn_ColumnsSelector'
+		EndIf
+<%
+				}
+			}
+		}
+%>
+	Else
+<%
+		foreach (IGridAttributesItem item in allGridAttsAndVars)
+		{
+			if (item.Visible)
+			{
+				string indent = "";
+				string secCond = "";
+				bool attHasSecurity = false;
+				bool attHasAdvSecurity = hasAdvancedSecurity && item is IElementWithSecurity && ((IElementWithSecurity)item).HasShowSecurityCheck_RealValue();
+				bool attHasCondition = item is IConditionalVisibility && ((IConditionalVisibility)item).HasVisibleCondition_RealValue();
+				if (attHasAdvSecurity || attHasCondition)
+				{
+					indent = "\t";
+					attHasSecurity = true;
+					
+					if (attHasAdvSecurity)
+					{
+						secCond += advSec.CheckByFunctionKeyName + "(!'" + ((IElementWithSecurity)item).ShowSecFuntionKey + "')";
+						if (attHasCondition)
+						{
+							secCond += " AND ";
+						}
+					}
+					if (attHasCondition)
+					{
+						secCond += "(" + ((IConditionalVisibility)item).GetVisibleCondition() + ")";
+					}
+				}
+				if (item.VisibleByDefault)
+				{
+%>
+
+<%
+					if (attHasSecurity)
+					{
+%>
+		If <%= secCond %>
+<%
+					}
+%>
+		<%= indent %>&VisibleColumn = new WWPColumnsSelector.VisibleColumn()
+		<%= indent %>&VisibleColumn.ColumnName = <%= columnsSelectorMultiLanguageSupport%><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		<%= indent %>&ColumnsSelector.VisibleColumns.Add(&VisibleColumn)
+<%
+				}
+				else
+				{
+%>
+
+<%
+					if (attHasSecurity)
+					{
+%>
+		If <%= secCond %>
+<%
+					}
+%>
+		<%= indent %>&InvisibleColumn = new WWPColumnsSelector.InvisibleColumn()
+		<%= indent %>&InvisibleColumn.ColumnName = <%= columnsSelectorMultiLanguageSupport %><%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		<%= indent %>&ColumnsSelector.InvisibleColumns.Add(&InvisibleColumn)
+<%
+				}
+				if (attHasSecurity)
+				{
+%>
+		EndIf
+<%
+				}
+			}
+		}
+%>		
+	EndIf
+<%
+		}
+%>
+
+EndSub
+
+<%
+		if (checkColSelAttsSecurity && !settings.ColumnsSelectorOrdered)
+		{
+%>
+Sub 'RemoveColumn_ColumnsSelector'
+
+	&i = 0
+	For &VisibleColumn in &ColumnsSelector.VisibleColumns
+		If &VisibleColumn.ColumnName = &ColumnName
+			&i = &ColumnsSelector.VisibleColumns.IndexOf(&VisibleColumn)
+			Exit
+		EndIf
+	EndFor
+	If &i > 0
+		&ColumnsSelector.VisibleColumns.Remove(&i)
+	Else
+		For &InvisibleColumn in &ColumnsSelector.InvisibleColumns
+			If &InvisibleColumn.ColumnName = &ColumnName
+				&i = &ColumnsSelector.InvisibleColumns.IndexOf(&InvisibleColumn)
+				Exit
+			EndIf
+		EndFor
+		If &i > 0
+			&ColumnsSelector.InvisibleColumns.Remove(&i)
+		EndIf
+	EndIf
+
+EndSub
+<%
+		}
+	}
+	if (standaloneActionsWithSecurityCheck.Count > 0)
+	{
+%>
+Sub 'CheckSecurityForActions'
+<%
+		foreach (IActionElement action in standaloneActionsWithSecurityCheck)
+		{
+%>
+<%= Indentation.Indent(action.EnableDisableCodeOutsideGrid(), 1) %> 
+<%
+		}
+%>
+EndSub
+
+<%
+	}
+%>
+
+Event Grid.Load
+
+<%
+	List<string> promptInOutAttParms = null, promptSelectedLevelKey = null;
+	if (isPromptMultiple)
+	{
+		promptInOutAttParms = new List<string>();
+		foreach (PromptParameterElement param in parameters)
+		{
+			if ((param.AttributeBasedOn != null || !Instance.HasTransaction()) && !param.IsTypeIn())
+			{
+				promptInOutAttParms.Add(param.Name);
+			}
+		}
+		if (promptInOutAttParms.Count == 0)
+		{
+			throw new Exception("The Prompt '" + GridObject.ObjectName + "' must have at least one InOut parameter");
+		}
+	}
+	if (!Instance.HasTransaction())
+	{
+		if (string.IsNullOrEmpty(grid.GetSDTCollection()))
+		{
+%>
+	//this code should be inside the For Each used to load the data
+<%= Indentation.Indent(DataSelectorHelper.GetSDTBasedGridObjectExampleConditions(GridObject, settings), 1) %>
+<%
+		}
+		else if (isPromptMultiple)
+		{
+			foreach (string att in promptInOutAttParms)
+			{
+				bool found = false;
+				foreach (IAttributesItem item in allGridAttsAndVars)
+				{
+					if (item is VariableElement)
+					{
+						if (((VariableElement)item).Domain is Artech.Genexus.Common.Objects.SDT)
+						{
+							if (item.Name.ToLower() == grid.GetSDTCollection().ToLower()
+								&& ((VariableElement)item).GetSDTItem().Replace("item(0).", "").ToLower() == att.TrimStart('&').ToLower())
+							{
+%>
+	<%= att %> = <%= grid.GetSDTCollection() %>.CurrentItem.<%= att.TrimStart('&') %>
+<%
+								found = true;
+								break;
+							}
+						}
+						else
+						{
+							if (item.Name.ToLower() == att.ToLower())
+							{
+								found = true;
+								break;
+							}
+						}
+					}
+				}
+				if (!found)
+				{
+%>
+	//<%= att %> has to assigned before this code
+<%
+				}
+			}
+		}
+	}
+		if (hasDVGroup)
+		{
+%>
+<%= Indentation.Indent(GridGroupByHelper.GetGroupCaptionLoadCode((GridGeneralElement)grid), 1) %>
+<%
+		}
+		foreach (IActionElement action in allActionsOfThisGrid)
+		{
+%>
+<%= Indentation.Indent(action.EnableDisableCodeInsideGrid(), 1) %>
+<%
+		}
+%>
+<%@ CallSubTemplate SubLinkAttributes Attributes='allGridAttsAndVars' LinkAssocToImage='false' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+		if (hasMultiRowActions && (string.IsNullOrEmpty(grid.GetSDTCollection()) || isPromptMultiple))
+		{
+			if (IsGXUIMultiRowSelectionAndCheckAll)
+			{
+%>
+	&Selected = &<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>					
+<%			}
+			else
+			{
+%>
+
+	&Selected = false
+<%
+			}
+		}
+%>
+
+<%	if (grid is GridElement)
+	{
+		foreach (GridVariableElement var in grid.GetVariables)
+		{
+			if (!(hasDVGroupMultipleOptions && var.AllowGrouping) && var.LoadCode != "")
+			{
+%>	
+<%= Indentation.Indent(var.LoadCode, 1) %>
+<%		
+			}
+		}
+	}
+	else if (gridIsFreeStyleNotColSel)
+	{
+		FreeStyleGridElement freeStyleGrid = (FreeStyleGridElement)grid;
+		foreach (WebComponentElement webComp in freeStyleGrid.AllWebComponents())
+		{
+%>		
+	<%= webComp.GetCreateWebComponentCall()%>
+<%
+		}
+	}
+	if (isAssociation)
+	{
+		index = 0;
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+			if(relationKeyRelatedAttribute != association.Info.RelatedTableKeyAttributes[index])
+			{
+%>
+	&<%= relationKeyRelatedAttribute %> = <%= association.Info.RelatedTableKeyAttributes[index] %>
+<%
+			}
+			index++;
+		}
+		foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+		{
+%>
+	&<%= relationKeyBaseAttribute %>Parm = &<%= relationKeyBaseAttribute %>
+<%
+		}
+%>
+	&IsAssociatedOld = False
+	For Each<%= settings.IsOptimizationNumber(11) ? " " + relationTrnName : "" %>
+<%
+		foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+		{
+%>
+		Where <%= relationKeyBaseAttribute %> = &<%= relationKeyBaseAttribute %>Parm
+<%
+		}
+		index = 0;
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+			if(relationKeyRelatedAttribute != association.Info.RelatedTableKeyAttributes[index])
+			{
+%>
+		Where <%= relationKeyRelatedAttribute %> = &<%= relationKeyRelatedAttribute %>
+<%
+			}
+			index++;
+		}
+%>
+		&IsAssociatedOld = True
+	EndFor
+
+<%
+		index = 0;
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+	&<%= relationKeyRelatedAttribute %>ToFind = <%= association.Info.RelatedTableKeyAttributes[index] %>
+<%
+			index++;
+		}
+%>
+	If &IsAssociatedOld
+		Do 'Find in Removed'
+	Else
+		Do 'Find in Added'
+	EndIf
+	If &i > 0
+		&IsAssociated = not &IsAssociatedOld
+	Else
+		&IsAssociated  = &IsAssociatedOld
+	EndIf
+<%
+	}
+
+	bool hasEditInLineBeforeLoadSub = false;
+	string editInLineBeforeLoadSub = null;
+	if (GridObject.HasInLineAction) 
+	{
+		editInLineBeforeLoadSub = GridObject.Events.GetEventBlockCode(EventsBlocksElement.SEL_EDIT_INLINE_BEFORE_LOAD, Instance, inlineSubsToDefine);
+		hasEditInLineBeforeLoadSub = (editInLineBeforeLoadSub != null);
+		if (GridObject.HasInLineInsert)
+		{
+%>
+	<%= gridInsertNameToHide %>.Visible = False
+	<%= gridNameToHide %>.Visible = True
+	If <%= editableGrid_ModeAuxName %> = <%= trnModePrefix %>TrnMode.Insert<%= trnModeSuffix %> AND not &EditableGrid_IsNotFirst
+<%
+			if (!hasEditInLineBeforeLoadSub)
+			{
+%>
+		&EditableGrid_IsNotFirst = True
+<%
+			}
+			foreach (List<GridAttributeElement> list in new List<GridAttributeElement>[]{GridObject.EditablePKAtts, GridObject.EditableAtts})
+			{
+				foreach (GridAttributeElement gridItem in list)
+				{
+					string gridItemEditSecFuntionKey = hasAdvancedSecurity ? gridItem.EditableGrid_GetEditSecFuntionKey() : "";
+%>
+		&<%= gridItem.Name %>_Editable.Enabled = <%= gridItemEditSecFuntionKey != "" ? (advSec.CheckByFunctionKeyName + "(!'" + gridItemEditSecFuntionKey + "')") : "True" %>
+<%
+					string gridItemEditableTheme = gridItem.GetGridAttThemeClass(true, null);
+					if (gridItem.GetGridAttThemeClass(false, null) != gridItemEditableTheme)
+					{
+%>
+		&<%= gridItem.Name %>_Editable.Class = !'<%= gridItemEditableTheme %>'
+<%
+					}
+				}
+			}
+			if (!isSmooth)
+			{
+%>
+<%= Indentation.Indent(StandardActionElement.GetEditableGrid_HideGridActions(allActionsOfThisGrid, isSmooth, hasAdvancedSecurity), 2) %>
+<%
+			}
+			foreach (IAttributesItem gridItem in GridObject.ReadonlyAtts)
+			{
+%>
+		<%= gridItem.Name %>.Class = !'Invisible'
+<%
+			}
+			if (hasEditInLineBeforeLoadSub)
+			{
+%>
+<%= Indentation.Indent(editInLineBeforeLoadSub, 2) %>
+		&EditableGrid_IsNotFirst = True
+<%
+			}
+%>
+		Grid.Load()
+<%
+			foreach (IAttributesItem gridItem in GridObject.ReadonlyAtts)
+			{
+%>
+		<%= gridItem.Name %>.Class = !'<%= (gridItem is AttributeElement) ? ((AttributeElement)gridItem).GetGridAttThemeClass(false, null) : ((VariableElement)gridItem).GetGridVarThemeClass(true, null) %>'
+<%
+			}
+%>
+	EndIf
+<%
+		}
+	}
+	conditionalFormattingCode = grid.GetConditionalFormattingCode();
+	if (!String.IsNullOrEmpty(conditionalFormattingCode))
+	{
+%>
+<%= Indentation.Indent(conditionalFormattingCode, 1) %>
+<%
+	}
+	if (GridObject.HasInLineAction) 
+	{
+		foreach(List<GridAttributeElement> list in new List<GridAttributeElement>[]{GridObject.EditablePKAtts, GridObject.EditableAtts})
+		{
+			foreach (GridAttributeElement gridItem in list)
+			{
+%>
+	&<%= gridItem.Name %>_Editable = <%= gridItem.Name %>
+<%
+			}
+		}
+		string bcCompareKeyStr = "";
+		foreach (string trnAttName in inLineActionPK)
+		{
+			bcCompareKeyStr += " AND &" + trnAttName + "_SelectedLine = " + trnAttName;
+		}
+%>
+
+	If <%= editableGrid_ModeAuxName %> <> <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %>
+		&IsCurrentRecordSelected = False
+		If <%= editableGrid_ModeAuxName %> <> <%= trnModePrefix %>TrnMode.Insert<%= trnModeSuffix %><%= bcCompareKeyStr %>
+			&IsCurrentRecordSelected = True
+		EndIf
+<%
+		if (!isSmooth)
+		{
+%>
+<%= Indentation.Indent(StandardActionElement.GetEditableGrid_HideGridActions(allActionsOfThisGrid, isSmooth, hasAdvancedSecurity), 2) %>
+		&EditableGridCancel.Visible = True
+		&EditableGridConfirm.Visible = True
+<%
+		}
+		if (GridObject.HasInLineUpdate && !isSmooth)
+		{
+%>
+		If <%= editableGrid_ModeAuxName %> = <%= trnModePrefix %>TrnMode.Update<%= trnModeSuffix %> AND &EditableGrid_ErrorValidating AND &IsCurrentRecordSelected
+<%
+			foreach (GridAttributeElement gridItem in GridObject.EditableAtts)
+			{
+%>
+			&<%= gridItem.Name %>_Editable = &<%= gridItem.Name %>_EditableAux
+<%
+			}
+%>
+		EndIf
+<%
+		}
+		string indentStr = "";
+		if (GridObject.HasInLineDelete)
+		{
+			indentStr = "\t";
+%>
+		If <%= editableGrid_ModeAuxName %> = <%= trnModePrefix %>TrnMode.Delete<%= trnModeSuffix %>
+<%
+			foreach (IAttributesItem gridItem in allGridAttsAndVars)
+			{
+				if (gridItem.Visible)
+				{
+					string theme = (gridItem is AttributeElement) ? ((AttributeElement)gridItem).GetGridAttThemeClass(false, null) : ((VariableElement)gridItem).GetGridVarThemeClass(true, null);
+					string controlName;
+					if (GridObject.ReadonlyAtts.Contains(gridItem))
+					{
+						controlName = gridItem.Name;
+						if (gridItem is IGridAttributesItem && ((IGridAttributesItem)gridItem).Tags != null)
+						{
+							controlName =  "&" + controlName.TrimStart('&') + "WithTags";
+						}
+					}
+					else
+					{
+						controlName = "&" + gridItem.Name + "_Editable";
+					}
+%>
+			<%= controlName %>.Class = iif(&IsCurrentRecordSelected, !'<%= theme %> InGridDeletion', !'<%= theme %>')
+<%
+				}
+			}
+			if (GridObject.HasInLineInsert || GridObject.HasInLineUpdate)
+			{
+%>
+		Else
+<%
+			}
+		}
+		foreach (GridAttributeElement gridItem in GridObject.EditablePKAtts)
+		{
+%>
+		<%= indentStr %>&<%= gridItem.Name %>_Editable.Enabled = False
+<%
+		}
+		foreach (GridAttributeElement gridItem in GridObject.EditableAtts)
+		{
+			string gridItemEditSecFuntionKey = hasAdvancedSecurity ? gridItem.EditableGrid_GetEditSecFuntionKey() : "";
+%>
+		<%= indentStr %>&<%= gridItem.Name %>_Editable.Enabled = &IsCurrentRecordSelected<%= gridItemEditSecFuntionKey != "" ? (" AND " + advSec.CheckByFunctionKeyName + "(!'" + gridItemEditSecFuntionKey + "')") : "" %>
+<%
+			string gridItemTheme = gridItem.GetGridAttThemeClass(false, null);
+			string gridItemEditableTheme = gridItem.GetGridAttThemeClass(true, null);
+			if (gridItemTheme != gridItemEditableTheme)
+			{
+%>
+		<%= indentStr %>&<%= gridItem.Name %>_Editable.Class = iif(&IsCurrentRecordSelected, !'<%= gridItemEditableTheme %>', !'<%= gridItemTheme %>')
+<%
+			}
+		}
+		if (GridObject.HasInLineDelete)
+		{
+%>
+		EndIf
+<%
+		}
+		string editableGridCancelClass;
+%>
+		&EditableGridCancel.Class = iif(&IsCurrentRecordSelected, !'<%= ((IActionElement)editableGridCancel).IsControlTypeGeneralImage() && ((StandardActionGridElement)editableGridCancel).IsImageTypeImage() ? (((IActionElement)editableGridCancel).ImageClass == "" ? "Image" : ((IActionElement)editableGridCancel).ImageClass) : "Attribute" %>', !'Invisible')
+		&EditableGridConfirm.Class = iif(&IsCurrentRecordSelected, !'<%= ((IActionElement)editableGridConfrim).IsControlTypeGeneralImage() && ((StandardActionGridElement)editableGridConfrim).IsImageTypeImage() ? (((IActionElement)editableGridConfrim).ImageClass == "" ? "Image" : ((IActionElement)editableGridConfrim).ImageClass) : "Attribute" %>', !'Invisible')
+<%
+		if (!isSmooth)
+		{
+%>
+	Else
+		&EditableGridCancel.Visible = False
+		&EditableGridConfirm.Visible = False
+<%
+		}
+%>
+	EndIf
+				
+<%
+		if (hasEditInLineBeforeLoadSub)
+		{
+%>
+<%= Indentation.Indent(editInLineBeforeLoadSub, 1) %>
+<%
+		}
+	}
+	if (isPromptMultiple)
+	{
+		if (isPromptWithDefaultParmFullLevelKey)
+		{
+			promptSelectedLevelKey = new List<string>();
+			foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in ((PromptElement)GridObject).GetSelectedLevel().PrimaryKey)
+			{
+				promptSelectedLevelKey.Add(trnAtt.Name);
+%>
+	&<%= trnAtt.Name %>ToFind = <%= trnAtt.Name %>
+<%
+			}
+		}
+		else
+		{
+			foreach (string promptParm in promptInOutAttParms)
+			{
+%>
+	&<%= promptParm.TrimStart('&') %>ToFind = <%= promptParm %>
+<%
+			}
+		}
+	}
+	if (multiRowActionsMantainSelected)
+	{
+		foreach (string attName in fullLevelKeyAttributeNames)
+		{
+%>
+	&<%= attName %>ToFind = <%= attName %>
+<%
+		}
+	}
+	if (isPromptMultiple || multiRowActionsMantainSelected)
+	{
+%>
+	Do 'GetIndexOfSelectedRow'
+	If &i > 0
+		&Selected = True
+	EndIf
+<%
+	}
+	if (isSplitScreenWithTabs && ((SelectionElement)GridObject).IsSplitScreenCaptionInGrid)
+	{
+%>
+	&DetailTabCaption = <%= ((SelectionElement)GridObject).SplitScreenTabCaption %>
+<%
+	}
+	if (hierarchySettings != null)
+	{
+%>
+	If <%= hierarchySettings.LevelAttributeName %> > 1
+		&PaddingLevel = iif(<%= hierarchySettings.LevelAttributeName %> <= 10, <%= hierarchySettings.LevelAttributeName %> - 1, 10)
+		&Expand.ColumnClass    += ' ' + ThemeClass:<%= settings.Theme.HierarchyLevelPrefixClass %> + &PaddingLevel.ToString().Trim()
+		<%= hierarchySettings.DisplayCodeAttribute != null ? hierarchySettings.DisplayCodeAttributeName : hierarchySettings.CodeAttributeName %>.ColumnClass += ' ' + ThemeClass:<%= settings.Theme.HierarchyLevelPrefixClass %> + &PaddingLevel.ToString().Trim()
+	EndIf
+
+	&HasChildren_<%= hierarchySettings.PkAttributeName %> = <%= hierarchySettings.PkAttributeName %>
+	Do 'Hierarchy_HasChildren'
+	&Expand.Visible = &HasChildren
+	&Expand.Enabled = &HasChildren
+	&NodeExpanded = False
+	If &HasChildren
+		If &<%= hierarchySettings.FkAttributeName %>Collection.IndexOf(<%= hierarchySettings.PkAttributeName %>) > 0
+			&NodeExpanded = true
+			&Expand.FromImage(<%= settings.StandardActions.Collapse.ImageName %>)
+		EndIf
+	EndIf
+<%
+	}
+	if (hasDVGroupExpand)
+	{
+%>
+	If &GridCollapsedRecordsChildren.Count = 0
+		//Dummy Code for GridCollapsedRecordsChildren to be considered in conditions
+	EndIf
+<%
+	}
+	if (GridObject.HasInLineAction && GridObject.HasInLineInsert)
+	{
+%>
+
+	Grid.Load()
+<%
+	}
+%>
+
+EndEvent
+
+<%
+	if (isSplitScreen)
+	{
+			string viewEmptyParms = null, viewDSPParms = null;
+			if (isAutolinkBehaviorGoToView)
+			{
+				if (Instance.Level.View != null || Instance.Level.ExtraViews.Count > 0)
+				{
+					viewEmptyParms = splitScreenView.Parameters.Concatenate("nullvalue(", ")", false);
+					viewEmptyParms += (viewEmptyParms != "" ? ", " : "") + "''";
+
+					viewDSPParms = splitScreenView.Parameters.List();
+					viewDSPParms += (viewDSPParms != "" ? ", " : "") + "''";
+				}
+			}
+			else
+			{
+				viewEmptyParms = StandardActionElement.GetTransactionCallParameters(GridObject, StandardAction.Insert, false);
+				viewDSPParms = StandardActionElement.GetTransactionCallParameters(GridObject, StandardAction.Display, false);
+			}
+
+			if (grid is FreeStyleGridElement && !((FreeStyleGridElement)grid).DescriptionsAsHeader && ((FreeStyleGridElement)grid).GetStandardAction(StandardAction.Display, true) == null
+				&& (!isAutolinkBehaviorGoToView || splitScreenView != null))
+			{
+%>
+Event FSGridTableRow.Click
+
+	&DetailWCLink = <%= isAutolinkBehaviorGoToView ? splitScreenView.ObjectName : gridTrn.Name %>.Link(<%= viewDSPParms %>)
+<%
+				if (isSplitScreenWithTabs)
+				{
+					if (!((SelectionElement)GridObject).IsSplitScreenCaptionInGrid)
+					{
+%>
+	&DetailTabCaption = <%= ((SelectionElement)GridObject).SplitScreenTabCaption %>
+<%
+					}
+%>
+	DetailTabsComponent.AddIFrameTab(&DetailWCLink, &DetailTabCaption)
+<%
+				}
+				else
+				{
+%>
+	If 1=0
+		&Session.Set('', '')
+	EndIf	
+	
+<%//	&DetailWCHistory.FromJson(&Session.Get(!'MasterDetailHistory'))%>
+	&DetailWCInfo = new()
+	&DetailWCInfo.Link = &DetailWCLink
+	&DetailWCHistory.Add(&DetailWCInfo)
+<%//	&Session.Set(!'MasterDetailHistory', &DetailWCHistory.ToJson())%>
+	DetailWC.Object = Create(&DetailWCLink)
+<%
+				}
+%>
+	
+EndEvent
+<%
+			}
+			if (isSplitScreenWithTabs)
+			{
+%>
+Event GlobalEvents.SplitScreenWithTabs_UpdateTab(&LoadDetailAction, &DetailWCInfo, &RefreshGrid, &DetailTableName)
+
+<%//	&DetailWCHistory.FromJson(&Session.Get(!'MasterDetailHistory'))%>
+	If &DetailTableName = !'<%= gridTrn.Structure.Root.AssociatedTable.Name.ToLower() %>'
+		&DetailWCLink = &DetailWCInfo.Link
+		Do Case
+<%
+				IStandardActionElement insertActionAux = (insertAction != null ? insertAction : GridObject.Table.GetStandardAction(StandardAction.Insert));
+				if (insertActionAux != null)
+				{
+%>
+			Case &LoadDetailAction = SplitScreen_Action.RecordCreated OR &LoadDetailAction = SplitScreen_Action.RecordCreationCanceled
+				&DetailWCLink2 = <%= gridTrn.Name %>.Link(<%= insertActionAux.Parameters.List() %>)
+				If &LoadDetailAction = SplitScreen_Action.RecordCreated
+					&DetailTabCaption = &DetailWCInfo.Title
+					DetailTabsComponent.ReplaceIFrameTab(&DetailWCLink2, &DetailWCLink, &DetailTabCaption)
+				Else
+					DetailTabsComponent.CloseIFrameTab(&DetailWCLink2)
+				EndIf
+<%
+				}
+%>
+			Case &LoadDetailAction = SplitScreen_Action.RecordUpdated
+				&DetailTabCaption = &DetailWCInfo.Title
+				DetailTabsComponent.UpdateIFrameTabCaption(&DetailWCLink, &DetailTabCaption)
+			Case &LoadDetailAction = SplitScreen_Action.RecordDeleted
+				DetailTabsComponent.CloseIFrameTab(&DetailWCLink)
+		EndCase
+		If &RefreshGrid
+			Grid.Refresh()
+		EndIf
+	EndIf
+
+EndEvent
+<%
+			}
+			else
+			{
+%>
+Event GlobalEvents.SplitScreen_LoadDetail(&LoadDetailAction, &DetailWCInfo, &RefreshGrid, &DetailTableName)
+
+<%//	&DetailWCHistory.FromJson(&Session.Get(!'MasterDetailHistory'))%>
+	If &DetailTableName <> !'<%= gridTrn.Structure.Root.AssociatedTable.Name.ToLower() %>'
+		If &LoadDetailAction = SplitScreen_Action.RecordCreated
+			&LoadDetailAction = SplitScreen_Action.GoBack
+		EndIf
+	EndIf
+	If &LoadDetailAction = SplitScreen_Action.GoTo OR &LoadDetailAction = SplitScreen_Action.RecordCreated
+		&DetailWCLink = &DetailWCInfo.Link
+		&DetailWCHistory.Add(&DetailWCInfo)
+	Else
+		If &DetailWCHistory.Count > 0
+			&DetailWCHistory.Remove(&DetailWCHistory.Count)
+		EndIf
+		If &LoadDetailAction = SplitScreen_Action.RecordDeleted
+			AND &DetailWCHistory.Count > 0 AND &DetailWCHistory.Item(&DetailWCHistory.Count).Link = &DetailWCInfo.Link
+			&DetailWCHistory.Remove(&DetailWCHistory.Count)
+		EndIf
+		If &DetailWCHistory.Count > 0
+			&DetailWCInfo = &DetailWCHistory.Item(&DetailWCHistory.Count)
+			&DetailWCLink = &DetailWCInfo.Link
+<%
+			if (!isAutolinkBehaviorGoToView || splitScreenView != null)
+			{
+%>
+		Else
+			&DetailWCLink = <%= isAutolinkBehaviorGoToView ? splitScreenView.ObjectName : gridTrn.Name %>.Link(<%= viewEmptyParms %>)
+		EndIf
+<%
+			}
+			else
+			{
+%>
+		EndIf
+<%
+			}
+%>
+	EndIf
+	DetailWC.Object = Create(&DetailWCLink)
+<%//	&Session.Set(!'MasterDetailHistory', &DetailWCHistory.ToJson())%>
+
+	If &RefreshGrid AND &DetailTableName = !'<%= gridTrn.Structure.Root.AssociatedTable.Name.ToLower() %>'
+		Grid.Refresh()
+	EndIf
+
+EndEvent
+<%
+			}
+	}
+	if (isPromptMultiple || multiRowActionsMantainSelected)
+	{
+%>
+
+Sub 'GetIndexOfSelectedRow'
+
+	&i = 1
+<%
+		List<string> listOfAttsToFind = isPromptMultiple ? (isPromptWithDefaultParmFullLevelKey ? promptSelectedLevelKey : promptInOutAttParms) : fullLevelKeyAttributeNames;
+		string firstAttToFind = listOfAttsToFind[0].TrimStart('&');
+%>
+	For &<%= firstAttToFind %>ColItem in &<%= firstAttToFind %>Col
+		If &<%= firstAttToFind %>ColItem = &<%= firstAttToFind %>ToFind
+<%
+		for (int i = 1; i < listOfAttsToFind.Count; i++)
+		{
+%>
+			AND &<%= listOfAttsToFind[i].TrimStart('&') %>Col.Item(&i) = &<%= listOfAttsToFind[i].TrimStart('&') %>ToFind
+<%
+		}
+%>
+			Exit
+		EndIf
+		&i += 1
+	EndFor
+	If &i > &<%= firstAttToFind %>Col.Count
+		&i = 0
+	EndIf
+
+EndSub
+
+Event &Selected.Click
+
+<%
+		if (!isSmooth)
+		{
+			if (isPromptMultiple)
+			{
+				foreach (PromptParameterElement param in parameters)
+				{
+					if ((param.AttributeBasedOn != null || !Instance.HasTransaction()) && !param.IsTypeIn())
+					{
+%>
+	&<%= param.Name.TrimStart('&') %>Col.FromJson(&Session.Get(&<%= param.Name.TrimStart('&') %>_WSKey + !"AUX"))
+<%
+					}
+				}
+			}
+			else
+			{
+				foreach (string attName in fullLevelKeyAttributeNames)
+				{
+%>
+	&<%= attName %>Col.FromJson(&<%= attName %>Json)
+<%
+				}
+			}
+		}
+		List<string> attsToAdd = (isPromptMultiple ? promptInOutAttParms : fullLevelKeyAttributeNames);
+		if (!Instance.HasTransaction() && !string.IsNullOrEmpty(grid.GetSDTCollection()))
+		{
+			foreach (string att in attsToAdd)
+			{
+				bool found = false;
+				foreach (IAttributesItem item in allGridAttsAndVars)
+				{
+					if (item is VariableElement)
+					{
+						if (((VariableElement)item).Domain is Artech.Genexus.Common.Objects.SDT)
+						{
+							if (item.Name.ToLower() == grid.GetSDTCollection().ToLower()
+								&& ((VariableElement)item).GetSDTItem().Replace("item(0).", "").ToLower() == att.TrimStart('&').ToLower())
+							{
+%>
+	<%= att %> = <%= grid.GetSDTCollection() %>.CurrentItem.<%= att.TrimStart('&') %>
+<%
+								found = true;
+								break;
+							}
+						}
+						else
+						{
+							if (item.Name.ToLower() == att.ToLower())
+							{
+								found = true;
+								break;
+							}
+						}
+					}
+				}
+				if (!found)
+				{
+%>
+	//<%= att %> has to assigned before this code
+<%
+				}
+			}
+		}
+%>
+	If &Selected
+<%
+		foreach (string att in attsToAdd)
+		{
+%>
+		&<%= att.TrimStart('&') %>Col.Add(<%= att %>)
+<%
+		}
+		if (hierarchySettings != null && hierarchySettings.IsMultiRowSelectBehaviourSelectNodeAndChildren())
+		{
+%>
+		If &NodeExpanded
+			&Aux_<%= hierarchySettings.PkAttributeName %> = <%= hierarchySettings.PkAttributeName %>
+			Do 'Hierarchy_SelectChildren'
+		Else
+			&Children_<%= hierarchySettings.PkAttributeName %> = <%= hierarchySettings.PkAttributeName %>
+			Do 'Hierarchy_GetChildren'
+			For &Aux_<%= hierarchySettings.PkAttributeName %> in &Aux_<%= hierarchySettings.PkAttributeName %>Children
+				If &<%= hierarchySettings.PkAttributeName %>Col.IndexOf(&Aux_<%= hierarchySettings.PkAttributeName %>) = 0
+					&<%= hierarchySettings.PkAttributeName %>Col.Add(&Aux_<%= hierarchySettings.PkAttributeName %>)
+				EndIf
+			EndFor
+		EndIf
+<%
+		}
+%>
+	Else
+<%
+		if (isPromptWithDefaultParmFullLevelKey)
+		{
+			foreach (string trnAttName in promptSelectedLevelKey)
+			{
+%>
+		&<%= trnAttName %>ToFind = <%= trnAttName %>
+<%
+			}
+		}
+		else
+		{
+			foreach (string att in attsToAdd)
+			{
+%>
+		&<%= att.TrimStart('&') %>ToFind = <%= att %>
+<%
+			}
+		}
+%>
+		Do 'GetIndexOfSelectedRow'
+<%
+		foreach (string att in attsToAdd)
+		{
+			if (!isPromptMultiple || !isPromptWithDefaultParmFullLevelKey || promptSelectedLevelKey.Contains(att))
+			{
+%>
+		&<%= att.TrimStart('&') %>Col.Remove(&i)
+<%
+			}
+		}
+		if (isPromptMultiple && isPromptWithDefaultParmFullLevelKey)
+		{
+			foreach (string att in attsToAdd)
+			{
+				if (!promptSelectedLevelKey.Contains(att))
+				{
+%>
+		If &<%= att.TrimStart('&') %>Col.Count = &<%= firstAttToFind.TrimStart('&') %>Col.Count + 1
+			&<%= att.TrimStart('&') %>Col.Remove(&i)
+		EndIf
+<%
+				}
+			}
+		}
+		if (hierarchySettings != null && hierarchySettings.IsMultiRowSelectBehaviourSelectNodeAndChildren())
+		{
+%>
+		&Children_<%= hierarchySettings.PkAttributeName %> = <%= hierarchySettings.PkAttributeName %>
+		Do 'Hierarchy_GetChildren'
+		For &Aux_<%= hierarchySettings.PkAttributeName %> in &Aux_<%= hierarchySettings.PkAttributeName %>Children
+			&<%= hierarchySettings.PkAttributeName %>ToFind = &Aux_<%= hierarchySettings.PkAttributeName %>
+			Do 'GetIndexOfSelectedRow'
+			&<%= hierarchySettings.PkAttributeName %>Col.Remove(&i)
+		EndFor
+<%
+		}
+%>
+	EndIf
+<%
+		if (isPromptMultiple)
+		{
+			foreach (string promptParm in promptInOutAttParms)
+			{
+%>
+	&Session.Set(&<%= promptParm.TrimStart('&') %>_WSKey + !"AUX", &<%= promptParm.TrimStart('&') %>Col.ToJson())
+<%
+			}
+		}
+		else
+		{
+			foreach (string attName in fullLevelKeyAttributeNames)
+			{
+%>
+	&<%= attName %>Json = &<%= attName %>Col.ToJson()
+<%
+			}
+		}
+		if (isOptimizationNumber7)
+		{
+			if (isPromptMultiple)
+			{
+%>
+	LayoutMainTable.Class = !'Table TableWithSelectableGrid' + iif(&<%= promptInOutAttParms[0].TrimStart('&') %>Col.Count > 0, !' WWPMultiRowSelected', '')
+<%
+			}
+			else
+			{
+%>
+	LayoutMainTable.Class = !'Table TableWithSelectableGrid' + iif(&<%= fullLevelKeyAttributeNames[0] %>Col.Count > 0, !' WWPMultiRowSelected', '')
+<%
+			}
+		}
+		if (hierarchySettings != null)
+		{
+%>
+	Grid.Refresh()
+<%
+		}
+%>
+
+EndEvent
+
+<%
+	}
+	if (GridObject.HasInLineInsert)
+	{
+		bool eventAdded = false;
+		if (insertAction is ActionElement || (insertAction is ActionGroupActionGeneralElement && ((ActionGroupActionGeneralElement)insertAction).IsTypeGXActionGroup()))
+		{
+			eventAdded = true;
+%>
+
+Event <%= insertAction is ActionElement ? ((ActionElement)insertAction).EventName() : "'DoInsert'" %>
+	
+<%
+		}
+		else
+		{
+%>
+
+Sub 'Do Insert'
+	
+<%
+		}
+%>
+<%= Indentation.Indent(InLineActionHelper.GetInsertEventCode(insertAction, isSmooth, trnModePrefix, trnModeSuffix, editableGrid_ModeAuxName, gridNameToHide, gridInsertNameToHide, grid, inLineActionPK, GridObject, settings, advSec), 1) %>
+End<%= (eventAdded) ? "Event" : "Sub" %>
+
+<%
+	}
+	if (GridObject.HasInLineUpdate || GridObject.HasInLineDelete)
+	{
+		foreach (IStandardActionElement standardAction in new IStandardActionElement[]{GridObject.HasInLineUpdate ? updateAction : null, GridObject.HasInLineDelete ? deleteAction : null})
+		{
+			if (standardAction != null)
+			{
+				bool isEvent = (standardAction is ActionElement || (standardAction is ActionGroupActionGeneralElement && ((ActionGroupActionGeneralElement)standardAction).IsTypeGXActionGroup()));
+				if (isEvent)
+				{
+%>
+
+Event <%= standardAction is ActionElement ? ((ActionElement)standardAction).EventName() : ("'Do" + standardAction.Name + "'") %>
+	
+<%
+				}
+				else
+				{
+%>
+
+Sub 'Do <%= standardAction.Name %>'
+	
+<%
+				}
+%>
+<%= Indentation.Indent(InLineActionHelper.GetUpdateDeleteEventCode(standardAction, isSmooth, trnModePrefix, trnModeSuffix, editableGrid_ModeAuxName, inLineActionPK, GridObject, gridTrn, settings, advSec), 1) %>
+End<%= isEvent ? "Event" : "Sub" %>
+
+<%
+			}
+		}
+	}
+	if (GridObject.HasInLineAction)
+	{
+%>
+
+Event 'EditableGridConfirm'
+
+<%= Indentation.Indent(InLineActionHelper.GetConfirmEventCode(insertAction, updateAction, deleteAction, parameters, isSmooth, trnModePrefix, trnModeSuffix, editableGrid_ModeAuxName, inLineActionPK, GridObject, gridTrn, settings, advSec), 1) %>
+
+EndEvent
+
+Event 'EditableGridCancel'
+
+<%
+		foreach (string trnAttName in inLineActionPK)
+		{
+%>
+	&<%= trnAttName %>_SelectedLine.SetEmpty()
+<%
+		}
+%>
+	&EditableGrid_Mode = <%= trnModePrefix %>TrnMode.Display<%= trnModeSuffix %>
+<%
+		if (!isSmooth)
+		{
+%>
+	<%= editableGrid_ModeAuxName %> = &EditableGrid_Mode
+<%
+		}
+		if (GridObject.HasInLineInsert)
+		{
+%>
+	<%= gridInsertNameToHide %>.Visible = False
+	<%= gridNameToHide %>.Visible = True
+<%
+		}
+%>
+	Refresh
+
+EndEvent
+
+Sub 'Show Messages'
+
+	For &Message in &Messages
+		msg(&Message.Description)
+	endfor
+
+EndSub
+
+<%
+		if (GridObject.HasInLineInsert)
+		{
+%>
+
+Event 'EditableGridInsertLineConfirm'
+
+<%= Indentation.Indent(InLineActionHelper.GetInsertGridConfirmEventCode(insertAction, parameters, isSmooth, trnModePrefix, trnModeSuffix, editableGrid_ModeAuxName, gridInsertNameToHide, gridNameToHide, inLineActionPK, GridObject, gridTrn, settings, advSec), 1) %>
+
+EndEvent
+
+Event GridInsertLine.Load
+
+<%
+			if (hasAdvancedSecurity)
+			{
+				foreach(List<GridAttributeElement> list in new List<GridAttributeElement>[]{GridObject.EditablePKAtts, GridObject.EditableAtts})
+				{
+					foreach (GridAttributeElement gridItem in list)
+					{
+						string gridItemEditSecFuntionKey = gridItem.EditableGrid_GetEditSecFuntionKey();
+						if (gridItemEditSecFuntionKey != "")
+						{
+%>
+	&<%= gridItem.Name %>_Editable2.Enabled = <%= advSec.CheckByFunctionKeyName %>(!'<%= gridItemEditSecFuntionKey %>')
+<%
+						}
+					}
+				}
+			}
+			if (isSmooth)
+			{
+				((GridElement)grid).m_GettingGridInsertLineHtml = true;
+				foreach (IActionElement action in allActionsOfThisGrid)
+				{
+					if (action.GetName() == StandardAction.EditableGridCancel || action.GetName() == StandardAction.EditableGridConfirm)
+					{
+%>
+<%= Indentation.Indent(action.EnableDisableCodeInsideGrid(), 1) %>
+<%
+					}
+				}
+			}
+			if (hasEditInLineBeforeLoadSub)
+			{
+%>
+<%= Indentation.Indent(editInLineBeforeLoadSub, 1) %>
+<%
+			}
+%>
+	GridInsertLine.Load()
+
+EndEvent
+
+<%
+		}
+	}
+
+	if (isPrompt || isAssociation)
+	{
+%>
+
+Event Enter
+
+<%
+		Artech.Common.Collections.IBaseCollection<Artech.Genexus.Common.Parts.TransactionAttribute> pk = null;
+		if (isPrompt)
+		{
+			foreach (PromptParameterElement param in parameters)
+			{
+				if ((param.AttributeBasedOn != null || isPromptMultiple && !Instance.HasTransaction()) && !param.IsTypeIn())
+				{
+					if (isPromptMultiple)
+					{
+%>
+	&Session.Set(&<%= param.Name.TrimStart('&') %>_WSKey, &Session.Get(&<%= param.Name.TrimStart('&') %>_WSKey + !"AUX"))
+	&Session.Remove(&<%= param.Name.TrimStart('&') %>_WSKey + !"AUX")
+<%
+					}
+					else
+					{
+%>
+	<%= param.GetVariableName() %> = <%= param.AttributeBasedOn %>
+<%
+					}
+				}
+				else if (!param.IsTypeIn() && !isPromptMultiple && !Instance.HasTransaction() && !string.IsNullOrEmpty(grid.GetSDTCollection()))
+				{
+					bool found = false;
+					foreach (IAttributesItem item in allGridAttsAndVars)
+					{
+						if (item is VariableElement)
+						{
+							if (((VariableElement)item).Domain is Artech.Genexus.Common.Objects.SDT)
+							{
+								if (item.Name.ToLower() == grid.GetSDTCollection().ToLower()
+									&& ((VariableElement)item).GetSDTItem().Replace("item(0).", "").ToLower() == param.Name.TrimStart('&').ToLower())
+								{
+%>
+	<%= param.Name %> = <%= grid.GetSDTCollection() %>.CurrentItem.<%= param.Name.TrimStart('&') %>
+<%
+									found = true;
+									break;
+								}
+							}
+							else
+							{
+								if (item.Name.ToLower() == param.Name.ToLower())
+								{
+									found = true;
+									break;
+								}
+							}
+						}
+					}
+					if (!found)
+					{
+%>
+	//<%= param.Name %> has to assigned before this code
+<%
+					}
+				}
+			}
+%>
+	Return
+<%
+        }
+        else
+        {
+%>
+	Do 'Load Lists'
+
+	&Success = True
+<%
+			foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+			{
+%>
+	&i = 1
+	For &<%= relationKeyRelatedAttribute %> In &<%= relationKeyRelatedAttribute %>Removed
+		&<%= relationTrnName %> = new()
+<%
+				index = 0;
+				foreach (string relationKeyRelatedAttribute2 in association.Info.RelationKeyRelatedAttributes)
+				{
+					if (index > 0)
+					{
+%>
+		&<%= relationKeyRelatedAttribute2 %> = &<%= relationKeyRelatedAttribute2 %>Removed.Item(&i)
+<%
+					}
+					index++;
+				}
+				string bcLoadList = "";
+				foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in association.RelationTransaction.Transaction.Structure.Root.PrimaryKey)
+				{
+					bcLoadList += ", &" + trnAtt.Name;
+				}
+				bcLoadList = bcLoadList.Substring(2);
+%>
+		&<%= relationTrnName %>.Load(<%= bcLoadList %>)
+		If &<%= relationTrnName %>.Success()
+			&<%= relationTrnName %>.Delete()
+		EndIf
+		If not &<%= relationTrnName %>.Success()
+			&Success = False
+			Do 'Show Error Messages'
+		EndIf
+		&i += 1
+	EndFor
+	
+	&i = 1
+	For &<%= relationKeyRelatedAttribute %> In &<%= relationKeyRelatedAttribute %>Added
+		&<%= relationTrnName %> = new()
+<%
+				foreach(string relationKeyBaseAttribute in association.Info.RelationKeyBaseAttributes)
+				{
+%>
+		&<%= relationTrnName %>.<%= relationKeyBaseAttribute %> = &<%= relationKeyBaseAttribute %>
+<%
+				}
+%>
+		&<%= relationTrnName %>.<%= relationKeyRelatedAttribute %> = &<%= relationKeyRelatedAttribute %>
+<%
+				index = 0;
+				foreach (string relationKeyRelatedAttribute2 in association.Info.RelationKeyRelatedAttributes)
+				{
+					if (index > 0)
+					{
+%>
+		&<%= relationTrnName %>.<%= relationKeyRelatedAttribute2 %> = &<%= relationKeyRelatedAttribute2 %>Added.Item(&i)
+<%
+					}
+					index++;
+				}
+				customEventCode = GridObject.Events.GetEventBlockCode(EventsBlocksElement.ASS_ENTER_BEFORE_SAVE, Instance, inlineSubsToDefine);
+				if (customEventCode != null)
+				{
+%>
+<%= Indentation.Indent(customEventCode, 2) %>
+<%
+				}
+%>
+		&<%= relationTrnName %>.Save()
+		If not &<%= relationTrnName %>.Success()
+			&Success = False
+			Do 'Show Error Messages'
+		EndIf
+		&i += 1
+	EndFor
+
+	If &Success 
+		If &<%= relationKeyRelatedAttribute %>Added.Count + &<%= relationKeyRelatedAttribute %>Removed.Count > 0
+			Commit
+<%
+				foreach (string relationKeyRelatedAttribute2 in association.Info.RelationKeyRelatedAttributes)
+				{
+%>
+			&<%= relationKeyRelatedAttribute2 %>AddedXml = ''
+			&<%= relationKeyRelatedAttribute2 %>RemovedXml = ''
+<%
+				}
+%>
+			msg('<%= settings.Labels.DataSuccessfulyUpdated %>')
+		Else
+			msg('<%= settings.Labels.NoChangesMade %>')
+		EndIf
+<%
+				if (template.ReturnOnConfirm)
+				{
+%>
+		<%= template.GetReturnExpression() %>
+<%
+				}
+%>
+	EndIf
+<%
+				break;
+			}
+		}
+%>
+
+EndEvent
+
+<%
+	}
+	if (GridObject.Orders.HasTitleOrdering && GridObject.Orders.IncludeItemInTable())
+	{
+%>
+
+Event <%= OrdersElement.OrderVariableName %>.Click
+
+<%
+		if (hasDDOSortedStatus)
+		{
+%>
+	Do 'SetDDOSortedStatus'
+<%
+		}
+%>
+	Refresh
+
+EndEvent
+
+<%
+	}
+	if (hasColumnsSelectorWithDDO)
+	{
+%>
+Event DDO_GridColumnsSelector.OnColumnsChanged
+
+	&ColumnsSelectorXML = DDO_GridColumnsSelector.ColumnsSelectorValues
+	&ColumnsSelector.FromJson(&ColumnsSelectorXML)
+	SaveColumnsSelectorState(!'<%= columnSelectorSessionKey %>', <%= settings.StandardActions.EditColumns.AllowRestore? "iif(&ColumnsSelectorXML.IsEmpty(), '', &ColumnsSelector.ToXml()))" : "&ColumnsSelector.ToXml())" %>
+	Refresh
+
+EndEvent
+<%
+	}
+	else if (hasColumnsSelectorWithRG)
+	{
+		bool defineSub = (editColumns is ActionGroupActionGeneralElement && !((ActionGroupActionGeneralElement)editColumns).IsTypeGXActionGroup());
+		string blockType = defineSub ? "Sub" : "Event";
+		if (defineSub)
+		{
+%>
+Sub 'Do EditColumns'
+<%
+		}
+		else
+		{
+%>
+Event 'EditColumns'
+<%
+		}
+%>
+	If &Session.Get(!'<%= columnSelectorSessionKey %>') <> ''
+		&ColumnsSelectorXML = &Session.Get(!'<%= columnSelectorSessionKey %>')
+	Else
+		Do 'InitializeColumnsSelector'
+		<%
+		if (sendGridStateToProcsBySession)
+		{
+%>
+		&Session.Set(!'<%= columnSelectorSessionKey %>', &ColumnsSelector.To<%= template.SerializationFormat %>())
+<%
+		}
+		else
+		{
+%>
+		&ColumnsSelectorXML = &ColumnsSelector.To<%= template.SerializationFormat %>()
+<%
+		}
+%>
+	EndIf
+<%
+		Artech.Genexus.Common.Objects.WebPanel colSelWP = ArtechGetSetObjectsUtilities.GetWebPanel(Object, "WWPBaseObjects.ColumnsSelector");
+		if (colSelWP == null)
+		{
+			colSelWP = ArtechGetSetObjectsUtilities.GetWebPanel(Object, "ColumnsSelector", true);
+		}
+%>
+	&Window.Object = Create(<%= Object.Module.Guid != colSelWP.Module.Guid ? SettingsObjectsElement.GetQualifiedName(colSelWP) : colSelWP.Name %>, <%= !sendGridStateToProcsBySession ? "&ColumnsSelectorXML, " : "" %>!'<%= columnSelectorSessionKey %>')
+	&Window.Open()
+	Refresh
+End<%= blockType %>
+
+<%
+	}
+	if (grid is FreeStyleGridElement)
+	{
+		if (((FreeStyleGridElement)grid).AddPagingActions())
+		{
+%>
+
+Event 'FirstPage'
+	Grid.FirstPage()
+EndEvent
+
+Event 'PreviousPage'
+	Grid.PreviousPage()
+EndEvent
+
+Event 'NextPage'
+	Grid.NextPage()
+EndEvent
+
+Event 'LastPage'
+	Grid.LastPage()
+EndEvent
+
+<%
+		}
+	}
+	if (hasDynamicFilters)
+	{
+%>
+
+<%@ CallSubTemplate DynamicFiltersAuxiliarEvents DynamicFilters='dynamicFilters' IsSmooth='isSmooth' %>
+<%
+	}
+%>	
+
+
+<%
+	if (manageFilters != null)
+	{
+		string manageFiltersControlName = manageFilters is ActionGroupActionGeneralElement ? "ddo_ManageFilters" : manageFilters.ControlName();
+%>
+
+Event <%= manageFiltersControlName %>.OnOptionClicked
+
+	Do Case
+		Case <%= manageFiltersControlName %>.ActiveEventKey = !'<#Clean#>'
+			Do 'CleanFilters'
+			Grid.FirstPage()
+<%
+			if (isSmooth && addPaginationBar)
+			{
+%>
+			Refresh
+<%
+			}
+%>
+		Case <%= manageFiltersControlName %>.ActiveEventKey = !'<#Save#>'
+			Do 'SaveGridState'
+<%
+			string gridStateToSend = sendGridStateToProcsBySession ? "&PgmName + !\"" + Constants.SessionKeys.GridState + "\"" : "&GridState.To" + template.SerializationFormat + "()";
+%>
+			SaveFilterAs.Popup(!'<%= manageFiltersSessionKey %>', <%= gridStateToSend %>)
+			&ManageFiltersExecutionStep = <%= isSmooth ? "2" : "1" %>
+			Refresh
+		Case <%= manageFiltersControlName %>.ActiveEventKey = !'<#Manage#>'
+			ManageFilters.Popup(!'<%= manageFiltersSessionKey %>')
+			&ManageFiltersExecutionStep = <%= isSmooth ? "2" : "1" %>
+			Refresh
+<%
+			if (hasConditionalFormattingFilters && ((GridGeneralElement)grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.FormatRow)
+			{
+				string condOption = "";
+				int condIndex = 1;
+				foreach (DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ICondFormattingItem item in ((GridGeneralElement)grid).ConditionalFormatting.CondFormattingItems)
+				{
+					if (!string.IsNullOrEmpty(item.FilterCaption))
+					{
+						condOption += " OR " + manageFiltersControlName + ".ActiveEventKey = !'<#CF_" + (condIndex < 10 ? "0" : "") + condIndex + "#>'";
+					}
+					condIndex++;
+				}
+%>
+		Case <%= condOption.Substring(4) %>
+<%
+				if (condOption.Contains(" OR "))
+				{
+%>
+			&ManageFiltersXml = <%= manageFiltersControlName %>.ActiveEventKey
+			&GridConditionalFormattingFilter.FromString(&ManageFiltersXml.Substring(6, 2))
+<%
+				}
+				else
+				{
+%>
+			&GridConditionalFormattingFilter = 1
+<%
+				}
+%>
+			Do 'LoadSavedFilters'
+			Grid.FirstPage()
+<%
+			}
+%>
+		Otherwise
+			&ManageFiltersXml = GetFilterByName(!'<%= manageFiltersSessionKey %>', <%= manageFiltersControlName %>.ActiveEventKey)
+			If &ManageFiltersXml.IsEmpty()
+				msg('<%= settings.StandardActions.ManageFilters.FilterNotExist %>')
+			Else
+				Do 'CleanFilters'
+				<%= gridStateSaveLine.Replace("&GridState.To" + template.SerializationFormat + "()", "&ManageFiltersXml") %>
+				&GridState.From<%= template.SerializationFormat %>(&ManageFiltersXml)
+<%
+			if (needOrderChoice) 
+			{
+%>
+				<%= OrdersElement.OrderVariableName %> = &GridState.OrderedBy
+<%
+			}
+			if (GridObject.Orders.HasTitleOrdering)
+			{
+%>
+				<%= OrdersElement.OrderDscVariableName %> = &GridState.OrderedDsc
+<%
+				if (hasDDOSortedStatus)
+				{
+%>
+				Do 'SetDDOSortedStatus' 
+<%
+				}
+			}
+			if (totalAmountOfRegularFilters > 0)
+			{
+%>
+				Do 'LoadRegFiltersState'
+<%
+			}
+			if (hasDynamicFilters)
+			{
+%>
+				Do 'LoadDynFiltersState'
+<%
+			}
+			if (hasDVGroup && !hasDVGroupFixed)
+			{
+%>
+				&GroupBy = &GridState.GroupBy
+<%
+			}
+			if (hasDVGroupExpand)
+			{
+%>
+				&GridCollapsedRecords.FromJson(&GridState.CollapsedRecords)
+				If &GridCollapsedRecords.Count > 0
+					&AddChildren = True
+					For &Group<%= hasDVGroupFixed && !GridGroupByHelper.IsFixedGroupNumericBaseOnEnumerated((GridElement)grid, ((GridElement)grid).GroupField) ? ((GridElement)grid).GroupField : "Key" %> in &GridCollapsedRecords
+						Do 'AddRemoveChildren'
+					EndFor
+				EndIf
+<%
+			}
+			if (GridObject.Load == "After pressing Search button")
+			{
+%>
+				&LoadGridData = True
+<%
+			}
+%>
+				Grid.FirstPage()
+<%
+			if (isSmooth && addPaginationBar)
+			{
+%>
+				Refresh
+<%
+			}
+%>
+			EndIf
+	EndCase
+
+EndEvent
+
+Sub 'LoadSavedFilters'
+
+<%
+			if (isOptimizationNumber7)
+			{
+				string dynFilterJS;
+				if (hasDynamicFilters && dynamicFilters.MaxFilters > 1)
+				{
+					if (dynFiltersIsAl)
+					{
+						dynFilterJS = "!\"WWPDynFilterHideAll_AL('%1', " + dynamicFilters.MaxFilters.ToString() + ", " + (dynamicFilters.FixedFilters != null ? dynamicFilters.FixedFilters.Items.Count : 0) + ")\"";
+					}
+					else
+					{
+						dynFilterJS = "!'WWPDynFilterHideAll(" + dynamicFilters.MaxFilters.ToString() + ")'";
+					}
+				}
+				else
+				{
+					dynFilterJS = "''";
+				}
+				bool hasAdvContainer = isOptimizationNumber10 && GridTableElement.GetAdvancedFiltersContainer(GridObject.Table) != null;
+%>
+	&ManageFiltersData = WWP_ManageFiltersLoadSavedFilters(!'<%= manageFiltersSessionKey %>', <%= dynFilterJS %>, <%= hasDynamicFilters && dynamicFilters.MaxFilters > 1 && dynFiltersIsAl ? "Table" + dynamicFilters.Name + ".InternalName" : "''" %><%= isOptimizationNumber10 ? ", " + (hasAdvContainer ? "True" : "False") : "" %>)
+<%
+				if (hasConditionalFormattingFilters && ((GridGeneralElement)grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.FormatRow)
+				{
+%>
+
+	&ManageFiltersDataItem = new()
+	&ManageFiltersDataItem.IsDivider = True
+	&ManageFiltersData.Add(&ManageFiltersDataItem, <%= 3 + (hasAdvContainer ? 1 : 0) %>)
+<%
+					int condIndex = 1;
+					foreach (DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ICondFormattingItem item in ((GridGeneralElement)grid).ConditionalFormatting.CondFormattingItems)
+					{
+						if (!string.IsNullOrEmpty(item.FilterCaption))
+						{
+%>
+
+	&ManageFiltersDataItem = new()
+	&ManageFiltersDataItem.Title = <%= WorkWithStringValues.StringWithQuotes(item.FilterCaption) %>
+	&ManageFiltersDataItem.EventKey = !'<#CF_<%= (condIndex < 10 ? "0" : "") + condIndex %>#>'
+	&ManageFiltersDataItem.FontIcon = !<%= WorkWithStringValues.StringWithQuotes((item.GetFilterIconClass(settings) + " ConditionalFormattingFilterIcon").Trim()) %>
+	&ManageFiltersDataItem.ThemeClass = iif(&GridConditionalFormattingFilter = <%= condIndex %>, !'ConditionalFormattingSelected', '')
+	&ManageFiltersData.Add(&ManageFiltersDataItem, <%= condIndex + 3 + (hasAdvContainer ? 1 : 0) %>)
+<%
+						}
+						condIndex++;
+					}				
+				}
+			}
+			else
+			{
+%>
+	&ManageFiltersData = new()
+
+	&ManageFiltersDataItem = new()
+	&ManageFiltersDataItem.Title = '<%= settings.StandardActions.ManageFilters.CleanFiltersOption %>'
+	&ManageFiltersDataItem.EventKey = !'<#Clean#>'
+	&ManageFiltersDataItem.IsDivider = False
+<%
+			if (!string.IsNullOrEmpty(settings.StandardActions.ManageFilters.CleanItemFontIcon))
+			{
+%>
+	&ManageFiltersDataItem.FontIcon = !<%= WorkWithStringValues.StringWithQuotes(settings.StandardActions.ManageFilters.CleanItemFontIcon) %>
+<%
+			}
+			else if (settings.StandardActions.ManageFilters.CleanItemImage != null)
+			{
+%>
+	&ManageFiltersDataItem.Icon = <%= settings.StandardActions.ManageFilters.CleanItemImageName %>.Link()
+<%
+			}
+			if (hasDynamicFilters && dynamicFilters.MaxFilters > 1)
+			{
+				if (dynFiltersIsAl)
+				{
+%>
+	&ManageFiltersDataItem.JSonclickEvent = format(!"WWPDynFilterHideAll_AL('%1', <%= dynamicFilters.MaxFilters.ToString() %>, <%= dynamicFilters.FixedFilters != null ? dynamicFilters.FixedFilters.Items.Count : 0 %>)", Table<%= dynamicFilters.Name %>.InternalName)
+<%
+				}
+				else
+				{
+%>
+	&ManageFiltersDataItem.JSonclickEvent = !'WWPDynFilterHideAll(<%= dynamicFilters.MaxFilters.ToString() %>)'
+<%
+				}
+			}
+%>
+	&ManageFiltersData.Add(&ManageFiltersDataItem)
+
+	&ManageFiltersDataItem = new()
+	&ManageFiltersDataItem.Title = '<%= settings.StandardActions.ManageFilters.SaveFilterOption %>'
+	&ManageFiltersDataItem.EventKey = !'<#Save#>'
+	&ManageFiltersDataItem.IsDivider = False
+<%
+				if (!string.IsNullOrEmpty(settings.StandardActions.ManageFilters.SaveItemFontIcon))
+				{
+%>
+	&ManageFiltersDataItem.FontIcon = !<%= WorkWithStringValues.StringWithQuotes(settings.StandardActions.ManageFilters.SaveItemFontIcon) %>
+<%
+				}
+				else if (settings.StandardActions.ManageFilters.SaveItemImage != null)
+				{
+%>
+	&ManageFiltersDataItem.Icon = <%= settings.StandardActions.ManageFilters.SaveItemImageName %>.Link()
+<%
+				}
+%>
+	&ManageFiltersData.Add(&ManageFiltersDataItem)
+
+	&ManageFiltersDataItem = new()
+	&ManageFiltersDataItem.IsDivider = True
+	&ManageFiltersData.Add(&ManageFiltersDataItem)
+
+	&ManageFiltersItems.From<%= template.SerializationFormat %>(LoadManageFiltersState(!'<%= manageFiltersSessionKey %>'))
+	For &ManageFiltersItem in &ManageFiltersItems
+		&ManageFiltersDataItem = new()
+		&ManageFiltersDataItem.Title = &ManageFiltersItem.Title
+		&ManageFiltersDataItem.EventKey = &ManageFiltersItem.Title
+		&ManageFiltersDataItem.IsDivider = False
+<%
+			if (hasDynamicFilters && dynamicFilters.MaxFilters > 1)
+			{
+				if (dynFiltersIsAl)
+				{
+%>
+		&ManageFiltersDataItem.JSonclickEvent = format(!"WWPDynFilterHideAll_AL('%1', <%= dynamicFilters.MaxFilters.ToString() %>, <%= dynamicFilters.FixedFilters != null ? dynamicFilters.FixedFilters.Items.Count : 0 %>)", Table<%= dynamicFilters.Name %>.InternalName)
+<%
+				}
+				else
+				{
+%>
+		&ManageFiltersDataItem.JSonclickEvent = !'WWPDynFilterHideAll(<%= dynamicFilters.MaxFilters.ToString() %>)'
+<%
+				}
+			}
+%>
+		&ManageFiltersData.Add(&ManageFiltersDataItem)
+
+		If &ManageFiltersData.Count = <%= (settings.StandardActions.ManageFilters.MaxSavedFiltersToShow + 3).ToString() %>
+			Exit
+		EndIf
+	EndFor
+
+	If &ManageFiltersData.Count > 3
+		&ManageFiltersDataItem = new()
+		&ManageFiltersDataItem.IsDivider = True
+		&ManageFiltersData.Add(&ManageFiltersDataItem)
+
+		&ManageFiltersDataItem = new()
+		&ManageFiltersDataItem.Title = '<%= settings.StandardActions.ManageFilters.ManageFiltersOption %>'
+		&ManageFiltersDataItem.EventKey = !'<#Manage#>'
+		&ManageFiltersDataItem.IsDivider = False
+<%
+				if (!string.IsNullOrEmpty(settings.StandardActions.ManageFilters.ManageItemFontIcon))
+				{
+%>
+		&ManageFiltersDataItem.FontIcon = !<%= WorkWithStringValues.StringWithQuotes(settings.StandardActions.ManageFilters.ManageItemFontIcon) %>
+<%
+				}
+				else if (settings.StandardActions.ManageFilters.ManageItemImage != null)
+				{
+%>
+		&ManageFiltersDataItem.Icon = <%= settings.StandardActions.ManageFilters.ManageItemImageName %>.Link()
+<%
+				}
+%>
+		&ManageFiltersDataItem.JSonclickEvent = ''
+		&ManageFiltersData.Add(&ManageFiltersDataItem)
+	EndIf
+
+<%
+			}
+%>
+EndSub
+
+<%
+	}
+	if (cleanFilters != null)
+	{
+		bool defineSub = (cleanFilters is ActionGroupActionGeneralElement && !((ActionGroupActionGeneralElement)cleanFilters).IsTypeGXActionGroup());
+		string blockType = defineSub ? "Sub" : "Event";
+%>
+
+<%= blockType %> '<%= defineSub ? "Do CleanFilters" : "DoCleanFilters" %>'
+
+	Do 'CleanFilters'
+	Grid.FirstPage()
+<%
+		if (isSmooth && addPaginationBar)
+		{
+%>
+	Refresh
+<%
+		}
+%>
+
+End<%= blockType %>
+<%
+	}
+	if (hasCleanFilters)
+	{
+%>
+
+Sub 'CleanFilters'
+
+<%
+
+		if (hierarchySettings != null)
+		{
+%>
+	&Expanded<%= hierarchySettings.PkAttributeName %>Collection.Clear()
+	&Expanded<%= hierarchySettings.FkAttributeName %>Collection.Clear()
+	&Collapsed<%= hierarchySettings.PkAttributeName %>Collection.Clear()
+	&<%= hierarchySettings.PkAttributeName %>Collection.Clear()
+	&<%= hierarchySettings.FkAttributeName %>Collection.Clear()
+<%
+		}
+
+		if (totalAmountOfRegularFilters > 0)
+		{
+			foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFilters)
+			{
+			foreach (IFilter filterAtt in filtersList) 
+			{
+				if (filterAtt.HasOperators())
+				{
+%>
+	<%= filterAtt.GetOperatorVariableName() %> = 0
+<%
+				}
+				if (filterAtt.Default != String.Empty)
+				{
+%>
+	<%= filterAtt.VariableName %> = <%= filterAtt.Default %>
+<%
+					if (filterAtt.HasRange() || filterAtt.HasRangeOperator())
+					{
+%>
+	&<%= filterAtt.Name %>_To.SetEmpty()
+<%
+					}
+				}
+				else if (filterAtt is FilterAttributeMultipleGeneralElement)
+				{
+%>
+	&<%= filterAtt.Name %>Values = new()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filterAtt).IsTypeDropDownSelector())
+					{
+%>
+	DDO_FilterMultiple<%= filterAtt.Name %>.SelectedValue_set = &<%= filterAtt.Name %>Values.ToJson()
+<%
+					}
+					if (((FilterAttributeMultipleGeneralElement)filterAtt).DescriptionsAttribute != null)
+					{
+%>
+	&<%= filterAtt.Name %>Descriptions = new()
+<%
+						if (((FilterAttributeMultipleGeneralElement)filterAtt).IsTypeDropDownSelector())
+						{
+%>
+	DDO_FilterMultiple<%= filterAtt.Name %>.SelectedText_set = &<%= filterAtt.Name %>Descriptions.ToJson()
+<%
+						}
+					}
+				}
+				else if (filterAtt.IsDVCombo())
+				{
+					if (((IItemWithControlInfo)filterAtt).ControlAllowMultipleSelection)
+					{
+%>
+	&<%= filterAtt.Name %> = new()
+<%
+					}
+					else
+					{
+%>
+	&<%= filterAtt.Name %>.SetEmpty()
+<%
+					}
+%>
+	Combo_<%= filterAtt.Name %>.SelectedValue_set = ''
+<%
+					if (((IItemWithControlInfo)filterAtt).ControlLoadDynamically)
+					{
+%>
+	Combo_<%= filterAtt.Name %>.SelectedText_set = ''
+<%
+					}
+				}
+				else if (!filterAtt.IsBoolean())
+				{
+%>
+	&<%= filterAtt.Name %>.SetEmpty()
+<%
+					if (filterAtt.HasRange() || filterAtt.HasRangeOperator())
+					{
+%>
+	&<%= filterAtt.Name %>_To.SetEmpty()
+<%
+					}
+				}
+				else
+				{
+%>
+	&<%= filterAtt.Name %> = False
+<%
+				}
+				if (filterWithUpdateFilterTypeSub && filterAtt is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterAtt).HasUpdateFilterTypeSub())
+				{
+%>
+	Do 'Update<%= filterAtt.Name %>OperatorValues'
+<%
+				}
+			}
+			}
+			if (hasTitleFilter)
+			{
+				bool hasFilteredText_set = false, hasSelectedValue_set = false, hasFilteredTextTo_set = false, hasSelectedFixedFilter = false;
+				foreach (IFilterableByTitle item in titlesWithFilters)
+				{
+					string name = item.ControlName.TrimStart('&');
+					if (TitleFilterProcedureHelper.ConsiderFilterCondition(item))
+					{
+%>
+	&TF<%= name %>.SetEmpty()
+<%
+						if (!useDDOTFMultiple)
+						{
+%>
+	DDO_<%= name %>.FilteredText_set = ''
+<%
+						}
+						else
+						{
+							hasFilteredText_set = true;
+						}
+						if (item.IsSearchBoxRange())
+						{
+%>
+	&TF<%= name %>_To.SetEmpty()
+<%
+							if (!useDDOTFMultiple)
+							{
+%>
+	DDO_<%= name %>.FilteredTextTo_set = ''
+<%
+							}
+							else
+							{
+								hasFilteredTextTo_set = true;
+							}
+						}
+					}
+					if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+					{
+						if (item.AllowMultipleSelection)
+						{
+%>
+	&TF<%= name %>_Sels = new()
+<%
+							if (useDDOTFMultiple && !isSmooth)
+							{
+%>
+	&TF<%= name %>_SelsJson.SetEmpty()
+<%
+							}
+						}
+						else
+						{
+%>
+	&TF<%= name %>_Sel.SetEmpty()
+<%
+						}
+						if (!useDDOTFMultiple)
+						{
+%>
+	DDO_<%= name %>.SelectedValue_set = ''
+<%
+						}
+						else
+						{
+							hasSelectedValue_set = true;
+						}
+					}
+					if (item.PredefinedOperators != null)
+					{
+%>
+	&TF<%= name %>Operator.SetEmpty()
+<%
+						if (!useDDOTFMultiple)
+						{
+%>
+	DDO_<%= name %>.SelectedFixedFilter = !''
+<%
+						}
+						else if (!hasSelectedFixedFilter)
+						{
+							hasSelectedFixedFilter = true;
+%>
+	DDO_Grid.SelectedFixedFilter = ''
+<%
+						}
+					}
+				}
+				if (useDDOTFMultiple)
+				{
+					if (!hasSelectedFixedFilter && hasConditionalFormattingFilters && ((GridGeneralElement)grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.AddTagColumn)
+					{
+%>
+	DDO_Grid.SelectedFixedFilter = ''
+<%
+					}
+					if (hasSelectedValue_set)
+					{
+%>
+	DDO_Grid.SelectedValue_set = ''
+<%
+					}
+					if (hasFilteredText_set)
+					{
+%>
+	DDO_Grid.FilteredText_set = ''
+<%
+					}
+					if (hasFilteredTextTo_set)
+					{
+%>
+	DDO_Grid.FilteredTextTo_set = ''
+<%
+					}
+				}
+				if (hasTitleFilterAllowMultiple && !isSmooth && !useDDOTFMultiple)
+				{
+%>
+	&TitleFilterSelsAlreadySet = True
+<%
+				}
+			}
+			if (hasConditionalFormattingFilters)
+			{
+%>
+	&GridConditionalFormattingFilter.SetEmpty()
+<%
+			}
+%>
+
+<%
+		}
+
+		if (hasDynamicFilters)
+		{
+			if (((IFilter)dynamicFilters.Items[0]).VisibleCondition != "")
+			{
+%>
+	&DynamicFiltersSelector1 = &DynamicFiltersFirstFilter
+<%
+			}
+			else
+			{
+%>
+	&DynamicFiltersSelector1 = <%= includeNamesInSDTGridState ? "!'" + ((IFilter)dynamicFilters.Items[0]).Name.ToUpper() + "'": "0" %>
+<%
+			}
+			bool resetOperator = true;
+			foreach (IFilter filter in dynamicFilters.Items)
+			{
+				if (resetOperator && filter.HasOperators())
+				{
+					resetOperator = false;
+%>
+	&DynamicFiltersOperator1 = 0
+<%
+				}
+				if (filter.Default != String.Empty)
+				{
+%>
+	&<%= filter.Name %>1 = <%= filter.Default %>
+<%
+				}
+				else if (filter is FilterAttributeMultipleGeneralElement)
+				{
+%>
+	&<%= filter.Name%>1Values = new()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filter).IsTypeDropDownSelector())
+					{
+%>
+	DDO_FilterMultiple<%= filter.Name %>1.SelectedValue_set = &<%= filter.Name %>1Values.ToJson()
+<%
+					}
+					if (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null)
+					{
+%>
+	&<%= filter.Name%>1Descriptions = new()
+<%
+						if (((FilterAttributeMultipleGeneralElement)filter).IsTypeDropDownSelector())
+						{
+%>
+	DDO_FilterMultiple<%= filter.Name %>1.SelectedText_set = &<%= filter.Name %>1Descriptions.ToJson()
+<%
+						}
+					}
+				}
+				else if (filter.IsDVCombo())
+				{
+					if (((IItemWithControlInfo)filter).ControlAllowMultipleSelection)
+					{
+%>
+	&<%= filter.Name %>1 = new()
+<%
+					}
+					else
+					{
+%>
+	&<%= filter.Name %>1.SetEmpty()
+<%
+					}
+				}
+				else if (!filter.IsBoolean())
+				{
+%>
+	&<%= filter.Name %>1.SetEmpty()
+<%
+					if (filter.HasRange() || filter.HasRangeOperator())
+					{
+%>
+	&<%= filter.Name %>_To1.SetEmpty()
+<%
+					}
+				}
+				else
+				{
+%>
+	&<%= filter.Name %>1 = False
+<%				
+				}
+				if (filter.VisibleCondition == "")
+				{
+					break;
+				}
+			}
+%>
+	Do 'EnableDynamicFilters1'
+<%
+			if (dynamicFilters.MaxFilters > 1)
+			{
+%>
+	Do 'ResetDynFilters'
+<%
+			}
+%>
+	&GridState.DynamicFilters.Clear()
+	Do 'LoadDynFiltersState'
+<%
+		}
+		if (manageFilters != null
+			&& hasConditionalFormattingFilters
+			&& ((GridGeneralElement)grid).ConditionalFormatting.Type == DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ConditionalFormattingType.FormatRow)
+		{
+%>
+	Do 'LoadSavedFilters'
+<%
+		}
+		if (hasDVGroupExpand)
+		{
+%>
+	&GridCollapsedRecords = new()
+	&GridCollapsedRecordsChildren = new()
+<%
+		}
+		if (GridObject.Load == "After pressing Search button")
+		{
+%>
+	&LoadGridData = False
+<%
+		}
+%>
+
+EndSub
+<%
+	}
+	
+	foreach (IActionElement action in allActions)
+	{
+		string actionCode = action.Event();
+		if (actionCode != String.Empty)
+		{
+%>
+<%= actionCode %>
+
+<%
+		}
+	}
+
+	if (hasMultiRowActions && !isPrompt)
+	{
+%>
+Sub 'LoadSelectedRows'
+	&SelectedRows = new()
+<%
+		if (!Instance.HasTransaction() && !string.IsNullOrEmpty(grid.GetSDTCollection()))
+		{
+			string sdtVarName = grid.GetSDTCollection() + ".";
+			sdtVarName = sdtVarName.Substring(0, sdtVarName.IndexOf('.'));
+%>
+	For <%= sdtVarName %>Item in <%= grid.GetSDTCollection() %>
+		If <%= sdtVarName %>Item.Selected
+			&SelectedRow = <%= sdtVarName %>Item.Clone()
+			&SelectedRows.Add(&SelectedRow)
+		Endif
+	Endfor
+<%
+		}
+		else if (multiRowActionsMantainSelected)
+		{
+			foreach (string attName in fullLevelKeyAttributeNames)
+			{
+%>
+	&<%= attName %>Col.FromJson(&<%= attName %>Json)
+<%
+			}
+			if (transactionPKCompounded)
+			{
+%>
+	&i = 1
+<%
+			}
+			string firstAttPKName = fullLevelKeyAttributeNames[0];
+%>
+	For &<%= firstAttPKName %>ColItem In &<%= firstAttPKName %>Col
+		&SelectedRow = new()
+<%
+			if (transactionPKCompounded)
+			{
+				for (int i = 1; i<fullLevelKeyAttributeNames.Count; i++)
+				{
+%>
+		&<%= fullLevelKeyAttributeNames[i] %>ColItem = &<%= fullLevelKeyAttributeNames[i] %>Col.Item(&i)
+<%
+				}
+			}
+%>
+		For Each<%= trnForForEach %>
+			Where <%= firstAttPKName%> = &<%= firstAttPKName %>ColItem
+<%
+			if (transactionPKCompounded)
+			{
+				for (int i = 1; i<fullLevelKeyAttributeNames.Count; i++)
+				{
+%>
+			Where <%= fullLevelKeyAttributeNames[i] %> = &<%= fullLevelKeyAttributeNames[i] %>ColItem
+<%
+				}
+			}
+%>
+
+<%
+			foreach (IAttributesItem attItem in allGridAttsAndVars)
+			{
+				if (attItem is GridVariableElement && ((GridVariableElement)attItem).LoadCode != "")
+				{
+%>	
+<%= Indentation.Indent(((GridVariableElement)attItem).LoadCode, 4) %>
+<%	
+				}
+%>
+				&SelectedRow.<%= attItem.Id %> = <%= attItem.Name %>
+<%
+			}
+%>
+		EndFor		
+		&SelectedRows.Add(&SelectedRow)
+<%
+			if (transactionPKCompounded)
+			{
+%>	
+		&i += 1
+<%	
+			}
+%>
+	EndFor
+<%
+		}
+		else
+		{
+%>
+	For Each Line<%= GridObject.HasInLineInsert ? " in Grid" : "" %>
+		If (&Selected)
+			&SelectedRow = new()
+
+	<%		foreach (IAttributesItem attItem in allGridAttsAndVars)
+			{
+%>
+			&SelectedRow.<%= attItem.Id %> = <%= attItem.Name %>
+<%
+			}
+%>
+
+			&SelectedRows.Add(&SelectedRow)
+		Endif
+	Endfor
+<%
+			if (IsGXUIMultiRowSelectionAndCheckAll)
+			{
+%>
+	&<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %> = False
+<%		
+			}
+		}
+%>	
+EndSub
+
+<%
+	}
+
+	if (needGridState) 
+	{
+%>
+
+Sub 'LoadGridState'
+<%
+		string subIndent = "";
+		if (!isSmooth)
+		{
+			subIndent = "\t";
+			if (isTabAndALTabs)
+			{
+%>
+	&PageAlreadyExecuted.Visible = False
+	If Not(&PageAlreadyExecuted)
+<%
+			}
+			else
+			{
+%>
+	If (&HTTPRequest.Method = HttpMethod.Get)
+<%
+			}
+		}
+%>
+<%= subIndent %>	// Load grid state from session.
+<%
+		if (isTabAndALTabs && !isSmooth)
+		{
+%>
+<%= subIndent %>	&PageAlreadyExecuted = True
+<%
+		}
+		if (!settings.Grid.IsSaveGridStateCustom())
+		{
+%>	
+<%= subIndent %>	&GridState.From<%= template.SerializationFormat %>(&Session.Get(&PgmName + !"<%= Constants.SessionKeys.GridState %>"))
+<%
+		}
+		else
+		{
+		
+%>	
+<%= subIndent %>	If &Session.Get(&PgmName + !"<%= Constants.SessionKeys.GridState %>") = !""
+<%= subIndent %>		&GridState.From<%= template.SerializationFormat %>(LoadGridState.Udp(&PgmName + !"<%= Constants.SessionKeys.GridState %>"))
+<%= subIndent %>	Else
+<%= subIndent %>		&GridState.From<%= template.SerializationFormat %>(&Session.Get(&PgmName + !"<%= Constants.SessionKeys.GridState %>"))
+<%= subIndent %>	Endif	
+<%		
+		}
+
+		if (needOrderChoice) 
+		{
+%>
+
+<%= subIndent %>	<%= OrdersElement.OrderVariableName %> = &GridState.OrderedBy
+<%
+		}
+		if (hasDVGroup && !hasDVGroupFixed)
+		{
+%>
+<%= subIndent %>	&GroupBy = &GridState.GroupBy
+<%
+		}
+		if (GridObject.Orders.HasTitleOrdering)
+		{
+			if (needOrderChoice || !GridObject.Orders.FirstOptionSwapped)
+			{
+%>
+<%= subIndent %>	<%= OrdersElement.OrderDscVariableName %> = &GridState.OrderedDsc
+<%
+			}
+			else
+			{
+%>
+<%= subIndent %>	<%= OrdersElement.OrderDscVariableName %> = &GridState.OrderedBy.IsEmpty() OR &GridState.OrderedDsc
+<%
+			}
+			if (hasDDOSortedStatus && isSmooth)
+			{
+%>
+<%= subIndent %>	Do 'SetDDOSortedStatus'
+<%
+			}
+		}
+		if (totalAmountOfRegularFilters > 0)
+		{
+			if (!hasCleanFilters)
+			{
+%>
+
+<%@ CallSubTemplate RegularFiltersLoadState UseDDOTFMultiple='useDDOTFMultiple' IsForProcedure='false' TotalAmountOfRegularFilters='totalAmountOfRegularFilters' FiltersAddFixedFilters='filtersAddFixedFilters' TitlesWithFilters='useDDOTFMultiple ? allGridAttsAndVars : titlesWithFilters' HasConditionalFormattingFilters='hasConditionalFormattingFilters' IsWebPanelLoad='true' Grid='grid' IndentLevel='1 + (isSmooth ? 0 : 1)' IndentLevelChar='"\t"' %>
+<%
+			}
+			else
+			{
+%>
+<%= subIndent %>	Do 'LoadRegFiltersState'
+<%
+			}
+		}
+		if (hasDynamicFilters)
+		{
+%>
+<%= subIndent %>	Do 'LoadDynFiltersState'
+<%
+		}
+		if (!isSmooth)
+		{
+			if (isTabAndALTabs && needOrderChoice)
+			{
+%>
+<%= subIndent %>	If <%= OrdersElement.OrderVariableName %> < 1
+<%= subIndent %>		<%= OrdersElement.OrderVariableName %> = 1
+<%
+				if (GridObject.Orders.FirstOptionSwapped)
+				{
+%>
+<%= subIndent %>		<%= OrdersElement.OrderDscVariableName %> = True
+<%
+				}
+				if (hasDDOSortedStatus)
+				{
+%>
+<%= subIndent %>		Do 'SetDDOSortedStatus'
+<%
+				}
+%>
+<%= subIndent %>	EndIf
+<%
+			}
+		}
+		if (hierarchySettings != null)
+		{
+%>
+	If not &GridState.ExpandedHierarchies.Trim().IsEmpty()
+		&Expanded<%= hierarchySettings.PkAttributeName %>Collection.FromJson(&GridState.ExpandedHierarchies.Trim())
+		For &Aux_<%= hierarchySettings.PkAttributeName %> in &Expanded<%= hierarchySettings.PkAttributeName %>Collection
+			For Each
+				Where <%= hierarchySettings.PkAttributeName %> = &Aux_<%= hierarchySettings.PkAttributeName %>
+				&Expanded<%= hierarchySettings.FkAttributeName %>Collection.Add(<%= hierarchySettings.FkAttributeName %>)
+			When None
+				&Expanded<%= hierarchySettings.FkAttributeName %>Collection.Add('')
+			EndFor
+		EndFor
+	EndIf
+<%
+		}
+		if (!isInfiniteScrolling)
+		{
+			if (settings.Grid.SaveGridPageSize)
+			{
+%>
+<%= subIndent %>	If not &GridState.PageSize.Trim().IsEmpty()
+<%= subIndent %>		Grid.Rows = &GridState.PageSize.ToNumeric()
+<%= subIndent %>	EndIf
+<%
+			}
+			if (settings.Grid.SaveGridCurrentPage && (!settings.IsOptimizationNumber(2) || !(GridObject is ITabElement)))
+			{
+%>
+<%= subIndent %>	Grid.CurrentPage = &GridState.CurrentPage
+<%
+			}
+		}
+		if (hasDVGroupExpand)
+		{
+%>
+<%= subIndent %>	&GridCollapsedRecords.FromJson(&GridState.CollapsedRecords)
+<%= subIndent %>	If &GridCollapsedRecords.Count > 0
+<%= subIndent %>		&AddChildren = True
+<%= subIndent %>		For &Group<%= hasDVGroupFixed && !GridGroupByHelper.IsFixedGroupNumericBaseOnEnumerated((GridElement)grid, ((GridElement)grid).GroupField) ? ((GridElement)grid).GroupField : "Key" %> in &GridCollapsedRecords
+<%= subIndent %>			Do 'AddRemoveChildren'
+<%= subIndent %>		EndFor
+<%= subIndent %>	EndIf
+<%
+		}
+		if (!isSmooth)
+		{
+%>
+	EndIf
+<%
+		}
+%>
+EndSub
+
+<%
+	}
+	
+	if (needGridState && totalAmountOfRegularFilters > 0 && hasCleanFilters)
+	{
+%>
+Sub 'LoadRegFiltersState'
+
+<%@ CallSubTemplate RegularFiltersLoadState UseDDOTFMultiple='useDDOTFMultiple' IsForProcedure='false' TotalAmountOfRegularFilters='totalAmountOfRegularFilters' FiltersAddFixedFilters='filtersAddFixedFilters' TitlesWithFilters='useDDOTFMultiple ? allGridAttsAndVars : titlesWithFilters' HasConditionalFormattingFilters='hasConditionalFormattingFilters' IsWebPanelLoad='true' Grid='grid' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+EndSub
+
+<%
+	}
+	
+	if (hasDynamicFilters)
+	{
+%>
+Sub 'LoadDynFiltersState'
+
+<%
+		bool hideOperator = dynamicFilters.FiltersWithOperatorVariable() > 0 &&  (!(dynamicFilters.Items[0] is FilterAttributeGeneralElement) || !((FilterAttributeGeneralElement)dynamicFilters.Items[0]).HasOperators());
+		for (int i = 1; i < dynamicFilters.MaxFilters; i++)
+		{
+%>
+	AddDynamicFilters<%= i.ToString() %>.Visible = True
+<%
+			if (!settings.StandardFilters.IsDynFiltersClearFilterVisibilityAlways())
+			{
+%>
+	RemoveDynamicFilters<%= i.ToString() %>.Visible = False
+<%
+			}
+			if (hideOperator)
+			{
+%>	
+	&DynamicFiltersOperator<%= i.ToString() %>.Visible = False
+<%
+			}
+		}
+
+		if (hideOperator)
+		{
+%>
+	&DynamicFiltersOperator<%= dynamicFilters.MaxFilters.ToString() %>.Visible = False
+<%
+		}
+%>			
+
+<%@ CallSubTemplate DynamicFiltersLoadState DynamicFilters='dynamicFilters' ActualFilter='1' SourceType='0' ExcelWriteFilter='false' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+		foreach (IFilter filter in dynamicFilters.Items)
+		{
+			if (filter.IsDVCombo() && !((IItemWithControlInfo)filter).ControlLoadDynamically)
+			{
+%>
+	Do 'LoadCombo<%= filter.Name %>'
+<%
+			}
+		}
+		if (dynamicFilters.MaxFilters > 1)
+		{
+%>
+	If &DynamicFiltersRemoving
+		JSDynamicFilters.Caption = ''
+	EndIf
+<%
+		}
+%>
+
+EndSub
+<%
+	}
+	
+	if (needGridState || manageFilters != null || hasFilterServiceProc)
+	{
+%>
+Sub 'SaveGridState'
+<%
+		if (needGridState)
+		{
+%>
+	&GridState.From<%= template.SerializationFormat %>(&Session.Get(&PgmName + !"<%= Constants.SessionKeys.GridState %>"))
+<%
+			if (hasDVGroupExpand)
+			{
+%>
+	&OldGridState.From<%= template.SerializationFormat %>(&GridState.To<%= template.SerializationFormat %>())
+<%
+			}
+		}
+		else
+		{
+%>
+	&GridState = new()
+<%
+		}
+%>
+
+	// Save grid state in session.
+<%
+		if (needOrderChoice) 
+		{
+%>
+	&GridState.OrderedBy = <%= OrdersElement.OrderVariableName %>
+<%
+		}
+		if (GridObject.Orders.HasTitleOrdering)
+		{
+			if (!needOrderChoice && GridObject.Orders.FirstOptionSwapped)
+			{
+%>
+	&GridState.OrderedBy = 1
+<%
+			}
+%>
+	&GridState.OrderedDsc = <%= OrdersElement.OrderDscVariableName %>
+<%
+		}
+		
+		string codeIndent = "";
+		if (totalAmountOfRegularFilters > 0)
+		{
+			index = 1;
+%> 
+	&GridState.FilterValues.Clear()
+<%
+			if (includeNamesInSDTGridState)
+			{
+				codeIndent = "\t";
+			}
+			foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFilters)
+			{
+			foreach (IFilter filterVar in filtersList)
+			{
+				string emptyCondition = "";
+				if (includeNamesInSDTGridState)
+				{
+					if (string.IsNullOrEmpty(filterVar.Default))
+					{
+						emptyCondition = filterVar.VariableName + (filterVar is FilterAttributeMultipleGeneralElement || filterVar.IsDVCombo_Multiple() ? ".Count = 0" : ".IsEmpty()");
+						if (filterVar.HasOperators() && filterVar.HasRangeOperatorNotFixed(null) || filterVar.HasRange())
+						{
+							emptyCondition = "(" + emptyCondition + " AND " + filterVar.RangeVariableName + ".IsEmpty())";
+						}
+						emptyCondition = "not " + emptyCondition;
+					}
+					else
+					{
+						emptyCondition = isOptimizationNumber7 ? "true" : "";
+					}
+				}
+				if (isOptimizationNumber7)
+				{
+					string valStr, valueTo;
+					if (filterVar is FilterAttributeMultipleGeneralElement && ((FilterAttributeMultipleGeneralElement)filterVar).DescriptionsAttribute != null)
+					{
+						valueTo = "&" + filterVar.Name + "Descriptions.To" + template.SerializationFormat + "()";
+					}
+					else if (filterVar.HasOperators() && filterVar.HasRangeOperator() || filterVar.HasRange())
+					{
+						valueTo = TableAttributeElement.GetIAttributeItemStringValue(filterVar.RangeVariableName, filterVar.eDBType, false);
+					}
+					else
+					{
+						valueTo = "''";
+					}
+					if (filterVar is FilterAttributeMultipleGeneralElement)
+					{
+						valStr = filterVar.VariableName + ".To" + template.SerializationFormat + "()";
+					}
+					else if (filterVar.IsDVCombo_Multiple())
+					{
+						valStr = filterVar.VariableName + ".ToJson()";
+					}
+					else
+					{
+						valStr = TableAttributeElement.GetIAttributeItemStringValue(filterVar.VariableName, filterVar.eDBType, false);
+					}
+					if (filterVar.IsDVCombo() && !((IItemWithControlInfo)filterVar).ControlLoadDynamically && ((IItemWithControlInfo)filterVar).ControlInputDS != "Fixed values" && (((IItemWithControlInfo)filterVar).ControlAllowMultipleSelection || LoadDVComboProcedureHelper.HasDescription((IItemWithControlInfo)filterVar)))
+					{
+%>
+	WWP_GridStateAddComboFilterValue(&GridState, !"<%= filterVar.Name.ToUpper() %>", <%= WorkWithStringValues.StringWithQuotes(setFilterDsc ? filterVar.Description : "") %>, <%= emptyCondition %>, <%= valStr %>, &<%= filterVar.Name %>_Data, <%= ((IItemWithControlInfo)filterVar).ControlAllowMultipleSelection.ToString() %>)
+<%
+					}
+					else
+					{
+%>
+	WWP_GridStateAddFilterValue(&GridState, !"<%= filterVar.Name.ToUpper() %>"<%= isOptimizationNumber10 ? ", " + WorkWithStringValues.StringWithQuotes(setFilterDsc ? filterVar.Description : "") : "" %>, <%= emptyCondition %>, <%= filterVar.HasOperators() ? filterVar.GetOperatorVariableName() : "0" %>, <%= valStr %>, <%= valueTo %>)
+<%
+					}
+				}
+				else
+				{
+				if (includeNamesInSDTGridState && emptyCondition != "")
+				{
+%>
+	If <%= emptyCondition %>
+<%
+				}
+%>
+	<%= codeIndent %>&GridStateFilterValue = new()
+<%
+				if (includeNamesInSDTGridState)
+				{
+%>
+		&GridStateFilterValue.Name = !"<%= filterVar.Name.ToUpper() %>"
+<%
+				}
+				if (filterVar is FilterAttributeMultipleGeneralElement)
+				{
+%>
+	<%= codeIndent %>&GridStateFilterValue.Value = <%= filterVar.VariableName %>.To<%= template.SerializationFormat %>()
+<%
+					if (((FilterAttributeMultipleGeneralElement)filterVar).DescriptionsAttribute != null)
+					{
+%>
+	<%= codeIndent %>&GridStateFilterValue.ValueTo = &<%= filterVar.Name %>Descriptions.To<%= template.SerializationFormat %>()
+<%
+					}
+				}
+				else
+				{
+%>
+	<%= codeIndent %>&GridStateFilterValue.Value = <%= filterVar.VariableName %>.ToString()
+<%
+				}
+				if (filterVar.HasOperators())
+				{
+%>
+	<%= codeIndent %>&GridStateFilterValue.Operator = <%= filterVar.GetOperatorVariableName() %>
+<%
+					if (filterVar.HasRangeOperator())
+					{
+%>
+	<%= codeIndent %>&GridStateFilterValue.ValueTo = <%= filterVar.RangeVariableName %>.ToString()
+<%
+					}
+				}
+				else if (filterVar.HasRange())
+				{
+%>
+	<%= codeIndent %>&GridStateFilterValue.ValueTo = <%= filterVar.RangeVariableName %>.ToString()
+<%
+				}
+%>
+	<%= codeIndent %>&GridState.FilterValues.Add(&GridStateFilterValue)
+<%
+				if (includeNamesInSDTGridState && emptyCondition != "")
+				{
+%>
+	EndIf
+<%
+				}
+				}
+			}
+			}
+			if (hasTitleFilter)
+			{
+				if (hasTitleFilterAllowMultiple && !isSmooth && !useDDOTFMultiple)
+				{
+					bool isFirst = true;
+					foreach (IFilterableByTitle item in titlesWithFilters)
+					{
+						if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item) && item.AllowMultipleSelection)
+						{
+							string name = item.ControlName.TrimStart('&');
+							if (isFirst)
+							{
+%>
+	If not &TitleFilterSelsAlreadySet AND DDO_<%= name %>.SelectedValue_get <> ''
+<%
+								isFirst = false;
+							}
+%>
+		&TF<%= name %>_SelsJson = DDO_<%= name %>.SelectedValue_get
+		&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson<%= item.eDBType == Artech.Genexus.Common.eDBType.NUMERIC ? ".Replace(!'\"', '')" : "" %>)
+<%
+						}
+					}
+%>
+	EndIf
+<%
+				}
+				foreach (IFilterableByTitle item in titlesWithFilters)
+				{
+					string name = item.ControlName.TrimStart('&');
+					bool considerFilterCondition = TitleFilterProcedureHelper.ConsiderFilterCondition(item);
+					bool selConditionAdded = false;
+					if (considerFilterCondition || item.PredefinedOperators != null)
+					{
+						string emptyCondition = "";
+						if (includeNamesInSDTGridState)
+						{
+							emptyCondition = "&TF" + name + ".IsEmpty()";
+							if (considerFilterCondition && item.IsSearchBoxRange() || item.PredefinedOperators != null)
+							{
+								emptyCondition = "(" + emptyCondition;
+								if (considerFilterCondition && item.IsSearchBoxRange())
+								{
+									emptyCondition += " AND &TF" + name + "_To.IsEmpty()";
+								}
+								if (item.PredefinedOperators != null)
+								{
+									emptyCondition += " AND &TF" + name + "Operator.IsEmpty()";
+								}
+								emptyCondition += ")";
+							}
+						}
+						if (isOptimizationNumber7)
+						{
+							if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item))
+							{
+								selConditionAdded = true;
+								if (!isSmooth && useDDOTFMultiple && item.AllowMultipleSelection)
+								{
+%>
+	&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson<%= item.eDBType == Artech.Genexus.Common.eDBType.NUMERIC ? ".Replace(!'\"', '')" : "" %>)
+<%
+								}
+%>
+	WWP_GridStateAddFilterValueAndSel(&GridState, !"TF<%= name.ToUpper() %>"<%= isOptimizationNumber10 ? ", " + WorkWithStringValues.StringWithQuotes(setFilterDsc ? item.Description : "") : "" %>, not <%= emptyCondition %>, <%= item.PredefinedOperators != null ? "&TF" + name + "Operator" : "0" %>, <%= TableAttributeElement.GetIAttributeItemStringValue("&TF" + name, item.eDBType, false) %>, <%= considerFilterCondition && item.IsSearchBoxRange() ? TableAttributeElement.GetIAttributeItemStringValue("&TF" + name + "_To", item.eDBType, false) : "''"%>, not &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()" %>, <%= item.AllowMultipleSelection ? "&TF" + name + "_Sels.ToJson()" : TableAttributeElement.GetIAttributeItemStringValue("&TF" + name + "_Sel", item.eDBType, false) %>, <%= TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(item) && !item.AllowMultipleSelection ? "&TF" + name + "_SelDsc" : "''" %>)
+<%
+							}
+							else
+							{
+%>
+	WWP_GridStateAddFilterValue(&GridState, !"TF<%= name.ToUpper() %>"<%= isOptimizationNumber10 ? ", " + WorkWithStringValues.StringWithQuotes(setFilterDsc ? item.Description : "") : "" %>, not <%= emptyCondition %>, <%= item.PredefinedOperators != null ? "&TF" + name + "Operator" : "0" %>, <%= TableAttributeElement.GetIAttributeItemStringValue("&TF" + name, item.eDBType, false) %>, <%= considerFilterCondition && item.IsSearchBoxRange() ? TableAttributeElement.GetIAttributeItemStringValue("&TF" + name + "_To", item.eDBType, false) : "''"%>)
+<%
+							}
+						}
+						else
+						{
+						if (includeNamesInSDTGridState)
+						{
+%>
+	If not <%= emptyCondition %>
+<%
+						}
+%>
+	<%= codeIndent %>&GridStateFilterValue = new()
+<%
+						if (includeNamesInSDTGridState)
+						{
+%>
+		&GridStateFilterValue.Name = !"TF<%= name.ToUpper() %>"
+<%
+						}
+						if (item.PredefinedOperators != null)
+						{
+%>
+	<%= codeIndent %>&GridStateFilterValue.Operator = &TF<%= name %>Operator
+<%
+						}
+%>
+	<%= codeIndent %>&GridStateFilterValue.Value = &TF<%= name %>.ToString()
+<%
+						if (considerFilterCondition && item.IsSearchBoxRange())
+						{
+%>
+	<%= codeIndent %>&GridStateFilterValue.ValueTo = &TF<%= name %>_To.ToString()
+<%
+						}
+%>
+	<%= codeIndent %>&GridState.FilterValues.Add(&GridStateFilterValue)
+<%
+						if (includeNamesInSDTGridState)
+						{
+%>
+	EndIf
+<%
+						}
+						}
+					}
+					if (TitleFilterProcedureHelper.ConsiderSelFilterCondition(item) && !selConditionAdded)
+					{
+						if (isOptimizationNumber7)
+						{
+							if (!isSmooth && useDDOTFMultiple && item.AllowMultipleSelection)
+							{
+%>
+	&TF<%= name %>_Sels.FromJson(&TF<%= name %>_SelsJson<%= item.eDBType == Artech.Genexus.Common.eDBType.NUMERIC ? ".Replace(!'\"', '')" : "" %>)
+<%
+							}
+%>
+	WWP_GridStateAddFilterValue(&GridState, !"TF<%= name.ToUpper() %>_SEL"<%= isOptimizationNumber10 ? ", " + WorkWithStringValues.StringWithQuotes(setFilterDsc ? item.Description : "") : "" %>, not &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()" %>, 0, <%= item.AllowMultipleSelection ? "&TF" + name + "_Sels.ToJson()" : TableAttributeElement.GetIAttributeItemStringValue("&TF" + name + "_Sel", item.eDBType, false) %>, <%= TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(item) && !item.AllowMultipleSelection ? "&TF" + name + "_SelDsc" : "''" %>)
+<%
+						}
+						else
+						{
+							if (includeNamesInSDTGridState)
+							{
+%>
+	If not &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "s.Count = 0" : ".IsEmpty()" %>
+<%
+							}
+%>
+	<%= codeIndent %>&GridStateFilterValue = new()
+<%
+							if (includeNamesInSDTGridState)
+							{
+%>
+		&GridStateFilterValue.Name = !"TF<%= name.ToUpper() %>_SEL"
+<%
+							}
+%>
+	<%= codeIndent %>&GridStateFilterValue.Value = &TF<%= name %>_Sel<%= item.AllowMultipleSelection ? "s.ToJson()" : ".ToString()" %>
+<%
+							if (TitleFilterProcedureHelper.IsDynamicWithDifferentValueAndDescription(item))
+							{
+								if (item.AllowMultipleSelection)
+								{
+									//not implemented (IsDynamicWithDifferentValueAndDescription and AllowMultipleSelection) - shows id when filter is selected and is not retrived in dynamic list
+								}
+								else
+								{
+%>
+	<%= codeIndent %>&GridStateFilterValue.ValueTo = &TF<%= name %>_SelDsc
+<%
+								}
+							}
+%>
+	<%= codeIndent %>&GridState.FilterValues.Add(&GridStateFilterValue)
+<%
+							if (includeNamesInSDTGridState)
+							{
+%>
+	EndIf
+<%
+							}
+						}
+					}
+				}
+			}
+			
+			if (hasConditionalFormattingFilters)
+			{
+				if (isOptimizationNumber10 && setFilterDsc)
+				{
+%>
+	If Not &GridConditionalFormattingFilter.IsEmpty()
+		Do Case
+<%
+					int condIndex = 1;
+					foreach (DVelop.Patterns.WorkWithPlus.CustomPropertyTypes.ICondFormattingItem item in ((GridGeneralElement)grid).ConditionalFormatting.CondFormattingItems)
+					{
+						if (!string.IsNullOrEmpty(item.FilterCaption))
+						{
+%>
+			Case &GridConditionalFormattingFilter = <%= condIndex %>
+				WWP_GridStateAddFilterValue(&GridState, !"GRIDCFFILTER", <%= WorkWithStringValues.StringWithQuotes(item.FilterCaption) %>, True, 0, &GridConditionalFormattingFilter.ToString(), '')
+<%
+						}
+						condIndex++;
+					}
+%>
+		EndCase
+	EndIf
+<%
+				}
+				else
+				{
+%>
+	WWP_GridStateAddFilterValue(&GridState, !"GRIDCFFILTER"<%= isOptimizationNumber10 ? ", ''" : "" %>, &GridConditionalFormattingFilter.IsEmpty(), 0, &GridConditionalFormattingFilter.ToString(), '')
+<%
+				}
+			}
+		}
+		if ((hasFilterServiceProc && totalAmountOfRegularFilters > 0) || (sendGridStateToProcsBySession && (exportAction != null || exportReportAction != null || exportCSVAction != null)))
+		{
+			if (totalAmountOfRegularFilters <= 0)
+			{
+%>			
+	&GridState.FilterValues.Clear()
+<%
+				if (includeNamesInSDTGridState)
+				{
+					codeIndent = "\t";
+				}
+			}
+			foreach (ParameterElement parameter in parameters)
+			{
+				if (!isPrompt || ((PromptParameterElement)parameter).Type == "In")
+				{
+					string parmVarName = "&" + (isPrompt && !parameter.Name.StartsWith("&") ? "In" : "") + parameter.Name.TrimStart('&');
+					if (includeNamesInSDTGridState)
+					{
+%>
+	If not <%= parmVarName %>.IsEmpty()
+<%
+					}
+%>
+	<%= codeIndent %>&GridStateFilterValue = new()
+<%
+					if (includeNamesInSDTGridState)
+					{
+%>
+		&GridStateFilterValue.Name = !"PARM_<%= parmVarName.ToUpper() %>"
+<%
+					}
+%>
+	<%= codeIndent %>&GridStateFilterValue.Value = <%= parmVarName %>.ToString()
+	<%= codeIndent %>&GridState.FilterValues.Add(&GridStateFilterValue)
+<%
+					if (includeNamesInSDTGridState)
+					{
+%>
+	EndIf
+<%
+					}
+				}
+			}
+		}
+		if (hasDynamicFilters)
+		{
+%>
+
+	Do 'SaveDynFiltersState'
+<%
+		}
+%>
+
+<%
+		if (hierarchySettings != null)
+		{
+%>
+
+	Do 'Hierarchy_ProcessRecordsToShow'
+	If Grid.CurrentPage > 1 AND Grid.CurrentPage > Grid.PageCount
+		Grid.FirstPage()
+	EndIf
+	&GridState.ExpandedHierarchies = &Expanded<%= hierarchySettings.PkAttributeName %>Collection.ToJson()
+<%
+		}
+
+		if (needGridState || hasFilterServiceProc)
+		{
+			if (!isInfiniteScrolling && needGridState)
+			{
+				if (settings.Grid.SaveGridPageSize)
+				{
+%>
+	&GridState.PageSize = str(Grid.Rows)
+<%
+				}
+				if (settings.Grid.SaveGridCurrentPage && (!settings.IsOptimizationNumber(2) || !(GridObject is ITabElement)))
+				{
+%>
+	&GridState.CurrentPage = Grid.CurrentPage
+<%
+				}
+			}
+			if (hasDVGroup && !hasDVGroupFixed)
+			{
+%>
+	&GridState.GroupBy = &GroupBy
+<%
+			}
+			if (hasDVGroup && !hasDVGroupFixed)
+			{
+%>
+<%= Indentation.Indent(GridGroupByHelper.GetSaveGridStateGroupByEmpty((GridElement)grid, needOrderChoice), 1) %>
+	Grid_Group.ColumnIndex = iif(&GroupBy.IsEmpty(), -1, <%= DVelop.Patterns.WorkWithPlus.Helpers.GridGroupByHelper.GetGroupByExpandColumnIndex((GridGeneralElement)grid, GridObject) + 1 %>)
+<%
+			}
+			if (hasDVGroupExpand)
+			{
+%>
+	If <%= hasDVGroupFixed ? "" : "&GroupBy.IsEmpty() OR " %>WWP_ResetCollapsedRecords(&OldGridState, &GridState)
+		&GridCollapsedRecords = new()
+		&GridCollapsedRecordsChildren = new()
+	EndIf
+	&GridState.CollapsedRecords = &GridCollapsedRecords.ToJson()
+<%
+			}
+%>
+	<%= gridStateSaveLine %>
+<%
+		}	
+%>
+EndSub
+
+<%
+	}
+	
+	if (hasDynamicFilters && (needGridState || hasExportOrReportAndDyn || hasTitleFilter || dynamicFilters.MaxFilters > 1))
+	{
+%>
+
+Sub 'SaveDynFiltersState'
+
+<%@ CallSubTemplate DynamicFiltersSaveState DynamicFilters='dynamicFilters' SetFilterDsc='setFilterDsc' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+EndSub
+
+<%
+	}
+
+	if (useTransactionContext)
+	{
+%>
+Sub 'PrepareTransaction'
+<%@ CallSubTemplate SubPrepareTransaction Transaction='GridObject.Transaction' CallerIsRecord='false' Parameters='parameters' Template='template' %>
+EndSub
+
+<%
+	}
+
+	if (exportAction != null)
+	{
+		string gridParameters = exportAction.GetParameters().List();
+		string exportParameters = (gridParameters != String.Empty ? gridParameters + ", " : String.Empty);
+		if (hasDynamicFilters && !sendGridStateToProcsBySession)
+		{
+			exportParameters += "&GridState.DynamicFilters.To" + template.SerializationFormat + "(), ";
+		}
+		if (hierarchySettings != null)
+		{
+			exportParameters += "&" + hierarchySettings.PkAttributeName + "Collection, ";
+		}
+		exportParameters += "&ExcelFilename, &ErrorMessage";
+		bool defineSub = (exportAction is ActionGroupActionGeneralElement && !((ActionGroupActionGeneralElement)exportAction).IsTypeGXActionGroup());
+		string blockType = defineSub ? "Sub" : "Event";
+%>
+<%= blockType %> '<%= Constants.EventExport %>'
+	// Generate Excel spreadsheet and download it.
+<%= Indentation.Indent(SettingsExportActionElement.GetActionEventCode(useDDOTFMultiple, exportAction, exportParameters, parameters, sendGridStateToProcsBySession, hasDynamicFilters, hasTitleFilter, hasTitleFilterAllowMultiple, titlesWithFilters, hasSomeCustomTitle && hasColumnsSelectorWithRG, template, GridObject, settings), 1) %>
+End<%= blockType %>
+
+<%
+	}
+
+	if (exportReportAction != null)
+	{
+		string gridParameters = exportReportAction.GetParameters().List();
+		if (hasDynamicFilters && !sendGridStateToProcsBySession)
+		{
+			if (gridParameters != "")
+			{
+				gridParameters += ", ";
+			}
+			gridParameters += "&GridState.DynamicFilters.To" + template.SerializationFormat + "()";
+		}
+		bool defineSub = (exportReportAction is ActionGroupActionGeneralElement && !((ActionGroupActionGeneralElement)exportReportAction).IsTypeGXActionGroup());
+		string blockType = defineSub ? "Sub" : "Event";
+%>
+<%= blockType %> 'DoExportReport'
+	// Generate PDF file.
+<%= Indentation.Indent(SettingsExportReportActionElement.GetActionEventCode(useDDOTFMultiple, exportReportAction, sendGridStateToProcsBySession, parameters, hasDynamicFilters, hasTitleFilterAllowMultiple, titlesWithFilters, filtersAddFixedFilters, hierarchySettings, gridParameters, GridObject, settings), 1) %>
+End<%= blockType %>
+
+<%
+	}
+
+	if (exportCSVAction != null)
+	{
+		string gridParameters = exportCSVAction.GetParameters().List();		
+		if (hasDynamicFilters && !sendGridStateToProcsBySession)
+		{
+			gridParameters += (gridParameters != String.Empty ? ", " : String.Empty);
+			gridParameters += "&GridState.DynamicFilters.To" + template.SerializationFormat + "()";
+		}
+		if (hierarchySettings != null)
+		{
+			gridParameters += (gridParameters != String.Empty ? ", " : String.Empty);
+			gridParameters += "&" + hierarchySettings.PkAttributeName + "Collection";
+		}
+
+		bool defineSub = (exportCSVAction is ActionGroupActionGeneralElement && !((ActionGroupActionGeneralElement)exportCSVAction).IsTypeGXActionGroup());
+		string blockType = defineSub ? "Sub" : "Event";
+%>
+<%= blockType %> 'DoExportCSV'
+	// Generate CSV file.
+<%= Indentation.Indent(SettingsExportActionElement.GetCSVActionEventCode(useDDOTFMultiple, exportCSVAction, gridParameters, parameters, sendGridStateToProcsBySession, hasDynamicFilters, filtersAddFixedFilters, hasTitleFilterAllowMultiple, titlesWithFilters, GridObject, settings), 1) %>
+End<%= blockType %>
+
+<%
+	}
+	if (hasColumnsSelectorWithRG && !settings.ColumnsSelectorOrdered)
+	{
+%>
+Sub 'UpdateColumns_ColumnsSelector'
+	//Update columns that changed its description or were deleted or hidden from the grid
+	&ColumnsSelectorXML = &ColumnsSelector.VisibleColumns.ToXml()
+	&ColumnsSelectorXML2 = &ColumnsSelector.InvisibleColumns.ToXml()
+	&ColumnsSelector = new()
+<%
+		bool isAddColumnsColumnsSelectorNo = settings.Grid.IsAddColumnsColumnsSelectorNo();
+		bool isAddColumnsColumnsSelectorYesAllVisibles = settings.Grid.IsAddColumnsColumnsSelectorYesAllVisibles();
+		bool isAddColumnsColumnsSelectorYesAllInvisibles = settings.Grid.IsAddColumnsColumnsSelectorYesAllInvisibles();
+		bool isAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault = settings.Grid.IsAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault();
+		foreach (IGridAttributesItem item in allGridAttsAndVars)
+		{
+			if (item.Visible)
+			{
+%>
+<%
+				if (isAddColumnsColumnsSelectorNo)
+				{
+%>
+	If &ColumnsSelectorXML.IsMatch(!<%= WorkWithStringValues.StringWithQuotesFirstSingleColon("<ColumnName>" + item.Description + "</ColumnName") %>)
+		&VisibleColumn = new WWPColumnsSelector.VisibleColumn()
+		&VisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		&ColumnsSelector.VisibleColumns.Add(&VisibleColumn)
+	Else
+		If &ColumnsSelectorXML2.IsMatch(!<%= WorkWithStringValues.StringWithQuotesFirstSingleColon("<ColumnName>" + item.Description + "</ColumnName") %>)
+			&InvisibleColumn = new WWPColumnsSelector.InvisibleColumn()
+			&InvisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+			&ColumnsSelector.InvisibleColumns.Add(&InvisibleColumn)
+		EndIf
+	EndIf
+<%
+				}
+				else if (isAddColumnsColumnsSelectorYesAllVisibles
+						|| (isAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault && item.VisibleByDefault))
+				{
+%>
+	If not(&ColumnsSelectorXML2.IsMatch(!<%= WorkWithStringValues.StringWithQuotesFirstSingleColon("<ColumnName>" + item.Description + "</ColumnName") %>))
+		&VisibleColumn = new WWPColumnsSelector.VisibleColumn()
+		&VisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		&ColumnsSelector.VisibleColumns.Add(&VisibleColumn)
+	Else
+		&InvisibleColumn = new WWPColumnsSelector.InvisibleColumn()
+		&InvisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		&ColumnsSelector.InvisibleColumns.Add(&InvisibleColumn)
+	EndIf
+<%
+				}
+				else
+				{
+					if (!(isAddColumnsColumnsSelectorYesAllInvisibles
+						|| (isAddColumnsColumnsSelectorYesBasedOnPropertyVisibleByDefault && !item.VisibleByDefault)))
+					{
+						throw new Exception("WorkWithPlus programming error.");
+					}
+%>
+	If &ColumnsSelectorXML.IsMatch(!<%= WorkWithStringValues.StringWithQuotesFirstSingleColon("<ColumnName>" + item.Description + "</ColumnName") %>)
+		&VisibleColumn = new WWPColumnsSelector.VisibleColumn()
+		&VisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		&ColumnsSelector.VisibleColumns.Add(&VisibleColumn)
+	Else
+		&InvisibleColumn = new WWPColumnsSelector.InvisibleColumn()
+		&InvisibleColumn.ColumnName = !<%= WorkWithStringValues.StringWithQuotesFirstSingleColon(item.Description) %>
+		&ColumnsSelector.InvisibleColumns.Add(&InvisibleColumn)
+	EndIf
+<%
+				}
+			}
+		}
+%>
+EndSub
+<%
+	}
+	if (isAssociation)
+	{
+%>
+
+Event &IsAssociated.Click
+
+	Do 'Load Lists'
+
+<%
+		index = 0;
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+	&<%= relationKeyRelatedAttribute %>ToFind = <%= association.Info.RelatedTableKeyAttributes[index] %>
+<%
+			index++;
+		}
+%>
+	If &IsAssociated 
+		If &IsAssociatedOld
+			Do 'Find in Removed'
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+			&<%= relationKeyRelatedAttribute %>Removed.Remove(&i)
+<%
+		}
+%>
+		Else
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+			&<%= relationKeyRelatedAttribute %>Added.Add(&<%= relationKeyRelatedAttribute %>ToFind)
+<%
+		}
+%>
+		EndIf
+	Else
+		If &IsAssociatedOld
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+			&<%= relationKeyRelatedAttribute %>Removed.Add(&<%= relationKeyRelatedAttribute %>ToFind)
+<%
+		}
+%>
+		Else
+			Do 'Find in Added'
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+			&<%= relationKeyRelatedAttribute %>Added.Remove(&i)
+<%
+		}
+%>
+		EndIf
+	EndIf
+	
+	Do 'Save Lists'
+	
+EndEvent
+
+Sub 'Find in Added'
+	&i = 1
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+	For &<%= relationKeyRelatedAttribute %> in &<%= relationKeyRelatedAttribute %>Added
+		If &<%= relationKeyRelatedAttribute %> = &<%= relationKeyRelatedAttribute %>ToFind
+<%
+			if (association.Info.RelationKeyRelatedAttributes.Count > 1)
+			{
+				index = 0;
+				foreach (string relationKeyRelatedAttribute2 in association.Info.RelationKeyRelatedAttributes)
+				{
+					if (index > 0)
+					{
+%>
+			&<%= relationKeyRelatedAttribute2 %> = &<%= relationKeyRelatedAttribute2 %>Added.Item(&i)
+<%
+					}
+					index++;
+				}
+				index = 0;
+				string equlsCondition = "";
+				foreach (string relationKeyRelatedAttribute2 in association.Info.RelationKeyRelatedAttributes)
+				{
+					if (index > 0)
+					{
+						equlsCondition += string.Format(" AND &{0} = &{0}ToFind", relationKeyRelatedAttribute2);
+					}
+					index++;
+				}
+				equlsCondition = equlsCondition.Substring(5);
+%>
+			If <%= equlsCondition %>
+				Exit
+			EndIf
+<%
+			}
+			else
+			{
+%>
+			Exit
+<%
+			}
+%>
+		EndIf
+		&i += 1
+	EndFor
+	If &i > &<%= relationKeyRelatedAttribute %>Added.Count
+		&i = 0
+	EndIf
+<%
+			break;
+		}
+%>
+EndSub
+
+Sub 'Find in Removed'
+	&i = 1
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+	For &<%= relationKeyRelatedAttribute %> in &<%= relationKeyRelatedAttribute %>Removed
+		If &<%= relationKeyRelatedAttribute %> = &<%= relationKeyRelatedAttribute %>ToFind
+<%
+			if (association.Info.RelationKeyRelatedAttributes.Count > 1)
+			{
+				index = 0;
+				foreach (string relationKeyRelatedAttribute2 in association.Info.RelationKeyRelatedAttributes)
+				{
+					if (index > 0)
+					{
+%>
+			&<%= relationKeyRelatedAttribute2 %> = &<%= relationKeyRelatedAttribute2 %>Removed.Item(&i)
+<%
+					}
+					index++;
+				}
+				index = 0;
+				string equlsCondition = "";
+				foreach (string relationKeyRelatedAttribute2 in association.Info.RelationKeyRelatedAttributes)
+				{
+					if (index > 0)
+					{
+						equlsCondition += string.Format(" AND &{0} = &{0}ToFind", relationKeyRelatedAttribute2);
+					}
+					index++;
+				}
+				equlsCondition = equlsCondition.Substring(5);
+%>
+			If <%= equlsCondition %>
+				Exit
+			EndIf
+<%
+			}
+			else
+			{
+%>
+			Exit
+<%
+			}
+%>
+		EndIf
+		&i += 1
+	EndFor
+	If &i > &<%= relationKeyRelatedAttribute %>Removed.Count
+		&i = 0
+	EndIf
+<%
+			break;
+		}
+%>
+EndSub
+
+Sub 'Load Lists'
+
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+	If not &<%= relationKeyRelatedAttribute %>RemovedXml.IsEmpty()
+		&<%= relationKeyRelatedAttribute %>Removed.From<%= template.SerializationFormat %>(&<%= relationKeyRelatedAttribute %>RemovedXml)
+	EndIf
+	If not &<%= relationKeyRelatedAttribute %>AddedXml.IsEmpty()
+		&<%= relationKeyRelatedAttribute %>Added.From<%= template.SerializationFormat %>(&<%= relationKeyRelatedAttribute %>AddedXml)
+	EndIf
+<%
+		}
+%>
+
+EndSub
+
+Sub 'Save Lists'
+
+<%
+		foreach (string relationKeyRelatedAttribute in association.Info.RelationKeyRelatedAttributes)
+		{
+%>
+	If &<%= relationKeyRelatedAttribute %>Removed.Count > 0
+		&<%= relationKeyRelatedAttribute %>RemovedXml = &<%= relationKeyRelatedAttribute %>Removed.To<%= template.SerializationFormat %>()
+	Else
+		&<%= relationKeyRelatedAttribute %>RemovedXml = ''
+	EndIf
+	If &<%= relationKeyRelatedAttribute %>Added.Count > 0
+		&<%= relationKeyRelatedAttribute %>AddedXml = &<%= relationKeyRelatedAttribute %>Added.To<%= template.SerializationFormat %>()
+	Else
+		&<%= relationKeyRelatedAttribute %>AddedXml = ''
+	EndIf
+<%
+		}
+%>
+
+EndSub
+
+Sub 'Show Error Messages'
+
+	For &Message in &<%= relationTrnName %>.GetMessages()
+		If &Message.Type = MessageTypes.Error
+			msg(&Message.Description)
+		EndIf
+	EndFor
+	
+EndSub
+
+<%
+	}
+	
+	if (hasRequiredAtts)
+	{
+%>
+<%= TableVariableElement.GetRequiredFieldsValidationSub(GridObject.Table, settings) %>
+<%
+	}
+
+	if (addAttSecurityCode || addAttVisibleConditionCode || otherControlVisibleCondition)
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+
+<%
+	if (addAttSecurityCode || addAttVisibleConditionCode)
+	{
+%>
+<%= Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(isAssociation, GridObject.Table.GetAllAttributesAndVariables(true, true), true, true), 1) %>
+
+<%
+	}
+	if (otherControlVisibleCondition)
+	{
+%>
+<%= Indentation.Indent(GeneralTableElement.GetControlVisibleConditionsCode(GridObject.Table), 1) %>
+
+<%
+	}
+%>
+
+EndSub
+<%
+	}
+	if (GridObject.Orders.HasTitleOrdering && grid is FreeStyleGridElement && !includeSortableByTitleInDropDownOptions)
+	{
+		if (needOrderChoice)
+		{
+%>
+
+Sub 'ResetTitlesThemeClases'
+<%
+			foreach (IAttributesItem gridItem in allGridAttsAndVars)
+			{
+				if (gridItem is ISortableByTitle && ((ISortableByTitle)gridItem).IsSortableByTitle()
+					&& !((ISortableByTitle)gridItem).AllowGrouping
+					&& !(hasTitleFilter && gridItem is IFilterableByTitle && ((IFilterableByTitle)gridItem).IsIncludeTitleFilterTrue()))
+				{
+%>
+	TextBlock<%= ((ISortableByTitle)gridItem).Name.TrimStart('&') %>.Class = !'<%= ((ITableItemWithDescription)gridItem).DescriptionThemeClass %> GridTitleSortable'
+<%
+				}
+			}
+%>
+EndSub
+
+<%
+		}
+		foreach (IAttributesItem gridItem in allGridAttsAndVars)
+		{
+			if (gridItem is ISortableByTitle && ((ISortableByTitle)gridItem).IsSortableByTitle()
+				&& !(hasTitleFilter && gridItem is IFilterableByTitle && ((IFilterableByTitle)gridItem).IsIncludeTitleFilterTrue()))
+			{
+				int orderIndex = ((ISortableByTitle)gridItem).OrderIndex;
+%>
+
+Event 'Order <%= ((ISortableByTitle)gridItem).Name.TrimStart('&') %>'
+
+<%
+				if (needOrderChoice)
+				{
+%>
+	Do 'ResetTitlesThemeClases'
+	If &OrderedBy = <%= orderIndex.ToString() %>
+		&OrderedDsc = not &OrderedDsc
+	Else
+		&OrderedDsc = False
+		&OrderedBy = <%= orderIndex.ToString() %>
+	EndIf
+<%
+				}
+				else
+				{
+%>
+	&OrderedDsc = not &OrderedDsc
+<%
+				}
+%>
+	TextBlock<%= ((ISortableByTitle)gridItem).Name.TrimStart('&') %>.Class = iif(&OrderedDsc, !'<%= ((ITableItemWithDescription)gridItem).DescriptionThemeClass %> GridTitleSortedDsc', !'<%= ((ITableItemWithDescription)gridItem).DescriptionThemeClass %> GridTitleSortedAsc')
+<%
+				if (isSmooth)
+				{
+%>
+	Grid.Refresh()
+<%
+				}
+%>
+
+EndEvent
+
+<%
+			}
+		}
+	}
+	if (GridObject.HasFilterMultiple || filterWithUpdateFilterTypeSub || filterHasRangePicker)
+	{
+		foreach (System.Collections.IEnumerable filtersList in filtersAddFixedFilters)
+		{
+			foreach (IFilter filterVar in filtersList)
+			{
+				if (filterVar is FilterAttributeMultipleGeneralElement)
+				{
+					if (((FilterAttributeMultipleGeneralElement)filterVar).IsTypePrompt())
+					{
+%>
+
+<%= ((FilterAttributeMultipleGeneralElement)filterVar).GetPromptEventCode(null, isSmooth) %>
+
+<%
+					}
+					else
+					{
+%>
+
+<%= ((FilterAttributeMultipleGeneralElement)filterVar).GetOnOptionClickedEventCode(null, template) %>
+
+<%
+					}
+%>
+
+Event TagsInput<%= filterVar.Name %>.OnTagRemoved
+
+<%
+					if (((FilterAttributeMultipleGeneralElement)filterVar).IsTypeDropDownSelector())
+					{
+%>
+	DDO_FilterMultiple<%= filterVar.Name %>.SelectedValue_set = &<%= filterVar.Name %>Values.ToJson()
+<%
+						if (((FilterAttributeMultipleGeneralElement)filterVar).DescriptionsAttribute != null)
+						{
+%>
+	DDO_FilterMultiple<%= filterVar.Name %>.SelectedText_set = &<%= filterVar.Name %>Descriptions.ToJson()
+<%
+						}
+					}
+%>
+	Refresh
+
+EndEvent
+
+<%
+				}
+				else if (filterVar is FilterAttributeGeneralElement && ((FilterAttributeGeneralElement)filterVar).HasUpdateFilterTypeSub())
+				{
+%>
+
+Event <%= filterVar.GetOperatorVariableName() %>.Click
+	<%= filterVar.VariableName %>.SetEmpty()
+<%
+					if (filterVar.HasRangeOperator())
+					{
+%>
+	<%= filterVar.RangeVariableName %>.SetEmpty()
+<%
+					}
+%>
+	Do 'Update<%= filterVar.Name %>OperatorValues'
+<%
+					if (!hasSearchAction)
+					{
+%>
+	Grid.Refresh()
+<%
+					}
+%>
+Endevent
+
+<%@ CallSubTemplate SubUpdateFilterOperatorValues  FilterVarGen='(FilterAttributeGeneralElement)filterVar' FilterActualIndex='""' %>
+<%
+				}
+				if (filterVar is IFilterWithRange && ((IFilterWithRange)filterVar).IsPickerRange()
+					|| filterVar.HasRangeOperatorPickerRange())
+				{
+%>
+Event <%= filterVar.Name %>_RangePicker.DateRangeChanged
+	&<%= filterVar.Name %> = &<%= filterVar.Name %>
+	&<%= filterVar.Name %>_To = &<%= filterVar.Name %>_To
+<%
+					if (!hasSearchAction)
+					{
+%>
+	Grid.Refresh()
+<%
+					}
+%>
+EndEvent
+<%
+				}
+			}
+		}
+	}
+	foreach (string inlineSubToDefine in inlineSubsToDefine)
+	{
+%>
+Sub '<%= inlineSubToDefine %>'
+EndSub
+<%
+	}
+	if (hasTotalizers)
+	{
+%>
+<%= TotalizersHelper.InitializeTotalizers(Instance, attsAndVarsWithTotalizers, Instance.HasTransaction() || grid.GetSDTCollection() == "" ? null : grid) %>
+
+Sub 'CalculateTotalizers'
+<%
+			bool hasMinMaxTotalizer = TotalizersHelper.HasMinMaxTotalizer(attsAndVarsWithTotalizers);
+			bool calculateCount = Instance.HasTransaction() && (hasDVGroupExpand && TotalizersHelper.NeedCount(attsAndVarsWithTotalizers) || !hasDVGroupExpand && hasMinMaxTotalizer);
+			if (calculateCount)
+			{
+%>
+	&TotalRecords = 0
+<%
+			}
+			if (Instance.HasTransaction())
+			{
+				if (calculateCount || TotalizersHelper.HasNoCountTotalizer(attsAndVarsWithTotalizers))
+				{
+					bool addDefinedByAtts = (trnForForEach == "");
+%>
+	For Each<%= trnForForEach %>
+<%@ CallSubTemplate SubGridEventsForEachConditions AddDefinedByAtts='addDefinedByAtts' GenerateDataSelector='generateDataSelector' HierarchySettings='hierarchySettings' Grid='grid' DynamicFilters='dynamicFilters' Template='template' IsPrompt='isPrompt' Parameters='parameters' CustomConditions='SelectionGeneralElement.GetCustomConditionsFromObject(GridObject)' WWInstance='Instance' %>
+<%
+					
+					if (calculateCount)
+					{
+%>
+		&TotalRecords += 1
+<%
+					}
+%>
+<%= Indentation.Indent(TotalizersHelper.GetTotalizersInForEachCode(attsAndVarsWithTotalizers, "&TotalRecords = 1", null, true), 2) %>
+	EndFor
+<%
+				}
+			}
+			else if (!string.IsNullOrEmpty(grid.GetSDTCollection()) && TotalizersHelper.HasNoCountTotalizer(attsAndVarsWithTotalizers))
+			{
+%>
+<%= Indentation.Indent(TotalizersHelper.GetTotalizersSDTCode(Instance, attsAndVarsWithTotalizers, grid), 1) %>
+<%
+			}
+%>
+<%= Indentation.Indent(TotalizersHelper.GetTableTotalizersCode(Instance, calculateCount, attsAndVarsWithTotalizers, grid, settings), 1) %>
+EndSub
+<%		
+	}
+
+	if (hasMultiRowActions && hasSelectAll && multiRowActionsMantainSelected)
+	{
+%>
+Event &SelectAll.Click
+<%
+		if (hierarchySettings != null)
+		{
+%>
+	&IsSelectAllChecked = &SelectAll
+	&<%= hierarchySettings.PkAttributeName %>Col.Clear()
+	if &SelectAll
+		&Aux_<%= hierarchySettings.PkAttributeName %> = ''
+		Do 'Hierarchy_SelectChildren'
+	endif
+	&<%= hierarchySettings.PkAttributeName %>Json = &<%= hierarchySettings.PkAttributeName %>Col.ToJson()
+<%
+			if (settings.IsOptimizationNumber(7))
+			{
+%>
+	LayoutMainTable.Class = !'Table TableWithSelectableGrid' + iif(&<%= hierarchySettings.PkAttributeName %>Col.Count > 0, !' WWPMultiRowSelected', '')
+<%
+			}
+%>
+	Refresh
+<%
+		}
+		else
+		{
+
+		if (!selectAllPages && !isSmooth)
+		{
+			foreach (string attName in fullLevelKeyAttributeNames)
+			{
+%>
+	&<%= attName %>Col.FromJson(&<%= attName %>Json)
+<%
+			}
+		}
+		if (selectAllPages)
+		{
+			foreach (string att in fullLevelKeyAttributeNames)
+			{
+%>
+	&<%= att %>Col = new()
+<%
+			}
+%>
+	If &SelectAll
+		Do 'Add all records'
+	EndIf
+	For Each Line<%= GridObject.HasInLineInsert ? " in Grid" : "" %>
+		&Selected = &SelectAll
+	EndFor
+<%
+		}
+		else
+		{
+%>
+	If &SelectAll
+<%
+			if (!isSmooth)
+			{
+%>
+		&IsSelectAllChecked = True
+<%
+			}
+%>
+		For Each Line<%= GridObject.HasInLineInsert ? " in Grid" : "" %>
+			If Not &Selected
+<%
+			foreach (string attName in fullLevelKeyAttributeNames)
+			{
+%>
+				&<%= attName %>Col.Add(<%= attName %>)
+<%
+			}
+%>
+				&Selected = True
+			EndIf
+		EndFor
+	Else
+		For Each Line<%= GridObject.HasInLineInsert ? " in Grid" : "" %>
+<%
+			foreach (string att in fullLevelKeyAttributeNames)
+			{
+%>
+			&<%= att %>ToFind = <%= att %>
+<%
+			}
+%>
+			Do 'GetIndexOfSelectedRow'
+<%
+			foreach (string att in fullLevelKeyAttributeNames)
+			{
+%>
+			&<%= att %>Col.Remove(&i)
+<%
+			}
+%>
+			&Selected = False
+		EndFor
+	EndIf
+<%
+		}
+		foreach (string attName in fullLevelKeyAttributeNames)
+		{
+%>
+	&<%= attName %>Json = &<%= attName %>Col.ToJson()
+<%
+		}
+		if (settings.IsOptimizationNumber(7))
+		{
+%>
+	LayoutMainTable.Class = !'Table TableWithSelectableGrid' + iif(&<%= fullLevelKeyAttributeNames[0] %>Col.Count > 0, !' WWPMultiRowSelected', '')
+<%
+		}
+		}
+%>
+EndEvent
+<%
+		if (selectAllPages)
+		{
+%>
+Sub 'Add all records'
+	For Each <%= gridTrn.Name %>
+<%@ CallSubTemplate SubGridEventsForEachConditions AddDefinedByAtts='false' GenerateDataSelector='generateDataSelector' HierarchySettings='hierarchySettings' Grid='grid' DynamicFilters='dynamicFilters' Template='template' IsPrompt='isPrompt' Parameters='parameters' CustomConditions='SelectionGeneralElement.GetCustomConditionsFromObject(GridObject)' WWInstance='Instance' %>
+<%
+			foreach (string att in fullLevelKeyAttributeNames)
+			{
+%>
+		&<%= att %>Col.Add(<%= att %>)
+<%
+			}
+%>
+	EndFor
+EndSub
+<%
+		}
+	}
+    if (extraGrids.Count > 0)
+	{
+%>
+<%@ CallSubTemplate SubExtraGridsEventLoad grids='extraGrids' paginationBarSettings='paginationBarSettings' isWizardStep='false' %>
+<%@ CallSubTemplate SubExtraGridsEventCalculateTotalizers grids='extraGrids' hasAnSDTItemTotalizer='hasAnSDTItemTotalizer[0]' settings='settings' %>
+<%
+	}
+	if (hierarchySettings != null)
+	{
+%>
+<%@ CallSubTemplate HierarchyEventsAndSubs GridObject='GridObject' HierarchySettings='hierarchySettings' Grid='grid' Parameters='parameters' DynamicFilters='dynamicFilters' HasMultiRowActions='hasMultiRowActions' HasSelectAll='hasSelectAll' %>
+<%
+	}
+%>
+<%= GridObject.Table.GetGeneralEventsAndSubs() %>

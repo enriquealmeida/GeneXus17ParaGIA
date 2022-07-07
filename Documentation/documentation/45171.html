@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Offline Data backup and restore</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45171,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Offline Data backup and restore</h1>
+<!--Offline Data backup and restore--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>To solve a completely offline SD application scenario, it is useful to have the possibility of backing-up and then restoring the application's local database.</p>
+
+<h3><a id="GeneXus.SD.Offline.DataBase+external+object" class="HashLink" href="#GeneXus.SD.Offline.DataBase+external+object"><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">GeneXus.SD.Offline.DataBase external object</span></a></h3>
+
+<p><span>It is an external object defined in the </span><a href="31268.html">GeneXus Core module</a></p>
+
+<h4><a id="Backup+Method" class="HashLink" href="#Backup+Method">Backup Method</a></h4>
+
+<p>This method performs a backup of the local database and all its resources including:</p>
+
+<ul>
+	<li>the .sqlite file</li>
+	<li>all binary files referenced from the database (blobs, images, etc.)</li>
+	<li>the synchronization hashes</li>
+	<li>the database's MD5 hash value.</li>
+</ul>
+
+<p><strong>Syntax</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">&amp;Result = DataBase</span>.Backup(&amp;Path)</pre>
+
+<p><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">Where:</span></p>
+
+<ul>
+	<li><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">&amp;Result is based on the ResultCode domain (see below)</span></li>
+	<li><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">&amp;Path is a String variable with the URI</span> of the backup file</li>
+</ul>
+
+<p><strong>Example</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;path = Directory.ExternalFilesPath + &quot;/backups/DB15012020.zip&quot;
+&amp;result = Database.Backup(&amp;path)
+</pre>
+
+<h4><a id="Restore+Method" class="HashLink" href="#Restore+Method"><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">Restore Method</span></a></h4>
+
+<p>Performs a restore of a previously created backup.</p>
+
+<p>It leaves the database operational so that the user can keep using the application after the restoration.</p>
+
+<p><strong>Syntax</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">&amp;Result = DataBase</span>.Restore(&amp;Path)</pre>
+
+<p><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">Where:</span></p>
+
+<ul>
+	<li><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">&amp;Result is based on the ResultCode domain (see below)</span></li>
+	<li><span id="docs-internal-guid-35afb9fc-7fff-9393-dc42-535eeb4d088a">&amp;Path is a String variable with the URI</span> of the backup file</li>
+</ul>
+
+<p><strong>Example</strong></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;path = Directory.ExternalFilesPath + &quot;/backups/DB15012020.zip&quot;
+&amp;result = Database.Restore(&amp;path)
+</pre>
+
+<h4><a id="ResultCode+domain" class="HashLink" href="#ResultCode+domain"><span>ResultCode domain</span></a></h4>
+
+<p><span>The domain used to return the operation result.</span></p>
+
+<p><span>Valid values are:</span></p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<thead>
+		<tr>
+			<th scope="col">Code</th>
+			<th scope="col">Message</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>0</td>
+			<td>Success</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>Application is not offline</td>
+		</tr>
+		<tr>
+			<td>2</td>
+			<td>Path is not correct / Backup file not found</td>
+		</tr>
+		<tr>
+			<td>3</td>
+			<td>Database structure does not match</td>
+		</tr>
+		<tr>
+			<td>9</td>
+			<td>Internal error</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<h4><a id="Concurrency" class="HashLink" href="#Concurrency">Concurrency</a></h4>
+
+<p>The backup and restore operation should not be performed while there are other operations accessing or modifying the database. The behavior in those cases is undefined and will probably create some inconsistencies. </p>
+
+<h4><a id="Synchronization" class="HashLink" href="#Synchronization">Synchronization</a></h4>
+
+<p>The backup and restore operations should be used with care if the application also has synchronization. Since the records added or deleted by the restore operation are not sent to the server, there could be cases where information is lost. Also when restoring a backup, the synchronization hashes restored on the device may no longer exist in the server (depending on the <a href="https://wiki.genexus.com/commwiki/wiki?31160,," target="_blank">Minimum Time Between Table Purges property</a>), which may be a problem when the device tries to synchronize again.</p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 03:51 PM</em></font></td></TR></table></font>

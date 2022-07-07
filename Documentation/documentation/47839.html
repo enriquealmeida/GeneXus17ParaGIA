@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy to Docker MSBuild task</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47839,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy to Docker MSBuild task</h1>
+<!--Deploy to Docker MSBuild task--><div class="TableWikiBody" id="tblwikibody"><p>To deploy to Docker, there is an MSBuild script to build the Docker image.</p>
+
+<p>Docker is an external target, and for all external targets there is a deploy.msbuild file (located in the GeneXus installation, under the DeploymentTargets folder). In the case of Docker deployment target, the deploy.msbuild file is under &lt;GeneXus installation&gt;\DeploymentTargets\Docker, and it defines a default task called Deploy. For more information about this topic, see <a href="42073.html">Docker deployment target</a>.</p>
+
+<p><strong>Summary</strong></p>
+
+<p><ul><li><a class="HashLink" href="#Sample+to+call+the+MSBuild+to+build+a+Docker+image">Sample to call the MSBuild to build a Docker image</a></li><li><a class="HashLink" href="#Deploy+to+docker+of+a+command+line+procedure">Deploy to docker of a command line procedure</a></li><li><a class="HashLink" href="#Taking+some+properties+from+a+configuration+file">Taking some properties from a configuration file</a></li><li><a class="HashLink" href="#Deploying+the+image+to+Openshift">Deploying the image to Openshift</a></li><li><a class="HashLink" href="#See+also">See also</a></li></ul></ul></p>
+
+<h3><a id="Sample+to+call+the+MSBuild+to+build+a+Docker+image" class="HashLink" href="#Sample+to+call+the+MSBuild+to+build+a+Docker+image">Sample to call the MSBuild to build a Docker image</a></h3>
+
+<p>After having run the two previous MSBuild scripts, as described in <a href="42073.html">Application Deployment MSBuild tasks</a>, you can execute the following command to have a Docker image built.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSBuild.exe /nologo /verbosity:minimal /ToolsVersion:4.0 "c:\GeneXus\DeploymentTargets\Docker\deploy.msbuild" 
+/p:DOCKER_BASE_IMAGE="tomcat:10-jdk15-openjdk-oracle" 
+/p:DOCKER_MAINTAINER="fullgx &lt;fullgx@example.com&gt;" 
+/p:DOCKER_WEBAPPLOCATION="/usr/local/tomcat/webapps/" 
+/p:DOCKER_IMAGE_NAME="k8sdeployjavaenvironment" 
+/p:DOCKER_ENVVARS=""
+/p:GENERATOR="Java" 
+/p:APPLICATION_NAME="DeploymentUnit2_20200130131103" 
+/p:DEPLOY_PATH="C:\GXmodels\junk\K8SDeploy\JavaModel\Deploy\DOCKER\DeploymentUnit2\20200130131103"
+/p:ProjectName="myproject"  
+/p:GXDeployFileProject="C:\GXmodels\junk\K8SDeploy\JavaModel\web\myproject.gxdproj" 
+/t:Deploy</pre>
+
+<h3><a id="Deploy+to+docker+of+a+command+line+procedure" class="HashLink" href="#Deploy+to+docker+of+a+command+line+procedure">Deploy to docker of a command line procedure</a></h3>
+
+<p>If your deployment unit has only one object, and this object is a main procedure with <a href="7947.html">Call protocol property</a> = "Command line", the Dockerfile generated adds an EntryPoint to be able to execute this procedure when the image is run.</p>
+
+<p>You have to set the DOCKER_BASE_IMAGE property with an adequate value for that purpose; for example, OpenJDK:15.</p>
+
+<p>In the case of deploying command line procedures, the <em>GXDeployFileProject </em>property is mandatory. In case of not passing it in Java, the msbuild execution throws an error.<br />
+For .NET it throws the following warning:<br />
+warning : Missing or invalid <em>GXDeployFileProject </em>property. It should be set for command line deployments.</p>
+
+<h3><a id="Taking+some+properties+from+a+configuration+file" class="HashLink" href="#Taking+some+properties+from+a+configuration+file">Taking some properties from a configuration file</a></h3>
+
+<p>The DOCKER_BASE_IMAGE and DOCKER_WEBAPPLOCATION properties can be taken from a configuration file and you can avoid adding their definitions to the MSBuild execution.</p>
+
+<p>The mechanism is as follows:</p>
+
+<p>1. If the DOCKER_BASE_IMAGE and DOCKER_WEBAPPLOCATION properties are specified when the MSBuild is run, they are taken from there. </p>
+
+<p>2. If both or either of them are empty the "BuildEnvironment" property is verified, which indicates the configuration file (.json) that should be read to extract the information from these properties.</p>
+
+<p>The BuildEnvironment property indicates the environment to which this build corresponds.<br />
+<br />
+For example, if you have / p: BuildEnvironment = dev, it looks for docker.dev.json, which must be in the root of GeneXus.</p>
+
+<p>The file format must be the same as the docker.prod.json that is distributed with GeneXus <sup>(1)</sup>. </p>
+
+<p>If the file cannot be found, an error similar to the following occurs:</p>
+
+<p>"Taking default values ​​for Base Image and Image WebApp Location from docker.dev.json file.<br />
+Configuration file not found and default parameters not set. Base Image and Image WebApp Location cannot be empty."</p>
+
+<p>3. If at least one of the properties (DOCKER_BASE_IMAGE and DOCKER_WEBAPPLOCATION) in the MSBuild command is not referenced and the BuildEnvironment property is not indicated, by default docker.prod.json is read and the user is warned:</p>
+
+<p>"Taking default values ​​for Base Image and Image WebApp Location from docker.prod.json file."</p>
+
+<p><sup>(1)</sup>The docker.prod.json file looks as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+{
+    "Images": {
+        ".NET Framework": "genexus/dotnet:4.6.2",
+        ".NET": "mcr.microsoft.com/dotnet/aspnet:6.0",
+        "C#": "genexus/dotnet:4.6.2",
+        ".NET Core": "mcr.microsoft.com/dotnet/aspnet:6.0",
+        "Java": "tomcat:10-jdk15-openjdk-oracle"
+    },
+    "CMDAppImages": {
+        ".NET Framework": "genexus/dotnet:4.6.2",
+        ".NET": "mcr.microsoft.com/dotnet/aspnet:6.0",
+        "C#": "genexus/dotnet:4.6.2",
+        ".NET Core": "mcr.microsoft.com/dotnet/aspnet:6.0",
+        "Java": "openjdk:15"
+    },
+    "WebAppLocation": {
+        ".NET Framework": "c:/inetpub/wwwroot/",
+        ".NET": "/app",
+        "C#": "c:/inetpub/wwwroot/",
+        ".NET Core": "/app",
+        "Java": "/usr/local/tomcat/webapps/"
+    },
+    "AppLocation": {
+        ".NET Framework": "/app",
+        ".NET": "/app",
+        "C#": "/app",
+        ".NET Core": "/app",
+        "Java": "/usr/src/myapp"
+    }
+}</pre>
+
+<p class="Code"><br />
+Note: The .json file is read considering the "Generator" MSBuild property. This property must be set using the same casing as in the configuration file.</p>
+
+<p>Otherwise, the MSBuild execution throws the error: "The given key was not present in the dictionary."</p>
+
+<p>Example: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSbuild.exe /nologo /verbosity:normal /ToolsVersion:14.0 "c:\genexus\DeploymentTargets\Docker\deploy.msbuild" /p:DeploySource="c:\kbaux\Deploy\JavaModel\Docker\kbauxJavaEnvironmentDeploy.war" /p:DOCKER_MAINTAINER="fullgxops &lt;fullgxops@genexus.com&gt;" /p:DOCKER_IMAGE_NAME="kbauxjavaenvironment" <strong>/p:GENERATOR="Java" /p:BuildEnvironment=dev</strong> /t:Deploy /l:FileLogger,Microsoft.Build.Engine;logfile=c:\fullgx\temp\DeployDocker.log 
+</pre>
+
+<p><strong>Availability:</strong> The configuration file is read since <a href="47659.html">GeneXus 17 upgrade 3</a></p>
+
+<h3><a id="Deploying+the+image+to+Openshift" class="HashLink" href="#Deploying+the+image+to+Openshift">Deploying the image to Openshift</a></h3>
+
+<p>OpenShift is an orchestrator standing on Kubernetes. It has some additional security restrictions. In particular (in addition to some other differences), this platform runs any container using a ramdon <a href='https://www.openshift.com/blog/a-guide-to-openshift-and-uids'>UUID</a>. So if the docker image is not ready to run as non-root, errors will occur.</p>
+
+<p>In order to deploy to Openshift, the "Container" property = {Default, Openshift} is available in the Deploy Target Docker Image properties (only for Java and .Net). This corresponds to the DOCKER_CONTAINER_RUNTIME MSBuild property.</p>
+
+<p>When the container is Openshift, the "Registry Image" property becomes visible. Through it, the registry of the base image {Docker hub, Redhat registry} can be selected. The corresponding MSBuild property is DOCKER_IMAGE_REGISTRY.</p>
+
+<p>The MSBuild in this case is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSbuild.exe /nologo /verbosity:normal /ToolsVersion:14.0 "c:\fullgx\gxsalto\DeploymentTargets\Docker\deploy.msbuild"
+/p:DeploySource="c:\fullgx\kbaux\Deploy\NetCoreModel\Docker\DeployNet.zip"
+/p:DOCKER_BASE_IMAGE=mcr.microsoft.com/dotnet/core/aspnet:6.0
+/p:DOCKER_MAINTAINER="fullgxops &lt;fullgxops@genexus.com&gt;"
+/p:DOCKER_WEBAPPLOCATION="/app"
+/p:DOCKER_IMAGE_NAME="kbauxnetcoreenvironment"
+/p:GENERATOR=".NET"
+/p:DOCKER_CONTAINER_RUNTIME=Openshift
+/p:DOCKER_IMAGE_REGISTRY=DockerHub
+/t:Deploy /l:FileLogger,Microsoft.Build.Engine;logfile=c:\fullgx\temp\DeployDocker.log </pre>
+
+<p>Note that :</p>
+
+<p>1. If Redhat registry is chosen, in "Base Image" property (DOCKER_BASE_IMAGE MSBuild property) an image from the Redhat image catalog must be entered.</p>
+
+<p>To authenticate and download the base image using the docker command, it is enough to log in to the machine once; then the credentials will be saved in a credentials store ($HOME/.docker/config.json on Linux or %USERPROFILE%/.Docker/config.json on Windows). See <a href='https://docs.docker.com/engine/reference/commandline/login/#privileged-user -requirement'>this</a> reference. For more information about authentication when downloading images from Redhat, see <a href='https://access.redhat.com/RegistryAuthentication'>here</a>.</p>
+
+<p>2. When images are non-root, they cannot listen on ports less than 1024.<br />
+In the case of .Net generator, when running the image, the user must use the -expose option to indicate a port that is allowed taking into account this restriction.</p>
+
+<p><strong>Availability: </strong>This is available since GeneXus 17 upgrade 3.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="32092.html">Application Deployment tool</a></li>
+	<li><a href="42073.html">Application Deployment MSBuild tasks</a></li>
+</ul>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD><TD><a href="48662.html">Toc:Application Deployment tool (Genexus 17 Upgrade 4)</a></TD><TD><a href="49911.html">Deploy to Docker MSBuild task (GeneXus 17 Upgrade 7)</a></TD></TR><TR><TD><a href="50271.html">Deploy to Docker MSBuild task (GeneXus 17 upgrade 8)</a></TD><TD><a href="49956.html">GeneXus 17 Upgrade 9</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/13/22 06:11 PM</em></font></td></TR></table></font>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Before connect property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8997,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Before connect property</h1>
+<!--Before connect property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td> The Before Connect property has been implemented to change connection properties dynamically at execution time.
+To use this feature, a GeneXus procedure is required. This procedure should state the connection properties at execution time; also, it will be executed immediately before any connection request is executed by the application to interact with the database.  <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Platforms:</strong> Web(.Net, Java)<br /></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>A GeneXus <a href="6293.html">Procedure object</a> should be stated in the 'Before Connect' property because it will be called before the connection is established. This procedure must be programmed in GeneXus and should meet some requirements as well.</p>
+
+<p>In this procedure, you may state/change the properties of the Datastore to which the application should connect.</p>
+
+<p>This procedure will be called every time a database request is executed. For instance, if we have a <a href="6916.html">Web Panel object</a> that loads data from a database, this procedure will be executed in each Refresh (F5).</p>
+
+<h3><a id="Procedure+requirements" class="HashLink" href="#Procedure+requirements">Procedure requirements</a></h3>
+
+<p>It must have at least one in/out DBConnection type parameter.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(INOUT: &amp;dbconn); //&amp;dbconn is a DBConnection type variable</pre>
+
+<p>In 3 Tier models, the <a href="8008.html">Execute in new LUW property</a> must be set to Yes; in Web environments, it must be set to No.</p>
+
+<p>The procedure receives the &amp;dbconn with the Datastore details, and you can modify those details depending on any logic that you may need to apply. For example, you can change the Datastore details depending on the User that is actually executing the application.</p>
+
+<p>Furthermore, it must not access the database or use any functionality that does it. Some functionalities that access the database (and must not be used, because if they were used the program would enter an infinite loop) are as follows:</p>
+
+<ul>
+	<li>For Each command</li>
+	<li>Business Components</li>
+	<li>GAMSession.Get() or any method that internally accesses the database</li>
+	<li>Call to a procedure that accesses the database</li>
+</ul></p>
+ <h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p> <h4><a id="Multi-company+application" class="HashLink" href="#Multi-company+application">Multi-company application</a></h4>
+
+<p>Suppose that the Login Web Panel sets the user that has logged in a web session:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Session.Set('UserID', str(&amp;UserID))</pre>
+
+<p>Also, you want to connect to different databases depending on the user logged in.</p>
+
+<p>For this purpose, define a Procedure named CONNECT, which must be stated in the 'Before Connect' Model property:</p>
+
+<h4><a id="JAVA+Example" class="HashLink" href="#JAVA+Example">JAVA Example</a></h4>
+
+<h4><a id="Sample+I." class="HashLink" href="#Sample+I.">Sample I.</a></h4>
+
+<p><i>Rules </i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(inout: &amp;dbconn); </pre>
+
+<p><i>Source </i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;UserID = val(&amp;Session.Get('UserID')) 
+Do Case
+   Case &amp;UserID = 1 
+        &amp;DataBase  = &quot;companyone&quot; 
+   Case &amp;UserID = 2 
+        &amp;DataBase  = &quot;companytwo&quot; 
+   Otherwise 
+        &amp;DataBase  = &quot;companyone&quot; //default database 
+EndCase
+
+// Changing Default connection 
+&amp;dbconn = GetDatastore(&quot;Default&quot;) 
+&amp;dbconn.JDBCDriverName = &quot;com.microsoft.jdbc.sqlserver.SQLServerDriver&quot; 
+&amp;dbconn.JDBCDriverURL = &quot;jdbc:microsoft:sqlserver://MyServer:1433;databaseName=&quot; + trim(&amp;DataBase) + &quot;;SelectMethod=cursor&quot; 
+&amp;dbConn.UserName = 'username' 
+&amp;dbConn.UserPassword = 'userpassword' 
+</pre>
+
+<p>Below is the same case but using JDBC driver: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;dbconn.JDBCDriverName = &quot;net.sourceforge.jtds.jdbc.Driver&quot;
+&amp;dbconn.JDBCDriverURL = &quot;jdbc:jtds:sqlserver://MyServer:1433/&quot;+ &amp;database.Trim()
+</pre>
+
+<h4><a id="+" class="HashLink" href="#+"> </a></h4>
+
+<h4><a id="Sample+II.+Alternatives+to+connect+to+an+external+datasource+and+GX+connection+pool+at+runtime" class="HashLink" href="#Sample+II.+Alternatives+to+connect+to+an+external+datasource+and+GX+connection+pool+at+runtime">Sample II. Alternatives to connect to an external datasource and GX connection pool at runtime</a></h4>
+
+<p><i>Rules </i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(inout: &amp;dbconn); </pre>
+
+<p><i>Source  </i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;dbconn = GetDatastore(&quot;Default&quot;)
+ 
+if &amp;Connection = 'JNDI'
+   &amp;dbconn.UseExternalDatasource = 1
+   &amp;dbconn.ExternalDatasourceName = 'java:/comp/env/jdbc/myoracle' 
+else
+   &amp;dbconn.UseExternalDatasource = 0
+   &amp;dbconn.JDBCDriverName = &quot;oracle.jdbc.driver.OracleDriver&quot;
+   &amp;dbconn.JDBCDriverURL = &quot;jdbc:oracle:thin:@Testorcl:1521:testorcl&quot;
+   &amp;dbConn.UserName = &amp;UserId.Trim()
+   &amp;dbConn.UserPassword = &amp;UserPwd.Trim()
+endif</pre>
+
+<h4><a id=".NET+Example" class="HashLink" href="#.NET+Example">.NET Example</a></h4>
+
+<p><i>Rules </i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(inout: &amp;dbconn); </pre>
+
+<p><i>Source </i></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;UserID = val(&amp;Session.Get('UserID')) 
+//select the Database depending on UserID 
+Do Case
+   Case &amp;UserID = 1 
+        &amp;DataBase  = &quot;companyone&quot; 
+   Case &amp;UserID = 2 
+        &amp;DataBase  = &quot;companytwo&quot; 
+   Otherwise 
+        &amp;DataBase  = &quot;companyone&quot; //default database 
+EndCase
+
+//Change connection properties 
+&amp;dbconn = GetDatastore(&quot;Default&quot;) 
+&amp;dbconn.UserName = 'username' 
+&amp;dbconn.UserPassword = 'userpassword'
+&amp;dbconn.ConnectionData = &quot;DATABASE=&quot; + &amp;DataBase.Trim() //SQLServer 
+//&amp;dbconn.ConnectionData = &quot;Data Source=&quot; + &amp;DataBase.Trim()  //MySQL
+</pre></p>
+ <h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p> <p><a href="6923.html">DBConnection Data Type</a><br />
+<a href="9024.html">After connect property</a></p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9024.html">After connect property</a></TD><TD><a href="6923.html">DBConnection Data Type</a></TD><TD><a href="2112.html">Defining a JDBC Datasource</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 12/15/20 02:27 PM</em></font></td></TR></table></font>

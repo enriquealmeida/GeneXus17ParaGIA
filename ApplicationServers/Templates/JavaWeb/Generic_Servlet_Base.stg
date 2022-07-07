@@ -1,0 +1,279 @@
+
+delimiters "$", "$"
+
+
+generateBaseWithDTD(Name, PubID, URI)::=<<
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE $Name$ PUBLIC "$PubID$" "$URI$">
+<web-app>
+	$generateWebAppContent()$
+</web-app> 
+>>
+
+generateBaseWithSchema(Version, Namespace, SchemaLocation)::=<<
+<?xml version="1.0" encoding="utf-8" ?>
+<web-app
+	xmlns="$Namespace$"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="$Namespace$ $SchemaLocation$"
+	version="$Version$">
+
+$generateWebAppContent()$
+	
+</web-app> 
+>>
+	
+generateWebAppContent()::=<<
+	<display-name>$DisplayName$</display-name>
+
+	<listener>
+		<listener-class>com.genexus.webpanels.ServletEventListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>com.genexus.webpanels.SessionEventListener</listener-class>
+	</listener>
+$if (RestSupport)$
+	$if (JakartaEE)$
+	<servlet>
+		<servlet-name>JerseyListener</servlet-name>
+		<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+		<init-param>
+			<param-name>jakarta.ws.rs.Application</param-name>
+			<param-value>$PackageGXApplication$</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+			<param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+			<param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+		</init-param>
+	</servlet>
+	$else$
+	<servlet>
+		<servlet-name>JerseyListener</servlet-name>
+		<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+		<init-param>
+			<param-name>javax.ws.rs.Application</param-name>
+			<param-value>$PackageGXApplication$</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+			<param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+			<param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+		</init-param>
+	</servlet>
+	$endif$
+$endif$
+$if (GAMSupport)$
+	<servlet>
+		<servlet-name>GXOAuthAccessToken</servlet-name>
+		<servlet-class>com.genexus.webpanels.GXOAuthAccessToken</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GXOAuthLogout</servlet-name>
+		<servlet-class>com.genexus.webpanels.GXOAuthLogout</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GXOAuthUserInfo</servlet-name>
+		<servlet-class>com.genexus.webpanels.GXOAuthUserInfo</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMOAuthSignIn</servlet-name>
+		<servlet-class>genexus.security.api.agamextauthinput</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMOAuthCallback</servlet-name>
+		<servlet-class>genexus.security.api.agamextauthinput</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMOAuthAccessToken</servlet-name>
+		<servlet-class>genexus.security.api.agamoauth20getaccesstoken</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GamAccessTokenV2</servlet-name>
+		<servlet-class>genexus.security.api.agamoauth20getaccesstoken_v20</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMOAuthUserInfo</servlet-name>
+		<servlet-class>genexus.security.api.agamoauth20getuserinfo</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>OAuthUserInfoV2</servlet-name>
+		<servlet-class>genexus.security.api.agamoauth20getuserinfo_v20</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>OAuthSSORestV2</servlet-name>
+		<servlet-class>genexus.security.api.agamssorestrequesttokenanduserinfo_v20</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMOAuthSignOut</servlet-name>
+		<servlet-class>genexus.security.api.agamextauthinput</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMOAuthRequestTokenService</servlet-name>
+		<servlet-class>genexus.security.api.agamstsauthappgetaccesstoken</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMOAuthQueryAccessToken</servlet-name>
+		<servlet-class>genexus.security.api.agamstsauthappvalidaccesstoken</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMSaml20SignOut</servlet-name>
+		<servlet-class>artech.security.saml.servlet.LOGOUT</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>GAMSaml20SignIn</servlet-name>
+		<servlet-class>artech.security.saml.servlet.SSO</servlet-class>
+	</servlet>
+$endif$
+$Servlets:{ obj |
+	<servlet>
+		<servlet-name>$obj.Name$</servlet-name>
+		<servlet-class>$obj.Class$</servlet-class>
+	</servlet>}$
+
+$if (RestSupport)$
+	<servlet-mapping>
+		<servlet-name>JerseyListener</servlet-name>
+		<url-pattern>/rest/*</url-pattern>
+	</servlet-mapping>
+$endif$
+$if (GAMSupport)$
+	<servlet-mapping>
+		<servlet-name>GXOAuthAccessToken</servlet-name>
+		<url-pattern>/oauth/access_token</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GXOAuthLogout</servlet-name>
+		<url-pattern>/oauth/logout</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GXOAuthUserInfo</servlet-name>
+		<url-pattern>/oauth/userinfo</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMOAuthSignIn</servlet-name>
+		<url-pattern>/oauth/gam/signin</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMOAuthCallback</servlet-name>
+		<url-pattern>/oauth/gam/callback</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMOAuthAccessToken</servlet-name>
+		<url-pattern>/oauth/gam/access_token</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GamAccessTokenV2</servlet-name>
+		<url-pattern>/oauth/gam/v2.0/access_token</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMOAuthUserInfo</servlet-name>
+		<url-pattern>/oauth/gam/userinfo</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>OAuthUserInfoV2</servlet-name>
+		<url-pattern>/oauth/gam/v2.0/userinfo</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>OAuthSSORestV2</servlet-name>
+		<url-pattern>/oauth/gam/v2.0/requesttokenanduserinfo</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMOAuthSignOut</servlet-name>
+		<url-pattern>/oauth/gam/signout</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMOAuthRequestTokenService</servlet-name>
+		<url-pattern>/oauth/RequestTokenService</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMOAuthQueryAccessToken</servlet-name>
+		<url-pattern>/oauth/QueryAccessToken</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMSaml20SignOut</servlet-name>
+		<url-pattern>/saml/gam/signout</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GAMSaml20SignIn</servlet-name>
+		<url-pattern>/saml/gam/signin</url-pattern>
+	</servlet-mapping>
+$endif$
+
+$Servlets:{ webObject |
+	<servlet-mapping>
+		<servlet-name>$webObject.Name$</servlet-name>
+		<url-pattern>/servlet/$webObject.Class$</url-pattern>
+		<url-pattern>/$webObject.Class$</url-pattern>
+		$if (webObject.UploadSupport)$
+		<url-pattern>/$webObject.Class$/gxobject</url-pattern>
+		<url-pattern>/servlet/$webObject.Class$/gxobject</url-pattern>
+		$endif$
+	</servlet-mapping>}$
+
+$if (UseJDBCDatasource && !UseAppServerDataSource)$
+	<resource-ref>
+		<description>DB Connection</description>
+		<res-ref-name>$JDBCDatasource$</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<res-auth>Container</res-auth>
+	</resource-ref>
+$endif$
+
+	<context-param>
+		<param-name>gxcfg</param-name>
+		<param-value>$PackageGXcfg$</param-value>
+	</context-param>
+$if (APIRestSupport)$
+	<filter>
+		<filter-name>APIObjectFilter</filter-name>
+		<filter-class>com.genexus.filters.APIObjectFilter</filter-class>
+		<init-param>
+			<param-name>BasePath</param-name>
+			<param-value>*</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>APIObjectFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+$endif$
+	<filter>
+		<filter-name>ExpiresFilter</filter-name>
+		<filter-class>com.genexus.filters.ExpiresFilter</filter-class>
+		<init-param>
+			<param-name>ExpiresByType image</param-name>
+			<param-value>access plus $CacheExpiration$ hours</param-value>
+		</init-param>
+		<init-param>
+			<param-name>ExpiresByType text/css</param-name>
+			<param-value>access plus $CacheExpiration$ hours</param-value>
+		</init-param>
+		<init-param>
+			<param-name>ExpiresByType application/javascript</param-name>
+			<param-value>access plus $CacheExpiration$ hours</param-value>
+		</init-param>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>ExpiresFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+	
+	<filter>
+		<filter-name>InternalRestServicesFilter</filter-name>
+		<filter-class>com.genexus.filters.InternalRestServicesFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>InternalRestServicesFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>	
+
+>>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Animations Layer property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?43487,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Animations Layer property</h1>
+<!--Animations Layer property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td>Enables or disables the Animation Layer (that allows viewing the animation of a point on the map) in a Grid whose Control Type is SD Maps.  <h3><a id="Values" class="HashLink" href="#Values">Values</a></h3>
+
+<p> <table style="border-style: none;border-collapse: collapse;"><tbody><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>False                                                       </strong></td></tr><tr><td style="border-width: 1.0px;border-style: dotted;vertical-align: top;padding: 4.0px;"><strong>True                                                        </strong></td></tr></tbody></table></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>This property allows viewing an animation of a point on the map. It allows, for example, showing the route a vehicle will travel (Taxi, Uber, distributor).</p>
+
+<p><img src="./images/44195.gif" id="44195" class="WikiImage"/></p>
+
+<p>It applies only to Grids whose <a href="15309.html">Control Type property = SD Maps</a>.</p>
+
+<p>When you set the Animations Layer property to True, the following properties will be enabled to set related details:</p>
+
+<ul>
+	<li><a href="43488.html">Animation Key Attribute</a></li>
+	<li><a href="44580.html">Animation Duration</a></li>
+	<li><a href="43490.html">Animation Duration Attribute</a></li>
+	<li><a href="43492.html">Animation End Behavior</a></li>
+	<li><a href="43493.html">Animation End Behavior Attribute</a></li>
+</ul>
+
+<p>Another important property related to this kind of Grid whose Control Type property = SD Maps, is the <a href="42209.html">Location Attribute property</a>.</p></p>
+ <h3><a id="Run-time%2FDesign-time" class="HashLink" href="#Run-time%2FDesign-time">Run-time/Design-time</a></h3>
+
+<p> This property applies only at design-time.</p>
+ <h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p> <p>Consider the following transactions:</p>
+
+<pre>
+Car
+{
+   CarId*
+   .....
+}
+
+CarLocation
+{
+   CarId*
+   CarLocationId*
+   CarLocation (Data Type = GeoPoint)
+}
+
+</pre>
+
+<p>Assume the existence of the following Procedure in order to assign data to the physical tables associated with the previous transactions:</p>
+
+<pre>
+new 
+     CarId = 1
+endnew
+new
+     CarId = 1
+     CarLocationId = 1
+     CarLocation = geopoint.FromString('POINT (-56.088973921240267 -34.883211936027749)')
+     CarAnimationDuration = 2
+endnew
+new        
+     CarId = 1
+     CarLocationId = 2
+     CarLocation = geopoint.FromString('POINT (-56.086742323339877 -34.883211936027749)')
+     CarAnimationDuration = 1
+endnew
+new
+     CarId = 1
+     CarLocationId = 3
+     CarLocation = geopoint.FromString('POINT (-56.083400226489289 -34.883156426543607)')
+     CarAnimationDuration = 3
+endnew
+</pre>
+
+<p>Next, a <a href="24829.html">Panel object</a> is created, and a Grid is included to which the following properties are configured:</p>
+
+<ul>
+	<li>Control Type = SD Maps</li>
+	<li>Location Attribute = CarLocation</li>
+	<li>Animation Layer = True</li>
+	<li>Animation Key Attribute = CarId</li>
+	<li>Animation Duration = 2</li>
+</ul>
+
+<p>In the Grid conditions, the following is defined:</p>
+
+<pre>
+       CarLocationId = &amp;CurrentAnimationStep;</pre>
+
+<p>In the events section of the Panel for Smart Devices, the following is defined:</p>
+
+<pre>
+Event 'Refresh'
+    Composite
+        Grid1.Refresh()
+        &amp;currentAnimationStep += 1
+    EndComposite
+Endevent
+
+Event ClientStart
+      &amp;currentAnimationStep = 1
+Endevent
+</pre>
+
+<p><b>Note:</b> To fully view the animation, defining a zoom based in a range that reaches the points to animate is recommended. The following Grid properties must be configured for this purpose:</p>
+
+<ul>
+	<li><a href="42217.html">Initial Zoom property</a> = Radius</li>
+	<li><a href="42218.html">Initial Zoom Radius Attribute property</a> = &amp;Radio </li>
+	<li><a href="42220.html">Center property</a> = Default</li>
+</ul>
+
+<p>Therefore, the ClientStart event has to be modified to start the &amp;Radio variable:</p>
+
+<pre>
+Event ClientStart
+     composite
+         &amp;currentAnimationStep = 1
+         &amp;Radio = 100
+     endcomposite
+EndEvent
+
+
+</pre>
+
+<p><strong>An alternative to set the duration of the animation</strong></p>
+
+<p>Suppose that attributes are added to the CarLocation transaction in example 1 to store the duration and/or the final behavior of the animation:</p>
+
+<pre>
+CarLocation
+{
+   CarID*
+   CarLocationId*
+   CarLocation (Data Type = GeoPoint)
+   CarAnimationDuration (Data Type = Numeric)
+}</pre>
+
+<p>Since an attribute (CarAnimationDuration) contains the number of seconds that the animation lasts, you have to set the Grid property of the SDMaps control type:</p>
+
+<ul>
+	<li>Animation Duration Attribute = CarAnimationDuration <br />
+	 </li>
+</ul>
+
+<h3><a id="Availability+" class="HashLink" href="#Availability+">Availability </a></h3>
+
+<p>IOS :  Genexus V16 U5 or higher<br />
+Android:  Genexus V16U7 or higher </p></p>
+ <h3><a id="wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes" class="HashLink" href="#wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes"><a href="17719.html">How to apply changes</a></a></h3>
+
+<p> To apply changes made by this property, do a Build with this Only of the object.</p>
+ <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Platforms:</strong> Smart Devices(IOS)<br /><strong>Controls:</strong> Grid (Control Type: <a href="15309.html">SD Maps</a>)<br /></p>
+ <h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p> <p><a href="15309.html">Maps Control Type</a><br />
+<a href="42209.html">Location Attribute property</a></p>
+
+<p> </p></p>
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43490.html">Animation Duration Attribute property</a></TD><TD><a href="43491.html">Animation Duration Field Specifier property</a></TD><TD><a href="44580.html">Animation Duration property (for Grids with Control Type = SD Maps)</a></TD></TR><TR><TD><a href="43493.html">Animation End Behavior Attribute property</a></TD><TD><a href="43494.html">Animation End Behavior Field Specifier property</a></TD><TD><a href="43492.html">Animation End Behavior property</a></TD><TD><a href="43488.html">Animation Key Attribute property</a></TD></TR><TR><TD><a href="43489.html">Animation Key Field Specifier property</a></TD><TD><a href="40763.html">Layers in Maps</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 02:29 PM</em></font></td></TR></table></font>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Build a custom model for GeneXusAI</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?43665,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Build a custom model for GeneXusAI</h1>
+<!--HowTo: Build a custom model for GeneXusAI--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This article explains how you can create your own custom model and integrate it into your Knowledge Base.</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  Custom models are available as of <a href="https://wiki.genexus.com/commwiki/wiki?43978,," target="_blank">GeneXus 16 upgrade 6</a> only for <strong>image classification problem</strong>. However, the process described in this document is more general, and it is applicable to any <strong>prediction problem</strong> (e.g. predict the price of a house in term of the features it has). GeneXusAI will cover more scenarios in future updates.</div>
+</p>
+
+<h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>When you create an Artificial Intelligence model you are 'teaching' your computer to make predictions based on the experience. In this context, <em>experience</em> means to be <em>historical data</em> from which your computer can infer patterns in order to make inferences over new (unseen) data with a certain confidence. The learning process involves two main steps: Training (see data and learn) and Testing (how well the model behaves).</p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  Custom models can't make inferences that humans can't. Thus, if a person cannot be trained to assign tags for a certain input (audio, image, text, video, etc.), don't expect a computer can do the same work (neither better).</div>
+</p>
+
+<p>The complete cycle for creating and using a custom model is described in <a href="43665.html">Image 1</a>.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="width: 100.0%;"><img src="./images/43666.png" id="43666" class="WikiImage"/></td>
+		</tr>
+		<tr>
+			<td>
+			<h5 style="text-align: center;"><a id="Image+1%3A+Artificial+Intelligence+flowchart" class="HashLink" href="#Image+1%3A+Artificial+Intelligence+flowchart"><strong>Image 1</strong>: Artificial Intelligence flowchart</a></h5 style="text-align: center;">
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>First, you must <strong>acquire tagged data</strong> for training your model. Sometimes, it may be helpful to split your dataset in two: training-set (80%) and test-set (20%) as it is shown in <a href="43665.html">Image 2</a>. Either way, if you don't do it, the provider automatically splits your dataset.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="width: 100.0%;"><img src="./images/43677.png" id="43677" class="WikiImage"/></td>
+		</tr>
+		<tr>
+			<td>
+			<h5 style="text-align: center;"><a id="Image+2%3A+Dataset+containing+training%2C+validation+and+test+sets." class="HashLink" href="#Image+2%3A+Dataset+containing+training%2C+validation+and+test+sets."><strong>Image 2</strong>: Dataset containing training, validation and test sets.</a></h5 style="text-align: center;">
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Then, you must <strong>train and test your model</strong> until you are satisfied with how well your model behaves (see <a href="43665.html">Evaluation importance section</a>). Once you consider you achieve a good score, you are able to deploy it.</p>
+
+<p>Finally, with your deployed model, you will be able to <strong>input new data and get a prediction</strong> for it (also, you can delete your model or retrain it if you wish).</p>
+
+<h2><a id="Building+process" class="HashLink" href="#Building+process">Building process</a></h2>
+
+<h3><a id="1%29+Acquire+and+tag+your+data" class="HashLink" href="#1%29+Acquire+and+tag+your+data">1) Acquire and tag your data</a></h3>
+
+<p style="margin: 0;">You must:</p>
+
+<ol>
+	<li>Get data for achieving your aim (e.g. images of dogs/cats).</li>
+	<li>Choose your output classes (e.g. 'dog' and 'cat').</li>
+	<li>Start tagging your data (e.g. &quot;image1.jpg &gt; dog&quot;, &quot;image2.png &gt; cat&quot;, etc.).</li>
+</ol>
+
+<p>After this step, you will get your <strong>training dataset</strong>.</p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  Tips and good-practices.<br />
+1. Training data should be as similar as possible to the data on which predictions will be made.<br />
+2. Provide at least 10 samples per class you want to predict (1000 samples per class are recommended) including, at least, 1 for testing and 1 for validation.<br />
+3. Avoid low-frequent classes (join them in a general class or discard them).<br />
+4. Include a &quot;NONE&quot; tag as a miscellaneous category to improve your model behavior.</div>
+</p>
+
+<h3><a id="2%29+Create+your+custom+model" class="HashLink" href="#2%29+Create+your+custom+model">2) Create your custom model</a></h3>
+
+<p style="margin: 0;">You must:</p>
+
+<ol>
+	<li>Train your model from your input dataset (asynchronously, may take a long time).</li>
+	<li>Test your model in order to decide if it behaves as you expect or not.</li>
+	<li>Deploy your model in order to use it.</li>
+</ol>
+
+<p style="margin-bottom: 10.0px;">You can do these three steps in two ways:</p>
+<strong>       A) By using your provider's back-office</strong>
+
+<ol style="list-style-type: upper-roman;">
+	<li>Go to your <a href="43665.html">provider's back-office</a>.</li>
+	<li>Upload your dataset following their requirements.</li>
+	<li>Start your training (and go for a coffee).</li>
+	<li>Once trained, look for evaluation metrics.</li>
+	<li>If you are satisfied, deploy your model.</li>
+	<li>Get model identifier, version, and credentials to be able to use it.</li>
+</ol>
+<strong>      B) By using an SDK (Standard Development Kit)</strong>
+
+<ol style="list-style-type: upper-roman;">
+	<li>Use GeneXusAI.Custom module (or an official SDK) for training, testing and deployment processes.</li>
+	<li>Get model identifier, version, and credentials to be able to use it.</li>
+</ol>
+
+<p>If you are going to use the alternative (B) with GeneXusAI.Custom module, you can take the following code as an implementation example for the flowchart described in the <a href="43665.html">Image 1</a> (details about how can you load <span class="atn">&amp;definition</span> variable can be found in <a href="44246.html">this sample</a>).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// trigger training process
+&amp;model = GeneXusAI.Custom.Train(&amp;definition, &amp;provider, &amp;Messages)
+
+// check for the progress
+do while True
+    &amp;ret = sleep(60) // wait 1 min until re-poll
+    &amp;state = GeneXusAI.Custom.Check(&amp;model,&amp;provider,&amp;Messages)
+    if &amp;state &lt;&gt; GeneXusAI.Custom.State.Training OR &amp;Messages.Count &gt; 0
+        exit // break the loop
+    endIf
+endDo
+
+// evaluate your model
+&amp;Measure = GeneXusAI.Custom.Evaluate(&amp;model, &amp;provider, &amp;Messages)
+if &amp;Measure.Score &lt; 0.85 // threshold
+    return
+endIf
+
+// deploy your model
+GeneXusAI.Custom.Deploy(&amp;model, &amp;provider, &amp;Messages)
+
+</pre>
+
+<p>After this step, you will get a reference to your <strong>custom model</strong>.</p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  Tips and good-practices.<br />
+1. Always evaluate your model before deploying it.<br />
+2. If your model predicts unexpected values, recheck your training data.<br />
+3. Higher precision does not guarantee you good predictions. Your model may fall over the <em><a href='https://en.wikipedia.org/wiki/Overfitting'>overfitting problem</a></em>.</div>
+</p>
+
+<h3><a id="3%29+Use+your+custom+model" class="HashLink" href="#3%29+Use+your+custom+model">3) Use your custom model</a></h3>
+
+<p style="margin: 0;">You must:</p>
+
+<ol>
+	<li>Load your provider with your model properties (identifier, version, and/or credential).</li>
+	<li>Call to the appropriate GeneXusAI's task.<br />
+	e.g. if you train your model for image classification, call to <a href="40171.html">Classify procedure</a> or, if you train your model using GeneXusAI.Custom module, you can call to <a href="44245.html">Predict procedure</a>.</li>
+	<li>Start making predictions over new data. </li>
+</ol>
+
+<p>As simple as that!</p>
+
+<h2><a id="Evaluation+importance" class="HashLink" href="#Evaluation+importance">Evaluation importance</a></h2>
+
+<p>Imagine you want to train a classifier that distinguishes between two classes:</p>
+
+<ul>
+	<li><strong>Positive</strong> (P)</li>
+	<li><strong>Negative</strong> (N)</li>
+</ul>
+
+<p>Ideally, you want your classifier to predict exactly the real value (i.e., predict P when it really was a P, analogous for N). This idea is shown in <a href="43665.html">Image 3a</a>. But, as you are training a model from biased data (data from the real world), sometimes it may fail. So, your real classifier will be 'deviated' from the classifier you expect (exemplified in the <a href="43665.html">Image 3b</a>).</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="width: 100.0%;">
+			<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+				<tbody>
+					<tr>
+						<td style="height: 150.0px;"><img src="./images/44875.png" id="44875" class="WikiImage"/></td>
+						<td><img src="./images/44876.png" id="44876" class="WikiImage"/></td>
+					</tr>
+					<tr>
+						<td>
+						<h5 style="text-align: center;"><a id="%28a%29+Ideal+classifier+with+two+classes" class="HashLink" href="#%28a%29+Ideal+classifier+with+two+classes"><strong>(a)</strong> Ideal classifier with two classes</a></h5 style="text-align: center;">
+						</td>
+						<td>
+						<h5 style="text-align: center;"><a id="%28b%29+Real+classifier+with+outcomes" class="HashLink" href="#%28b%29+Real+classifier+with+outcomes"><strong>(b)</strong> Real classifier with outcomes</a></h5 style="text-align: center;">
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<h5 style="text-align: center;"><a id="Image+3%3A+ideal+vs+real+classifier" class="HashLink" href="#Image+3%3A+ideal+vs+real+classifier"><strong>Image 3</strong>: ideal vs real classifier</a></h5 style="text-align: center;">
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Take into account that this 'deviation' is not a bad thing since your model will be used for predicting values from new data (unseen during the training); otherwise, you may fall into the well-known <em><a href='https://en.wikipedia.org/wiki/Overfitting'>overfitting problem</a></em>. The fact that matters is 'how much' your model is 'deviated' from your expectation.</p>
+
+<p>So, when you evaluate a model, you will get four outcomes:</p>
+
+<ul>
+	<li><strong>True Positives</strong> (TP) <br />
+	How many positive values were correctly classified as positive.<br />
+	 </li>
+	<li><strong>True Negatives</strong> (TN)<br />
+	How many negative values were correctly classified as negative.<br />
+	 </li>
+	<li><strong>False Positive</strong> (FP)<br />
+	How many negative values were misclassified as positive.<br />
+	 </li>
+	<li><strong>False Negative</strong> (FN)<br />
+	How many positive values were misclassified as negative.</li>
+</ul>
+
+<p>These values determine what we know as a <a href='https://en.wikipedia.org/wiki/Confusion_matrix'>Confusion Matrix</a>, and from it you will be able to perform calculations that allow you to decide how well your model behaves. For instance, the most used metrics are calulated as follows:</p>
+
+<ul>
+	<li><strong>Accuracy</strong> (ACC)
+
+	<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+		<tbody>
+			<tr>
+				<td rowspan="2" style="vertical-align: middle;">ACC = </td>
+				<td style="vertical-align: middle;text-align: center;border-bottom: 1.0px solid black;">TP + TN</td>
+			</tr>
+			<tr>
+				<td style="vertical-align: middle;text-align: center;">TP + TN + FP + FN</td>
+			</tr>
+		</tbody>
+	</table>
+	 </li>
+	<li><strong>Precision</strong> (P)
+	<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+		<tbody>
+			<tr>
+				<td rowspan="2" style="vertical-align: middle;">P = </td>
+				<td style="vertical-align: middle;text-align: center;border-bottom: 1.0px solid black;">TP</td>
+			</tr>
+			<tr>
+				<td style="vertical-align: middle;text-align: center;">TP +  FP</td>
+			</tr>
+		</tbody>
+	</table>
+	  </li>
+	<li><strong>Recall</strong> (R)
+	<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+		<tbody>
+			<tr>
+				<td rowspan="2" style="vertical-align: middle;">R = </td>
+				<td style="vertical-align: middle;text-align: center;border-bottom: 1.0px solid black;">TP</td>
+			</tr>
+			<tr>
+				<td style="vertical-align: middle;text-align: center;">TP +  FN</td>
+			</tr>
+		</tbody>
+	</table>
+	 </li>
+	<li><strong>F1-Score</strong> (F<sub>1</sub>, armonic mean of precision and recall)
+	<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+		<tbody>
+			<tr>
+				<td rowspan="2" style="vertical-align: middle;">F<sub>1</sub> = </td>
+				<td style="vertical-align: middle;text-align: center;border-bottom: 1.0px solid black;">2 · P · R</td>
+			</tr>
+			<tr>
+				<td style="vertical-align: middle;text-align: center;">P  +  R</td>
+			</tr>
+		</tbody>
+	</table>
+	</li>
+</ul>
+
+<p>This same idea can be generalized to a multiclass classifier. So, don't be strict, a 100% accuracy does not guarantee that your model behaves correctly when classifies new data (data that it has never seen before).</p>
+
+<h2><a id="Provider+back-office" class="HashLink" href="#Provider+back-office">Provider back-office</a></h2>
+
+<p>The following table tells you where can you find the online training website for each supported provider.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr style="border-bottom: 1.0px solid black;">
+			<td style="vertical-align: top;"><strong>Provider</strong></td>
+			<td style="vertical-align: top;"><strong>Online training</strong></td>
+			<td style="vertical-align: top;"><strong>Documentation</strong></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Google</strong></td>
+			<td style="vertical-align: top;"><a href='https://cloud.google.com/automl/ui/vision'>AutoML Vision UI</a></td>
+			<td style="vertical-align: top;"><img src="./images/43676.png" id="43676" class="WikiImage"/> <a href='https://cloud.google.com/vision/automl/docs/how-to'>Read</a></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>IBM</strong></td>
+			<td style="vertical-align: top;"><a href='https://dataplatform.cloud.ibm.com/studio/redirect?create=watson-vision-combined,cloud-object-storage&amp;tool=watson_visual_recognition&amp;target=instance'>Watson Studio Visual Recognition</a></td>
+			<td style="vertical-align: top;"><img src="./images/43676.png" id="43676" class="WikiImage"/> <a href='https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/visual-recognition-create-model.html?audience=wdp'>Read</a></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Microsoft </strong></td>
+			<td style="vertical-align: top;"><a href='https://www.customvision.ai/projects?mostRecentDirectory'>Custom Vision AI</a></td>
+			<td style="vertical-align: top;"><img src="./images/43676.png" id="43676" class="WikiImage"/> <a href='https://docs.microsoft.com/en-us/azure/cognitive-services/custom-vision-service/getting-started-build-a-classifier'>Read</a></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>SAP</strong></td>
+			<td style="vertical-align: top;">GeneXus SDK for SAP Leonardo</td>
+			<td style="vertical-align: top;"><img src="./images/43676.png" id="43676" class="WikiImage"/> <a href="https://wiki.genexus.com/commwiki/wiki?41860,," target="_blank">Read</a></td>
+		</tr>
+		<tr style="border-top: 1.0px solid black;">
+			<td style="vertical-align: top;"> </td>
+			<td style="vertical-align: top;"> </td>
+			<td style="vertical-align: top;"> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>Google provider does not work with .NET Core Generator.</li>
+</ul>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This document applies as of <a href="https://wiki.genexus.com/commwiki/wiki?43978,," target="_blank">GeneXus 16 upgrade 6</a>.</p>
+
+<p></p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44242.html">Check procedure</a></TD><TD><a href="40171.html">Classify procedure</a></TD><TD><a href="44423.html">DataInputType domain</a></TD></TR><TR><TD><a href="44424.html">DataOutputType domain</a></TD><TD><a href="44243.html">Delete procedure</a></TD><TD><a href="44247.html">Deploy procedure</a></TD><TD><a href="44244.html">Evaluate procedure</a></TD></TR><TR><TD><a href="40167.html">Toc:GeneXus Artificial Intelligence</a></TD><TD><a href="40315.html">GeneXusAI Overview</a></TD></TR><TR><TD><a href="43665.html">HowTo: Build a custom model for GeneXusAI</a></TD><TD><a href="46593.html">Integration and Evolution with GeneXus 17</a></TD></TR><TR><TD><a href="44245.html">Predict procedure</a></TD><TD><a href="44234.html">Purpose domain</a></TD><TD><a href="44235.html">State domain</a></TD></TR><TR><TD><a href="44246.html">Train procedure</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

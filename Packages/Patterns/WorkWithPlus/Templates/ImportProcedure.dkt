@@ -1,0 +1,864 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Import Procedure" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="IsExcel" Type="System.Boolean" %>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	IGridObject gridObject = wwInstance.GetElement<IGridObject>(Element);
+	bool isCSV = !IsExcel;
+	bool isExcel = IsExcel;
+	
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	SettingsTemplateElement template = wwInstance.GetAppropiateTemplate();
+	
+	SettingsImportCSVActionElement importExcelSettings = settings.StandardActions.ImportExcel;
+	SettingsImportCSVActionElement importCSVSettings = settings.StandardActions.ImportCSV;
+	SettingsExportCSVActionElement exportCSVSettings = settings.StandardActions.ExportCSV;
+	SettingsExportActionElement exportExcelSettings = settings.StandardActions.Export;
+	
+	IGrid grid = gridObject.GetGrid();
+	
+	Procedure proc = (Procedure)Object;
+	
+	List<IAttributesItem> items = SettingsImportCSVActionElement.GetExportableItems(grid, isExcel);
+
+	IStandardActionElement actionElement = gridObject.GetStandardAction(isExcel ? StandardAction.ImportExcel : StandardAction.ImportCSV);
+	if (actionElement == null)
+	{
+		//this is called when the object is deleted
+		return;
+	}
+	
+	var multitenantAtt = wwInstance.MultiTenantAtt;
+
+	List<string> trnPK = new List<string>();
+	string keyList = "";
+	Artech.Genexus.Common.Objects.Transaction gridTrn = null;
+	ParametersElement parameters = gridObject.GetParameters();
+	if (wwInstance.HasTransaction())
+	{
+		gridTrn = gridObject.Transaction;
+		foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in gridTrn.Structure.Root.PrimaryKey)
+		{
+			bool isMultitenantAtt = (multitenantAtt != null && trnAtt.Name == multitenantAtt.Name);
+			if (isMultitenantAtt)
+			{
+				keyList += ", " + settings.MultiTenant.CurrentTenantExpression;
+			}
+			else
+			{
+				keyList += ", &" + trnAtt.Name;
+			}
+			if (parameters.FindParameter(trnAtt.Name) == null && !isMultitenantAtt)
+			{
+				trnPK.Add(trnAtt.Name);
+			}
+		}
+		keyList = keyList.Substring(2);
+		if (trnPK.Count == 0)
+		{
+			throw new Exception("WWPERROR: All PK attributes are received as Parameters.");
+		}
+	}
+	string csvInd = isCSV ? "\t" : "";
+	
+%>
+&Messages = new()
+
+<%
+	if (multitenantAtt != null)
+	{
+%>
+<%@ CallSubTemplate SubLoadContext Settings='settings' %>
+<%
+	}
+
+	bool addSecurityEndIf = false;
+	string mainIndentation = "";
+	if (wwInstance.Settings.Security.IsAdvancedOrGAM())
+	{
+		bool isTypeAdvanced = wwInstance.Settings.Security.IsTypeAdvanced();
+		string secFuntionKey = SettingsImportCSVActionElement.GetProcedureSecFuntionKey(actionElement, gridObject, wwInstance);
+		if (secFuntionKey != null && secFuntionKey.Trim() != "")
+		{
+			addSecurityEndIf = true;
+			mainIndentation = "	";
+			if (isTypeAdvanced)
+			{
+%>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' SecurityFunction='secFuntionKey' IndentLevelChar='"\t"' %>
+
+<%
+			}
+			else
+			{
+				List<string> functionList = SettingsSecurityAdvancedElement.GetFunctionsList(secFuntionKey);
+				if (functionList.Count > 0)
+				{
+					if (functionList.Count > 1)
+					{
+%>
+&SecurityFunctionalityKeys = new()
+<%
+						foreach(string function in functionList)
+						{
+%>
+&SecurityFunctionalityKeys.Add(!'<%= function.Trim() %>')
+<%
+						}
+%>
+&IsAuthorized = <%= settings.Security.SecurityGAM.CheckByFunctionKeysName %>.Udp(&SecurityFunctionalityKeys)
+<%
+					}
+					else
+					{
+%>
+&IsAuthorized = <%= settings.Security.SecurityGAM.CheckByFunctionKeyName %>.Udp(!'<%= functionList[0] %>') 
+<%
+					}
+				}
+			}
+%>
+If &IsAuthorized
+<%
+		}
+	}
+	if (items.Count == 0)
+	{
+		DVelop.Patterns.WorkWithPlus.Helpers.LogHelper.WriteErrorLog("At least one attribute must be included in the Export/Import to generate this object");
+		throw new Exception("WWPERROR: At least one attribute must be included in the Export/Import to generate this object");
+	}
+%>
+
+<%= mainIndentation %>&IsOk = True
+
+<%= mainIndentation %>Do 'Initialize parameters'
+
+<%
+	if (parameters.Count > 0)
+	{
+%>
+<%= mainIndentation %>Do 'Load extra parmeters'
+
+<%
+	}
+%>
+<%= mainIndentation %>If &DoDelete
+<%= mainIndentation %>	Do 'Get all records'
+<%= mainIndentation %>EndIf
+
+<%
+	if (isCSV)
+	{
+%>
+<%= mainIndentation %>&File.Source = &FilePath
+<%
+	}
+%>
+<%= mainIndentation %>Do 'Process file'
+
+<%= mainIndentation %>If &IsOk OR not &StopOnError
+<%= mainIndentation %>	Do 'Delete remaining records'
+<%= mainIndentation %>EndIf
+
+<%= mainIndentation %>If &IsOk
+<%= mainIndentation %>	Do 'Add success messages'
+<%= mainIndentation %>	Do 'Commit updates'
+<%= mainIndentation %>EndIf
+<%
+	if (addSecurityEndIf)
+	{
+%>
+
+Else
+	&IsOk = False
+	WWP_AddMessage(!'WWP_Import_NotAuthorized', MessageTypes.Error, 'WWP_NotAuthorizedTitle', &Messages)
+EndIf
+
+<%
+	}
+%>
+Sub 'Initialize parameters'
+	&StopOnError = <%= (IsExcel ? importExcelSettings.StopOnError : importCSVSettings.StopOnError).ToString() %>
+	&DoDelete = <%= (IsExcel ? importExcelSettings.DeleteRecords : importCSVSettings.DeleteRecords).ToString() %>
+	&DoUpdate = <%= (IsExcel ? importExcelSettings.UpdateRecords : importCSVSettings.UpdateRecords).ToString() %>
+	&DoInsert = <%= (IsExcel ? importExcelSettings.InsertRecords : importCSVSettings.InsertRecords).ToString() %>
+<%
+	if (isCSV)
+	{
+%>
+	&TitlesIncludedInFile = <%= exportCSVSettings.IncludeColumnTitles.ToString() %>
+<%
+	}
+%>
+	&ErrorIfKeyColumnNotFound = <%= (IsExcel ? importExcelSettings.ErrorIfKeyNotFound : importCSVSettings.ErrorIfKeyNotFound).ToString() %>
+	&ErrorIfUnmachingColumns = <%= (IsExcel ? importExcelSettings.ErrorIfUnmachingColumns : importCSVSettings.ErrorIfUnmachingColumns).ToString() %>
+EndSub
+
+Sub 'Add success messages'
+	If &AddedRecords > 0
+		WWP_AddMessage(!'WWP_Import_AddedRecordsCount', MessageTypes.Info, format('%1 records added.', &AddedRecords.ToString().Trim()), &Messages)
+	EndIf
+	If &UpdatedRecords > 0
+		WWP_AddMessage(!'WWP_Import_UpdatedRecordsCount', MessageTypes.Info, format('%1 records updated.', &UpdatedRecords.ToString().Trim()), &Messages)
+	EndIf
+	If &DeletedRecords > 0
+		WWP_AddMessage(!'WWP_Import_DeletedRecordsCount', MessageTypes.Info, format('%1 records deleted.', &DeletedRecords.ToString().Trim()), &Messages)
+	EndIf
+	If &AddedRecords + &UpdatedRecords + &DeletedRecords = 0
+		WWP_AddMessage(!'WWP_Import_NoRecordsModified', MessageTypes.Info, 'No record was modified.', &Messages)
+	EndIf
+EndSub
+
+Sub 'Commit updates'
+	Commit
+EndSub
+
+Sub 'Process file'
+<%
+	if (IsExcel)
+	{
+%>
+	Do 'OpenDocument'
+	
+	&LineNumber = 1
+	If &ExcelDocument.Cells(&LineNumber, 1).Text <> '' AND &ExcelDocument.Cells(&LineNumber, 2).Text = '' AND &ExcelDocument.Cells(&LineNumber + 1, 1).Text = ''
+		//Main title assumed
+		&LineNumber += 2
+	EndIf
+	&ContinueReading = True
+	&ColumnTitlesFound = False
+	Do while &ContinueReading
+		If Not &ColumnTitlesFound
+			If &ExcelDocument.Cells(&LineNumber, 1).Text <> ''
+				Do 'Get titles positions'
+				&ColumnTitlesFound = True
+			Else
+				If &LineNumber > 50
+					If &ExcelDocument.Cells(1, 1).Text <> ''
+						&LineNumber = 0
+					Else
+						WWP_AddMessage(!'WWP_Import_TitlesNotFound', MessageTypes.Error, 'No column title was found.', &Messages)
+						&ContinueReading = False
+					EndIf
+				EndIf
+			EndIf
+		Else
+			&RowHasData = False
+			For &ColIndex = 1 To &ColumnsCount
+				If &ExcelDocument.Cells(&LineNumber, &ColIndex).Text <> ''
+					&RowHasData = True
+					Exit
+				EndIf
+			EndFor
+			If &RowHasData
+				Do 'Process line'
+			Else
+				&ContinueReading = False
+			EndIf
+		EndIf
+		&LineNumber += 1
+	EndDo
+	Do 'CloseDocument'
+<%
+	}
+	else
+	{
+%>
+	If not &TitlesIncludedInFile
+		Do 'Get titles positions'
+	EndIf
+	&LineNumber = 1
+	For &LineStr in &File.ReadAllLines()
+		If &LineNumber = 1 AND &TitlesIncludedInFile
+			Do 'Get titles positions'
+		Else
+			If not &LineStr.Trim().IsEmpty()
+				Do 'Process line'
+			EndIf
+		EndIf
+		If &StopOnError AND not &IsOk
+			Exit
+		EndIf
+		&LineNumber += 1
+	EndFor
+<%
+	}
+%>
+EndSub
+
+Sub 'Get all records'
+<%
+	if (gridTrn != null)
+	{
+		foreach (string trnAttName in trnPK)
+		{
+%>
+	&<%= trnAttName %>s = new()
+<%
+		}
+%>
+	For Each <%= gridTrn.Name %>
+<%
+		foreach (ParameterElement parameter in parameters)
+		{
+			if (parameter.IsRealAttribute())
+			{
+%>
+		Where <%= parameter.ParameterCondition %>
+<%
+			}
+		}
+		List<string> automaticConditions = gridObject.GetAutomaticConditions(null);
+		if (automaticConditions != null)
+		{
+			foreach (string conditions in automaticConditions)
+			{
+%>
+		Where <%= conditions %>
+<%
+			}
+		}
+		if (multitenantAtt != null)
+		{
+%>
+		Where <%= multitenantAtt.Name %> = <%= settings.MultiTenant.CurrentTenantExpression %>
+<%
+		}
+		
+		foreach (string trnAttName in trnPK)
+		{
+%>
+		&<%= trnAttName %>s.Add(<%= trnAttName %>)
+<%
+		}
+%>
+	EndFor
+<%
+	}
+%>
+EndSub
+
+Sub 'Get titles positions'
+<%
+	if (isCSV)
+	{
+%>
+	If &TitlesIncludedInFile
+<%
+	}
+%>
+<%= csvInd %>	&TitleNames = new()
+<%
+	foreach (IAttributesItem item in items)
+	{
+		string itemDescription;
+		if (isCSV)
+		{
+			if (exportCSVSettings.WrapValuesWithDoubleQuotes)
+			{
+				itemDescription = WorkWithStringValues.StringWithQuotesWithoutReplace("\"" + item.Description.Replace("\"", "\"\"") + "\"");
+			}
+			else
+			{
+				itemDescription =  WorkWithStringValues.StringWithQuotes(item.Description.Replace(exportCSVSettings.Delimiter, exportCSVSettings.Delimiter == "," ? ";" : ","));
+			}
+		}
+		else
+		{
+			itemDescription = WorkWithStringValues.StringWithQuotes(item.Description);
+		}
+%>
+<%= csvInd %>	&TitleNames.Add(<%= itemDescription %>)
+<%
+	}
+%>
+
+<%= csvInd %>	WWP_GetImport<%= IsExcel ? "Excel" : "CSV" %>ColumnIndexes(&TitleNames, <%= IsExcel ? "&ExcelDocument, &LineNumber" : "&LineStr" %>, &DiscardedColumns, &TitleIndexes, &ColumnsCount, &ColumnsFound)
+
+<%= csvInd %>	If not &DiscardedColumns.IsEmpty()
+<%= csvInd %>		WWP_AddMessage(!'WWP_Import_DiscardedColumns', iif(&ErrorIfUnmachingColumns, MessageTypes.Error, MessageTypes.Warning), format('The following columns do not match any column to import: %1.', &DiscardedColumns), &Messages)
+<%= csvInd %>		If &ErrorIfUnmachingColumns
+<%= csvInd %>			&IsOk = False
+<%= csvInd %>		EndIf
+<%= csvInd %>	EndIf
+
+<%
+	string keysWithDscExpression = "";
+	if (gridTrn != null)
+	{
+		bool isFirstPK = true;
+		string keyColumnsExpression = "";
+		foreach (string trnAttName in trnPK)
+		{
+			int pkColIndex = SettingsImportCSVActionElement.GetColumnIndex(items, trnAttName);
+			if (pkColIndex != -1)
+			{
+				keysWithDscExpression += " + ', ' + " + WorkWithStringValues.StringWithQuotesFirstSingleColon(items[pkColIndex - 1].Description) + " + ': ' + " + TableAttributeElement.GetIAttributeItemStringValue("&" + trnAttName, items[pkColIndex - 1].eDBType, false);
+				keyColumnsExpression += " + ', ' + " + WorkWithStringValues.StringWithQuotesFirstSingleColon(items[pkColIndex - 1].Description);
+%>
+<%= csvInd %>	<%= isFirstPK ? "If" : "\tOR " %> &TitleIndexes.Item(<%= pkColIndex %>) = 0
+<%
+				isFirstPK = false;
+			}
+			else
+			{
+				Artech.Genexus.Common.Objects.Attribute att = gridTrn.Structure.GetAttribute(trnAttName).Attribute;
+				keysWithDscExpression += " + ', ' + " + WorkWithStringValues.StringWithQuotesFirstSingleColon(att.Description) + " + ': ' + " + TableAttributeElement.GetIAttributeItemStringValue("&" + trnAttName, att.Type, false);
+			}
+		}
+		keysWithDscExpression = keysWithDscExpression.Substring(10);
+		if (!isFirstPK)
+		{
+			keyColumnsExpression = keyColumnsExpression.Substring(10);
+%>
+<%= csvInd %>		&DoUpdate = False
+<%= csvInd %>		If &ErrorIfKeyColumnNotFound
+<%= csvInd %>			&KeyColumnNames = <%= keyColumnsExpression %>
+<%= csvInd %>			WWP_AddMessage(!'WWP_Import_KeyNotFound', MessageTypes.Error, format('The following columns must be present on the import file: %1.', &KeyColumnNames), &Messages)
+<%= csvInd %>			&IsOk = False
+<%= csvInd %>		EndIf
+<%= csvInd %>	EndIf
+<%
+		}
+	}
+%>
+
+<%= csvInd %>	If &IsOk AND &ColumnsFound = 0
+<%= csvInd %>		WWP_AddMessage(!'WWP_Import_NoColumnFound', MessageTypes.Error, 'No column title was found.', &Messages)
+<%= csvInd %>		&IsOk = False
+<%= csvInd %>	EndIf
+<%= csvInd %>	&StopOnError = &StopOnError OR not &IsOk
+<%
+	if (isCSV)
+	{
+%>
+	Else
+		&TitleIndexes = new()
+<%
+		int colIndex2 = 1;
+		foreach (IAttributesItem item in items)
+		{
+%>
+		&TitleIndexes.Add(<%= colIndex2 %>)
+<%
+			colIndex2++;
+		}
+%>
+		&ColumnsCount = <%= items.Count %>
+	EndIf
+<%
+	}
+	else
+	{
+%>
+	&ContinueReading = &IsOk
+<%
+	}
+	string itemName = gridTrn != null ? "&" + gridTrn.Name : (grid.GetSDTCollection().Contains(".") ? grid.GetSDTCollection().Substring(0, grid.GetSDTCollection().IndexOf(".")) : grid.GetSDTCollection() + "Item");
+%>
+	
+EndSub
+
+Sub 'Process line'
+	&IsLineOk = True
+	<%= itemName %> = new()
+<%
+	if (isCSV)
+	{
+%>
+	&LineSplitted = &LineStr.SplitRegEx(!'<%= exportCSVSettings.Delimiter %>')
+	If &LineSplitted.Count <> &ColumnsCount
+		WWP_AddImportErrorMessage(&Messages, &LineNumber.ToString().Trim(), !'WWP_Import_ColumnsMissingOrExcessed', 'Columns missing or excessed.')
+		&IsLineOk = False
+	Else
+<%
+	}
+%>
+<%
+	if (gridTrn != null)
+	{
+%>
+<%= csvInd %>	Do 'Load key'
+<%
+	}
+%>
+<%= csvInd %>	Do 'Find record'
+<%= csvInd %>	If &Index.IsEmpty()
+<%= csvInd %>		If &DoInsert
+<%= csvInd %>			&AddedRecords += 1
+<%
+	if (gridTrn != null)
+	{
+		foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in gridTrn.Structure.Root.PrimaryKey)
+		{
+			if (gridTrn.Structure.Root.PrimaryKey.Count > 1 || !TransactionElement.IsAutonumber(trnAtt))
+			{
+				int pkColIndex = SettingsImportCSVActionElement.GetColumnIndex(items, trnAtt.Name);
+				if (pkColIndex != -1)
+				{
+					var attType = trnAtt.Attribute.Type;
+					if (isExcel && (attType == eDBType.DATE || attType == eDBType.DATETIME))
+					{
+%>
+<%= csvInd %>			<%= itemName + "." + trnAtt.Name %> = &ExcelDocument.Cells(&LineNumber, &TitleIndexes.Item(<%= pkColIndex %>)).Date
+<%
+					}
+					else
+					{
+						string valueFrom;
+						if (isCSV)
+						{
+							valueFrom = "&LineSplitted.Item(&TitleIndexes.Item(" + pkColIndex + "))";
+							if (exportCSVSettings.WrapValuesWithDoubleQuotes)
+							{
+								valueFrom = "WWP_ExportCSV_RemoveQuotes(" + valueFrom + ")";
+							}
+						}
+						else
+						{
+							valueFrom = "&ExcelDocument.Cells(&LineNumber, &TitleIndexes.Item(" + pkColIndex + ")).Text";
+						}
+%>
+<%= csvInd %>			<%= TableAttributeElement.GetAssignVarFromStringValue(itemName + "." + trnAtt.Name, attType, TableAttributeElement.IsBasedOnEnumerated(trnAtt.Attribute), valueFrom) %>
+<%
+					}
+				}
+				if (parameters.FindParameter(trnAtt.Name) != null)
+				{
+%>
+<%= csvInd %>			<%= itemName %>.<%= trnAtt.Name %> = &<%= trnAtt.Name %>
+<%
+				}
+				else if (multitenantAtt != null && trnAtt.Name == multitenantAtt.Name)
+				{
+%>
+<%= csvInd %>			<%= itemName %>.<%= trnAtt.Name %> = <%= settings.MultiTenant.CurrentTenantExpression %>
+<%
+				}
+			}
+
+		}
+	}
+%>
+<%= csvInd %>		Else
+<%= csvInd %>			WWP_AddImportErrorMessage(&Messages, &LineNumber.ToString().Trim(), !'WWP_Import_RecordNotFound', 'WWP_RecordNotFound')
+<%= csvInd %>			&IsLineOk = False
+<%= csvInd %>		EndIf
+<%= csvInd %>	Else
+<%= csvInd %>		If &DoUpdate
+<%= csvInd %>			&UpdatedRecords += 1
+<%= csvInd %>			If &DoDelete
+<%= csvInd %>				Do 'Remove record from remainings'
+<%
+	if (gridTrn != null)
+	{
+%>
+<%= csvInd %>				<%= itemName %>.Load(<%= keyList %>)
+<%
+	}
+%>
+<%= csvInd %>			EndIf
+		
+<%
+	if (gridTrn != null)
+	{
+%>
+<%= csvInd %>			If not <%= itemName %>.Success()
+<%= csvInd %>				WWP_AddImportErrorMessages(&Messages, &LineNumber.ToString().Trim(), <%= itemName %>.GetMessages())
+<%= csvInd %>				&IsLineOk = False
+<%= csvInd %>			EndIf
+<%
+	}
+%>
+<%= csvInd %>		Else
+<%= csvInd %>			WWP_AddImportErrorMessage(&Messages, &LineNumber.ToString().Trim(), !'WWP_Import_RecordFound_NoUpdate', 'Matching record found and Update not allowed.')
+<%= csvInd %>			&IsLineOk = False
+<%= csvInd %>		EndIf
+<%= csvInd %>	EndIf
+<%
+	if (isCSV)
+	{
+%>
+	EndIf
+<%
+	}
+%>
+	If &IsLineOk
+		Do 'Set record values'
+		Do 'Validate before Save'
+		If &IsLineOk
+<%
+	if (gridTrn != null)
+	{
+%>
+			<%= itemName %>.Save()
+			If not <%= itemName %>.Success()
+				WWP_AddImportErrorMessages(&Messages, &LineNumber.ToString().Trim(), <%= itemName %>.GetMessages())
+				&IsLineOk = False
+			EndIf
+<%
+	}
+	else
+	{
+%>
+			<%= grid.GetSDTCollection() %>.Add(<%= itemName %>)
+<%
+	}
+%>
+		EndIf
+	EndIf
+	&IsOk = &IsOk AND &IsLineOk
+<%
+	if (IsExcel)
+	{
+%>
+	&ContinueReading = (not &StopOnError OR &IsOk)
+<%
+	}
+%>
+
+EndSub
+
+Sub 'Set record values'
+<%
+	int colIndex = 1;
+	foreach (IAttributesItem item in items)
+	{
+		if (gridTrn == null || SettingsImportCSVActionElement.IsEditable(item, gridTrn))
+		{
+%>
+	If &TitleIndexes.Item(<%= colIndex %>) > 0
+<%= Indentation.Indent(SettingsImportCSVActionElement.GetSetExpression(item, isCSV ? "&LineSplitted.Item(&TitleIndexes.Item(" + colIndex + "))" : "&ExcelDocument.Cells(&LineNumber, &TitleIndexes.Item(" + colIndex + ")).Text", gridTrn, itemName, IsExcel, settings), 2) %>
+	EndIf
+<%
+		}
+		colIndex++;
+	}
+	if (gridTrn != null)
+	{
+		foreach (ParameterElement parameter in parameters)
+		{
+			if (parameter.IsRealAttribute() && SettingsImportCSVActionElement.IsEditable(gridTrn.Structure.Root.GetAttribute(parameter.Name)))
+			{
+%>
+	<%= itemName %>.<%= parameter.Name %> = &<%= parameter.Name %>
+<%
+			}
+		}
+	}
+%>
+EndSub
+
+Sub 'Remove record from remainings'
+<%
+	if (gridTrn != null)
+	{
+		foreach (string trnAttName in trnPK)
+		{
+%>
+	&<%= trnAttName %>s.Remove(&Index)
+<%
+		}
+	}
+%>
+EndSub
+
+<%
+	if (gridTrn != null)
+	{	
+%>
+Sub 'Load key'
+<%
+		foreach (Artech.Genexus.Common.Parts.TransactionAttribute trnAtt in gridTrn.Structure.Root.PrimaryKey)
+		{
+			if (parameters.FindParameter(trnAtt.Name) == null && (multitenantAtt == null || trnAtt.Name != multitenantAtt.Name))
+			{
+				int pkColIndex = SettingsImportCSVActionElement.GetColumnIndex(items, trnAtt.Name);
+				if (pkColIndex != -1)
+				{
+%>
+	If &TitleIndexes.Item(<%= pkColIndex %>) > 0
+<%= Indentation.Indent(SettingsImportCSVActionElement.GetSetExpression(items[pkColIndex - 1], isCSV ? "&LineSplitted.Item(&TitleIndexes.Item(" + pkColIndex + "))" : "&ExcelDocument.Cells(&LineNumber, &TitleIndexes.Item(" + pkColIndex + ")).Text", gridTrn, null, IsExcel, settings), 2) %>
+	EndIf
+<%
+				}
+				else
+				{
+%>
+	//Warning: Attribute '<%= trnAtt.Name %>' is part of the key and is not included in the export. Set it at the beggining of this Subrutine or every line will be added as a new record.
+<%
+				}
+			}
+		}
+%>
+EndSub
+<%
+	}	
+%>
+
+Sub 'Find record'
+<%
+	if (gridTrn != null)
+	{
+%>
+	If &DoDelete
+<%
+		if (trnPK.Count == 1)
+		{
+%>
+		&Index = &<%= trnPK[0] %>s.IndexOf(&<%= trnPK[0] %>)
+<%
+		}
+		else
+		{
+%>
+		&Index.SetEmpty()
+		For &i = 1 To &<%= trnPK[0] %>s.Count
+			If &<%= trnPK[0] %>s.Item(&i) = &<%= trnPK[0] %>
+<%
+			for (int i = 1; i < trnPK.Count; i++)
+			{
+%>
+				AND &<%= trnPK[i] %>s.Item(&i) = &<%= trnPK[i] %>
+<%
+			}
+%>
+
+				&Index = &i
+				Exit
+			EndIf
+		EndFor
+<%
+		}
+%>
+	Else
+		<%= itemName %>.Load(<%= keyList %>)
+		If <%= itemName %>.Success()
+			&Index = 1
+		Else
+			&Index = 0
+		EndIf
+	EndIf
+<%
+	}
+%>
+EndSub
+
+Sub 'Validate before Save'
+
+	//If User custom validation fails:
+	// - set &IsLineOk = False
+	// - call WWP_AddImportErrorMessage to add the error message
+	
+EndSub
+
+Sub 'Delete remaining records'
+<%
+	if (gridTrn != null)
+	{
+%>
+	&DeletedRecords = &<%= trnPK[0] %>s.Count
+<%
+		if (trnPK.Count == 1)
+		{
+%>
+	For &<%= trnPK[0] %> in &<%= trnPK[0] %>s
+		<%= itemName %>.Load(<%= keyList %>)
+<%
+		}
+		else
+		{
+%>
+	For &i = 1 To &<%= trnPK[0] %>s.Count
+<%
+			foreach (string trnAttName in trnPK)
+			{
+%>
+		&<%= trnAttName %> = &<%= trnAttName %>s.Item(&i)
+<%
+			}
+%>
+		<%= itemName %>.Load(<%= keyList %>)
+<%
+		}
+%>
+		If <%= itemName %>.Success()
+			<%= itemName %>.Delete()
+		EndIf
+		If not <%= itemName %>.Success()
+			WWP_AddImportErrorMessages(&Messages, format('(Deleting %1)', <%= keysWithDscExpression %>), <%= itemName %>.GetMessages())
+			&IsOk = False
+			If &StopOnError
+				Exit
+			EndIf
+		EndIf
+	EndFor
+<%
+	}
+%>
+EndSub
+<%
+	if (IsExcel)
+	{
+%>
+Sub 'OpenDocument'
+	
+	&ExcelDocument.Open(&FilePath)
+	Do 'CheckStatus'
+	
+EndSub
+
+Sub 'CloseDocument'
+	&ExcelDocument.Close()
+EndSub
+
+Sub 'CheckStatus'
+
+	If (&ExcelDocument.ErrCode <> 0)
+		WWP_AddMessage('WWP_ErrorExcelDocument', MessageTypes.Error, &ExcelDocument.ErrDescription, &Messages)
+		&ExcelDocument.Close()
+		Return
+	EndIf
+
+EndSub
+
+<%
+	}
+	if (parameters.Count > 0)
+	{
+%>
+
+Sub 'Load extra parmeters'
+
+	&ExtraParms.FromJson(&ExtraParmsJson)
+	If &ExtraParms.Count = <%= parameters.Count %> 
+<%
+		int parmIndex = 1;
+		foreach (ParameterElement parameter in parameters)
+		{
+			var parameterVar = proc.Variables.GetVariable(parameter.Name);
+%>
+		<%= TableAttributeElement.GetAssignVarFromStringValue((parameter.IsAttribute ? "&" : "") + parameter.Name, parameterVar.Type, DVelop.Patterns.WorkWithPlus.Object_Utilities.VariablesGenerator.IsVariablesBasedOnEnum(parameterVar), "&ExtraParms.Item(" + parmIndex + ")") %>
+<%
+			parmIndex++;
+		}
+%>
+	EndIf
+
+EndSub
+
+<%
+	}
+%>
+

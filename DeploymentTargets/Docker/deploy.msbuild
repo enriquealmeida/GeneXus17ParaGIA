@@ -1,0 +1,44 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Deploy"  ToolsVersion="4.0">
+
+	<Import Project= "createpackage.msbuild" Condition = "'$(CreateCloudPackage)' == '' or '$(CreateCloudPackage)' == 'true'" />
+
+	<Target Name="Deploy" DependsOnTargets="ValidateDeploy">
+		
+		 <CallTarget Targets="CreatePackage" Condition = "'$(CreateCloudPackage)' == '' or '$(CreateCloudPackage)' == 'true'"/>
+
+		<ItemGroup> 
+			<SourceFile Include="$(DeploySource)" />
+		</ItemGroup>
+
+		<PropertyGroup>
+			<DeployDirectory>%(SourceFile.RootDir)%(SourceFile.Directory)context</DeployDirectory>
+			<Dockerfile>$(DeployDirectory)\Dockerfile</Dockerfile>
+			<UnslashedDeployDirectory>$([System.Text.RegularExpressions.Regex]::Replace ($(DeployDirectory), `\\$`, ""))</UnslashedDeployDirectory>
+		</PropertyGroup>
+		
+		<Message Text="Building Docker image $(DOCKER_IMAGE_NAME)" Importance="high" Condition="'$(DOCKER_EXIT_CODE)' == '0'"/>
+
+		<Exec Command='docker build --pull --no-cache -t $(DOCKER_IMAGE_NAME) -f "$(Dockerfile)" "$(UnslashedDeployDirectory)"' Condition="'$(DOCKER_EXIT_CODE)' == '0'" >
+			<Output TaskParameter="ExitCode" PropertyName="DOCKER_BUILD_EXIT_CODE"/>
+		</Exec>
+
+		<Message Text="Make sure you push the $(DOCKER_IMAGE_NAME) Docker image to a reachable Docker registry (eg. 'docker push $(DOCKER_IMAGE_NAME)')" Condition ="'$(DOCKER_BUILD_EXIT_CODE)' == '0'" Importance="high"/>
+
+	</Target>
+
+	<Target Name = "ValidateDeploy">
+		
+		<Exec Command="docker info --format &quot;{{.OSType}}&quot;" ConsoleToMSBuild="true" ContinueOnError="true">
+			<Output TaskParameter="ConsoleOutput" PropertyName="DOCKER_OS" />
+			<Output TaskParameter="ExitCode" PropertyName="DOCKER_EXIT_CODE"/>
+		</Exec>
+		
+		<Error Text="Missing property DOCKER_IMAGE_NAME" Condition="'$(DOCKER_EXIT_CODE)' == '0' AND '$(DOCKER_IMAGE_NAME)' == ''"/>
+
+		<Error Text="Docker client not found." Condition="'$(DOCKER_EXIT_CODE)' == '9009' OR '$(DOCKER_EXIT_CODE)' == '2'"/>
+
+		<Error Text="You need to change your Docker Engine to work with Linux containers" Condition="('$(GENERATOR)' == '.NET Core' or '$(GENERATOR)' == '.NET' OR '$(GENERATOR)' == 'Java') AND '$(DOCKER_OS)' == 'windows'"/>
+		<Error Text="You need to change your Docker Engine to work with Windows containers" Condition="('$(GENERATOR)' == 'C#' or '$(GENERATOR)' == '.NET Framework') AND '$(DOCKER_OS)' == 'linux'"/>	
+
+	</Target>
+</Project>

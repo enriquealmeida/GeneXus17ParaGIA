@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>SD Component control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?29811,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">SD Component control</h1>
+<!--SD Component control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>SD Components are available in the toolbox for <a href="24829.html">SDPanel</a> or <a href="15974.html">WWSD</a> .</p>
+
+<p>Like <a href="https://wiki.genexus.com/commwiki/wiki?6056,," target="_blank">Web Components</a>, SD Components are controls that can contain <a href="24829.html">SDPanel</a> or <a href="15974.html">WWSD</a> objects without losing any of its characteristics and they can also run independently. This feature provides to designers of GeneXus Smart Device applications a high degree of reusability.</p>
+
+<p>The main difference with <a href="https://wiki.genexus.com/commwiki/wiki?6056,," target="_blank">Web Components</a> is that SD components don't need any additional property like <a href="10444.html">Type property (in Web Panels and Transactions)</a>.</p>
+
+<p> </p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 700.0px;">
+	<tbody>
+		<tr>
+			<td style="text-align: center;"><img src="./images/30083.png" id="30083" class="WikiImage"/></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><em>Final result on <a href="https://wiki.genexus.com/commwiki/wiki?22550,," target="_blank">EventDay</a> sample</em></td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h2><a id="Simple+usage+example" class="HashLink" href="#Simple+usage+example">Simple usage example</a></h2>
+
+<p>In <em><a href="https://wiki.genexus.com/commwiki/wiki?22550,," target="_blank">EventDay</a></em>, suppose we want to view tweets while we are reading session content.</p>
+
+<p>To do this, we create a Panel for Smart Devices called &quot;SessionsWithTweets&quot; and drag two Component controls from the toolbox.</p>
+
+<p><img src="./images/29995.gif" id="29995" class="WikiImage"/></p>
+
+<p>Then, we must set both Component controls with WorkWith object for Sessions and the Panel for Smart Devices of Tweets as shown below:</p>
+
+<p><img src="./images/29996.gif" id="29996" class="WikiImage"/></p>
+
+<p>Finally, the layout results as shown below.</p>
+
+<p><img src="./images/30370.png" id="30370" class="WikiImage"/></p>
+
+<p> </p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods">Methods</a></h2>
+
+<h4><a id="Refresh" class="HashLink" href="#Refresh">Refresh</a></h4>
+
+<p>  Causes an object embedded into an SD Component to execute the Refresh event.</p>
+
+<p>  <strong>Return value</strong>: None</p>
+
+<p>  <strong>Parameters</strong>: None</p>
+
+<p>  <strong>Note</strong>: Differences between Refresh methods/commands and how to use them:</p>
+
+<ul>
+	<li>To refresh an object and all its components (including forms, grids, etc), use the <a href="25069.html">Refresh</a> command. </li>
+	<li>To refresh the full screen, use the <a href="25287.html">Refresh Form</a> command.</li>
+	<li>To refresh a Grid in an object, use the <a href="22578.html">Grid Refresh</a> method.</li>
+	<li>To refresh an object embedded in a Component (and all its descendants) use the method described here.</li>
+</ul>
+
+<ul>
+</ul>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h2><a id="Event+trigger+sequence+with+multiple+Components" class="HashLink" href="#Event+trigger+sequence+with+multiple+Components">Event trigger sequence with multiple Components</a></h2>
+
+<p>The event trigger order in a Panel for Smart Devices with multiple Components is analogous to Detail and Sections in <a href="17614.html">Work With for Smart Devices</a>. If we have C<sub>1</sub>...C<sub>N </sub> Components in a Panel P, schematically the execution order will be:</p>
+
+<pre>
+Client Start (P)
+Start (P)
+Refresh (P)
+Load (P)
+
+     ClientStart (C<sub>1</sub>)
+     Start (C<sub>1</sub>)
+     Refresh (C<sub>1</sub>)
+     Load (C<sub>1</sub>)
+
+     &lt;...&gt;
+
+     ClientStart (C<sub>N</sub>)
+     Start (C<sub>N</sub>)
+     Refresh (C<sub>N</sub>)
+     Load (C<sub>N</sub>)
+</pre>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h2><a id="Action+Bar+behavior" class="HashLink" href="#Action+Bar+behavior">Action Bar behavior</a></h2>
+
+<p>When using multiple Components, the Action Bar behavior will be the combination of actions for each Component.</p>
+
+<p> </p>
+
+<h2><a id="Advance+usage+example" class="HashLink" href="#Advance+usage+example">Advance usage example</a></h2>
+
+<p>Continuing with the previous example, suppose we want to read the tweets minute. To do this, we must write an event associated with a Timer variable (invisible in SD Panel and with <a href="25058.html">Chronometer control</a> set) and refresh the screen when the elapsed time exceeds 60 seconds.</p>
+
+<p><img src="./images/29812.png" id="29812" class="WikiImage"/></p>
+
+<pre>
+Event ClientStart
+    // Init timer
+    &amp;Timer = 0
+Endevent
+
+Event &amp;Timer.Tick
+    // If one minute elapsed, refresh component
+    If Mod(&amp;Timer,60) = 0
+        Component2.Refresh()
+    EndIf
+EndEvent
+</pre>
+
+<p>Finally, substitute the invocation to Sessions on the dashboard, delete the Tweets node and run the application.</p>
+
+<h2><br />
+Notes</h2>
+
+<ul>
+	<li>SD Components controls cannot be drawn into a Grid Control.</li>
+	<li>To synchronize the components at run-time programmatically, you can use  <a href="30201.html">Global Events</a>.</li>
+	<li>The <a href="7011.html">Object property</a> is available at design-time, and also available at run-time programmatically for <a href="5404.html">Dynamic Component Creation</a></li>
+</ul>
+
+<p> </p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<p>  <strong>Objects </strong><a href="24829.html">Panel for Smart Devices</a>, <a href="15974.html">Work With for Smart Devices</a></p>
+
+<p><strong>  SD Generators:</strong> iOS, Android</p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This property is available as of<b> </b><a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a></p>
+
+<p> <a href="5404.html">Dynamic Component Creation</a> is available as of  <a href="https://wiki.genexus.com/commwiki/wiki?39737,," target="_blank">GeneXus 15 upgrade 12</a></p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p> </p>
+<br />
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5404.html">Dynamic Component Creation</a></TD><TD><a href="30201.html">HowTo: Using Global Events in Smart Device applications</a></TD></TR><TR><TD><a href="7011.html">Object property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

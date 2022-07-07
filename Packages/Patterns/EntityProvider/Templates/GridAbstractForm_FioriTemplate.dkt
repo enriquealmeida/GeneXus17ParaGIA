@@ -1,0 +1,352 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tab Ab Form" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Include Name="SearchButton.cs" %>
+<%@ Assembly Name="Concepto.Patterns.EntityProvider" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider" %>
+<%@ Import Namespace="Concepto.Patterns.EntityProvider.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Import Namespace="Artech.Patterns.WorkWithDevices.Copy" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Concepto.Patterns.EntityProvider.EntityProviderInstance" %>
+<%@ Property Name="GridObject" Type="Concepto.Patterns.EntityProvider.IGridObject" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ Property Name="IsTabTemplate" Type="System.Boolean" %>
+<%@ Property Name="Template" Type="Artech.Genexus.Common.Parts.DefaultFormHelper.FormTemplate" %>
+
+<Part type="<%= PartType.WebForm %>">
+	<Source><![CDATA[<%
+
+	EntityProviderSettings settings = Instance.Settings;
+	//EntityProviderInstance epInstance = EntityProviderInstance.Load(Instance);
+	Transaction transaction = Instance.Transaction.Transaction;
+	
+	bool hasFilters = (GridObject.Filter != null && GridObject.Filter.Attributes.Count > 0);
+	uint filtersCount = 5;//GridObject.Filter.Attributes.Count;
+	int outOfGridActionsCount = GridObject.Actions.StandaloneActions.Count;
+	bool hasOutOfGridActions = outOfGridActionsCount > 0;
+	bool hasAdvancedBar = (hasFilters && GridObject.Filter.Attributes.Count > 1) || GridObject.Orders.NeedsChoice;
+	bool isSelection = GridObject is SelectionElement;
+	string actionGroupThemeClass = null;
+	string gridTheme = settings.Theme.Grid;
+	string gridTableClass = Constants.AdvancedContainerFluidClass;
+	// Dummy vars
+	bool needCurrentPage = false;
+	ResponsiveSizes mainTableSizes = Concepto.Patterns.EntityProvider.Helpers.GridAbstractForm.MainTableResponsiveSizes(hasAdvancedBar, Template);
+	ResponsiveSizes tableTopSearchSizes = Concepto.Patterns.EntityProvider.Helpers.GridAbstractForm.TableTopResponsiveSizes(hasAdvancedBar, IsTabTemplate, Template);	
+	ResponsiveSizes gridTableSizes = Concepto.Patterns.EntityProvider.Helpers.GridAbstractForm.GridTableResponsiveSizes(false, true, false, hasAdvancedBar, Template);
+	ResponsiveSizes filtersTableSizes = Concepto.Patterns.EntityProvider.Helpers.GridAbstractForm.FiltersTableResponsiveSizes(filtersCount);
+	string mainTableClass = "BodyContainer";//hasAdvancedBar ? Constants.AdvancedContainerFluidClass : Constants.ContainerClass;
+%>
+<%= WebMultiForm.BeginMultiForm(1) %>
+	<%-- Main form --%>
+	<%= WebMultiForm.BeginLayoutForm(1) %>
+		<%= WebLayout.BeginLayout() %>
+			<%= WebLayout.BeginResponsiveTable(mainTableSizes, Constants.MainTable, isSelection ? mainTableClass : Constants.GridTabMainTableClass) %>
+
+<%
+	if (hasOutOfGridActions || GridObject.Description != String.Empty || hasFilters)
+	{
+		string tableTopClass = "TableTopSearch";
+		if (IsTabTemplate)
+			tableTopClass = "ViewTableTop";
+%>
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebLayout.BeginResponsiveTable(tableTopSearchSizes, "TableTop", tableTopClass) %>
+							<%= WebLayout.BeginTableRow() %>
+							
+<%				
+			if (GridObject.Description != String.Empty)
+			{
+%>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.TextBlock("TitleText", settings.Theme.Subtitle, GridObject.Description) %>
+								<%= WebLayout.EndTableCell() %>
+<%
+			}
+			if (hasAdvancedBar)
+			{
+%>
+								<%= WebLayout.BeginTableCell(null, Constants.ToggleCellClass, null, null, "Right", null) %>
+									<%= WebLayout.Button(Constants.ToggleButton, "HideFiltersButton", Constants.BtnHideFiltersCaption, "'Toggle'") %>
+								<%= WebLayout.EndTableCell() %>
+<%
+			}
+%>
+							<%= WebLayout.EndTableRow() %>
+							
+<%	
+		if (IsTabTemplate)
+		{		
+			actionGroupThemeClass  	= "WWViewActions";
+			gridTheme				= "ViewGrid";
+			gridTableClass			= null;
+		}
+		// Advanced bar, for orders and filters
+		if (hasAdvancedBar)
+		{ 
+%>				
+							
+							<%= WebLayout.BeginTableRow() %>
+<%
+		//	uint rows = (uint)((GridObject.Filter.Attributes.Count - 1) + (GridObject.Orders.NeedsChoice ? 1 : 0));
+		//	ResponsiveSizes advancedBarTableSizes = Concepto.Patterns.EntityProvider.Helpers.GridAbstractForm.AdvancedBarTableResponsiveSizes(rows);
+%>
+								<%= WebLayout.BeginTableCell(null, (isSelection) ? Constants.AdvancedBarCellClass : Constants.ViewAdvancedBarCellClass) %>
+									<%= WebLayout.BeginResponsiveTable(filtersTableSizes, Constants.AdvancedContainerTable, Constants.AdvancedBarContainerClass) %>							
+										<%= WebLayout.BeginTableRow() %>
+<%
+			Dictionary<string, object> advancedLabelProperties = new Dictionary<string, object>();
+			advancedLabelProperties[Artech.Genexus.Common.Properties.HTMLSPAN.Format] = Artech.Genexus.Common.Properties.HTMLSPAN.Format_Values.Html;
+			// Orders
+			if (GridObject.Orders.NeedsChoice)
+			{
+%>	
+											<%= WebLayout.BeginTableCell() %>
+												<%= WebLayout.BeginResponsiveTable(Concepto.Patterns.EntityProvider.Helpers.AbstractForm.SimpleResponsiveSizesHelper(2, 1), Constants.OrderByContainerTable, Constants.AdvancedBarContainerItemExpandedClass) %>
+													<%= WebLayout.BeginTableRow() %>
+														<%= WebLayout.BeginTableCell() %>
+															<%= WebLayout.TextBlock("LblOrderBy", Constants.OrderByLabelClass, settings.Labels.OrderedBy, advancedLabelProperties) %>
+														<%= WebLayout.EndTableCell() %>
+													<%= WebLayout.EndTableRow() %>
+													<%= WebLayout.BeginTableRow() %>
+														<%= WebLayout.BeginTableCell() %>
+															<%= WebLayout.BeginResponsiveTable(Concepto.Patterns.EntityProvider.Helpers.GridAbstractForm.OrdersTableResponsiveSizes((uint)GridObject.Orders.Count), Constants.OrderByContainerTable2, Constants.OrdersTableClass) %>
+																<%= WebLayout.BeginTableRow() %>
+<%
+				int i = 1;
+				foreach (OrderElement orderElement in GridObject.Orders)
+				{
+					string className = (i == 1) ? Constants.OrderItemSelectedClass : Constants.OrderItemClass;
+%>
+																	<%= WebLayout.BeginTableCell(null, Constants.OrdersCellClass) %>
+																		<%= WebLayout.TextBlock("OrderBy" + (i++).ToString(), className, orderElement.Name) %>
+																	<%= WebLayout.EndTableCell() %>
+<%
+				}
+%>
+																<%= WebLayout.EndTableRow() %>
+															<%= WebLayout.EndResponsiveTable() %>
+														<%= WebLayout.EndTableCell() %>
+													<%= WebLayout.EndTableRow() %>
+												<%= WebLayout.EndResponsiveTable() %>
+											<%= WebLayout.EndTableCell() %>
+								
+<%
+			}	
+			// Filters
+						
+			if (hasFilters)
+			{
+				Dictionary<string, object> filterAttProps = new Dictionary<string, object>();
+				// TO DO: Cambiar valor "None" LayoutDataItemElement.LabelPositionValue.None
+				
+				filterAttProps[Artech.Patterns.WorkWithDevices.Copy.InstanceAttributes.LayoutDataItem.LabelPosition] = "None";
+				filterAttProps[Artech.Patterns.WorkWithDevices.Copy.InstanceAttributes.LayoutDataItem.InviteMessage] = GridObject.Filter.Attributes[0].Description;
+%>
+											
+											<%= WebLayout.BeginTableCell() %>
+												<%= WebLayout.BeginResponsiveTable(Concepto.Patterns.EntityProvider.Helpers.AbstractForm.SimpleResponsiveSizesHelper(1, 1), "MainFilterContainer", Constants.AdvancedBarContainerItemExpandedClass) %>													
+													<%=WebLayout.BeginTableRow() %>
+														<%= WebLayout.BeginTableCell() %>										
+															<%= WebLayout.Variable(GridObject.Filter.Attributes[0].Name, GridObject.Filter.Attributes[0].IsDateType ? "DateFilterSearchAttribute" : Constants.FilterAttributeClass, null, null, filterAttProps) %>
+														<%= WebLayout.EndTableCell() %>
+													<%= WebLayout.EndTableRow() %>
+												<%= WebLayout.EndResponsiveTable() %>
+											<%= WebLayout.EndTableCell() %>							
+<%
+			}			
+			if (hasFilters && GridObject.Filter.Attributes.Count > 1)
+			{
+				for (int i = 1; i < GridObject.Filter.Attributes.Count; i++)
+				{
+					FilterAttributeElement filterVar = GridObject.Filter.Attributes[i];
+					Dictionary<string, object> filterAttProps = new Dictionary<string, object>();
+					// TO DO: Cambiar valor "None" LayoutDataItemElement.LabelPositionValue.None
+					filterAttProps[Artech.Patterns.WorkWithDevices.Copy.InstanceAttributes.LayoutDataItem.LabelPosition] = "None";
+					
+					if (filterVar.IsDateType)
+						filterAttProps[Artech.Genexus.Common.Properties.HTMLATT.DisplayFlat] = true;
+
+%>
+											<%= WebLayout.BeginTableCell() %>
+												<%= WebLayout.BeginResponsiveTable(Concepto.Patterns.EntityProvider.Helpers.AbstractForm.SimpleResponsiveSizesHelper(2, 1), String.Format("{0}FilterContainer", filterVar.Name), Constants.AdvancedBarContainerItemExpandedClass) %>
+													
+													<%=WebLayout.BeginTableRow() %>
+														<%= WebLayout.BeginTableCell() %>
+															<%= WebLayout.TextBlock(String.Format("Lbl{0}Filter", filterVar.Name), filterVar.IsDateType ? Constants.DateFilterLabelClass : Constants.FilterLabelClass, filterVar.Description, advancedLabelProperties) %>
+														<%= WebLayout.EndTableCell() %>
+													<%=WebLayout.EndTableRow() %>
+													
+													<%= WebLayout.BeginTableRow() %>
+														<%= WebLayout.BeginTableCell(null, Constants.FilterCellClass) %>
+															<%= WebLayout.Variable(filterVar.Name, Constants.FilterComboAttributeClass, null, null, filterAttProps) %>
+														<%= WebLayout.EndTableCell() %>
+													<%= WebLayout.EndTableRow() %>
+												<%= WebLayout.EndResponsiveTable() %>
+											<%= WebLayout.EndTableCell() %>
+							
+<%
+				}
+			}
+%>							
+										<%= WebLayout.EndTableRow() %>
+									<%= WebLayout.EndResponsiveTable() %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+									
+<%
+		}
+%>	
+						<%= WebLayout.EndResponsiveTable() %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %> 
+<%
+	} // end table top
+%>
+				<%= WebLayout.BeginTableRow() %>
+			
+<%	
+
+	string gridCellClass = null;
+	if (hasAdvancedBar)
+		gridCellClass = (isSelection) ? Constants.GridCellClass : Constants.ViewGridCellAdvancedClass;
+	else
+	{
+		gridCellClass = Constants.ViewGridCellAdvancedClass;
+		if (!isSelection)
+			gridCellClass = Constants.ViewGridCellClass;
+	}
+%>
+					<%= WebLayout.BeginTableCell(Constants.GridCellName, gridCellClass) %>
+						<%= WebLayout.BeginResponsiveTable(gridTableSizes, Constants.GridTable, gridTableClass) %>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.ErrorViewer("ErrorViewer") %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+							
+<%
+	if (hasOutOfGridActions)
+	{
+%>							
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell(null, isSelection ? Constants.ActionsCellClass : Constants.ViewGridActionsCellClass, null, null, "Right", null) %>
+									<%= GridObject.Actions.ToActionGroupBlock() %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+<%
+	}
+%>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.BeginSimpleGrid(Constants.GridName, gridTheme, null, GridObject.Orders.Condition, null) %>
+
+<%
+	if (GridObject.Actions.MultiRowActions.Count > 0)
+	{
+		// Checkbox is first column.
+%>
+										<%= WebLayout.SimpleGridVariable("Selected", null, "") %>
+<%
+	}
+
+	// Then, grid attributes and variables.
+	if (GridObject.Attributes != null)
+	{
+		foreach (IAttributesItem gridItem in GridObject.Attributes)
+		{
+			AttributeElement att = gridItem as AttributeElement;
+%>
+										<%= WebFormScript.GridColumn(gridItem, true, (att != null) ? att.IsDescriptionAttribute : false) %>
+<%
+		}
+	}
+
+	foreach (ActionElement inGridAction in GridObject.Actions.GridActions)
+	{
+		// InGrid actions go next.
+		if (inGridAction != GridObject.Actions.Display && inGridAction != GridObject.Actions.Update && inGridAction != GridObject.Actions.Delete)
+		{
+%>
+										<%= inGridAction.ToAbstractMarkup() %>
+<%
+		}
+	}
+	
+	if (GridObject.Actions.Display != null)
+	{
+%>
+										<%= GridObject.Actions.Display.ToAbstractMarkup() %>
+<%
+	}
+	if (GridObject.Actions.Update != null)
+	{
+%>
+										<%= GridObject.Actions.Update.ToAbstractMarkup() %>
+<%
+	}
+	if (GridObject.Actions.Delete != null)
+	{
+%>
+										<%= GridObject.Actions.Delete.ToAbstractMarkup() %>
+<%
+	}
+%>	
+									<%= WebLayout.EndSimpleGrid() %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+						<%= WebLayout.EndResponsiveTable() %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+<%-- "Hidden" attributes - sometimes necessary for GX to infer the correct navigation scheme. --%>
+<%
+	foreach (ParameterElement parameter in GridObject.Parameters)
+	{
+		if (!Variables.IsVariableName(parameter.Name) && 
+			GridObject.Attributes != null &&
+			GridObject.Attributes.FindAttribute(parameter.Name) == null &&
+			parameter.AttributeExistsInModel(Object.Model))
+		{
+			// Always use edits (they are hidden).
+%>
+				<%= WebLayout.BeginTableRow() %>
+					<%= WebLayout.BeginTableCell() %>
+						<%= WebFormScript.HiddenAttribute(parameter.Name, true) %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+<%
+		}
+	}
+%>
+			<%= WebLayout.EndResponsiveTable() %>
+
+<%-- Action group --%>
+			<%= WebLayout.BeginActionGroups() %>
+<%
+	if (hasOutOfGridActions)
+	{
+		if (outOfGridActionsCount > 1)
+		{
+%>		
+				<%= GridObject.Actions.ToActionGroupMenu(2, actionGroupThemeClass) %>
+				
+<%		
+		}
+		else
+		{
+%>				
+				<%= GridObject.Actions.ToActionGroup(actionGroupThemeClass) %>
+<%
+		}
+	}
+%>
+			<%= WebLayout.EndActionGroups() %>
+		<%= WebLayout.EndLayout() %>
+	<%= WebMultiForm.EndLayoutForm() %>
+<%= WebMultiForm.EndMultiForm() %>]]>
+	</Source>
+</Part>

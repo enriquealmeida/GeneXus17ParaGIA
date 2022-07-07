@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM deploy tool command line (only windows)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?30642,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM deploy tool command line (only windows)</h1>
+<!--GAM deploy tool command line (only windows)--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The  <a href="18608.html">GAM Deploy Tool</a> performs the task of importing/exporting a package via command line. Its behavior is similar when running in UI mode. All the information requested from the user through the UI can be specified using the argument indicated for this purpose.</p>
+
+<p>This tool only runs in Windows (gamdeploytool.exe), and it's distributed stand-alone.</p>
+
+<h3><a id="Valid+Arguments" class="HashLink" href="#Valid+Arguments">Valid Arguments</a></h3>
+
+<p><br />
+•    -apps mode: It allows specifying which applications will be imported. The values admitted are: none, all, {app_guid1,...,app_guidn}. With the &quot;all&quot; value, all the applications included in the package will be imported. The &quot;none&quot; value indicates the opposite action, meaning that no application will be imported. It can also be applied to one of the applications to be inserted, separating their GUID by commas.<br />
+•    -config_file_path name: If specified, it indicates where to copy the configuration file (client.exe.config) created for executing the GX processes.<br />
+•    -conn_string_additional_args args: Additional arguments taken into account when building the connection string to the DB.<br />
+•    -connection_gam_file dir: Name of the directory where the connection.gam file will be saved with the inserted data.<br />
+•    -dbms code *: It matches the code of the DBMS managed by GeneXus.<br />
+•    -db_name name: Name of the DB where the GAM scheme resides.<br />
+•    -db_pass password: User’s password to connect to the DBMS.<br />
+•    -db_user user: Username to connect to the DBMS.<br />
+•    -gam_pass password: Password of the GAM administrator user.<br />
+•    -gam_user user: Username of the GAM administrator (by default, it is &quot;gamadmin&quot;)<br />
+•    -gen_def_rep_conn: If specified, it indicates that a new connection must be created to the inserted/updated repository.<br />
+•    -help: It displays a help message indicating the supported arguments.<br />
+•    -import type: It indicates the import mode and the entities that will have to be updated. The possible values are: full or a combination of the following keys separated by a comma between '{}': repository, users, roles, sec_policies; for example &quot;-import {roles,users,repository}&quot; is valid.<br />
+•    -informix_srv instance: It indicates the name of the Informix server instance.<br />
+•    -log_file name: It stores the output of the tool in the specified file. By default, it is generated in %USER_TEMP_DIR%\GamLog.log<br />
+•    -file path_package: It indicates the path to the package file to be imported.<br />
+•    -srv_host server: Name or IP address of the database server to connect to.<br />
+•    -srv_port port: It indicates the DBMS listening port.<br />
+•    -use_exported_conns: If specified, it indicates that the exported repository connections will have to be taken into account for importing it.<br />
+•    -use_nt_sec: If specified, it indicates that it must connect to the DBMS using the authentication mode provided by Windows NT.<br />
+•    -verbose: If specified, it indicates that the application's output must be also redirected to the console. The GamLog.log file will also be generated (or the one specified)</p>
+
+<h3><a id="Configuring+the+input+for+the+GAM+deploy+tool" class="HashLink" href="#Configuring+the+input+for+the+GAM+deploy+tool">Configuring the input for the GAM deploy tool</a></h3>
+
+<p>The GAM deploy tool can take the input from an XML file. </p>
+
+<p>Entering the arguments through the console is only valid for the import operation; in the other cases, you should use the XML file as the input. Below is the configuration schema of the input XML file.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;Windows-1252&quot;?&gt;
+
+&lt;xs:schema attributeFormDefault=&quot;unqualified&quot; elementFormDefault=&quot;qualified&quot; xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+  &lt;xs:element name=&quot;GamDeployTool&quot;&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:sequence&gt;
+        &lt;xs:element name=&quot;GeneralSettings&quot;&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name=&quot;ProcessType&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;GamAdminName&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;GamAdminPass&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;Verbose&quot; type=&quot;xs:boolean&quot; /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+        &lt;xs:element name=&quot;DbmsSettings&quot;&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name=&quot;DbmsCode&quot; type=&quot;xs:unsignedByte&quot; /&gt;
+              &lt;xs:element name=&quot;ServerHost&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;ServerPort&quot; type=&quot;xs:unsignedShort&quot; /&gt;
+              &lt;xs:element name=&quot;UseWindowsNT&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;DbmsUser&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;DbmsPass&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;DbName&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;AdditionalStrings&quot; /&gt;
+              &lt;xs:element name=&quot;InformixInstance&quot; /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+        &lt;xs:element name=&quot;ExportSettings&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;1&quot;&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name=&quot;PackageFilePath&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;ExportType&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;ExportRepositorySettings&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ExportRoles&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ExportSecurityPolicies&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ExportUsers&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;RepositoryGuid&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;Platforms&quot;&gt;
+                &lt;xs:complexType&gt;
+                  &lt;xs:sequence&gt;
+                    &lt;xs:element maxOccurs=&quot;unbounded&quot; name=&quot;Platform&quot; type=&quot;xs:unsignedByte&quot; /&gt;
+                  &lt;/xs:sequence&gt;
+                &lt;/xs:complexType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name=&quot;Applications&quot;&gt;
+                &lt;xs:complexType&gt;
+                  &lt;xs:sequence&gt;
+                    &lt;xs:element maxOccurs=&quot;unbounded&quot; name=&quot;AppId&quot; type=&quot;xs:string&quot; /&gt;
+                  &lt;/xs:sequence&gt;
+                &lt;/xs:complexType&gt;
+              &lt;/xs:element&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+        &lt;xs:element name=&quot;ImportSettings&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;1&quot;&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name=&quot;PackageFilePath&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;ImportType&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;ImportRepositorySettings&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ImportRoles&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ImportSecurityPolicies&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ImportUsers&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ImportConnections&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ImportAuthenticationTypes&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;GenerateDefaultConnection&quot; type=&quot;xs:boolean&quot; /&gt;
+              &lt;xs:element name=&quot;ImportRepositoryAction&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;RepositoryGuid&quot; /&gt;
+              &lt;xs:element name=&quot;NewRepositorySettings&quot;&gt;
+                &lt;xs:complexType&gt;
+                  &lt;xs:sequence&gt;
+                    &lt;xs:element name=&quot;Name&quot; type=&quot;xs:string&quot; /&gt;
+                    &lt;xs:element name=&quot;Namespace&quot; type=&quot;xs:string&quot; /&gt;
+                    &lt;xs:element name=&quot;Description&quot; type=&quot;xs:string&quot; /&gt;
+                    &lt;xs:element name=&quot;AdminUserName&quot; type=&quot;xs:string&quot; /&gt;
+                    &lt;xs:element name=&quot;AdminUserPass&quot; type=&quot;xs:string&quot; /&gt;
+                    &lt;xs:element name=&quot;ConnectionUserName&quot; type=&quot;xs:string&quot; /&gt;
+                    &lt;xs:element name=&quot;ConnectionUserPass&quot; type=&quot;xs:string&quot; /&gt;
+                    &lt;xs:element name=&quot;AllowOauthAccess&quot; type=&quot;xs:boolean&quot; /&gt;
+                    &lt;xs:element name=&quot;GiveAnonymousSessions&quot; type=&quot;xs:boolean&quot; /&gt;
+                    &lt;xs:element name=&quot;CanRegisterUsers&quot; type=&quot;xs:boolean&quot; /&gt;
+                    &lt;xs:element name=&quot;AdministratorRoleGuid&quot; type=&quot;xs:string&quot; /&gt;
+                  &lt;/xs:sequence&gt;
+                &lt;/xs:complexType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name=&quot;Applications&quot;&gt;
+                &lt;xs:complexType&gt;
+                  &lt;xs:sequence&gt;
+                    &lt;xs:element name=&quot;Application&quot;&gt;
+                      &lt;xs:complexType&gt;
+                        &lt;xs:sequence&gt;
+                          &lt;xs:element name=&quot;Id&quot; type=&quot;xs:string&quot; /&gt;
+                          &lt;xs:element name=&quot;ImportPermissions&quot; type=&quot;xs:string&quot; /&gt;
+                        &lt;/xs:sequence&gt;
+                      &lt;/xs:complexType&gt;
+                    &lt;/xs:element&gt;
+                  &lt;/xs:sequence&gt;
+                &lt;/xs:complexType&gt;
+              &lt;/xs:element&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+        &lt;xs:element name=&quot;GenerateConnectionFile&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;1&quot;&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name=&quot;ConnectionFileDir&quot; type=&quot;xs:string&quot; /&gt;
+              &lt;xs:element name=&quot;Connections&quot;&gt;
+                &lt;xs:complexType&gt;
+                  &lt;xs:sequence&gt;
+                    &lt;xs:element name=&quot;Connection&quot;&gt;
+                      &lt;xs:complexType&gt;
+                        &lt;xs:sequence&gt;
+                          &lt;xs:element name=&quot;RepositoryId&quot; type=&quot;xs:string&quot; /&gt;
+                          &lt;xs:element name=&quot;Name&quot; type=&quot;xs:string&quot; /&gt;
+                        &lt;/xs:sequence&gt;
+                      &lt;/xs:complexType&gt;
+                    &lt;/xs:element&gt;
+                  &lt;/xs:sequence&gt;
+                &lt;/xs:complexType&gt;
+              &lt;/xs:element&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:sequence&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</pre>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<p>The sections ExportSettings, ImportSettings, and GenerateConnectionFile are optional depending on the process (property ProcessType inside the GeneralSettings).</p>
+
+<p>Download the <a href="https://wiki.genexus.com/commwiki/wiki?30643,," target="_blank">GAM deploy tool XSD input file</a>. This file specifies the valid values and restrictions for the fields.</p>
+
+<p>Download a <a href="https://wiki.genexus.com/commwiki/wiki?30644,," target="_blank">GAM deploy tool XML input file sample</a>.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p><br />
+1. Perform a “Full Import” against SQL Server in a DB called GamDb. Windows NT authentication is used.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&gt; GamDeployTool.exe -file c:\pack.gpkg -dbms 12 -srv_host localhost -use_nt_sec -db_name GamDb -gam_user gamadmin -gam_pass gamadmin123 -import full -connection_gam_file c:\connection.gam -use_exported_connections</pre>
+
+<p><br />
+2. Perform a “Custom Import” against MySQL in a DB called GamDb. The guid application is imported: '54fdaafd-cb9f-4786-b7d6-f9b20e20a8e2'</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&gt; GamDeployTool.exe -file c:\pack.gpkg -dbms 18 -srv_host localhost -db_user root -db_pass root -db_name GamDb -gam_user gamadmin -gam_pass gamadmin123 -import repository,roles -apps 54fdaafd-cb9f-4786-b7d6-f9b20e20a8e2 -connection_gam_file c:\connection.gam -gen_def_rep_conn -verbose
+</pre>
+
+<p>3. Example using an XML input file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&gt; GamDeployTool.exe -xml_config_path c:\arguments.xml</pre>
+
+<p>The following is a sample XML file where the application is asked to create a connection.gam file with the connection to the <a href="18617.html">GAM Manager Repository</a></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;GamDeployTool&gt;
+
+&lt;GeneralSettings&gt;
+ 
+  &lt;ProcessType&gt;GenerateConnectionFile&lt;/ProcessType&gt;
+ 
+  &lt;GamAdminName&gt;gamadmin&lt;/GamAdminName&gt;
+
+  &lt;GamAdminPass&gt;gamadmin123&lt;/GamAdminPass&gt;
+  &lt;Verbose&gt;false&lt;/Verbose&gt;
+&lt;/GeneralSettings&gt;
+
+
+&lt;DbmsSettings&gt;
+ 
+  &lt;DbmsCode&gt;18&lt;/DbmsCode&gt;
+  
+  &lt;ServerHost&gt;localhost&lt;/ServerHost&gt;
+
+  &lt;ServerPort&gt;3306&lt;/ServerPort&gt;
+  
+  &lt;UseWindowsNT&gt;false&lt;/UseWindowsNT&gt;
+ 
+  &lt;DbmsUser&gt;root&lt;/DbmsUser&gt;
+ 
+  &lt;DbmsPass&gt;root&lt;/DbmsPass&gt;
+
+  &lt;DbName&gt;gamtestplatform_gam&lt;/DbName&gt;
+
+  &lt;AdditionalStrings&gt;&lt;/AdditionalStrings&gt;
+ 
+  &lt;InformixInstance&gt;&lt;/InformixInstance&gt;
+&lt;/DbmsSettings&gt;
+
+
+&lt;GenerateConnectionFile&gt;
+
+  &lt;ConnectionFileDir&gt;c:\&lt;/ConnectionFileDir&gt;
+
+  &lt;Connections&gt;
+   &lt;Connection&gt;
+
+    &lt;RepositoryId&gt;92b783a2-2a50-4261-8ba7-684fb780967d&lt;/RepositoryId&gt;
+
+    &lt;Name&gt;GAM-Manager&lt;/Name&gt;
+   &lt;/Connection&gt;
+  &lt;/Connections&gt;
+&lt;/GenerateConnectionFile&gt;
+&lt;/GamDeployTool&gt;</pre>
+
+<h3><br />
+List of DBMS codes</h3>
+
+<ul>
+	<li>DB2_UDB = 5</li>
+	<li>ORACLE = 7</li>
+	<li>DB2_ISERIES = 9</li>
+	<li>INFORMIX = 11</li>
+	<li>SQL_SERVER = 12</li>
+	<li>POSTGRESQL = 15</li>
+	<li>MYSQL = 18</li>
+</ul>
+
+<p></p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="18608.html">GAM Deploy Tool</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

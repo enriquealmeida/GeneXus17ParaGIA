@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>WebBrowser external object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?36384,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">WebBrowser external object</h1>
+<!--WebBrowser external object--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The WebBrowser external object allows you to handle events related to web-designed applications which are embedded in a Smart Device application.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"> </td>
+			<td style="vertical-align: top;"><img src="./images/39380.png" id="39380" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Definitions" class="HashLink" href="#Definitions">Definitions</a></h2>
+
+<p>Through this document we will be using some names that require a precise definition, so that we can later use them more loosely.</p>
+
+<p><strong>Embedded web view control</strong>: Is a control that is shown inside the Panel's layout, and can show a web page. It can be a read-only attribute, variable or SDT member based on the <a href="16186.html">Component</a> or <a href="16293.html">HTML</a> domains.</p>
+
+<p><strong>Inline web browser</strong>: Is a full screen web browser with the tipical navigation elements (URL, back button, refresh button, etc.), that is shown inside the application.</p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods">Methods</a></h2>
+
+<h3><a id="Open+method" class="HashLink" href="#Open+method">Open method</a></h3>
+
+<p>Opens an inline web browser, displaying the given URL. This method replaces the OpenInBrowser method of <a href="23734.html">Interop external object</a>.</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Input</strong></td>
+			<td>url:<a href="15668.html">URL</a></td>
+		</tr>
+		<tr>
+			<td><strong>Output</strong></td>
+			<td>None</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Close+method" class="HashLink" href="#Close+method">Close method</a></h3>
+
+<p>Closes the inline web browser.</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Input</strong></td>
+			<td>None</td>
+		</tr>
+		<tr>
+			<td><strong>Output</strong></td>
+			<td>None</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Events" class="HashLink" href="#Events">Events</a></h2>
+
+<h3><a id="BeforeNavigate+event" class="HashLink" href="#BeforeNavigate+event">BeforeNavigate event</a></h3>
+
+<p>This event lets you capture -before they happen- navigation events started from an embedded web view control, so that you can decide how to handle this navigation.</p>
+
+<p>Note that this event is not triggered from the inline web browser, but just from an embedded web view control.</p>
+
+<p>If the WebBrowser.BeforeNavigate is not present, following a link from an an embedded web view control will always open the inline web browser. The reason for this is that the embedded web view control has no navigation controls (like the &quot;back&quot; or &quot;refresh&quot; buttons), required for a correct navigation experience.</p>
+
+<p>When the WebBrowser.BeforeNavigate is present, you can control if a link is opened in the same embedded web view control or if it should open an inline web browser.</p>
+
+<p>This event receives the URL that will be opened, and an in-out parameter that indicates if the navigation has been handled. If you set the &amp;handled variable to True, then the application will not follow the link, because it assumes that it has been handled in the event. If you set it to False, then the navigation is handled as usual and the application will open an inline web browser to show the &amp;url parameter.</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Input</strong></td>
+			<td>url:<a href="15668.html">URL</a></td>
+		</tr>
+		<tr>
+			<td><b>In-out</b></td>
+			<td>handled:<a href="4374.html">Boolean</a></td>
+		</tr>
+		<tr>
+			<td><strong>Output</strong></td>
+			<td>None</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="OnClose+event" class="HashLink" href="#OnClose+event">OnClose event</a></h3>
+
+<p>This event is triggered when the inline web browser, opened within a Smart Devices application, is closed. It is very helpful to code communication between the mobile and web applications.</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Input</strong></td>
+			<td>url:<a href="15668.html">URL</a></td>
+		</tr>
+		<tr>
+			<td><strong>Output </strong></td>
+			<td>None</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Examples+for+the+BeforeNavigate+event" class="HashLink" href="#Examples+for+the+BeforeNavigate+event">Examples for the BeforeNavigate event</a></h2>
+
+<h3><a id="Navigating+inside+the+embedded+web+view+control" class="HashLink" href="#Navigating+inside+the+embedded+web+view+control">Navigating inside the embedded web view control</a></h3>
+
+<p>If you want to navigate inside the embedded web view control (say you have a &amp;Component variable), the following code can be used:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event GeneXus.SD.WebBrowser.BeforeNavigate(&amp;Url, &amp;Handled)
+  composite
+    &amp;Component = &amp;Url // assign the new URL to the variable in the form
+    &amp;Handled = true
+  endcomposite
+EndEvent</pre>
+
+<p>Keep in mind that the tipical navigation options (like the &quot;back&quot; or &quot;refresh&quot; actions) will not be available.</p>
+
+<h3><a id="Implement+a+payment+flow" class="HashLink" href="#Implement+a+payment+flow">Implement a payment flow</a></h3>
+
+<p>This event is also usefull to implement a payment flow, where the web page acts like some kind of wizard with several steps, and after finishing it calls some well known callback URL to finish the payment process.</p>
+
+<p>This can be implemeted as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event GeneXus.SD.WebBrowser.BeforeNavigate(&amp;Url, &amp;Handled)
+  composite
+    if &amp;Url = &amp;callbackURL
+      &lt;your_code&gt;
+    endif
+ <span style="white-space: pre;"> </span>  &amp;Handled = true // always force navigation inside the embedded web view
+  endcomposite
+EndEvent
+</pre>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li>Another way to open a web browser: <a href="18555.html">HowTo: Open a Web Page in a New Browser Window from a Smart Devices Application</a></li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><b>Generators </b></td>
+			<td>Apple, Android</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+<br />
+</p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR></TR><TR><TD><a href="31268.html">GeneXus Core module</a></TD><TD><a href="15288.html">Category:Smart Devices API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/23/21 02:29 PM</em></font></td></TR></table></font>

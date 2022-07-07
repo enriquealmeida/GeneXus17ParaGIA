@@ -1,0 +1,203 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Web Form" %>
+<%@ Include Name="PromptConstants.cs" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="System.Diagnostics" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Import Namespace="Artech.Genexus.Common.CustomTypes" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+
+<%
+	int filtersCount = 0;
+	foreach (PromptAttribute fixedAtt in Definition.Fixed)
+	{
+		if (fixedAtt.FixType == "c")
+		{
+			filtersCount++;
+		}	
+	}
+	
+	bool hasFilters = (filtersCount > 0);
+	
+	ResponsiveSizes mainTableSizes = PromptHelper.MainTableResponsiveSizes(hasFilters);
+	string mainTableClass = hasFilters ? PromptConstants.ContainerFluidClass + " " + PromptConstants.PromptContainerClass : PromptConstants.ContainerClass;
+	ResponsiveSizes gridTableSizes = PromptHelper.GridTableResponsiveSizes(hasFilters);
+	
+%>
+<%= WebMultiForm.BeginMultiForm(1) %>
+	<%-- Main form --%>
+	<%= WebMultiForm.BeginLayoutForm(1) %>
+		<%= WebLayout.BeginLayout() %>
+			<%= WebLayout.BeginResponsiveTable(mainTableSizes, "Main", mainTableClass) %>
+				<%= WebLayout.BeginTableRow() %>
+<%
+	// Find the "return on click" attribute.
+	Table table = Table.Get(Model, Definition.Info.Table.TableId);
+	int linkedAttId = table.TableStructure.DescriptionAttribute.Id;
+
+	Transaction trn = null;
+	TransactionLevel trnLevel = null;
+	if (table.AssociatedTransactions.Count > 0)
+	{
+		trn = table.AssociatedTransactions[0];
+		trnLevel = trn.Structure.GetLevelOfTable(table);
+	}
+
+	if (hasFilters)
+	{
+		ResponsiveSizes advancedBarTableSizes = PromptHelper.AdvancedBarTableResponsiveSizes(filtersCount);
+%>
+					<%= WebLayout.BeginTableCell(null, PromptConstants.AdvancedBarCellClass) %>
+						<%= WebLayout.BeginResponsiveTable(advancedBarTableSizes, PromptConstants.AdvancedContainerTable, PromptConstants.AdvancedBarContainerVisibleClass) %>
+<%
+		Dictionary<string, object> advancedLabelProperties = new Dictionary<string, object>();
+		advancedLabelProperties[Artech.Genexus.Common.Properties.HTMLSPAN.Format] = Artech.Genexus.Common.Properties.HTMLSPAN.Format_Values.Html;
+		foreach (PromptAttribute fixedAtt in Definition.Fixed)
+		{
+			if (fixedAtt.FixType == "c")
+			{
+				Artech.Genexus.Common.Objects.Attribute att = GetAttribute(fixedAtt.AttriId);
+				Dictionary<string, object> filterAttProps = new Dictionary<string, object>();
+				filterAttProps[Artech.Patterns.WorkWithDevices.Copy.InstanceAttributes.LayoutDataItem.LabelPosition] = "None";
+				
+				bool isDateType = att.Type == eDBType.DATE || att.Type == eDBType.DATETIME;
+				if (isDateType)
+					filterAttProps[Artech.Genexus.Common.Properties.HTMLATT.DisplayFlat] = true;
+%>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.BeginResponsiveTable(PromptHelper.FilterTableResponsiveSizes(), String.Format("{0}FilterContainer", att.Name), PromptConstants.AdvancedBarContainerItemClass) %>
+										<%= WebLayout.BeginTableRow() %>
+											<%= WebLayout.BeginTableCell() %>
+												<%= WebLayout.TextBlock(String.Format("Lbl{0}Filter", att.Name), isDateType ? PromptConstants.DateFilterLabelClass : PromptConstants.FilterLabelClass, String.Format("={0}.Title", att.Name), advancedLabelProperties) %>
+											<%= WebLayout.EndTableCell() %>
+										<%= WebLayout.EndTableRow() %>
+										<%= WebLayout.BeginTableRow() %>
+											<%= WebLayout.BeginTableCell(null, PromptConstants.FilterCellClass) %>
+												<%= WebLayout.Variable("&" + GetConditionVarName(att.Name), null, null, null, filterAttProps) %>
+											<%= WebLayout.EndTableCell() %>
+										<%= WebLayout.EndTableRow() %>
+									<%= WebLayout.EndResponsiveTable() %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+<%
+			}
+		}
+%>
+						<%= WebLayout.EndResponsiveTable() %>
+					<%= WebLayout.EndTableCell() %>
+<%
+	}
+	
+	// Grid properties
+	const int k_maxRows = 10;
+
+	Dictionary<string, object> gridProps = new Dictionary<string, object>();
+	gridProps[Properties.HTMLSFL.Rows] = k_maxRows;
+
+	Dictionary<string, object> selectionColumnProperties = new Dictionary<string, object>();
+	selectionColumnProperties[Properties.HTMLSFLCOL.ReturnOnClick] = true;
+	selectionColumnProperties[Properties.HTMLSFLCOL.ColumnClass] = PromptConstants.ActionColumnClass;
+%>
+					<%= WebLayout.BeginTableCell(null, hasFilters ? PromptConstants.GridCellClass : null) %>
+						<%= WebLayout.BeginResponsiveTable(gridTableSizes, "GridTable", null) %>
+<%
+	if (hasFilters)
+	{
+%>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell(null, PromptConstants.ToggleCellClass) %>
+									<%= WebLayout.Button(PromptConstants.ToggleButton, PromptConstants.BtnToggleClass, "|||", "'Toggle'") %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+<%	
+	}
+%>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.BeginSimpleGrid(PromptConstants.GridName, PromptConstants.GridClass, null, null, gridProps) %>
+										<%= WebLayout.SimpleGridVariable("&LinkSelection", PromptConstants.SelectImageAttributeClass, "", null, selectionColumnProperties) %>
+<%
+	for (int i = 0; i < Definition.SubFile.Length; i++)
+	{
+		Artech.Genexus.Common.Objects.Attribute att = GetAttribute(Definition.SubFile[i]);
+
+		string titleProperty = "ColumnTitle";
+		bool isDescriptionAttribute = false;
+		bool isKey = false;
+		if (trnLevel != null)
+		{
+			// TrnAttribute can be null (especially for prompts for transaction sublevels).
+			TransactionAttribute trnAttribute = trnLevel.GetAttribute(att.Id);
+			if (trnAttribute != null && trnAttribute.IsLocal)
+			{
+				titleProperty = "ContextualTitle";
+				isDescriptionAttribute = trnAttribute.IsDescriptionAttribute;
+				isKey = trnAttribute.IsKey;
+			}
+		}
+
+		string colTitleExpression = String.Format("={0}.{1}", att.Name, titleProperty);
+		string themeClass = isDescriptionAttribute ? PromptConstants.DescriptionAttributeClass : null;
+		Dictionary<string, object> columnProps = new Dictionary<string, object>();
+		if (Definition.SubFile[i] == linkedAttId )
+		{
+			columnProps[Properties.HTMLSFLCOL.ReadOnly] = true;
+			columnProps[Properties.HTMLSFLCOL.ReturnOnClick] = true;
+		}
+		if (Definition.SubFile[i] == linkedAttId || isKey)
+		{
+			columnProps[Properties.HTMLSFLCOL.ColumnClass] = PromptConstants.ColumnClass;
+		}
+		else
+		{
+			columnProps[Properties.HTMLSFLCOL.ColumnClass] = PromptConstants.ColumnClass + " " + PromptConstants.OptionalColumnClass;
+		}
+%>
+										<%= WebLayout.SimpleGridAttribute(att.Name, themeClass, colTitleExpression, null, columnProps) %>
+<%
+	}
+	
+	// Add hidden attributes in grid, since rule is deprecated.
+	for (int i = 0; i < Definition.Hidden.Length; i++)
+	{
+		Artech.Genexus.Common.Objects.Attribute att = GetAttribute(Definition.Hidden[i]);
+		if (att != null)
+		{
+			Dictionary<string, object> columnProps = new Dictionary<string, object>();
+			columnProps[Properties.HTMLSFLCOL.Visible] = false;
+%>
+										<%= WebLayout.SimpleGridAttribute(att.Name, null, null, null, columnProps) %>
+<%
+		}
+		else
+			Debug.Assert(false);
+	}
+%>
+									<%= WebLayout.EndSimpleGrid() %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.Button("btn_cancel", "BtnCancel", "GX_BtnCancel", "Cancel") %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+						<%= WebLayout.EndResponsiveTable() %>
+					<%= WebLayout.EndTableCell() %>
+				<%= WebLayout.EndTableRow() %>
+			<%= WebLayout.EndResponsiveTable() %>
+		<%= WebLayout.EndLayout() %>
+	<%= WebMultiForm.EndLayoutForm() %>
+<%= WebMultiForm.EndMultiForm() %>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>No triggered actions</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17062,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">No triggered actions</h1>
+<!--No triggered actions--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document is a brief description of the concept of &quot;no triggered actions&quot; or &quot;rules not included&quot; during the specification phase. The &quot;No Triggered Actions&quot; section is detailed on the <a href="https://wiki.genexus.com/commwiki/wiki?7171,," target="_blank">Specification Report</a> when <a href="https://wiki.genexus.com/commwiki/wiki?12885,," target="_blank">enabled</a>.</p>
+
+<p>Every action has an entry list of dependencies. An action is a reading of a table, a business rule (eg: error rule, msg rule), the calculation of a formula, the calculation of Dynamic Combo box, Suggests, Input Type Descriptions features. A dependency is a variable or attribute that must be known to trigger the action.</p>
+
+<p>An action can be triggered only when all input variables and attributes related with that action are known. Once the action is triggered, the attributes and variables computed with the action associated are now also considered to be known, so other attributes or variables depending on the previous ones are able to be evaluated too.</p>
+
+<p>The &quot;No Triggered Actions&quot; or &quot;Rules not included&quot; sections, detail the set of actions that are not generated on the program because one of its dependencies never becomes instantiated (known in the context of the object.).</p>
+
+<p>As a general term, the &quot;No triggered actions&quot; section will detail the transaction level where the problem occurs while the &quot;Rules not included&quot; section is more general and will only detail the rule that will not be included.</p>
+
+<p>This means that the program will not behave as desired; the developer needs to check the transaction structure and rules and solve the problem.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<h4><a id="Inferred+Attributes" class="HashLink" href="#Inferred+Attributes">Inferred Attributes</a></h4>
+
+<p>Let's assume a Bill Transaction with a Customer Foreign Key. On the Bill transaction it is detailed the CustomerCode and CustomerName attributes.<br />
+An action is generated to get CustomerName once the user inserts the desired CustomerCode attribute. The action generates a reading action on the Customer table to get the name, and this action is dependent on the CustomerCode attribute. Once this attribute is known the CustomerName is known and other actions depending on CustomerName can be triggered.</p>
+
+<p>If you get a No &quot;Triggered Action&quot; message on CustomerName it means that the generated program will not resolve this attribute and dependencies on this attribute will not be resolved either.</p>
+
+<h4><a id="Formula+calculation" class="HashLink" href="#Formula+calculation">Formula calculation</a></h4>
+
+<p>Suppose you have the following &quot;No Triggered Actions&quot; section with the following formulas:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+No Triggered Actions
+t04f01 = t04int1 + t04int2
+t04int2 = t05int1</pre>
+
+<p>and the following transaction structure</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+T04
+{
+t04id*
+t04int1
+t04f01
+}</pre>
+
+<p>You need to check all the dependencies for those formulas; for the example the problem is related to the following not included attributes on the transaction structure: <em>t04Id</em>, <em>t05int1</em> and <em>t04int2</em> as these are needed dependencies to calculate t04f01. Once these attributes are included on the Transaction Structure all the dependencies will be resolved and the specification report will correctly detail:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+READ t04 
+WHERE t04. t04id = t04id
+  INTO  t04int1 t05id
+READ  t05 
+WHERE t05. t05id = t04. t05id
+  INTO  t05int1
+  t04int2 = t05int1
+  t04f01 = t04int1 + t04int2</pre>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?12885,," target="_blank">Options - Build</a><br />
+<a href="6774.html">spc0208</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+   <br />    <br /> <br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

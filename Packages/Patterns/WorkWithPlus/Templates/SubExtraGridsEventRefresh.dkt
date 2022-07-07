@@ -1,0 +1,97 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Sub Extra Grids Event Refresh" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="iGenObj" Type="DVelop.Patterns.WorkWithPlus.IGeneratedObject" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="grids" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="paginationBarSettings" Type="DVelop.Patterns.WorkWithPlus.SettingsPaginationBarActionElement" %>
+<%@ Property Name="hasAnSDTItemTotalizer" Type="System.Boolean[]" %>
+<%
+		foreach (IGrid grid in grids)
+		{
+			if (grid.IsGXUIMultiRowSelectionAndCheckAll())
+			{
+%>
+	&<%= grid.GetMultiRowSelectedVariableName() %>.Title = format(!'<input name="selectAllCheckbox" type="checkbox" %1value="Select All" onClick="WWPSelectAllGXUI(%2%3%2);" class="<%= settings.Theme.GridCheckBoxAttribute %>" >', iif(&<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>, !'checked ', ''), !"'", &<%= ((GridGeneralElement)grid).GetGXUISelectAllVariableName() %>.InternalName)
+<%
+			}
+			if (grid.HasTotalizers())
+			{
+				if (grid is WPGridElement && !string.IsNullOrEmpty(((WPGridElement)grid).SDTCollection))
+				{
+					List<IAttributesItem> attsAndVarsWithTotalizers = grid.GetAttributesAndVariablessWithTotalizer();
+					foreach (IAttributesItem att in attsAndVarsWithTotalizers)
+					{
+						if (att is VariableElement && !string.IsNullOrEmpty(((VariableElement)att).GetSDTItem()))
+						{
+							hasAnSDTItemTotalizer[0] = true;
+							break;
+						}
+					}
+					if (hasAnSDTItemTotalizer[0])
+					{
+%>
+	Do 'InitializeTotalizers<%= grid.GetControlName() %>'
+	Do 'CalculateTotalizers<%= grid.GetControlName() %>'	
+<%
+					}
+				}
+			}
+			if (grid.IncludePagBar())
+			{
+				if (paginationBarSettings.IncludePageSize)
+				{
+					if (grid is WPGridElement && !(grid.IncludePagBar() && grid.IncludeRowsPerPageInPagBar()))
+					{
+						WPGridElement gridElement = (WPGridElement)grid;
+						string infiniteScrollingType;
+						string pageSize = gridElement.GetPageSize(out infiniteScrollingType);
+%>
+	&<%= grid.GetControlName() %>PageSize = <%= pageSize %>
+<%
+					}
+					else
+					{
+%>
+	&<%= grid.GetControlName() %>PageSize = <%= grid.GetControlName() %>.Rows
+<%
+					}
+				}
+				if (string.IsNullOrEmpty(grid.GetSDTCollection()))
+				{
+%>
+	//The variable '&<%= grid.GetControlName() %><%= paginationBarSettings.IncludePageCount ? "PageCount" : "RecordCount" %>' must be assigned manually in order to get a correct behaviour of the Pagination Bar.
+<%
+				}
+				else
+				{
+%>
+	&<%= grid.GetControlName() %>CurrentPage = <%= grid.GetControlName() %>.CurrentPage
+<%
+					if (paginationBarSettings.IncludeRecordCount)
+					{
+%>
+	&<%= grid.GetControlName() %>RecordCount = <%= grid.GetControlName() %>.RecordCount
+<%
+					}
+					if (paginationBarSettings.IncludePageCount)
+					{
+%>
+	&<%= grid.GetControlName() %>PageCount = <%= grid.GetControlName() %>.PageCount
+<%
+					}
+				}
+			}
+			string conditionalFormattingCode = grid.GetConditionalFormattingRefreshCode();
+			if (!String.IsNullOrEmpty(conditionalFormattingCode))
+			{
+%>
+<%= Indentation.Indent(conditionalFormattingCode, 1) %>
+<%
+			}
+		}
+%>

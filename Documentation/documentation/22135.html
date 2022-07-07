@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>The TimeZone problem</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22135,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">The TimeZone problem</h1>
+<!--The TimeZone problem--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Users of Web or Smart Device applications are frequently located in different time zones, both among themselves and in relation to the application server. In this context, data of <a href="7370.html">DateTime data type</a> can be entered and viewed in different time zones. Failure to take this into account may lead to confusion when interpreting DateTime field values.</p>
+
+<p>In GeneXus, time zone support is aimed at normalizing how DateTime field values are used and stored in order to solve the problems mentioned above.</p>
+
+<h3><a id="Background" class="HashLink" href="#Background">Background</a></h3>
+
+<p>The Earth is divided into time zones which are offset from Coordinated Universal Time (<a href="https://wiki.genexus.com/commwiki/wiki?21994,," target="_blank">UTC</a>).  This offset is expressed as the number of hours and minutes to be added to UTC time to obtain the local time in a certain <a href="https://wiki.genexus.com/commwiki/wiki?21997,," target="_blank">TimeZone</a> (<a href="https://wiki.genexus.com/commwiki/wiki?21998,," target="_blank">TZ</a>). For example, since Montevideo’s TZ has a <a href="https://wiki.genexus.com/commwiki/wiki?22007,," target="_blank">TimeZone Offset</a> of -3:00 (minus three hours and zero minutes), when the time is 6:31 p.m. in Montevideo, UTC time is 9:31 p.m.</p>
+
+<p>In some parts of the world (in general they are countries, but these zones can be represented by cities when the countries are big), the time is usually changed during summer in order to save energy. This is known as Daylight Saving Time (<a href="https://wiki.genexus.com/commwiki/wiki?22003,," target="_blank">DST</a>). For example, in Uruguay the Time Zone Offset is -2:00 instead of -3:00 during summer.</p>
+
+<p>What should be taken into account about DST is that for the same TZ, the offset value can change depending on the time of year.</p>
+
+<p>It must be noted that the TZ problem doesn’t apply to Date or DateTime type fields that don’t include the Date part (see <a href="7370.html">DateTime data type</a> and <a href="15050.html">Time domain</a>). Both the date and time are necessary to correctly determine the offset to apply.</p>
+
+<h3><a id="Problem+details" class="HashLink" href="#Problem+details">Problem details</a></h3>
+
+<p>Suppose that a DateTime attribute stored in the database has the value November 19, 2010 22:48. The application server is located in New York and two users, one in Tokyo and the other in Buenos Aires, see the attribute value in a Web or <a href="20766.html">SD</a> application. What value should be displayed to each user?</p>
+
+<ol>
+	<li>Exactly the same value (November 19, 2010 22:48)</li>
+	<li>The value converted to their corresponding TZs (Tokyo and Buenos Aires)</li>
+	<li>The same value converted to New York’s TZ (where the server resides)</li>
+</ol>
+
+<p>To answer this question we need to analyze the value of the <a href="17218.html">DateTime storage timezone property</a>.</p>
+
+<ul>
+	<li>If the property has Undefined value, only the first answer is possible.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Since GeneXus doesn’t know the TZ over which the attribute value is expressed, it can't convert it.</p>
+
+<ul>
+	<li>If the property doesn't have Undefined value, the second answer is correct.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">In this case, GeneXus knows the TZ corresponding to the attribute value (UTC or Application Server) and automatically makes the conversion to each user’s TZ.</p>
+
+<p>In a similar situation, let’s say that both users (one in Tokyo and the other in Buenos Aires) record a transaction at the same second. The user in Tokyo will record it on July 28, 2012 0:28:17 and the user in Buenos Aires on July 27, 2012, 12:28:17. What value should be stored in the database as registration time/date for each transaction?</p>
+
+<p>Once again, to answer this question we need to analyze the value of the DateTime storage timezone property.</p>
+
+<ul>
+	<li>If the property has Undefined value, transactions will be recorded with different values.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Note that even though the application may know the TZ of each transaction, this value is lost as soon as it is stored in the database. DateTime type attributes don’t keep TZ specifications at the level of each value.</p>
+
+<ul>
+	<li>If the property doesn’t have Undefined value, both transactions will be recorded as if they were made simultaneously.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">GeneXus converts the date of the transaction made by the user in Tokyo and that of the user in Buenos Aires from their corresponding TZs to the one indicated by the property value.</p>
+<strong>Sample Table</strong>
+
+<table align="center" border="1" cellpadding="1" cellspacing="1" style="width: 100.0%;">
+	<tbody>
+		<tr>
+			<td rowspan="2" style="text-align: center;"><strong>Datetime Value</strong></td>
+			<td colspan="1" rowspan="2" style="text-align: center;"><strong>Application Client Location</strong></td>
+			<td colspan="3" rowspan="1" style="text-align: center;"><strong>DateTime Storage Timezone Property Value / DB Stored Value</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;vertical-align: top;"><strong>Undefined</strong></td>
+			<td style="text-align: center;vertical-align: top;"><strong>UTC</strong></td>
+			<td style="text-align: center;vertical-align: top;"><strong>Application Server </strong><br />
+			<span style="font-size: smaller;">New York (UTC -5)</span></td>
+		</tr>
+		<tr>
+			<td colspan="1" style="text-align: center;">July 28, 2012  00:28:17</td>
+			<td style="text-align: center;">Tokio (UTC +9)</td>
+			<td style="text-align: center;">July 28, 2012  00:28:17</td>
+			<td style="text-align: center;">July 27, 2012  15:28:17</td>
+			<td style="text-align: center;">July 27, 2012  10:28:17</td>
+		</tr>
+		<tr>
+			<td colspan="1" style="text-align: center;">July 27, 2012  12:28:17</td>
+			<td style="text-align: center;">Buenos Aires (UTC -3)</td>
+			<td style="text-align: center;">July 27, 2012, 12:28:17</td>
+			<td style="text-align: center;">July 27, 2012  15:28:17</td>
+			<td style="text-align: center;">July 27, 2012  10:28:17</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<h3><a id="More+here" class="HashLink" href="#More+here">More here</a></h3>
+
+<ul>
+	<li>Read <a href="22147.html">Enabling TimeZone Support</a> to learn how to enable/disable time zone support.</li>
+	<li>To automatically determine the TZ in which to show data, read <a href="22146.html">Current TimeZone</a>.</li>
+</ul>
+
+<p><br />
+</p>
+
+<p><br />
+<br />
+<br />
+</p>
+
+<p></p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR><TD><a href="21988.html">Toc:TimeZone Support</a></TD><TD><a href="16416.html">ToUniversalTime method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

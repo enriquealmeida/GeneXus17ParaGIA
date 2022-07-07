@@ -1,0 +1,80 @@
+
+delimiters "$", "$"
+
+generate()::=<<
+$appService(containerPort)$
+---
+$appDeployment(containerPort)$
+>>
+
+appService(port)::=<<
+apiVersion: v1
+kind: Service
+metadata:
+  name: $AppName$-svc
+  namespace: $CustomNamespace$
+  labels:
+    app: $AppName$-svc
+    genby: genexus
+    du: $DeploymentUnit$
+spec:
+  ports:
+    - port: $port$
+      name: http
+  selector:
+    app: $AppName$-app
+  type: $serviceType$
+>>
+
+appDeployment(port)::=<<
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $AppName$-app
+  namespace: $CustomNamespace$
+  annotations:
+    kubernetes.io/change-cause: "$imageTag$"
+  labels:
+    app: $AppName$-app
+    genby: genexus
+    du: $DeploymentUnit$
+    $labels()$
+spec:
+  replicas: $replicas$
+  selector:
+    matchLabels:
+      app: $AppName$-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: $AppName$-app
+        genby: genexus
+        du: $DeploymentUnit$
+        $labels()$
+    spec:
+      containers:
+      - image: $imageTag$
+        name: $AppName$
+        $envVars()$
+        ports:
+        - containerPort: $port$
+          name: external-port
+        imagePullPolicy: Always
+>>
+
+envVars()::=<<
+$if (HasEnvVars)$env:
+$EnvVarsItems:{ envVar | $writeEnvVar(envVar)$ };separator="\r\n"$$endif$
+>>
+
+writeEnvVar(envVar)::=<<
+  - name: $envVar.Key$
+    value: $envVar.Value$
+>>
+
+labels()::=<<
+$if (HasLabels)$
+$LabelItems:{ label | $label.Key$: $label.Value$ };separator="\r\n"$$endif$
+>>

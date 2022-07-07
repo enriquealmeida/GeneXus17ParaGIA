@@ -1,0 +1,171 @@
+ *****************************************************
+ * TIME-STAMP TO CHAR (TTOC func)
+ * PARAMETERS: (I) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *             (O) $GXDTC C(22)
+ *****************************************************
+C           GXTTC     BEGSR
+C                     MOVE #2        $DTDF
+C                     EXSR GXTTOC
+C                     ENDSR 
+ *****************************************************
+ * CHAR TO TIME-STAMP  (CTOT func)
+ * PARAMETERS: (I) $GXDTC C(22)
+ *             (O) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *             (O) $GXOUT N(1,0)
+ * IF ERROR RETURNS: $GXTS=NULLVALUE($GXTS)
+ *                   $GXOUT=0
+ *****************************************************
+C           GXCTT     BEGSR
+C                     MOVE #2        $DTDF
+C                     Z-ADD10        $DTDL
+C                     Z-ADD8         $DTTL
+C                     EXSR GXCTOT
+C                     ENDSR
+ *****************************************************
+ * TIME-STAMP TO CHAR
+ * PARAMETERS: (I) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *             (O) $GXDTC C(22)
+ *****************************************************
+C           GXTTOC    BEGSR
+ * TIME-STAMP TO DATE-TIME
+C                     EXSR GXTSDT
+C           $GXDTN    IFEQ *ZEROS
+C                     MOVE *BLANKS   $GXDTC
+C                     ELSE
+ * DATE-TIME TO CHAR
+C                     MOVEA*BLANKS   #1
+C* FORMATTING DATE PORTION
+C           $DTDL     IFNE 0
+C           $DTDF     IFEQ 'D'
+C                     MOVE $DTDN     $F6523  2
+C                     MOVEA$F6523    #1 ,1            DD
+C                     MOVEA$DTDS     #1 ,3            /
+C                     MOVE $DTMN     $F6523
+C                     MOVEA$F6523    #1 ,4            MM
+C                     MOVEA$DTDS     #1 ,6            /
+C           $DTDL     IFEQ 10
+C                     MOVE $DTYN     $F6524  4
+C                     MOVEA$F6524    #1 ,7            YYYY
+C                     ELSE
+C           2         SUBST$DTYC:3   $F6523
+C                     MOVEA$F6523    #1 ,7            YY
+C                     ENDIF
+C                     ELSE
+C           $DTDF     IFEQ 'M'
+C                     MOVE $DTMN     $F6523
+C                     MOVEA$F6523    #1 ,1            MM
+C                     MOVEA$DTDS     #1 ,3            /
+C                     MOVE $DTDN     $F6523
+C                     MOVEA$F6523    #1 ,4            DD
+C                     MOVEA$DTDS     #1 ,6            /
+C           $DTDL     IFEQ 10
+C                     MOVE $DTYN     $F6524  4
+C                     MOVEA$F6524    #1 ,7            YYYY
+C                     ELSE
+C           2         SUBST$DTYC:3   $F6523
+C                     MOVEA$F6523    #1 ,7            YY
+C                     ENDIF
+C                     ELSE
+C           $DTDF     IFEQ 'Y'
+C           $DTDL     IFEQ 10
+C                     MOVE $DTYN     $F6524
+C                     MOVEA$F6524    #1 ,1            YYYY
+C                     MOVEA$DTDS     #1 ,5            /
+C                     MOVE $DTMN     $F6523
+C                     MOVEA$F6523    #1 ,6            MM
+C                     MOVEA$DTDS     #1 ,8            /
+C                     MOVE $DTDN     $F6523
+C                     MOVEA$F6523    #1 ,9            DD
+C                     ELSE
+C           2         SUBST$DTYC:3   $F6523
+C                     MOVEA$F6523    #1 ,1            YY
+C                     MOVEA$DTDS     #1 ,3            /
+C                     MOVE $DTMN     $F6523
+C                     MOVEA$F6523    #1 ,4            MM
+C                     MOVEA$DTDS     #1 ,6            /
+C                     MOVE $DTDN     $F6523
+C                     MOVEA$F6523    #1 ,7            DD
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+ * STORES FORMATTED DATE IN AN AUXILIARY VARIABLE
+C                     MOVEA#1        $F6520 10 P
+ * FORMATTING TIME PORTION
+C                     MOVEA*BLANKS   #1
+C           $DTTL     IFNE 0
+ * TIME IN 24 HOURS FORMAT
+C           $DTTF     IFEQ 24
+C                     Z-ADD$DTHN     $F6521  20       HH
+C                     MOVE *BLANKS   $F6522  3        AM/PM
+ * TIME IN 12 HOURS FORMAT
+C                     ELSE
+C           $DTHN     IFLT 12                         AM
+C           $DTHN     IFEQ 0                          12 AM
+C                     Z-ADD12        $F6521
+C                     ELSE
+C                     MOVE $DTHN     $F6521
+C                     ENDIF
+C                     MOVE ' AM'     $F6522           AM
+C                     ELSE                            PM
+C           $DTHN     IFEQ 12
+C                     Z-ADD$DTHN     $F6521           12 PM
+C                     ELSE
+C           $DTHN     SUB  12        $F6521
+C                     ENDIF
+C                     MOVE ' PM'     $F6522           PM
+C                     ENDIF
+C                     ENDIF
+ *
+C                     MOVE $F6521    $F6523
+C                     MOVEA$F6523    #1 ,1            HH
+C                     MOVEA$F6522    #1 ,3
+C           $DTTL     IFNE 2
+C                     MOVEA$DTTS     #1 ,3            :
+C                     MOVE $DTNN     $F6523
+C                     MOVEA$F6523    #1 ,4            MM
+C                     MOVEA$F6522    #1 ,6
+C           $DTTL     IFEQ 8
+C                     MOVEA$DTTS     #1 ,6            :
+C                     MOVE $DTSN     $F6523
+C                     MOVEA$F6523    #1 ,7            SS
+C                     MOVEA$F6522    #1 ,9
+C                     ENDIF
+C                     ENDIF
+C                     ENDIF
+ * IF THERE IS DATE PORTION
+C           $DTDL     IFNE 0
+ * STORES FORMATTED TIME IN AN AUXILIARY VARIABLE
+C                     MOVEA#1        $F6530 11 P
+ * CONCATENATES DATE AND TIME PORTIONS
+C                     MOVEA*BLANKS   #1
+C                     MOVEA$F6520    #1 ,1
+C           $DTDL     IFEQ 10
+C                     MOVEA$F6530    #1 ,12
+C                     ELSE
+C                     MOVEA$F6530    #1 ,10
+C                     ENDIF
+C                     ENDIF
+ *
+C                     MOVEA#1        $GXDTC 22 P
+C                     END
+C                     ENDSR
+ *****************************************************
+ * CHAR TO TIME-STAMP
+ * PARAMETERS: (I) $GXDTC C(22)
+ *             (O) $GXTS  DS(YYYY-MM-DD-HH.MM.SS.NNNNNN)
+ *             (O) $GXOUT N(1,0)
+ * IF ERROR RETURNS: $GXTS=NULLVALUE($GXTS)
+ *                   $GXOUT=0
+ *****************************************************
+C           GXCTOT    BEGSR
+C                     MOVE #3        $GXTS
+C                     Z-ADD1         $GXOUT
+ * CHAR TO DATE-TIME (PARSE CHAR AND TEST DATE-TIME)
+C                     EXSR GXFTT
+C           $GXOUT    IFNE 0
+ * DATE-TIME TO TIME-STAMP
+C                     EXSR GXDTTS
+C                     ENDIF
+C                     ENDSR

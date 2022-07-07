@@ -1,0 +1,172 @@
+group DesignTokens;
+
+delimiters "$", "$"
+
+generate_render(tokens, style) ::=<<
+<html>
+<head>
+$style$
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<style>
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+}
+.group > div {
+  margin: 10px;
+  text-align: left;
+}
+.metric-box {
+  display: inline-block;
+  vertical-align: middle;
+  background: gray;
+}
+
+.title
+{
+    position: relative;
+    color: #1b1b1b;
+    text-align: center;
+    font-size: 25px;
+    font-weight: 300;
+}
+
+.title:after
+{
+    content: "";
+    position: absolute;
+    display: block;
+    z-index: -1;
+    bottom: 15px;
+    height: 1px;
+    background-color: #ccc;
+    width: 100%;
+}
+
+
+</style>
+</head>
+<body>
+<div id="body">
+
+<nav id="tokensNavigation" class="navbar navbar-light bg-light">
+  <a class="navbar-brand" href="#">Tokens</a>
+  <ul class="nav nav-pills">
+    <li class="nav-item">
+      <a class="nav-link" href="#colors">Colors</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#spacing">Spacing</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#border">Borders</a>
+    </li>
+     <li class="nav-item">
+      <a class="nav-link" href="#fonts">Fonts</a>
+    </li>
+	 <li class="nav-item">
+      <a class="nav-link" href="#fontsizes">Font Sizes</a>
+    </li>
+	 <li class="nav-item">
+      <a class="nav-link" href="#opacity">Opacity</a>
+    </li>
+	 <li class="nav-item">
+      <a class="nav-link" href="#radius">Radius</a>
+    </li>
+ 
+  </ul>
+</nav>
+
+<div data-spy="scroll" data-target="#tokensNavigation" data-offset="0">
+
+<div class="card" style="padding:4px;margin:10px;">
+<div id="colors" class="title"><span>Colors</span></div>
+<div class="group color">
+   $tokens.Colors:{ color | $generate_color(color)$};separator="\r\n"$
+</div>
+</div>
+
+<div class="card" style="padding:4px;margin:10px;">
+<div id="spacing" class="title"><span>Spacing</span></div>
+<div class="group">
+   $tokens.Spacing:{ space | $generate_space(space)$};separator="\r\n"$
+</div>
+</div>
+
+<div class="card" style="padding:4px;margin:10px;">
+<div id="spacing" class="title"><span>Borders</span></div>
+<div class="group">
+   $tokens.Borders:{ border | $generate_border(border)$};separator="\r\n"$
+</div>
+</div>
+
+<div class="card" style="padding:4px;margin:10px;">
+<div id="fonts" class="title"><span>Fonts Families</span></div>
+<div class="group">
+   $tokens.Fonts:{ font | $generate_font(font)$};separator="\r\n"$
+</div>
+</div>
+
+<div class="card" style="padding:4px;margin:10px;">
+<div id="fontsizes" class="title"><span>Font Sizes</span></div>
+<div class="group">
+   $tokens.FontSizes:{ size | $generate_fontsize(size)$};separator="\r\n"$
+</div>
+</div>
+
+<div class="card" style="padding:4px;margin:10px;">
+<div id="radius" class="title"><span>Radius</span></div>
+<div class="group">
+   $tokens.Radius:{ size | $generate_radius(size)$};separator="\r\n"$
+</div>
+</div>
+
+<div class="card" style="padding:4px;margin:10px;">
+<div id="opacity" class="title"><span>Opacities</span></div>
+<div class="group">
+   $tokens.Opacities:{ opacity | $generate_opacity(opacity)$};separator="\r\n"$
+</div>
+</div>
+
+</div>
+</body>
+</html>
+>>
+
+generate_opacity(opacity) ::=<<
+<div><span>$opacity.Name$ </span> <div style="background:linear-gradient(45deg,rgba(43,40,38,.1) 25%,transparent 0),linear-gradient(-45deg,rgba(43,40,38,.1) 25%,transparent 0),linear-gradient(45deg,transparent 75%,rgba(43,40,38,.1) 0),linear-gradient(-45deg,transparent 75%,rgba(43,40,38,.1) 0);height:50px;width:50px;color:rgb(88, 118, 163);dbackground-color:#005fb2;opacity:$opacity.Value$" class="slds-cell-wrap"></div></div>
+>>
+
+generate_radius(size) ::=<<
+<div><span>$size.Name$ </span><div class="site-box-radius" style="border-style:solid; height:50px; width:50px;border-radius:$size.Value$"></div></div>
+>>
+
+generate_font(font) ::=<<
+<div class="card" style="height:75px;width: 120px;">
+     <div class="card-header">$font.Name$</div>
+     <div style="text-align: center;font-family:$font.Value$" class="slds-cell-wrap"><span style="horizontalfont-size:2rem">Aa</span></div></div>
+</div>
+>>
+
+generate_fontsize(font) ::=<<
+<div class="card">
+	<div class="card-header">$font.Name$</div>
+	<div style="text-align: center;font-family:Arial;" class="slds-cell-wrap"><span style="font-size:$font.Value$">Aa</span></div>
+</div>
+>>
+
+generate_color(color) ::=<<
+ 	<div class="card" style="width: 120px;">
+    	<div class="card-header">$color.Name$</div>
+    	<div style="background-color: var(--$color.Name$);height:75px" class="card-body"></div>
+    </div>
+>>
+
+generate_space(space) ::=<<
+<div class="card"><span>$space.Name$ </span> <div class="metric-box" style="width: var(--$space.Name$); height: var(--$space.Name$);"></div></div>
+>>
+
+generate_border(border) ::=<<
+<div><span>$border.Name$ </span><div class="metric-box" style="border-style:solid;border-width: var(--$border.Name$); height: 50px; width: 50px;"></div></div>
+>>

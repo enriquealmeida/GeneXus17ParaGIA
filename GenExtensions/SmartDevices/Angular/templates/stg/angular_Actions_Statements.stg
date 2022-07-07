@@ -1,0 +1,19 @@
+delimiters "$", "$"
+
+update_output_parameters( outputObject, outputParameters) ::= <<
+$if(outputParameters.Parameter)$
+$outputParameters.Parameter:{p|$update_output_parameter(p,outputObject)$};separator="\r\n"$
+$endif$
+>>
+
+update_output_parameter( p, outputObject ) ::= <%
+$if (p.Name)$
+  $p.Expression:g_expression()$ = $outputObject$.$p.Name$;
+$else$
+  $p.Expression:g_expression()$ = $outputObject$;
+$endif$
+%>
+
+execute_control_statement(stmt) ::= <%
+$stmt.expression:g_expression()$;
+%>

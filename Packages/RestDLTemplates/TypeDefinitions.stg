@@ -1,0 +1,169 @@
+﻿group ApiDefinitions;
+
+delimiters "$", "$"
+
+definition(entity, formatinfo)::=<%
+$if (entity.SDT && entity.SDT.IsCollection)$$level_definition_collection(entity, entity.SDT, formatinfo)$$endif$
+$if (entity.SDT && !entity.SDT.IsCollection)$$level_definition(entity.FullName, entity.SDT, formatinfo)$$endif$
+%>
+
+level_definition_collection(entity, level, formatinfo)::=<%
+$if (formatinfo.AlphaNumericEntityNames)$
+$level_emit_name(entity.FullName, "", entity.SDT.CollectionItemName)$
+$else$
+$level_emit_name(entity.FullName, "_", entity.SDT.CollectionItemName)$
+$endif$
+$level_definition_props(level, formatinfo)$
+$if (level.SubLevels)$$level.SubLevels:{item| $level_definition(item.FullName, item, formatinfo)$};separator="\n"$$endif$
+%>
+
+level_definition(fullname, level, formatinfo)::=<%
+$if (!level.IsCollection)$
+$level_emit_name(fullname, "", "")$
+$else$
+$if (formatinfo.AlphaNumericEntityNames)$
+$level_emit_name(fullname, "", level.CollectionItemName)$
+$else$
+$level_emit_name(fullname, "_",level.CollectionItemName)$
+$endif$
+$endif$
+$level_definition_props(level, formatinfo)$
+$if (level.SubLevels)$$level.SubLevels:{item| $level_definition(item.FullName, item, formatinfo)$};separator="\n"$$endif$
+%>
+
+level_emit_name(fullname, sep, colName)::=<<
+$fullname$$sep$$colName$:
+>>
+
+level_definition_props(level, formatinfo)::=<<
+
+$properties_first(level, formatinfo)$
+$level_definition_1(level, formatinfo)$
+
+
+>>
+
+level_definition_1(level, formatinfo)::=<%
+$if (level.KeyAttributes)$
+$required_properties(level)$
+$endif$
+$if (!level.IsRootLevel && formatinfo.VendorExtensionEnabled)$
+$vendor_extension(level)$
+$endif$
+%>
+
+vendor_extension(level)::=<<
+  x-gx-level: "$level.ParentLevel$"
+>>
+
+properties_first(level, formatinfo)::=<<
+  properties:
+  $level.Attributes:{item| $definition_property(item,formatinfo)$};separator=""$
+  $if (level.SubLevels)$$level.SubLevels:{item| $level_property(item, formatinfo)$};separator="\n-"$$endif$
+>>
+
+required_properties(level)::=<<
+  required:
+    $level.KeyAttributes:{item| - $item.Name$};separator="\n"$
+
+>>
+
+definition_property(parameter,formatinfo)::=<<
+  $parameter.Name$:
+$if(parameter.Description)$
+    description: $parameter.Description$
+$endif$
+$if(parameter.IsSDTType)$
+$if(parameter.IsCollection)$
+    type: array
+    items:
+	$if(parameter.CollectionItemName)$
+    $if (formatinfo.AlphaNumericEntityNames)$
+      \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$$parameter.CollectionItemName$"
+	$else$
+      \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$_$parameter.CollectionItemName$"
+    $endif$
+    $else$
+      \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$"
+	$endif$
+$else$
+  $if(parameter.CollectionItemName)$
+   $if (formatinfo.AlphaNumericEntityNames)$
+    \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$$parameter.CollectionItemName$"
+   $else$
+    \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$_$parameter.CollectionItemName$"
+   $endif$
+  $else$
+    \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$parameter.SDTType$"
+  $endif$
+$endif$
+$else$
+$if(parameter.IsCollection)$
+    type: array
+    items:
+	$if(parameter.CollectionItemName)$
+      description: $parameter.CollectionItemName$
+	$endif$
+      type: "$parameter.SwaggerType$"
+      $if(parameter.SwaggerFormat)$format: "$parameter.SwaggerFormat$"$endif$
+$else$
+    type: "$parameter.SwaggerType$"
+    $if(parameter.SwaggerFormat)$format: "$parameter.SwaggerFormat$"$endif$
+$endif$
+$endif$
+>>
+
+level_property(level, formatinfo)::=<<
+  $level.Name$:
+$if(level.IsCollection)$
+    type: array
+    items:
+	$if(level.CollectionItemName)$
+      description: $level.CollectionItemName$
+	$endif$
+$if (formatinfo.AlphaNumericEntityNames)$
+      \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$level.FullName$$level.CollectionItemName$"
+$else$
+      \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$level.FullName$_$level.CollectionItemName$"
+$endif$
+$else$
+    \$ref: "#$if(formatinfo.IsOAS3)$/components/schemas/$else$/definitions/$endif$$level.FullName$"
+$endif$
+>>
+
+api_output_definition(procedure,formatinfo)::=<%
+$if(!procedure.IsDP)$
+$if(procedure.OutParameters)$
+$proc_list_properties(procedure.CamelName, "Output", procedure.OutParameters, formatinfo)$
+$endif$
+$endif$
+%>
+
+api_input_definition(procedure,formatinfo)::=<%
+$if(!procedure.isGet)$
+$if (procedure.InParameters)$
+$proc_list_properties(procedure.CamelName, "Input", procedure.InParameters, formatinfo)$
+$endif$
+$endif$
+%>
+
+proc_output_definition(procedure,formatinfo)::=<%
+$if (!procedure.IsDP)$
+$if (procedure.OutParameters)$
+$proc_list_properties(procedure.FullName,"Output", procedure.OutParameters, formatinfo)$
+$endif$
+$endif$
+%>
+
+proc_input_definition(procedure,formatinfo)::=<%
+$if (!procedure.IsDP)$
+$if (procedure.InParameters)$
+$proc_list_properties(procedure.FullName, "Input", procedure.InParameters, formatinfo)$
+$endif$
+$endif$
+%>
+
+proc_list_properties(label, io,  parameters, formatinfo)::=<<
+$label$$io$:
+  properties:
+  $parameters:{item| $definition_property(item,formatinfo)$}$>>

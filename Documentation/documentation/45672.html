@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Customize GeneXus Deployment capabilities</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45672,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Customize GeneXus Deployment capabilities</h1>
+<!--Customize GeneXus Deployment capabilities--><div class="TableWikiBody" id="tblwikibody"><p>The GeneXus <a href="32092.html">Application Deployment tool</a> is a powerful tool that allows you to deploy your GeneXus-generated applications to either on-premises servers or to a wide range of Cloud Providers.</p>
+
+<p>Its sole purpose is to run through the so-called &quot;references tree&quot; to figure out what are all the necessary objects for your application to run properly on a production environment.</p>
+
+<p>However, sometimes you may need something that's not in the Knowledge Base or, for some reason, you may need to remove something from the Knowledge Base, say for security reasons, or when some objects have references to objects that you know for sure are not used at runtime. Also, maybe you want to run a custom script before moving to production and before creating the WAR or ZIP file.</p>
+
+<h3><a id="That%27s+what+the+user.gxdproj+file+is+for." class="HashLink" href="#That%27s+what+the+user.gxdproj+file+is+for.">That's what the user.gxdproj file is for.</a></h3>
+
+<p>The generation of the WAR or ZIP file consists of two tasks. The first one (<em>CreateDeployProject</em>) will generate an MSBuild script file with the extension .gxdproj, which contains every GeneXus object form your Knowledge Base that is involved in the deployment of the selected Deployment unit or objects. The second task (<em>CreatePackage</em>), takes the previously generated gxdproj file and, based on its contents, tries to find every file generated for every declared object. More on these tasks here: <a href="42073.html">Application Deployment MSBuild tasks</a>.</p>
+
+<p>When the CreateDeployProject task is executed, it will look for a file called &lt;Deployment Unit Name&gt; _user.gxdproj. If it does not exist, it will be created but never overwritten.</p>
+
+<p>At first, the file looks like this:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;Project xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;
+
+    &lt;PropertyGroup&gt;
+        &lt;!--AdditionalDirectory&gt;some directory to copy&lt;/AdditionalDirectory--&gt;
+    &lt;/PropertyGroup&gt;
+
+    &lt;!-- You can add a directory where every AdditionalFile will be copied (relative to the root) --&gt;
+    &lt;PropertyGroup&gt;
+        &lt;AdditionalFileDestination&gt;&lt;/AdditionalFileDestination&gt;
+    &lt;/PropertyGroup&gt;
+
+    &lt;ItemGroup&gt;
+        &lt;!--AdditionalFile Include=&quot;some File to copy&quot;/--&gt;
+
+        &lt;!--
+        This file will be copied to $(DeployFullPath)\$(AdditionalFileDestination)
+        &lt;AdditionalFile Include=&quot;C:\myfiles\myfile.txt&quot;/&gt;
+        This file will be copied to $(DeployFullPath)\TargetDir
+        &lt;AdditionalFile Include=&quot;C:\myfiles\my other file.txt&quot;&gt;
+            &lt;RelativeTargetDir&gt;TargetDir&lt;/RelativeTargetDir&gt;
+        &lt;/AdditionalFile&gt;
+        --&gt;
+
+    &lt;/ItemGroup&gt;
+
+    &lt;Target Name=&quot;RemoveExtraFiles&quot;&gt;
+        &lt;!-- Uncomment this section in case you want to delete files right before creating the package
+        &lt;ItemGroup&gt;
+            &lt;UnneededFiles Include=&quot;$(DeployFullPath)\your\file\goes\here&quot;/&gt;
+        &lt;/ItemGroup&gt;
+
+        &lt;Message Text=&quot;RemovingUserExcludedFiles&quot; Importance=&quot;high&quot; /&gt;
+        &lt;Delete Files=&quot;@(UnneededFiles)&quot;/&gt;
+        --&gt;
+    &lt;/Target&gt;
+
+    &lt;Target Name=&quot;BeforePackaging&quot; DependsOnTargets=&quot;RemoveExtraFiles&quot;&gt;
+
+    &lt;/Target&gt;
+
+&lt;/Project&gt;</pre>
+
+<h3><a id="How+to+include+complete+folders" class="HashLink" href="#How+to+include+complete+folders">How to include complete folders</a></h3>
+
+<p>Note that there's an AdditionalDirectory tag, and you can add as many tags as you wish with all the directories you want to add. Keep in mind this will copy every file and directories in the destination, following the original structure.</p>
+
+<p>There's also a IncludeDirectory tag to include the folder and its contents.</p>
+
+<h3><a id="How+to+include+files" class="HashLink" href="#How+to+include+files">How to include files</a></h3>
+
+<p>There's also a tag called AdditionalFile which allows you to add as many files as you wish. </p>
+
+<p>Where will these files be copied? You have two options for this. First, you can set a default destination folder with the tag AdditionalFileDestination; if you set a path there, every file will be copied to that destination. Alternatively, you can set an additional property to your files called RelativeTargetDir. This is a property that only applies to the file it belongs to and ensures that this file will be copied to that directory.</p>
+
+<h3><a id="How+to+remove+files" class="HashLink" href="#How+to+remove+files">How to remove files</a></h3>
+
+<p>There's a whole target for that called RemoveExtraFiles.</p>
+
+<p>In the ItemGroup in that target, you need to add every file you want to delete. Keep in mind that you can use wild cards (*) for either file names and/or directories. </p>
+
+<p>The last task of the target deletes every file included in the UnneededFiles item group.</p>
+
+<h3><a id="How+to+run+a+customized+script" class="HashLink" href="#How+to+run+a+customized+script">How to run a customized script</a></h3>
+
+<p>The last target of the user.gxdproj file is called BeforePackaging and will be run exactly when you think, right before creating the package. So, at this point everything is in place –the extra files you added– and the ones you wanted to delete are gone. In this target, you can run your own scripts by calling the Exec task or adding the imports needed to call your own tasks.</p>
+
+<p>Keep in mind that in this process there a few variables you can use:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+$(DeployFullPath): the absolute path where the deployed engine is copying files.
+$(WebPath): this is the web directory from the source environment. </pre>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href='https://www.genexus.com/en/developers/websac?data=46921'>SAC 46921</a></p>
+
+<p><h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p> This feature is available since <a href="https://wiki.genexus.com/commwiki/wiki?45624,," target="_blank">GeneXus 16 upgrade 10</a>.</p>
+
+<p></p>
+</p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD><TD><a href="48662.html">Toc:Application Deployment tool (Genexus 17 Upgrade 4)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/11/22 08:33 PM</em></font></td></TR></table></font>

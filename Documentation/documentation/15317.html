@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Procedures as REST: Example of getting data</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15317,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Procedures as REST: Example of getting data</h1>
+<!--Procedures as REST: Example of getting data--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The following example shows a REST GeneXus procedure that returns information about a Customer, given its Identification.</p>
+
+<p>The GeneXus procedure (called &quot;GetCustomer&quot;) is declared as REST by setting the following properties:</p>
+
+<ul>
+	<li>Expose as web service = True</li>
+	<li>Rest Protocol = True</li>
+</ul>
+
+<p><img src="./images/15324.png" id="15324" class="WikiImage"/></p>
+
+<p>The code is very simple, as shown below:</p>
+
+<p>Parm Rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;CustomerId,out:&amp;CustomerName,out:&amp;CustomerBirthDate,out:&amp;CustomerPayDate);</pre>
+
+<p>Source Code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for each
+ where CustomerId = &amp;CustomerId
+ &amp;customerName = CustomerName
+ &amp;CustomerBirthDate = CustomerBirthDate
+ &amp;CustomerPayDate = CustomerPayDate
+endfor</pre>
+
+<p>The GeneXus client can be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Host =&amp;host // &amp;httpclient is an HTTPClient variable data type
+&amp;httpclient.Port = &amp;port
+&amp;httpclient.BaseUrl = &amp;baseurl //Example: /webappname/rest/
+ 
+&amp;customersdt.CustomerId= &amp;customerId
+&amp;body = &amp;customersdt.ToJson()
+ 
+&amp;httpclient.AddHeader('Content-type','application/json')
+&amp;httpclient.AddString(&amp;body)
+ 
+&amp;httpclient.Execute('POST','GetCustomer')
+ &amp;lvc = &amp;httpclient.ToString() </pre>
+
+<p>Since the response is in Json format:</p>
+
+<p>{&quot;CustomerBirthDate&quot;:&quot;1989-06-03&quot;,&quot;CustomerName&quot;:&quot;Francisco&quot;,&quot;CustomerPayDate&quot;:&quot;1995-03-21T18:54:00&quot;}</p>
+
+<p>the result should be processed using , loading the Json response in an SDT (<a href="10021.html">Structure SDT Object</a>) with the corresponding structure.</p>
+
+<h4><a id="NOTE" class="HashLink" href="#NOTE"><span style="line-height: 1.2em;">NOTE</span></a></h4>
+
+<ul>
+	<li>The Json code (in the example, the variable &amp;body) must include only the items declared as parameters in the parm rule.</li>
+	<li>The values in the Json code have to be CamelCase as defined in the parm rule of the REST procedure.</li>
+</ul>
+
+<h4><a id="How+do+we+call+a+REST+procedure+object+from+a+general+REST+client%3F" class="HashLink" href="#How+do+we+call+a+REST+procedure+object+from+a+general+REST+client%3F">How do we call a REST procedure object from a general REST client?</a></h4>
+
+<p>In general, we set the following:</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td> </td>
+			<td>Sample</td>
+		</tr>
+		<tr>
+			<td>URL</td>
+			<td>http://localhost:8080/applicationname/rest/GetCustomer</td>
+		</tr>
+		<tr>
+			<td>Body parameter</td>
+			<td>Content-Type: application/json; charset=UTF-8<br />
+			{&quot;CustomerId&quot;:1}</td>
+		</tr>
+		<tr>
+			<td>Method</td>
+			<td>Post</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p><img src="./images/26280.png" id="26280" class="WikiImage"/></p>
+
+<p>Based on the previous sample calling a 'GetCustomer' object, a sample request is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+POST /Demo20140425U4JavaScriptEnvironment1/rest/GetCustomer HTTP/1.1
+Content-Length: 17
+Content-Type: application/json; charset=UTF-8
+Host: localhost:8181
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.3.1 (java 1.5)
+<span style="line-height: 1.6em;">{&quot;CustomerId&quot;:1}</span></pre>
+
+<p>And the response is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+HTTP/1.1 200 OK
+Server: Apache-Coyote/1.1
+Set-Cookie: JSESSIONID=D737067FECD79CD466F29877D3B74375; Path=/Demo20140425U4JavaScriptEnvironment1/; HttpOnly
+Last-Modified: Wed, 23 Jul 2014 06:29:04 GMT
+Content-Type: application/json;charset=UTF-8
+Transfer-Encoding: chunked
+Date: Wed, 23 Jul 2014 06:29:05 GMT
+
+58
+{&quot;CustomerName&quot;:&quot;miura&quot;,&quot;CustomerBirthDate&quot;:&quot;2014-07-01&quot;,&quot;CustomerPayDate&quot;:&quot;2014-07-01&quot;}
+0</pre>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="28213.html">Rest web services in GeneXus</a></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="37254.html">REST Protocol property</a></TD><TD><a href="28213.html">Toc:Rest web services in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

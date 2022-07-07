@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Get user's additional information from the GAM Identity Provider</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37703,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Get user's additional information from the GAM Identity Provider</h1>
+<!--HowTo: Get user's additional information from the GAM Identity Provider--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>When using <a href="25355.html">GAM Remote Authentication Type</a>, sometimes it may be necessary to retrieve additional information about the user from the Identity Provider. For example, after the user logs in, retrieve his place of work, or his salary. This information belongs to the Identity Provider and may have to be transferred to the client after login.</p>
+
+<p>The so-called dynamic attributes of a user (or extended attributes) are managed through the &quot;gam_user_additional_data&quot; scope as explained <a href="https://wiki.genexus.com/commwiki/wiki?37038,," target="_blank">here</a>. Nevertheless, in some scenarios, it may be necessary to transfer to the client other information besides the extended attributes of the user.<br />
+<br />
+In such cases, the solution consists of using the <a href="32698.html">GAM Events subscription</a>.<br />
+Let's see it in more detail.</p>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>The information you want to pass from the Identity Provider to the Client is loaded using a procedure (named for example &quot;servereventsubscription&quot;).<br />
+That procedure is going to be subscribed to the <em>User_GetCustomInfo</em> event in the GAM of the Identity Provider. It will trigger automatically after the login is executed.</p>
+
+<p><img src="./images/37712.png" id="37712" class="WikiImage"/></p>
+
+<p>The procedure must have a specific interface:</p>
+
+<p><strong>parm(in:&amp;EventName,in:&amp;JsonIn,out:&amp;JsonOut);</strong></p>
+
+<p>where </p>
+
+<p><strong>EventName</strong>: Belongs to the GAMEvents Domain.<br />
+<strong>JsonIn</strong>: It's a json string whose structure is that of the <em>GAMsession</em> object.<br />
+<strong>JsonOut</strong>: It's a json string with free format. There, you return the information you want, in any format.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Consider a scenario where the Client application of a GAM Identity Provider needs to get the salary and the salary incentive of the user who logs into the Identity Provider.</p>
+
+<p>So, in the Client configuration, we need to add the necessary Additional Scopes to the Remote Authentication Type defined. In this case, we add the salary and salary_incentive scopes, separated by '+'. Note that all the other scopes that need to be added are separated by '+' (such as the gam_user_additional_data, if it's needed).</p>
+
+<p><img src="./images/37711.png" id="37711" class="WikiImage"/></p>
+
+<p>First, we need to program a procedure which runs in the Identity Provider's and gets the information you're interested in, assuming that the GAMUser logged in can be obtained from the GAMSession received as a string parameter in JSON format.</p>
+
+<p>The Scopes are also obtained from the GAMSession received. There you have a string where each scope is separated by '+'. You have to parse this string to search for the scope you are expecting to receive. In the following example, note that we search for the &quot;salary&quot; and &quot;salary incentive&quot; scopes. If those scopes aren't received, the procedure returns an empty string.</p>
+
+<p>So the code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>parm(in:&amp;EventName,in:&amp;JsonIn,out:&amp;JsonOut);</strong>
+
+
+&amp;GAMSession.FromJsonString(&amp;jsonIN) //Get the GAMSession from the in parameter.
+
+&amp;UserGUID = &amp;GAMSession.User.GUID //Get the GAMUser from the GAMSession obtained previously.
+&amp;Scopes    = &amp;GAMSession.Scope.SplitRegEx(!&quot;\+&quot;) //Read the scopes from the GAMSession.
+
+&amp;i = 1
+Do while &amp;i &lt;= &amp;Scopes.Count
+    &amp;ScopeReceived = &amp;Scopes.Item(&amp;i)
+    If  &amp;ScopeReceived = !&quot;salary&quot;
+        do &quot;GetSalary&quot;
+    else
+        if &amp;ScopeReceived = !&quot;salary_incentive&quot;
+            do &quot;GetSalaryIncentive&quot;
+        endif
+    endif
+    &amp;i = &amp;i + 1
+EndDo
+
+&amp;jsonOUT = &amp;SDT_UserCustomInfo.ToJson()
+//Search for the salary of the user.
+sub &quot;GetSalary&quot;
+    for each Users
+        where UserGUID = &amp;UserGUID
+        &amp;SDT_UserCustomInfoItem = new()
+        &amp;SDT_UserCustomInfoItem.Id         = &quot;salary&quot;
+        &amp;SDT_UserCustomInfoItem.Value     =  userSalary.ToString()
+        &amp;SDT_UserCustomInfo.Add(&amp;SDT_UserCustomInfoItem)
+    endfor
+endsub
+
+sub &quot;GetSalaryIncentive&quot;
+    for each Users
+        where UserGUID = &amp;UserGUID
+        &amp;SDT_UserCustomInfoItem = new()
+        &amp;SDT_UserCustomInfoItem.Id         = &quot;salary_incentive&quot;
+        &amp;SDT_UserCustomInfoItem.Value     =  userSalaryIncentive.ToString()
+        &amp;SDT_UserCustomInfo.Add(&amp;SDT_UserCustomInfoItem)
+    endfor
+endsub</pre>
+
+<p>As stated above, the output is free format, so we've defined the following SDT (named UserCustomInfoItem) to store the information that we need to retrieve.</p>
+
+<p><img src="./images/37706.png" id="37706" class="WikiImage"/></p>
+
+<p>In this example, the string returned for a given user, could be the following : [{&quot;Value&quot;:&quot;1000000&quot;,&quot;Id&quot;:&quot;salary&quot;},{&quot;Value&quot;:&quot;1000&quot;,&quot;Id&quot;:&quot;salary_incentive&quot;}]</p>
+
+<h3><a id="How+to+retrieve+the+information+in+the+client%3F" class="HashLink" href="#How+to+retrieve+the+information+in+the+client%3F">How to retrieve the information in the client?</a></h3>
+
+<p>In the Client, we subscribe to the User_SaveCustomInfo event, which triggers automatically after the login. In this example, the procedure is called &quot;clienteventsubscription&quot;.</p>
+
+<p><img src="./images/37713.png" id="37713" class="WikiImage"/></p>
+
+<p>In the procedure subscribed to that event, we should program all the steps we need to execute using the information returned from the Identity Provider (in our example, the salary and the salary incentive).</p>
+
+<p>The interface of the procedure is always as follows: </p>
+
+<p><strong>Parm(in:&amp;EventName, in:&amp;jsonIN, out:&amp;jsonout);</strong></p>
+
+<p>where </p>
+
+<p><strong>EventName</strong>: Belongs to the GAMEvents Domain.<br />
+<strong>JsonIn</strong>: It's a json string with free structure, where the information is passed from the Identity Provider to the client.<br />
+<strong>JsonOut</strong>: It's a json string with a free format; it can be used for error handling.</p>
+
+<p>The code of the example is the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;SDT_UserCustomInfo.FromJson(&amp;JsonIn) // SDT_UserCustomInfo is based on the UserCustomInfoItem SDT.
+
+for &amp;SDT_UserCustomInfoItem in &amp;SDT_UserCustomInfo
+   //Save the data: &amp;SDT_UserCustomInfoItem.id
+  //Save the data:  &amp;SDT_UserCustomInfoItem .value
+endfor</pre>
+
+<h3><a id="Conclusion" class="HashLink" href="#Conclusion">Conclusion</a></h3>
+
+<p>The solution consists of using GAM Events subscription and specifying the correct Additional Scope in the Client configuration.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32698.html">GAM Events subscription</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

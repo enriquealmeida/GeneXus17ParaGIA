@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>When clause</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?8629,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">When clause</h1>
+<!--When clause--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>To specify when the condition for data retrieval or the order of data displayed will be used.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p><i>condition </i>| <i>order_attributes…</i><b> </b>[ <b>when</b> <i>constraint</i> ]<br />
+<br />
+<b>Where:</b><br />
+<i>condition</i><br />
+    specifies any valid logical expression that conditions the data retrieval. </p>
+
+<p><i>order_attributes</i><br />
+    specifies a list of attributes delimited by spaces or commas that indicate the navigation order.</p>
+
+<p><i>constraint</i><br />
+    enables the condition or the order.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>The When clause can be specified to restrict a condition for data retrieval or the order of data displayed. It may be used in the <a href="8578.html">Where clause</a> and in the <a href="6075.html">Order clause</a> of the <a href="24744.html">For Each command</a>, <a href="8596.html">Xfor Each command</a> and <a href="8601.html">Xfor First command</a>.  It also applies to <a href="24817.html">Grid control</a> conditions and <a href="24817.html">Grid control</a> orders.</p>
+
+<h3><a id="Notes" class="HashLink" href="#Notes">Notes</a></h3>
+
+<ul>
+	<li>Conditional filter conditions are additions (with AND) among them, and it is possible that no constraint apply, when all corresponding conditions are false. </li>
+	<li>They only apply to generators using SQL as method to access the database. </li>
+	<li>To generate a conditional constraint as such, you must be in a Client/Server architecture and the DBMS used must be able to “evaluate” the Condition . For example: GeneXus must know how to write the Condition in the language of the DBMS used.</li>
+	<li>If it cannot be generated as such (because the destination generator does not support it or because the condition cannot be written in the DBMS language) it will be transformed into a “standard” filter substituting the WHEN with an OR.</li>
+	<li>If the Constraint has attributes, these are considered as instantiated. For instance: the Constraint is evaluated before starting the navigation and it does not change during navigation.</li>
+	<li>If none of the Constraints are true, and there is no unconditional Order (without the When Clause), the navigation order is undefined. In this case, undefined means that no order is indicated. Therefore, the order to be applied may vary from one DBMS to another, even in successive executions. </li>
+	<li>If more than one Constraint is true, the order taken is the first ORDER clause defined. This is why this order should be the preferred one for queries. </li>
+	<li>Conditional orders are not supported with Breaks.</li>
+</ul>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<h4><a id="Example+of+a+filter+condition" class="HashLink" href="#Example+of+a+filter+condition">Example of a filter condition</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CustomerName LIKE &amp;CustomerName
+       WHEN NOT null(&amp;CustomerName);</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CustomerIDCard &gt;= &amp;CustomerIDCard
+       WHEN NOT null(&amp;CustomerIDCard);</pre>
+
+<p>The previous code is interpreted as follows:</p>
+
+<p>If the &amp;CustomerName variable has some value, GeneXus will apply the filter: CustomerName LIKE &amp;CustomerName. Besides, if the &amp;CustomerIDCard variable has some value, it will also apply the filter: CustomerIDCard &gt;= &amp;CustomerIDCard, in and AND relation with the other filters.  If no variable has value, no filter will be applied. </p>
+
+<h4><a id="Example+with+orders" class="HashLink" href="#Example+with+orders">Example with orders</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each CustomerName WHEN NOT null(&amp;CustomerName)
+       Order CustomerIDCard WHEN NOT null(&amp;CustomerIDCard)
+       ...
+EndFor</pre>
+
+<p>In this For Each, the navigation will be performed ordered by CustomerName if the &amp;CustomerName variable has some value. If it does not have any value, the order will be by CustomerIDCard if &amp;CustomerIDCard has some value. If none of the previous conditions occur, the navigation will be performed in an undefined order.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For each CustomerName WHEN NOT null(&amp;CustomerName)
+       Order CustomerIDCard WHEN NOT null(&amp;CustomerIDCard)
+       Order CustomerId
+       ...
+EndFor</pre>
+
+<p>In the For Each in the example, the navigation orders are the same as those in the previous one. In the case where none of the Conditions occur because there is an unconditional Order, the navigation is performed by the CustomerId unconditional Order.</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Commands</strong></td>
+			<td><a href="24744.html">For Each command</a>, <a href="8596.html">Xfor Each command</a>, <a href="8601.html">Xfor First command</a></td>
+		</tr>
+		<tr>
+			<td><strong>Controls</strong></td>
+			<td><a href="24817.html">Grid control</a></td>
+		</tr>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="6293.html">Procedure object</a>, <a href="6916.html">Web Panel object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Operators</strong></td>
+			<td><a href="9991.html">Like operator</a></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="24744.html">For Each command</a><br />
+<a href="8596.html">Xfor Each command</a><br />
+<a href="8601.html">Xfor First command</a><br />
+<a href="9991.html">Like operator</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="9991.html">Like operator</a></TD><TD><a href="8578.html">Where clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

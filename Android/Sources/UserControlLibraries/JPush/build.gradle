@@ -1,0 +1,30 @@
+apply from: rootProject.file('android-library.gradle')
+
+android {
+    defaultConfig {
+        ndk {
+            //选择要添加的对应cpu类型的.so库。
+            //abiFilters 'armeabi', 'armeabi-v7a', 'armeabi-v8a'
+            // 还可以添加 'x86', 'x86_64', 'mips', 'mips64'
+
+            def abiFiltersProperty = "armeabi;armeabi-v7a;armeabi-v8a"
+
+            abiFilters = []
+            abiFilters.addAll(abiFiltersProperty.split(';').collect{it as String})
+        }
+
+        manifestPlaceholders = [
+                JPUSH_PKGNAME : "${applicationId}",
+                JPUSH_APPKEY : "",
+                JPUSH_CHANNEL : "",
+        ]
+    }
+}
+
+dependencies {
+    implementation project(':FlexibleClient')
+    implementation deps.jpush
+    implementation deps.jpush_core
+    implementation deps.gson
+    compileOnly deps.androidx.annotations
+}

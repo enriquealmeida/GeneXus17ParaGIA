@@ -1,0 +1,195 @@
+delimiters "$", "$"
+
+baseClassToMixinMap ::= [
+  "Application"     : "gx-application",
+  "ApplicationBars"	: "gx-application-bar",
+  "Attribute"		: "gx-form-field",
+  "Button"			: "gx-button",
+  "Group"			: "gx-group",
+  "Image"			: "gx-image-attribute",
+  "Progress"		: "gx-loading",
+  "Tab"				: "gx-tab",
+  "Table"			: "gx-table",
+  "TabPage"			: "gx-tab-caption",
+  "TextBlock"		: "gx-textblock",
+  "Grid"			: "gx-grid-base",
+  "GridRow"			: "gx-grid-base-row"
+]
+
+baseClassToParameterNameMap ::= [
+  default			: "class"
+]
+
+nodeTypeToStyleRuleMap ::= [
+    "virtual": "g_virtual_style_rule",
+    default: "g_default_style_rule"
+]
+
+g_theme(page, gx)::=<<
+@import  "../../node_modules/@genexus/web-controls-library/dist/theming/theming-mixins";
+@import  "./common";
+
+$page.Colors:g_color()$
+$page.Transformations:{transform | $g_transformation(transform, page)$}$
+$page.Styles:{style| $g_style(style, page)$}$
+$page.Fonts:g_font()$
+
+.section > main > gx-card > div > div > gx-table {
+	height: auto;
+}
+
+.section > main > gx-card > div > .card-header {
+	border-spacing: 10px;
+	background-color: rgba(0,0,0,.02);
+}
+
+.section {
+	margin-bottom: 30px;
+}
+
+/* Horizontal grid items must fill its given area */
+.gx-horizontal-grid-item {
+	width:100%;
+	height:100%;
+	& > div {
+		width:100%;
+		height:100%;
+	}
+}
+
+/* Fix horizontal grid elements sizing (AGS version) 
+If this rule is not specified, grid elements in horizontal 
+grids won't grow, and would depend on container size. This 
+won't work if container size depends on contained items size*/
+.gx-horizontal-grid-item .image-viewer {
+	min-width: 100%;
+	min-height: 100%;
+}
+
+>>
+
+g_style(style, page) ::= <<
+
+%Base$style.Name$ {
+	$style:g_style_body(page)$
+}
+
+$(nodeTypeToStyleRuleMap.(style.NodeType))(style, page)$
+$style.Styles:{childStyle| $g_style(childStyle, page)$}$
+>>
+
+g_default_style_rule(style, page) ::= <<
+%CustomVars_$style.Name$ {
+$style.UsedProperties:{pty | $g_style_css_variable_property(pty, style, page)$}$
+$style.CustomCssVariables$
+}
+
+.$style.Name$ {
+	$g_control_interface(style, page)$
+}
+
+>>
+
+g_virtual_style_rule(style, page) ::= <<>>
+
+g_control_interface(style, page) ::= <<
+$if (style.ExtendStyle)$
+@extend %CustomVars_$style.ExtendStyle$ !optional;
+$endif$
+$if (baseClassToMixinMap.(style.__RootType))$
+@include $baseClassToMixinMap.(style.__RootType)$( 
+	\$$baseClassToParameterNameMap.(style.__RootType)$: "%Base$style.Name$"$style.ReferencedStyles:g_interface_property()$
+);
+$else$
+// No mixin available for this class at the moment
+@extend %Base$style.Name$ !optional;
+$endif$
+
+@extend %CustomVars_$style.Name$ !optional;
+>>
+
+g_interface_property(refStyle) ::= <<
+, 
+$if (refStyle.IsVirtualStyle)$
+	\$$refStyle.RefName$: "%Base$refStyle.StyleName$"
+$else$
+	\$$refStyle.RefName$: ".$refStyle.StyleName$"
+$endif$
+>>
+
+g_style_css_variable_property(pty, style, page) ::= <<
+$if (page.CssVariables.(pty))$$g_style_property(pty, style, page)$$endif$>>
+
+g_style_body(style, page) ::= <<
+$style.ExtendStyle:g_style_extend()$
+$g_style_properties(style, style.UsedProperties, page)$
+$g_style_mixins(style, style.UsedProperties, page)$
+$style.CustomCSS$
+>>
+
+g_style_extend(extendStyle) ::= <%
+@extend %Base$extendStyle$ !optional;
+%>
+
+g_style_properties(style, ptylist, page) ::= <%
+$ptylist:{pty | $g_style_standard_property(style, pty, page)$}$%>
+
+g_style_standard_property(style, pty, page) ::= <<
+$if (!page.CssVariables.(pty))$
+$if (!page.MixinPropertyNameMappings.(pty))$
+$g_style_property(pty, style, page)$
+$endif$
+$endif$
+>>
+
+g_style_property(pty, style, page) ::= <<
+$if (style.(pty))$$gx.ToDashedCase.({$g_style_property_name(pty, style, page)$})$: $style.(pty)$;
+$endif$
+>>
+
+g_style_property_name(pty, style, page) ::= <%
+$if (page.CssPropertyNameMappings.(pty))$
+$  if (page.PrefixedProperties.(pty))$
+--$gx.ToLower.(style.__RootType)$
+$  endif$
+$(page.CssPropertyNameMappings.(pty))$
+$else$
+$pty$
+$endif$
+%>
+
+g_style_mixins(style, ptylist, page) ::= <%
+$ptylist:{pty | $g_style_mixin(style, pty, page)$}$
+%>
+
+g_style_mixin(style, pty, page) ::= <%
+$if (page.MixinPropertyNameMappings.(pty))$
+$if (style.(pty))$
+	@include $page.MixinPropertyNameMappings.(pty)$$style.(pty)$;
+$endif$
+$endif$
+%>
+
+g_color( color) ::= <<
+>>
+
+g_font(font) ::= <<
+@font-face {
+	font-family: '$font.Name$';
+	src: url($font.FileName$);
+    font-display: swap;
+}
+
+>>
+
+g_transformation(transformation, page) ::= <<
+@mixin $page.MixinPropertyNameMappings.ThemeTransformationReference$$transformation.Name$ {
+$if (transformation.Origin)$
+	transform-origin: $transformation.Origin$;
+$endif$
+$if (first(transformation.Transformations))$
+	transform: $transformation.Transformations:{t | $t$};separator=" "$;
+$endif$
+}
+
+>>

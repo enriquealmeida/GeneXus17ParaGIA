@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Get an API Key from Google</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19055,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Get an API Key from Google</h1>
+<!--HowTo: Get an API Key from Google--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>To use Google Maps in any compiled Android application, you must have an API Key from Google. If not, maps will not show when using the <a href="15309.html">Maps Control Type</a> or <a href="14644.html">Geolocation domain</a>.</p>
+
+<blockquote>
+<p><strong>Note</strong>: This is not required when prototyping the application through <a href="14974.html">Knowledge Base Navigator</a>, as it already has its own Maps API Key</p>
+</blockquote>
+
+<p><span style="line-height: 1.6em;">By default, the generated app use a default Android debug-certificate to </span><a href="23328.html">sign the application</a><span style="line-height: 1.6em;"> when compiling.<br />
+That allows you to install the application on devices,</span> directly with the <i>*.</i><em>apk</em> file, but not through <a href="15948.html">Google Play</a> (as of GeneXus 15 U2), unless a custom certificate is created.</p>
+
+<p><span style="line-height: 1.6em;">However, to use Google Maps service you need a <em>special</em> certificate called <strong>Map API Key</strong>, different from the previous one. This particular key is linked to the specific </span><a href="17814.html">package name</a><span style="line-height: 1.6em;"> and the certificate mentioned before, in order to restrict the access. </span></p>
+
+<h3><a id="How+can+I+get+my+API+key%3F" class="HashLink" href="#How+can+I+get+my+API+key%3F">How can I get my API key?</a></h3>
+
+<p><span style="line-height: 1.6em;">This section explains how to obtain that key for your application.</span></p>
+
+<h4><a id="1.+Retrieve+the+fingerprint" class="HashLink" href="#1.+Retrieve+the+fingerprint"><strong><span style="line-height: 1.6em;">1. Retrieve the fingerprint</span></strong></a></h4>
+
+<p>The first thing to know is the fingerprint of the certificate that will sign the application (this is not required if while you are prototyping with the debug certificate provided by GeneXus).<br />
+To see this fingerprint run the following command, using the keystore provided by Android.</p>
+
+<p style="margin-left: 40.0px;"><span style="font-family: courier new;">keytool -list -v -keystore &lt;your_release_key.keystore&gt; -alias &lt;your_alias_name&gt; -storepass &lt;your_store_pass&gt; -keypass &lt;your_key_pass&gt;</span></p>
+
+<p style="margin-left: 40.0px;">Where:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="width: 40.0px;"> </td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Value</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Description</strong></td>
+			<td style="border-bottom: 1.0px solid black;"><strong>Default (<a href="23328.html">Android Application Signing</a>)</strong></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>&lt;your_release_key.keystore&gt;  </strong></td>
+			<td>The filepath to the <em>*.keystore</em> file, whose value is set on <a href="19108.html">Key Store File property</a>. </td>
+			<td><em>C:\&lt;genexus_dir&gt;\Android\debug.keystore</em></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>&lt;your_alias_name&gt;</strong></td>
+			<td>The alias of the <em>*.keystore</em> file, whose value is set on <a href="19112.html">Key Alias property</a>.</td>
+			<td><em>androiddebugkey</em></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>&lt;your_store_pass&gt;</strong></td>
+			<td>The key store password to access the *.keystore file, whose value is set on Store Password property. </td>
+			<td><em>android</em></td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>&lt;your_key_pass&gt;</strong></td>
+			<td>The key password to access a particular key pair's private key. </td>
+			<td><em>android</em></td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+This command tool will print an output like this:</p>
+
+<p style="margin-left: 40.0px;"><span style="font-family: courier new;">Alias name: androiddebugkey</span><br />
+<span style="font-family: courier new;">Creation date: Dec 01, 2016<br />
+Entry type: PrivateKeyEntry<br />
+Certificate chain length: 1<br />
+Certificate[1]:<br />
+Owner: CN=Android Debug, O=Android, C=US<br />
+Issuer: CN=Android Debug, O=Android, C=US<br />
+Serial number: ********<br />
+Valid from: Mon Jan 01 08:04:04 UTC 2013 until: Mon Jan 01 18:04:04 PST 2033<br />
+Certificate fingerprints:<br />
+     MD5:  AE:9F:95:D0:A6:86:89:BC:A8:70:BA:34:FF:6A:AC:F9<br />
+     <strong>SHA1: <span style="line-height: 1.6;">5F:BD:E1:6B:93:D6:5A:01:D2:C2:43:04:DD:2D:3D:93:A9:AD:C8:E8</span></strong><br />
+     Signature algorithm name: SHA1withRSA<br />
+     Version: 3</span></p>
+
+<p>The SHA1 value corresponds to the fingerprints.</p>
+
+<blockquote>
+<p><strong>Note</strong>: keytool program is installed on /bin directory of Java JDK </p>
+</blockquote>
+
+<h4><a id="2.+Get+the+API+Key" class="HashLink" href="#2.+Get+the+API+Key"><strong>2. Get the API Key</strong></a></h4>
+
+<p>Go to <a href='https://console.developers.google.com/apis/'>Google API</a> console and create a new API Key for your application.<br />
+The process to obtain that key can be done accessing to:</p>
+
+<p><em>API Manager </em>&gt; <em>Credentials</em> &gt; <em>Create Credential</em> &gt; <em>API Key.</em></p>
+
+<p><img src="./images/33140.png" id="33140" class="WikiImage"/></p>
+
+<h4><a id="3.+Adding+access+restrictions+" class="HashLink" href="#3.+Adding+access+restrictions+"><strong>3. Adding access restrictions </strong></a></h4>
+
+<p>The fingerprint of the step (1) allows adding exclusive access for this application. The following steps explain how to do it.</p>
+
+<p><strong>3.1 Select the API key</strong></p>
+
+<p>Click on the API Key created in step (2) from the list.<br />
+<img src="./images/33136.png" id="33136" class="WikiImage"/></p>
+
+<p><strong>3.2 Check Android apps</strong></p>
+
+<p>On <em>Key restriction</em> section, check for Android apps option.<br />
+<img src="./images/33137.png" id="33137" class="WikiImage"/></p>
+
+<p><strong>3.3 Add package/fingerprint</strong></p>
+
+<p>Click on &quot;<em>Add new package name and fingerprint</em>&quot; button, and complete the fields with your <a href="17814.html"><u>package name</u></a> and <u>fingerprint</u> (from step (1))<br />
+<img src="./images/33138.png" id="33138" class="WikiImage"/></p>
+
+<p><strong>3.4. Save your changes</strong></p>
+
+<p><strong>4. Enabled Api</strong></p>
+
+<p>Depending the case, into the Google Apikey, is necessary enabled some Api,  such as: Geolocation Api and/or Directions Api and/or Maps Static API, etc<br />
+<img src="./images/47742.png" id="47742" class="WikiImage"/></p>
+
+<h4><a id="5.+Set+GeneXus%27s+property" class="HashLink" href="#5.+Set+GeneXus%27s+property"><strong>5. Set GeneXus's property</strong></a></h4>
+
+<p>Finally, set the <a href="19115.html">Android Maps API Key property</a> with the value of Google API console (notice that there is not longer a warning icon).<br />
+<img src="./images/33139.png" id="33139" class="WikiImage"/></p>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<ul>
+	<li>For those developers who has applications in production with the previous default settings (i.e. the *.apk file signed with Artech credentials) must generate the fingerprint with the legacy values.
+	<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+		<tbody>
+			<tr>
+				<td style="border-bottom: 1.0px solid black;"><strong>Value</strong></td>
+				<td style="border-bottom: 1.0px solid black;"><strong>Default (<a href="23328.html">Android Application Signing</a>, as of GeneXus 15 Upgrade 3)</strong></td>
+			</tr>
+			<tr>
+				<td><strong>&lt;your_release_key.keystore&gt;  </strong></td>
+				<td><em>C:\&lt;GeneXus_Dir&gt;\Android\legacy.keystore</em></td>
+			</tr>
+			<tr>
+				<td><strong>&lt;your_alias_name&gt;</strong></td>
+				<td><em>alias_name</em></td>
+			</tr>
+			<tr>
+				<td><strong>&lt;your_store_pass&gt;</strong></td>
+				<td><em>artech</em></td>
+			</tr>
+			<tr>
+				<td><strong>&lt;your_key_pass&gt;</strong></td>
+				<td><em>artech</em></td>
+			</tr>
+		</tbody>
+	</table>
+	</li>
+</ul>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href='https://developers.google.com/maps/documentation/android/start'>Google Maps - First steps</a></li>
+	<li><a href='https://developers.google.com/maps/documentation/android-api/signup'>Google Maps - Get API Key</a></li>
+</ul>
+
+<p><br />
+</p>
+<br />
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="23328.html">Android Application Signing</a></TD><TD><a href="37267.html">Android Google Services API Key property</a></TD><TD><a href="19115.html">Android Maps API Key property</a></TD></TR><TR><TD><a href="14644.html">Geolocation domain</a></TD></TR><TR><TD><a href="30810.html">HowTo: Configure Google Places API in Smart Devices</a></TD><TD><a href="15948.html">HowTo: Publishing an application in Google Play</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/23/21 09:01 PM</em></font></td></TR></table></font>

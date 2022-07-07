@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>DeviceAuthentication external object</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39252,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">DeviceAuthentication external object</h1>
+<!--DeviceAuthentication external object--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Nowadays most of the mobile devices provide biometric sensors that allow the end user to authenticate locally. This type of authentication can be done through fingerprint recognition, facial recognition, retinal scanning, etc. and its objective is to make sure that the end user is the owner of the device.</p>
+
+<p>The DeviceAuthentication external object allows you to interact with these different types of authentication where available, without worrying about device-specific considerations.</p>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><img src="./images/39646.png" id="39646" class="WikiImage"/></td>
+			<td style="vertical-align: top;"><img src="./images/39647.png" id="39647" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Properties" class="HashLink" href="#Properties">Properties</a></h2>
+
+<h3><a id="BiometricDescription+property" class="HashLink" href="#BiometricDescription+property">BiometricDescription property</a></h3>
+
+<p>Returns the name of the biometric authentication method available on the current device. For iOS, the possible values are &quot;Touch ID&quot;, &quot;Face ID&quot;, for Android are &quot;Finger Print&quot; or the empty value if the property IsAvailable returns False.</p>
+
+<h3><a id="AllowableReuseDuration+property" class="HashLink" href="#AllowableReuseDuration+property">AllowableReuseDuration property</a></h3>
+
+<p>Indicates the minimum time (in seconds) before asking the user to locally authenticate again after one successful authentication.</p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods">Methods</a></h2>
+
+<h3><a id="IsAvailable+method" class="HashLink" href="#IsAvailable+method">IsAvailable method</a></h3>
+
+<p>Returns True if the API can be used in the current device, False otherwise.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Return value</strong></td>
+			<td>Boolean</td>
+		</tr>
+		<tr>
+			<td><strong>Parameter</strong></td>
+			<td>method: DeviceAuthenticationPolicy</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Authenticate+method" class="HashLink" href="#Authenticate+method">Authenticate method</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Return value</strong><span style="white-space: pre;"> </span></td>
+			<td>Boolean</td>
+		</tr>
+		<tr>
+			<td><strong>Parameters</strong></td>
+			<td>method: DeviceAuthenticationPolicy, title:VarChar(40), usageDescription:VarChar(40)</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p>This method performs the authentication step, using the method that corresponds to the current device.</p>
+
+<p>If the method parameter is set to Biometrics, then only biometrics sensors will be used. If set to Any and biometrics is not available or is disabled, then the password will be used.</p>
+
+<p>It returns True if the user could be authenticated, otherwise, it returns False. In particular, if the property IsAvailable has value False, the return value of this method is also False.</p>
+
+<p>Calling the method without using the return value (assigning it to a variable, checking it in an if command, etc.) will make the Composite block containing the call to fail.</p>
+
+<p>The title parameter is used to present the end user a title when they are prompted for the local authentication. It is used only in Android.</p>
+
+<p>The UsageDescription parameter is used to present the end user with a message when they are prompted for the local authentication. It cannot be empty in iOS.</p>
+
+<h2><a id="Domains" class="HashLink" href="#Domains">Domains</a></h2>
+
+<h3><a id="DeviceAuthenticationPolicy+domain" class="HashLink" href="#DeviceAuthenticationPolicy+domain">DeviceAuthenticationPolicy domain</a></h3>
+
+<p>Specifies the policy the developer wants to use.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Any</strong></td>
+			<td>Biometrics or Password.</td>
+		</tr>
+		<tr>
+			<td><strong>Biometrics</strong></td>
+			<td>Only Biometrics. </td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Examples" class="HashLink" href="#Examples">Examples</a></h2>
+
+<p>The code shown below is a very simple example created for this document.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Composite
+    &amp;BioComfirmed = DeviceAuthentication.Authenticate(DeviceAuthenticationPolicy.Any, 'Authenticate', 'Please authenticate')
+    If &amp;BioComfirmed
+        //Access granted
+        return
+    Else 
+        Actions.Cancel()
+    EndIf
+EndComposite
+</pre>
+
+<p>Executing this code will display the following screens, depending on whether the device allows biometric authentication. </p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="text-align: center;"><strong>Authenticathion with Biometrics</strong></td>
+			<td style="text-align: center;"><strong> Authentication when Biometrics is not accepted</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align: center;"><img src="./images/39679.png" id="39679" class="WikiImage"/></td>
+			<td style="text-align: center;"><img src="./images/39680.png" id="39680" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>Available from <a href="https://wiki.genexus.com/commwiki/wiki?38845,," target="_blank">GeneXus 15 Upgrade 11</a>.</p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>Platforms </strong></td>
+			<td>Smart Devices(iOS, Android)</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h2><a id="See+Also%3A" class="HashLink" href="#See+Also%3A">See Also:</a></h2>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?38412,," target="_blank">DeviceAuthentication external object usage examples</a><br />
+<br />
+<br />
+</p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38838.html">Face ID Usage Description property</a></TD><TD><a href="31268.html">GeneXus Core module</a></TD></TR><TR><TD><a href="15288.html">Category:Smart Devices API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

@@ -1,0 +1,335 @@
+group ControlRenderGenerator;
+
+delimiters "$", "$"
+
+controlRenderMap ::= [
+  "ANGULAR"        : "g_not_supported",
+  default          : "g_default_render"
+]
+
+showMethodMap ::= [
+  "SAPUI5"         : "g_sapui5_show_method",
+  default          : "g_default_show_method"
+]
+
+scriptsIncludeMap ::= [
+  "SAPUI5"         : "g_sapui5_scripts_include",
+  default          : "g_default_scripts_include"
+]
+
+setHtmlMap ::= [
+  "SAPUI5"         : "g_sapui5_set_html",
+  default          : "g_default_set_html"
+]
+
+assignValueExpression ::= [
+  "numeric"        : "g_assign_value_numeric",
+  "boolean"        : "g_assign_value_boolean",
+  default          : "g_assign_value"
+]
+
+g_control_render(component, gx) ::=<<
+$(controlRenderMap.(component.TargetLibrary))(component, gx)$
+>>
+
+g_default_render(component, gx) ::=<<
+function $component.Constructor$(\$) {
+$if (component.TargetLibrary)$
+	// User control's target library: $component.TargetLibrary$
+$endif$
+
+	$component.Properties:{ prop |  $(propGetSet.(prop.Type))(prop, gx)$ };separator="\n"$
+
+	var template = '$gx.ToOneLine.(component.Render.Value)$';
+	Mustache.parse(template);
+	$component.Events:{event | $g_event_index(event, gx)$ };separator="\n"$
+	var \$container;
+	$if (component.IncludeInControlInfo)$
+	var valueObject = {};
+	
+	this.setAttribute = function (v) {
+		$component.BeforeSetDataScripts:{event | this.$event.Name$(v); };separator="\n"$
+		valueObject.value = $(assignValueExpression.(component.BoundDataType))({v})$;
+	}
+	this.getAttribute = function () {
+		var v = valueObject.value;
+		$component.BeforeGetDataScripts:{event | v = this.$event.Name$(v); };separator="\n"$
+		return v;
+	}
+	$endif$
+
+	this.show = function() {
+		$(showMethodMap.(component.TargetLibrary))(component, gx)$
+	}
+
+	$(scriptsIncludeMap.(component.TargetLibrary))(component, gx)$
+
+	$component.AfterShowScripts:{ method | $g_method(component, method, gx)$};separator="\n"$
+	$component.BeforeShowScripts:{ method | $g_method(component, method, gx)$};separator="\n"$
+	$component.BeforeGetDataScripts:{ method | $g_data_method(component, method, gx)$};separator="\n"$
+	$component.BeforeSetDataScripts:{ method | $g_data_method(component, method, gx)$};separator="\n"$
+	$component.AfterSAPUI5InitScripts:{ method | $g_method(component, method, gx)$};separator="\n"$
+	$component.Methods:{ method | $g_uc_method(component, method, gx)$};separator="\n"$
+	$component.PrivateMethods:{ method | $g_uc_method(component, method, gx)$};separator="\n"$
+
+
+	$component.Events:{event | $g_event_handler(component, event, gx)$ };separator="\n"$
+
+	this.autoToggleVisibility = true;
+
+	var childContainers = {};
+	this.renderChildContainers = function () {
+		\$container
+			.find("[data-slot][data-parent='" + this.ContainerName + "']")
+			.each((function (i, slot) {
+				var \$slot = \$(slot),
+					slotName = \$slot.attr('data-slot'),
+					slotContentEl;
+
+				slotContentEl = childContainers[slotName];
+				if (!slotContentEl) {				
+					slotContentEl = this.getChildContainer(slotName)
+					childContainers[slotName] = slotContentEl;
+					slotContentEl.parentNode.removeChild(slotContentEl);
+				}
+				\$slot.append(slotContentEl);
+				\$(slotContentEl).show();
+			}).closure(this));
+	};
+	
+}
+>>
+
+g_not_supported(component, gx) ::=<<
+/*! Unsupported User Control Object Target ($component.TargetLibrary$) */
+>>
+
+g_sapui5_show_method(component, gx)::=<<
+gx.http.loadScript({
+		url: gx.util.resourceUrl(gx.basePath + gx.staticDirectory + "$component.Library$/resources/sap-ui-core.js", false),
+		isExternal: false,
+		attris: {
+			"data-sap-ui-theme": "sap_bluecrystal",
+			"data-sap-ui-libs": "sap.m",
+			"data-sap-ui-bindingSyntax": "complex",
+			"data-sap-ui-compatVersion": "edge",
+			"data-sap-ui-preload": "async"
+		}
+	},
+	(function () {
+	$g_default_show_method(component, gx)$
+	}).closure(this),
+	false
+);
+>>
+
+g_default_show_method(component, gx)::=<<
+	\$container = \$(this.getContainerControl());
+
+	// Raise before show scripts
+	$component.BeforeShowScripts:{event | this.$event.Name$(); };separator="\n"$
+
+	$component.Events:{event | $g_event_init_var(event, gx)$ };separator="\n"$
+
+	$(setHtmlMap.(component.TargetLibrary))(component, gx)$
+
+	// Raise after show scripts
+	$component.AfterShowScripts:{event | this.$event.Name$(); };separator="\n"$
+>>
+
+g_default_scripts_include(component, gx)::=<<
+this.Scripts = [];
+>>
+
+g_sapui5_scripts_include(component, gx)::=<<>>
+
+g_default_set_html(component, gx)::=<<
+$if (component.RenderFirstTime)$
+	$if (component.ServerRender)$
+	$else$
+if (!this.IsPostBack) {
+	this.setHtml(Mustache.render(template, this));
+}
+	$endif$
+$else$
+	$if (component.ServerRender)$
+//if (this.IsPostBack)
+	this.setHtml(Mustache.render(template, this));
+	$else$
+	this.setHtml(Mustache.render(template, this));
+	$endif$
+$endif$
+this.renderChildContainers();
+	
+$if (component.IncludeInControlInfo)$
+var \$dataElement = \$container.find("[data-gx-binding]");
+var dataElementProp = \$dataElement.attr("data-gx-binding") || "value";
+\$dataElement.on("input", function () {
+	valueObject.value = $(assignValueExpression.(component.BoundDataType))({this[dataElementProp]})$;
+});
+\$dataElement.on("change", function () {
+	valueObject.value = $(assignValueExpression.(component.BoundDataType))({this[dataElementProp]})$;
+});
+\$dataElement.on("focus", this.onfocus.closure(this));
+\$dataElement.on("input", this.oninput.closure(this));
+\$dataElement.on("change", this.onchange.closure(this));
+
+\$dataElement.prop(dataElementProp, valueObject.value);
+$endif$
+
+$component.Events:{event | $g_default_attach_event(event, gx)$ };separator="\n"$
+>>
+
+g_sapui5_set_html(component, gx)::=<<
+$if (component.ServerRender)$
+if (this.IsPostBack) {
+	$g_sapui5_set_html_apply_template(component, gx)$
+}
+$else$
+$g_sapui5_set_html_apply_template(component, gx)$
+$endif$
+
+$if (component.RenderFirstTime)$
+if (!this.IsPostBack) {
+	$g_sapui5_attach_init(component, gx)$
+}
+$else$
+$g_sapui5_attach_init(component, gx)$
+$endif$
+>>
+
+g_sapui5_set_html_apply_template(component, gx)::=<<
+\$container
+	.find('script[type="ui5/xmlview"]')
+	.html(Mustache.render(template, this));
+$if (component.RenderFirstTime)$
+$	if (component.IncludeInControlInfo)$
+
+this.XmlView
+	.getModel()
+	.setProperty("/value", valueObject.value);
+$	endif$
+$endif$
+>>
+
+g_sapui5_attach_init(component, gx)::=<<
+sap.ui.getCore().attachInit((function() {
+
+	// Raise after SAPUI5 init scripts
+	$component.AfterSAPUI5InitScripts:{event | this.$event.Name$(); };separator="\n"$
+$if (component.Events)$
+	var Controller = $component.SAPUI5Controller$.extend(
+		"$component.Constructor$Controller",
+		{
+			$component.Events:{event | $g_sapui5_controller_event_handler(event, gx)$ };separator=",\n"$
+		}
+	);
+$endif$
+	// Instantiate the SAPUI5 control
+	this.XmlView = sap.ui.xmlview({
+			viewContent: \$container
+							.find('script[type="ui5/xmlview"]')
+							.html()$if (component.Events)$,$endif$
+$if (component.Events)$
+			controller: new Controller()
+$endif$
+		})
+		.placeAt(\$container.get(0), "only")
+		.attachAfterRendering((function () {
+			this.renderChildContainers();
+		}).closure(this));
+$if (component.IncludeInControlInfo)$
+
+	var oModel = new sap.ui.model.json.JSONModel(valueObject);
+	oModel.attachPropertyChange(function(event) {
+		var params = event.getParameters();
+		valueObject.value = params.value;
+	});
+	this.XmlView.setModel(oModel);
+$endif$
+}).closure(this));
+>>
+
+g_sapui5_controller_event_handler(event, gx)::=<<
+gx_handle$event.Name$: (function() {
+	this.on$event.Name$Handler();
+}).closure(this)
+>>
+
+g_event_init_var(event, gx)::=<<
+_iOn$event.Name$ = 0;
+>>
+
+g_event_index(event, gx) ::=<<
+var _iOn$event.Name$ = 0;
+>>
+
+g_method(component, method, gx) ::=<<
+	this.$method.Name$ = function() {
+		$method.Source$
+	}
+>>
+
+g_uc_method(component, method, gx) ::=<<
+	this.$method.Name$ = function($method.Parameters:{parameter | $parameter.Name$ };separator=","$) {
+		$method.Source$
+	}
+>>
+
+g_data_method(component, method, gx) ::=<<
+	this.$method.Name$ = function(value) {
+		$method.Source$
+	}
+>>
+
+
+g_event_handler(component, event, gx) ::=<<
+
+	this.on$event.Name$Handler = function (e) {
+		if (e) {
+			var target = e.currentTarget;
+			e.preventDefault();
+			$component.Properties:{ prop | $if (propCollection.(prop.Type))$ this.$prop.Name$CurrentIndex = (parseInt(\$(target).attr('data-items-index'), 10) || 1); $endif$ };separator="\n"$
+		}
+		
+		if (this.$event.Name$) {
+			this.$event.Name$();
+		}
+	}
+>>
+
+
+g_default_attach_event(event, gx) ::=<<
+\$(this.getContainerControl())
+	.find("[data-event='$event.Name$']")
+	.on('$event.On$', this.on$event.Name$Handler.closure(this))
+	.each(function (i) {
+		this.setAttribute("data-items-index", i + 1);
+	});
+>>
+
+g_property(prop, gx) ::=<<
+	this.set$prop.Name$ = function(value) {
+		this.$prop.Name$ = value;
+	}
+
+	this.get$prop.Name$ = function() {
+		return this.$prop.Name$;
+	}
+>>
+
+g_empty(prop, gx) ::=<<>>
+
+propGetSet ::= [
+	"sdt" : "g_property",
+	default: "g_empty"
+]
+
+propCollection ::= [
+	"sdt" : true,
+	default: false
+]
+
+g_assign_value_numeric(exp) ::=<<Number($exp$)>>
+g_assign_value_boolean(exp) ::=<<gx.lang.gxBoolean($exp$)>>
+g_assign_value(exp) ::=<<$exp$>>

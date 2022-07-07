@@ -1,0 +1,78 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template for Inner Levels" %>
+<%@ SubTemplate Name="AbstractFormInnerLevel" File="TrnAbstractFormLayout_InnerLevel_FioriTemplate.dkt" MergeProperties="True"  %>
+<%@ SubTemplate Name="AbstractFormLeafLevel" File="TrnAbstractFormLayout_LeafLevel.dkt" MergeProperties="True"  %>
+<%@ SubTemplate Name="AbstractFormOneAttribute" File="TrnAbstractFormLayout_OneAttribute_CarmineTemplate.dkt" MergeProperties="True"  %>
+
+<%@ Property Name="TransactionLevel" Type="TransactionLevel" %>
+<%@ Property Name="Counters" Type="System.Collections.Generic.Dictionary<string,int>"%>
+<%
+	IDictionary<TransactionAttribute, Artech.Genexus.Common.Objects.Attribute> descAttNames;
+	IList<int> toExclude = DefaultFormHelper.CalculateExcluded(TransactionLevel, out descAttNames);
+	int iter = 0;
+	string formCellClass;
+	foreach (IStructureItem structureItem in TransactionLevel.Items)
+	{
+		if (structureItem is TransactionAttribute)
+		{
+			TransactionAttribute trnAttribute = structureItem as TransactionAttribute;
+
+			if (DefaultFormHelper.CanIncludeAttributeInDefaultForm(toExclude, trnAttribute))
+			{			
+%>			
+	<%= WebLayout.BeginTableRow() %>
+		<%= WebLayout.BeginTableCell() %>
+<%@ CallSubTemplate AbstractFormOneAttribute att='trnAttribute' descAttNames='descAttNames' %>
+		<%= WebLayout.EndTableCell() %>
+	<%= WebLayout.EndTableRow() %>
+<%
+			}
+		}
+		else if (structureItem is TransactionLevel)
+		{
+			TransactionLevel subLevel = structureItem as TransactionLevel;
+%>
+<%= WebLayout.BeginTableRow() %>
+	<%= WebLayout.BeginTableCell(null, "LevelTable") %>
+		<%= WebLayout.BeginResponsiveTable(null, subLevel.Name + "Table", "LevelTable") %>
+			<%= WebLayout.BeginTableRow() %>
+				<%= WebLayout.BeginTableCell() %>
+					<%= WebLayout.TextBlock("Title" + subLevel.Name, "Title", subLevel.Description) %>
+				<%= WebLayout.EndTableCell() %>
+			<%= WebLayout.EndTableRow() %>
+			<%= WebLayout.BeginTableRow() %>
+				<%= WebLayout.BeginTableCell() %>
+			<%
+						bool hasMoreLevels = (subLevel.Levels.Count > 0);
+						if (hasMoreLevels)
+						{
+							ResponsiveSizes sizes = DefaultFormHelper.CalculateResponsiveSizes(subLevel, false, false, false, false);
+			%>
+					<%= WebLayout.BeginGrid("Grid" + Counters["GridCounter"].ToString(), "TrnSublevelGrid") %>
+						<%= WebLayout.BeginResponsiveTable(null, "GridTable" + (Counters["GridCounter"]++).ToString(), null) %>
+							<%= WebLayout.BeginTableRow() %>
+								<%= WebLayout.BeginTableCell() %>
+									<%= WebLayout.BeginResponsiveTable(sizes, "Table" + (Counters["TableCounter"]++).ToString(), "LevelTable") %>
+			<%@ CallSubTemplate AbstractFormInnerLevel TransactionLevel='subLevel' Counters='Counters' %>
+									<%= WebLayout.EndResponsiveTable() %>
+								<%= WebLayout.EndTableCell() %>
+							<%= WebLayout.EndTableRow() %>
+						<%= WebLayout.EndResponsiveTable() %>
+					<%= WebLayout.EndGrid() %>
+			<%
+						}
+						else
+						{
+			%>
+			<%@ CallSubTemplate AbstractFormLeafLevel TransactionLevel='subLevel' Counters='Counters' %>
+			<%
+						}
+			%>
+				<%= WebLayout.EndTableCell() %>
+			<%= WebLayout.EndTableRow() %>
+		<%= WebLayout.EndResponsiveTable() %>
+	<%= WebLayout.EndTableCell() %>
+<%= WebLayout.EndTableRow() %>
+<%
+		}
+	}
+%>

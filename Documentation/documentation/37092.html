@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Last Modified Date Time Attribute property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37092,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Last Modified Date Time Attribute property</h1>
+<!--Last Modified Date Time Attribute property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td>Indicates the DateTime-based attribute that contains information about when the record was last modified.  <h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<p> <strong>Objects:</strong> Transaction<br /><strong>Platforms:</strong> Smart Devices(Android, IOS)<br /></p>
+ <h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p> <p>This attribute will be used as a reference for the timestamp algorithm to determine which rows must be synchronized from the server to the device. In other words, the device will synchronize those rows whose last modified date time is later than the last synchronization timestamp.</p>
+
+<p>In the next synchronization, the server uses the timestamp sent by the device to compare with the value in the Last Modified Date Time Attribute. All rows modified or added after the last synchronization are considered.</p></p>
+ <h3><a id="Run-time%2FDesign-time" class="HashLink" href="#Run-time%2FDesign-time">Run-time/Design-time</a></h3>
+
+<p> This property applies only at design-time.</p>
+ <h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p> <p>Suppose we have a Chat transaction object defined as follows:</p>
+
+<p><img src="./images/37099.png" id="37099" class="WikiImage"/></p>
+
+<p>As you can see, we have set the following properties (both are required for using synchronization by timestamp).</p>
+
+<ul>
+	<li><a href="37091.html">Logically Deleted Attribute property</a> = ChatIsDeleted</li>
+	<li><a href="37092.html">Last Modified Date Time Attribute property</a> = ChatTimestamp</li>
+</ul>
+
+<p>Also, suppose there are two friends communicating through our chat system and they already have the following rows synchronized on their devices.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend1 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend2 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:01 AM</em>  </td>
+			<td style="border-right: solid 1.0px black;"> False </td>
+			<td> Happy birthday!</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend2</em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend1</em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:02 AM</em></td>
+			<td style="border-right: solid 1.0px black;"> False</td>
+			<td> Thks =) See you tomorrow at the dance club?</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend1</em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend2</em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/13/17 12:05:47 AM</em></td>
+			<td style="border-right: solid 1.0px black;"> False</td>
+			<td> Mom ¬¬ I'm fine. Write u later. Bye</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+Minutes later, <em>friend1 </em>realizes he/she has made a mistake sending a message to <em>friend2</em> instead of <em>Mom</em>. Luckily, our chat system allows the end user to change the content of sent messages, and <em>friend1</em> decides to change the text to &quot;<em>Hey dude! I'm at the dance club. Where r u?</em>&quot;</p>
+
+<p>Typically, the developer implements this functionality by using the <a href="6714.html">New command</a> (not recommended) or combining <a href="23211.html">Business Component Load method</a> with <a href="7964.html">Commit command</a> in a Procedure as follows.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;From, in:&amp;To, &amp;DateTime, in:&amp;Text);
+
+&amp;Chat.Load(&amp;From,&amp;To,&amp;DateTime)
+&amp;Chat.ChatMessage = &amp;Text // instantiated with '<em>Hey dude! I'm at the dance club. Where r u?</em>&quot;'
+&amp;Chat.Save()
+commit</pre>
+
+<p>The developer expects that this new row on the Chat table will reflect the change automatically on the target device after the insertion. However, when synchronization by timestamp is used, since the last message is already synchronized on the friend2 device, the updated row will never be sent (there is no hash comparison). Therefore, the appropriate mechanism for updating (or inserting) data <strong>must be implemented by the developer</strong>. In this case, the Procedure shown above should be changed for the following code.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Chat.Load(&amp;From,&amp;To,&amp;DateTime) 
+&amp;Chat.ChatMessage = &amp;Text   // instantiated with '<em>Hey dude! I'm at the dance club. Where r u?</em>&quot;'
+&amp;Chat.ChatTimestamp = now() // Last update modified (value 10/13/17 12:06:17 AM)
+&amp;Chat.Save() 
+commit
+</pre>
+
+<p>Once the row has been updated by the developer, both devices will have the following records on its offline database (convenient for <em>friend1</em>).</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend1 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend2 </em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:01 AM</em>  </td>
+			<td style="border-right: solid 1.0px black;"> False </td>
+			<td> Happy birthday!</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><em>friend2</em></td>
+			<td style="border-right: solid 1.0px black;"><em> friend1</em></td>
+			<td style="border-right: solid 1.0px black;"><em> 10/12/17 12:00:02 AM</em></td>
+			<td style="border-right: solid 1.0px black;"> False</td>
+			<td> Thks =) See you tomorrow at the dance club?</td>
+		</tr>
+		<tr>
+			<td style="border-right: solid 1.0px black;"><span style="color: rgb(128,128,128);"><em>friend1</em></span></td>
+			<td style="border-right: solid 1.0px black;"><span style="color: rgb(128,128,128);"><em>friend2</em></span></td>
+			<td style="border-right: solid 1.0px black;"><span style="color: rgb(128,128,128);"> <strong><em>10/13/17 12:06:17 AM</em></strong></span></td>
+			<td style="border-right: solid 1.0px black;"><span style="color: rgb(128,128,128);"> False</span></td>
+			<td><span style="color: rgb(128,128,128);"> <strong>Hey dude! I'm at the dance club. Where r u?</strong></span></td>
+		</tr>
+	</tbody>
+</table></p>
+ <h3><a id="wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes" class="HashLink" href="#wiki%3F17719%2CApplying%2Bproperty%2Bchanges+How+to+apply+changes"><a href="17719.html">How to apply changes</a></a></h3>
+
+<p> To apply the corresponding changes when the property value is configured, execute a Rebuild All.</p>
+ <h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This property is available since  <a href="https://wiki.genexus.com/commwiki/wiki?36778,," target="_blank">GeneXus 15 Upgrade 8</a>.</p>
+ <h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p> <ul>
+	<li><a href="37091.html">Logically Deleted Attribute property</a></li>
+	<li><a href="23541.html">Data Receive Granularity property</a></li>
+</ul></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="23541.html">Data Receive Granularity property</a></TD><TD><a href="37092.html">Last Modified Date Time Attribute property</a></TD></TR><TR><TD><a href="37091.html">Logically Deleted Attribute property</a></TD><TD><a href="37109.html">Offline Native Mobile synchronization granularity alternatives</a></TD><TD><a href="23672.html">KB:Sales</a></TD></TR><TR><TD><a href="6774.html">Specification Codes from spc0150 onwards</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 02:13 PM</em></font></td></TR></table></font>

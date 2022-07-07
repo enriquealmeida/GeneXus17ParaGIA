@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Smart Devices caching</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18602,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Smart Devices caching</h1>
+<!--Smart Devices caching--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>There are several scenarios that call for offline storing (from now on referred to as “caching”) in an application generated for smart devices.</p>
+
+<p>Below is a detailed description of some of these scenarios.</p>
+
+<h3><a id="Scenario+1%3A+Query+Cache" class="HashLink" href="#Scenario+1%3A+Query+Cache">Scenario 1: Query Cache</a></h3>
+
+<p>The idea is to avoid data traffic between the client and the server when data on the server remains unchanged. This is the most basic case we want to solve: that is: in a fully online application, repeated queries to the server should be avoided.</p>
+
+<p>Avoiding unnecessary network traffic is desirable because it implies savings mainly in:</p>
+
+<ul>
+	<li>bandwidth use (particularly in the use of telephone networks instead of Wi-fi)</li>
+	<li>the device’s consumption of energy (cordless communications, data de-serialization)</li>
+	<li>web server load.</li>
+</ul>
+
+<p>In order to solve this, for a query made from the smart device, we must know if the data involved has been modified since it was last used.</p>
+
+<h3><a id="Scenario+2%3A+Offline+application+%28read-only%29" class="HashLink" href="#Scenario+2%3A+Offline+application+%28read-only%29">Scenario 2: Offline application (read-only)</a></h3>
+
+<p>This is an extension of the case described above, assuming that there's no connectivity. The basic idea is that, with a cache like the one described above – where it will not be necessary to go to the server if the queried data has not been changed – when there is no connectivity, it will be possible to browse the sections of the application already visited using the data stored in the device.</p>
+
+<h2><a id="Implementation+of+the+solution" class="HashLink" href="#Implementation+of+the+solution">Implementation of the solution</a></h2>
+
+<p>To solve the two scenarios described above we will need two things:</p>
+
+<ul>
+	<li>Storage in a local database.</li>
+</ul>
+
+<p>The data returned by the server must be stored on a database to avoid over-consumption of memory and to survive the closing of the application. Since the result of the server queries is what should be stored, the data model for this base would be a &quot;table for each <a href="5270.html">Data Provider object</a>&quot; and not the GeneXus normalized data model.</p>
+
+<p>The database used for this purpose is <a href='https://www.sqlite.org/'>SQLite</a>, which is included in all devices.</p>
+
+<ul>
+	<li>A mechanism for determining whether the data has changed on the server.</li>
+</ul>
+
+<p>When the client makes a query to the server, it also sends, together with the query, the timestamp of the last reply (that is to say, the time when the query was last made). The server must control whether any of the tables involved in the query has changed since then, in order to define what must be returned. It can be either a new result when the last query made by the client is older than the data update (that is when the tables associated with the query have been modified) or a message indicating that the client's data continues to be valid, in which case the client shows the cached result. In this last case, it returns a special reply (HTTP 304).</p>
+
+<p>On the server, in order to determine whether the client data is still valid, two elements become necessary (these are the elements stored in the server cache):</p>
+
+<ol>
+	<li>A list of tables.</li>
+	<li>The timestamp of the tables' last modification.</li>
+</ol>
+
+<p>Therefore, the cache of smart device applications will always include the data needed to know whether it is possible to use the cache or if the query must be made once again.</p>
+
+<p>The server cache is updated when there is an insert or update in any record of a table.<br />
+The table update can be performed using any GeneXus object (it doesn't need to be a Rest procedure). In fact, if the KB has two generators (web and Smart Devices) when a web-generated object updates a table, the Smart Devices cache is updated as well. The web generator checks the <a href="18370.html">Smart Devices Cache Management property</a> of the Smart Devices generator.</p>
+
+<p>The only exception is when a table in the system’s database is updated outside the applications developed with GeneXus.</p>
+
+<h2><a id="How+to+activate+the+Smart+Devices+caching" class="HashLink" href="#How+to+activate+the+Smart+Devices+caching">How to activate the Smart Devices caching</a></h2>
+
+<p>First, you need to activate the <a href="18370.html">Smart Devices Cache Management property</a>, and the <a href="18302.html">Enable Data Caching property</a> for each object for which the cache is going to be used.</p>
+
+<p>When the Enable Data Caching object property is True, the <a href="18322.html">Check For New Data property</a> is enabled, as well as the <a href="18329.html">Check For New Data After Minutes Elapsed property</a>.</p>
+
+<h2><a id="Disabling+the+cache" class="HashLink" href="#Disabling+the+cache">Disabling the cache</a></h2>
+
+<p>In some scenarios, we specifically need to disable the cache. For example, when having to force the application to refresh the device’s form, or when the data has been changed from an application other than GeneXus, among other possibilities.</p>
+
+<p>Let’s consider the following case:</p>
+
+<p>Upon a <a href="24829.html">Panel object</a> whose form shows a variable and attributes of the database, in an action of the panel a <a href="6293.html">Procedure object</a> is called and a refresh is done after the return. During the refresh operation, the variable on the form is loaded with the contents of the web session modified in the Procedure.</p>
+
+<p>The events of the panel for smart devices will be as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event ‘CallProc’
+   Composite
+      ModifyWebSession.Call()
+      refresh
+   EndComposite
+EndEvent
+
+Event Refresh
+   &amp;FormVar =&amp;websession.get(‘Sample’)
+Endevent</pre>
+
+<p>If the procedure ModifyWebSession simply does the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;websession.set(‘Sample’, &amp;time)</pre>
+
+<p>Then, upon returning to the <a href="24829.html">Panel object</a>, the &amp;FormVar variable on the panel will never be viewed as modified (unless the attributes present on the form have actually been modified). The reason is that, after running the query to the database, the panel will receive a reply indicating that the data has not been modified. As a result, the refresh will not be executed, and consequently, no changes will be viewed in the &amp;FormVar variable.</p>
+
+<p>In order to solve this situation, a way of programmatically invalidating the cache has been implemented. Therefore, regardless if the data has been changed, the query to the database will be made anyway (as if the data had been subject to changes).</p>
+
+<p>This was implemented as an external object, imported when the smart device generator is used (the same as with all external objects that are automatically consolidated within the SmartDevicesApi folder). This class is called ServerAPI and contains the InvalidateCache method.</p>
+
+<p>Therefore, the ModifyWebSession procedure in the above example should use it in order to invalidate the cache, and upon returning to the Panel for Smart Devices, the data should be deemed changed and the query should be made again (with the corresponding refresh). The procedure would then be the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;websession.set(‘Sample’, &amp;time)
+ServerAPI.InvalidateCache()</pre>
+
+<p>For <a href="https://wiki.genexus.com/commwiki/wiki?27605,," target="_blank">GeneXus 15</a> see <a href="32105.html">Cache API</a> and the Cache.SmartDevices.Clear() method.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?28166,," target="_blank">Caching in GeneXus applications</a><br />
+<a href="32105.html">Cache API</a></p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32105.html">Cache API</a></TD><TD><a href="18329.html">Check For New Data After Minutes Elapsed property</a></TD></TR><TR><TD><a href="18322.html">Check For New Data property</a></TD><TD><a href="28136.html">Distributed cache in GeneXus applications</a></TD><TD><a href="18302.html">Enable Data Caching property</a></TD><TD><a href="17614.html">Event Triggering Order in Native Mobile Applications</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD><TD><a href="24234.html">Server-side Events in Native Mobile Applications</a></TD></TR><TR><TD><a href="18370.html">Smart Devices Cache Management property</a></TD></TR><TR><TD><a href="16608.html">Video data type</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

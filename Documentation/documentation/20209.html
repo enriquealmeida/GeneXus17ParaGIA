@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Parallel Transactions</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?20209,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Parallel Transactions</h1>
+<!--Parallel Transactions--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Parallel Transactions is the name used for two or more <a href="1908.html">Transaction object</a>s with the same identifier (primary key).</p>
+
+<p>For instance, when you have the following two Transactions:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Supplier</strong></td>
+			<td><strong>Client</strong></td>
+		</tr>
+		<tr>
+			<td><strong>{</strong></td>
+			<td><strong>{</strong></td>
+		</tr>
+		<tr>
+			<td>   CompanyId*</td>
+			<td>   CompanyId*</td>
+		</tr>
+		<tr>
+			<td>   CompanyName</td>
+			<td>   CompanyName</td>
+		</tr>
+		<tr>
+			<td>   CompanyAddress</td>
+			<td>   CompanyAddress</td>
+		</tr>
+		<tr>
+			<td>   CompanyPhone</td>
+			<td>   CompanyPhone</td>
+		</tr>
+		<tr>
+			<td>   SupplierPurchasesAmount</td>
+			<td>   ClientDiscount</td>
+		</tr>
+		<tr>
+			<td><strong>}</strong></td>
+			<td><strong>}</strong></td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p>they are Parallel Transactions because they share the identifier: CompanyId.</p>
+
+<p>What effect does this have?</p>
+
+<p>GeneXus designs the database upon standardization criteria, so, it will create an only physical table in the database whose attributes will be those resulting from the merged attributes of both Transactions:</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 1050.0px;">
+	<tbody>
+		<tr>
+			<td>CompanyId*</td>
+			<td>CompanyName</td>
+			<td>CompanyAddress</td>
+			<td>CompanyPhone</td>
+			<td>SupplierPurchasesAmount</td>
+			<td>ClientDiscount</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p>Then, GeneXus generates two different programs – each one with its own form, rules, events, properties, etc. – but they will have associated the same physical table where the data will be stored.</p>
+
+<p>Thus, when executing the Supplier Transaction and entering a new company, with CompanyId=1, a record will be inserted in the COMPANY table with primary key value 1, and the values entered by the end-user in the CompanyName, CompanyAddress CompanyPhone, and SupplierPurchasesAmount attributes. What will happen with the ClientDiscount attribute – for this record? It will be empty because it is not present in the Supplier Transaction so the end-user can not enter a value for it.</p>
+
+<p>Afterward, when executing the Client Transaction with the purpose of entering a new company, CompanyId=2, a record will be inserted in the COMPANY table with primary key value 2, and the values entered by the user in the CompanyName, CompanyAddress, CompanyPhone, and ClientDiscount. In this case, the SupplierPurchasesAmount attribute will be stored with an empty value.</p>
+
+<p>Note that by executing any of the Transactions, the end-user will be able, for example, to query, update and delete any record present in the COMPANY physical table associated with both Transactions. Consider that because each Transaction is an independent object, it is possible to define different rules and events for each of the Parallel Transactions to define the desired controls and behavior.</p>
+
+<p>Transactions may be parallel at several levels. The example above just mentioned one-level Transactions.</p>
+
+<p>For example, you could have three transactions with the following structures:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 400.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Transaction “T1”</strong></td>
+			<td><strong>Transaction “T2”</strong></td>
+			<td><strong>Transaction “T3”</strong></td>
+		</tr>
+		<tr>
+			<td>A*</td>
+			<td>A*</td>
+			<td>A*</td>
+		</tr>
+		<tr>
+			<td>B</td>
+			<td>C</td>
+			<td>E</td>
+		</tr>
+		<tr>
+			<td>C</td>
+			<td>D</td>
+			<td><strong>{</strong> M*</td>
+		</tr>
+		<tr>
+			<td><strong>{ </strong>X*</td>
+			<td><strong>{</strong> X*</td>
+			<td>  N<strong> }</strong></td>
+		</tr>
+		<tr>
+			<td>  Z <strong>}</strong></td>
+			<td>  Y <strong>}</strong></td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p>In this case, there is double parallelism: between the first level of the three Transactions (they all have the same physical table associated), and between the second levels of the first two Transactions (they share the same physical table). GeneXus will create the three following physical tables in the database:</p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 150.0px;">
+	<tbody>
+		<tr>
+			<td><strong>T1</strong></td>
+			<td><u>A*</u></td>
+			<td>B</td>
+			<td>C</td>
+			<td>D</td>
+			<td>E</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 150.0px;">
+	<tbody>
+		<tr>
+			<td><strong>T2</strong></td>
+			<td><u>A*</u></td>
+			<td><u>X*</u></td>
+			<td>Z</td>
+			<td>Y</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<table border="1" cellpadding="1" cellspacing="1" style="width: 150.0px;">
+	<tbody>
+		<tr>
+			<td><strong>T3</strong></td>
+			<td><u>A*</u></td>
+			<td><u>M*</u></td>
+			<td>N</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p><br />
+</p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="25344.html">Module - Parallel Transactions and Object Visibility</a></TD><TD><a href="22885.html">Optimistic concurrency control</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

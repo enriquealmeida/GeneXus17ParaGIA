@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>CI / CD integration for Unit Tests (GeneXus 17 upgrade 2 or prior)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47892,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">CI / CD integration for Unit Tests (GeneXus 17 upgrade 2 or prior)</h1>
+<!--CI / CD integration for Unit Tests (GeneXus 17 upgrade 2 or prior)--><div class="TableWikiBody" id="tblwikibody"><p>As discussed in the <a href="38329.html">Typical GeneXus development cycle for Agile</a>, the software industry has evolved to enable a set of automation to boost quality and adopting DevOps practices. Continuous integration is a fundamental step to start working in a proper way with <a href="https://wiki.genexus.com/commwiki/wiki?30869,," target="_blank">GXserver</a> and GXtest.</p>
+
+<p>Continuous integration means that every time a developer makes a change in a centralized repository in GXserver KB, that code will trigger some automation to check that recent changes can successfully build a new version without conflicts with other developments. Also, it will check that there are no missing references to be committed and that the build succeeds in a totally different environment than it was developed. With this step in your process, you will be avoiding the typical dev phase like “it works/builds on my machine”. Theoretically, CI means to integrate every time a developer makes a commit, but sometimes in your methodology, you want to do this less often but still getting often (maybe daily) feedback regarding your app status. In other words, that is continuously integrated.</p>
+
+<p>CI tools are usually agnostic, and you can integrate GeneXus with any CI tools using msbuild.exe on Windows platforms. As an example, we will be showing some cases using Jenkins CI.</p>
+
+<p>In the same way that you will use GeneXus Tasks such as OpenKB, BuildAll, RebuildAll, etc. for handling Knowledge Base tasks and Team Development Tasks for handling GXServer, to run Unit tests you will need to call some extra task/step. You can find proper documentation of these tasks <a href="40738.html">here</a>.</p>
+
+<h2><a id="How+to+Run+All+your+Unit+Tests+in+your+KB" class="HashLink" href="#How+to+Run+All+your+Unit+Tests+in+your+KB">How to Run All your Unit Tests in your KB</a></h2>
+
+<p><strong>GXtest.msbuild</strong>: Assume that this is the filename of the MSBuild File that you are building to run Unit Tests.</p>
+
+<p><strong>In the beginning, you will need to import two MSBuild projects that contain predefined tasks that you are going to use on your file. Those projects are: GeneXus.Tasks.targets and GXtest.targets.</strong></p>
+
+<p>The following is an example of the MSBuild file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;    
+  &lt;Import Project=&quot;$(GX_PROGRAM_DIR)\GeneXus.Tasks.targets&quot;/&gt;    
+  &lt;Import Project=&quot;$(GX_PROGRAM_DIR)\GXtest.targets&quot;/&gt;
+
+  &lt;Target Name=&quot;RunAllTests&quot;&gt;
+    &lt;OpenKnowledgeBase Directory=&quot;$(KBPath)&quot;/&gt;
+    &lt;SetActiveEnvironment EnvironmentName=&quot;$(EnvironmentName)&quot;/&gt;
+    &lt;UpdateTestRefs Type=&quot;$(TestType)&quot; ServerUserName=&quot;$(GXUser)&quot; ServerPassword=&quot;$(GXPass)&quot;/&gt;
+    &lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;Runner&quot;/&gt;
+    &lt;RunTests Type=&quot;$(TestType)&quot; ServerUserName=&quot;$(GXUser)&quot; ServerPassword=&quot;$(GXPass)&quot;/&gt;
+    &lt;CloseKnowledgeBase/&gt;
+  &lt;/Target&gt;
+&lt;/Project&gt;
+</pre>
+
+<p>Having this file configured properly, you can launch all unit tests using this command line: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSBuild.exe /t:RunAllTests /p:KBPath=&quot;C:\Models\KbTests&quot; /p:EnvironmentName=&quot;CSharpWeb&quot; /p:TestType=&quot;Unit&quot;<strong> </strong>/p:GXUser=&quot;local\admin&quot; /p:GXPass=&quot;password&quot; $env:GX_PROGRAM_DIR&quot;\GXtest.msbuild&quot;</pre>
+
+<h2><a id="How+to+Run+a+Test+List+%28suite%29+of+your+KB" class="HashLink" href="#How+to+Run+a+Test+List+%28suite%29+of+your+KB">How to Run a Test List (suite) of your KB</a></h2>
+
+<p>As well as the task Run All Tests, you will need to configure an MSBuild file as is showed below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project xmlns=&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;&gt;    
+&lt;Import Project=&quot;.\GeneXus.Tasks.targets&quot;/&gt;    
+&lt;Import Project=&quot;.\GXtest.targets&quot;/&gt;
+
+&lt;Target Name=&quot;RunTestsList&quot;&gt;
+    &lt;OpenKnowledgeBase Directory=&quot;$(KBPath)&quot;/&gt;
+    &lt;SetActiveEnvironment EnvironmentName=&quot;$(EnvironmentName)&quot;/&gt;
+    &lt;UpdateTestRefs ExecutionDataFilePath=&quot;$(pathToJSON)&quot; ServerUserName=&quot;$(GXUser)&quot; ServerPassword=&quot;$(GXPass)&quot;/&gt;
+    &lt;BuildOne BuildCalled=&quot;true&quot; ObjectName=&quot;Runner&quot;/&gt;
+    &lt;RunTestsList ExecutionDataFilePath=&quot;$(pathToJSON)&quot; ServerUserName=&quot;$(GXUser)&quot; ServerPassword=&quot;$(GXPass)&quot;/&gt;
+    &lt;CloseKnowledgeBase/&gt;
+&lt;/Target&gt;
+&lt;/Project&gt; 
+</pre>
+
+<p>Having this file configured properly, you can run a specific unit tests list using this command line:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSBuild.exe /t:RunTestsList 
+/p:KBPath=&quot;C:\Models\KbTests&quot;
+/p:EnvironmentName=&quot;CSharpWeb&quot;
+/p:pathToJSON=&quot;C:\Models\KBTests\TestList.json&quot;
+/p:GXUser=&quot;local\admin&quot; /p:GXPass=&quot;password&quot;
+$env:GX_PROGRAM_DIR&quot;\GXtest.msbuild&quot;
+</pre>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p><a href="40739.html">See MSbuild examples</a> </p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/07/22 01:57 PM</em></font></td></TR></table></font>

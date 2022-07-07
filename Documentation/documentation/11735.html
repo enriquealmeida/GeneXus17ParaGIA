@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Triggering context for Events and Rules</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?11735,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Triggering context for Events and Rules</h1>
+<!--Triggering context for Events and Rules--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Allows you to define specific rules and events for each user interface (Windows or GUI, Web or HTML and Text).</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p>EnvironmentAttribute { <i>rule </i>| <i>event </i>} | { { <i>rule </i>… | <i>event </i>… } }</p>
+
+<h4><a id="Where%3A" class="HashLink" href="#Where%3A">Where:</a></h4>
+
+<p>EnvironmentAttribute<br />
+   Specifies the environment attribute used. The possible values are:</p>
+
+<ul>
+	<li>[win]: Indicates that the events and rules which follow must only be applied to the Windows or GUI forms. In this case, the validation is done the moment the information is saved and sent to the specifier only if the user interface of the associated generator is &quot;Win&quot; type.</li>
+	<li>[web]: The events and rules that follow are only valid for the Web or HTML form. The information is sent to the specifier only if the user interface of the associated generator is &quot;Web&quot;.</li>
+	<li>[text]: The events and rules that follow must only be applied to char based user interfaces.</li>
+	<li>[business]: This is the default value and specifies that it applies to all forms; thus, this information is always sent to the specifier. An alternative way to achieve this is to use the previous identifiers concatenated [win] [web] [text].</li>
+</ul>
+
+<p><i>rule</i><br />
+   Specifies a rule or list of rules (separated by semicolon) associated to the object.</p>
+
+<p><i>event</i><br />
+   Details an event or list of events associated to the object.</p>
+
+<h4><a id="Notes" class="HashLink" href="#Notes">Notes</a></h4>
+
+<p>   There are two possible syntaxes:</p>
+
+<ul>
+	<li>Individual: This allows you to apply the identifier by event or rule; i.e., individually. To do so you must include the associated identifier and then, in the following line, the rule/event to be executed.</li>
+	<li>By Block: To apply one or several attributes to a group of rules or events, the rules or events to be applied must be enclosed between keys ({ }).</li>
+</ul>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>The [win], [web], [text] and [business]  environment attributes allow you to discriminate the environment where the related events and rules will be executed. The user can specify the rules and events according to the form.</p>
+
+<p>Due to backward compatibility with Knowledge Bases of previous GeneXus versions, when these identifiers (environment attributes) are not used, the [business] option is assumed by default.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<ul>
+	<li>The following examples show in detail the use of the syntax applying to rules/events individually.</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+[win] // Rule for GUI environments
+Noaccept(CliCod) If Insert On AfterValidate;
+[win][web] // Event for Win and Web environments
+Event Start
+       Call( PSettings , &amp;UserId)
+EndEvent // Start</pre>
+
+<p>The NoAccept rule will only be applied in Windows or GUI environments, while the Start event is valid in Win and Web environments.</p>
+
+<ul>
+	<li>The next examples show the use of the Block syntax.</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+[win]
+{
+parm(&amp;CliCod , &amp;Mode);
+Noaccept&amp;CliCod);
+CliCod = &amp;CliCod If Update Or Delete;
+CliCod = udp( PNumber , ‘Cli’ ) If Insert On AfterValidate;
+}
+[win][text]
+{
+Event Start
+       Call(PSettings, &amp;UserId)
+EndEvent
+Event ‘User’ 8
+       // User Event
+EndEvent
+}</pre>
+
+<p>The first one specifies that the list of rules within the block delimited by {} must be executed only in Win environments. The other example specifies that the group of events within the block delimited by {} must be executed in Win and Text environments.</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 500.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="1908.html">Transaction object</a>, <a href="https://wiki.genexus.com/commwiki/wiki?7387,," target="_blank">Work Panel object</a>, <a href="8132.html">Web Panel form</a> (rules and events)</td>
+		</tr>
+		<tr>
+			<td><strong>Interfaces</strong></td>
+			<td>Text, Web, Win</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="8060.html">Web Transactions</a><br />
+<a href="8213.html">Transaction rules</a><br />
+<a href="8042.html">Events in Transactions</a><br />
+<a href="8288.html">Web Panel rules</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="11734.html">Printer Rule</a></TD><TD><a href="1908.html">Category:Transaction object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

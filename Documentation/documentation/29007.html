@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Facebook Authentication Type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?29007,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Facebook Authentication Type</h1>
+<!--GAM - Facebook Authentication Type--><div class="TableWikiBody" id="tblwikibody"><p><a href="19888.html">GeneXus Access Manager</a> provides a way to authenticate using Facebook. </p>
+
+<p>Summary</p>
+
+<p><ul><li><a class="HashLink" href="#Steps+to+follow">Steps to follow</a></li><ul><li><a class="HashLink" href="#1.+Create+a+%22Facebook+client+application%22">1. Create a &quot;Facebook client application&quot;</a></li><li><a class="HashLink" href="#2.+Define+%22Facebook+Authentication+Type%22">2. Define &quot;Facebook Authentication Type&quot;</a></li></ul></li><li><a class="HashLink" href="#Web+Applications">Web Applications</a></li><li><a class="HashLink" href="#Native+Mobile+Applications">Native Mobile Applications</a></li><li><a class="HashLink" href="#Software+Requirements">Software Requirements</a></li><li><a class="HashLink" href="#See+Also">See Also</a></li></ul></ul></p>
+
+<h3><a id="Steps+to+follow" class="HashLink" href="#Steps+to+follow">Steps to follow</a></h3>
+
+<h4><a id="1.+Create+a+%22Facebook+client+application%22" class="HashLink" href="#1.+Create+a+%22Facebook+client+application%22">1. Create a &quot;Facebook client application&quot;</a></h4>
+
+<p>Create a &quot;Facebook client application&quot; in the Facebook site and obtain App Id and App Secret for that application.</p>
+
+<p>Go to Facebook for developers (http://developers.facebook.com/) &gt; My apps &gt; Add a new app, as shown in the following figures:</p>
+
+<p><img src="./images/37857.png" id="37857" class="WikiImage"/></p>
+
+<p><img src="./images/37858.png" id="37858" class="WikiImage"/></p>
+
+<p><img src="./images/37859.png" id="37859" class="WikiImage"/></p>
+
+<p>Enter the Site URL = http://&lt;domain&gt; (eg.: apps5.genexus.com).</p>
+
+<p><img src="./images/37860.png" id="37860" class="WikiImage"/></p>
+
+<p>Go through settings &gt; Basic, to get the App Id and App Secret of the application.</p>
+
+<p><img src="./images/37861.png" id="37861" class="WikiImage"/></p>
+
+<p>Go through Products &gt; Facebook Login &gt; Settings. There, enter a valid value for &quot;Valid OAuth redirect URIs&quot; field.<br />
+A valid format is : https://&lt;server&gt;/&lt;base url&gt;/oauth/gam/callback<br />
+You can enter as many URIs as you want in that field, for example, if <a href="21146.html">the REST Web Services of the mobile application</a> are separate from Web application, you need to add the URL as well, following the format :</p>
+
+<p>https://&lt;server&gt;/&lt;Services base url &gt;/oauth/gam/callback</p>
+
+<p>Note also that &quot;Web Oauth Login&quot; must always be set to YES.</p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: Remember to make the FB application public.</div>
+
+<h4><a id="2.+Define+%22Facebook+Authentication+Type%22" class="HashLink" href="#2.+Define+%22Facebook+Authentication+Type%22">2. Define &quot;Facebook Authentication Type&quot;</a></h4>
+
+<p>Define &quot;Facebook Authentication Type&quot; using the <a href="15935.html">GAM backend</a> or the <a href="16535.html">GAM API</a>. Go through <a href="16508.html">Authentication Types link</a>.</p>
+
+<p><img src="./images/39426.png" id="39426" class="WikiImage"/></p>
+Important note:
+
+<p class="Code">The Local Site URL specified is only the domain where the application runs. You don't need to enter the complete site URL. For example https://apps6.genexus.com.<br />
+If you enter the complete Site URL is also right, but never include the &quot;/servlet&quot; in Java.</p>
+
+<p>Facebook Authentication Type can be used in Web Applications and Native Mobile applications also.</p>
+
+<h3><a id="Web+Applications" class="HashLink" href="#Web+Applications">Web Applications</a></h3>
+
+<p>See the <a href="https://wiki.genexus.com/commwiki/wiki?39427,," target="_blank">GAMExampleLogin object</a> for details about how the login is executed.</p>
+
+<p>Considerations: The LoginFacebook function doesn't work as expected in popup windows (the same happens to LoginTwitter). This is a limitation of those sites, who don't support a redirect from an HTML iframe. For a workaround, see <a href='https://www.genexus.com/developers/websac?en,,,34259;;'>SAC 34259</a></p>
+
+<h3><a id="Native+Mobile+Applications" class="HashLink" href="#Native+Mobile+Applications">Native Mobile Applications</a></h3>
+
+<p>In the case of Native Mobile applications, you need to add an event in the login object to authenticate using Facebook.<br />
+The logic inside the event associated will include a call to a method of <a href="31350.html">Actions external object</a>, named &quot;LoginExternal&quot;.</p>
+
+<p>The first parameter is based on the GAMAuthenticationTypes domain, and its value should be &quot;Facebook&quot;.<br />
+The &amp;User and &amp;password parameters are ignored in this case.<br />
+The &amp;LoginExternalAdditionalParameters has an &quot;AuthenticationTypeName&quot; property where you can set the name of the Authentication Type. This is due to the fact that more than one Facebook Authentication Type can be defined in the Repository.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Facebook'
+    Composite
+        &amp;LoginExternalAdditionalParameters.AuthenticationTypeName    = !&quot;facebook1&quot;  
+      GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.Facebook, &amp;User, &amp;Password, &amp;LoginExternalAdditionalParameters)
+      Return
+    EndComposite
+EndEvent</pre>
+
+<p>Another way to program the Facebook login, when you only have one Facebook Authentication Type in the repository, is the following (without passing the &amp;LoginExternalAdditionalParameters):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Facebook'
+    Composite
+        GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.Facebook, &amp;User, &amp;Password)
+        Return
+    EndComposite
+EndEvent</pre>
+
+<p>See <a href="19269.html">GAM Login Method</a> for details.</p>
+
+<h3><a id="Software+Requirements" class="HashLink" href="#Software+Requirements">Software Requirements</a></h3>
+
+<ul>
+	<li>    Java: JDK 1.7 or upper is required to be installed on the application server. Otherwise, the Facebook certificate has to be installed in the key store of the JVM.</li>
+	<li>    Csharp: The certificate of Facebook has to be installed on the Windows server.</li>
+</ul>
+
+<p>Notes:</p>
+
+<p>1. Facebook Authentication is solved using OAuth.<br />
+2. In case you want to &quot;work with friends&quot;, or do any particular action after the user has logged in, you need to communicate with the Facebook API. In that case, you'll probably need to get the ExternalToken method of GAMSession EO. The result of invoking this method should be passed to the Facebook API.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="16569.html">GAM: Facebook Interaction Sample</a><br />
+<a href="17208.html">GAM - Twitter Authentication Type</a><br />
+<a href="29013.html">GAM - Google Authentication Type</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?21584,," target="_blank">Additional Scope Property for GAM Google / Facebook Authentication Types</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?27798,," target="_blank">iOS 6.0 Facebook Integration</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?27935,," target="_blank">Windows Phone Facebook Integration</a></p>
+
+<p><br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31350.html">Actions external object</a></TD><TD><a href="38432.html">Facebook external object</a></TD><TD><a href="29013.html">GAM - Google Authentication Type</a></TD></TR><TR><TD><a href="17208.html">GAM - Twitter Authentication Type</a></TD><TD><a href="16508.html">GAM Authentication Types</a></TD></TR><TR></TR><TR></TR><TR><TD><a href="22082.html">GAM Users</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/27/22 05:40 PM</em></font></td></TR></table></font>

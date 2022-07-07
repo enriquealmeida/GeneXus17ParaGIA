@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Group Navigations that receive attributes as parameters</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18243,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Group Navigations that receive attributes as parameters</h1>
+<!--Group Navigations that receive attributes as parameters--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>When an object receives input attributes as a parameter (or input-output), filter conditions can be applied to some groups (For Each, Grids, etc) (See <a href="6862.html">Parm rule</a> for more details).</p>
+
+<p>The above rule is not being considered in some situations and therefore some changes have been introduced in GeneXus X Evolution 2 to fix it. This document explains the error and its solution.</p>
+
+<h2><a id="Previous+behavior+%28until+GeneXus+X+Evolution+1+inclusive%29" class="HashLink" href="#Previous+behavior+%28until+GeneXus+X+Evolution+1+inclusive%29">Previous behavior (until GeneXus X Evolution 1 inclusive)</a></h2>
+
+<p>Suppose we have the following Transactions and objects described below:</p>
+
+<p class="Code">TRN Category<br />
+{<br />
+   CategoryId*<br />
+}</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+TRN Customer
+{
+   CustomerId*
+   CategoryId
+}
+
+TRN Invoice
+{
+   InvoiceId*
+   CustomerId
+}
+
+parm( CategoryId)
+
+...
+for each
+   defined by CategoryId, InvoiceId, CustomerId
+   ...
+endfor</pre>
+
+<p>For that For Each clause, the <em>Invoice </em>table is considered as its Base Table and that navigation <strong>does not</strong> access the <em>Customer </em>table.</p>
+
+<h3><a id="Where+is+the+problem%3F" class="HashLink" href="#Where+is+the+problem%3F">Where is the problem?</a></h3>
+
+<p>The code generated for the WWSD patterns allowed us to identify the error more clearly.</p>
+
+<p>Suppose we have the data structure mentioned above. When the pattern is applied to Category a Section for each related table is created, in this case, to view all Customers from a given CategoryId. The code of the Section has CategoryId as parm and the grid shows CustomerId. The generated code displays all Customers instead of the given CategoryId.</p>
+
+<h3><a id="What+is+the+technical+reason+for+this+behavior%3F" class="HashLink" href="#What+is+the+technical+reason+for+this+behavior%3F">What is the technical reason for this behavior?</a></h3>
+
+<p>CategoryId attribute is a parameter (in this case an in-out parameter) and is considered as instantiated (with a value). This is correct since, according to the general rule, a filter condition could be generated with it.</p>
+
+<p>In addition, it is considered constant and it would therefore be unnecessary to navigate it. As a consequence, it is taken off the list of attributes to navigate. As a result:</p>
+
+<ul>
+	<li>Customer table is not navigated (where CategoryId belongs to).</li>
+	<li>No filter is applied by the parameter.</li>
+	<li>All invoices are processed.</li>
+</ul>
+
+<h2><a id="Current+behavior+%28from+GeneXus+X+Evolution+2+inclusive%29" class="HashLink" href="#Current+behavior+%28from+GeneXus+X+Evolution+2+inclusive%29">Current behavior (from GeneXus X Evolution 2 inclusive)</a></h2>
+
+<p>The above problem is fixed in the new version, adding the following criteria:</p>
+
+<ul>
+	<li>The base table of a group is determined as <a href="6347.html">usual</a>, by considering all the attributes belonging to the group, regardless of whether they are mentioned or not in the parm rule.</li>
+</ul>
+
+<p>Besides, these criteria are still applied for each parm attribute:</p>
+
+<ul>
+	<li>If the attribute belongs to one of the tables determined by the group (note that this doesn’t mean all the extended tables), then the filter is applied.</li>
+	<li>If it doesn't belong to any of the above tables, but there exists an explicit condition by the attribute, the condition is applied (see Example 2 in Appendix).</li>
+</ul>
+
+<h2><a id="Compatibility" class="HashLink" href="#Compatibility">Compatibility</a></h2>
+
+<p>For Knowledge Bases converted from previous versions, it is important to perform a <a href="https://wiki.genexus.com/commwiki/wiki?3217,," target="_blank">Navigation Comparison</a> in order to detect any changes related to this fix.</p>
+
+<p>In general, some of these situations could happen:</p>
+
+<ul>
+	<li>The navigation changes some tables or conditions, because the parm attributes are also mentioned in Events outside For Each groups. <br />
+	For instance, in the Start Event you have a Call to invoke a Procedure that passes some of these attributes as parameters. Now, the object navigation could change because those attributes are considered to infer the base and extended table.</li>
+</ul>
+
+<p>In addition, the followings SACs have been fixed:</p>
+
+<ul>
+	<li><a href='https://www.genexus.com/en/developers/websac?data=6453'>SAC  #6453</a>   The base table is not well determined when the primery key is received as an attribute in the parm</li>
+	<li><a href='http://www2.gxtechnical.com/portal/hgxppredirect.aspx?15,26,0,,,18904'>SAC #18904</a>  Incorrect warning spc0037 by an att received as parameter</li>
+	<li><a href='http://www2.gxtechnical.com/portal/hgxppredirect.aspx?15,26,0,,,20460'>SAC #20460</a>  Filter is not applied by the parm attribute also mentioned in the group</li>
+	<li><a href='http://www2.gxtechnical.com/portal/hgxppredirect.aspx?15,26,0,,,22824'>SAC #22824</a>  Obj navigation includes a condition by an attribute mentioned within a call command inside the Start Event</li>
+</ul>
+
+<h2><a id="Appendix" class="HashLink" href="#Appendix">Appendix</a></h2>
+
+<h3><a id="Example+1" class="HashLink" href="#Example+1">Example 1</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+TRN Category
+{
+   CategoryId*
+}
+TRN Customer
+{
+   CustomerId*
+   CustmerName
+   CategoryId
+}</pre>
+
+<p>Suppose we want a Web Panel to list all the Customers that belong to a specific Category. The expected code is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(CategoryId);
+...
+// Insert a Grid with the attributes: CustomerId and CustomerName
+// Insert CategoryId as a hidden control in the form, to force the join navigation.</pre>
+
+<p>However, this navigation did not include the condition and only the Customer Table is accessed.</p>
+
+<p>While this can be easily solved by changing the parm(ATT) with parm(&amp; VAR) and adding the condition ATT = &amp;Var; this behavior could lead to a confusion due to the general rule of how Base Tables and Extended Tables are inferred in a For Each, Grid, DP, etc.</p>
+
+<h3><a id="Example+2" class="HashLink" href="#Example+2">Example 2</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+TRN A
+{
+    A1*
+    A2
+}
+
+Trn B
+{
+    B1*
+    B2
+}
+
+Proc:
+
+Parm(A1)
+For each
+  Where B1 = A1
+Endfor</pre>
+
+<p>In this case, the expected behavior is to navigate the B Table with this condition: B1 = @A1   (this case did not change)</p>
+
+<p> </p>
+
+<p><br />
+<br />
+</p>
+
+<p></p>
+
+<p></p>
+
+<p> </p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

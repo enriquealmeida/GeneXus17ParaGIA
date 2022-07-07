@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Grid paging on the Web</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6064,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Grid paging on the Web</h1>
+<!--Grid paging on the Web--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>For usability and performance reasons, it is convenient to display grid results in a fixed-size grid and provide buttons to browse the pages.</p>
+
+<p>By this, we mean grid paging. Paging applies to standard and free style grids, as well as to nested grids.</p>
+
+<p>Paging can be <a href="6086.html">automatic</a> or manual, when the grid <a href="2452.html">Rows property</a> has a value other than zero.<br />
+<br />
+For manual paging, we have methods associated with the Grid control.</p>
+
+<p>Below are the methods available to handle manual paging.</p>
+
+<h3><a id="Methods" class="HashLink" href="#Methods">Methods</a></h3>
+
+<h3><a id="FirstPage" class="HashLink" href="#FirstPage">FirstPage</a></h3>
+
+<p>The FirstPage method takes the user to the first set of returned records. For example, in the code below, when the user clicks on the button associated with the Enter event, the first set of records will be displayed in the grid.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Enter
+
+    MyGrid.FirstPage()
+
+Endevent</pre>
+
+<h3><a id="NextPage+" class="HashLink" href="#NextPage+">NextPage </a></h3>
+
+<p>The NextPage method displays the set of records that follow.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'NextList'
+
+    &amp;err = MyGrid.NextPage()
+
+    if &amp;err = 2
+
+       Message.Caption = 'Last page already displayed'
+
+    endif
+
+Endevent</pre>
+
+<p>In this example, when the user clicks on the NextList button, the grid will display the set of records that follow. If the last page is already loaded, the message  &quot;Last page already displayed&quot; will be shown in the Message text block</p>
+
+<h3><a id="PreviousPage" class="HashLink" href="#PreviousPage">PreviousPage</a></h3>
+
+<p>The PreviousPage method displays the previous set of records.    </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'BackList'
+
+    &amp;err = MyGrid.PreviousPage()
+
+    if &amp;err = 2
+
+        Message.Caption = ‘First page already displayed’
+
+    endif
+
+Endevent</pre>
+
+<p>In this example, when the user clicks on the BackList button, the grid will show the previous set of records. If the first page is already loaded, the &quot;First page already displayed&quot; message will be displayed in the Message textblock.</p>
+
+<h3><a id="LastPage" class="HashLink" href="#LastPage">LastPage</a></h3>
+
+<p>The LastPage method takes the user to the last set of records. It can be used only if the grid has a base table.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Last'
+
+    MyGrid.LastPage()
+
+Endevent</pre>
+
+<p>In this example, when the user clicks on the Last button, the grid will display the last set of records.  </p>
+
+<h3><a id="GoToPage" class="HashLink" href="#GoToPage">GoToPage</a></h3>
+
+<p>The GotoPage(PageNumber) method gives direct access to a particular set of records. It can be used only if the grid has a base table. The following example shows a call to the page corresponding to a set of data. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'GoTo'
+
+MyGrid.GoToPage(&amp;PageNbr)
+
+EndEvent</pre>
+
+<p>Methods return a value after execution.</p>
+
+<ul>
+	<li>0: Successful operation.</li>
+	<li>1: Grid paging is not enabled.</li>
+	<li>2: Last page already displayed or First page already displayed (according to the NextPage or PreviousPage method, respectively).</li>
+	<li>3: The grid doesn't have a base table. </li>
+</ul>
+
+<h3><a id="+Considerations" class="HashLink" href="#+Considerations"> Considerations</a></h3>
+
+<ul>
+	<li>If paging is applied to a web panel that has filters, the FirstPage method should be used in the event that applies the filter so as not to display the result corresponding to the previous page. <br />
+	 </li>
+	<li>The efficiency of the FirstPage, NextPage, PreviousPage and GotoPage(N) methods is related to the efficiency of the navigation defined for the corresponding grid. In other words, if the grid has good response times without paging, the response times with paging will be similar. <br />
+	Consider that <a href="15589.html">Server Paging</a> is used when it's possible: when any of the conditions used to navigate the Grid (Where conditions) is evaluated in the client, <a href="15589.html">Server Paging</a> optimization is not performed.<br />
+	 </li>
+	<li>The RecordCount, LastPage, and GotPage methods are not implemented for Grids without a <a href="6347.html">Base Table</a>, or grids that have a Base table but any of their conditions are evaluated on the client side (cannot be evaluated by the DBMS).</li>
+</ul>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>When <a href="15589.html">Server Paging</a> cannot be used, Paging is done per &quot;record number&quot;. To show page N, the records in previous pages (N-1) are read without being displayed.</p>
+
+<h3><a id="Given+the+implementation%2C+we+recommend%3A" class="HashLink" href="#Given+the+implementation%2C+we+recommend%3A">Given the implementation, we recommend:</a></h3>
+
+<ul>
+	<li>Having good data filtering (so that there aren't many pages). </li>
+	<li>Avoiding, when the cost is high, the use of GotoPage(N) with high N values, as well as the use of LastPage. </li>
+	<li>Saving the value of the RecordCount property in a variable, since each call to the property implies a COUNT in the database. </li>
+</ul>
+
+<p> </p>
+
+<h4><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h4>
+
+<p><a href="8768.html">FirstPage Method</a><br />
+<a href="8769.html">NextPage Method</a><br />
+<a href="8770.html">PreviousPage Method</a><br />
+<a href="8771.html">LastPage Method</a><br />
+<a href="8772.html">GotoPage Method</a><br />
+<a href="10328.html">CurrentPage property</a><br />
+<br />
+<br />
+<br />
+</p>
+
+<p><br />
+<br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6086.html">Automatic paging in Grid control</a></TD><TD><a href="10328.html">CurrentPage property</a></TD></TR><TR><TD><a href="8768.html">FirstPage Method</a></TD><TD><a href="8772.html">GotoPage Method</a></TD><TD><a href="8771.html">LastPage Method</a></TD></TR><TR><TD><a href="8769.html">NextPage Method</a></TD><TD><a href="31280.html">Paging in apps</a></TD><TD><a href="31234.html">Paging Property for grids</a></TD></TR><TR><TD><a href="8770.html">PreviousPage Method</a></TD><TD><a href="8757.html">RecordCount property</a></TD><TD><a href="15589.html">Server Paging</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

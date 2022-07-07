@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Distributed cache in GeneXus applications</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?28136,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Distributed cache in GeneXus applications</h1>
+<!--Distributed cache in GeneXus applications--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>GeneXus allows retrieving data from the in-memory cache to both web <sup>(1)</sup> and smart device applications <sup>(2)</sup>; but what happens if the application runs in a distributed environment, or in the cloud?<br />
+In a distributed environment, the local cache of the application server is useless. In this case, you need a distributed memory object caching system to guarantee the validity of the cached information.</p>
+
+<p>The solution in this scenario (mostly applications that run on the cloud or in a clustered environment) is to use a distributed cache.</p>
+
+<h2><a id="GeneXus+implementation+for+distributed+caching" class="HashLink" href="#GeneXus+implementation+for+distributed+caching">GeneXus implementation for distributed caching</a></h2>
+
+<p>For distributed environments, the GeneXus application can be configured at runtime to use <a href='http://redis.io/'>Redis</a> or <a href='http://memcached.org/'>Memcached</a> for <a href="https://wiki.genexus.com/commwiki/wiki?28167,," target="_blank">ResultSet caching in GeneXus</a> and <a href="18602.html">Smart Devices caching</a> as well.</p>
+
+<p>See <a href="https://wiki.genexus.com/commwiki/wiki?28163,," target="_blank">Distributed Resultset caching in GeneXus</a> and <a href="https://wiki.genexus.com/commwiki/wiki?28156,," target="_blank">Smart Devices distributed Caching</a> to understand the cache behavior.</p>
+
+<h2><a id="How+to+configure+distributed+caching+in+GeneXus" class="HashLink" href="#How+to+configure+distributed+caching+in+GeneXus">How to configure distributed caching in GeneXus</a></h2>
+
+<p>First of all, configure caching in GeneXus. It's the same as configuring the server local cache (1)(2).</p>
+
+<p>The way to configure distributed caching is through the <a href="31147.html">Cache Provider property</a>.</p>
+
+<p>Note: The cache is an in-memory key-value store where the key-value pair depends on the application platform. For SD applications, the key corresponds to the database table, and the value is the table modification timestamp. For web and web services, the key corresponds to the query with its parameters and the value is the resultset of the query.</p>
+
+<h3><a id="Server+and+client+configuration" class="HashLink" href="#Server+and+client+configuration">Server and client configuration</a></h3>
+
+<p>On the server, any implementation of Memcached or Redis has to be installed. For example, <a href='http://aws.amazon.com/elasticache/'>AWS ElastiCache</a>.</p>
+
+<p>In the client machine, the corresponding API implementation has to be referenced in the classpath for Java or included in the bin directory of the web application for Csharp.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<h4><a id="1.+Using+Csharp+and+Memcached" class="HashLink" href="#1.+Using+Csharp+and+Memcached">1. Using Csharp and Memcached</a></h4>
+
+<p>First, check that the <a href='https://code.google.com/archive/p/spymemcached/'>BeITMemcached</a> client DLLs have been copied to the bin directory.</p>
+
+<p>Additionally, download the <a href='http://s3.amazonaws.com/downloads.northscale.com/memcached-win64-1.4.4-14.zip'>Memcached for Windows</a> server.</p>
+
+<p>Configure the <a href="31147.html">Cache Provider property</a>, the <a href="https://wiki.genexus.com/commwiki/wiki?31331,," target="_blank">Cache Location Property</a>, (and the <a href="https://wiki.genexus.com/commwiki/wiki?31332,," target="_blank">Cache UserName Property</a> and <a href="31333.html">Cache Password Property</a> if necessary).</p>
+
+<h4><a id="2.+Using+Csharp+and+Redis" class="HashLink" href="#2.+Using+Csharp+and+Redis">2. Using Csharp and Redis</a></h4>
+
+<p>Download the <a href='https://github.com/rgl/redis/downloads'>Redis</a> server and install it as a service on Windows.</p>
+
+<p>The <a href='https://github.com/ServiceStack/ServiceStack.Redis'>ServiceStack</a> client is used in this case.</p>
+
+<p>Configure the <a href="31147.html">Cache Provider property</a>, the <a href="https://wiki.genexus.com/commwiki/wiki?31331,," target="_blank">Cache Location Property</a>, (and the <a href="https://wiki.genexus.com/commwiki/wiki?31332,," target="_blank">Cache UserName Property</a> and <a href="31333.html">Cache Password Property</a> if necessary).</p>
+
+<p>Licensing Notice: Refer to <a href='https://www.genexus.com/developers/websac?es,,,40283'>SAC 40283</a>.</p>
+
+<h4><a id="3.+Using+Java+and+Memcached" class="HashLink" href="#3.+Using+Java+and+Memcached">3. Using Java and Memcached</a></h4>
+
+<p>Download the spymemcached-2.10.3.jar - <a href='https://code.google.com/archive/p/spymemcached/'>spy memcached </a>jar file - and copy it to the lib directory under the web app.</p>
+
+<h2><a id="How+to+invalidate+the+distributed+caching" class="HashLink" href="#How+to+invalidate+the+distributed+caching">How to invalidate the distributed caching</a></h2>
+
+<p>You can do it programmatically. See <a href="32105.html">Cache API</a>.</p>
+
+<h3><a id="NOTE%3A" class="HashLink" href="#NOTE%3A">NOTE:</a></h3>
+
+<p>For the time being, the feature is supported in these combinations:</p>
+
+<ul>
+	<li>JAVA - Memcached - authentication supported</li>
+	<li>.NET - Memcached - authentication not supported</li>
+	<li>.NET - Redis - authentication supported</li>
+</ul>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p>(1) <a href="8968.html">Database access caching property</a><br />
+(2) <a href="18602.html">Smart Devices caching</a><br />
+(3) <a href="https://wiki.genexus.com/commwiki/wiki?28156,," target="_blank">Smart Devices distributed Caching</a><br />
+(4) <a href="https://wiki.genexus.com/commwiki/wiki?28163,," target="_blank">Distributed Resultset caching in GeneXus</a><br />
+(5) <a href="32105.html">Cache API</a></p>
+
+<p></p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32105.html">Cache API</a></TD><TD><a href="31333.html">Cache Password Property</a></TD></TR><TR></TR><TR><TD><a href="45291.html">Load balancing considerations</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

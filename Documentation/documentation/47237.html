@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Hardening of GeneXus Systems and Deployments with GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?47237,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Hardening of GeneXus Systems and Deployments with GAM</h1>
+<!--Hardening of GeneXus Systems and Deployments with GAM--><div class="TableWikiBody" id="tblwikibody"><p>This article aims to inform developers and administrators about actions to take when developing and deploying GeneXus applications so that they are more secure against certain events that, by default, are not covered by configuration in the GeneXus IDE or otherwise are covered and are explained here.</p>
+
+<p>It should be stressed that every development or configuration improvement implemented <strong>must be tested before</strong> it is deployed in a production environment. In particular, this applies to changes regarding server configuration.</p>
+
+<h2><a id="Recommended+GAM+settings" class="HashLink" href="#Recommended+GAM+settings">Recommended GAM settings</a></h2>
+
+<p>Every deployment has its particular characteristics, so there is no fixed configuration recommended for everything that GAM offers. However, several elements should be checked and adjusted to recommended or appropriate values for the application. This section lists the essential tasks that must be performed when configuring GAM for safe deployment. For more details on each item, read the <a href="https://wiki.genexus.com/commwiki/wiki?18574,," target="_blank">documentation on recommended changes</a>.</p>
+
+<h3><a id="Default+and+test+credentials" class="HashLink" href="#Default+and+test+credentials">Default and test credentials</a></h3>
+
+<ul>
+	<li>Change the password of the administrator user, “admin.”</li>
+</ul>
+
+<p style="margin-left: 40.0px;">Since the automatically created administrator users of the <a href="17568.html">GAM Repository</a> have a default password, this must be changed in the <a href="29699.html">GAM Backend</a>.</p>
+
+<ul>
+	<li>Change the password of the administrator user, “gamadmin.”</li>
+</ul>
+
+<p style="margin-left: 40.0px;">This is the password of the repository administrator. It has to be changed through the <a href="16535.html">GAM API</a> using code, which must not be accessible to non-administrators.</p>
+
+<ul>
+	<li>Create new connections (Repository Connections) or edit them in the repository.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">By default, GAM creates a user for each connection named &lt;version_name&gt; (name of the knowledge base version using that naming convention), with a default password. For example, in a version called “MY_APP” the username will be “my_app” and the password will be “my_app123.” Creating new connections or at least editing the default password generated for production deployments is recommended.</p>
+
+<ul>
+	<li>Delete all users intended for testing.</li>
+</ul>
+
+<h3><a id="Confidentiality+settings" class="HashLink" href="#Confidentiality+settings">Confidentiality settings</a></h3>
+
+<ul>
+	<li>Only deploy metadata of Native mobile applications if it's strictly required. More information at <a href="46540.html">App Update property</a> and <a href="46541.html">Enable KBN property</a>.</li>
+	<li>The web server must not expose the connection.gam file.</li>
+	<li>The GAM backend must be private, so that only users with the “Administrator” role can run its Panels.</li>
+</ul>
+
+<p><br />
+<a href="6916.html">Web Panel object</a>s already have the logic to comply with this restriction. However, if the backend binaries distributed by GAM are not used but the “GAM Examples” are compiled, keep in mind that the Panels GAMExampleRecoverPasswordStep1 and GAMExampleRecoverPasswordStep2 must be edited as indicated in the <a href="16923.html">GAM example article</a>. They should not be deployed as they were distributed because they are sample Panels. The same applies to the Panels GAMExampleRegisterUser, GAMExampleUpdateRegisterUser and GAMExampleChangePassword.</p>
+
+<h3><a id="Repository+settings" class="HashLink" href="#Repository+settings">Repository settings</a></h3>
+
+<p>Configuring the following elements in the GAM repositories is recommended:</p>
+
+<ul>
+	<li>User remember me type: The safest value is “None.”</li>
+	<li>User remember me timeout (days): Depending on the security requirements, the recommended value may be a maximum of 30 days and decrease as the severity increases.</li>
+	<li>User recovery password key timeout (minutes).</li>
+	<li>Minimum amount characters in login.</li>
+	<li>Login retries to lock user.</li>
+	<li>Login attempts to lock session.</li>
+	<li>Unblock user timeout (minutes).</li>
+	<li>Give anonymous session?</li>
+	<li>User session cache timeout (seconds): A value smaller than or equal to 30 seconds is recommended.</li>
+	<li>Expire the session when the IP changes?</li>
+	<li>User activation method: The “Automatic” value is not recommended.</li>
+	<li>User automatic activation timeout (hours).</li>
+	<li>Repository cache timeout (minutes).</li>
+	<li>Check the repository's default values for the properties Repository default security policy and Repository default role.</li>
+</ul>
+
+<h3><a id="Security+Policy+settings" class="HashLink" href="#Security+Policy+settings">Security Policy settings</a></h3>
+
+<p>Configuring the following elements regarding the GAM security policy is recommended:</p>
+
+<ul>
+	<li>ONLY WEB</li>
+	<li style="margin-left: 40.0px;">Session time out (minutes).</li>
+	<li style="margin-left: 40.0px;">Allow multiple concurrent user sessions: The safest value is “No.”</li>
+	<li>ONLY REST OAUTH (Mobile, GAMRemoteRest)</li>
+	<li style="margin-left: 40.0px;">Token Expire (minutes): There isn't a fixed recommended value; it is determined by the required security level (the lower this value, the safer the application).</li>
+	<li style="margin-left: 40.0px;">Token maximum renovations: To avoid entering credentials again, also set a maximum number of refresh tokens of at least 1.</li>
+	<li>Period change password (days).</li>
+	<li>Minimum waiting time between password changes (days).</li>
+	<li>Minimum password length: The minimum length can be debatable, but a minimum of 8 is usually suggested if the password is complex enough.</li>
+	<li>Minimum number of numeric characters in passwords.</li>
+	<li>Minimum number of uppercase characters in passwords.</li>
+	<li>Minimum number of special characters in passwords.</li>
+	<li>Maximum password history entries.</li>
+</ul>
+
+<h3><a id="Considerations+for+mobile+applications" class="HashLink" href="#Considerations+for+mobile+applications">Considerations for mobile applications</a></h3>
+
+<ul>
+	<li>In the case of mobile devices, in general, actions programmed by GeneXus developers are translated into calls to REST Web Services. REST services must be protected in the same way as objects for mobile development.</li>
+</ul>
+
+<p style="margin-left: 40.0px;">To find these services, search the KB for “Rest Protocol= True” and set the permissions on each one as appropriate (see section “Integrated Security Levels”).</p>
+
+<ul>
+	<li>To the extent possible, avoid the use of cache in the mobile application client. In particular, make sure that the <a href="18302.html">Enable Data Caching property</a> in the <a href="24829.html">Panel object</a>s is set to False.<br />
+	 </li>
+	<li>Consider the <a href="17242.html">Single User Access property</a> when configuring the application in GAM.</li>
+</ul>
+
+<p></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="47243.html">Configuration for secure deployment</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/03/22 02:23 PM</em></font></td></TR></table></font>

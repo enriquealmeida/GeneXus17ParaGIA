@@ -1,0 +1,164 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Events" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Include Name="PromptConstants.cs" %>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+<%
+	int filtersCount = 0;
+	foreach (PromptAttribute fixedAtt in Definition.Fixed)
+	{
+		if (fixedAtt.FixType == "c")
+		{
+			filtersCount++;
+		}	
+	}
+	
+	bool hasFilters = (filtersCount > 0);
+	bool useAbstractForm = (ObjClass.FromShortObjClass(Definition.Info.Class) == ObjClass.WebPanel) && (Model.GetDesignModel().GetPropertyValue<int>(Properties.MODEL.WebFormDefaults) == Properties.MODEL.WebFormDefaults_Values.ResponsiveWebDesign);
+
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>
+<Part type="<%= PartType.Events.ToString() %>">
+	<Source>
+		<![CDATA[Event Start
+<%
+		// Remove quotes, or tiltes that contain them will cause validation errors.
+		Table table = Table.Get(Model, Definition.Info.Table.TableId);
+		string tableTitle = table.Description.Replace("\"", "'");
+%>
+	Form.Caption = Format("GXSPC_SelectionList", "<%= tableTitle %>")
+<%
+		// Constants required for filters bar items in abstract forms
+		if (useAbstractForm && hasFilters)
+		{
+%>
+	&<%= PromptConstants.AdvancedLabelTemplateVariable %> = "%1 <strong>%2</strong>"
+<%
+		}
+%>
+EndEvent
+
+<%
+	}
+	
+	if (useAbstractForm && hasFilters)
+	{
+%>
+Event 'Toggle'
+	if <%= PromptConstants.AdvancedContainerTable %>.Class = ThemeClass:<%= PromptConstants.AdvancedBarContainerClass %>
+		<%= PromptConstants.AdvancedContainerTable %>.Class = ThemeClass:<%= PromptConstants.AdvancedBarContainerClass %> + !" " + ThemeClass:<%= PromptConstants.AdvancedBarContainerVisibleClass %>
+		<%= PromptConstants.ToggleButton %>.Class += !" " + ThemeClass:<%= PromptConstants.BtnToggleActiveClass %>
+	else
+		<%= PromptConstants.AdvancedContainerTable %>.Class = ThemeClass:<%= PromptConstants.AdvancedBarContainerClass %>
+		<%= PromptConstants.ToggleButton %>.Class = ThemeClass:<%= PromptConstants.BtnToggleClass %>
+	endif
+Endevent
+
+<%
+		foreach (PromptAttribute fixedAtt in Definition.Fixed)
+		{
+			if (fixedAtt.FixType == "c")
+			{
+				Artech.Genexus.Common.Objects.Attribute att = GetAttribute(fixedAtt.AttriId);
+				bool isDateType = att.Type == eDBType.DATE || att.Type == eDBType.DATETIME;
+%>
+Event Lbl<%= att.Name %>Filter.Click
+	if <%= att.Name %>FilterContainer.Class = ThemeClass:<%= PromptConstants.AdvancedBarContainerItemClass %>
+		<%= att.Name %>FilterContainer.Class = ThemeClass:<%= PromptConstants.AdvancedBarContainerItemClass %> + !" " + ThemeClass:<%= PromptConstants.AdvancedContainerItemExpandedClass %>
+<%
+				if (!isDateType)
+				{
+%>
+		&<%= GetConditionVarName(att.Name) %>.Visible = true
+<%
+				}
+%>
+	else
+		<%= att.Name %>FilterContainer.Class = ThemeClass:AdvancedContainerItem
+<%
+				if (!isDateType)
+				{
+%>
+		&<%= GetConditionVarName(att.Name) %>.Visible = false
+<%
+				}
+%>
+	endif
+EndEvent
+
+<%
+			}
+		}
+	}
+
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) == ObjClass.WebPanel)
+	{
+%>
+Event Load
+	&LinkSelection.FromImage(selectRow)
+EndEvent
+
+<%
+	}
+	
+	string selectionEventName = "Enter";
+	bool needsComposite = false;
+	
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) == ObjClass.SDPanel)
+	{
+		selectionEventName = String.Format("'{0}'", SELECTION_EVENT);
+		needsComposite = true;
+	}
+%>
+Event <%= selectionEventName %>
+<%
+	if (needsComposite)
+	{
+%>
+	Composite
+<%
+	}
+
+	foreach (PromptRulesParm parmAtt in Definition.Rules.Parms)
+	{
+		if (parmAtt.ParType.ToLower() == "out")
+		{
+			Artech.Genexus.Common.Objects.Attribute att = GetAttribute(parmAtt.AttriId);
+%>
+	<%= (needsComposite ? "\t" : "") %>&<%= GetParameterVarName(att.Name) %> = <%= att.Name %>
+<%
+		}
+	}
+%>
+	<%= (needsComposite ? "\t" : "") %>Return
+<%
+	if (needsComposite)
+	{
+%>
+	EndComposite
+<%
+	}
+%>
+EndEvent
+<%
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>
+]]>
+	</Source>
+</Part>
+<%
+	}
+%>

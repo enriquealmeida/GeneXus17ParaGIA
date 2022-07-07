@@ -1,0 +1,57 @@
+group ControlDefinitionGenerator;
+
+delimiters "$", "$"
+
+g_control_definition(component, gx) ::=<<
+<?xml version="1.0"?>
+<ControlDefinition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<Id>$component.Id$</Id>
+	<Name>$component.Name$</Name>
+	<Description>$component.Description$</Description>
+	<ObjClass>$component.Name$</ObjClass>
+	<Version>2.00.00</Version>
+	<RuntimeRender>$component.Name$/$component.Name$Render.js</RuntimeRender>
+	$if (component.ServerRender)$<ServerRender>$component.Name$/$component.Name$.view</ServerRender>$endif$
+	<PropertiesDefinition>$component.Name$/$component.Name$Properties.xml</PropertiesDefinition>
+	<DesignRender>$if(component.DesignRender)$$component.DesignRender$$else$$component.Name$/$component.Name$DesignRender.html$endif$</DesignRender>
+	<ShowMethod>show</ShowMethod>
+	<BaseControlType>$component.BaseClass$</BaseControlType>
+	<ResizeSupported>false</ResizeSupported>
+	<DataSourceAllowed>None</DataSourceAllowed>
+	<CustomDataSources />
+	<AutoGrowSupported>false</AutoGrowSupported>
+	<IncludeInControlInfo>$component.IncludeInControlInfo$</IncludeInControlInfo>
+	<SupportFiles> 
+		$if(component.Library)$<Directory>$component.Library$</Directory>$endif$
+	</SupportFiles>
+	<iOS_SupportFiles />
+	<Android_SupportFiles />
+	<Platforms>
+		<Platform>WebLayout</Platform>
+		<Platform>SmartDevices</Platform>
+	</Platforms>
+	<ReferencedFiles>
+		$component.CSSFiles:{ file | <File>$file$</File>};separator="\n"$
+		$component.Files:{ file | <File>$file$</File>};separator="\n"$
+	</ReferencedFiles>
+	<iOS_ReferencedFiles />
+	<Android_ReferencedFiles />
+	<Constructor>
+		<Parameters />
+		<Name>$component.Name$</Name>
+	</Constructor>
+	<ControlType></ControlType>
+	<Categories>
+		<Category>$component.Namespace$</Category>
+	</Categories>
+	<Events>
+		$component.Events:{event |<Event>$event.Name$$if (event.Parameters)$($event.Parameters$)$endif$</Event> };separator="\n"$
+	</Events>
+	<Methods>
+	</Methods>
+	<Actions>
+	</Actions>
+	<IsPublic>true</IsPublic>
+	<Android_IsScrollable>false</Android_IsScrollable>
+</ControlDefinition>
+>>

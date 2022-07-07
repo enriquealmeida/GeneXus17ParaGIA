@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Deploy mobile services to AWS Serverless using AWS Lambda and AWS API Gateway</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?35355,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Deploy mobile services to AWS Serverless using AWS Lambda and AWS API Gateway</h1>
+<!--Deploy mobile services to AWS Serverless using AWS Lambda and AWS API Gateway--><div class="TableWikiBody" id="tblwikibody"><p>This document tells you the prerequisites and steps to deploy applications (REST APIs) to <a href='https://aws.amazon.com/lambda/'>AWS Lambda</a> and <a href='https://aws.amazon.com/api-gateway'>AWS API Gateway</a>.</p>
+
+<blockquote>
+<p>&quot;AWS Lambda lets you run code without provisioning or managing servers. You pay only for the compute time you consume - there is no charge when your code is not running.&quot; ref.: <a href='https://aws.amazon.com/lambda/'>https://aws.amazon.com/lambda/</a></p>
+</blockquote>
+
+<blockquote>
+<p>&quot;Amazon API Gateway is a fully managed service that makes it easy for developers to create, publish, maintain, monitor, and secure APIs at any scale.&quot; ref.: <a href='https://aws.amazon.com/api-gateway'>https://aws.amazon.com/api-gateway</a></p>
+</blockquote>
+
+<p>The main benefits of deploying to serverless platforms are the following:</p>
+
+<ul>
+	<li>No worry about infrastructure at all.</li>
+	<li>No need to manage, configure or install any web server. </li>
+	<li>No need to rent or buy any server. </li>
+	<li>24/7/365 up time for (almost) free. (You pay only if the App is used. )</li>
+</ul>
+
+<h2><a id="Technology+used" class="HashLink" href="#Technology+used"><strong>Technology used</strong></a></h2>
+
+<ul>
+	<li>AWS Lambda is used in order to Deploy Code that will be run in the Cloud. </li>
+	<li>AWS API Gateway for Deploying REST Services. </li>
+	<li>AWS Cloudfront for CDN</li>
+	<li>AWS S3 for Storage</li>
+	<li>AWS IAM for Credentials</li>
+	<li>Swagger definition for describing the API generated for our Application. </li>
+</ul>
+
+<h2><a id="Supports+deployment+of" class="HashLink" href="#Supports+deployment+of"><strong>Supports deployment of</strong></a></h2>
+
+<ul>
+	<li>Service Backend for REST based Applications (iOS, Angular, Android)</li>
+	<li>API Objects</li>
+</ul>
+
+<h2><a id="Restrictions" class="HashLink" href="#Restrictions"><strong>Restrictions</strong></a></h2>
+
+<ul>
+	<li>Java Generator only</li>
+	<li>Multimedia content considerations
+	<ul>
+		<li>If using Image, Audio, Video, BlobFile data types =&gt; <a href="31121.html">Storage Provider property</a> must be used. This is because all App multimedia must be served from an external URL, such as Amazon S3. </li>
+		<li>Cannot use FileSystem to serve content: File/read write access as Blob data type, Excel, PDF Reports. </li>
+	</ul>
+	</li>
+	<li>Temporal restrictions:
+	<ul>
+		<li><a href="6321.html">WebSession data type</a> not supported (coming later)</li>
+		<li><s>GAM not supported. (coming later)</s> Supported since <a href="https://wiki.genexus.com/commwiki/wiki?49971,," target="_blank">GeneXus 17 Upgrade 10</a>. </li>
+		<li>KB Images not supported if returned from Server Side. Ex: Procedure that Returns &amp;Image.FromImage(MyKBImage)</li>
+		<li><a href="46541.html">Enable KBN property</a> not supported</li>
+		<li><a href="46540.html">App Update property</a> not supported</li>
+		<li><a href="20366.html">Dynamic Services URL property</a> and <a href="31310.html">SetApplicationServerURL</a> not supported</li>
+	</ul>
+	</li>
+	<li>Max number of 600 services can be deployed per AWS Region. </li>
+	<li><strong>Beware</strong>
+	<ul>
+		<li>DBMS Connection Pooling does not work in Serverless.
+		<ul>
+			<li>This is because Serverless executes one Lambda Function per Request. So every Lamdba execution initialize a DB Pool. Thus, if 200 request are received at the exact same time, 200 lambdas are waken up, and 200 connections to DB will be opened.</li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+</ul>
+
+<p> </p>
+
+<h2><a id="How+to+use+it" class="HashLink" href="#How+to+use+it"><strong>How to use it</strong></a></h2>
+
+<ol>
+	<li>Create AWS Serverless Infraestructure. <a href="https://wiki.genexus.com/commwiki/wiki?49718,," target="_blank">Link</a></li>
+	<li>Ensure Property <a href="31859.html">Generate OpenAPI interface property</a> is set to &quot;Yes&quot; at Generator Level and <a href="https://wiki.genexus.com/commwiki/wiki?49531,," target="_blank">OpenAPI version property</a> = OpenAPI 3.0</li>
+	<li>ReBuild your GeneXus JAVA Application</li>
+	<li>Using <a href="32092.html">Application Deployment tool</a>, select the Main Objects to Deploy. It must be a Smart Device Main Application or API Object. </li>
+	<li>From the Target Dropdown, select: &quot;AWS Serverless Deploy&quot;</li>
+	<li>Fill required Deployment properties (obtained from Step (1), from the Stack Outputs):
+	<ul>
+		<li>AWS Access Key Id</li>
+		<li>AWS Secret Access Key</li>
+		<li>AWS Default Region</li>
+		<li>IAM Role Name</li>
+		<li>Application Name</li>
+		<li>Stage Name</li>
+	</ul>
+	</li>
+	<li>Click &quot;Deploy&quot;</li>
+</ol>
+
+<p>That's it!</p>
+
+<p>At the final step, GeneXus will print out the final URL.</p>
+
+<p>You can use it now in the Smart Devices Generator's <a href="21146.html">Services URL property</a> or directly for APIObjects. </p>
+
+<p> </p>
+
+<p><strong>Important notes:</strong></p>
+
+<ul>
+	<li><strong>Database Access</strong></li>
+</ul>
+
+<p>The AWS Lambda Function deployed <u><strong>must </strong></u>have access to the Database (should be in the same VPC and Security Group). You will have to configure it manually in the AWS Lambda Function Console. </p>
+
+<p> <img src="./images/40759.PNG" id="40759" class="WikiImage"/></p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>Since <a href="49301.html">GeneXus 17 upgrade 7</a>. </p>
+
+<p> </p>
+
+<h2><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h2>
+
+<ul>
+	<li><a href='https://aws.amazon.com/api-gateway/pricing/'>https://aws.amazon.com/api-gateway/pricing/</a> (As of September 2018: &quot;The Amazon API Gateway free tier includes one million API calls received per month for up to 12 months.&quot;)</li>
+	<li><a href='https://aws.amazon.com/lambda/pricing/'>https://aws.amazon.com/lambda/pricing/</a> (As of September 2018: &quot;The Lambda free tier includes 1M free requests per month and 400,000 GB-seconds of compute time per month.&quot;)</li>
+	<li><a href='https://www5.genexus.com/meeting2017/gx27.session.aspx?en,Serverless-computing-The-next-evolution-of-Cloud-Computing'>Serverless computing - The next evolution of Cloud Computing</a> <em>by Gonzalo Gallotti (Presented at #GX27, Spanish only, 30 mins)</em></li>
+	<li><a href="40803.html">How to deploy a command line procedure to AWS Lambda as a Function</a></li>
+</ul>
+
+<p></p>
+
+<p><br />
+</p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32092.html">Toc:Application Deployment tool</a></TD></TR><TR><TD><a href="48662.html">Toc:Application Deployment tool (Genexus 17 Upgrade 4)</a></TD><TD><a href="42079.html">Deploy Application Targets</a></TD><TD><a href="40679.html">Function Name Prefix property</a></TD></TR><TR><TD><a href="49301.html">GeneXus 17 upgrade 7</a></TD><TD><a href="40803.html">How to deploy a command line procedure to AWS Lambda as a Function</a></TD><TD><a href="49622.html">How to deploy an application to AWS Lambda and AWS API Gateway (GeneXus 17 Upgrade 6 or prior)</a></TD><TD><a href="49963.html">How to: Angular front end applications using serverless backend</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/22/22 02:27 PM</em></font></td></TR></table></font>

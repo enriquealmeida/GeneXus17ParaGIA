@@ -1,0 +1,229 @@
+/*-------------------------------------------------------------------*/
+/* GeneXus RPG/400 Generator.                                        */
+/*                                                                   */
+/*     Create a RPG/400 Program.                                     */
+/*                                                                   */
+/*                                                                   */
+/*-------------------------------------------------------------------*/
+       PGM
+/* Internal variables                                                */
+       DCL      VAR(&MSGTYPE) TYPE(*CHAR) LEN(7)
+       DCL      VAR(&PGMLIB)  TYPE(*CHAR) LEN(10) VALUE(#3)
+       DCL      VAR(&PGMNAME) TYPE(*CHAR) LEN(10) VALUE(#4)
+       DCL      VAR(&SCRNAME) TYPE(*CHAR) LEN(10) VALUE(#13)
+       DCL      VAR(&OBJTYPE) TYPE(*CHAR) LEN(15) VALUE('#11')
+/* Standard error-handling variables                                 */
+       DCL      VAR(&ERRORSW) TYPE(*LGL)
+       DCL      VAR(&MSGID)   TYPE(*CHAR) LEN(7)
+       DCL      VAR(&MSGDTA)  TYPE(*CHAR) LEN(79)
+       DCL      VAR(&MSGF)    TYPE(*CHAR) LEN(10)
+       DCL      VAR(&MSGFLIB) TYPE(*CHAR) LEN(10)
+/* Standard error-handling monitoring                                */
+       MONMSG   MSGID(CPF0000 GXM0000) +
+                EXEC(GOTO CMDLBL(STDERR1))
+/* Main program flow                                                 */
+       RMVLIBLE LIB(#12)  \
+       MONMSG   MSGID(CPF0000) \
+       ADDLIBLE LIB(#12)
+
+       RMVM     FILE(#3/QCLSRC) MBR(#7)                   #8
+       MONMSG   MSGID(CPF5715 CPF5815 CPF7310)            #8
+/* Overwrite DataBase Files */                                          
+       OVRDBF   FILE(#1) TOFILE(#2)
+/* Create Display File */                                          
+       CRTDSPF  FILE(#3/#13) +
+                SRCFILE(#3/QDDSSRC) +
+                OPTION(*NOSRC *NOLIST) +
+                RSTDSP(*NO)  +
+                AUT(*USE)
+       MONMSG     MSGID(CPF7211 CPF7302) EXEC(DO)
+
+          RMVM FILE(#3/QDDSSRC) MBR(#13)                  #8
+          MONMSG MSGID(CPF5715 CPF5815 CPF7310)           #8
+
+          CHGVAR     VAR(&MSGDTA) +
+                     VALUE(&SCRNAME *CAT +
+                        &PGMNAME *CAT +
+                        &PGMLIB *CAT +
+                        'program        ')
+          CHGVAR     VAR(&MSGID)   VALUE(GXM0102)
+          CHGVAR     VAR(&MSGTYPE) VALUE(*ESCAPE)
+          GOTO       CMDLBL(PGMEND)
+
+       ENDDO
+
+       RMVM     FILE(#3/QDDSSRC) MBR(#13)                #8
+       MONMSG   MSGID(CPF5715 CPF5815 CPF7310)           #8
+
+
+/* Create Printer File */                                          \
+       CRTPRTF   FILE(&PGMLIB/#16) SRCFILE(&PGMLIB/QDDSSRC) +      \
+                 OPTION(*NOSRC *NOLIST) AUT(*USE) DEVTYPE(*SCS) +  \
+                 TEXT(&PGMNAME *CAT ' : Printer file')
+       MONMSG    MSGID(CPF7211 CPF7302) EXEC(DO)                   \
+                 CHGVAR    VAR(&MSGDTA) VALUE( #16 *CAT +          \
+                           &PGMNAME *CAT &PGMLIB *CAT &OBJTYPE)    \
+                 CHGVAR    VAR(&MSGID) VALUE(GXM0102)              \
+                 CHGVAR    VAR(&MSGTYPE) VALUE(*ESCAPE)            \
+                 GOTO      CMDLBL(PGMEND)                          \
+                 ENDDO                                             
+
+       CHGVAR   VAR(&MSGDTA) +
+                VALUE(  &SCRNAME *CAT +
+                        'program                        ' *CAT +
+                        &PGMNAME *CAT +
+                        &PGMLIB)
+
+       SNDPGMMSG  MSGID(GXM0104) +
+                  MSGF(GXMSGF) +
+                  MSGDTA(&MSGDTA) +
+                  MSGTYPE(*COMP)
+
+       CRTBNDRPG  PGM(#3/#4) +
+                  SRCFILE(#3/QRPGLESRC) +
+                  GENLVL(15) +
+                  FIXNBR(*ZONED) +                       #9
+                  INDENT('|') +
+                  OPTION(     +
+                          #5  +
+                            ) +
+                  AUT(*USE) TGTRLS(#18) +
+                  OUTPUT(*PRINT) +                      #21
+                  OPTIMIZE(*NONE) +                     #20
+                  CVTOPT(*DATETIME *VARCHAR *GRAPHIC)
+
+       MONMSG     MSGID(RNS9309 RNS9310) EXEC(DO)
+
+         RMVM   FILE(#3/QRPGLESRC) MBR(#4)                 #8
+         MONMSG MSGID(CPF5715 CPF5815 CPF7310)           #8
+
+         CHGVAR     VAR(&MSGDTA) +
+                    VALUE(&PGMNAME *CAT +
+                          &PGMLIB *CAT +
+                          '#11')
+
+         CHGVAR     VAR(&MSGID) +
+                    VALUE(GXM0103)
+
+         CHGVAR     VAR(&MSGTYPE) +
+                    VALUE(*ESCAPE)
+
+         GOTO       CMDLBL(PGMEND)
+
+       ENDDO
+
+       RMVM   FILE(#3/QRPGLESRC) MBR(#4)                    #8
+       MONMSG MSGID(CPF5715 CPF5815 CPF7310)              #8
+
+       CHGPGM PGM(#3/#4) RMVOBS(*ALL)                     #10
+       CHGOBJD   OBJ(&PGMLIB/&PGMNAME) OBJTYPE(*PGM) +
+                 TEXT('#14')
+
+CRTBNDRPG  PGM(#3/#17) + \
+   SRCFILE(#3/QRPGLESRC) + \
+   GENLVL(15) + \
+   INDENT('|') + \
+  OPTION(     + \
+        #5  +   \
+          ) +   \
+   AUT(*USE) + \
+  CVTOPT(*DATETIME *VARCHAR *GRAPHIC) + \
+  TGTRLS(#18) \
+ \
+MONMSG  MSGID(RNS9309 RNS9310) EXEC(DO) \
+\
+\
+    CHGVAR     VAR(&MSGDTA) + \
+               VALUE(&PGMNAME *CAT + \
+                     &PGMLIB *CAT + \
+                     '#11') \
+\
+    CHGVAR     VAR(&MSGID) + \
+               VALUE(GXM0103) \
+\
+    CHGVAR     VAR(&MSGTYPE) + \
+               VALUE(*ESCAPE) \
+\
+    GOTO       CMDLBL(PGMEND) \
+\
+ENDDO \
+\
+\
+
+/* Cl programs required for SUBMIT rule/command */
+CRTCLPGM  PGM(&PGMLIB/#15) + \
+SRCFILE(&PGMLIB/QCLSRC) AUT(*USE) + \
+TGTRLS(#18) \
+MONMSG    MSGID(CPF0801) EXEC(DO) \
+  CHGVAR VAR(&MSGDTA) VALUE('Submit program #15 not created') \
+  CHGVAR VAR(&MSGID) VALUE(GXM9999) \
+  CHGVAR VAR(&MSGTYPE) VALUE(*ESCAPE) \
+  GOTO   CMDLBL(PGMEND) \
+ENDDO
+/* End of Cl programs */
+
+
+/* Delete spool files                                                */
+       DLTSPLF   FILE(&PGMNAME)      SPLNBR(*LAST)   #19
+       MONMSG    CPF0000                             #19
+
+       CHGVAR     VAR(&MSGDTA) +
+                  VALUE(&PGMNAME *CAT +
+                        &PGMLIB *CAT +
+                        '#11')
+
+       CHGVAR     VAR(&MSGID) +
+                  VALUE(GXM0101)
+
+       CHGVAR     VAR(&MSGTYPE) +
+                  VALUE(*COMP)
+
+ PGMEND:
+       CALL       PGM(GXUSRMSG) +
+                  PARM(&MSGID &MSGDTA &MSGTYPE)
+
+/* Normal program end                                                */
+             GOTO CMDLBL(ENDOFPGM)
+
+/* Standard error-handling routine                                   */
+ STDERR1:
+             IF         COND(&ERRORSW) +
+                        THEN(SNDPGMMSG MSGID(CPF9999) +
+                                       MSGF(QCPFMSG) +
+                                       MSGTYPE(*ESCAPE))
+
+             CHGVAR     VAR(&ERRORSW) +
+                        VALUE('1')
+ STDERR2:
+             RCVMSG     MSGTYPE(*DIAG) +
+                        MSGDTA(&MSGDTA) +
+                        MSGID(&MSGID) +
+                        MSGF(&MSGF) +
+                        MSGFLIB(&MSGFLIB)
+
+             IF         COND(&MSGID *EQ '       ') +
+                        THEN(GOTO CMDLBL(STDERR3))
+
+             SNDPGMMSG  MSGID(&MSGID) +
+                        MSGF(&MSGFLIB/&MSGF) +
+                        MSGDTA(&MSGDTA) +
+                        MSGTYPE(*DIAG)
+
+             GOTO       CMDLBL(STDERR2)
+ STDERR3:
+             RCVMSG     MSGTYPE(*EXCP) +
+                        MSGDTA(&MSGDTA) +
+                        MSGID(&MSGID) +
+                        MSGF(&MSGF) +
+                        MSGFLIB(&MSGFLIB)
+
+             SNDPGMMSG  MSGID(&MSGID) +
+                        MSGF(&MSGFLIB/&MSGF) +
+                        MSGDTA(&MSGDTA) +
+                        MSGTYPE(*ESCAPE)
+/*-------------------------------------------------------------------*/
+/* End of program                                                    */
+/*-------------------------------------------------------------------*/
+ENDOFPGM:
+             DLTOVR FILE(*ALL)
+             ENDPGM

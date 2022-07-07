@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>MSBuild Tasks</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?3908,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">MSBuild Tasks</h1>
+<!--MSBuild Tasks--><div class="TableWikiBody" id="tblwikibody"><p>GeneXus MSBuild Tasks let you automate all about <a href="1836.html">Knowledge Base</a> building (i.e., automating import, specification, generation and compilation tasks among others). In a declarative way (creating and programming scripts in XML format) you can easily specify the tasks to be done later with no user interaction.</p>
+
+<p>This technology helps you create night builds of the applications you are developing, running automatic tests on them, etc.</p>
+
+<p>GeneXus MSBuild Tasks are based on the Microsoft Build Engine (MSBuild). It is the new build platform for Microsoft and Visual Studio. It is a generic, extensible build platform and is part of Framework 2.0 (meaning it is free).</p>
+
+<h2><a id="The+basic+script" class="HashLink" href="#The+basic+script">The basic script</a></h2>
+
+<p>The following is a simple script intended for opening an existing Knowledge Base and building all its objects.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project DefaultTargets="OpenAndBuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+   &lt;Import Project="C:\Program Files\Artech\GeneXus\GeneXusX\Genexus.Tasks.targets" /&gt;
+   &lt;Target Name="OpenAndBuildAll"&gt;
+     &lt;OpenKnowledgeBase Directory="C:\MyKnowledgeBases\TestKnowledgeBase" /&gt;
+     &lt;BuildAll /&gt;
+   &lt;/Target&gt;
+&lt;/Project&gt;</pre>
+
+<p>The Import directive (second script line) tells MSBuild where to find extensions specific to GeneXus; this is a required directive. Lines 3 thru 6 identify a "Target" (something to be built) and specify what actions or "Tasks" must be accomplished to complete it. In this case, the tasks are OpenKnowledgeBase and BuildAll.</p>
+
+<p>As you may have noticed, MSBuild coding is simple but powerful. You can take a closer look at all its features <a href='https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild?view=vs-2019'>here)</a>.</p>
+
+<h2><a id="Tasklist" class="HashLink" href="#Tasklist">Tasklist</a></h2>
+
+<p>The following task list describes all GeneXus MSBuild tasks (provided in GeneXus.MSBuild.Tasks.dll) and their parameters.</p>
+
+<h3><a id="CreateKnowledgeBase" class="HashLink" href="#CreateKnowledgeBase">CreateKnowledgeBase</a></h3>
+
+<p>Creates a Knowledge Base in the specified directory based on a KB template.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CreateKnowledgeBase
+   Directory="kbDirectory"
+   Template="kbTemplate" |  BulkCopyFile="fileNameWithBCPformat"
+   TemplatesPath="alternateTemplatesPath"
+   Overwrite="true|false"
+   IntegratedSecurity="true|false"
+   UserId="userId"
+   Password="password"  
+   CreateDbInKbFolder="true|false"
+   ServerInstance="instance"
+   DBName="dbName"
+   Language="language"
+/&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Directory </em>is the directory (absolute or relative) where the Knowledge Base should be created. <strong>REQUIRED</strong></p>
+
+<p><em>Template </em>is the name of a Knowledge Base template.</p>
+
+<p>They are exported with GeneXus, and there are two of them:</p>
+
+<ul>
+	<li>CSharp.KBTemplate<br />
+	     Sets properties for a CSharp Generator.</li>
+	<li>Java.KBTemplate<br />
+	     Sets properties for a Java Generator.</li>
+</ul>
+
+<p>You can specify this parameter or the <em>BulkCopyFile </em>parameter<em>. </em>The last alternative is to omit both parameters and define the Default Template in the genexus.exe.config file through the "DefaultEnvironmentForCreate" entry:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;add key="DefaultEnvironmentForCreate" value=".NET Environment"/&gt;
+</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;add key="DefaultEnvironmentForCreate" value="Java Environment"/&gt;</pre>
+
+<p>The value that you have to specify is the Environment name (as it is shown in the 'Create Knowledge Base' dialog).</p>
+
+<p><em>BulkCopyFile</em>: Name of a file with BCP format to be able to create the KB from it.</p>
+
+<p><em>TemplatesPath </em>specifies the directory from which to obtain the template files. Said directory <b>must</b> contain the following folders from any GeneXus installation:</p>
+
+<ul>
+	<li>ObjectDefinitions</li>
+	<li>Startup</li>
+	<li>Templates</li>
+</ul>
+
+<p><em>Overwrite</em> is true or false (default value) to delete the folder before creating the KB. </p>
+
+<p><em>IntegratedSecurity</em>: "true" to use trusted connection; "false" to use specific user Id and password. Default: true.</p>
+
+<p><em>UserId</em>: the user's name to use when IntegratedSecurity is set to false.</p>
+
+<p><em>Password</em>: password to use when IntegratedSecurity is set to false.</p>
+
+<p><em>CreateDbInKbFolder</em>: "true" to create KB database files in the Knowledge Base folder; "false" to use the DBMS' default data folder. Default: true.</p>
+
+<p><em>ServerInstance</em>: server name and the instance of the SQL Server, for example: ".\SQLEXPRESS" or "localhost". If you don't use this property, the local default instance will be used.</p>
+
+<p><em>DBName</em>: name of the KB database. The default is the KB name prefixed with "GX_KB_".</p>
+
+<p><em>Language</em>: the language of the Knowledge Base to create.</p>
+
+<p>Samples</p>
+
+<p>Create a CSharp Knowledge Base in directory C:\MyKnowledgeBases.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CreateKnowledgeBase Directory="C:\MyKnowledgeBases" Template="CSharp.KBTemplate" /&gt;</pre>
+
+<h3><a id="BulkCopyKnowledgeBase" class="HashLink" href="#BulkCopyKnowledgeBase">BulkCopyKnowledgeBase</a></h3>
+
+<p>Generates the needed file to recreate the Knowledge Base <a href='https://docs.microsoft.com/en-us/sql/relational-databases/import-export/import-and-export-bulk-data-by-using-the-bcp-utility-sql-server?view=sql-server-ver16'>(BCP format)</a>.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;BulkCopyKnowledgeBase
+   FullKB="true|false"
+   Outputfile="outputfile"
+/&gt;</pre>
+
+<p>Options</p>
+
+<p><em>FullKB</em>: "true" to generate the information for each version of the KB; 'false' generate the information only for the active version. <strong>REQUIRED</strong><br />
+<br />
+<em>OutputFile</em>: name of the .zip file that will contain the extracted information; if a value is not specified, this file is generated in the same directory of the KB with the same name.</p>
+
+<p>Basically the BulkCopyKnowledgeBase task is used to generate a BCP (the format used by GeneXus Server to send a KB or checkout), file with all the information of the current KB. It can be used to save a backup of said KB.</p>
+
+<p>Samples</p>
+
+<p>1. Define the createBackup.msbuild file with the following content:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project DefaultTargets="RunTests" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+  &lt;Import Project="$(GXInstall)\genexus.tasks.targets"/&gt;
+
+  &lt;Target Name="CreateBackupAndRestore"&gt;
+    &lt;PropertyGroup&gt;
+      &lt;BackupFilename&gt;KB_$([System.DateTime]::Now.ToString('yyyyMMddhhmmss')).bcp&lt;/BackupFilename&gt;
+      &lt;BackupPath&gt;$([System.IO.Path]::Combine('$(KBDir)', '$(BackupFilename)'))&lt;/BackupPath&gt;
+    &lt;/PropertyGroup&gt;
+
+    &lt;!-- Create a backup of the KB located at $(KBDir) --&gt;
+    &lt;OpenKnowledgeBase Directory="$(KBDir)"/&gt;
+    &lt;BulkcopyKnowledgeBase FullKB="false" OutputFile="$(BackupPath)"/&gt;
+    &lt;CloseKnowledgeBase/&gt;
+
+    &lt;!-- Create a new KB from the BCP file in a sibling directory --&gt;
+    &lt;CreateKnowledgeBase Directory="$(KBDir)_restore" BulkCopyFile="$(BackupPath)"/&gt;
+    &lt;CloseKnowledgeBase/&gt;
+  &lt;/Target&gt;
+
+&lt;/Project&gt;
+
+</pre>
+
+<p>2. Run by command line:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+c:\&gt;msbuild createBackup.msbuild /t:CreateBackupAndRestore /p:KBDir=c:\Models\MyKB /p:GXInstall="F:\Program Files (x86)\GeneXus\GeneXus17"
+
+</pre>
+
+<h3><a id="Import" class="HashLink" href="#Import">Import</a></h3>
+
+<p>Read about the Import task in this article: <a href="35599.html">Import MSBuild Task</a></p>
+
+<h3><a id="OpenKnowledgeBase" class="HashLink" href="#OpenKnowledgeBase">OpenKnowledgeBase</a></h3>
+
+<p>The OpenKnowledgeBase task is documented in this article: <a href="35862.html">OpenKnowledgeBase MSBuild Task</a>.</p>
+
+<h3><a id="CloseKnowledgeBase" class="HashLink" href="#CloseKnowledgeBase">CloseKnowledgeBase</a></h3>
+
+<p>You don't have to explicitly close the KB using this task, it will be automatically closed when the MSBuild task finishes processing.</p>
+
+<p>It would be useful when you need to open more than one KB during the same MSBuild task execution, for instance, export objects from one KB and import on another one.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CloseKnowledgeBase/&gt;</pre>
+
+<h3><a id="SetEnvironmentProperty" class="HashLink" href="#SetEnvironmentProperty">SetEnvironmentProperty</a></h3>
+
+<p>Sets the value of a given environment property.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetEnvironmentProperty Name="$(PropertyName)" Value="$(PropertyValue)"/&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Name</em>: $(PropertyName) is a valid property name. <strong>REQUIRED</strong>.</p>
+
+<p><em>Value</em>: $(PropertyValue) is valid value for the specified property. <strong>REQUIRED</strong></p>
+
+<p>Example</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetGeneratorProperty Generator="Default" Name="Database access caching" Value="Yes" /&gt;</pre>
+
+<p> </p>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: As you notice in the sample code, it is valid to name the property in the MSBuild exactly as it appears in the <a href="5272.html">IDE</a></div>
+
+<p><img src="./images/49559.png" id="49559" class="WikiImage"/></p>
+
+<h3><a id="SetVersionProperty" class="HashLink" href="#SetVersionProperty">SetVersionProperty</a></h3>
+
+<p>Sets the value of a given version property.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetVersionProperty Name="$(PropertyName)" Value="$(PropertyValue)"/&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Name</em>: $(PropertyName) is a valid property name. <strong>REQUIRED</strong>.</p>
+
+<p><em>Value</em>: $(PropertyValue) is valid value for the specified property. <strong>REQUIRED</strong></p>
+
+<h3><a id="SetKnowledgeBaseProperty" class="HashLink" href="#SetKnowledgeBaseProperty">SetKnowledgeBaseProperty</a></h3>
+
+<p>Sets the value of a Knowledge Base property.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetKnowledgeBaseProperty Name="$(PropertyName)" Value="$(PropertyValue)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Name</em>: $(PropertyName) is a valid property name. <strong>REQUIRED</strong>.</p>
+
+<p><em>Value</em>: $(PropertyValue) is valid value for the specified property. <strong>REQUIRED</strong></p>
+
+<h3><a id="SetDataStoreProperty" class="HashLink" href="#SetDataStoreProperty">SetDataStoreProperty</a></h3>
+
+<p>Sets the value of a given data store property.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetDataStoreProperty Datastore="$(DataStoreName)" Name="$(PropertyName)" Value="$(PropertyValue)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Datastore</em>: $(DataStoreName) is the name of a Data Store defined in the Knowledge Base. Usually, the value of this name is "Default".</p>
+
+<ul>
+	<li>Optional, default value "Default", not implemented yet.</li>
+</ul>
+
+<p><em>Name</em>: $(PropertyName) is a valid model property name. <strong>REQUIRED</strong></p>
+
+<p><em>Value</em>: $(PropertyValue) is valid value for the specified property. <strong>REQUIRED</strong></p>
+
+<h3><a id="SetGeneratorProperty" class="HashLink" href="#SetGeneratorProperty">SetGeneratorProperty</a></h3>
+
+<p>Sets the value of a given generator property.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetGeneratorProperty Generator="$(GeneratorName)" Name="$(PropertyName)" Value="$(PropertyValue)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Generator</em>: $(GeneratorName) is the name of a Generator defined in the Knowledge Base. Usually, the value of this name is "Default" or "Reorg".</p>
+
+<ul>
+	<li>Optional, the default value is "Default", not implemented yet.</li>
+</ul>
+
+<p><em>Name</em>: $(PropertyName) is a valid model property name. <strong>REQUIRED</strong></p>
+
+<p><em>Value</em>: $(PropertyValue) is valid value for the specified property. <strong>REQUIRED</strong></p>
+
+<h3><a id="GetKnowledgeBaseProperty%2C+GetVersionProperty%2C+GetEnvironmentProperty%2C+GetGeneratorProperty%2C+GetDataStoreProperty%2C+GetObjectProperty" class="HashLink" href="#GetKnowledgeBaseProperty%2C+GetVersionProperty%2C+GetEnvironmentProperty%2C+GetGeneratorProperty%2C+GetDataStoreProperty%2C+GetObjectProperty">GetKnowledgeBaseProperty, GetVersionProperty, GetEnvironmentProperty, GetGeneratorProperty, GetDataStoreProperty, GetObjectProperty</a></h3>
+
+<p>Gets the values of the given property.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;GetKnowledgeBaseProperty Name="$(PName)"&gt;
+   &lt;Output TaskParameter="PropertyValue" PropertyName="PValue"/&gt;
+&lt;/GetKnowledgeBaseProperty&gt;
+&lt;GetVersionProperty Name="$(PName)"&gt;
+   &lt;Output TaskParameter="PropertyValue" PropertyName="PValue"/&gt;
+&lt;/GetVersionProperty&gt;
+&lt;GetEnvironmentProperty Name="$(PName)"&gt;
+   &lt;Output TaskParameter="PropertyValue" PropertyName="PValue"/&gt;
+&lt;/GetEnvironmentProperty&gt;
+&lt;GetGeneratorProperty Name="$(PName)"&gt;
+   &lt;Output TaskParameter="PropertyValue" PropertyName="PValue"/&gt;
+&lt;/GetGeneratorProperty&gt;
+&lt;GetDataStoreProperty Name="$(PName)"&gt;
+   &lt;Output TaskParameter="PropertyValue" PropertyName="PValue"/&gt;
+&lt;/GetDataStoreProperty&gt;
+&lt;GetObjectProperty Object="$(SelectedKBObject)" Name="$(PName)"&gt;
+   &lt;Output TaskParameter="PropertyValue" PropertyName="PValue" /&gt;
+&lt;/GetObjectProperty&gt;
+</pre>
+
+<h3><a id="Export" class="HashLink" href="#Export">Export</a></h3>
+
+<p>Exports the currently opened Knowledge Base to a file.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Export File="$(ExportFileName)" Objects="$(ObjectList)" DependencyType="$(depType)" 
+ReferenceType="$(refType)" IncludeGXMessages="$(includeGXMsg)" IncludeUntranslatedMessages="$(includeUtMsg)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>File</em>: $(ExportFileName) is the fully or partially qualified name of an export file (.XPZ). <strong>REQUIRED</strong></p>
+
+<p><em>Objects</em>: $(ObjectList) is the list of objects to specify (see the section about <a href="7769.html">object lists in MSBuild tasks</a>.) Unless you use this parameter, all objects in the Knowledge Base will be exported.</p>
+
+<p><em>DependencyType</em>: when using the Objects parameter, you may set DependencyType to “ReferencedBy” or “ReferencesTo” to also export objects that either is <i>referenced by</i> or <i>reference to</i>, respectively, the original set. Default: “ReferencesTo”.</p>
+
+<p><em>ReferenceType</em>: controls what kinds of references are used when adding objects with a given DependencyType. Possible values are: “None” (no reference is considered, which avoids the effect of the DependencyType parameter); “Minimal” (only the references that would be needed when importing in a new KB); “Hard” (all hard references); and “All”. Default: “Minimal”.</p>
+
+<p><em>IncludeGXMessages</em>: when exporting languages, standard GeneXus messages are not exported unless you use this parameter. Possible values: “true” and “false”. Default “false”.</p>
+
+<p><em>IncludeUntranslatedMessages</em>: exporting languages, untranslated messages are not exported unless you use this parameter. Possible values “true” and “false”. Default “false”.</p>
+
+<p><em>ExportKBInfo</em>: include information about the Knowledge Base (KB Guid and source). Possible values "true" and "false". Default "true".</p>
+
+<p><em>ExportAll</em>: specifies to export the entire model and their active objects. Possible values "true" and "false". Default "false".</p>
+
+<p>Samples</p>
+
+<p>Export to file c:\MyExports\ImportTestFile.xpz the content of the currently opened Knowledge Base.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Export File="c:\MyExports\ImportTestFile.xpz" /&gt;
+</pre>
+
+<h3><a id="BuildAll" class="HashLink" href="#BuildAll">BuildAll</a></h3>
+
+<p>Builds all objects in a Knowledge Base optionally forcing its generation. Building means performing all tasks required to successfully run the application. Knowledge Base objects are specified, generated and compiled. If a reorganization is required, it is also automatically run.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;BuildAll ForceRebuild="true|false" CompileMains="true|false" DetailedNavigation="true|false" FailIfReorg="true|false" DoNotExecuteReorg="true|false"/&gt;</pre>
+
+<p>Options</p>
+
+<p><em>ForceRebuild</em>: indicates whether a rebuild should be performed; the default value is False.</p>
+
+<p><em>CompileMains</em>: if false it will compile only the Developer menu, if true it will also compile all main objects in the KB.</p>
+
+<p><em>DetailedNavigation</em>: indicates whether a detailed navigation should be done; the default value is False.</p>
+
+<p>For scenarios where you do not want to continue if there is an implicit reorganization at build time or the reorg is not wanted to be executed, the next 2 options were added:</p>
+
+<p><i>FailIfReorg</i>: When <span style="font-family: courier new;">true</span> the build fails if there is a reorganization (that is generated) and nothing else is generated; the default value is False (continue with the build).<br />
+     When <span style="font-family: courier new;">true</span> the generated reorganization can be executed later.<br />
+     If there is no reorganization this option does not apply.</p>
+
+<p><em>DoNotExecuteReorg</em>: indicates if the reorganization will be executed or not; the default value is False (execute the reorganization).<br />
+   It is similar to the Reorganization option <span style="font-family: courier new;">-donotexecute</span> but in this case, the program is never executed</p>
+
+<p>Samples</p>
+
+<p>Build, without forcing generation, all objects in the currently opened Knowledge Base.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;BuildAll ForceRebuild="false" /&gt;</pre>
+
+<h3><a id="BuildOne" class="HashLink" href="#BuildOne">BuildOne</a></h3>
+
+<div align="left">
+<p>Builds the object specified and all objects it calls (direct or indirect). Building means performing all tasks required to successfully run the application. Objects (the one selected and those called by it) are specified, generated and compiled. If a reorganization is required, it is also automatically run.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;BuildOne ForceRebuild="true|false" BuildCalled="true|false" ObjectName="$(ObjectName)" DetailedNavigation="true|false" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>ForceRebuild</em>: indicates whether a rebuild should be performed; the default value is False.</p>
+
+<p><em>ObjectName</em>: is the name of an existing object having the Main property set to true. <strong>REQUIRED </strong></p>
+
+<p><em>DetailedNavigation</em>: indicates whether a detailed navigation should be done; the default value is False.</p>
+
+<p>Samples</p>
+
+<p>Build object MyMainMenu and all called objects in the currently opened Knowledge Base.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;BuildOne ObjectName="MyMainMenu" /&gt;</pre>
+
+<h3><a id="BuildArtifacts" class="HashLink" href="#BuildArtifacts">BuildArtifacts</a></h3>
+
+<div align="left">
+<p>Builds the KB/Enviroment artifacts, available from <a href="https://wiki.genexus.com/commwiki/wiki?42129,," target="_blank">GeneXus 16 upgrade 3</a>. Further information: <a href='https://www.genexus.com/en/developers/websac?data=45075;;'>SAC 45075</a></p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;BuildArtifacts/&gt;</pre>
+
+<h3><a id="Custom+Build" class="HashLink" href="#Custom+Build">Custom Build</a></h3>
+
+<p>Execute the tasks of a <a href="43849.html">Custom Build</a> previously defined from GeneXus IDE, through Tools &gt; Options &gt; Build &gt; Custom Build. </p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CustomBuild Name="$(CustomBuild Name)" ObjectName="$(ObjectName)"/&gt;</pre>
+
+<p>Options</p>
+
+<p><em>CustomBuild Name: </em>is the name of the Custom Build command. <strong>REQUIRED</strong></p>
+
+<p><em>ObjectName</em>: is the name of an existing object having the Main property set to true. Mandatory when the Custom Build is about an object. </p>
+
+<p>Samples</p>
+
+<p>Suppose that "Build mobile without compiling" is the name of a Custom Build, previously defined in the GeneXus IDE, to carry out all the tasks of the build process except the final compilation.</p>
+
+<p>So the tasks that MSbuild will execute are the tasks defined in "Build mobile without compiling".</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CustomBuild Name="Build mobile without compile" ObjectName="MainPanelSD"/&gt;
+</pre>
+</div>
+</div>
+
+<h3><a id="DeleteObject" class="HashLink" href="#DeleteObject">DeleteObject</a></h3>
+
+<div align="left">
+<p>Removes the specified object from the Knowledge Base.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;DeleteObject Objects="$(ObjectName)" IncludeChildren="true|false" FailWhenNone="true|false"/&gt; 
+</pre>
+
+<p>Options</p>
+
+<p><em>Objects</em>: $(ObjectName) is the name of the object to be deleted. <strong>REQUIRED</strong></p>
+
+<p><i>IncludeChildren</i>: "true|false" can be used if the specified object name is a folder or module.</p>
+
+<p><em>FailWhenNone</em>: error if the object doesn't exist.</p>
+</div>
+
+<h3><a id="Run" class="HashLink" href="#Run">Run</a></h3>
+
+<p>Builds the specified object and all objects it references (direct or indirectly), and executes it. The object must have the Main property set to True. Building means performing all tasks required to successfully run the object. Objects (the one selected and those called by it) are specified, generated and compiled. If a reorganization is required, it is also automatically run. This behavior can be changed specifying <em>Build=false</em>, where only the execution of the object is performed.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Run ForceRebuild="true|false" Build="true|false" BuildCalled="true|false" ObjectName="$(ObjectName)" DetailedNavigation="true|false" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>ForceRebuild</em>: indicates whether a rebuild should be performed; the default value is False.</p>
+
+<p><em>Build:</em> indicates whether the object should be built as well; the default value is True. </p>
+
+<p><em>BuildCalled</em>: indicates whether called objects should be built as well; the default value is True.</p>
+
+<p><em>ObjectName</em>: is the name of an existing object having the Main property set to True. <strong>REQUIRED </strong></p>
+
+<p><em>DetailedNavigation</em>: indicates whether a detailed navigation should be done; the default value is False.</p>
+
+<p><em>Parameters:</em> allows you to pass parameters to an object's run</p>
+
+<p>Samples</p>
+
+<p>Build object MyMainMenu and all called objects in the currently opened Knowledge Base, and execute object MyMainMenu.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Run ObjectName="MyMainMenu" /&gt;
+</pre>
+
+<h3><a id="RestoreRevision" class="HashLink" href="#RestoreRevision">RestoreRevision</a></h3>
+
+<p>Restores the specified object to the specified revision.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RestoreRevision Object=&lt;"object type":"object name"&gt; RevisionId=&lt;"revision id"&gt; /&gt;
+</pre>
+
+<h3><a id="CreateDatabase" class="HashLink" href="#CreateDatabase">CreateDatabase</a></h3>
+
+<p>Creates Database objects (tables, indices, constraints, etc.) as required for the currently opened Knowledge Base.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CreateDatabase ExecuteCreate="true|false" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>ExecuteCreate</em></p>
+
+<h3><a id="Reorganize" class="HashLink" href="#Reorganize">Reorganize</a></h3>
+
+<p>Compiles and Executes the last Impact Data Base specified.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Reorganize /&gt;</pre>
+
+<h3><a id="SpecifyAll" class="HashLink" href="#SpecifyAll">SpecifyAll</a></h3>
+
+<p>Specifies all objects in a Knowledge Base, optionally forcing their generation (but not generating).</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SpecifyAll ForceRebuild="true|false" DetailedNavigation="true|false" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>ForceRebuild</em>: indicates whether a rebuild should be performed; the default value is False.</p>
+
+<p><em>DetailedNavigation</em>: indicates whether a detailed navigation should be done; the default value is False.</p>
+
+<p>Samples</p>
+
+<p>Specify, without forcing generation, all objects in the currently opened Knowledge Base.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SpecifyAll ForceRebuild="false" /&gt;</pre>
+
+<h3><a id="GenerateOnly" class="HashLink" href="#GenerateOnly">GenerateOnly</a></h3>
+
+<p>Generates all objects whose generation is pending by the execution of a previous SpecifyAll tasks. It does not compile generated objects.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;GenerateOnly /&gt;</pre>
+
+<h3><a id="Compile" class="HashLink" href="#Compile">Compile</a></h3>
+
+<p>Compiles the object specified in the optional parameter ObjectName. If the ObjectName parameter is omitted, the Developer Menu is compiled.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Compile ObjectName="$(ObjectName)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>ObjectName</em>: is the name of an existing object having the Main property set to true.</p>
+
+<ul>
+	<li>Optional, default to compile the Developer Menu.</li>
+</ul>
+
+<p><u>Samples</u></p>
+
+<p>Compile object MyMainMenu in the currently opened Knowledge Base.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Compile ObjectName="MyMainMenu" /&gt;</pre>
+
+<h3><a id="UpdateWorkingModel" class="HashLink" href="#UpdateWorkingModel">UpdateWorkingModel</a></h3>
+
+<p>Updates the working model with information of the corresponding design model. This task should be executed with care as once executed, GeneXus will "forget" all design changes made. If, for example, a Database change was required due to design changes and you execute the UpdateWorkingModel task, those changes will <strong>not</strong> be applied to your Database.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;UpdateWorkingModel /&gt;</pre>
+
+<h3><a id="WriteKnowledgeBaseSchema" class="HashLink" href="#WriteKnowledgeBaseSchema">WriteKnowledgeBaseSchema</a></h3>
+
+<p><span id="nsrTitle">Writes a .xml file with the schema of the database that is defined by a GeneXus project.</span></p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;<span id="nsrTitle">WriteKnowledgeBaseSchema File="$(KnowledgeBaseSchemaFile)" DesignModel="true|false" SortByName="true|false" /&gt;</span></pre>
+
+<p>Options</p>
+
+<p><em>File</em>: $(KnowledgeBaseSchemaFile) is the fully or partially qualified name of a Knowledge Base Schema file to be created. <strong>REQUIRED</strong></p>
+
+<p><em>DesignModel:</em> "true" to display design model information; "false" to display target model information. Default: false. </p>
+
+<p><em>SortByName</em>: "true" to display table and index information ordered by name. Default: false. </p>
+
+<h3><a id="WriteDatabaseSchema" class="HashLink" href="#WriteDatabaseSchema">WriteDatabaseSchema</a></h3>
+
+<p>Writes a .xml file with the schema of the database that is configured in a GeneXus project.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;<span id="nsrTitle">WriteDatabaseSchema File="$(DataBaseSchemaFile)" /&gt;</span></pre>
+
+<p>Options</p>
+
+<p><em>File</em>: $(DataBaseSchemaFile) is the fully or partially qualified name of the Database Schema file to be created. <strong>REQUIRED</strong></p>
+
+<h3><a id="CompareSchemas" class="HashLink" href="#CompareSchemas">CompareSchemas</a></h3>
+
+<p>Compares files representing a Database schema and a Knowledge Base Schema. You may have created these files using <span id="nsrTitle">WriteDatabaseSchema and <span id="nsrTitle">WriteKnowledgeBaseSchema tasks. This is useful to know if the database schema is synchronized with the schema defined by the KB.</span></span></p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CompareSchemas DBFile="$(DataBaseSchemaFile)" KBFile="$(KnowledgeBaseSchemaFile)" DiffFile="$(ComparisonDifferenceFile)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>DBFile</em>: $(DataBaseSchemaFile) is the fully or partially qualified name of the Database Schema file to be compared. <strong>REQUIRED </strong></p>
+
+<p><em>KBFile</em>: $(KnowledgeBaseSchemaFile) is the fully or partially qualified name of a Knowledge Base Schema file to be compared. <strong>REQUIRED</strong></p>
+
+<p><em>DiffFile</em>: $(ComparisonDifferenceFile) is the fully or partially qualified name of a file generated with the differences in the schemas comparison.</p>
+
+<h3><a id="CheckKnowledgeBase" class="HashLink" href="#CheckKnowledgeBase">CheckKnowledgeBase</a></h3>
+
+<p>The CheckKnowledgeBase task checks the consistency of a Knowledge Base.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CheckKnowledgeBase Fix="true|false" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Fix</em>: determines if errors are fixed or not.</p>
+
+<h3><a id="GetCategoryObjects" class="HashLink" href="#GetCategoryObjects">GetCategoryObjects</a></h3>
+
+<p>The GetCategoryObjects task returns a list of all objects belonging to a given category.</p>
+
+<p>Syntax</p>
+
+<pre>
+&lt;GetCategoryObjects CategoryName="TestCategory"&gt;
+   &lt;Output TaskParameter="Objects" PropertyName="ObjList"/&gt;
+&lt;/GetCategoryObjects&gt;
+
+&lt;Message Text="Objects in TestCategory = $(ObjList)"/&gt; </pre>
+
+<h3><a id="SetConfiguration" class="HashLink" href="#SetConfiguration">SetConfiguration</a></h3>
+
+<p>Changes configuration; it's the combo in the IDE that shows Release, Debug, Performance Test, Live Editing.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetConfiguration Configuration="$(Configuration)"/&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Configuration</em>: $(Configuration) is a valid configuration: "Release", "Debug", or "Performance Test". Note that "Live Editing" is <strong>not</strong> yet included for this task.</p>
+
+<h3><a id="SetCredential" class="HashLink" href="#SetCredential">SetCredential</a></h3>
+
+<p>The SetCredential task changes the GeneXus Account that is later used for some services, for example for deploying to cloud; it's the same one that you can change in the IDE in Tools&gt;GeneXus Account.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetCredential UserName="$(UserName)" UserPassword="$(UserPassword)" Persist="true|false" /&gt;</pre>
+
+<p>Options</p>
+
+<p><i>UserName</i>: $(UserName) is a valid GeneXus Account username.</p>
+
+<p><i>UserPassword</i>: &amp;(UserPassword)is the GeneXus Account password that corresponds to that username.</p>
+
+<p><em>Persist</em>: determines if the information persists or if it's only for this session.</p>
+
+<h3><a id="Teamworking" class="HashLink" href="#Teamworking">Teamworking</a></h3>
+
+<p>See also <a href="https://wiki.genexus.com/commwiki/wiki?24612,," target="_blank">Team Development MSBuild Tasks</a></p>
+
+<h3><a id="CreateVersion" class="HashLink" href="#CreateVersion">CreateVersion</a></h3>
+
+<p>Creates a new frozen version from the active or specified version.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CreateVersion VersionName="$(VersionName)" VersionDescription="$(VersionDescription)" Parent="$(ParentName)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>VersionName</em>: is the name that will be assigned to the Version. <strong>REQUIRED</strong></p>
+
+<p><em>VersionDescription</em>: is an optional description for the Version. Parent is the name of an existing development version. The special value *Trunk or the Knowledge Base's name can be used to name the root element of the version tree.</p>
+
+<p><em>Parent</em>: is the name of an existing development or frozen version. The special value *Trunk or the Knowledge Base's name can be used to name the root element of the version tree.</p>
+
+<h3><a id="SetActiveVersion" class="HashLink" href="#SetActiveVersion">SetActiveVersion</a></h3>
+
+<p>Sets a development version as "active" or current. All subsequent commands that do not specify a development version or frozen version work on this version.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetActiveVersion VersionName="$(VersionName)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>VersionName</em>: is the name of an existing version. <strong>REQUIRED</strong></p>
+
+<h3><a id="RevertToVersion" class="HashLink" href="#RevertToVersion">RevertToVersion</a></h3>
+
+<p>Reverts (overwrites) the Root version with the version specified as the parameter. Any changes to the Root version are lost.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RevertToVersion VersionName="$(VersionName)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>VersionName</em>: is the name of an existing version. <strong>REQUIRED</strong></p>
+
+<h3><a id="MergeVersions" class="HashLink" href="#MergeVersions">MergeVersions</a></h3>
+
+<p>Makes a merge between two versions.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;MergeVersions SourceVersion="$(SourceVersion)" TargetVersion="$(TargetVersion)" SinceDate="$(SinceDate)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>SourceVersion</em>: is the Version from which the changes will be brought. <strong>REQUIRED</strong></p>
+
+<p><em>TargetVersion</em>: is the Version where the changes will be applied. If not indicated, the active Version will be used.</p>
+
+<p><em>SinceDate</em>: is the beginning date to consider the changes to apply. If not indicated, all changes will be applied. The formats supported by the parameter are detailed <a href='https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings?redirectedfrom=MSDN'>here</a>. Note that some formats depend on the regional configuration of the machine. An independent format is suggested, i.e."yyyy-mm-dd hh:MM:ss".</p>
+
+<h3><a id="CreateEnvironment" class="HashLink" href="#CreateEnvironment">CreateEnvironment</a></h3>
+
+<p>Creates a new Environment in the active or specified version.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;CreateEnvironment Name="$(EnvironmentName)" Template="$(KBTemplate)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>Name</em>: is the name that will be assigned to the Environment. <strong>REQUIRED</strong></p>
+
+<p><em>Template</em>: one of the KBTemplates files located in the Template directory of a GeneXus installation, that has information about generator and DBMS types. <strong>REQUIRED</strong></p>
+
+<h3><a id="SetActiveEnvironment" class="HashLink" href="#SetActiveEnvironment">SetActiveEnvironment</a></h3>
+
+<p>Sets an Environment as the active or current one. All subsequent commands that do not specify an environment work on this Environment. The Environment must exist in the active Version.</p>
+
+<p>Syntax</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;SetActiveEnvironment EnvironmentName="$(EnvironmentName)" /&gt;</pre>
+
+<p>Options</p>
+
+<p><em>EnvironmentName</em>: is the name of an existing Environment. <strong>REQUIRED</strong></p>
+
+<h3><a id="Modules+Handling" class="HashLink" href="#Modules+Handling">Modules Handling</a></h3>
+
+<p>See <a href="31376.html">Modules Distribution in GeneXus</a>.</p>
+
+<h2><a id="Output" class="HashLink" href="#Output">Output</a></h2>
+
+<p>When you run an MSBuild script, the results are displayed in the standard output by default. You can also indicate an XML output to be generated to a file, using the following parameter:</p>
+
+<p>XmlOutputFile="$(XmlOutputFile)"</p>
+
+<p>To process the result programmatically, check the <a href="35863.html">CaptureOutput</a> property.</p>
+
+<h2><a id="Executing+MSBuild+Scripts" class="HashLink" href="#Executing+MSBuild+Scripts">Executing MSBuild Scripts</a></h2>
+
+<p>MSBuild scripts can be executed from the command line by invoking MSBuild.exe (stored in folder C:\WINDOWS\Microsoft.NET\Framework\v4.0 if you have installed all products leaving default path names). A sample command line to execute the script called Demo.msbuild is as follows.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+msbuild Demo.msbuild
+</pre>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: Be sure to execute the MSBuild tasks using the Microsoft.Net Framework 32 bits 4.0 or higher. If you instead use the 64 bits framework the following error will be shown:</div>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+error : Could not load file or assembly 'gxio, Version=0.0.0.0, Culture=neutral, PublicKeyToken=6f5bf81c27b6b8aa' or one of its dependencies. The system cannot find the file specified.</pre>
+
+<h2><a id="Sample+scripts" class="HashLink" href="#Sample+scripts">Sample scripts</a></h2>
+
+<h3><a id="Test+all+GeneXus+MSBuild+Tasks" class="HashLink" href="#Test+all+GeneXus+MSBuild+Tasks">Test all GeneXus MSBuild Tasks</a></h3>
+
+<p>This tests just invokes every GeneXus MSBuild Task</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project DefaultTargets="Test" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+    &lt;Import Project="C:\Program Files\Artech\GeneXus\GeneXusX\GeneXus.Tasks.targets" /&gt;
+
+    &lt;PropertyGroup&gt;
+        &lt;KBTemplate&gt;csharp.kbtemplate&lt;/KBTemplate&gt;
+        &lt;KBPath&gt;c:\TestKnowledgeBases&lt;/KBPath&gt;
+    &lt;/PropertyGroup&gt;
+
+	&lt;Target Name="CreateKnowledgeBase"&gt;
+		&lt;RemoveDir Directories="$(KBPath)" /&gt;
+		&lt;CreateKnowledgeBase Directory="$(KBPath)\TestCreate" Template="$(KBTemplate)" /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="Import"&gt;
+		&lt;Import File="c:\NameOfFileToImport.xpz" /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="OpenKnowledgeBase"&gt;
+		&lt;OpenKnowledgeBase Directory="$(KBPath)\TestCreate" /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="Export"&gt;
+		&lt;Export File="c:\NameOfDistributionFile.xpz" /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="Reorganize"&gt;
+		&lt;Reorganize /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="SpecifyAll"&gt;
+		&lt;SpecifyAll ForceRebuild="false" /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="Generate"&gt;
+		&lt;Generate /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="Compile"&gt;
+		&lt;Compile ObjectName="NameOfObjectToCompile" /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="UpdateWorkingModel"&gt;
+		&lt;UpdateWorkingModel /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="BuildOne"&gt;
+		&lt;BuildOne ObjectName="NameOfObjectToBuild" /&gt;
+	&lt;/Target&gt;
+	&lt;Target Name="BuildAll"&gt;
+		&lt;BuildAll /&gt;
+	&lt;/Target&gt;
+    &lt;Target Name="RestoreRevision"&gt;
+        &lt;OpenKnowledgeBase Directory="$(KBPath)" /&gt;
+        &lt;RestoreRevision Object="ObjectType:ObjectName" RevisioID="RevisionId" /&gt; 
+    &lt;/Target&gt;
+&lt;/Project&gt;</pre>
+
+<p>To run this script, you should use a command line like the following</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSBuild /t:CreateKnowledgeBase;Import;OpenKnowledgeBase;Export;Reorganize;SpecifyAll;Generate;Compile;UpdateworkingModel;BuildOne;BuildAll 
+TestAlPrimitives.msbuild</pre>
+
+<p>If you want to execute each function separately:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MSBuild /t:CreateKnowledgeBase TestAlPrimitives.msbuild
+MSBuild /t:OpenKnowledgeBase;Import TestAlPrimitives.msbuild
+MSBuild /t:OpenKnowledgeBase;SpecifyAll TestAlPrimitives.msbuild
+...</pre>
+
+<h3><a id="Building+all+objects+of+an+existing+Knowledge+Base" class="HashLink" href="#Building+all+objects+of+an+existing+Knowledge+Base">Building all objects of an existing Knowledge Base</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Project DefaultTargets="TestGenexus" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"&gt;
+   &lt;Import Project="C:\Program Files\Artech\GeneXus\GeneXusX\Genexus.Tasks.targets" /&gt;
+   &lt;PropertyGroup&gt;
+      &lt;KBPath&gt;C:\MyKnowledgeBases\test&lt;/KBPath&gt;
+   &lt;/PropertyGroup&gt;
+   &lt;Target Name="TestGenexus"&gt;
+      &lt;OpenKnowledgeBase Directory="$(KBPath)" /&gt;
+      &lt;SpecifyAll /&gt;
+   &lt;/Target&gt;
+&lt;/Project&gt;
+
+</pre>
+
+<h3><br />
+See Also</h3>
+
+<p><a href="35863.html">CaptureOutput MSBuild Property</a><br />
+<a href="38359.html">How to create a unit test and add a task using the GeneXus Jenkins Plugin</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?24612,," target="_blank">Team Development MSBuild Tasks</a><br />
+<a href="42073.html">Application Deployment MSBuild tasks</a><br />
+<a href="46226.html">GAM MSBuild Tasks</a></p>
+
+<p> </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="42073.html">Application Deployment MSBuild tasks</a></TD><TD><a href="44422.html">AssemblyImport MSBuild Task</a></TD></TR><TR><TD><a href="5690.html">Category:Build Menu</a></TD><TD><a href="35863.html">CaptureOutput MSBuild Property</a></TD><TD><a href="38331.html">Category:Continuous Integration</a></TD><TD><a href="46226.html">GAM MSBuild Tasks</a></TD></TR><TR><TD><a href="51033.html">GeneXus Task MSBuild messages</a></TD><TD><a href="12560.html">HelpGenerator MSBuild Task</a></TD><TD><a href="44328.html">How to specify an object list in a MSBuild task</a></TD></TR><TR><TD><a href="35599.html">Import MSBuild Task</a></TD></TR><TR><TD><a href="50205.html">MSBuild Tasks (GeneXus 17 upgrade 8 or prior)</a></TD></TR><TR><TD><a href="43849.html">Options - Custom Build</a></TD><TD><a href="12559.html">Patterns MSBuild Tasks</a></TD></TR><TR></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 04:20 PM</em></font></td></TR></table></font>

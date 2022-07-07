@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>NoAccept rule</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?6856,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">NoAccept rule</h1>
+<!--NoAccept rule--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Prevents the value of the field to be changed by end-user interaction. In most environments, this means the field is disabled (no end-user input is allowed) when the condition (if any) applies.</p>
+
+<p>If user input cannot be disabled (<a href="5846.html">Business Component</a>, iSeries, for example), the input value is ignored.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p><b>NoAccept(</b>{<i>att</i> | <b>&amp;</b><i>var</i>}<b>)</b> [ <b>IF</b> <i>condition</i> ][ <strong>ON</strong> <em>triggering event</em>] <b>;</b></p>
+
+<p><b>Where</b></p>
+
+<p><i>condition</i><br />
+   Is the condition that must be met to trigger the rule.</p>
+
+<p><em>triggering event</em><br />
+   See the information <a href="6840.html">here</a>.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>GeneXus evaluates which Attributes/Variables are used for input/output. However, there are times when you do not want the user to enter data for what GeneXus considers to be an input Attribute/Variable. This rule enables you to define which will not be used as waiting input fields. The rule may also be used in combination with conditions.</p>
+
+<p>All variables that appear in a <a href="https://wiki.genexus.com/commwiki/wiki?7387,," target="_blank">Work Panel object</a> or <a href="6916.html">Web Panel object</a> are always by default input variables (i.e. they accept input) unless a NOACCEPT rule has been defined for it. Hence, this rule indicates that the variable must not be accepted; you will be able to assign a value for the attribute or variable with another rule.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+NoAccept(PrdDsc); // Unconditional NOACCEPT
+
+NoAccept(CreditLimit) if CliCat = 1; // Conditional NOACCEPT
+</pre>
+
+<h3><a id="Notes" class="HashLink" href="#Notes"><b>Notes</b></a></h3>
+
+<ul>
+	<li><i><i>&amp;var</i></i><i> </i>could be a <a href="2427.html">SDT</a> variable and in this case just writing <i>NoAccept(&amp;var)</i> is enough to disable all the SDT elements.</li>
+	<li><i>Conditional Noaccept</i>: You <b>must </b>be able to evaluate the condition before the attribute/variable in the NoAccept rule is entered. That is, the attributes/variables involved in the condition must have a value before the rule is triggered. Conditional NoAccept is only valid for transactions.</li>
+	<li>NoAccept rule over Primary Keys does not apply to Business Components methods (Load, Insert, Update, InsertOrUpdate).</li>
+	<li>The NoAccept rule is expanded at specification time as a <em><em>{att|&amp;var}.E</em>nabled = 0</em> assignment for the No Accept condition and <em><em>{att|&amp;var}.E</em>nabled = 1</em> for the otherwise section.<br />
+	if you take the conditional rule of the previous example, you will see in the Navigation view of the object the following code:</li>
+</ul>
+
+<h4><a id="One+condition%3A" class="HashLink" href="#One+condition%3A">One condition:</a></h4>
+
+<p>RULE:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+NoAccept(CreditLimit) if CliCat = 1;</pre>
+
+<p>NAVIGATION VIEW:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CreditLimit.Enabled = 0 IF CliCat = 1; 1 OTHERWISE;</pre>
+
+<p>This means that the rule will disable the CreditLimit attribute only if the value of the attribute CliCat is 1, otherwise, it will remain enabled.</p>
+
+<h4><a id="More+than+one+condition%3A" class="HashLink" href="#More+than+one+condition%3A">More than one condition:</a></h4>
+
+<p>RULE:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+NoAccept(CustomerDiscount) if CustomerDate &gt; Today() and CustomerActive = false and CustomerAmount = 0;</pre>
+
+<p>NAVIGATION VIEW:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+CustomerDiscount. Enabled = 0 IF CustomerDate &gt; today() and CustomerActive = FALSE and CustomerAmount = 0; 1 OTHERWISE;</pre>
+
+<p>This means that the rule will disable the CustomerDiscount attribute only if the value of the attribute CustomerDate is &lt; Today() and the value of the attribute CustomerActive = false and the value of the attribute CustomerAmount = 0, otherwise it will remain enabled.<br />
+<br />
+If you have different conditionals NoAccept, you must be careful with the conditions defined in each, because they can cause conflicts between them.</p>
+
+<ul>
+</ul>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td><a href="1908.html">Transaction object</a>, <a href="6916.html">Web Panel object</a>, <a href="https://wiki.genexus.com/commwiki/wiki?7387,," target="_blank">Work Panel object</a></td>
+		</tr>
+		<tr>
+			<td><strong>Languages</strong></td>
+			<td>.NET, Ruby, Java, RPG, Visual FoxPro, Cobol</td>
+		</tr>
+		<tr>
+			<td><strong>Interfaces</strong></td>
+			<td>Web, Win</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="8765.html">Enabled property</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="8765.html">Enabled property</a></TD><TD><a href="22331.html">Toc:GeneXus - Table of contents</a></TD><TD><a href="7385.html">How to define Variables and Arrays</a></TD></TR><TR><TD><a href="31225.html">Mode variable</a></TD><TD><a href="8826.html">ReadOnly property</a></TD><TD><a href="31506.html">Security Web Development tips</a></TD></TR><TR><TD><a href="8213.html">Transaction rules</a></TD><TD><a href="21430.html">Update rule</a></TD><TD><a href="8288.html">Web Panel rules</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/04/21 02:53 PM</em></font></td></TR></table></font>

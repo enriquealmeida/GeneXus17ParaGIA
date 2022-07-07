@@ -1,0 +1,40 @@
+delimiters "$", "$"
+
+anything_else(ws)::=<<
+{
+	"go_to": $if(ws.RedirectOnError)$$anyDialog_goto(ws.InternalNotUnderstoodRedirection)$$else$null$endif$,
+	"output": $if(ws.NotUnderstoodMesagesFormatted)${ "text" : {"values":[$anyDialog_output(ws.NotUnderstoodMesagesFormatted)$], "selection_policy": "random"}}$else$null$endif$,
+	"parent": null,
+	"context": {
+			"GXUserInput": "<?input.text?>",
+			"GXComponentSD": "",
+			"GXCallPanelSD": "",
+			"GXComponentWeb": "",
+			"GXSetImageResponse": ""
+		},
+	"created": "$today$",
+	"updated": "$today$",
+	"metadata": null,
+	"conditions": "anything_else or #gx_anything_else",
+	"description": null,
+	"dialog_node": "anything_else",
+	"previous_sibling": "$ws.LastRootNode$",
+	"disambiguation_opt_out": true
+}
+>>
+
+anyDialog_output(messages)::=<<
+	$messages:{message|$messages(message)$};separator=","$
+>>
+
+anyMessages(message)::=<<
+	"$message$"
+>>
+
+anyDialog_goto(redirect)::=<<
+	{
+		"return": null,
+		"selector": "body",
+		"dialog_node": "$redirect$"
+	}
+>>

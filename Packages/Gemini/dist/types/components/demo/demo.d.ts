@@ -1,0 +1,35 @@
+export declare class GxgDemo {
+    layerZIndex: number;
+    initiateDemo: boolean;
+    modalMessage: string;
+    gxgDemoItems: NodeList;
+    numberOfItems: number;
+    currentItem: number;
+    message: string;
+    position: string;
+    leftPosition: string;
+    rightPosition: string;
+    topPosition: string;
+    layerVisible: boolean;
+    instructionVisible: boolean;
+    modalVisible: boolean;
+    nextItemClicked: boolean;
+    disableNextButton: boolean;
+    rtl: boolean;
+    currentItemZIndex: string;
+    currentItemPosition: string;
+    currentItemBoxShadow: string;
+    currentItemPointerEvents: string;
+    componentDidLoad(): void;
+    resizeObserver(): void;
+    initiateDemoHandler(): void;
+    saveCurrentItemStyles(currentItem: any): void;
+    setCoordinates(item: any): void;
+    setItemStyles(item: any): void;
+    removeStyles(item: any): void;
+    previousItem(): void;
+    nextItem(): void;
+    nextOrPrevItem(): void;
+    endDemo(): void;
+    render(): any[];
+}

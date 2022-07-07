@@ -1,0 +1,132 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tabs Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="WWInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+<%@ Property Name="AddDefinedByAtts" Type="System.Boolean" %>
+<%@ Property Name="GenerateDataSelector" Type="System.Boolean" %>
+<%@ Property Name="HierarchySettings" Type="DVelop.Patterns.WorkWithPlus.HierarchySettingsElement" %>
+<%@ Property Name="Grid" Type="DVelop.Patterns.WorkWithPlus.IGrid" %>
+<%@ Property Name="DynamicFilters" Type="DVelop.Patterns.WorkWithPlus.DynamicFilterAttributesElement" %>
+<%@ Property Name="Template" Type="DVelop.Patterns.WorkWithPlus.SettingsTemplateElement" %>
+<%@ Property Name="IsPrompt" Type="System.Boolean" %>
+<%@ Property Name="Parameters" Type="DVelop.Patterns.WorkWithPlus.ParametersElement" %>
+<%@ Property Name="CustomConditions" Type="System.Collections.IEnumerable" %>
+<%
+	string definedByAtts = "";
+	Artech.Genexus.Common.Objects.Table gridTable = null;
+	if (AddDefinedByAtts)
+	{
+		if (IsPrompt)
+		{
+			gridTable = ((PromptElement)GridObject).GetSelectedLevel().AssociatedTable;
+		}
+		else if (GridObject.IsGridTab())
+		{
+			gridTable = ((GridTabElement)GridObject).GetRelatedTable();
+		}
+		else
+		{
+			gridTable = GridObject.Transaction.Structure.Root.AssociatedTable;
+		}
+		foreach(Artech.Genexus.Common.Parts.TableAttribute tableAtt in gridTable.TableStructure.Attributes)
+		{
+			if (!tableAtt.IsKey && !gridTable.TableStructure.ForeignKeyAttributes.Contains(tableAtt))
+			{
+				definedByAtts = tableAtt.Attribute.Name;
+				break;
+			}
+		}
+		if (definedByAtts == "")
+		{
+			foreach (Artech.Genexus.Common.Parts.TableAttribute pkAtt in gridTable.TableStructure.PrimaryKey)
+			{
+				definedByAtts += " " + pkAtt.Attribute.Name;
+			}
+		}
+	}
+	if (HierarchySettings != null)
+	{
+%>
+		Where <%= HierarchySettings.PkAttributeName %> in &<%= HierarchySettings.PkAttributeName %>Collection
+<%
+	}
+	else if (GenerateDataSelector)
+	{
+%>
+		using <%= Settings.Objects.GridDataSelectorName(GridObject, false) %>(<%= DataSelectorHelper.GetParameters(GridObject, Grid, "\t\t\t\t\t") %>)
+<%
+	}
+	else
+	{	
+		string parmCondition = Parameters.WhereCondition();
+		if (parmCondition != String.Empty)
+		{
+%>
+		Where <%= parmCondition %>
+<%
+		}
+		foreach (string filterCond in GridObject.GetFiltersConditions())
+		{
+%>
+		Where <%= filterCond %>
+<%
+		}
+		if (DynamicFilters != null)
+		{
+			foreach (string cond in DynamicFilters.GetConditions())
+			{
+%>
+		Where <%= cond %>
+<%
+			}
+		}
+		if (GridObject.HasTitleFilter)
+		{
+			foreach (string filterCond in TitleFilterProcedureHelper.GetConditions(Grid))
+			{
+%>
+		Where <%= filterCond %>
+<%
+			}
+		}
+
+	} //close if GenerateDataSelector
+
+	bool? filterInDataSelector = (!GenerateDataSelector || !Template.IncludeAutomaticConditionsInDataSelector) ? (bool?)null : (bool?)false;
+	//Add Audtomatic Conditions from instance
+	List<string> automaticConditions = GridObject.GetAutomaticConditions(filterInDataSelector);
+	if (automaticConditions != null)
+	{
+		foreach (string cond in automaticConditions)
+		{
+%>
+		Where <%= cond %>
+<%
+		}
+	}
+
+	foreach (string condition in CustomConditions)
+	{
+%>
+		Where <%= condition %>
+<%
+	}
+	var multitenantAtt = WWInstance.MultiTenantAtt;
+	if (multitenantAtt != null)
+	{
+%>
+		Where <%= multitenantAtt.Name %> = <%= Settings.MultiTenant.CurrentTenantExpression %>
+<%
+	}
+	if (definedByAtts != "")
+	{
+%>
+		defined by <%= definedByAtts %>
+<%
+	}
+%>

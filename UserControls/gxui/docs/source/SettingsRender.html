@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * GxUI Library 2.0.1
+ * Copyright (c) 2009, Artech
+ * All rights reserved.
+ * 
+ * GxUI Library is freely distributable under the terms of the BSD license.
+ * 
+ */
+
+/// &lt;reference path=&quot;..\..\Freezer\Ext\ext-all-dev.js&quot; /&gt;
+
+<span id='gxui-Settings'>/**
+</span>* @class gxui.Settings
+* The gxui.Settings control lets you set GxUI Library global settings.
+* It does not show any control on the page and should be placed only once in the form, as the first GxUI control (for example, in the master page).
+* 
+* For state management, it lets you select between storing the controls' state in cookies or in the server, through HTTP calls to a URL.
+* The default value is to store the state in cookies. This option is ok in development environments or simple applications, however, HTTP should be used in production environments 
+* where there is heavy usage of GxUI controls.
+* 
+* For localization, you can choose the language of ExtJS standard texts (for example, those used in {@link gxui.GridExtension} column menu options.
+*
+* # Example
+* In the following example we will see how to store the state of a grid using gxui.GridExtension as its Custom Render in the server.
+* 
+* Dragging gxui.Settings control to the Master Page of your KB automatically imports the relevant objects to work with this control.
+* 
+* These objects are:
+* 
+* - gxuiSaveState (procedure)
+* - gxuiInitState (data provider)
+* - gxuiState (SDT) 
+* 
+* A code snippet will be also created in the Events of the Master Page.
+* 
+* After we have the above mentioned objects in our KB, we will have to create the structures that will allow us to save the state of of the grid (or any gxui control).
+* 
+* We start creating the UserState Transaction, which have the following structure:
+* 
+* - UserId *
+* - UserGXUIStateId *
+* - UserGXUIStateValue 
+* 
+* Once you have this transaction, we can modify the above mentioned objects as follows:
+* 
+* ## gxuiSaveState:
+* 
+*		Do 'Init'
+*		Do 'Save'
+*		Do 'Response'
+*		
+*		Sub 'Init'
+*		    &amp;data = &amp;request.GetVariable(!'data')
+*		    &amp;matches = &amp;data.Matches(!'{&quot;name&quot;:&quot;([^&quot;]*)&quot;,&quot;value&quot;:&quot;([^&quot;]*)&quot;}')
+*		    For &amp;match in &amp;matches
+*		        If &amp;match.Groups.Count = 2
+*		            &amp;state = new()
+*		            &amp;state.name = &amp;match.Groups.Item(1)
+*		            &amp;state.value = &amp;match.Groups.Item(2)
+*		            &amp;states.Add(&amp;state)            
+*		        EndIf
+*		    Endfor
+*		EndSub
+*		
+*		Sub 'Save'
+*		    For &amp;state in &amp;states    
+*		        For each UserId UserGXUIStateId
+*		            Where UserId = &amp;user
+*		            Where UserGXUIStateId = &amp;state.name
+*		            If &amp;state.value = !'undefined'
+*		                Delete
+*		            Else
+*		                UserGXUIStateValue = &amp;state.value
+*		            Endif
+*		        When none
+*		            If &amp;state.value &lt;&gt; !'undefined'        
+*		                New
+*		                    UserId     = &amp;user
+*		                    UserGXUIStateId    = &amp;state.name
+*		                    UserGXUIStateValue    = &amp;state.value
+*		                EndNew
+*		            Endif    
+*		        Endfor                
+*		    Endfor
+*		EndSub
+*		
+*		Sub 'Response'
+*		    &amp;response.AddHeader(!&quot;Content-Type&quot;, !&quot;text/xml&quot;)
+*		    &amp;response.AddString(!'{success: true}')
+*		EndSub
+* 
+* ## gxuiInitState:
+* 
+*		gxuiStates
+*		{
+*		    gxuiState Where UserId = &amp;user
+*		    {
+*		        name = UserGXUIStateId.Trim()
+*		        value = UserGXUIStateValue.Trim()
+*		    }
+*		}
+*
+* The SDT gxuiState remains the same (only has a name and a value).
+*
+*/
+Ext.define('gxui.Settings', {
+	extend: 'gxui.UserControl',
+
+<span id='gxui-Settings-method-initialize'>	initialize: function () {
+</span>		this.callParent(arguments);
+	},
+
+<span id='gxui-Settings-method-SetState'>	// Databinding
+</span>	SetState: function (data) {
+		this.State = data;
+	},
+
+<span id='gxui-Settings-method-GetState'>	// Databinding
+</span>	GetState: function (data) {
+		return this.State;
+	},
+
+<span id='gxui-Settings-method-onRender'>	onRender: function () {
+</span>		gxui.fixPaddingReset = gxui.CBoolean(this.RevertTablePaddingReset);
+		gxui.fixSpacingReset = gxui.CBoolean(this.RevertTableSpacingReset);
+
+		var provider = null;
+		if (gxui.CBoolean(this.Enable)) {
+			if (this.Provider == gxui.Settings.StateProvider.HTTP) {
+				if (this.SaveURL != &quot;&quot;) {
+					provider = Ext.create('Ext.ux.state.HttpProvider', {
+						saveUrl: this.SaveURL,
+						autoRead: false
+						/*readUrl: this.ReadURL*/
+					});
+				}
+			}
+			else {
+				if (this.Provider == gxui.Settings.StateProvider.Cookie) {
+					provider = Ext.create('Ext.state.CookieProvider', {
+						expires: new Date(new Date().getTime() + (1000 * 60 * 60 * 24 * 365)) //365 days
+					})
+				}
+			}
+		}
+		else {
+			// This is equivalent to removing the default provider set in gxui.js.
+			provider = Ext.create('Ext.state.Provider');
+		}
+
+		if (provider) {
+			// Initialize state provider (required to be able to keep state in controls)
+			Ext.state.Manager.setProvider(provider);
+			if (this.Provider == gxui.Settings.StateProvider.HTTP) {
+				Ext.state.Manager.getProvider().initState(this.State);
+			}
+			this.State = []; //Reset initial state to avoid innecessary traffic
+		}
+	},
+
+<span id='gxui-Settings-method-onDestroy'>	onDestroy: Ext.emptyFn,
+</span>
+<span id='gxui-Settings-property-LOCALE_SCRIPT_ID'>	LOCALE_SCRIPT_ID: &quot;ext-lang&quot;,
+</span>
+<span id='gxui-Settings-property-methods'>	methods: {
+</span>		// Methods
+<span id='gxui-Settings-method-SetLanguage'>		/**
+</span>		* Sets the language for ExtJS standard texts
+		* @param {String} lang Language to set
+		* @param {String} [charset] Charset for the script tag to use for including the localized standard texts
+		* @method
+		*/
+		SetLanguage: function (lang, charset) {
+			var s = Ext.getDom(this.LOCALE_SCRIPT_ID);
+			var src = gx.util.resourceUrl(gx.basePath + gx.staticDirectory + &quot;Shared/ext/locale/ext-lang-&quot; + lang + &quot;.js&quot;, true);
+			if (!s) {
+				s = document.createElement(&quot;script&quot;);
+				s.id = this.LOCALE_SCRIPT_ID;
+				s.type = 'text/javascript';
+				document.getElementsByTagName(&quot;head&quot;)[0].appendChild(s);
+			}
+			s.src = src;
+			if (charset) {
+				s.charset = charset;
+			}
+		},
+
+		RemoveLanguage: function () {
+			var s = Ext.getDom(this.LOCALE_SCRIPT_ID);
+			if (s) {
+				document.getElementsByTagName(&quot;head&quot;)[0].removeChild(s);
+			}
+		}
+	}
+});
+
+// Supported state providers
+gxui.Settings.StateProvider = {
+	Cookie: &quot;Cookie&quot;,
+	HTTP: &quot;HTTP&quot;
+};
+</pre>
+</body>
+</html>

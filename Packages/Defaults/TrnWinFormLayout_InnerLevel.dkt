@@ -1,0 +1,52 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template for Inner Levels" %>
+<%@ SubTemplate Name="WinFormInnerLevel" File="TrnWinFormLayout_InnerLevel.dkt" MergeProperties="True"  %>
+<%@ SubTemplate Name="WinFormLeafLevel" File="TrnWinFormLayout_LeafLevel.dkt" MergeProperties="True"  %>
+<%@ SubTemplate Name="WinFormOneAttribute" File="TrnWinFormLayout_OneAttribute.dkt" MergeProperties="True"  %>
+<%@ Property Name="helper" Type="Artech.Genexus.Common.Helpers.TemplateHelper" %>
+<%@ Property Name="TransactionLevel" Type="TransactionLevel" %>
+<%@ Property Name="Counters" Type="System.Collections.Generic.Dictionary<string,int>"%>
+<%
+	IDictionary<TransactionAttribute, Artech.Genexus.Common.Objects.Attribute> descAttNames;
+	IList<int> toExclude = DefaultFormHelper.CalculateExcluded(TransactionLevel, out descAttNames);
+	TransactionAttribute getButtonAtt = (TransactionLevel.Parent == null && TransactionLevel.PrimaryKey.Count != 0 ? TransactionLevel.PrimaryKey[TransactionLevel.PrimaryKey.Count - 1] : null);
+	helper.MaxLabels = DefaultFormHelper.GetMaxLabels(TransactionLevel, helper, descAttNames);
+	foreach (IStructureItem structureItem in TransactionLevel.Items)
+	{
+		if (structureItem is TransactionAttribute)
+		{
+			TransactionAttribute trnAttribute = structureItem as TransactionAttribute;
+			
+			if (DefaultFormHelper.IsHiddenAttribute(trnAttribute))
+				continue;
+			
+			if (trnAttribute.IsKey || !toExclude.Contains(trnAttribute.Attribute.Id))
+			{
+				bool getButton = (trnAttribute == getButtonAtt);
+%>
+<%@ CallSubTemplate WinFormOneAttribute att='trnAttribute' Counters='Counters' getButton='getButton' descAttNames='descAttNames' %>
+<%
+			}
+		}
+		else if (structureItem is TransactionLevel)
+		{
+%>
+<%-- sublevels --%>
+<%
+			TransactionLevel subLevel = structureItem as TransactionLevel;
+			bool hasMoreLevels = (subLevel.Levels.Count > 0);
+			if (hasMoreLevels)
+			{
+%>
+<%@ CallSubTemplate WinFormInnerLevel TransactionLevel='subLevel' Counters='Counters' %>
+<%
+			}
+			else
+			{
+%>
+<%@ CallSubTemplate WinFormLeafLevel TransactionLevel='subLevel' Counters='Counters' %>
+<%
+			}
+		}
+	}
+%>
+ 

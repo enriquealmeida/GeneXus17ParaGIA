@@ -1,0 +1,31 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prepare Transaction event code" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Level" Type="LevelElement" %>
+<%@ Property Name="Element" Type="IWorkWithInstanceElement" %>
+<%@ Property Name="Attributes" Type="AttributesElement" %>
+<%
+	foreach (IAttributesItem item in Attributes)
+	{
+		if (item.Visible)
+		{
+			if (item.Link != null && item.Link.LinkExpression != String.Empty)
+			{
+				if (item.SupportsLink)
+				{
+%>
+<%= item.Name %>.Link = <%= item.Link.LinkExpression %>
+<%
+				}
+				else
+				{
+%>
+// Cannot add link to <%= item.Name %>. Control type does not support links.
+<%
+				}
+			}
+		}
+	}
+%>

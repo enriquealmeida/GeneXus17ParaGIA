@@ -1,0 +1,60 @@
+delimiters "$", "$"
+
+gridActionTemplate ::= [
+  "noselection": "g_controller_grid_action_noselection",
+  "single_executing": "g_controller_grid_action_single_executing",
+  "single_keep": "g_controller_grid_action_single_keep",
+  "multi_keep": "g_controller_grid_action_multi_keep",
+  "noaction": "g_controller_grid_action_noaction",
+  default: "g_controller_grid_action_noselection"
+]
+
+g_controller_grid_action_method(controller) ::= <%
+  $if(controller.Selection)$
+    $(gridActionTemplate.(controller.Selection.ActionType))(controller)$
+  $endif$
+%>
+
+g_controller_grid_action_noselection(controller) ::= <<
+$controller_grid_action_noselection(controller)$
+>>
+
+g_controller_grid_action_single_executing(controller) ::= <<
+async $controller.ControlName$Action( ix: number, action: any) {
+  $controller.UIEntityCurrentExpression:g_expression()$.Selected = true;
+  if (action) {
+    await this.callAction(action);
+  }
+  $controller.UIEntityCurrentExpression:g_expression()$.Selected = false;
+}
+
+>>
+
+g_controller_grid_action_single_keep(controller) ::= <<
+async $controller.ControlName$Action( ix: number, action: any) {
+  for(const item of $controller.UIEntityCollectionExpression:g_expression()$) {
+    item.Selected = false;
+  }
+  $controller.UIEntityCurrentExpression:g_expression()$.Selected = true;
+  if (action) {
+    await this.callAction(action);
+  }
+}
+
+>>
+
+g_controller_grid_action_multi_keep(controller) ::= <<
+async $controller.ControlName$Action( ix: number, action: any) {
+  $if(controller.Selection.SelectionFlagExpression)$
+  $controller.Selection.SelectionFlagExpression:g_expression()$ = ! $controller.Selection.SelectionFlagExpression:g_expression()$;
+  $endif$
+  $controller.UIEntityCurrentExpression:g_expression()$.Selected = ! $controller.UIEntityCurrentExpression:g_expression()$.Selected;
+  if (action) {
+    await this.callAction(action);
+  }
+}
+
+>>
+
+g_controller_grid_action_noaction(controller) ::= <<
+>>

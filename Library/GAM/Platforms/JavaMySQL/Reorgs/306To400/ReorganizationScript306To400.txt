@@ -1,0 +1,36 @@
+ALTER TABLE `Session` MODIFY COLUMN `SesOauthScope`  national varchar(2048)
+ALTER TABLE `Session` MODIFY COLUMN `SesLastURL`  national varchar(2048) NOT NULL
+ALTER TABLE `Session` MODIFY COLUMN `SesURL`  national varchar(2048) NOT NULL
+
+ALTER TABLE `SessionHistory` MODIFY COLUMN `SesHisOauthScope`  national varchar(2048)
+ALTER TABLE `SessionHistory` MODIFY COLUMN `SesHisLastURL`  national varchar(2048) NOT NULL
+ALTER TABLE `SessionHistory` MODIFY COLUMN `SesHisURL`  national varchar(2048) NOT NULL
+
+DROP TABLE `Auditory`
+CREATE TABLE `Auditory` (`RepId`  int NOT NULL , `AudId`  int NOT NULL , `AudSesRepId`  int NOT NULL , `AudSesToken`  national char(120) NOT NULL , `AudDate`  datetime NOT NULL , `AudActId`  bigint NOT NULL , `AudPgmName`  national char(254) NOT NULL , `AudActKey1`  bigint , `AudActKey2`  bigint , `AudActKey3`  bigint , `AudActKey4`  bigint , `AudActPreDet`  national varchar(2048) , `AudActCurDet`  national varchar(2048) , `AudActionKeyGUID1`  national char(40) , `AudActionKeyGUID2`  national char(40) , `AudActionKeyChar1`  national char(254) , PRIMARY KEY(`RepId`, `AudId`))  ENGINE=InnoDB
+CREATE INDEX `IAUDITORY1` ON `Auditory` (`AudActId` )
+
+ALTER TABLE `Application` MODIFY COLUMN `AppCliLocalLoginURL`  national varchar(2048)
+ALTER TABLE `Application` MODIFY COLUMN `AppCliSiteDomain`  national varchar(2048)
+ALTER TABLE `Application` MODIFY COLUMN `AppCliSiteURL`  national varchar(2048)
+ALTER TABLE `Application` MODIFY COLUMN `AppCliImageURL`  national varchar(2048)
+
+ALTER TABLE `User` MODIFY COLUMN `UserURLImage`  national varchar(2048) NULL
+ALTER TABLE `User` MODIFY COLUMN `UserURLProf`  national varchar(2048) NULL
+ALTER TABLE `User` ADD `UserPwdEncryption`  nchar(3) NULL, ADD`UserPhoto_GXI`  varchar(2048) NULL
+
+DROP INDEX `UUSERLOGIN` ON `User`
+DROP INDEX `IUSERCOUNTRY` ON `User`
+DROP INDEX `UUSEREMAIL` ON `User`
+DROP INDEX `UUSEREXTID` ON `User`
+
+CREATE INDEX `UUSERLOGIN` ON `User` (`UserNameSpace` ,`UserAutTypeName` ,`UserName` ,`UserIsDlt` )
+CREATE INDEX `IUSERCOUNTRY` ON `User` (`CountryId` )
+CREATE INDEX `UUSEREMAIL` ON `User` (`UserNameSpace` ,`UserAutTypeName` ,`UserEMail` ,`UserIsDlt` )
+CREATE INDEX `UUSEREXTID` ON `User` (`UserNameSpace` ,`UserAutTypeName` ,`UserExtId` ,`UserIsDlt` )
+
+ALTER TABLE `AppAuthReq` MODIFY COLUMN `AppAuthReqRedirURL`  national varchar(2048) NOT NULL
+
+CREATE TABLE `RepositoryEvents` (`RepId`  int NOT NULL , `RepEveEntity`  national char(60) NOT NULL , `RepEveAction`  national char(20) NOT NULL , `RepEveClassName`  national char(60) NOT NULL , `RepEveFileName`  national char(254) NOT NULL , `RepEveMethodName`  national char(60) NOT NULL , PRIMARY KEY(`RepId`, `RepEveEntity`, `RepEveAction`, `RepEveClassName`))  ENGINE=InnoDB
+
+CREATE INDEX `UAPPMENUOPTION` ON `AppMenuOption` (`RepId` ,`AppId` ,`AppMnuId` ,`AppMnuOptOrder` )

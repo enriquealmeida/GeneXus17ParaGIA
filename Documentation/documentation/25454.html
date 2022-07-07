@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Error handling in Synchronization.Send() operations</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25454,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Error handling in Synchronization.Send() operations</h1>
+<!--Error handling in Synchronization.Send() operations--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In the <a href="20286.html">Offline Native Mobile Applications</a>, when there is a <a href="23604.html">Synchronization.Send()</a> operation, the device sends to the server a list of <a href="5846.html">Business Component</a> (BC) operations which were performed localy. The server then applies these operations to the central database.</p>
+
+<p>There are some cases where a BC operation can result in an error for several reasons: business rules which succeded in the device but failed on the server database, referential integrity, etc.</p>
+
+<h3><a id="How+changes+are+applied+to+the+server" class="HashLink" href="#How+changes+are+applied+to+the+server">How changes are applied to the server</a></h3>
+
+<p>There is a procedure, called &quot;<a href="26218.html">OfflineEventReplicator</a>&quot;, which handles the list of operations sent from the device.</p>
+
+<p>The signature of this procedure is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;GxPendingEvents, in:&amp;GxSyncroInfo, out:&amp;EventResults);</pre>
+
+<p>Where</p>
+
+<ul>
+	<li>&amp;GxPendingEvents are the events sent by the device,</li>
+	<li>&amp;GxSyncroInfo contains additional information required by the synchronization process, and</li>
+	<li>&amp;EventResults is a collection of the results of each pending event processed by the server.</li>
+</ul>
+
+<h3><a id="How+errors+are+handled" class="HashLink" href="#How+errors+are+handled"><span style="line-height: 1.2em;">How errors are handled</span></a></h3>
+
+<p>The GeneXus developer might need to have control over the behavior of the application whenever there is an error in a Send operation.</p>
+
+<p>There are two procedures, called automatically from the <a href="26218.html">OfflineEventReplicator procedure</a>, which notify the application of any error and allows the programmer to take any required action.</p>
+
+<p>These procedures are located in the GeneXus\SD\Synchronization folder under the <a href="22439.html">Root module</a> of the <a href="1836.html">Knowledge Base</a>. Note that they are not inside the <a href="31268.html">GeneXus Module</a>, because they may be modified locally in the KB.</p>
+
+<h4><a id="GxOnPendingEventFailed" class="HashLink" href="#GxOnPendingEventFailed">GxOnPendingEventFailed</a></h4>
+
+<p>This procedure is called on every BC operation that finishes with an error.</p>
+
+<p>The signature of this procedure is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;PendingEvent, in:&amp;BCName, in:&amp;BCJson, in:&amp;EventResult, in:&amp;GxSyncroInfo, out:&amp;Continue);</pre>
+
+<p>where</p>
+
+<ul>
+	<li>&amp;PendingEvent is based on GxSynchroEventSDT.GxSynchroEventSDTItem and has the information about the failed event,</li>
+	<li>&amp;BCName is a VarChar(128) and contains the name of the business component,</li>
+	<li>&amp;BCJSon is based on EventData and contains the BC's JSON representation associated with the failed event,</li>
+	<li>&amp;EventResult is based on GxSynchroEventResultSDT.GxSynchroEventResultSDTItem and has the information about the nature of the failed event (fields: EventStatus and EventErrors),</li>
+	<li>&amp;GxSynchroInfo is passed along from the <a href="26218.html">OfflineEventReplicator procedure</a>, and</li>
+	<li>&amp;Continue is a Boolean which indicates if the <a href="26218.html">OfflineEventReplicator procedure</a> should continue processing the next items (return True) or if it must abort the synchronization (return False).</li>
+</ul>
+
+<p>By default, this procedure is empty (except for the assignment &amp;Continue = True) so that the GeneXus developer can indicate the action to take under each circumstance.</p>
+
+<h4><a id="GxBeforeEventReplicator" class="HashLink" href="#GxBeforeEventReplicator">GxBeforeEventReplicator</a></h4>
+
+<p>This procedure is called by the OfflineEventReplicator before processing any of the BC operations.</p>
+
+<p>Its signature is the same than the one of the OfflineEventReplicator.</p>
+
+<p>You can change this procedure by adding log information or even change, with caution, the list of events to be processed.</p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  This procedure is available since <a href="https://wiki.genexus.com/commwiki/wiki?40782,," target="_blank">GeneXus 16 upgrade 1</a>.</div>
+</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  For already existing KBs, migrated from previous GeneXus versions, this procedure must be imported from &lt;genexus_installation_directory&gt;\Packages\Patterns\WorkWithDevices\Resources\SDApi.xml .</div>
+</p>
+
+<h4><a id="GxAfterEventReplicator" class="HashLink" href="#GxAfterEventReplicator">GxAfterEventReplicator</a></h4>
+
+<p>This procedure is called after processing all the BC operations, whether all operations completed successfully or there were any errors. It is called even if a call to the GxOnPendingEventFailed procedure finished with &amp;Continue = False.</p>
+
+<p>The signature of this procedure is:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;EventResults, in:&amp;GxSyncroInfo);
+</pre>
+
+<p>where</p>
+
+<ul>
+	<li>&amp;EventResults is based on GxSynchroEventResultSDT, which is, the collection returned to the device and has all the information about the synchronization result, and</li>
+	<li>&amp;GxSynchroInfo is passed along from the <a href="26218.html">OfflineEventReplicator procedure</a>.</li>
+</ul>
+
+<p><br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD><TD><a href="26218.html">OfflineEventReplicator procedure</a></TD></TR><TR><TD><a href="31341.html">SynchronizationEvents external object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

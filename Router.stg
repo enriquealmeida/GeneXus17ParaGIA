@@ -1,0 +1,207 @@
+group RouterGeneration;
+
+delimiters "$", "$"
+
+generators ::= [
+	"15" : "g_rewrite_net",
+	"12" : "g_rewrite_java",
+	"41" : "g_rewrite_net"
+]
+
+package_writer ::= [
+	"15" : "g_package_net",
+	"41" : "g_package_net",
+	"12" : "g_package_java"
+]
+
+g_write_rule_query_gen_writer ::= [
+	"15" : "g_write_rule_query_gen_net",
+	"41" : "g_write_rule_query_gen_java",
+	"12" : "g_write_rule_query_gen_java"
+]
+
+g_write_inverse_rule_query_prefix_writer ::= [
+	"15" : "g_write_inverse_rule_query_prefix_net",
+	"41" : "g_write_inverse_rule_query_prefix_net",
+	"12" : "g_write_inverse_rule_query_prefix_java"
+]
+
+
+extension_writer ::= [
+	"15" : "g_extension_net",
+	"41" : "g_extension_net",
+	"12" : "g_extension_java"
+]
+base_url_writer ::= [
+	"15" : "g_baseurl_net",
+	"41" : "g_baseurl_net_core",
+	"12" : "g_baseurl_java"
+]
+inverse_rule_prefix_writer ::= [
+	"15" : "g_inverse_rule_prefix_net",
+	"41" : "g_inverse_rule_prefix_java",
+	"12" : "g_inverse_rule_prefix_java"
+]
+inverse_rule_flags_writer ::= [
+	"15" : "g_inverse_rule_flags_net",
+	"41" : "g_inverse_rule_flags_net_core",
+	"12" : "g_inverse_rule_flags_java"
+]
+inverse_rule_parms_writer ::= [
+	"15" : "g_inverse_rule_parms_net",
+	"41" : "g_inverse_rule_parms_java",
+	"12" : "g_inverse_rule_parms_java"
+]
+inverse_rule_writer ::= [
+	"15" : "g_inverse_rule_net",
+	"41" : "g_inverse_rule_java",
+	"12" : "g_inverse_rule_java"
+]
+
+
+g_router(generator, object, rewrites, model, env, baseurl, gx) ::=<%
+$rewrites:{rewrite | $(generators.(generator))(rewrite, env, gx)$};separator="\n"$
+%>
+
+g_router_apache(generator, object, rewrites, model, env, baseurl, gx) ::=<<
+$rewrites:{rewrite | $g_rewrite(rewrite, generator, env, gx)$};separator="\n"$
+>>
+
+
+g_rewrite(rewrite, generator, env, gx) ::=<<
+$g_write_inverse_rule(generator, rewrite)$
+$g_write_basic_rule(rewrite, generator, env, gx)$
+$g_write_post_rule(rewrite, generator, env, gx)$
+
+>>
+
+g_write_inverse_rule(generator, rewrite) ::=<%
+$(inverse_rule_writer.(generator))(generator, rewrite)$
+%>
+
+g_inverse_rule_java(generator, rewrite) ::=<<
+$if(rewrite.AllQuery)$
+$g_write_inverse_rule_named_cond(rewrite)$ [OR]
+$g_write_inverse_rule_positional_cond(rewrite)$ [NC]
+$endif$
+$g_write_inverse_rule_i(generator, rewrite)$
+>>
+
+g_inverse_rule_net(generator, rewrite) ::=<<
+$if(rewrite.AllQuery)$
+$g_write_inverse_rule_named_cond(rewrite)$ [NC]
+$g_write_inverse_rule_i(generator, rewrite)$
+$g_write_inverse_rule_positional_cond(rewrite)$ [NC]
+$g_write_inverse_rule_i(generator, rewrite)$
+$else$
+$g_write_inverse_rule_i(generator, rewrite)$
+$endif$
+>>
+
+g_write_inverse_rule_i(generator, rewrite) ::=<%
+RewriteRule$g_inverse_rule_prefix(generator)$ ^$g_baseurl(generator)$/$g_package(generator, env)$$gx.ToLower.(rewrite.Implementation.Name)$$g_extension(generator)$\$ 
+$g_baseurl(generator)$/$rewrite.FriendlyUrl:{ step | $g_inverse_rule_parms(generator, step)$};separator="/"$
+$g_write_inverse_rule_query_prefix(generator, rewrite)$$rewrite.FriendlyQuery:{parm | $g_inverse_rule_parms(generator, parm)$};separator="&"$ $g_inverse_rule_flags(generator, rewrite)$
+%>
+
+g_write_inverse_rule_query_prefix(generator, rewrite) ::=<%$(g_write_inverse_rule_query_prefix_writer.(generator))(rewrite)$%>
+g_write_inverse_rule_query_prefix_java(rewrite) ::= <%$if (rewrite.Implementation.Parameters)$?$endif$%>
+g_write_inverse_rule_query_prefix_net(rewrite) ::= <%$if(rewrite.FriendlyQuery)$?$endif$%>
+
+g_write_inverse_rule_named_cond(rewrite) ::=<%
+RewriteCond %{QUERY_STRING} ^$rewrite.AllQuery:{parm | $parm.QueryOldParm$};separator=","$\$
+%>
+
+g_write_inverse_rule_positional_cond(rewrite) ::=<%
+RewriteCond %{QUERY_STRING} ^$rewrite.AllQuery:{parm | $parm.QueryApacheParm$};separator="&"$\$
+%>
+
+g_write_basic_rule(rewrite, generator, env, gx) ::=<<
+$g_write_no_post_cond(rewrite)$
+$g_write_querystring_cond(rewrite)$
+$g_write_rule_path(rewrite, generator, env, gx)$$g_write_rule_query(rewrite, generator, env, gx)$ [L,NC]
+>>
+
+g_write_rule_path(rewrite, generator, env, gx) ::=<%
+RewriteRule ^$g_baseurl(generator)$/$rewrite.FriendlyUrl:{ step | $step.ApacheString$};separator="/"$\$
+$\ $$g_baseurl(generator)$/$g_package(generator, env)$
+$gx.ToLower.(rewrite.Implementation.Name)$$g_extension(generator)$
+%>
+
+g_write_rule_query(rewrite, generator, env, gx) ::=<%
+$if (rewrite.Implementation.Parameters)$
+	$g_write_rule_query_gen(generator, rewrite)$
+$endif$
+%>
+
+g_write_rule_query_gen(generator, rewrite) ::=<%$(g_write_rule_query_gen_writer.(generator))(rewrite)$%>
+g_write_rule_query_gen_net(rewrite) ::= <%?$rewrite.Implementation.Parameters:{parm | $parm.NetNamedApacheParm$};separator="&"$%>
+g_write_rule_query_gen_java(rewrite) ::= <%?$rewrite.Implementation.Parameters:{parm | $parm.NamedApacheParm$};separator="&"$%>
+
+g_write_querystring_cond(rewrite) ::=<%
+$if(rewrite.FriendlyQuery)$
+RewriteCond %{QUERY_STRING} ^$rewrite.FriendlyQuery:{parm | $parm.QueryApacheParm$};separator="&"$\$ [NC]
+$endif$
+%>
+
+g_write_post_rule(rewrite, generator, env, gx) ::=<%
+$if (rewrite.Implementation.Parameters)$
+$g_write_rule_path(rewrite, generator, env, gx)$ [L,NC]
+$endif$
+%>
+
+g_write_no_post_cond(rewrite) ::= <%
+$if (rewrite.Implementation.Parameters)$
+RewriteCond %{REQUEST_METHOD} !POST
+$endif$
+%>
+
+g_package(generator, env) ::=<%$(package_writer.(generator))(env)$%>
+g_package_net(env) ::= <%%>
+g_package_java(env) ::= <%$env.PACKAGE$.%>
+
+g_extension(generator) ::=<%$(extension_writer.(generator))()$%>
+g_extension_net() ::= <%.aspx%>
+g_extension_java() ::= <%%>
+
+g_baseurl(generator) ::=<%$(base_url_writer.(generator))()$%>
+g_baseurl_net() ::= <%%>
+g_baseurl_net_core() ::= <%{BASEURL}%>
+g_baseurl_java() ::= <%%>
+
+g_inverse_rule_prefix(generator) ::=<%$(inverse_rule_prefix_writer.(generator))()$%>
+g_inverse_rule_prefix_net() ::= <%(,InvAct)%>
+g_inverse_rule_prefix_java() ::= <%%>
+
+g_inverse_rule_flags(generator, rewrite) ::=<%$(inverse_rule_flags_writer.(generator))(rewrite)$%>
+g_inverse_rule_flags_net(rewrite) ::= <%
+$if(rewrite.AllQuery)$[R]
+$else$[R,QSA]
+$endif$
+%>
+g_inverse_rule_flags_net_core(rewrite) ::= <%
+$if(rewrite.AllQuery)$[R,QSD]
+$else$[R]
+$endif$
+%>
+g_inverse_rule_flags_java(rewrite) ::= <%[R]%>
+
+g_inverse_rule_parms(generator, step) ::=<%$(inverse_rule_parms_writer.(generator))(step)$%>
+g_inverse_rule_parms_net(step) ::= <%$step.NetQueryString$%>
+g_inverse_rule_parms_java(step) ::= <%$step.QueryString$%>
+
+g_rewrite_java(rewrite, env, gx) ::=<%
+$env.PACKAGE$.$gx.ToLower.(rewrite.Implementation.Name)$=$rewrite.FriendlyUrl:{ step | $step.JavaString$};separator="/"$
+$if(rewrite.FriendlyQuery)$?
+	$rewrite.FriendlyQuery:{parm | $parm.JavaString$};separator="&"$
+$endif$
+%>
+
+g_rewrite_net(rewrite, env, gx) ::=<%
+$rewrite.Implementation.Name$=$rewrite.FriendlyUrl:{ step | $step.NetString$};separator="/"$
+$if(rewrite.FriendlyQuery)$?
+	$rewrite.FriendlyQuery:{parm | $parm.NetString$};separator="&"$
+$endif$
+%>
+
+

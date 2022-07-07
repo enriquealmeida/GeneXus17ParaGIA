@@ -1,0 +1,150 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selectiond and Grid Tab Conditions" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+
+<%
+	
+	HierarchySettingsElement hierarchySettings = (GridObject is SelectionElement ? ((SelectionElement)GridObject).HierarchySettings : null);
+
+	IGrid grid = GridObject.GetGrid();
+	SettingsTemplateElement template = Instance.GetAppropiateTemplate();
+	bool generateDataSelectorForConditions = GridObject.HasGenerateDataSelectorForConditions();
+	if (!generateDataSelectorForConditions && hierarchySettings == null)
+	{
+		if (GridObject.IsPrompt())
+		{
+			foreach (PromptParameterElement param in GridObject.GetParameters())
+			{
+				if(param.AttributeBasedOn != null && param.Type == "In")
+				{
+%>
+<%= param.AttributeBasedOn %> = <%= param.GetVariableName() %>;
+<%
+				}
+			}
+		}
+		else
+		{
+			foreach (ParameterElement parameter in GridObject.GetParameters())
+			{
+				if (parameter.IsAttribute)
+				{
+%>
+<%= parameter.ParameterCondition %>;
+<%
+				}
+			}
+		}
+	
+		foreach (string filterCond in GridObject.GetFiltersConditions())
+		{
+%>
+<%= filterCond.TrimEnd(';') %>;
+<%
+		}
+		DynamicFilterAttributesElement dynamicFilters = GridObject.Table.GetDynamicFilters();
+		if (dynamicFilters != null)
+		{
+			foreach (string cond in dynamicFilters.GetConditions())
+			{
+%>
+<%= cond %>;
+<%
+			}
+		}
+		if (GridObject.HasTitleFilter)
+		{
+			foreach (string cond in TitleFilterProcedureHelper.GetConditions(grid))
+			{
+%>
+<%= cond %>;
+<%
+			}
+		}
+	}
+	else if (hierarchySettings != null)
+	{
+%>
+<%= hierarchySettings.PkAttributeName %> in &<%= hierarchySettings.PkAttributeName %>Collection;
+<%
+	}
+
+	bool? filterInDataSelector = (!generateDataSelectorForConditions || !template.IncludeAutomaticConditionsInDataSelector) ? (bool?)null : (bool?)false;
+	//Add Audtomatic Conditions from instance
+	List<string> automaticConditions = GridObject.GetAutomaticConditions(filterInDataSelector);
+	if (automaticConditions != null)
+	{
+		foreach (string condition in automaticConditions)
+		{
+%>
+<%= condition %>;
+<%
+		}
+	}
+	if (GridObject.IsAssociation())
+	{
+		AssociationSelectionElement association = (AssociationSelectionElement)GridObject;
+		if (association.Info.RelationKeyRelatedAttributes.Count < association.RelatedTransaction.Transaction.Structure.Root.PrimaryKey.Count)
+		{
+			int attIndex = 0;
+            foreach (string att in association.Info.BaseTableKeyAttributes)
+            {
+                foreach (Artech.Genexus.Common.Parts.TransactionAttribute att2 in association.RelatedTransaction.Transaction.Structure.Root.PrimaryKey)
+                {
+                    if (att == att2.Name)
+                    {
+%>
+<%= att %> = &<%= association.Info.RelationKeyBaseAttributes[attIndex] %>;
+<%
+                        break;
+                    }
+                }
+                attIndex++;
+            }
+		}
+	}
+	if (grid is GridElement && ((GridElement)grid).HasDVGroup() && ((GridElement)grid).AllowCollapseGroup)
+	{
+		bool hasMultiplePK;
+		string keys = DVelop.Patterns.WorkWithPlus.Helpers.GridGroupByHelper.GetKey(GridObject, (GridElement)grid, out hasMultiplePK);
+		if (hasMultiplePK)
+		{
+%>
+not WWP_ItemInCollection(<%= keys %>, &GridCollapsedRecordsChildren) When &GridCollapsedRecordsChildren.Count > 0;
+<%
+		}
+		else
+		{
+%>
+not(<%= keys %> in &GridCollapsedRecordsChildren) When &GridCollapsedRecordsChildren.Count > 0;
+<%
+		}
+	}
+	var multitenantAtt = Instance.MultiTenantAtt;
+	if (multitenantAtt != null)
+	{
+%>
+<%= multitenantAtt.Name %> = <%= Instance.Settings.MultiTenant.CurrentTenantExpression %>;
+<%
+	}
+	if (Instance.HasTransaction() && GridObject.Load != "On page load")
+	{
+		string levelName = GridObject.GetForEachLevelName(true, false);
+		string pkCondition = "";
+        foreach (Artech.Genexus.Common.Parts.TransactionAttribute att in (GridObject.IsAssociation() ? ((AssociationSelectionElement)GridObject).RelatedTransaction.Transaction.Structure.Root.PrimaryKey : (levelName.Contains(".") ? SelectionGeneralElement.GetSelectedLevel(levelName, GridObject, Instance).PrimaryKey : GridObject.Transaction.Structure.Root.PrimaryKey)))
+        {
+			pkCondition += string.Format(" AND {0}.IsNull()", att.Name) + (pkCondition == "" ? string.Format(" AND not {0}.IsNull()", att.Name) : "");
+        }
+%>
+<%= pkCondition.Substring(5) %> When not &LoadGridData;
+<%
+	}
+%>

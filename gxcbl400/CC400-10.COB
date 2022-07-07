@@ -1,0 +1,18 @@
+MOVE 1      TO GX-QCMDEXC-PTR
+MOVE SPACES TO GX-QCMDEXC-CMD
+STRING 'OPNQRYF FILE(#1) '
+               'OPTION(#2) '
+               'KEYFLD('
+       DELIMITED BY SIZE
+            INTO GX-QCMDEXC-CMD
+         POINTER GX-QCMDEXC-PTR
+STRING
+       ' (#3) '
+       DELIMITED BY SIZE
+            INTO GX-QCMDEXC-CMD
+         POINTER GX-QCMDEXC-PTR
+STRING ') '
+       'OPNID(#4) '
+       DELIMITED BY SIZE
+            INTO GX-QCMDEXC-CMD
+         POINTER GX-QCMDEXC-PTR

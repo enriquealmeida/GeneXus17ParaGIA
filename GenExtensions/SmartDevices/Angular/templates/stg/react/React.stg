@@ -1,0 +1,62 @@
+﻿group React;
+
+delimiters "$", "$"
+
+g_html_id(id) ::=<<id="$id$">>
+
+g_call_action(action) ::=<<  onClick="" >>
+
+g_data_binding(data) ::=<< 
+  value={$data.DataBinding:g_expression()$}
+  $if(!data.IsReadonly)$
+  onInput={ ev => { setState()}}
+  $endif$
+  readonly={$data.IsReadonlyExpression:g_expression()$}
+>>
+
+g_get_data_content(data) ::=<<
+  try {
+    let response = await fetch("$data.ProviderPath$"$data:{dt|$g_dp_request_parameters(dt,i0)$}$)
+$if(data.ControlInfo.IsGridControl)$
+		.then(obj => obj.json())
+		.then(json => GxCollectionData.create<$data.EntityItemExpression.exprDataType:g_type_name()$>(json, $data.EntityItemExpression.exprDataType:g_type_name()$));
+$else$
+	.then(obj => { 
+	    return obj.json() as $data.GeneratorType:g_type_name()$});
+$endif$
+    return response;
+  }
+  catch (error) {
+    return this.handleError(error);
+  }
+>>
+
+g_service_class_attributes() ::=<<>>
+
+g_service_constructor(data) ::=<<>>
+
+g_import_prefix() ::=<<../../>>
+
+g_service_imports(page, gx) ::=<<
+import { Settings } from '../app.settings';
+import { PanelService } from '../../app/gx/base/panel.service';
+import { UIListElementItem } from '../../app/gx/ui/model/ui-list';
+
+>>
+
+g_print_bound_attribute(att, bindingExpression, suFix, posFix) ::=<< $att$ = {$suFix$$bindingExpression$$posFix$} >>
+
+g_print_bound_grid_event(event, gridName, eventName) ::=<< on$event$={$gridName$_$eventName$(event)} >>
+
+g_html_iterate_grid(grid) ::=<< 
+		{$grid.DataBinding:g_expression()$.map( $grid.DataBindingItem:g_expression()$ => { 
+			return ($grid:g_template()$) 
+		})}
+>>
+
+html_att_value(attName, attValue) ::= <<$if (attValue)$$attName$="$attValue$"$endif$>>
+
+html_att_style(attValue) ::=  <<$if (attValue)$style={{$attValue$}}$endif$>>
+
+html_att_func(attName, attValue) ::= <<$if (attValue)$$attName$={$attValue$}$endif$>>
+

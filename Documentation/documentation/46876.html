@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GXML (GeneXus Markup Language)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46876,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GXML (GeneXus Markup Language)</h1>
+<!--GXML (GeneXus Markup Language)--><div class="TableWikiBody" id="tblwikibody"><p>GeneXus Markup Language (GXML) is an XML-like descriptive language for describing GeneXus' objects.</p>
+
+<p>The drag-and-drop concept in GeneXus makes it far easier for the average user to understand how to design apps by describing their components in an abstract way, without worrying about the lines of code that it may entail. Either way, for those adventured users, the GXML syntax aims to be very simple to understand, providing views, controls, and layout structures for declaring your app's user interface. This document pretends to be a guideline for those intrigued users that wants to analyze a GeneXus object from another point of view.</p>
+
+<h2><a id="Overview" class="HashLink" href="#Overview">Overview</a></h2>
+
+<p>The GXML format can be used for defining User Interface (UI) objects such as Panels, Stencils, Themes, and ColorPalette objects. This format aims to be simple to read for developers.</p>
+
+<p>The main structure of every GXML is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Root&gt;
+    &lt;!-- Object description --&gt;
+&lt;/Root&gt;
+
+</pre>
+
+<p>The content of the <span style="font-family: courier new;">Root</span> tag will depend on what kind of object you are modeling.</p>
+
+<p>In the case of <strong>Panels </strong>and <strong>Stencils</strong>, it will contain the definition of every object in the Layout (delimited by a <span style="font-family: courier new;">Controls</span> tag), the Variables involved (by a <span style="font-family: courier new;">Variables</span> tag), and the Code section (by a <span style="font-family: courier new;">Code</span> tag). Also, it allows you to define a set of data objects on which it depends (delimited by <span style="font-family: courier new;">SDTs</span> tag and <span style="font-family: courier new;">DataProviders</span> tag). For instance:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Root ImportFor=&quot;SD&quot;&gt;
+    &lt;Controls&gt;
+        &lt;!-- Controls description --&gt;
+    &lt;/Controls&gt;
+    &lt;Variables&gt;
+        &lt;Variable name=&quot;MyVar&quot;&gt;
+            &lt;!-- Variable definition --&gt;
+        &lt;/Variable&gt;
+        ...
+    &lt;/Variables&gt;
+    &lt;Code&gt;
+    &lt;![CDATA[
+    // Code events
+    ]]&gt;
+    &lt;/Code&gt;
+    &lt;SDTs&gt;
+        &lt;!-- Structure Data Type definition --&gt;
+    &lt;/SDTs&gt;
+    &lt;DataProviders&gt;
+        &lt;!-- Data Providers definition --&gt;
+    &lt;DataProviders&gt;
+&lt;/Root&gt;
+</pre>
+
+<p> </p>
+
+<p>In the case of a <strong>Design System object</strong> definition, the GXML structure will contain a <span style="font-family: courier new;">DesignSystems</span> tag where you are able to define a set of theme objects by a <span style="font-family: courier new;">DesignSystem</span> tag (usually one), and each <span style="font-family: courier new;">DesignSystem</span> tag is defined by two sections: <span style="font-family: courier new;">Tokens</span> tag for describing the token-groups and <span style="font-family: courier new;">Styles</span> for describing style-classes. For instance:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Root&gt;
+    &lt;DesignSystems&gt;
+        &lt;DesignSystem name=&quot;MyMobileDesignSystem&quot;&gt;
+            &lt;Tokens&gt;
+                &lt;!-- Tokens definition in raw text --&gt;
+            &lt;/Tokens&gt;   
+            &lt;Styles&gt;
+                &lt;!-- Styles definition in raw text --&gt;
+            &lt;/Styles&gt;
+        &lt;/DesignSystem&gt;
+        &lt;DesignSystem name=&quot;MyWebDesignSystem&quot;&gt;
+            &lt;!-- Token/Style sections definitions --&gt;
+        &lt;/DesignSystem&gt;
+    &lt;/DesignSystems&gt;
+&lt;/Root&gt;
+</pre>
+
+<p> </p>
+
+<h2><a id="Advantages" class="HashLink" href="#Advantages">Advantages</a></h2>
+
+<ol>
+	<li>The <a href="46882.html">Design Import option</a> tool will basically generate the appropriate GXML files from your Sketch files (translate them) in order to import them into GeneXus. In that sense, when GeneXus displays the preview of what are you going to import, you can see a <a href="46882.html">Code tab</a> with the GXML to be imported.<br />
+	 </li>
+	<li>In the Layout tab of a (Web) Panel, you can copy any Table (except the Main Table) and paste it into a text editor in order to see the GXML representation and vice versa.<br />
+	<br />
+	For example, if you have the following layout and copy the highlighted control.<br />
+	<img src="./images/46982.png" id="46982" class="WikiImage"/><br />
+	<br />
+	And you paste it into a text editor, it will show you something as follows:
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;Root&gt;
+    &lt;Controls&gt;
+        &lt;table controlName=&quot;Table1&quot; 
+               columnsStyle=&quot;100%;60dip&quot; 
+               class=&quot;Search&quot;&gt;
+            &lt;row rowHeight=&quot;60dip&quot;&gt;
+                &lt;cell&gt;
+                    &lt;data attribute=&quot;&amp;amp;Search&quot; /&gt;
+                &lt;/cell&gt;
+                &lt;cell colSpan=&quot;1&quot;&gt;
+                    &lt;action controlName=&quot;Search&quot; 
+                            onClickEvent=&quot;'Search'&quot; 
+                            image=&quot;Search_icon&quot; /&gt;
+                &lt;/cell&gt;
+            &lt;/row&gt;
+        &lt;/table&gt;
+    &lt;/Controls&gt;
+    &lt;Variables&gt;
+        &lt;Variable Name=&quot;Search&quot;&gt;
+            &lt;Properties&gt;
+                &lt;Property&gt;
+                    &lt;Name&gt;Name&lt;/Name&gt;
+                    &lt;Value&gt;Search&lt;/Value&gt;
+                &lt;/Property&gt;
+                &lt;Property&gt;
+                    &lt;Name&gt;OBJ_TYPE&lt;/Name&gt;
+                    &lt;Value&gt;id_OTYPE_VAR&lt;/Value&gt;
+                &lt;/Property&gt;
+                &lt;Property&gt;
+                    &lt;Name&gt;ATTCUSTOMTYPE&lt;/Name&gt;
+                    &lt;Value&gt;bas:VarChar&lt;/Value&gt;
+                &lt;/Property&gt;
+                &lt;Property&gt;
+                    &lt;Name&gt;Type&lt;/Name&gt;
+                    &lt;Value&gt;VARCHAR&lt;/Value&gt;
+                &lt;/Property&gt;
+            &lt;/Properties&gt;
+        &lt;/Variable&gt;
+    &lt;/Variables&gt;
+&lt;/Root&gt;</pre>
+	</li>
+</ol>
+
+<h2><a id="Formal+specification" class="HashLink" href="#Formal+specification">Formal specification</a></h2>
+
+<p>Under construction.</p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td><strong>Generators  </strong></td>
+			<td>.NET, .NET Core, Java, Android, Apple, Angular</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li><a href="46871.html">Guide for designers</a></li>
+	<li><a href="46877.html">Guide for developers</a></li>
+</ul>
+
+<p><br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46882.html">Design Import option</a></TD><TD><a href="46870.html">Toc:DesignOps and GeneXus</a></TD><TD><a href="50570.html">Toc:DesignOps and GeneXus (GeneXus 17 Upgrade 9)</a></TD></TR><TR><TD><a href="49608.html">Sketch Import option (GeneXus 17 u5 or prior)</a></TD><TD><a href="50557.html">Sketch Import option (GeneXus 17 Upgrade 9)</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/07/22 02:09 PM</em></font></td></TR></table></font>

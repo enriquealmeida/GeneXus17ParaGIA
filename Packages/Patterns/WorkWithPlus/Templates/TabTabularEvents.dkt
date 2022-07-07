@@ -1,0 +1,195 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Tabular Tab Events" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="wwInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="SubLoadContext" File="SubLoadContext.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubCheckSecurity" File="SubCheckSecurity.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubPrepareTransaction" File="SubPrepareTransaction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubLinkAttributes" File="SubLinkAttributes.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SubAddressAutoLinkEvent" File="SubAddressAutoLinkEvent.dkt" MergeProperties="True"%>
+<%
+
+	TabularTabElement tab = wwInstance.GetElement<TabularTabElement>(Element);
+
+	WorkWithPlusSettings settings = wwInstance.Settings;
+	SettingsTemplateElement template = wwInstance.GetAppropiateTemplate();
+
+	List<IActionElement> actionsWithSecurity = new List<IActionElement>();
+	List<IActionElement> actions = tab.AllActions();
+	foreach(IActionElement action in actions)
+	{
+		if (action.HasStandaloneCondition())
+			actionsWithSecurity.Add(action);		
+	}
+    bool addAttSecurityCode, addAttVisibleConditionCode, otherControlVisibleCondition;
+    tab.Table.AddShowAttSecurityCode(out addAttSecurityCode, out addAttVisibleConditionCode, out otherControlVisibleCondition);
+	List<IAttributesItem> attsAndVars = null;
+	if (addAttSecurityCode || addAttVisibleConditionCode)
+	{
+		attsAndVars = tab.Table.GetAllAttributesAndVariables(true, true);
+	}
+
+%>
+Event Start
+<%@ CallSubTemplate SubLoadContext Settings='settings' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate SubCheckSecurity Settings='settings' SecurityFunction='tab.GetSecurityFunctionKey()' IndentLevel='1' IndentLevelChar='"\t"' %>
+<%
+	string generalInitializationCode = tab.Table.GetGeneralInitializationCode(Object);
+	if (generalInitializationCode != "")
+	{
+%>
+
+<%= Indentation.Indent(generalInitializationCode, 1) %>
+<%
+	}
+	if (addAttSecurityCode)
+	{
+%>
+
+	Do 'AttributesSecurityCode'
+<%
+	}
+	if (template.UseTransactionContext && wwInstance.HasTransaction())
+	{
+%>
+	Do 'PrepareTransaction'
+<%
+	}
+	foreach (WebComponentElement webComp in tab.Table.AllWebComponents(false))
+	{
+%>
+	<%= webComp.GetCreateWebComponentCall()%>
+<%		
+	}
+	foreach (IActionElement action in actions)
+	{
+		string initCode = action.InitializationCode();
+		if (initCode != String.Empty)
+		{
+%>
+<%= Indentation.Indent(initCode, 1) %>
+<%
+		}
+	}
+	bool hasDiscussions = tab.Table.GetStandardAction(StandardAction.Discussions) != null;
+	if (hasDiscussions || tab.Table.GetStandardAction(StandardAction.Subscriptions) != null)
+	{
+%>
+	&RecordDescription = Form.Caption
+<%
+	}
+%>
+
+EndEvent
+
+<%
+	if (hasDiscussions
+		&& wwInstance.HasTransaction()
+		&& settings.StandardActions.Discussions.IsImageTypeFontIcon()
+		&& settings.StandardActions.Discussions.NoDisImageClass != "")
+	{
+%>
+Event Refresh
+	If Not WWP_HasDiscussionMessages(!'<%= wwInstance.Transaction.TransactionName %>', <%= NotificationElement.GetNotificationRecordId(wwInstance) %>)
+		ddc_Discussions.Icon = <%= WorkWithStringValues.StringWithQuotes(settings.StandardActions.Discussions.NoDisImageClass) %>
+	EndIf
+EndEvent
+<%
+	}
+%>
+
+Event Load
+<%@  CallSubTemplate SubLinkAttributes Attributes='tab.GetTableAttributesAndVariables()' LinkAssocToImage='true' IndentLevel='1' IndentLevelChar='"\t"' %>
+
+<%
+	foreach (IAttributesItem item in tab.GetTableAttributesAndVariables())
+	{
+		if (!item.Visible)
+		{
+%>
+	<%= item.ControlName %>.Visible = False
+<%
+		}
+		if (item.Tag is RelatedElementCode && ((RelatedElementCode)item.Tag).EventName == "Load")
+		{
+			((RelatedElementCode)item.Tag).DefineVariables(wwInstance, item);
+%>
+<%= Indentation.Indent(((RelatedElementCode)item.Tag).Code, 1) %>
+<%
+		}
+	}
+	
+	foreach (IActionElement action in actionsWithSecurity)
+	{
+%>
+
+	// Security check for '<%= action.GetName() %>'
+<%= Indentation.Indent(action.EnableDisableCodeOutsideGrid(), 1) %> 
+<%
+	}
+
+	if (addAttVisibleConditionCode || otherControlVisibleCondition)
+	{
+%>
+
+	// Visible Conditions
+<%
+		if (addAttVisibleConditionCode)
+		{
+%>
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, attsAndVars, false, true), 1) %>
+<%
+		}
+		if (otherControlVisibleCondition)
+		{
+%>
+<%= Indentation.Indent(GeneralTableElement.GetControlVisibleConditionsCode(tab.Table), 1) %>
+<%
+		}
+	}
+%>
+EndEvent
+
+<%@ CallSubTemplate SubAddressAutoLinkEvent Attributes='tab.Table.GetTableAttributesAndVariables()' EventAssocToImage='true' %>
+<%
+	foreach (IActionElement action in actions)
+	{
+		string eventCode = action.Event();
+		if (eventCode != String.Empty)
+		{
+%>
+
+<%= eventCode %>
+<%
+		}
+	}
+
+	if (template.UseTransactionContext && wwInstance.HasTransaction())
+	{
+%>
+
+Sub 'PrepareTransaction'
+<%@ CallSubTemplate SubPrepareTransaction Transaction='tab.TabTransaction' CallerIsRecord='true' Parameters='tab.Parameters' Template='template' %>
+EndSub
+<%
+	}
+
+	if (addAttSecurityCode)
+	{
+%>
+
+Sub 'AttributesSecurityCode'
+
+<%= Artech.Common.Helpers.Strings.Indentation.Indent(SettingsSecurityElement.GetAttributesSecurityCode(false, attsAndVars, true, false), 1) %>
+
+EndSub
+<%
+	}
+%>
+<%= tab.Table.GetGeneralEventsAndSubs() %>

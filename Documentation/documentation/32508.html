@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Framework template for iOS User Controls or External Objects</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?32508,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Framework template for iOS User Controls or External Objects</h1>
+<!--Framework template for iOS User Controls or External Objects--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>When developing a User Control or External Object for any of the Apple platforms (iOS, AppleWatch or AppleTV), you may find it helpful to start off with an Xcode template.</p>
+
+<p>Such Xcode template is provided by the <a href="https://wiki.genexus.com/commwiki/wiki?27521,," target="_blank">GeneXus SDK</a>. Install de SDK, and then search for the XcodeTemplates folder under the installation directory.</p>
+
+<h2><a id="Installing+the+template" class="HashLink" href="#Installing+the+template">Installing the template</a></h2>
+
+<p>To install de template, copy the XcodeTemplates folder from the GeneXus SDK installation directory anywhere in your Mac computer, and run the script installTemplates.sh under xcTemplates from a Terminal.app.</p>
+
+<p>To check if the install succeded, go to Xcode, File &gt; New &gt; Proyect..., select Cross-platfotm, and under GeneXus you should see a GX Framework option.</p>
+
+<p><img src="./images/32534.png" id="32534" class="WikiImage"/></p>
+
+<h2><a id="Configuring+Xcode" class="HashLink" href="#Configuring+Xcode">Configuring Xcode</a></h2>
+
+<h3><a id="Define+GXSDK+global+variable" class="HashLink" href="#Define+GXSDK+global+variable">Define GXSDK global variable</a></h3>
+
+<p>You need to define a GXSDK global variable in Xcode, pointing to the path where the GeneXus Frameworks are located (typically /Users/&lt;user_name&gt;/Library/GeneXus/GeneXus/&lt;gx_version_number&gt;).</p>
+
+<p>To do that, go to Xcode &gt; Preferences... &gt; Locations &gt; Custom Paths<sup>(*)</sup> and add the GXSDK path.</p>
+
+<p><img src="./images/32536.png" id="32536" class="WikiImage"/></p>
+
+<p><img src="./images/32537.png" id="32537" class="WikiImage"/></p>
+
+<p><sup>(*)</sup> Note: <em>Custom Paths</em> option was named <em>Source Trees</em> in Xcode 7.</p>
+
+<h2><a id="Creating+the+project" class="HashLink" href="#Creating+the+project">Creating the project</a></h2>
+
+<p>When you select the GX Framework option from the New Project dialog in Xcode, the following dialog is presented.</p>
+
+<p><img src="./images/32538.png" id="32538" class="WikiImage"/></p>
+
+<p>Here you have to configure:</p>
+
+<ul>
+	<li><strong>Product Name</strong>: the name of your User Control or External Object</li>
+	<li><strong>Language</strong>: you may choose Swift or Objective-C</li>
+	<li><strong>Copy config files</strong>: if checked (default value), the .xcconfig files will be copied to the project's directory. If you uncheck this option, the files will be referenced from their original location.</li>
+	<li><strong>Allow app extension API only</strong>: if checked (default value), only extensions-enabled options will be available. You shoud probably not change this value, since using other APIs may result in your extension being incompatible with GeneXus apps.</li>
+	<li><strong>Use shared umbrella header</strong>: if checked (default value), only one header file will be created for all the supported platforms (iOS, watchOS &amp; tvOS). Otherwise, an individual header will be created for each platform.</li>
+</ul>
+
+<h2><a id="Implement+your+User+Control+or+External+Object" class="HashLink" href="#Implement+your+User+Control+or+External+Object">Implement your User Control or External Object</a></h2>
+
+<p>Now you need to add the implementation of your extension by subclassing the appropiate base clases. You may refer to <a href="18330.html">Creating User Controls for iOS</a> and <a href="18072.html">External Object for iOS Devices</a> for more information.</p>
+
+<h2><a id="Build+and+deploy" class="HashLink" href="#Build+and+deploy">Build and deploy</a></h2>
+
+<p>When you build your Xcode project, a framework is created. Frameworks are special folders in OS X where the implementation of the component is stored, along with all the necessary resources. If you want to learn more about frameworks, you can read all about them in Apple's <a href='https://developer.apple.com/library/content/documentation/MacOSX/Conceptual/BPFrameworks/Frameworks.html#//apple_ref/doc/uid/10000183i'>Introduction to Framework Programming Guide</a>.</p>
+
+<p>You need to build both the device and simulator instances of the framework. To do that, in Xcode select a simulator from the Schemes dropdown and build, then select a device and build again.</p>
+
+<p>After that is done, you need to find the <strong><em>build</em></strong> folder in Finder. The easiest way of doing that is right-clicking the project in Xcode and then selecting Show in Finder.</p>
+
+<p>The <strong><em>build</em></strong> folder will contain two additional folders: <strong><em>Debug-iphonesimulator</em></strong> and <strong><em>Debug-iphoneos</em></strong>. Both subfolders contain a .framework with the implementation for each platform. You'll need to zip both frameworks, as both of them are needed.</p>
+
+<h3><a id="User+Controls" class="HashLink" href="#User+Controls">User Controls</a></h3>
+
+<p>For User Controls, you'll have a .control file that you need to modify in order to use the frameworks previously created.</p>
+
+<p>Add the following to your .control file:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;iOS_SupportFiles&gt;
+        &lt;File&gt;iphoneos\MyUserControl.framework.gxzip&lt;/File&gt;
+        &lt;File&gt;iphonesimulator\MyUserControl.framework.gxzip&lt;/File&gt;
+&lt;/iOS_SupportFiles&gt;
+&lt;iOS_ReferencedFiles&gt;
+        &lt;File embed=&quot;true&quot;&gt;./UserControls/$(PLATFORM_NAME)/MyUserControl.framework&lt;/File&gt;
+&lt;/iOS_ReferencedFiles&gt;</pre>
+
+<p>where <em>MyUserControl</em> is the name of the user control</p>
+
+<h3><a id="External+Objects" class="HashLink" href="#External+Objects">External Objects</a></h3>
+
+<p>For External Objects, an <a href="33545.html">Extension Library</a> is needed to deploy them automatically. That is, to include the External Object's implementation in the Xcode project each time the developer performs a Build in GeneXus.</p>
+
+<p>Extension Libraries are available for iOS since <a href="https://wiki.genexus.com/commwiki/wiki?35908,," target="_blank">GeneXus 15 Upgrade 6</a>.</p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="32558.html">BlurredImage: sample User Control for iOS</a></TD><TD><a href="18330.html">Creating User Controls for iOS</a></TD><TD><a href="18072.html">External Object for iOS Devices</a></TD></TR><TR><TD><a href="33805.html">HowTo: Migrate an External Object for iOS from Evolution 3 to GeneXus 15</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/11/20 07:00 PM</em></font></td></TR></table></font>

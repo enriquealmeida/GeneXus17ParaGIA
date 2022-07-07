@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>State persistence of grids</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46491,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">State persistence of grids</h1>
+<!--State persistence of grids--><div class="TableWikiBody" id="tblwikibody"><p>This article explains different mechanisms to persist, or not, information related to the state of a grid.</p>
+
+<p>State information such as pagination position, filtering, and sorting can be read, changed, and also handled automatically by the programs.</p>
+
+<p>Several properties and methods allow this in design- or runtime.</p>
+
+<h3><a id="Design-time+configuration" class="HashLink" href="#Design-time+configuration">Design-time configuration</a></h3>
+
+<h4><a id="Grid%27s+Save+State+property+" class="HashLink" href="#Grid%27s+Save+State+property+">Grid's Save State property </a></h4>
+
+<p><a href="46017.html">This</a> property allows choosing, at design-time, whether the programs should save and load the grid's session state automatically or not.</p>
+
+<h3><a id="Programming+state+persistence" class="HashLink" href="#Programming+state+persistence">Programming state persistence</a></h3>
+
+<p>The following methods and properties can be used in Events of a <a href="6916.html">Web Panel object</a>, <a href="1864.html">Web Component object</a>, and <a href="10348.html">Web Master Panel object</a>:</p>
+
+<h4><a id="Grid%27s+LoadSessionState+method" class="HashLink" href="#Grid%27s+LoadSessionState+method">Grid's LoadSessionState method</a></h4>
+
+<p>This method allows loading the Grid's state from the session, programmatically.</p>
+
+<p>Note: Variables that are the input for the grid's orders are only loaded if they are not empty</p>
+
+<h4><a id="Grid%27s+SaveSessionState+method" class="HashLink" href="#Grid%27s+SaveSessionState+method">Grid's SaveSessionState method</a></h4>
+
+<p>This method allows saving the Grid's state to the session, programmatically.</p>
+
+<p>What is saved:</p>
+
+<ul>
+	<li>Editable Variables that are the input for the grid's conditions and also are in the layout (eg.: &amp;ClientId)</li>
+	<li>Variables that are the input for the grid's orders (eg.: &amp;OrderedBy)</li>
+</ul>
+
+<h4><a id="Grid%27s+State+property" class="HashLink" href="#Grid%27s+State+property">Grid's State property</a></h4>
+
+<p>The Grid State property can be accessed and changed at runtime. Its type is of an SDT, GeneXus.Common.GridState. You may use it to persist the state somewhere else; for example, to store it in the database, associated with your application user's preferences. The automatic assignment of the User Interface's state to the State property (and vice-versa) depends on the Save State Property.</p>
+
+<h2><a id="Samples" class="HashLink" href="#Samples">Samples</a></h2>
+
+<h3><a id="Sample+1%3A+Automation+vs+Flexibility" class="HashLink" href="#Sample+1%3A+Automation+vs+Flexibility">Sample 1: Automation vs Flexibility</a></h3>
+
+<p>The following three cases are equivalent</p>
+
+<p>A) Set Grid's Save State Property to True</p>
+
+<p>B) Set Grid's Save State Property to False and write the following</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    //some other lines of code
+    Grid.LoadSessionState()
+EndEvent
+
+Event Refresh
+    Grid.SaveSessionState()
+    // some other lines of code
+EndEvent</pre>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  This is actually what the <a href="5636.html">Work With Pattern</a> writes by default.</div>
+</p>
+
+<p>C) Set Grid's Save State Property to False and write the following</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    // some other lines of code 
+    Do 'LoadGridState'
+EndEvent
+
+Event Refresh
+    Do 'SaveGridState'
+    // some lines of code 
+EndEvent
+
+/*** Subroutines used to load and save the grid state. ***/
+
+Sub 'LoadGridState'
+    If (&amp;HTTPRequest.Method = HttpMethod.Get)
+        // Load grid state from session.
+        &amp;GridState.FromXml(&amp;Session.Get(&amp;PgmName + !&quot;GridState&quot;))
+
+        If &amp;GridState.FilterValues.Count &gt;= 1
+            &amp;ClientName.FromString(&amp;GridState.FilterValues.Item(1).Value)
+        Endif
+
+        If &amp;GridState.CurrentPage &gt; 0
+            &amp;GridPageCount = Grid.PageCount
+            If (&amp;GridPageCount &gt; 0 and &amp;GridPageCount &lt; &amp;GridState.CurrentPage)
+                Grid.CurrentPage = &amp;GridPageCount
+            Else 
+                Grid.CurrentPage = &amp;GridState.CurrentPage
+            Endif            
+        Endif
+    Endif    
+EndSub
+
+Sub 'SaveGridState'
+    &amp;GridState.FromXml(&amp;Session.Get(&amp;PgmName + !&quot;GridState&quot;))
+
+    // Save grid state in session.
+    &amp;GridState.CurrentPage = Grid.CurrentPage
+    &amp;GridState.FilterValues.Clear()
+    &amp;GridStateFilterValue = new()
+    &amp;GridStateFilterValue.Value = &amp;ClientName.ToString()
+    &amp;GridState.FilterValues.Add(&amp;GridStateFilterValue)
+
+    &amp;Session.Set(&amp;PgmName + !&quot;GridState&quot;, &amp;GridState.ToXml())
+EndSub
+
+</pre>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  This is actually what the <a href="5636.html">Work With Pattern</a> wrote by default in <a href="https://wiki.genexus.com/commwiki/wiki?45901,," target="_blank">GeneXus 16 Upgrade 11</a> or prior.</div>
+</p>
+
+<h3><a id="Sample+2%3A+Persisting+the+Grid%27s+state+in+the+Database+" class="HashLink" href="#Sample+2%3A+Persisting+the+Grid%27s+state+in+the+Database+">Sample 2: Persisting the Grid's state in the Database </a></h3>
+
+<p>You can persist the state of the grid to places like the database or the cache, and load it from there afterward, using the State property.<br />
+The following two samples are equivalent:</p>
+
+<p>A) Set Grid's Save State property to False and write the following</p>
+
+<pre>
+Event Start
+    //some other lines of code
+    Grid1.State = GridStateFromBD(&amp;pgmname, !&quot;Grid1&quot;) //Updates session and internal state
+    Grid1.LoadSessionState() //Updates user interface
+EndEvent
+</pre>
+
+<pre>
+Event Refresh
+    Grid1.SaveSessionState() //Reads user interface and updates session and internal state
+    GridStateToDB(&amp;pgmname, !&quot;Grid1&quot;, Grid1.State) //Saves internal state to database
+    //some other lines of code
+EndEvent</pre>
+
+<p>B) Set Grid's Save State property to True and write the following</p>
+
+<pre>
+Event Start
+    //some other lines of code
+    Grid1.State = GridStateFromBD(&amp;pgmname, !&quot;Grid1&quot;) //Updates session and internal state
+EndEvent
+</pre>
+
+<pre>
+Event Refresh
+   GridStateToDB(&amp;pgmname, !&quot;Grid1&quot;, Grid1.State) //Saves internal state to database
+   //some other lines of code
+EndEvent</pre>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46344.html">GeneXus 17 Compatibility Section</a></TD><TD><a href="46592.html">Multi-experience with GeneXus 17</a></TD></TR><TR><TD><a href="46017.html">Save State property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/16/21 06:22 PM</em></font></td></TR></table></font>

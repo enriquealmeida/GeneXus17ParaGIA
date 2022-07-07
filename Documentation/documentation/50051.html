@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>API Object - ListCustomers service definition and declaration</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50051,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">API Object - ListCustomers service definition and declaration</h1>
+<!--API Object - ListCustomers service definition and declaration--><div class="TableWikiBody" id="tblwikibody"><p>This article describes all the necessary steps to define an <a href="46151.html">API object</a> (called APICustomers) and declare inside it a ListCustomers service that returns all the Customer data.<br />
+<br />
+Consider a <a href="1836.html">Knowledge Base</a> containing:</p>
+
+<p>1) A Customer <a href="1908.html">Transaction object</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+  CustomerId*
+  CustomerName
+  CustomerLastName
+}  </pre>
+
+<p>Note: The Customer Transaction has <a href="32706.html">Automatic data population</a>.</p>
+
+<p>2) An <a href="2427.html">SDT</a> that is a collection with the same structure as the Customer Transaction:</p>
+
+<p><img src="./images/50250.png" id="50250" class="WikiImage"/><br />
+ </p>
+
+<p>3) A <a href="5270.html">Data Provider object</a> with the logic needed to return all the customer's data:</p>
+
+<p><img src="./images/50252.jpg" id="50252" class="WikiImage"/></p>
+
+<p>Note that the Data Provider has the previously defined SDT as the output parameter.</p>
+
+<p>Create an <a href="46151.html">API object</a> called APICustomers. Inside its <strong>Service Source</strong> tab, you have to declare, for each service, a mapping between its external name (exposed as a service) and the internal implementation in the KB (in this example, the CustomerList Data Provider). Look at the following mapping:<br />
+ </p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Customer{
+    <strong>ListCustomers</strong>(out:&amp;SDTCustomers) =&gt; CustomerList(&amp;SDTCustomers);
+}</pre>
+
+<p><br />
+The external service name is ListCustomers; internally, it is solved with the CustomerList Data Provider.</p>
+
+<ul>
+</ul>
+
+<p>The service source is not allowed to access data. Therefore, you have to use a <a href="5270.html">Data Provider</a> or a <a href="6293.html">Procedure</a> object instead of a <a href="24744.html">For Each command</a> or <a href="2277.html">Business Component</a>.</p>
+
+<p>You could define the following event in the Events tabs, if necessary:</p>
+
+<pre class="Code" style="margin-left: 40.0px;">
+Event Before
+    //Some Code if is needed
+Endevent
+
+Event After
+    //Some Code if is needed
+Endevent
+
+Event ListCustomers.Before
+    //Some code if is needed
+Endevent
+
+Event ListCustomers.After
+    //Some Code if is needed
+EndEvent</pre>
+
+<p><br />
+The event execution order would be as follows:</p>
+
+<ol>
+	<li style="margin-left: 40.0px;">Event 'Before'</li>
+	<li style="margin-left: 40.0px;">Event 'ListCustomers.Before'</li>
+	<li style="margin-left: 40.0px;">ListCustomers method (CustomerList Data Provider)</li>
+	<li style="margin-left: 40.0px;">Event 'ListCustomers.After'</li>
+	<li style="margin-left: 40.0px;">Event 'After' </li>
+</ol>
+
+<p>You can see all the steps being executed:</p>
+
+<p> <img src="./images/49758.gif" id="49758" class="WikiImage"/></p>
+
+<p><font color="#ff0000"> </font></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="50054.html">Calling rest API Using Postman app</a></TD><TD><a href="49754.html">Toc:First Steps with API Objects</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/01/22 12:25 PM</em></font></td></TR></table></font>

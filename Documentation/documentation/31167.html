@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using Global Events in Web Objects</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31167,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using Global Events in Web Objects</h1>
+<!--HowTo: Using Global Events in Web Objects--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Most times it's necessary to implement a solution where one action in a <a href="1864.html">Web Component object</a> of the screen causes a reaction in another web component.</p>
+
+<p>For example, trigger an action in some web component if the user selects an item in a Menu (of another component of the screen).</p>
+
+<p>Since communication between the web components of the screen is a bit limited - the only feasible communication is between parents to children-, <a href="31164.html">Global Events</a> are very useful for enabling the GeneXus user to establish communication between <a href="1864.html">Web Components</a> that are disengaged <sup>(1)</sup>. </p>
+
+<p> </p>
+
+<div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,235,59);padding: 0.01em 16.0px;">
+<p><b>Benefits of using Global Events on the web:</b></p>
+
+<ul>
+	<li>Global Events give a solution for communication between the web components of a form.</li>
+	<li>Also, you can execute a specific event of a component with no need to Refresh the component's form.</li>
+</ul>
+
+<p> </p>
+</div>
+
+<p> </p>
+
+<h2><a id="Example" class="HashLink" href="#Example">Example</a></h2>
+
+<h3><a id="Communicating+with+a+sibling+object" class="HashLink" href="#Communicating+with+a+sibling+object">Communicating with a sibling object</a></h3>
+
+<p>An action in component A should trigger an action in component B.</p>
+
+<p><img src="./images/32497.png" id="32497" class="WikiImage"/></p>
+
+<p>Consider a hypothetical case where we have two sibling components, one of them (&quot;AuthorsComponent&quot;) loads a list of Authors, and the other (&quot;BooksComponent&quot;) filters the literary works of the author selected in the first component.</p>
+
+<p><img src="./images/31908.png" id="31908" class="WikiImage"/></p>
+
+<p>As both components have no communication with each other, the best way to trigger the refresh of the Component B's grid is to use <em>Global Events</em>.</p>
+
+<p>1. Open the <a href="31169.html">GlobalEvents external object</a> and add an event called &quot;SelectAuthor&quot;. Consider adding the necessary parameters there.</p>
+
+<p><img src="./images/31977.png" id="31977" class="WikiImage"/></p>
+
+<p>2. In the &quot;AuthorsComponent&quot; we call the &quot;SelectAuthor&quot; Global Event when the user activates a line of the grid.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&quot;AuthorsComponent&quot; code:
+Event grid1.OnLineActivate
+    GlobalEvents.SelectAuthor(AuthorId)
+Endevent
+</pre>
+
+<p>3. In &quot;BooksComponent&quot; we define the &quot;SelectAuthor&quot; Global Event. It receives the &amp;authorId as a parameter and calls the grid refresh. &amp;authorId is a variable present on the screen in this case.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&quot;BooksComponent&quot; code
+Event GlobalEvents.SelectAuthor(&amp;authorId)
+    grid1.Refresh()
+Endevent</pre>
+
+<p>Here we've shown a particular example, but any combination of the localization of the components in the form is possible. The parent object of all the components can also define or invoke a Global Event.</p>
+
+<div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,235,59);padding: 0.01em 16.0px;">
+<p><b>Note:</b></p>
+
+<p>In this scheme, there are N web components that can publish an event, and M web components which are subscribers to the events.</p>
+
+<p> </p>
+</div>
+
+<p>Then, another web component could subscribe to the &quot;SelectAuthor&quot; <em>Global Event</em>. For example, a component that shows the author's biography.</p>
+
+<p><img src="./images/31979.gif" id="31979" class="WikiImage"/></p>
+
+<p>To try it yourself, download the sample <a href="https://wiki.genexus.com/commwiki/wiki?31980,," target="_blank">Web Global Events sample for books</a>.</p>
+
+<p> </p>
+
+<h3><a id="Restrictions" class="HashLink" href="#Restrictions">Restrictions</a></h3>
+
+<ul>
+	<li>If a web component which defines a <em>Global Event </em>is<em> </em>present more than once on the screen, the Global Event is called only once (only for one instance of the web components and not for all of them).</li>
+	<li>Global Events can only be called from objects with UI (web panels and web transactions). In <a href="5846.html">Business Component</a> rules, they have to be called inside the [Web] section. Eg: 
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Web Trn rules:
+[ web ] 
+{
+GlobalEvents.TotalWorksEvent(-1) 
+    if delete on aftercomplete;
+
+GlobalEvents.TotalWorksEvent(1) 
+    if insert on aftercomplete;
+}</pre>
+	</li>
+</ul>
+
+<div style="background-color: rgb(235,235,235);padding: 0.01em 16.0px;">
+<h4><a id="%281%29The+traditional+problem+of+web+components+communication" class="HashLink" href="#%281%29The+traditional+problem+of+web+components+communication"><sup>(1)</sup>The traditional problem of web components communication</a></h4>
+
+<p>The traditional ways to communicate between web components (solution without Global Events), are:</p>
+
+<ol>
+	<li>Executing a <a href="22579.html">Refresh Web Component command</a><br />
+	In general, web sessions are used to pass information to other web components, and the web session is read in a Refresh event.<br />
+	However, the WebComponent.Refresh command can be executed for the child components of a given component, not for parents or siblings.<br />
+	Besides, the <a href="25069.html">Refresh command</a> executes a full refresh of the screen, and in the majority of the cases, this is not desired.<br />
+	 </li>
+	<li>Calling the Web Component, passing it the necessary parameters (WebComponent.create command).<br />
+	A Web Component can be created as a child, you cannot create parent or sibling components.</li>
+</ol>
+
+<p>In sum, sibling components, cannot communicate with each other, and one web component cannot communicate with its parent or grandparents.</p>
+</div>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="22472.html">Event Execution Scheme</a></TD><TD><a href="31164.html">Global Events</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

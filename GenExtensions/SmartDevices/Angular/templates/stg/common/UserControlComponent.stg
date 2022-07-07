@@ -1,0 +1,103 @@
+delimiters "$", "$"
+import "UserControlCommon.stg"
+
+g_component(page, gx)::=<<
+import { Component, Input$if (page.ComponentEvents)$, Output$endif$ } from "@angular/core";
+$if (page.ComponentEvents)$
+import { EventEmitter } from "@angular/core";
+$endif$
+import { UserControlComponent } from "app/gx/base/usercontrol.component";
+$page.LocalImports : { import | $import.Source$};separator = "\r\n"$
+
+@Component({
+  selector: "$page.FullName$",
+  templateUrl: "./$gx.ToLower.(page.OnlyName)$.component.html",
+})
+export class $page.FullName$Component extends UserControlComponent $g_implements(page)${
+  @Input() visible: boolean;
+  $page.Properties:g_properties_definition();separator="\n"$
+  $page.ComponentEvents:g_events_definition();separator="\n"$
+  $page.ClassBodyScripts : { script | $script.Source$};separator = "\r\n"$
+
+  constructor() {
+    super();
+    this.visible = true;
+    $page.Properties:g_properties_initialization();separator="\n"$
+  }
+
+  $page.ComponentEvents:g_events_handlers_definition();separator="\n"$
+  $page.Methods.Public:g_method();separator="\n"$
+  $page.Methods.Private:g_private_method();separator="\n"$
+  $g_before_show(page)$
+  $g_after_show(page)$
+}
+
+>>
+
+g_implements(page) ::=<%
+$if (page.ComponentImplements)$implements $page.ComponentImplements : { interface | $interface$};separator = ", "$$endif$
+%>
+
+g_before_show(page) ::=<<
+$if (page.Scripts.BeforeShow)$
+ngOnInit() {
+  // Before show
+  $page.Scripts.BeforeShow : { script | this.$script.Name$();};separator = "\r\n"$
+}
+
+$page.Scripts.BeforeShow:g_script();separator="\n"$
+$endif$
+>>
+
+g_after_show(page) ::=<<
+$if (page.Scripts.AfterShow)$
+ngAfterViewChecked() {
+  // After show
+  $page.Scripts.AfterShow : { script | this.$script.Name$();};separator = "\r\n"$
+}
+
+$page.Scripts.AfterShow:g_script();separator="\n"$
+$endif$
+>>
+
+g_properties_definition(property) ::=<%
+@Input() $g_properties_definition_common(property.ResolvedName, property.Type)$
+%>
+
+g_properties_initialization(property) ::=<%
+$g_properties_initialization_common(property.ResolvedName, property.Type, property.Default)$
+%>
+
+g_events_definition(event) ::=<%
+@Output() $event.ComponentEventName$ = new EventEmitter();
+%>
+
+g_events_handlers_definition(event) ::=<<
+$event.ComponentHandlerName$(event) {
+  this.$event.ComponentEventName$.emit(event);
+}
+
+>>
+
+g_method(method) ::=<<
+$method.Name$($method.Parameters:g_method_parameter();separator=", "$) {
+  $method.Source$
+}
+
+>>
+
+g_private_method(method) ::=<<
+private $method.Name$($method.Parameters:g_method_parameter();separator=", "$) {
+  $method.Source$
+}
+
+>>
+
+g_script(script) ::=<<
+private $script.Name$() {
+  $script.Source$
+}
+
+>>
+
+g_method_parameter(param) ::=<%$param.Name$%>

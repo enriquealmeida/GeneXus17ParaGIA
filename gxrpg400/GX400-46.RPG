@@ -1,0 +1,161 @@
+ ************************************************************** 
+C           GTFDBK    BEGSR
+ ************************************************************** 
+ *
+ *
+ * GET FEEDBACK INFORMATION
+ *
+C                     BITOF'01234567'HEX00   1
+C                     MOVELHEX00     $BINAR
+C                     MOVE $FKEY     $BINAR
+C                     Z-ADD$BYTE     $KEYP   30
+C                     MOVELHEX00     $BINAR
+C                     MOVE $CROW     $BINAR
+C                     Z-ADD$BYTE     $SFROW  30
+C                     MOVELHEX00     $BINAR
+C                     MOVE $CCOL     $BINAR
+C                     Z-ADD$BYTE     $SFCOL  30
+C                     MOVELHEX00     $BINAR
+C                     MOVE $SFLTR    $BINAR
+C                     Z-ADD$BYTE     $SFTRC  50
+C                     ENDSR
+ ************************************************************** 
+C           ACTRCD    BEGSR
+ ************************************************************** 
+ *
+ *
+ * COMPUTE SELECTED SUBFILE RECORD
+ *
+C                     Z-ADD0         $SFOUR  10
+C                     EXSR GTFDBK
+C           $SFTRC    IFEQ 0
+C                     Z-ADD$SFLRN    $SFTRC
+C                     ENDIF
+C           $SFROW    IFLT $SFLUR
+C           $SFROW    ORGT $SFLLR
+ * OUT OF SUBFILE RANGE
+C                     Z-ADD1         $SFOUR  10
+C                     Z-ADD0         @RELPS  40
+C                     ELSE
+C           $SFROW    SUB  $SFLUR    @RELPS
+C                     ENDIF
+C                     ADD  @RELPS    $SFTRC
+C           $SFTRC    IFGT $SFLRN
+ * ON EMPTY RECORD
+C                     Z-ADD1         $SFOUR  10
+C                     Z-ADD$SFLRN    $SFTRC
+C                     ENDIF
+C                     Z-ADD$SFTRC    SFLRCD
+C           SFLRCD    IFEQ 0
+C                     Z-ADD1         SFLRCD
+C                     Z-ADD1         $SFOUR  10
+C                     ENDIF
+C                     Z-ADD0         #8
+C                     MOVE *BLANKS   #9
+C           $SFOUR    IFEQ 1
+C                     Z-ADD3         #8
+C                     MOVEL#12       #9
+C                     ENDIF
+C                     ENDSR
+ ************************************************************** 
+C           SCRCFM    BEGSR
+ ************************************************************** 
+ *
+ *
+ * USER CONFIRMATION
+ *
+C                     MOVE *BLANKS   $MSG  
+C                     MOVE '0'       $MSGIN  1
+C                     MOVEL#1        $MSG  
+C                     MOVE *BLANKS   #11
+C                     MOVEL#2        #11
+C                     EXSR MSGCFM
+C                     ENDSR
+ ************************************************************** 
+C           PNDMSG    BEGSR
+ ************************************************************** 
+ *
+ *
+ * SEND PENDING MESSAGES
+ *
+C                     MOVE 0         $CONFR  10     
+C                     MOVE 0         $RKEY   10   
+C                     EXSR SNDAMS
+ * WAIT UNTIL A VALID KEY IS PRESSED
+C           $RKEY     DOUEQ1 
+C                     EXFMT#7
+C                     SETOF                     86
+C                     EXSR GTFDBK
+C           $KEYP     IFEQ #3                            ENTER  
+C           $KEYP     OREQ #4     
+C                     MOVE 1         $RKEY
+C                     ENDIF
+C                     ENDDO
+ * IF ENTER-KEY PRESSED - CONFIRMED
+C           $KEYP     IFEQ #3                            ENTER
+C                     MOVE 1         $CONFR
+C                     ENDIF
+C                     ENDSR
+ ************************************************************** 
+C           MSGCFM    BEGSR
+ ************************************************************** 
+ *
+ *
+ * MESSAGE WITH CONFIRMATION
+ *
+C                     EXSR SNDMSG
+C                     EXSR PNDMSG
+C                     ENDSR
+ ************************************************************** 
+C           INZSFL    BEGSR
+ ************************************************************** 
+ *
+ * INIT MESSAGE SUBFILE
+ *
+ *
+C                     SETOF                     9192
+C                     Z-ADD0         $MRRN   40
+C                     WRITE#6
+C                     ENDSR
+ ************************************************************** 
+C           SNDAMS    BEGSR
+ ************************************************************** 
+ *
+ *
+ * WRITE ALL MESSAGES TO SUBFILE
+ *
+C                     EXSR INZSFL
+C           $MSGC     IFLE 0
+C                     MOVE *BLANKS   $MSG   80
+C                     EXSR SNDMSG
+C                     ENDIF
+C           $MSGC     DOWGT$MRRN
+C                     ADD  1         $MRRN          
+ * MOVE GX_MSG TO DSPF MSG
+C                     MOVE $MSI,$MRRN*IN84  
+C                     MOVEL$MSA,$MRRN#10          
+C                     WRITE#5                     93     
+C                     ENDDO
+C           $MSGC     IFGT 0
+C                     SETON                     9192
+C                     SETON                     93
+C                     WRITE#6
+C                     ENDIF
+C                     Z-ADD0         $MSGC
+C                     ENDSR
+ ************************************************************** 
+C           SNDMSG    BEGSR
+ ************************************************************** 
+ *
+ *
+ * ADD MESSAGE TO MSG-ARRAY
+ *
+C           $MSGC     IFLT 50
+C                     ADD  1         $MSGC   20         
+ * MOVE GX_MSG TO DSPF MSG
+C                     Z-ADD$MSGC     X       50
+C                     MOVE $MSGIN    $MSI,X        
+C                     MOVE *BLANKS   $MSA,X        
+C                     MOVEL$MSG      $MSA,X        
+C                     ENDIF
+C                     ENDSR

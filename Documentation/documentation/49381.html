@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Design System Tokens Options</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?49381,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Design System Tokens Options</h1>
+<!--Design System Tokens Options--><div class="TableWikiBody" id="tblwikibody"><p>The set of <a href="47378.html">Tokens</a> of a <a href="40108.html">Design System</a> can be parameterized so that the value of some or all the tokens can be varied according to the options being used for the parameters at runtime.</p>
+
+<p>A clear example is when you want to have a Light and a Dark mode for the application. This variation usually affects only the colors; therefore, it would be enough to add a parameter to the TokensSetName representing the mode, specify that its possible values will be Light and Dark, and set the values of the color Tokens for Light mode and of the color Tokens for Dark mode —for those that change according to the mode. </p>
+
+<p><img src="./images/49379.gif" id="49379" class="WikiImage"/></p>
+
+<p>Depending on the value of the color-scheme option selected at runtime, the classes that use the OnSurface, Surface and Highlight color Tokens will vary the associated values and therefore will be displayed differently at runtime (the generation of the DSO takes them into account and sets the corresponding selectors for each token depending on the parameters chosen):</p>
+
+<p><img src="./images/49394.gif" id="49394" class="WikiImage"/></p>
+
+<p>In <a href="47378.html">Design System Tokens</a>, the general syntax was presented showing parameters and conditions as optional:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+tokens <em>TokensSetName </em>[<strong>(</strong> <em>option<sub>1</sub></em><em> </em>[<strong>,</strong><em> option</em><sub>2</sub>]... <strong>)</strong>]
+‘<strong>{</strong>’
+       [<em>tokensDeclarations</em>]...
+‘<strong>}</strong>’</pre>
+
+<p style="text-align: right;"><a href="49363.html">View Syntax conventions</a>.</p>
+
+<p><strong>Where:</strong></p>
+
+<p><em>TokensSetName:</em></p>
+
+<p>      Name given to the set of token declarations. Currently, only one set of token declarations can be defined in a DSO, but more may be available in the future.</p>
+
+<p><em>option<sub>i</sub></em>:<br />
+      Each option has the following format:</p>
+
+<p><em>                          option_name</em><strong>:</strong> ‘<strong>[</strong>’<em>value<sub>1</sub></em>‘<strong>]</strong>’ ‘<strong>|</strong>’ <em>value<sub>2</sub></em> [ { ‘<strong>|</strong>’ <em>value<sub>3</sub></em> }...]</p>
+
+<ul style="margin-left: 40.0px;">
+	<li style="margin-left: 36.0pt;"><em>option_name</em>: Name by which the definition of some or all tokens can be varied. It can be a name such as color-scheme, mode, platform, etc.</li>
+	<li style="margin-left: 36.0pt;"><em>value<sub>1</sub></em>’: Value that can take the <em>option_name</em>. The bold square brackets are used to define that this option is the default one.</li>
+	<li style="margin-left: 36.0pt;"><em>value<sub>i</sub></em>: Value that can take the <em>option_name</em>.</li>
+</ul>
+
+<p style="margin-left: 36.0pt;">             Notes: </p>
+
+<ul style="margin-left: 40.0px;">
+	<li style="margin-left: 36.0pt;">The list of values must be separated by "|".</li>
+	<li style="margin-left: 36.0pt;">Values are not enclosed in quotation marks.</li>
+</ul>
+
+<p><em>tokensDeclarations</em>:<br />
+     Each tokenDeclaration corresponds to an option declared, and has the following format:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+[option_condition]
+‘{’]
+       [#token_group
+      ‘{’
+               [token_name: value[unit]|valuewithData ;] ...
+      ‘}’
+       ] …
+       |[tokensDeclarations] ...
+[‘}’]
+</pre>
+
+<p><br />
+         Each option<em>_condition</em> has the following format:</p>
+
+<p>                          <strong>@</strong><em>option_name<sub>1</sub> </em><strong>=</strong> <em>value<sub>1i</sub> </em>[<strong>and</strong> <strong>@</strong><em>option_name<sub>i</sub> </em><strong>=</strong> <em>value<sub>ik</sub></em>]...</p>
+
+<ul style="margin-left: 40.0px;">
+	<li><em>option_name<sub>m</sub></em>: One of the parameters of <em>TokensSetName</em>.</li>
+	<li><em>value<sub>mn</sub></em>: One of the values listed for the <em>option_name<sub>m </sub></em>parameter.</li>
+</ul>
+
+<h3><a id="Sample" class="HashLink" href="#Sample">Sample</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+tokens MyTokensSet (color-scheme: <strong>[</strong>Light<strong>]</strong>|Dark, platform: <strong>[</strong>Native<strong>]</strong>|Web Angular| Web)
+{
+       @color-scheme =  Light
+       {
+              #colors
+              {
+                      primary: black;
+              }
+       }
+
+       @color-scheme = Light and @platform = Native
+       {
+              #colors
+              {
+                      primary: grey;
+              }
+              // more
+       }
+       // more
+}
+</pre>
+
+<div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: In this case, the default options of color-scheme and platform are Light and Native respectively.</div>
+
+<p>Nesting is also valid, and behaves like AND:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+tokens MyTokensSet (color-scheme: <strong>[</strong>Light<strong>]</strong>|Dark, platform: <strong>[</strong>Native<strong>]</strong>|Web Angular|Web)
+{
+       @color-scheme =  Light
+       {
+              #colors
+              {
+                      primary: black;
+              }
+              @platform = Native
+              {
+                    #colors
+                    {
+                             primary: grey;
+                    }
+                    // more
+              }
+        }
+        // more
+}</pre>
+
+<h3><a id="Set+the+value+of+an+option+at+runtime" class="HashLink" href="#Set+the+value+of+an+option+at+runtime">Set the value of an option at runtime</a></h3>
+
+<p>In order to assign and change the value of the parameters by code, the <a href="49367.html">Design System external object</a>, inside the GeneXus module, provides the SetOption method.  </p>
+
+<p><img src="./images/49398.gif" id="49398" class="WikiImage"/></p>
+
+<p>If an option has no value at runtime, only the tokens not conditioned according to the option will have a value. The others are left without a value. </p>
+
+<p>The dark / light example is provided for illustrative purposes only. With these parameters, you can have any custom option that the developer wants to define. Therefore, there is no reason to vary only the color tokens. Conditions can be set for all token groups.</p>
+
+<h3><a id="Image+variation" class="HashLink" href="#Image+variation">Image variation</a></h3>
+
+<p>It is also possible to vary an image at runtime according to the options. See <a href="49372.html">Image variation by Tokens options</a>.</p>
+
+<p><img src="./images/49375.gif" id="49375" class="WikiImage"/></p>
+
+<h3><a id="Imported+tokens" class="HashLink" href="#Imported+tokens">Imported tokens</a></h3>
+
+<p>If a DSO A or only its token set is being imported into a DSO B (always from the Styles tab) and it has defined options not needed in DSO B because its tokens will not be varied by those options, the tokens from DSO A can be used in the classes of DSO B without having to declare the parameters again.</p>
+
+<p>Example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Tokens DSOA_Tokens (option1: a|b)
+{
+       @option1 = a
+       {
+              #colors           
+              {
+                      primary: red;
+       }
+              }
+       @option1 = b
+       {
+             #colors
+             {
+                      primary: blue;
+             }
+       }
+}
+
+Tokens DSOB_Tokens
+{
+       #colors
+       {
+               secondary: black;
+       }
+}
+
+Styles DSOB_Styles
+{
+       @Import DSOA.tokens;
+       .class1
+       {
+              color: $colors.primary;
+              background-color: $colors.secondary;
+       }
+}</pre>
+
+<p>Suppose that an object has DSOB as its associated Style, and contains a TextBlock with class class1. At runtime, the TextBlock font will look red or blue, depending on the option set for option1. In addition, it will always be displayed with a black background color.</p>
+
+<p>To set the option at runtime you can use the SetOption method seamlessly even if the option doesn't come from the DSO itself, but from an imported one.</p>
+
+<p>In the example, you could set the option as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+DesignSystem.SetOption(option1, a)</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49367.html">Design System external object</a></TD><TD><a href="47378.html">Design System Tokens</a></TD><TD><a href="50939.html">Design System Tokens (GeneXus 17 Upgrade 9)</a></TD></TR><TR><TD><a href="50937.html">Design System Tokens Options (GeneXus 17 Upgrade 9)</a></TD><TD><a href="40108.html">Toc:Design Systems</a></TD><TD><a href="49372.html">Image variation by Tokens options</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/06/22 02:42 PM</em></font></td></TR></table></font>

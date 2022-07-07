@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GXflow Performance Tips</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?29277,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GXflow Performance Tips</h1>
+<!--GXflow Performance Tips--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Abstract+" class="HashLink" href="#Abstract+">Abstract </a></h2>
+
+<p>After using GXflow for some time, you may start to notice a slowdown in some operations.</p>
+
+<p>This document is intended as a guide to determine the cause of the problem and to make some suggestions and recommendations.</p>
+
+<h2><a id="Recommendations" class="HashLink" href="#Recommendations">Recommendations</a></h2>
+
+<h3><a id="Development+Environment" class="HashLink" href="#Development+Environment">Development Environment</a></h3>
+
+<ul>
+	<li>When using APIs that list objects of one of these types: {ProcessInstance, Workitem, DocumentInstance, Event}, keep in mind that they handle a very large volume of data (around millions). Use filters with appropriate date ranges that allow you to narrow your search.</li>
+	<li>Excessive creation of connections with the Workflow engine can lead to performance problems. Therefore, the Server.Connect() API must be used sparingly.
+	<ul>
+		<li>When programming an inbox or similar type of application, it is recommended to create a connection in the login and then reuse it –as long as it is valid– caching the session identifier and using the Server.Load() method.</li>
+		<li>Keep in mind that the sessions expire. The default value is 30 minutes, but it can be changed in the GXflow Client Settings.</li>
+		<li>When you need to run operations anonymously with the Workflow API (for example, in Script Tasks, Event Managers, etc.), using the WFADMINISTRATOR user is recommended because it allows reusing the connection. Also, special users with exclusive access for APIs can also be used. To configure a user for this purpose, run this SQL statement: UPDATE WFUsers SET WFUsrAccType = &quot;A&quot; Where WFUsrCod =&quot;MY_USER&quot;. Users configured for exclusive API access are not allowed to enter the GXflow client.</li>
+	</ul>
+	</li>
+</ul>
+
+<h3><a id="Production+Environment" class="HashLink" href="#Production+Environment">Production Environment</a></h3>
+
+<h3><a id="Maintenance" class="HashLink" href="#Maintenance">Maintenance</a></h3>
+
+<ul>
+	<li>Periodically empty the WFSessions table (read <a href="43314.html">Maintenance Utility</a>).</li>
+	<li>Review instances that show no activity. If there are process instances that have been inactive for a long time, it may be time to evaluate whether they will be attended or not, so as not to slow down the system. A first option is to suspend them temporarily; if at any later time you want to process them, they can be activated. The other option is to terminate them if it has already been decided that they will not be processed.</li>
+</ul>
+
+<h3><a id="DBMS+Monitoring" class="HashLink" href="#DBMS+Monitoring">DBMS Monitoring</a></h3>
+
+<ul>
+	<li>Frequently review the following queries:
+	<ul style="list-style-type: circle;">
+		<li>The slowest statements.</li>
+		<li>The statements run the most times.</li>
+	</ul>
+	</li>
+	<li>Review the execution plans of the slowest statements and see if there are suggested indexes (if so, create them).</li>
+	<li>Confirm that there are no locks affecting the queries.</li>
+</ul>
+
+<h2><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h2>
+
+<p><a href="47305.html">Optimization to build the worklist</a></p>
+
+<p><br />
+<br />
+</p>
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD><TD><a href="43314.html">GXflow Maintenance Script</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 11/20/20 10:21 PM</em></font></td></TR></table></font>

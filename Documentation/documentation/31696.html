@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Business Component Update method</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31696,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Business Component Update method</h1>
+<!--Business Component Update method--><div class="TableWikiBody" id="tblwikibody"><p>Updates the content assigned to a <a href="5846.html">Business Component</a> variable into the database. You must have previously assigned the desired data to the variable. </p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<p>&amp;BCVariable.<strong>Update()</strong></p>
+
+<p><strong>Where:</strong><br />
+<em>&amp;BCVariable</em><br />
+     Is a scalar or collection variable based on a Business Component.  </p>
+
+<p><strong>Type returned:</strong><br />
+Boolean</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>When the Update method is executed, the database will be updated only if the referential integrity doesn't fail and if error rules don't occur.<br />
+The method always returns a boolean value that informs whether the Update could be executed successfully or not. This boolean value can be evaluated if you want to. </p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p>Suppose you define the following Transaction as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+  CustomerId*     (Autonumber property = True)
+  CustomerName
+  CustomerAddress
+  CustomerPhone
+  CustomerEmail
+  CustomerAddedDate
+  CustomerTotalMiles
+}
+
+Customer rule:
+Default(CustomerAddedDate,&amp;today);</pre>
+
+<p>Thus, a Business Component data type of the Customer Transaction is automatically created in the <a href="1836.html">Knowledge Base</a> and you can define a variable of the new type created in any object. So, in any object, you can define a variable named &amp;Customer based on the Customer type.</p>
+
+<p><strong>1)</strong> The following code (defined for example in a <a href="6664.html">Procedure Source</a> or inside an Event in a <a href="6916.html">Web Panel object</a>) is updating a customer:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &amp;Customer = new() 
+ &amp;Customer.CustomerId = 8
+ &amp;Customer.CustomerEmail = 'marybrown@gmail.com'
+ <strong>&amp;Customer.Update()</strong>
+ if &amp;Customer.Success()
+    commit
+ else
+    msg(&amp;Customer.GetMessages().ToJson())
+ endif
+</pre>
+
+<p><strong>2)</strong> The following code (defined for example in a Procedure Source or inside an Event in a Web Panel) is updating a customer. It is almost equal to the previous example with the only variant that the result of applying the Update method is directly evaluated with an if sentence:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ &amp;Customer = new() 
+ &amp;Customer.CustomerId = 8
+ &amp;Customer.CustomerEmail = 'marybrown@gmail.com'
+ if <strong>&amp;Customer.Update()</strong>
+    commit
+  else
+    msg(&amp;Customer.GetMessages().ToJson())
+  endif
+</pre>
+
+<p><strong>3)</strong> The following Procedure is called from several objects. It receives a &amp;Customer variable based on the Customer type and it only has to update the database:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Procedure: UpdateCustomer
+   Rules
+      parm(in:&amp;Customer)
+   Source
+      <strong>&amp;Customer.Update()
+     </strong> if &amp;Customer.Success()
+         commit
+      else
+         msg(&amp;Customer.GetMessages().ToJson())
+      endif
+</pre>
+
+<p><strong>4) </strong>Now, suppose you define the following Transaction as Business Component (by setting its <a href="9548.html">Business Component property</a> = True):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Product
+{
+  ProductId*     
+  ProductName
+  ProductStock
+}</pre>
+
+<p>So, a Business Component data type of the Product Transaction is automatically created in the Knowledge Base and you can define a variable of the new type created in any object (and it can be set as a collection).</p>
+
+<p>Thus, in a certain object, a variable named &amp;Products is defined based on the Product type and it is set as a collection. The DPProducts Data Provider loads the &amp;Products variable (for example inside an Event). Once the &amp;Products variable is loaded, the Update method is applied to it as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Products=DPProducts()
+<strong>&amp;Products.Update()</strong>
+if &amp;Products.success()
+    Commit
+else 
+    msg(&amp;Products.GetMessages().ToJson(), status) 
+endif
+</pre>
+
+<p>Look at the DPProducts <a href="5270.html">Data Provider</a> definition:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Data Provider: DPProducts
+Properties: Output:Product / Collection:True
+   
+Source:
+Product
+{
+    ProductId = 100
+    ProductStock = 5000
+}
+Product
+{ 
+   ProductId = 101
+   ProductStock = 6000
+}
+</pre>
+
+<p>In conclusion, a collection of products is loaded and after that, the Update method is applied to the collection variable. Each product in the collection will be updated.</p>
+
+<p><strong>If there's an error in a BC from the list, are the following BCs processed?</strong> <br />
+Yes, all elements in the list are processed whether an error occurs or not. Then, it's up to you to commit the changes depending on the errors. </p>
+
+<p>If you want to know which BCs had an error, you have to scan the list and check each one; for example, after applying the Update<strong> </strong>method, you may write the following code: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For &amp;Product in &amp;Products
+    if &amp;Product.GetMessages().Count &gt; 0
+       //msg(...)
+    endif
+endfor
+</pre>
+
+<h3><br />
+Availability</h3>
+
+<p>This method is available since <a href="https://wiki.genexus.com/commwiki/wiki?28265,," target="_blank">GeneXus 15</a>.</p>
+
+<h3><br />
+See Also</h3>
+
+<p><a href="31703.html">Differences between the Save method and the Update method</a><br />
+<a href="2279.html">Error handling in Business Components</a></p>
+
+<p><br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="49780.html">API Object - Update service definition and declaration</a></TD><TD><a href="5846.html">Toc:Business Component</a></TD><TD><a href="2278.html">Business Component samples</a></TD></TR><TR><TD><a href="31703.html">Business Components - Differences between the Save method and the Insert and Update methods</a></TD><TD><a href="17664.html">GAM - Full Control Permissions and inheritance</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/15/22 03:45 PM</em></font></td></TR></table></font>

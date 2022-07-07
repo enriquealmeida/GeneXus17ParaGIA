@@ -1,0 +1,30 @@
+group CommonTrns;
+delimiters "$", "$"
+
+init(transaction, variables, outputParameters, action, isComponent, parent, responses, action, trnCheck)::=<<
+$if(variables)$
+	$searchContent()$
+$else$
+$searchContent()$
+$endif$
+>>
+
+searchContent()::=<<
+for each $transaction$
+	where $variables:{variable|$parameters(variable)$};separator="AND"$
+	&speechOut += &ContextIn.Context.GXOutput
+	$outputParameters:{parameter|$parametersReplaceTrn(parameter)$};separator="\n"$ 
+endfor
+if &speechOut = ""
+	&ContextOut.FromJson(&ContextPrevMsg.ToJson())
+	&speechOut = !"The $transaction$ wasn't found!"		
+endif
+>>
+
+parameters(parameter)::=<<
+($if(parameter.IsNaP)$$parameter.Name$ = &ContextIn.Context.$parameter.CastedSlot$ $else$ $parameter.Name$.ImageName = &ContextIn.Context.$parameter.CastedSlot$ $endif$ $if(parameter.IsNaP)$OR $parameter.GetToString$.Contains(&ContextIn.Context.$parameter.GetToString$) $else$$endif$ )
+>>
+
+parametersReplaceTrn(parameter)::=<<
+&speechOut = &speechOut.Replace("&$parameter.Name$", Format("%1", $parameter.Name$))
+>>

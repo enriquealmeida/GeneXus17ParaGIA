@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Downloading a File using HTTP Protocol</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?14144,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Downloading a File using HTTP Protocol</h1>
+<!--HowTo: Downloading a File using HTTP Protocol--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This article describes how to easily manage file downloads in your GeneXus application.</p>
+
+<p>If you want that in a user event the user is prompted to save or run a file like the following:</p>
+
+<p><img src="./images/14147.png" id="14147" class="WikiImage"/></p>
+
+<p>All you need to do is:</p>
+
+<ul>
+	<li>Create a Procedure with the following property values:
+	<ul>
+		<li><a href="7407.html">Main program property</a> = TRUE</li>
+		<li><a href="7947.html">Call protocol property</a> = HTTP</li>
+	</ul>
+	</li>
+</ul>
+
+<p>To add data to the Http response header, the GeneXus object should be callable using the Http protocol. To make a procedure callable by the Http protocol, the above setting is necessary.<br />
+Below is a sample for downloading a file.</p>
+
+<h3><a id="Procedure+Source%3A" class="HashLink" href="#Procedure+Source%3A">Procedure Source:</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+/*
+Get &amp;contenttype, &amp;filename and &amp;filepath from the context (Websession, Database, etc). 
+Do not receive them via parm because of security reasons (Path transversal).
+*/
+&amp;HttpResponse.AddHeader(!&quot;Content-Type&quot;, &amp;contenttype) //&amp;contenttype could be 'application/x-zip-compressed'
+&amp;HttpResponse.AddHeader(!&quot;Content-Disposition&quot;, !&quot;attachment;filename=&quot;+&amp;filename) //&amp;filename could be 'download.zip'
+&amp;HttpResponse.AddFile(&amp;filepath) //&amp;filepath could be 'C:\temp\download.zip'
+&amp;HttpResponse.AddHeader(!&quot;Pragma&quot;, !&quot;public&quot;)
+&amp;HttpResponse.AddHeader(!&quot;Cache-Control&quot;, !&quot;max-age=0&quot;)
+</pre>
+
+<h3><a id="How+to+Call+the+Download+within+GeneXus%3A" class="HashLink" href="#How+to+Call+the+Download+within+GeneXus%3A">How to Call the Download within GeneXus:</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Download'
+  ProcedureHTTPDownload.Link()   
+EndEvent
+</pre>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>Be sure that the application has full access to &amp;filepath. It will fail if the application cannot access to the &amp;filepath (if not, it will throw Access Denied Exception)</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="7947.html">Call protocol property</a></p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="7947.html">Call protocol property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

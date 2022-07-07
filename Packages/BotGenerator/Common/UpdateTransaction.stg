@@ -1,0 +1,36 @@
+delimiters "$", "$"
+
+init(transaction, lowerTransaction, variables, foreigns, event, regExp, enums, responses, action, trnCheck)::=<<
+$if(variables)$
+	$updateContent()$
+$else$
+$updateContentt()$
+$endif$	
+>>
+
+updateContent()::=<<
+$variables:{variable|$imageVariables(variable)$};separator="\n"$
+$foreigns:{foreign|$foreignValidation(foreign, transaction, lowerTransaction, transaction)$};separator="\n"$
+$regExp:{variable|$regExpValidation(variable)$};separator="\n"$
+$shouldCheckIf(trnCheck, foreigns, regExp, enums)$
+$if(trnCheck.ShouldCheck)$
+	$performUpdate()$
+$shouldCheckEndIf(trnCheck)$
+$else$
+$performUpdate()$
+$endif$
+>>
+
+performUpdate()::=<<
+$variables:{variable|$renderParameters(transaction, variable)$};separator="\n"$
+$enums:{variable|$enumParameters(transaction, variable)$};separator="\n"$
+&$transaction$.Update()
+if &$transaction$.success()
+	commit
+else
+	&Messages = &$transaction$.GetMessages()
+	for &Message in &Messages
+		&speechOut+= &Message.Description
+	endfor
+endif
+>>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>What is error 403?</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45483,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">What is error 403?</h1>
+<!--What is error 403?--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Learn more in SAC <a href='https://www.genexus.com/en/developers/websac?data=41179;;'>41179</a>.</p>
+
+<p>In summary, an error 403 occurs when working on a web application, a server receives the value of a <a href="7375.html">Variable</a>/<a href="7240.html">Attribute</a> with a value that is different from the value that the server had sent. The value should not have been changed, as it is a read-only Variable/Attribute.</p>
+
+<p>The objective is to avoid vulnerabilities if someone intervenes and changes values in the POST that are not supposed to be modified.</p>
+
+<p>The message that appears in the browser may vary according to whether you are working with Java or .NET, and depending on the type of object (<a href="1908.html">Transaction object</a>, <a href="6916.html">Web Panel object</a>, etc.):</p>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+An error occurred while accessing the application server. (403)
+
+HTTP status 403 – Forbidden
+
+403 Forbidden
+
+</pre>
+</div>
+
+<h3><a id="How+can+this+error+be+debugged%3F" class="HashLink" href="#How+can+this+error+be+debugged%3F">How can this error be debugged?</a></h3>
+
+<p>The error may return after an attack (it worked) or there may be a programming/configuration error that causes it.</p>
+
+<p>To determine the specific case, the log must be enabled.<br />
+ </p>
+
+<h3><a id="How+can+the+log+be+enabled%3F" class="HashLink" href="#How+can+the+log+be+enabled%3F">How can the log be enabled?</a></h3>
+
+<p>You can enable the log by configuring the <a href="36304.html">Log level property</a> (at the generator level) with value “2. Error.”</p>
+
+<p><img src="./images/45489.png" id="45489" class="WikiImage"/></p>
+
+<p>Depending on the log level selected, it will include more or less information:</p>
+
+<ul>
+	<li>ERROR - The log will only include the object with the error, the variables/attributes that were modified but should not be modified, and their new value(s) (received by the server of the client).</li>
+	<li>INFO - In addition to the above information, the values that were originally sent to the client are included.</li>
+	<li>DEBUG - In addition to the above, more information about the program execution context is included (example: encrypted values, session ID), the stack trace in Java. In complex cases, this information can be useful.</li>
+</ul>
+
+<p>Note: To change the log level at runtime (outside the <a href="5272.html">GeneXus IDE</a>), you can change the logging configuration. For more information, go to the <a href="36304.html">Log level property</a> article.</p>
+
+<h3><br />
+What is the most appropriate level?</h3>
+
+<p>The DEBUG level contains the most information, but the log can be too large and confusing to process. Also, it can affect the application's performance, etc.</p>
+
+<p>In this context, usually the ERROR or INFO level are enough to identify the problem.</p>
+
+<p>Therefore, as a general recommendation –at least in production– you can leave the log with the ERROR level as it is the least costly to generate and process, or even the INFO level.</p>
+
+<h3><br />
+How are log files processed?</h3>
+
+<p>In the log file, look for the string &quot;403&quot; or directly for the error “SecurityCheckFailed.”</p>
+
+<p>All log levels include a line similar to the following:</p>
+
+<p>JAVA</p>
+
+<pre>
+2020-03-10T11:28:01.557-03:00 [http-nio-8080-exec-10] ERROR com.genexus.CommonUtil - customer:[ SecurityCheckFailed (403 Forbidden) value for] &quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Harry&quot;}</pre>
+
+<p>.NET</p>
+
+<pre>
+2020-03-10 12:19:05,698 [19] ERROR GeneXus.Utils.GXUtil - At file: , line: 0, customer:[ SecurityCheckFailed (403 Forbidden) value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Harry&quot;}</pre>
+
+<p>where &quot;Customer&quot; is the object that failed and &quot;CustomerName&quot; is the name of the attribute/variable whose value was changed to &quot;Harry.&quot;</p>
+
+<p>That is, the value that was sent from the server for CustomerName is different from the one that came from the client; the latter is &quot;Harry.&quot;</p>
+
+<p>With that information, in some cases the problem can be identified.</p>
+
+<p>If this is not enough, the log level must be increased to INFO, and then this is displayed:</p>
+
+<p>JAVA</p>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+2020-03-10T12:04:12.836-03:00 [http-nio-8080-exec-48] INFO com.genexus.CommonUtil - customer:[ SendSecurityCheck value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Oliver&quot;}
+
+2020-03-10T12:04:22.305-03:00 [http-nio-8080-exec-49] ERROR com.genexus.CommonUtil - customer:[ SecurityCheckFailed (403 Forbidden) value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Harry&quot;}</pre>
+</div>
+
+<p>.NET</p>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+2020-03-10 12:20:58,009 [7] INFO GeneXus.Utils.GXUtil - At file: , line: 0, customer:[ SendSecurityCheck value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Oliver&quot;}
+
+2020-03-10 12:21:03,769 [11] ERROR GeneXus.Utils.GXUtil - At file: , line: 0, customer:[ SecurityCheckFailed (403 Forbidden) value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Harry&quot;}</pre>
+</div>
+
+<p>That is, in the &quot;Customer&quot; object the value &quot;Oliver&quot; was sent for the &quot;CustomerName&quot; attribute, and the value &quot;Harry&quot; was returned to the server, even though CustomerName cannot be modified.</p>
+
+<p>Thus you have the value that was sent to the client and the returned one; using that information it may be possible to identify the problem.</p>
+
+<p>If it is not possible to identify the problem with this information, you can enable the DEBUG level which includes, in addition to the above, more context information.</p>
+
+<p>It is something similar to the following:</p>
+
+<p>JAVA</p>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+2020-03-10T12:11:42.906-03:00 [http-nio-8080-exec-5] INFO com.genexus.CommonUtil - customer:[ SendSecurityCheck value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Oliver&quot;}
+
+2020-03-10T12:11:48.028-03:00 [http-nio-8080-exec-6] ERROR com.genexus.CommonUtil - customer:[ SecurityCheckFailed (403 Forbidden) value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Harry&quot;}
+
+2020-03-10T12:11:48.030-03:00 [http-nio-8080-exec-6] DEBUG com.genexus.CommonUtil - send_http_error_code 403
+
+java.lang.Throwable: null
+
+at com.genexus.CommonUtil.writeLog(CommonUtil.java:242) [gxcommon.jar:?]
+
+at com.genexus.GXutil.writeLog(GXutil.java:53) [gxclassR.jar:?]
+
+at com.error403.customer_impl.standaloneStartupServer(customer_impl.java:662) [classes/:?]
+
+at com.error403.customer_impl.standaloneStartup(customer_impl.java:523) [classes/:?]
+
+at com.error403.customer_impl.userMain(customer_impl.java:509) [classes/:?]
+
+at com.error403.customer_impl.userMainFullajax(customer_impl.java:516) [classes/:?]
+
+at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) [?:1.8.0_181]
+
+....</pre>
+</div>
+
+<p> </p>
+
+<p>.NET</p>
+
+<div>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+2020-03-10 13:03:57,148 [20] INFO GeneXus.Utils.GXUtil - At file: d:\AppPath\customer.cs, line: 1856, customer:[ SendSecurityCheck value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Oliver&quot;}
+
+....
+
+2020-03-10 13:04:01,593 [5] ERROR GeneXus.Utils.GXUtil - At file: d:\AppPath\customer.cs, line: 692, customer:[ SecurityCheckFailed (403 Forbidden) value for]{&quot;hshsalt&quot;:&quot;hshCustomer&quot;,&quot;CustomerName&quot;:&quot;Harry&quot;}</pre>
+</div>
+
+<p> </p>
+
+<p><strong>TIP for .NET: </strong>For the source line number (CS) to be displayed, it must have been compiled with debug and the PDB files must exist in the installation where you are running the DLLs. With any log level available, the line number that may be useful is displayed. In Java, the DEBUG level is enough and it can be seen in the stack trace.</p>
+
+<h3><br />
+Solutions</h3>
+
+<p>The cause must be determined before a possible solution can be found. These debugging actions help determine them.</p>
+
+<p>SAC <a href='https://www.genexus.com/en/developers/websac?data=41179;;'>41179</a> contains some possible scenarios, as well as the following article: <a href="31506.html">Security Web Development tips</a>.</p>
+
+<h3><br />
+Availability</h3>
+
+<p>Although this feature has been offered for several GeneXus versions (GeneXus X Evolution 3, GeneXus 15, GeneXus 16), this article describes the <a href="https://wiki.genexus.com/commwiki/wiki?45275,," target="_blank">GeneXus 16 upgrade 9</a> values, behaviors, and recommendations.</p>
+
+<p></p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

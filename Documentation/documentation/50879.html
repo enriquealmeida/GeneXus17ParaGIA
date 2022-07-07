@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>API Object Syntax</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50879,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">API Object Syntax</h1>
+<!--API Object Syntax--><div class="TableWikiBody" id="tblwikibody"><p>Below is a description of the syntax used in the Service Source tab of the <a href="46151.html">API object</a>.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong></strong>&lt;APIObject&gt;::= &lt;<em>APIName&gt; </em><strong>'{'</strong>
+               <strong>['['</strong>Annotation<sub>1</sub><strong>']']</strong>
+               <strong>['['</strong>Annotation<sub>2</sub><strong>']']</strong>
+               &lt;<em>ServiceName<sub>1</sub></em>&gt;(in:&amp;var<sub>1</sub>, <strong>[</strong>in:&amp;var<sub>2</sub>, inout:&amp;var<sub>3</sub>,<strong>]</strong> out:&amp;var<sub>4</sub>) =&gt;  &lt;<em>Implementation<sub>1</sub></em>&gt;(&amp;var<sub>1</sub>, <strong>[</strong>&amp;var<sub>2</sub>, &amp;var<sub>3</sub>,<strong>]</strong> &amp;var<sub>4</sub>);
+               ...
+               <strong>['['</strong>Annotation<sub>N</sub><strong>']']</strong>
+               &lt;<em>ServiceName<sub>N</sub></em>&gt;(in:&amp;var<sub>5</sub>, <strong>[</strong>inout:&amp;var<sub>6</sub>,<strong>]</strong> out:&amp;var<sub>7</sub>) =&gt; &lt;<em>ImplementationN</em>&gt;(&amp;var<sub>5</sub>, <strong>[</strong>&amp;var<sub>6</sub>,<strong>]</strong> &amp;var<sub>7</sub>);
+               <strong>'}'</strong></pre>
+
+<p style="text-align: right;"> View <a href="6626.html">Syntax conventions</a>.</p>
+
+<p><strong>Where:</strong></p>
+
+<p><em>APIName</em><br />
+            It’s the name used to describe the API in the code.</p>
+
+<p><em>Annotation<sub>1</sub>, … Annotation<sub>N</sub></em><br />
+            They are optional annotations that must be written between square brackets and before the declaration of the ServiceName to which they apply. The possible annotations are  <a href="50508.html">RestMethod</a> and ​​<a href="50360.html">RestPath</a>.</p>
+
+<p><em>ServiceName<sub>1</sub>, … ServiceName<sub>N</sub></em><br />
+           External name (exposed as a service).</p>
+
+<p><em>&amp;var<sub>1</sub>, ..., &amp;var<sub>N</sub></em><br />
+           These are variables defined in the API object that must be parameters in the service.</p>
+
+<p><em>Implementation<sub>1</sub>, …, Implementation<sub>N</sub></em><br />
+           Name of GeneXus object implemented in the KB.</p>
+
+<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+
+<p>For each service declared in the API object, the following must be specified:</p>
+
+<ol>
+	<li>The name of the service exposed (with its parameters and the type of operator of each of them).</li>
+	<li>The name of the GeneXus object defined in the KB that implements the service functionality (with its parameters, and the possibility of indicating the type of operator for each one of them).</li>
+</ol>
+
+<p>Each service is defined by the mapping between the external name and the implementation of the service functionality.</p>
+
+<p>The basic mapping of the parameters, between the service and the implementation, is done by the variable names. That is, it doesn't matter if the order between the service parameters and the implementation varies.</p>
+
+<p>The last parameters of the service are the return parameters (what the service returns), although they may not be the last ones in the implementation.</p>
+
+<p>In the service declaration, you can omit parameters that are defined in the implementation with de <a href="8220.html">IN operator</a>. In that case, they can be initialized in the <a href="46151.html">BEFORE event</a> of the service.</p>
+
+<p>At the same time, in the service declaration, you can define parameters with the OUT operator that are not mentioned in the implementation. In this case, they can be initialized in the <a href="46151.html">AFTER event</a> of the service.</p>
+
+<p>In addition, constants are supported in the implementation part if the parameters have the IN operator in those objects. </p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<p>Consider the following <a href="1908.html">Transaction</a> defined as a <a href="5846.html">Business Component</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Account
+{
+AccountId* 
+AccountOwner
+AccountPassword
+AccountStatus        (Type:Boolean)
+}</pre>
+
+<h4><br />
+Sample #1</h4>
+
+<p>Suppose you want to know the status of an account and the account owner by entering the account number and password.</p>
+
+<p>Create a <a href="6293.html">Procedure object</a> called QueryAccount and define the following:</p>
+
+<p>Variables:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Account             (Type:Account)
+AccountId           (Type:Attribute:AccountId)
+AccountOwner        (Type:Attribute:AccountOwner)
+AccountPassword     (Type:Attribute:AccountPassword)
+AccountStatus       (Type:Attribute:AccountStatus)
+</pre>
+
+<p>Rules:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Parm(in:&amp;AccountId, in:&amp;AccountPassword, out:&amp;AccountOwner, out:&amp;AccountStatus);
+</pre>
+
+<p>Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Account.Load(&amp;AccountId)
+&amp;AccountOwner = &amp;Account.AccountOwner
+&amp;AccountStatus = &amp;Account.AccountStatus
+</pre>
+
+<p>Create the API object called APIAccount and define the following:</p>
+
+<p>Variables:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+AccountId           (Type:Attribute:AccountId)
+AccountOwner        (Type:Attribute:AccountOwner)
+AccountPassword     (Type:Attribute:AccountPassword)
+AccountStatus       (Type:Attribute:AccountStatus)
+</pre>
+
+<p>Service Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Account{
+        AccountInfo(in:&amp;AccountId, in:&amp;AccountPassword, out:&amp;AccountStatus, out:&amp;AccountOwner)
+        =&gt;QueryAccount(&amp;AccountId,  &amp;AccountPassword, &amp;AccountOwner, &amp;AccountStatus);
+       }
+</pre>
+
+<p>AccountInfo is the name exposed as a service. The input parameters are &amp;Account and &amp;Password. The output parameters are &amp;Status and &amp;AccountOwner.</p>
+
+<p>QueryAccount is the Procedure defined in the KB. The variables &amp;AccountId, &amp;AccountPassword are defined in the Procedure as input parameters. The variables &amp;AccountStatus and &amp;AccountOwner are defined as output parameters in the Procedure.</p>
+
+<p>In addition, the order of &amp;AccountStatus and &amp;AccountOwner does not affect the performance of the service or the Procedure.</p>
+
+<h4><a id="Sample+%232" class="HashLink" href="#Sample+%232">Sample #2</a></h4>
+
+<p>A slight variation from the previous example is to return only the account status.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Account{
+       AccountInfo(in:&amp;AccountId, in:&amp;AccountPassword, out:&amp;AccountStatus)
+       =&gt;QueryAccount(&amp;AccountId, &amp;AccountPassword, &amp;AccountOwner, &amp;AccountStatus);
+       }
+</pre>
+
+<p>In this case, the variable &amp;AccountOwner is only defined in the GeneXus object that solves the implementation.</p>
+
+<p>There are two ways to deal with this type of variables:</p>
+
+<ul>
+	<li>Initialize them in the Object API events. That is, define the value taken by the &amp;AccountOwner variable in the BEFORE event of AccountInfo.</li>
+	<li>Define them as inout in the Procedure; for example:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;AccountId, in:&amp;AccountPassword, inout:&amp;AccountOwner, out:&amp;AccountStatus);
+</pre>
+
+<h4><a id="Sample+%233" class="HashLink" href="#Sample+%233">Sample #3</a></h4>
+
+<p>Another option for sample 2 is to add a constant, as shown below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Account{
+       AccountInfo(in:&amp;AccountId, in:&amp;AccountPassword, out:&amp;AccountStatus)
+       =&gt;QueryAccount(&amp;AccountId,  &amp;AccountPassword, "Tomas Huck", &amp;AccountStatus);
+      }
+</pre>
+
+<p>The &amp;AccountOwnwer variable must be defined with the in operator in the implementation.</p>
+
+<p></p>
+
+<p></p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46151.html">Category:API object</a></TD><TD><a href="49754.html">Toc:First Steps with API Objects</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/21/22 04:51 PM</em></font></td></TR></table></font>

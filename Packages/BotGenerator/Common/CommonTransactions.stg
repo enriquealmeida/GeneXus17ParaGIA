@@ -1,0 +1,72 @@
+group CommonTrns;
+delimiters "$", "$"
+
+shouldCheckIf(trnCheck, foreigns, regExp, enums)::=<<
+$if(trnCheck.ShouldCheck)$if $foreigns:{variable|$conditionsFromForeigns(variable)$};separator=" AND "$$if(trnCheck.HasRegexpAndForeigns)$ AND$endif$$regExp:{variable|$regExpCondition(variable)$};separator=" AND "$ $if(trnCheck.HasEnumsAndOthers)$ AND $endif$ $enums:{variable|$enumCondition(variable)$};separator=" AND "$$endif$	
+>>
+
+shouldCheckEndIf(trnCheck)::=<<
+$if(trnCheck.ShouldCheck)$
+endif
+$endif$
+>>
+
+renderParameters(transaction, parameter)::=<<
+$if(parameter.IsEnum)$&$transaction$.$parameter.Name$ = $parameter.EnunmDomain$.Convert(&ContextIn.Context.$parameter.CastedSlot$)$else$$if(parameter.IsNaP)$&$transaction$.$parameter.Name$ = &ContextIn.Context.$parameter.CastedSlot$ $else$&$transaction$.$parameter.Name$ = &ContextIn.Context.$parameter.Name$Serialized$endif$$endif$
+>>
+
+enumParameters(transaction, parameter)::=<<
+&$transaction$.$parameter.Attribute$.FromString(&ContextIn.Context.$parameter.Attribute$)
+>>
+
+conditionsFromForeigns(foreign)::=<<
+&exist$foreign.Inferred$ = true
+>>
+
+regExpValidation(regExp)::=<<
+if not &ContextIn.Context.$regExp.AttributeName$.IsEmpty()
+	if &ContextIn.Context.$regExp.AttributeName$.IsMatch("$regExp.RegExp$") = false
+		&ContextOut.FromJson(&ContextPrevMsg.ToJson())
+		&speechOut = !"$regExp.Message$"
+	endif
+endif
+>>
+
+regExpCondition(regExp)::=<<
+&ContextIn.Context.$regExp.AttributeName$.IsMatch(!"$regExp.RegExp$")
+>>
+
+enumCondition(parameter)::=<<
+not &ContextIn.Context.$parameter.Attribute$.IsEmpty()
+>>
+
+imageVariables(parameter)::=<<
+$if(parameter.IsNaP)$$else$if not &ContextIn.Context.$parameter.Name$.IsEmpty() AND &ContextIn.Context.$parameter.Name$Serialized.IsEmpty()
+	&ContextIn.Context.$parameter.Name$Serialized = &ContextIn.Context.GXImage  
+endif
+$endif$
+>>
+
+foreignValidation(foreign, transaction, lower, reference)::=<<
+&exist$foreign.Inferred$ = false
+&sames = ""
+if not &ContextIn.Context.$foreign.Inferred$.IsEmpty() AND &ContextIn.Context.$foreign.Foreign$.IsEmpty()
+	for each $foreign.Related$
+		where &ContextIn.Context.$foreign.Inferred$ = $foreign.InverseCastedInferred$
+			&$reference$.$foreign.Foreign$ = $foreign.Foreign$
+			&exist$foreign.Inferred$ = true
+		when none
+			&aux = $foreign.CastedInferred$
+			if &aux.Contains(&ContextIn.Context.$foreign.SpecificCastedInferred$)
+				&sames += $foreign.CastedInferred$+" "
+			endif		
+	endfor
+	if &exist$foreign.Inferred$ = false
+		&ContextOut.FromJson(&ContextPrevMsg.ToJson())
+		&speechOut = &ContextIn.Context.$foreign.Inferred$+" isn't a $foreign.Related$, you can create a new one"
+		if &sames <> "" 
+			&speechOut += !" or select an existent one: "+&sames
+		endif
+	endif
+endif
+>>

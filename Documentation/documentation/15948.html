@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Publishing an application in Google Play</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?15948,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Publishing an application in Google Play</h1>
+<!--HowTo: Publishing an application in Google Play--><div class="TableWikiBody" id="tblwikibody"><p>This document is intended to guide GeneXus developers in the process of publishing (for the first time or update) their Android applications to Google Play.</p>
+
+<h2><a id="Prerequisites" class="HashLink" href="#Prerequisites">Prerequisites</a></h2>
+
+<ul>
+	<li>Get (if not already have one) a Google Play Developer account. See <a href='https://play.google.com/apps/publish/'>Google Play Developer site</a> for details.</li>
+	<li><div style="background-color: rgb(255,204,204);border-left: 6.0px solid rgb(255,0,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Alert</strong>: <strong>Info</strong>: Google Play requires that new apps target at least Android 11 (API level 30) from August 2021, and that app updates target Android 11 from November 2021. This implies that you must use <a href="47418.html">GeneXus 17 upgrade 2</a> or higher to be able to deploy to Google Play. More information in <a href='https://support.google.com/googleplay/android-developer/answer/9859152#zippy=%2Ctarget-api-level-requirements-for-play-console'>Play Console Help</a> site.<em>.</div>
+</em></li>
+</ul>
+
+<h2><a id="Publishing+steps" class="HashLink" href="#Publishing+steps">Publishing steps</a></h2>
+
+<h3><a id="1.+Signing+the+Application" class="HashLink" href="#1.+Signing+the+Application">1. Signing the Application</a></h3>
+
+<p>Every application that will be published in Google Play must be signed, and after being uploaded only will be updated if it is signed with the same signature. Refer to <a href="15948#How+to+obtain+a+signature%3F'.html">How to obtain a signature?</a> section of this document.</p>
+
+<p><div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,255,0);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><strong>Warning</strong>:  GeneXus signs the application a <strong>debug signature</strong> for testing purposes, that will not be accepted by Google if the application isn't signed with this key: See Notes section.</div>
+</p>
+
+<h3><a id="2.+Test+your+application+thoroughly" class="HashLink" href="#2.+Test+your+application+thoroughly">2. Test your application thoroughly</a></h3>
+
+<p>It's highly important to test the application before uploading to the store. The validation process of Google takes a while, if you need a second emergency update, consider that the end users do not have the application fixed instantaneously.</p>
+
+<h3><a id="3.+Choose+the+icon+and+images+that+you+will+use+for+the+publication" class="HashLink" href="#3.+Choose+the+icon+and+images+that+you+will+use+for+the+publication">3. Choose the icon and images that you will use for the publication</a></h3>
+
+<p>You will need (not counting optional)</p>
+
+<p><strong>Screenshots</strong>:<br />
+<strong>- Format</strong>: PNG or JPEG (no alpha) of 24 bits.<br />
+<strong>- Resolutions</strong>: 320 x 480, 480 x 800, 480 x 854, 1280 x 720 or 1280 x 800 pixels<br />
+<strong>- Considerations</strong>: Full screen, no borders.</p>
+
+<p><strong>Application icon</strong>:<br />
+<strong>- Format</strong>: PNG of 32 bits or JPEG image<br />
+<strong>- Resolutions</strong>: 512 x 512 pixels<br />
+<strong>- Size</strong>: 1024 KB</p>
+
+<h3><a id="4.+Publish" class="HashLink" href="#4.+Publish">4. Publish</a></h3>
+
+<p>At this point, you are ready to upload the application to Google Play.</p>
+
+<p>Login to <a href='https://play.google.com/apps/publish/'>Google Play Developer site</a>. Once you are there:</p>
+
+<ul>
+	<li>If you are <strong>creating a new application:</strong><br />
+	Click <em>Create Application</em> button to access a wizard to create a new application.<br />
+	See <a href='https://support.google.com/googleplay/android-developer/answer/113469?hl=en'>here</a> for detailed information.<br />
+	<img src="./images/37604.png" id="37604" class="WikiImage"/></li>
+	<li>If you are <strong>updating an existing application:</strong><br />
+	Click on your application title, and the detail information will be displayed (e.g. our Sales Order app).<br />
+	On the left-side menu, go to <em>Release management &gt; App releases &gt; Manage production</em>.<br />
+	Once there, click on <em>Create release</em> button.<br />
+	<img src="./images/37605.png" id="37605" class="WikiImage"/><br />
+	Finally, upload the new APK file by clicking on <em>Browse Files</em> button. You should note that:
+	<ul>
+		<li>The <strong>Version Code</strong> or <strong>Version Name </strong>property must have a higher value than the previous version.</li>
+		<li>The keystore used to sign the application has to be the same as the previous version.</li>
+	</ul>
+	</li>
+</ul>
+
+<h2><a id="How+to+obtain+a+signature%3F" class="HashLink" href="#How+to+obtain+a+signature%3F">How to obtain a signature?</a></h2>
+
+<p><strong>1.</strong> Create an account in <a href='https://play.google.com/apps/publish/signup/'>Google Play</a> (reference price at June/2011: registration fee $25.00).</p>
+
+<p><strong>2.</strong> Create a &quot;Key Store file&quot; for signature the application's packets with the following command. It is distributed with the JDK on the <em>/bin</em> directory.<br />
+<span style="font-family: courier new;">&gt; keytool -genkey -v -keystore <strong>my_release.keystore</strong> -alias <strong>my_alias_name</strong> <strong>-</strong></span><strong><span style="font-family: courier new;">keyalg</span></strong><span style="font-family: courier new;"><strong> RSA</strong> -</span><span style="font-family: courier new;">keysize</span><span style="font-family: courier new;"> 2048 -validity 1000</span></p>
+
+<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="width: 30.0px;"> </td>
+			<td style="width: 100.0px;">Where:</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>-genkey</strong></td>
+			<td>Generate a key pair (public and private keys).</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>-v</strong></td>
+			<td>Enable verbose output.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>-keystore </strong></td>
+			<td>The name for the keystore containing the private key.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>-alias</strong></td>
+			<td>An alias for the key. Only the first eight characters of the alias are used.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>-keyalg</strong></td>
+			<td>The encryption algorithm to use when generating the key. Must be RSA for GeneXus applications.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>-keysize</strong></td>
+			<td>The size of each generated key (bits). If not supplied, Keytool uses a default key size of 1024 bits. In general, it is recommended to use a key size of 2048 bits or higher.</td>
+		</tr>
+		<tr>
+			<td> </td>
+			<td><strong>-validity</strong></td>
+			<td>The validity period for the key, in days. A value of 10000 or greater is recommended.</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p><br />
+<strong>Note: </strong>if you sign your application using your keystore and it uses SD Map control, you have to follow <a href="19055.html">these steps</a>.</p>
+
+<p><strong>3. </strong>Complete all information requested. You <strong>must save the password</strong> for the next step.</p>
+
+<p><strong>4. </strong>At <a href="17817.html">Main object level</a> set the <a href="35447.html">Compilation Mode property</a> in &quot;Distribution&quot; and complete the <a href="23328.html">Application Signing properties</a> in the generator properties:</p>
+
+<ul>
+	<li><strong><a href="19108.html">Key Store File</a>: </strong>The filepath to &quot;<strong>my_release.keystore</strong>&quot; file in the keytool command.</li>
+	<li><strong>Store Password</strong>: That's the one you set (you are asked for it ) while you run the keytool command.</li>
+	<li><strong>Key Password</strong>: That's the one you set (you are asked for it ) while you run the keytool command.</li>
+</ul>
+
+<p>See the image below.<br />
+<img src="./images/33132.png" id="33132" class="WikiImage"/></p>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>There isn't any relation between the signature and the developer registered in the Google Play. Any developer can publish any APK; the signature is not important.</li>
+	<li>Once the APK was published with a user, only this user can upload new versions of the same application; however, this user may assign the application to other, then, this other can upload new versions.</li>
+	<li>GeneXus 15 (as of U2) signs the APKs file automatically with the Android's default debug-signature. On every build, the IDE alerts of this state with a warning message until the developer signs it with an own signature.<br />
+	<span style="color: rgb(0,128,0);">========== Android Compilation started ==========</span><br />
+	<span style="color: rgb(0,0,205);">The generated application will be signed using a default key. Note that you<br />
+	should change this key (in SmartDevices &gt; Android Specific &gt; Application Signing) before releasing it.</span><br />
+	This mechanism forces the developers to sign their applications when they publish it (on production) but allowing an easy prototyping of it.<br />
+	<strong>If the application is not signed with a custom certificate, Google Play does not publish it in the store</strong>.</li>
+	<li>For those developers who already have applications in production with the previous default settings (i.e. the *.apk file signed with Artech credentials) must set its properties manually with legacy values.
+	<div style="overflow-x:auto"><table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+		<tbody>
+			<tr style="border-bottom: 1.0px solid black;">
+				<td style="width: 150.0px;"><strong>Property</strong></td>
+				<td><strong>Default</strong></td>
+				<td><strong>Legacy (as of GeneXus 15 Upgrade 3)</strong></td>
+			</tr>
+			<tr>
+				<td><strong>Key Store File</strong></td>
+				<td><span style="font-size: smaller;"><em>C:\path_to_GeneXus_installation\Android\debug.keystore</em></span></td>
+				<td><span style="font-size: smaller;"><em>C:\path_to_GeneXus_installation\Android\legacy.keystore</em></span></td>
+			</tr>
+			<tr>
+				<td><strong>Key Alias</strong></td>
+				<td><span style="font-size: smaller;">androiddebugkey</span></td>
+				<td><span style="font-size: smaller;"><em>alias_name</em></span></td>
+			</tr>
+			<tr>
+				<td><strong>Store Password</strong></td>
+				<td><span style="font-size: smaller;">android</span></td>
+				<td><span style="font-size: smaller;"><em>artech</em></span></td>
+			</tr>
+			<tr>
+				<td><strong>Key Password</strong></td>
+				<td><span style="font-size: smaller;">android</span></td>
+				<td><span style="font-size: smaller;"><em>artech</em></span></td>
+			</tr>
+		</tbody>
+	</table></div>
+	</li>
+</ul>
+
+<h2><a id="Additional+information" class="HashLink" href="#Additional+information">Additional information</a></h2>
+
+<ul>
+	<li><a href='https://developer.android.com/guide/practices/ui_guidelines/icon_design'>Android Developer - Icon Design Guidelines</a></li>
+	<li><a href='https://support.google.com/googleplay/android-developer/answer/1078870'>Google Support - Graphic Assets for your Application</a></li>
+	<li><a href='https://support.google.com/googleplay/android-developer/answer/113469?hl=en'>Google Support - Upload an app</a></li>
+	<li><a href="17817.html">Native Mobile Main object properties</a></li>
+</ul>
+
+<h2><a id="Videos" class="HashLink" href="#Videos">Videos</a></h2>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/prototyping-features-and-deployment-of-applications-for-smart-devices?p=3694'>Prototyping features and Deployment of applications for Smart Devices</a></p>
+
+<p></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="23328.html">Android Application Signing</a></TD><TD><a href="17814.html">Android Package Name property</a></TD><TD><a href="14453.html">Category:Android platform</a></TD></TR><TR><TD><a href="31449.html">Android specific properties</a></TD><TD><a href="19055.html">HowTo: Get an API Key from Google</a></TD><TD><a href="17223.html">HowTo: Versioning Your Native Mobile Application</a></TD><TD><a href="19112.html">Key Alias property</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 02/16/22 01:03 PM</em></font></td></TR></table></font>

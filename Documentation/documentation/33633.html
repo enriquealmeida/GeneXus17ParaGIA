@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Receiving and processing a notification message from an external app</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?33633,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Receiving and processing a notification message from an external app</h1>
+<!--HowTo: Receiving and processing a notification message from an external app--><div class="TableWikiBody" id="tblwikibody"><p>There are some scenarios where you need to send notifications from client to server (and not only the other way).</p>
+
+<p>Typically, in an n-to-n communication (in a chat room) the notifications should be sent from the client (it can be Web or Smart Device) to the server, and from the server to the client (in a bi-directional way).</p>
+
+<p>Notifications can be sent from the server to the client using the <a href="22442.html">Server.Socket external object</a>.</p>
+
+<p>At present, GeneXus does not support an API for sending notifications from the client to the server, but an external app can send those notifications and GeneXus is able to receive and process the incoming messages.</p>
+
+<h3><a id="Implementation" class="HashLink" href="#Implementation">Implementation</a></h3>
+
+<p>When the notification is received from an external app, it should be processed.</p>
+
+<p>The are some properties available which allow you to establish the handler to be used when a notification is received, and also when a connection to the web socket is open or closed. This can be useful in a chat room, for example, to know when new clients are added to the chat or leave it.</p>
+
+<p>In summary, the properties involved in the solution are the following (at generator level):</p>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="1" cellspacing="1" style="width: 800.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Property Name</strong></td>
+			<td style="width: 200.0px;"><strong>Description              </strong></td>
+			<td><strong>Procedure Signature</strong></td>
+		</tr>
+		<tr>
+			<td><strong>WebNotifications Provider: None | In Process</strong></td>
+			<td style="width: 200.0px;"><em>None</em>: The application doesn't receive notifications.<br />
+			<em>In Process</em>: The application will receive notifications and is able to handle them.</td>
+			<td>                           ------</td>
+		</tr>
+		<tr>
+			<td><strong>Received Handler</strong></td>
+			<td style="width: 200.0px;">A procedure of the KB. The procedure will execute when a new message is received.</td>
+			<td>
+			<p>parm(in:&amp;ClientId, in:&amp;NotificationInfo)</p>
+
+			<p>&amp;ClientId: VarChar(200)</p>
+
+			<p>&amp;NotificationInfo is of NotificationInfo data type (predefined Structured Data type GeneXus.Web.Notifications.NotificationInfo).</p>
+
+			<p>The incoming message is loaded in the Message property of the SDT.</p>
+
+			<p>Id and Object properties of the SDT are empty in external notifications.</p>
+			</td>
+		</tr>
+		<tr>
+			<td><strong>Open Handler</strong></td>
+			<td style="width: 200.0px;">A procedure of the KB. The procedure executes when a connection to the web socket is done.</td>
+			<td>parm(in:&amp;ClientId)</td>
+		</tr>
+		<tr>
+			<td><strong>Close Handler</strong></td>
+			<td style="width: 200.0px;">A procedure of the KB. The procedure executes when a connection to the web socket is closed.</td>
+			<td>parm(in:&amp;ClientId)</td>
+		</tr>
+		<tr>
+			<td><strong>Error Handler</strong></td>
+			<td style="width: 200.0px;">A procedure of the KB. The procedure executes when an error is thrown in the web socket connection.</td>
+			<td>parm(in:&amp;ClientId, in:&amp;ErrorMessage)</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Consider a web panel where the incoming messages <em><strong>from an external application</strong></em> are going to be processed in a GeneXus web application and sent to the GeneXus clients connected to the web socket.</p>
+
+<p>In this example, the properties in the KB are as follows:</p>
+
+<p><img src="./images/33640.png" id="33640" class="WikiImage"/></p>
+
+<p>Note that the Received Handler property is set to &quot;NewMessageReceived&quot; procedure, whose code is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(in:&amp;ClientId, in:&amp;NotificationInfo);</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;NotificationInfotoSend.Message = Format(!&quot;%1 (%2)&quot;, &amp;NotificationInfo.Message.Trim(), &amp;ClientId)
+&amp;webNotification.Broadcast(&amp;notificationInfoToSend)</pre>
+
+<p>The Received Handler receives two parameters, one of them is the &amp;ClientId of the client that sends the notification, and the other is an SDT which contains the incoming message (the SDT properies Id and Object are always empty in this case). We've defined another NotificationInfo variable (called &amp;NotificationInfotoSend) that loads the Message to be sent to the clients. It will include the original message plus the ClientId information. In this case, the message is sent to everyone (we use the BroadCast method of WebNotification).</p>
+
+<p>Then, what's left is to show those messages in the web panel. We use the OnMessage event for receiving the web notifications sent from the NewMessageReceived procedure.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event OnMessage(&amp;NotificationInfo)
+    &amp;IncomingMessage = &amp;NotificationInfo.Message
+    //Process the web notification
+Endevent</pre>
+
+<h4><a id="Notes" class="HashLink" href="#Notes">Notes</a></h4>
+
+<ul>
+	<li>To try this example, you need to program an external client that sends notifications to our web application. The entry point for connecting to the web socket of the GeneXus application is the following: 
+	<ul>
+		<li>JAVA: ws://&lt;server&gt;/&lt;BaseURL&gt;/gxwebsocket?&lt;client_Id&gt;</li>
+		<li>NET: ws://&lt;server&gt;/&lt;BaseURL&gt;/gxwebsocket.svc?&lt;client_Id&gt;</li>
+	</ul>
+	</li>
+	<li>In the case of a GeneXus client, the client_Id is a GUID which identifies the browser instance (<a href="20198.html">ClientInformation.Id Property</a>). If a web panel includes the OnMessage event in its code, it will connect to the web socket as well. That's why you see it as another client included in the list of clients.</li>
+	<li>The property settings are saved in the CloudServices.config file, which has to be taken to production.</li>
+	<li>Remember that you need to have a dummy main procedure which calls the procedures referenced in the &quot;Handler&quot; properties so that they can be compiled. </li>
+</ul>
+
+<p>Download sample from <a href="https://wiki.genexus.com/commwiki/wiki?33641,," target="_blank">here</a>.</p>
+
+<h3><a id="Requirements" class="HashLink" href="#Requirements">Requirements</a></h3>
+
+<p>Java WebSocket 1.1 API defined by JSR-356. For example, in the case of Tomcat, the required version is 7.0.60 or higher.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="https://wiki.genexus.com/commwiki/wiki?33278,," target="_blank">GeneXus 15 Upgrade 3</a> for Java Generator and since <a href="https://wiki.genexus.com/commwiki/wiki?35908,," target="_blank">GeneXus 15 Upgrade 6</a> for .NET generator.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<ul>
+	<li><a href="41299.html">Client.Socket External Object</a></li>
+</ul>
+
+<p></p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="35361.html">Adding additional files to an application package</a></TD><TD><a href="41299.html">Client.Socket External Object</a></TD></TR><TR><TD><a href="45291.html">Load balancing considerations</a></TD><TD><a href="33670.html">Notifications Provider property</a></TD></TR><TR><TD><a href="22442.html">Server.Socket external object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/07/21 12:07 AM</em></font></td></TR></table></font>

@@ -1,0 +1,38 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Default WebForm Template" %>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Common.Helpers" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+
+<%@ Import Namespace="System.Drawing" %>
+<%@ Import Namespace="System.Collections.Generic" %>
+<%@ Import Namespace="Artech.Common.Helpers.Structure" %>
+<%@ Import Namespace="Artech.Genexus.Common.Helpers" %>
+
+<%@ Import Namespace="Artech.Genexus.Common.Parts" %>
+
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ SubTemplate Name="WinFormLayout" File="TrnWinFormLayout.dkt" MergeProterties="True" %>
+<%
+	Transaction transaction = Object as Transaction;
+	if (transaction == null)
+		throw new ArgumentNullException("Object");
+	
+	TemplateHelper helper = new TemplateHelper(); 
+	helper.UISettings.ChangeConstantsForMobile();
+	helper.CurrentPoint = new Point(helper.UISettings.FormInsets.Left,helper.UISettings.FormInsets.Top);	%>
+	<%-- Mobile Form --%>
+		<Form>
+			<Type>Mobile</Type>
+			<SizeUnit>px</SizeUnit>
+			<Canvas>
+				<Elements>
+<%@ CallSubTemplate WinFormLayout transaction="transaction" helper="helper" GenerateToolbar="false" GenerateDelete="false" GenerateButtons="true" %>
+				</Elements>
+				<% Size formSize = new Size(helper.CurrentPoint.X, helper.CurrentPoint.Y); %>
+				<%= WinForm.FormProperties(formSize, null, null) %>
+			</Canvas>
+		</Form>

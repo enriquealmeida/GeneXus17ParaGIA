@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Extensibility of GAM entity properties</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?19634,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Extensibility of GAM entity properties</h1>
+<!--Extensibility of GAM entity properties--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><a href="16535.html">GAM API</a> provides methods to extend the properties of <a href="14960.html">GAM</a> entities in GAM database, by means of an <a href="https://wiki.genexus.com/commwiki/wiki?1847,," target="_blank">OAV Pattern</a>.<br />
+That is, attributes of GAMUser Table in GAM database can be extended adding new attributes, without doing any reorganization.<br />
+The same happens with other GAM entities, such as <a href="17569.html">Roles</a>, <a href="15910.html">Applications</a>, <a href="15912.html">Permissions</a>, and <a href="17568.html">Repositories</a>, whose properties can be extended dinamically to meet different scenarios.</p>
+
+<h3><a id="Extensibility+of+GAM+Users+Table+attributes" class="HashLink" href="#Extensibility+of+GAM+Users+Table+attributes">Extensibility of GAM Users Table attributes</a></h3>
+
+<p>The purpose is to allow to add dynamically different attributes to GAM Users table, such as &quot;Company&quot;, &quot;Telephones&quot;, etc, which are not included in GAM Users table by default. The GAMUser External Object (which is part of the GAM Library consolidated when <a href="14706.html">Enable Integrated Security Property</a> is set to Yes), provides methods to Add, Update, and Delete dynamic attributes in GAM Users table. The dynamic attributes are represented as GAMUserAttribute data type. GAMUserAttribute is an external object which is also part of GAM library folder.</p>
+
+<p>Let's see some details of these objects and the methods they provide, as well as some examples on how to use this functionality.</p>
+
+<h4><a id="GAMUserAttribute+Object" class="HashLink" href="#GAMUserAttribute+Object">GAMUserAttribute Object</a></h4>
+
+<p>GAMUserAttribute is an external Object, part of the GAM Library consolidated when <a href="14706.html">Enable Integrated Security Property</a> is set to Yes. It represents an attribute to be added or updated dynamically in GAM Users entity.</p>
+
+<p>It has the following properties:</p>
+
+<ul>
+	<li>Id</li>
+	<li>Value</li>
+</ul>
+
+<p><img src="./images/19635.png" id="19635" class="WikiImage"/></p>
+
+<h4><a id="GAMUser+object+" class="HashLink" href="#GAMUser+object+">GAMUser object </a></h4>
+
+<p>It represents the User in GAM database. The following are the methods to get, update, and delete attributes (represented as GAMUserAttribute Objects) in GAM Users table.</p>
+
+<ul>
+	<li>GetAttribute</li>
+	<li>SetAttribute</li>
+	<li>DeleteAttribute</li>
+</ul>
+
+<h4><a id="Examples" class="HashLink" href="#Examples">Examples</a></h4>
+
+<p>1. How to scan the extended attributes of a given User</p>
+
+<p>GAMUser object has a property named &quot;Attributes&quot; which returns a collection of GAMUserAttribute. In order to get all the extended attributes of a given user, you need to loop through the collection as the following sample code shows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;UserGUIDselected)   //&amp;GAMUser is GAMUser data type, &amp;UserGUIDselected is GAMGUID data type
+For &amp;UserAttr In &amp;GAMUser.Attributes //&amp;UserAttr is GAMUserAttribute data type
+    &amp;UserAttribute = &amp;UserAttr.Id //&amp;UserAttribute is GAMPropertyID data type
+    &amp;AttrValue = &amp;UserAttr.Value //&amp;AttrValue is GAMPropertyValue data type
+EndFor</pre>
+
+<p>As the implementation is done using a collection, you can perform all the operations which are valid for collections (such as add, remove, etc). Nevertheless, the API provides methods to add, update, and delete dynamic attributes without the need of performing operations on the collection, which is shown in the following examples.</p>
+
+<p>2. How to get an extended attribute value given its ID: GetAttribute method of GAMUser object</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;UserGUIDselected) //&amp;GAMUser is GAMUser data type, &amp;UserGUIDselected is GAMGUID data type
+&amp;GAMUserAttribute = &amp;GAMUser.GetAttribute(&amp;UserAttribute.Id,&amp;Errors) //&amp;UserAttribute is GAMPropertyID data type
+//&amp;UserAttribute is GAMPropertyID data type, &amp;Errors is collection of GAMError, &amp;GAMUserAttribute is GAMUserAttribute data type
+&amp;AttrValue = &amp;GAMUserAttribute.Value //&amp;AttrValue is GAMPropertyValue data type</pre>
+
+<p>3. How to update an extended attribute: SetAttribute method of GAMUser object</p>
+
+<p>SetAttribute methods inserts a new attribute if it doesn't already exist, on the other hand it updates the value of the existing attribute.</p>
+
+<p>Take into account that the dynamic attributes are inserted into another table different than the Users tables, where the KEY is composed of UserGUID, and UserAttId (the User GUID and the Attribute Id).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;UserGUIDselected) //&amp;GAMUser is GAMUser data type, &amp;UserGUIDselected is GAMGUID data type
+&amp;GAMUserAttribute.Id = &amp;UserAttribute //&amp;GAMUserAttribute is GAMUserAttribute data type, &amp;UserAttribute is GAMPropertyID data type
+&amp;GAMUserAttribute.Value = &amp;UserAttributeValuenew
+&amp;isOK= &amp;GAMUser.SetAttribute(&amp;GAMUserAttribute,&amp;Errors) //&amp;Errors is collection of GAMError 
+if &amp;isOK
+   commit
+else
+   For &amp;Error in &amp;Errors
+      Msg(Format(!&quot;%1 (GAM%2)&quot;, &amp;Error.Message, &amp;Error.Code))
+   EndFor
+endif
+</pre>
+
+<p>For example, suppose that we need to add the &quot;HairColor&quot; attribute for the user, so in this example &amp;UserAttribute = &quot;HairColor&quot; and &amp;UserAttributeValuenew = 'black'.</p>
+
+<p>Another way of adding attributes is to manage the collection of GAMUserAttribute. In this case you need to execute save() and commit command, as the following code shows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;UserGUIDselected)
+&amp;GAMUserAttribute     = new () //&amp;GAMUserAttribute is GAMUserAttribute data type
+&amp;GAMUserAttribute.Id    = &amp;UserAttribute //&amp;UserAttribute is GAMPropertyID data type
+&amp;GAMUserAttribute.IsMultiValue  = False
+&amp;GAMUserAttribute.Value   = &amp;UserAttributeValuenew
+&amp;GAMUser.Attributes.Add(&amp;GAMUserAttribute)
+&amp;GAMUser.Save()
+
+For &amp;Error In &amp;GAMUser.GetErrors()
+  msg(&amp;Error.Message + !&quot;(GAM&quot; + &amp;Error.Code.ToString().Trim() + !&quot;)&quot;)
+EndFor
+
+if &amp;GAMUser.Success()
+  commit
+endif</pre>
+
+<p>Adding an attribute using the add method of the collection always adds a new item to the collection, if the UserAttId already exists a &quot;Record already exists(GAM42)&quot; error will be thrown.</p>
+
+<p>4. How to delete an extended attribute: DeleteAttribute method of GAMUser object</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GAMUser.Load(&amp;UserGUIDselected)
+&amp;GAMUserAttribute = new() //&amp;GAMUserAttribute is GAMUserAttribute data type
+&amp;GAMUserAttribute.Id = &amp;UserAttribute //it can be &quot;HairColor&quot;
+&amp;GAMUserAttribute.Value = &amp;AttrValue //it can be &quot;black&quot;
+&amp;isOK = &amp;GAMUser.DeleteAttribute(&amp;GAMUserAttribute,&amp;errors)
+For &amp;Error In &amp;GAMUser.GetErrors()
+  msg(&amp;Error.Message + !&quot;(GAM&quot; + &amp;Error.Code.ToString().Trim() + !&quot;)&quot;)
+EndFor
+if &amp;isOK
+  commit
+endif</pre>
+
+<p>Another way of deleting an attribute is to perform the remove method of the collection of GAMAttribute items.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?21315,," target="_blank">HowTo: GAM User table extensibility: multivalued attributes</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?19639,," target="_blank">Howto: Extend GAM entity properties</a></p>
+
+<p><br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR></TR><TR><TD><a href="44841.html">Client side configuration for GAM Remote Rest Authentication type</a></TD><TD><a href="39484.html">GAM Oauth 2.0 Authentication Type</a></TD></TR><TR></TR><TR><TD><a href="22082.html">GAM Users</a></TD></TR><TR><TD><a href="38116.html">HowTo: Emulating SSO without using GAM remote authentication</a></TD><TD><a href="16552.html">HowTo: Mapping Application Users to GAM Users</a></TD></TR><TR><TD><a href="44824.html">Howto: sending and receiving properties set at the login</a></TD><TD><a href="44840.html">Server side configuration for GAM Remote Rest Authentication type</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

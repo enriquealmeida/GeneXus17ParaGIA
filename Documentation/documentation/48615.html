@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Connecting to GAM Manager Repository (GeneXus 17 Upgrade 4 or prior)</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48615,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Connecting to GAM Manager Repository (GeneXus 17 Upgrade 4 or prior)</h1>
+<!--HowTo: Connecting to GAM Manager Repository (GeneXus 17 Upgrade 4 or prior)--><div class="TableWikiBody" id="tblwikibody"><p>GAM Manager Repository is a particular Repository used to administer the rest of the Repositories, and users of this Repository are the only ones who can create new Repositories and manage them.</p>
+
+<p>In this document we explain how to connect to &quot;GAM Manager Repository&quot;. </p>
+
+<p>The <a href="16150.html">GAM Repository Connection</a> to &quot;GAM Manager Repository&quot; already exists in the GAM database.</p>
+
+<h3><a id="How+to+connect+to+GAM+Manager+Repository+using+GAM+Backend+as+it+is" class="HashLink" href="#How+to+connect+to+GAM+Manager+Repository+using+GAM+Backend+as+it+is">How to connect to GAM Manager Repository using GAM Backend as it is</a></h3>
+
+<p>1. You need to connect to <a href="18617.html">GAM Manager Repository</a>, using &quot;gamadmin&quot;.</p>
+
+<p>You should create an entry in connection.gam file with the <a href="16150.html">GAM Repository Connection</a> to &quot;GAM Manager Repository&quot;. The way to do this is through the <a href="18608.html">GAMDeployTool</a>. See <a href="18610.html">GAM Deploy Tool: Creating the connection.gam file</a>.</p>
+
+<p><img src="./images/18626.png" id="18626" class="WikiImage"/></p>
+
+<h6><a id="Figure+1.+GAMDeployTool%2C+create+connection.gam+file+with+a+connection+to+GAM+Manager+Repository." class="HashLink" href="#Figure+1.+GAMDeployTool%2C+create+connection.gam+file+with+a+connection+to+GAM+Manager+Repository.">Figure 1. GAMDeployTool, create connection.gam file with a connection to GAM Manager Repository.</a></h6>
+
+<p>After obtaining connection.gam file including the connection to &quot;GAM Manager Repository&quot;, copy it to the virtual directory (or root of the webapp in case of JAVA applications). Now you are able to connect to the &quot;GAM Manager Repository&quot;.</p>
+
+<p>2. If the only connection which includes connection.gam is the one to &quot;GAM Manager Repository&quot;, you can login using &quot;gamadmin&quot;, and you will connect directly to &quot;GAM Manager Repository&quot;.</p>
+
+<p><img src="./images/18640.png" id="18640" class="WikiImage"/></p>
+
+<h6><a id="Figure+2.+Login+using+%22gamadmin%22." class="HashLink" href="#Figure+2.+Login+using+%22gamadmin%22.">Figure 2. Login using &quot;gamadmin&quot;.</a></h6>
+
+<p>If the connection.gam includes more than one connection (&quot;GAM Manager Repository&quot; and another one), the application will connect to the first connection found in connection.gam file (*).</p>
+
+<p>In that case, you can &quot;Change working Repository&quot;, by going through this link in GAM Backend. </p>
+
+<p><img src="./images/18627.png" id="18627" class="WikiImage"/></p>
+
+<h6><a id="Figure+3.+Execute+GAM+Backend%2C+go+to+%22Change+Working+Repository%22+and+select+%22GAM+Manager+Repository%22." class="HashLink" href="#Figure+3.+Execute+GAM+Backend%2C+go+to+%22Change+Working+Repository%22+and+select+%22GAM+Manager+Repository%22.">Figure 3. Execute GAM Backend, go to &quot;Change Working Repository&quot; and select &quot;GAM Manager Repository&quot;.</a></h6>
+
+<p>(*) The reason why the application connects to the first connection found in connection.gam file is the following code in Start Event of &quot;GAMExampleLogin&quot; object.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+GAM.GetConnections(&amp;ConnectionInfoCollection)
+//If no connection is already being used
+If &amp;ConnectionInfoCollection.Count &gt; 0 and GAMRepository.GetId().IsEmpty()
+  // the first connection found is established by default
+  GAM.SetConnection(&amp;ConnectionInfoCollection.Item(1).Name, &amp;Errors)
+Else
+  Do 'DisplayMessages'
+EndIf</pre>
+
+<p>The connection to the Repository is stored in the web session, the application stores in a web session the first connection found in connection.gam file and tries to connect to it.</p>
+
+<p>If the user is not enabled in the Repository he is trying to connect to, an error is thrown: &quot;User Unknown&quot;.</p>
+
+<p>This error is thrown in the login execution: </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors )</pre>
+
+<p>So, after performing &quot;Change Working Repository&quot;, the user who is logged will be automatically logged out unless he is a user of GAM Manager Repository. When logged out, you can log in using &quot;gamadmin&quot; credentials, as shown in figure 2.</p>
+
+<p>Now you are working at &quot;GAM Manager Repository&quot;. There you can add new administrator users, and perform all the tasks this users can (see: <a href="18642.html">Howto: Create new Repositories</a>).</p>
+
+<h3><a id="Some+aspects+to+be+considered" class="HashLink" href="#Some+aspects+to+be+considered">Some aspects to be considered</a></h3>
+
+<p>The <a href="15935.html">GAM Backend</a> uses the GAM API in fact, so the objects distributed in GAM Library can be taken as examples on how to program the operations desired.</p>
+
+<p>1. You can have the GAM backend published only to administrators of GAM Manager Repository, so the connection.gam file will need to include only the connection to this Repository.</p>
+
+<p>2. If not, and the application installation is the same for all users (administrators, as well as non administrator users) you need to include in connection.gam file all the necessary connections, but in code you need to set the connection to the corresponding <a href="16150.html">GAM Repository Connection</a> depending on the user who has signed in. See <a href="19245.html">HowTo: Get and Set GAM Repository Connections</a>.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<p><a href="18617.html">GAM Manager Repository</a></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/07/22 02:42 PM</em></font></td></TR></table></font>

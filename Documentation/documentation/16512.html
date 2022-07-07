@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - External Web Services Authentication Type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16512,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - External Web Services Authentication Type</h1>
+<!--GAM - External Web Services Authentication Type--><div class="TableWikiBody" id="tblwikibody"><p>Using External Web Services <a href="16508.html">Authentication Type</a> there are two versions of the web services supported by GAM. The supported web services versions are 1.0 and 2.0. The version depends on the signature of the web service, that is, the data type of the "in" and "out" parameters it sends and receives. The web service can be generated with any tool, but it must meet some requirements, related to its soap message format.</p>
+
+<ul>
+	<li><a href="21548.html">External Authentication: version 1.0</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?21555,," target="_blank">External Authentication: version 2.0</a></li>
+</ul>
+
+<p>This document explains how to give users the possibility to authenticate using <a href="19888.html">GeneXus Access Manager</a> external web services Authentication.</p>
+
+<h3><a id="How+to+authenticate+using+GAM+external+web+services+authentication+type" class="HashLink" href="#How+to+authenticate+using+GAM+external+web+services+authentication+type">How to authenticate using GAM external web services authentication type</a></h3>
+
+<h4><a id="1.+Define+a+new+%28wiki%3F16508%2CGAM%2B-%2BAuthentication%2BTypes+Authentication+Type%29+using+wiki%3F15935%2CCategory%253AGAM%2B-%2BWeb%2BBackoffice+GAM+Web+Backoffice." class="HashLink" href="#1.+Define+a+new+%28wiki%3F16508%2CGAM%2B-%2BAuthentication%2BTypes+Authentication+Type%29+using+wiki%3F15935%2CCategory%253AGAM%2B-%2BWeb%2BBackoffice+GAM+Web+Backoffice.">1. Define a new (<a href="16508.html">Authentication Type</a>) using <a href="15935.html">GAM Web Backoffice</a>.</a></h4>
+
+<p>It has to be "External Web Services Authentication" Type.</p>
+
+<p><img src="./images/16513.png" id="16513" class="WikiImage"/></p>
+
+<h5><a id="Figure+1.+Java+external+web+service" class="HashLink" href="#Figure+1.+Java+external+web+service">Figure 1. Java external web service</a></h5>
+
+<p><img src="./images/27870.png" id="27870" class="WikiImage"/></p>
+
+<h5><a id="Figure+2.+Csharp+external+web+service." class="HashLink" href="#Figure+2.+Csharp+external+web+service.">Figure 2. Csharp external web service.</a></h5>
+
+<p>As seen in figure 1 and 2, you have to specify the location of the web service, protocol, and all the necessary information to connect to the web service.</p>
+
+<p>You need to specify the web service version (1.0 or 2.0)</p>
+
+<p>The "Encryption Key" is useful in case of Genexus web services because the Encrypt64 function is used to encrypt the username and password when sent to the web service. You have to set the Encryption key used in the web service for decrypting the user and password received.</p>
+
+<p>Note that the best way to protect the data is by using HTTPS.</p>
+
+<h4><a id="2.+Program+%22External+Web+Services+Authentication%22+login+in+the+Smart+Devices+application" class="HashLink" href="#2.+Program+%22External+Web+Services+Authentication%22+login+in+the+Smart+Devices+application">2. Program "External Web Services Authentication" login in the Smart Devices application</a></h4>
+
+<p>The <a href="19269.html">login</a> External method of <a href="https://wiki.genexus.com/commwiki/wiki?22264,," target="_blank">SDActions external object</a> is used. In this case, the first parameter sent to the method must be "ExternalWebService".</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ExternalLogin'
+ SDActions.LoginExternal(!"ExternalWebService",&amp;User,&amp;Password)
+EndEvent</pre>
+
+<p>As since GeneXus 15, the syntax is as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'ExternalLogin'
+ GeneXus.SD.Actions.LoginExternal(GAMAuthenticationTypes.ExternalWebService,&amp;User,&amp;Password,&amp;AdditionalParameters)
+EndEvent</pre>
+
+<h4><a id="3.+Program+%22External+Web+Services+Authentication%22+login+in+the+web+application" class="HashLink" href="#3.+Program+%22External+Web+Services+Authentication%22+login+in+the+web+application">3. Program "External Web Services Authentication" login in the web application</a></h4>
+
+<p>The following code is an example of executing the external login in web applications. In the case of Web Panels, the Login method of GAMRepository object is used. You need to define a variable of GAMLoginAdditionalParameters in order to specify the AuthenticationType, which is going to be used.</p>
+
+<p>See the GAMExampleLogin Web Panel (which is part of the <a href="https://wiki.genexus.com/commwiki/wiki?21993,," target="_blank">GAM Examples</a>), where this code is used:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AdditionalParameter.AuthenticationTypeName = &amp;LogOnTo //&amp;LogOnTo is a combo box where the user selects the authentication type he wants to use. 
+                                                       //This is the name of the Authentication Type. Using the example shown in figure 1 it would be "Testws2.0".
+&amp;LoginOK = GAMRepository.Login(&amp;UserName, &amp;UserPassword, &amp;AdditionalParameter, &amp;Errors )//&amp;Errors is collection of GAMError</pre>
+
+<p>Note: Only one "External Web Service" Authentication Type can be defined for each GAM Repository.</p>
+
+<h3><a id="LoginExternal+method+considerations" class="HashLink" href="#LoginExternal+method+considerations">LoginExternal method considerations</a></h3>
+
+<p>As since GeneXus 15 in <a href="20766.html">SD</a> applications, the <a href="31350.html">Actions external object</a> adds the LoginExternal method, which supports the &amp;AdditionalParameters parameter.</p>
+
+<p>For previous versions, additional parameters cannot be passed to the web service, as the LoginExternal method of SDActions object does not allow this parameter.</p>
+
+<h3><a id="TroubleShooting" class="HashLink" href="#TroubleShooting">TroubleShooting</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?19715,," target="_blank">GAM - How to debug errors when using External Web Service Authentication Type</a></p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="21751.html">GAM - Custom Authentication Type</a><br />
+<a href="16929.html">Managing Roles through external authentication programs</a><br />
+<a href="21752.html">HowTo: Pass additional parameters to external authentication programs using GAM</a><br />
+ </p>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<p>       </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31350.html">Actions external object</a></TD><TD><a href="19909.html">Auto-register anonymous user - How it works</a></TD></TR><TR><TD><a href="16508.html">GAM - Authentication Types</a></TD><TD><a href="21751.html">GAM - Custom Authentication Type</a></TD><TD><a href="21755.html">GAM - External Authentication Type</a></TD><TD><a href="21548.html">GAM - External Authentication: version 1.0</a></TD></TR><TR><TD><a href="24241.html">GAM - Impersonation</a></TD><TD><a href="48254.html">GAM - Two Factor Authentication</a></TD></TR><TR></TR><TR><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD><TD><a href="29474.html">HowTo: LDAP Authentication using GAM</a></TD><TD><a href="21752.html">HowTo: Pass additional parameters to external authentication programs using GAM</a></TD></TR><TR><TD><a href="44824.html">Howto: sending and receiving properties set at the login</a></TD><TD><a href="16929.html">Managing Roles through external authentication programs</a></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/17/22 03:45 PM</em></font></td></TR></table></font>

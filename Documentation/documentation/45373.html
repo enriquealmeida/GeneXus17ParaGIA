@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Image Annotations</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45373,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Image Annotations</h1>
+<!--Image Annotations--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Draws traces on images.<br />
+<br />
+You can store only the trace made on an image, or store the image together with the annotations.<br />
+<br />
+This control cannot be placed inside Grids because they generate a Scroll, and when a trace is drawn on the scroll axis the event triggered will be the scroll and not the trace.   </p>
+
+<h2><a id="Properties" class="HashLink" href="#Properties"><strong>Properties</strong></a></h2>
+
+<p><a href="45382.html">Trace Color property</a></p>
+
+<p><a href="45381.html">Trace Thickness property</a></p>
+
+<h2><a id="Methods" class="HashLink" href="#Methods"><strong>Methods</strong></a></h2>
+
+<h3><a id="GetAnnotatedImage" class="HashLink" href="#GetAnnotatedImage"><strong>GetAnnotatedImage</strong></a></h3>
+
+<p>It stores the modified image along with the annotations.  </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ResultImage = &amp;AnnotationImage.GetAnnotadeImage()</pre>
+
+<h3><a id="GetAnnotations" class="HashLink" href="#GetAnnotations"><strong>GetAnnotations</strong></a></h3>
+
+<p>It stores only the annotations made on an image. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AnnotationsImage = &amp;AnnotationImage.GetAnnotations()</pre>
+
+<h3><a id="Undo" class="HashLink" href="#Undo"><strong>Undo</strong></a></h3>
+
+<p>It undoes the last trace made. The trace is taken from the moment you press on the device screen until you release it. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AnnotationImage.Undo()</pre>
+
+<h3><a id="Redo" class="HashLink" href="#Redo"><strong>Redo</strong></a></h3>
+
+<p>It redraws the last trace discarded by the previous Undo.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;AnnotationImage.Redo()</pre>
+
+<p><strong>Note:</strong></p>
+
+<p>In both cases, when a new trace is made, the trace history changes. </p>
+
+<h2><a id="Sample" class="HashLink" href="#Sample"><strong>Sample</strong></a></h2>
+
+<p>A car rental company uses an application for the rental process. When the car is delivered, it is checked by both the supervisor and the client, so that both of them try to find any scratches or dents before the client takes the car out on the street. That way the supervisor will record anything that might be found.</p>
+
+<p>This example will show the steps to follow to design a screen like the one shown below, using several of the methods provided by the control:</p>
+
+<p><img src="./images/45376.jpg" id="45376" class="WikiImage"/>    <img src="./images/45377.jpg" id="45377" class="WikiImage"/></p>
+
+<p> </p>
+
+<p>Step 1: <br />
+<br />
+Create a <a href="24829.html">Panel object</a>, and drag an <a href="6911.html">Attribute/Variable</a> based on the <a href="15204.html">Image data type</a> to the Main Table. Set the image <a href="9550.html">Control Type property</a> to &quot;Image Annotations.&quot;</p>
+
+<p><img src="./images/46429.png" id="46429" class="WikiImage"/></p>
+
+<p>Step 2:</p>
+
+<p>Enter some images that will allow you to indicate the thickness of the trace, and to delete and recover the traces made. Schedule the following events for these images.</p>
+
+<p><img src="./images/45388.png" id="45388" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    &amp;CarImage.FromImage(&quot;ExampleImageCar&quot;)
+Endevent
+
+// They configure the thickness (in dips) of the traces to be drawn on the background image.
+Event ImageNarrowLine.Tap
+    &amp;CarImage.TraceThickness = 1
+Endevent
+Event ImageWideLine.Tap
+    &amp;CarImage.TraceThickness = 3
+Endevent
+
+// It undoes the last trace drawn by the user.
+Event ImageUndo.Tap
+    &amp;CarImage.Undo()
+Endevent
+
+// It redraws the last trace discarded by the previous Undo.
+Event ImageRedo.Tap
+    &amp;CarImage.Redo()
+Endevent</pre>
+
+<p> </p>
+
+<p>Step 3:</p>
+
+<p>Lastly, add some images with the colors available for the trace. Program the Tap events for each of the colors. This way you can change the color of the trace at runtime.</p>
+
+<p><img src="./images/45389.png" id="45389" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// They configure the different colors for the traces.
+Event ImageBlack.Tap
+    &amp;CarImage.TraceColor = rgb(0,0,0)
+Endevent
+Event ImageRed.Tap
+    &amp;CarImage.TraceColor = rgb(249,104,104)  
+Endevent
+Event ImageBlue.Tap
+    &amp;CarImage.TraceColor = rgb(94,169,231)  
+Endevent
+Event ImageGreen.Tap
+    &amp;CarImage.TraceColor = rgb(164,220,141) 
+Endevent
+Event ImageMustard.Tap
+    &amp;CarImage.TraceColor = rgb(255,217,87)  
+Endevent
+</pre>
+
+<p> </p>
+
+<p>The application will then be programmed to meet the proposed scenario:  </p>
+
+<p><img src="./images/45395.gif" id="45395" class="WikiImage"/></p>
+
+<p><br />
+Download Sample: <a href="https://wiki.genexus.com/commwiki/wiki?47155,," target="_blank">Sample SD Annotations</a></p>
+
+<h2><a id="Scope" class="HashLink" href="#Scope"><strong>Scope</strong></a></h2>
+
+<p><strong>Generators: </strong>iOS, Android.</p>
+
+<h2><a id="Availability" class="HashLink" href="#Availability"><strong>Availability</strong></a></h2>
+
+<p>This external is available only for iOS as of <a href="https://wiki.genexus.com/commwiki/wiki?45275,," target="_blank">GeneXus 16 upgrade 9</a>.</p>
+
+<p>This external is available for Android as of <a href="https://wiki.genexus.com/commwiki/wiki?45624,," target="_blank">GeneXus 16 upgrade 10</a>.</p>
+
+<h2><a id="See+also" class="HashLink" href="#See+also"><strong>See also</strong></a></h2>
+
+<p><a href="45381.html">Trace Thickness property</a></p>
+
+<p><a href="45382.html">Trace Color property</a></p>
+
+<p> </p>
+
+<p></p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46592.html">Multi-experience with GeneXus 17</a></TD></TR><TR><TD><a href="45382.html">Trace Color property</a></TD><TD><a href="45381.html">Trace Thickness property</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 04/09/21 09:52 AM</em></font></td></TR></table></font>

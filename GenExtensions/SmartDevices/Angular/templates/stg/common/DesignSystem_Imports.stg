@@ -1,0 +1,76 @@
+delimiters "$", "$"
+
+g_dso_imports(page, gx) ::= 
+<<
+$page.Imports:{ ruleImport | $(g_dso_import_type_template.(ruleImport.Type))(page.Module, ruleImport)$}; separator="\n"$
+>>
+
+g_dso_import_dso(module, ruleImport) ::=
+<%
+$(g_dso_import_part_template.(ruleImport.Part))(module, ruleImport)$
+%>
+
+g_dso_import_dso_all(module, ruleImport) ::=
+<%
+@import "
+	$dso_import_relative_path(module, ruleImport)$
+	$gx.ToLower.(ruleImport.QualifiedName.Name)$
+";
+%>
+
+g_dso_import_dso_styles(module, ruleImport) ::=
+<%
+@import "
+	$dso_import_relative_path(module, ruleImport)$
+	_base_
+	$gx.ToLower.(ruleImport.QualifiedName.Name)$
+";
+ @include $g_dso_mixin_name(ruleImport.QualifiedName.Module, ruleImport.QualifiedName.Name, "tokens")$;
+ @include $g_dso_mixin_name(ruleImport.QualifiedName.Module, ruleImport.QualifiedName.Name, "fonts")$;
+ @include $g_dso_mixin_name(ruleImport.QualifiedName.Module, ruleImport.QualifiedName.Name, "styles")$;
+%>
+
+g_dso_import_dso_tokens(module, ruleImport) ::=
+<%
+@import "
+	$dso_import_relative_path(module, ruleImport)$
+	_base_$
+	gx.ToLower.(ruleImport.QualifiedName.Name)$
+";
+ @include $g_dso_mixin_name(ruleImport.QualifiedName.Module, ruleImport.QualifiedName.Name, "tokens")$;
+%>
+
+g_dso_import_url(module, ruleImport) ::=
+<%
+@import "$ruleImport.Name$";
+%>
+
+g_dso_import_gxfile(module, ruleImport) ::=
+<%
+@import "
+	$dso_import_relative_gxfile_path(module)$
+	$ruleImport.Name$
+	.css
+";
+%>
+
+g_dso_import_unknown(module, ruleImport) ::=
+<%
+// Unknown import type: "$ruleImport.Type$|$ruleImport.Part$"
+%>
+
+g_dso_import_type_template ::=
+[
+	"DSO": "g_dso_import_dso",
+	"File": "g_dso_import_url",
+	"GxFile": "g_dso_import_gxfile",
+	default: "g_dso_import_unknown"
+]
+
+g_dso_import_part_template ::=
+[
+	"all": "g_dso_import_dso_all",
+	"styles": "g_dso_import_dso_styles",
+	"tokens": "g_dso_import_dso_tokens",
+	default: "g_dso_import_unknown"
+]

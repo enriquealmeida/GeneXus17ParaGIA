@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Filters As Hint</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?2015,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Filters As Hint</h1>
+<!--Filters As Hint--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><span style="line-height: 1.6em;">Filters in a For Each group or Grid conditions can be used to improve navigation between different tables and simplify the code to be written.</span></p>
+
+<p>Since it is more intuitive, it further isolates the developer from the database structure enabling to resolve queries more intuitively while getting the results faster and more efficiently.</p>
+
+<p>Consider the following example, where we have Log Entries in our database. Each Log has an associated Message that could be translated into many Languages:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+MessagesByLanguage Transaction
+MessageId*                                  
+LanguageId*                                 
+MessageText</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+LogEntries Transaction
+LogEntryId*
+MessageId</pre>
+
+<p>We want a report showing LogEntryId, MessageId and MessageText, in a given language. For example:</p>
+
+<h5><a id="Language+%3D+English" class="HashLink" href="#Language+%3D+English">Language = English</a></h5>
+
+<table border="1" cellpadding="1" cellspacing="1" class="WikiTable" style="width: 200.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Log </strong></td>
+			<td><strong>Entry Message </strong></td>
+		</tr>
+		<tr>
+			<td>007</td>
+			<td>ATM Deposit</td>
+		</tr>
+		<tr>
+			<td>005</td>
+			<td>Cashier Deposit</td>
+		</tr>
+		<tr>
+			<td>001</td>
+			<td>Cashier Withdraw</td>
+		</tr>
+	</tbody>
+</table>
+
+<h5><a id="Language+%3D+Espanol" class="HashLink" href="#Language+%3D+Espanol">Language = Español</a></h5>
+
+<table border="1" cellpadding="1" cellspacing="1" class="WikiTable" style="width: 300.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Código </strong></td>
+			<td><strong>Mensaje </strong></td>
+		</tr>
+		<tr>
+			<td>007</td>
+			<td>Depósito en Cajero Automático</td>
+		</tr>
+		<tr>
+			<td>005</td>
+			<td>Depósito en Caja Banco</td>
+		</tr>
+		<tr>
+			<td>001</td>
+			<td>Retiro en Caja Banco</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>If we refer all these attributes in only one For Each group or Grid, we will get an error saying that there is no relation between them. This is the expected behavior, because each Log Entry doesn't have a one MessageText (in this case the two tables are not related. Also if they were related in a 1-N relation the problem is the same).</p>
+
+<p>The situation is different if we indicate a specific language for this query, for example LanguageId = &quot;ENG&quot; or LanguageId = &amp;LanguageId. In this case, the relation between these two tables can be resolved thanks to the improvement in filters to determine the navigation. With the new filter, both tables look as if they belong to the same extended table (now LogEntry has only one Message), and thus the query can be resolved in one step.</p>
+
+<p>Advantages:</p>
+
+<p>More intuitive query design. In older <a href="1756.html">GeneXus</a> versions, the code necessary to resolve the above query was as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+For Each
+    defined by LogEntryId, MessageId
+    For Each
+        where LanguageId = &amp;LanguageId
+        defined by MessageText
+    EndFor
+Endfor</pre>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Now the code is as follows: 
+ 
+For Each
+    where LanguageId = &amp;LanguageId
+    defined by LogEntryId, MessageId, MessageText
+Endfor</pre>
+
+<p>It generates more efficient SQL code. The query is resolved with only one SQL sentence with a join between the tables instead of using two Select statements.</p>
+
+<p>Developers need less knowledge of the database structure and relationships.</p>
+
+<h4><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h4>
+
+<p>Filters must be specified in the For Each &quot;Where&quot; clause or in Grid Conditions. General Conditions of Reports, Procedures, Work Panels and Web Panels do not support this feature (General Conditions may not apply to all groups).</p>
+
+<p>The condition to which the filters belong cannot have either &quot;NOT&quot; or &quot;OR&quot; operators. Also, the filter can only be compared with the &quot;=&quot; operator. In other cases, the filter cannot be applied. For example, &quot;LanguageId = &amp;LanguageId and LogEntryId &gt; &amp;LogEntryIdStart&quot; is a valid condition to instantiate LanguageId, but &quot;LanguageId = &amp;LanguageId OR LogEntryId &gt; &amp;LogEntryIdStart&quot; is invalid.</p>
+
+<p>The navigation diagram below displays the tables accessed through this feature, showing a value used to this end (&amp;LanguageId in the example).</p>
+
+<p><img src="./images/12924.JPG" id="12924" class="WikiImage"/></p>
+
+<p>This feature is supported only for generators that access the database via SQL.</p>
+
+<h4><a id="Scope" class="HashLink" href="#Scope">Scope</a></h4>
+
+<p><strong>Objects:</strong> <a href="6293.html">Procedures</a>, <a href="6916.html">Web Panels</a>, Work Panels,<br />
+<strong>Languages:</strong> Java, Ruby, .NET, .NET Mobile<br />
+<strong>Interfaces:</strong> Web, Win</p>
+
+<p><br />
+<br />
+</p>
+
+<p><br />
+</p>
+   <br /> <br /><br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24456.html">Multiple Base Transactions in a For Each command</a></TD><TD><a href="8578.html">Where clause</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

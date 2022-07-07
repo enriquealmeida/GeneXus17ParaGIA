@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Synchronization by Chunks</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42733,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Synchronization by Chunks</h1>
+<!--Synchronization by Chunks--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>In GeneXus-generated <a href="20286.html">Smart Devices offline applications</a>, when the <a href="22269.html">data synchronization</a> is executed, all the pending synchronization events are processed and sent to the server as a whole, that means in a single request to the server.</p>
+
+<p>This functionality has its justification: it allows the correct processing of primary and foreign keys, assuring the consistency between server-side and device database information. For example, if in an application we perform these actions:</p>
+
+<ul>
+	<li>Insert a new record in Customer table with CustomerId = 1</li>
+	<li>Insert a new record in Invoice table, with an association (FK) to CustomerId = 1</li>
+	<li>Insert another record in Invoice table, also with an association (FK) to CustomerId = 1</li>
+</ul>
+
+<p>When all this information is synchronized to the server, the data will keep its consistency. If the CustomerId for the Customer record in the server changes (because of the application of an auto numbering function), the Invoice table records are modified to have the correct reference to the Customer. In addition, this data change information is sent back to the client in the response of the synchronization request to be applied at the device's offline database.</p>
+
+<p>Sending all the pending information at once has a drawback, nevertheless. If we have an application that performs several offline database operations (creating many synchronization events), this synchronization method may present some problems and negatively affect the application's user experience, because a very big synchronization request to the server is needed and if it fails (due to network connection problems, for instance) it has to be repeated.</p>
+
+<p>The solution to this problem is to send the database events data in a group of smaller requests, instead of executing a very big one. It is important to know that we need to be sure that the consistency of the data will be maintained. For example, in the scenario we explained before for the Customer and the Invoices, we cannot split the actions in different requests, because if we sent the Customer in one request and the Invoices in another, if the CustomerId is changed in server-side processing the first request, when the second one is processed we do not have this CustomerId change information, and the Invoices will remain referencing CustomerId = 1 which is not the Customer record selected at the beginning.</p>
+
+<h3><a id="How+to+perform+batch+synchronization+in+GeneXus%3F" class="HashLink" href="#How+to+perform+batch+synchronization+in+GeneXus%3F">How to perform batch synchronization in GeneXus?</a></h3>
+
+<p>The <a href="23602.html">Synchronization API</a> has a new method called <strong>SetSendCheckpoint</strong> which allows inserting &quot;checkpoints&quot; in the pending events table. These checkpoints will be inserted along with the other synchronization events (inserts, updates, and deletes) and then, when the Send operation is performed (automatically or manually), the pending events are processed by its date and included in the request until a checkpoint is found. At that moment, the request is sent to the server and the same process is repeated for the remaining pending events.</p>
+
+<p>Following this, the data synchronization can be executed using more that one request to the server, avoiding performance or network problems associated to the request size.</p>
+
+<p>Note: As a developer, you only need to perform the Send operation once. This mechanism of sending the events in chunks is handled internally by the platform's flexible client.</p>
+
+<h3><a id="When+should+the+checkpoints+be+included%3F" class="HashLink" href="#When+should+the+checkpoints+be+included%3F">When should the checkpoints be included?</a></h3>
+
+<p>This decision corresponds entirely to the application developer. Depending on the application's functionality and the data processed, the checkpoints should be added in the code in order to create reasonable-size synchronization requests.</p>
+
+<p>Note: Please pay special attention when using checkpoints in an application that has autonumbered primary keys, because that is the case where the problem described above may arise.</p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Suppose we need to track the device location and save it in the device's database every 5 minutes. We want to put a checkpoint after 100 inserts to be sure of not generating huge synchronization requests. The code could be as follows:</p>
+
+<pre>
+Event 'LocationChanged'
+    composite
+        SaveCurrentLocation()
+        do 'SetCheckpointIfNeeded'
+    endcomposite
+EndEvent
+
+Sub 'SetCheckpointIfNeeded'
+    composite
+        &amp;countStr = ClientStorage.Get('SyncEventsCount')
+        &amp;count = Int(&amp;countStr) + 1
+        if &amp;count = 100
+            Synchronization.SetSendCheckpoint()
+            &amp;count = 0
+        endif
+        &amp;countStr = &amp;count.ToString()
+        ClientStorage.Set('SyncEventsCount', &amp;countStr)
+    endcomposite
+EndSub</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>This synchronization method is available as of <a href="https://wiki.genexus.com/commwiki/wiki?42129,," target="_blank">GeneXus 16 Upgrade 3</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="22240.html">The Data Synchronization Problem</a></li>
+	<li><a href="22269.html">GeneXus applications data synchronization</a></li>
+	<li><a href="23602.html">Synchronization API</a></li>
+</ul>
+
+<p></p>
+
+<p> </p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="25536.html">Advanced Concepts of Offline Applications architecture</a></TD><TD><a href="22269.html">Data Synchronization</a></TD><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR><TR><TD><a href="23602.html">Synchronization API</a></TD><TD><a href="42735.html">Synchronization.SetSendCheckpoint method</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

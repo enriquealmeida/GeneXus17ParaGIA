@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Updating data using a BC exposed as a Rest service</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?30701,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Updating data using a BC exposed as a Rest service</h1>
+<!--HowTo: Updating data using a BC exposed as a Rest service--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document explains how to update data using a Business Component exposed as a <a href="28213.html">Rest web services in GeneXus</a> in GeneXus.</p>
+
+<p>First, let's see the basic guidelines:</p>
+
+<h3><a id="How+do+I+call+the+Rest+service+in+GeneXus%3F" class="HashLink" href="#How+do+I+call+the+Rest+service+in+GeneXus%3F">How do I call the Rest service in GeneXus?</a></h3>
+
+<p>Use the <a href="6932.html">HttpClient data type</a>.</p>
+
+<h3><a id="What+are+the+HTTP+methods+to+update+data%3F" class="HashLink" href="#What+are+the+HTTP+methods+to+update+data%3F">What are the HTTP methods to update data?</a></h3>
+
+<p>Two methods have to be executed:</p>
+
+<ol>
+	<li>Get the data using its PK with the HTTP GET verb and keep the MD5 hash associated with the data. It's very similar to what is explained in <a href="30699.html">HowTo: Retrieving data from a BC exposed as a Rest service</a>.</li>
+	<li>Update the data using the HTTP PUT verb. In addition to all the data of the table structure, the gx_md5_hash has to be included in the body of the HTTP Request. The reason is that you must mimic the pseudo-conversational dialog used by GeneXus when using the Transaction. To update a record you need to use the HTTP PUT verb with the entire Business Component structure in the body including the Hash value. The hash value is used for concurrency control. The body of the message should be in JSON format and contain the structure of the Business Component as it comes when it makes an HTTP GET.<br />
+	Similar to the HTTP POST, the PK values have to be added to the query string when the HTTP PUT verb is executed.</li>
+</ol>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Consider the following example, where we want to update an Invoice (which is a two-level transaction). Note that the BC is exposed as a Rest Service.</p>
+
+<p><img src="./images/30723.png" id="30723" class="WikiImage"/></p>
+
+<p>In this example, we are going to update the Invoice adding a new line to it.</p>
+
+<p>As explained before, there are two steps to follow, as explained below:</p>
+
+<ol>
+	<li>GET the record that's going to be updated (InvoiceId=1), and retrieve the gx_md5_hash data along with all the other data of the record. The data is retrieved using the &amp;HTTClient.ToString method, and temporarily stored in a string variable called &amp;result.
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Host= &amp;server
+&amp;httpclient.Port = &amp;port
+&amp;httpclient.BaseUrl = &amp;urlbase
+&amp;httpclient.Execute('GET','Invoice/1')
+
+if &amp;httpclient.StatusCode = 200
+    &amp;result = &amp;httpclient.ToString()
+else
+   msg(&quot;There was an error retrieving the data: &quot; + &amp;httpclient.StatusCode.ToString())
+endif</pre>
+	</li>
+	<li>To the previous code, we add the code to retrieve the HTTP response after getting the data (including the HASH data) and store it in an SDT structure. This structure looks as follows (it's based on the Invoice structure, but it also includes a field for the gx_md5_hash):</li>
+</ol>
+
+<p><img src="./images/30725.png" id="30725" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;httpclient.Host= &amp;server
+&amp;httpclient.Port = &amp;port
+&amp;httpclient.BaseUrl = &amp;urlbase
+&amp;httpclient.Execute('GET','Invoice/1')
+
+if &amp;httpclient.StatusCode = 200
+    &amp;result = &amp;httpclient.ToString()
+
+   <span style="background-color: rgb(255,255,224);"> &amp;invoicesdt.FromJson(&amp;result)  //&amp;invoicesdt already contains the gx_md5_hash information loaded</span>
+<span style="background-color: rgb(255,255,224);">
+    &amp;invoicesdtlevel = new()  //Adding a new line...
+    &amp;invoicesdtlevel.InvoiceLineCod = 4
+    &amp;invoicesdtlevel.ProductCod = 1
+    &amp;invoicesdt.InvoiceLevel.Add(&amp;invoicesdtlevel)
+    
+    &amp;addstring = &amp;invoicesdt.ToJson() //to JSON format..
+    &amp;httpclient.AddString(&amp;addstring)
+    &amp;httpclient.AddHeader('content-type','application/json') //Adding the necessary headers
+    &amp;httpclient.Execute('PUT','Invoice/1')
+
+   if &amp;httpclient.StatusCode = 200
+       msg(&quot;Data successfully added&quot;)
+   else
+       msg(&quot;There was an error udapting the data: &quot; + &amp;httpclient.StatusCode.ToString())
+    endif
+</span>
+else
+   msg(&quot;There was an error retrieving the data: &quot; + &amp;httpclient.StatusCode.ToString())
+endif</pre>
+
+<p>Note that in this example the PK is sent in the body as well. This is necessary until <a href="https://wiki.genexus.com/commwiki/wiki?20247,," target="_blank">GeneXus X Evolution 3</a> only.</p>
+
+<p>Download the sample from <a href="https://wiki.genexus.com/commwiki/wiki?30727,," target="_blank">Sample Update Rest services</a></p>
+
+<p>Notes:</p>
+
+<ul>
+	<li>If more than one parameter should be passed in the URL (a compound PK), they need to be separated by commas.</li>
+	<li>If the service URI is &quot;http://localhost/TestRESTFullGX.NetEnvironment/rest/Product&quot;, the BASE URL is: &quot;/TestRESTFullGX.NetEnvironment/rest/&quot;</li>
+	<li>Error handling is managed by querying the HTTP Status Code after the invocation.</li>
+</ul>
+
+<h3><a id="Troubleshooting" class="HashLink" href="#Troubleshooting">Troubleshooting</a></h3>
+
+<ul>
+	<li>If the execution throws the error :</li>
+</ul>
+
+<p><em>{&quot;error&quot;:{&quot;code&quot;:&quot;500&quot;,&quot;message&quot;:&quot;The incoming message has an unexpected message format 'Raw'. The expected message formats for the operation are '</em><em>Xml</em><em>'; '</em><em>Json</em><em>'. This can be because a WebContentTypeMapper has not been configured on the binding. See the documentation of WebContentTypeMapper for more details.&quot;}}</em></p>
+
+<p>The reason is that you missed the appropriate header in the request. Add 'content-type: application/json' header.</p>
+
+<ul>
+	<li>Using the <a href='http://www.tcptrace.org/'>TCPtrace</a> or any other similar tool is very useful to see the HTTP traffic and detect any possible failures. It's very easy to use as it works like a proxy. Just redirect the call to the port and host where TCPtrace listens and the TCPtrace should point to your service URL.<br />
+	 </li>
+	<li>In addition, if you need more information about any error, you can print the output of the call, using the following HTTPClient data type methods:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+    &amp;httpclient.Execute('PUT','Invoice/1')
+    &amp;httpstatus = &amp;httpclient.StatusCode
+    msg('Http status: ' + &amp;httpstatus,status)
+    &amp;result = &amp;httpclient.ToString()
+    msg('Output: ',status)
+    msg('=========',status)
+    msg(&amp;result,status)</pre>
+
+<p>The following would be printed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Http status: 200
+Output:
+=========
+{&quot;InvoiceCod&quot;:1,&quot;InvoiceDate&quot;:&quot;2016-03-01&quot;,&quot;CustomerCod&quot;:&quot;C56A4180-65AA-42EC-A945-5FD21DEC0538&quot;,&quot;CustomerName&quot;:&quot;juan&quot;,&quot;InvoiceLevel&quot;:[{&quot;InvoiceLineCod&quot;:1,&quot;ProductCod&quot;:1,&quot;ProductName&quot;:&quot;product1&quot;,&quot;ProductPrice&quot;:12.0000},{&quot;InvoiceLineCod&quot;:4,&quot;ProductCod&quot;:1,&quot;ProductName&quot;:&quot;product1&quot;,&quot;ProductPrice&quot;:12.0000}],&quot;gx_md5_hash&quot;:&quot;4C921FA040E330D0EF68F96354420A79&quot;}
+
+</pre>
+
+<p> </p>
+
+
+<br />
+
+<div style="background-color: rgb(255,255,204);border-left: 6.0px solid rgb(255,235,59);padding: 0.01em 16.0px;">
+<p><b>Note:</b><br />
+With respect to consuming a Rest service (it can be generated by GeneXus or not), GeneXus provides the <a href="31864.html">OpenAPI import tool</a>.</p>
+</div>
+
+
+<p></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="28213.html">Toc:Rest web services in GeneXus</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

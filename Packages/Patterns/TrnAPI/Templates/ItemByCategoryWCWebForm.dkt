@@ -1,0 +1,47 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Selected Objects SDT" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Concepto.Patterns.TrnAPI" %>
+<%@ Import Namespace="Concepto.Patterns.TrnAPI" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	TrnAPIInstance trnAPIInstance = new TrnAPIInstance(Instance);
+	TrnAPISettings catSettings = trnAPIInstance.Settings;
+%>
+<Part type="<%= PartType.WebForm %>">
+<Source><![CDATA[
+<BODY bottomMargin="0" topMargin="0" rightMargin="0" leftMargin="0" class="Form" noWrap="">
+<table>
+	<tbody>
+	<tr>
+		<td>
+<div align="right"> <gxTextBlock Caption="" Class="TextBlock" id="TextBlock2" />
+</div>
+		</td>
+	</tr>	
+	<tr>
+		<td>
+<P/>
+<gxTextBlock Caption="<%= catSettings.Labels.AssignedItemsToCategory %>" Class="SubTitle" id="TextBlock11" />
+<HR class="HRDefault" />
+<gxGrid ControlWhere="<%= trnAPIInstance.AttributesName.CategoryId %>=&amp;<%= trnAPIInstance.AttributesName.CategoryId %>;" AllowDrag="False" ControlName="Grid1" GxObjClass="13">
+<%	foreach (AttributeElement att in trnAPIInstance.ViewItemAttributes)	
+	{	
+		if (att.Visible)
+		{	%>
+	<gxColumn ColAttId="<%= att.Attribute.Name %>" />	
+<%		}
+	}	%>	
+</gxGrid>
+		</td>
+	</tr>	
+	</tbody>
+</table>
+	
+<gxAttribute AttID="&amp;<%= trnAPIInstance.AttributesName.CategoryId %>" GxObjClass="13" />
+</BODY>
+]]></Source>
+ </Part>

@@ -1,0 +1,122 @@
+delimiters "$", "$"
+
+cssRef(dir,css)::=<<
+<!--link href="/$dir$/$css.File$" rel="stylesheet" $g_cssfile_media(css.LayoutMedia)$/-->
+
+>>
+
+bodyHeader(page) ::=<<>>
+
+layout_body_main(page) ::= <<
+<section class="main-content">
+  $page.Layout:{layout| $g_layout(layout, page)$};separator="\r\n"$
+</section>
+>>
+
+layout(layout, page) ::= <<
+<gx-card
+  $g_html_id(layout.LayoutId)$
+  $g_test_data(layout.LayoutId)$
+  $g_class_property(layout.ActionBar, layout.ActionBar.ApplicationBarsClass, "control")$
+  [showHeader]='showAsCard'
+  [showBorder]='showAsCard'
+  [showFooter]='showAsCard'
+  $g_layout_condition(layout.LayoutId)$
+    $g_form_caption_property(layout)$
+>
+  $if (page.ShowApplicationBars)$$(layoutHeaderMap.(page.Caption))(page.Caption, layout)$$endif$
+  <div slot="body" $g_layout_condition(layout.LayoutId)$>
+    $g_table(layout.Table, false)$
+  </div>
+  $layout.ActionBar:g_actionbar()$
+  $if (layout.ActionGroups)$
+  $layout.ActionGroups.ActionGroup:g_actionsheet()$
+  $endif$
+</gx-card>
+>>
+
+layout_condition(layoutId) ::= <%*ngIf="viewManager.view === '$layoutId$'"%>
+
+control_id(controlId) ::=<<
+#$controlId$
+>>
+
+area_cell(cell, rowIndex, cellIndex) ::= <<
+area="cell$rowIndex$$cellIndex$"
+>>
+
+textblock_html(data) ::= <<
+<gx-textblock
+  $control_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  $g_visible_property(data, data.Visible)$
+  $g_enabled_property(data, data.Enabled)$
+  $g_assign_html_property_or_default({inner}, data.UIModelInfo.UIElementContextExpression, data.UIElementControlName, data.UIModelInfo.CaptionProperty, {'}, data.Caption)$
+  $g_touch_event_binding(data)$
+  $g_invisible_mode_attr(data)$
+  format="HTML">
+</gx-textblock>
+>>
+
+button_action() ::=<<
+$if (action.ActionElement)$(click)="$action.CurrentContextInfo.actionContext:g_event_set_action_context()$ callAction( this.$action.ActionElement$); \$event.stopPropagation()"$endif$
+>>
+
+button(action)::= <<
+<gx-button
+  $control_id(action.ControlName)$
+  $g_test_data(action.ControlName)$
+  $g_class_property(action, action.Class, "control")$
+  $button_action()$
+  $g_visible_property(action, action.Visible)$
+  $g_enabled_property(action, action.Enabled)$
+  $g_invisible_mode_attr(action)$
+  $g_button_dimensions(action)$
+  $g_action_image_position(action)$
+>
+  $if (action.HasImage)$  
+  <img src="{{getImageSource('$action.image$')}}" slot="main-image" />
+  $endif$
+  $g_caption_property(action, action.Caption)$
+</gx-button>
+>>
+
+control_dimensions(control) ::= <<
+$if (control.HasWidth)$
+width="$control.Width$px"
+$endif$
+$if (control.HasHeight)$
+height="$control.Height$px"
+$endif$
+>>
+
+image(data) ::= <<
+<gx-image
+  $g_html_id(data.ControlName)$
+  $g_test_data(data.ControlName)$
+  $g_class_property(data, data.Class, "control")$
+  $g_enabled_property(data, data.Enabled)$
+  $g_visible_property(data, data.Visible)$
+  src="{{getImageSource('$data.Image$')}}"
+  [autoGrow]="$data.AutoGrow$"
+  $html_att_value("alt", data.AlternateText)$
+  $g_touch_event_binding(data)$
+  $g_invisible_mode_attr(data)$
+>
+</gx-image>
+>>
+
+cell_grid_parent (cell) ::=<%%>
+
+g_html_id(id) ::=<<#$id$>>
+
+html_att_value(attName, attValue) ::= <<$if (attValue)$$attName$="$attValue$"$endif$>>
+
+html_css_image_value(attName, attValue) ::= <<$if (attValue)$$attName$="'url(' + getImageSource('$attValue$') + ')'"$endif$>>
+
+html_att_style(styleList) ::=  <<$if(styleList)$ style="$styleList:html_att_style_element();separator="; "$; "$endif$>>
+
+html_att_style_element(cssAtt) ::= <<$cssAtt.name$: $cssAtt.value$>>
+
+html_table_cell_height(cell) ::= <<$html_att_value("max-height", cell.MaxHeight)$ $html_att_value("min-height", cell.MinHeight)$>>

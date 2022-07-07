@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Enumerated Domains Methods and Properties</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?9918,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Enumerated Domains Methods and Properties</h1>
+<!--Enumerated Domains Methods and Properties--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document is intended to compile methods and properties related to <a href="2207.html">Enumerated Domains</a>.</p>
+
+<p>Samples below use the following Enumerated Domain definition:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Enumerated Domain Name: MaritalStatus
+Data type             : C(1)
+Values                : Name        Description   Value
+                        Single      Single        S
+                        Married     Married       M
+                        Widow       Widow         W
+                        Divorced    Divorced      D
+</pre>
+
+<h2><a id="Enumerated+Domain+methods" class="HashLink" href="#Enumerated+Domain+methods">Enumerated Domain methods</a></h2>
+
+<h3><a id="Convert%28%29" class="HashLink" href="#Convert%28%29">Convert()</a></h3>
+
+<p>Use this method when a value that is not known to belong to the enumerated domain needs to be assigned to a field (attribute, variable, SDT member) that is based on an enumerated domain. This happens, for example, when you read a value from an XML or CSV file and want to assign it to an enumerated domain field. The value is a string but GX does not know that its value belongs to the enumerated domain. The Convert() method avoids the type mismatch error that would otherwise occur in this case.</p>
+
+<p>The Convert() method does not check that its parameter's value belongs to the enumerated domain at run-time.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p><i>EnumeratedDomain</i><b>.Convert(</b> <i>&lt;expression&gt;</i> <b>)</b></p>
+
+<p>where:</p>
+
+<ul>
+	<li><i>EnumeratedDomain</i> is the name of an already defined Enumerated Domain.</li>
+	<li><i>&lt;expression&gt;</i> is any valid expression. Its data type must match the basic Enumerated Domain data type.</li>
+</ul>
+
+<h4><a id="Sample" class="HashLink" href="#Sample">Sample</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// The following code raises a &quot;type mismatch&quot; error
+&amp;MaritalStatus = &quot;M&quot;
+// You should use the following instead:
+&amp;MaritalStatus = MaritalStatus.Convert( &quot;M&quot;)
+</pre>
+
+<p><strong>Availability: </strong>This method is available since version 9.0.</p>
+
+<h3><a id="Elements%28%29" class="HashLink" href="#Elements%28%29">Elements()</a></h3>
+
+<p>Returns a collection populated with all values defined in the Enumerated Domain. Elements in the returned collection are returned sorted by Value. It can be used anywhere a collection can.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p><i>EnumeratedDomain</i><b>.Elements()</b></p>
+
+<p>where:</p>
+
+<ul>
+	<li><i>EnumeratedDomain</i> is the name of an already defined Enumerated Domain.</li>
+</ul>
+
+<h4><a id="Sample" class="HashLink" href="#Sample">Sample</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+// To insert domain values to a table.
+For &amp;x in MaritalStatus.Elements()
+   new
+      MaritalStatusId = &amp;x
+      MaritalStatusDescription = &amp;x.EnumerationDescription()
+   endnew
+EndFor
+ 
+// In a Where clause
+For each
+   where MaritalStatusId in MaritalStatus.Elements()
+   ...
+Endfor
+</pre>
+
+<p><strong>Availability:</strong> This method is available since version <a href="https://wiki.genexus.com/commwiki/wiki?9256,," target="_blank">GeneXus X Evolution 1</a>.</p>
+
+<hr />
+<h2><a id="Methods+of+Enumerated+Domain+based+attributes+and+variables" class="HashLink" href="#Methods+of+Enumerated+Domain+based+attributes+and+variables">Methods of Enumerated Domain based attributes and variables</a></h2>
+
+<h3><a id="EnumerationDescription%28%29" class="HashLink" href="#EnumerationDescription%28%29">EnumerationDescription()</a></h3>
+
+<p>The EnumerationDescription() method returns the descriptive text associated to the given enumerated domain value.</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p> <i>Field</i><b>.EnumerationDescription()</b></p>
+
+<p>where:</p>
+
+<ul>
+	<li><i>Field </i>is an attribute, variable or SDT member based on an Enumerated Domain.</li>
+</ul>
+
+<h4><a id="Sample" class="HashLink" href="#Sample">Sample</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;MaritalStatus            = MaritalStatus.Married
+&amp;MaritalStatusDescription = &amp;MaritalStatus.EnumerationDescription()
+// &amp;MaritalStatus must now have the value &quot;M&quot; and &amp;MaritalStatusDescription &quot;Married&quot;
+
+&amp;MaritalStatus            = MaritalStatus.Divorced
+&amp;MaritalStatusDescription = &amp;MaritalStatus.EnumerationDescription()
+// &amp;MaritalStatus must now have the value &quot;D&quot; and &amp;MaritalStatusDescription &quot;Divorced&quot;
+</pre>
+
+<p><strong>Availability:</strong> This method is available since <a href="https://wiki.genexus.com/commwiki/wiki?3146,," target="_blank">GeneXus X</a>.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<br />
+<br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6330.html">Application Localization</a></TD><TD><a href="7379.html">Enum Values property</a></TD><TD><a href="16239.html">HowTo: Using the Wheel Control</a></TD></TR><TR><TD><a href="21989.html">Timezones Domain</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:17 PM</em></font></td></TR></table></font>

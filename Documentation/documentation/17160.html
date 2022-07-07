@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Calls to Elements in Work Withs from Native Mobile Applications Events</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17160,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Calls to Elements in Work Withs from Native Mobile Applications Events</h1>
+<!--Calls to Elements in Work Withs from Native Mobile Applications Events--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><a href="24332.html">Client events</a> in Native Mobile Applications, that is, the events executed on the device (as opposed to those executed on the server-side) have a slightly different grammar than <a href="24234.html">server events</a>. Mostly it is a subset of the grammar of GeneXus events (for example, that of the Web Panels).</p>
+
+<p>But it has to include a way to call the elements of the Work With itself. The syntax for every case (calling <strong>List</strong>, <strong>Detail</strong> in order to view information, <strong>Detail</strong> in order to edit -insert/update/delete-) is as follows (below you will have each case examined with an example):</p>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.List( </strong>[<em>parm<sub>1</sub></em><strong>,</strong> ...<strong>,</strong> <em>parm<sub>N</sub> </em> ] <strong>)</strong></p>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em>.<strong>Detail( </strong>[<em>parm1</em><strong>,</strong><i> </i><em>...</em><strong>,</strong><i> </i><em>parmN</em><i> </i> ]<strong>)</strong></p>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Insert( </strong>[<i>&amp;</i><em>BC </em>] <strong>)</strong></p>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Update( </strong><em>pk_parameters </em><strong>)</strong></p>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Delete( </strong><em>pk_parameters </em><strong>)</strong></p>
+
+<p>Where (<a href="6626.html">Syntax conventions</a>)</p>
+
+<p><em>WorkWithDevicesObject</em></p>
+
+<p>Name of the Work With object. When it corresponds to the <a href="15974.html">Work With for Smart Devices object</a> pattern applied to a Transaction, it is made up of <strong>WorkWithDevices </strong>+ <i>TransactionName. </i>(If the Work with Object was created from scratch, as an object that is not related to any transaction, it is the name the user gave to it).</p>
+
+<p><em>levelname</em></p>
+
+<p>Name of the Level where the List or Detail is being called.</p>
+
+<p><em>parm<sub>i</sub></em></p>
+
+<p>(For each i between 1 and n), variable or attribute whose value is sent to the List or Detail invoked, in i-th place. The data type must be compatible with the declared i-th parameter in the List/Detail node parm rule.</p>
+
+<p><em>BC</em></p>
+
+<p>(Optional) It is a variable based on the Business Component associated to the transaction whose Work With Detail is being called in order to insert a new information record on the database. The values of the BC variable are taken as a way of initializing the Detail attributes displayed when the call is performed. After the user actually inserts the information in the system, that variable will be returned loaded with those values. So, it is an in-out parameter. If it is not sent, the Detail will be opened with the default values. If the level to which Insert is called is not the first in the BC, you must pass the primary key of the parent level, and optionally the BCLevel with the initialization values.</p>
+
+<p><em>pk_parameters</em></p>
+
+<p>When calling Update or Delete, you have to identify the corresponding record. To do so, you have to send the parameters that constitute the primary key.</p>
+
+<p><strong>Note:</strong> For Insert, Update, and Delete, you use the Edit layouts. In the Detail Edit layout, you can include the sections you want to view for this.</p>
+
+<h2><a id="Calling+the+List" class="HashLink" href="#Calling+the+List">Calling the List</a></h2>
+
+<p><strong>Syntax</strong></p>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.List( </strong>[<em>parm<sub>1</sub></em><strong>,</strong> ...<strong>,</strong> <em>parm<sub>N</sub></em> ] <strong>)</strong></p>
+
+<p>Supposing that from the List of WorkWithDevicesInputMeasures (based on the InputMeasures <a href="1908.html">Transaction object</a>) you want to reach the List of Work With associated with the Urgent transaction, you will have to start with a button (for example in the <a href="19486.html">Application Bar</a> of the first Work With). You will call the action associated with the <em>UrgentCall</em> button.</p>
+
+<p><img src="./images/17105.bmp" id="17105" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'UrgentCall'
+    WorkWithDevicesUrgent.Urgent.List()
+EndEvent</pre>
+
+<p>In the following example, and with the pattern shown, if you wanted to access the second List from any other Native Mobile object, you would code the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'WithoutAbout'
+    WorkWithDevicesAirport.AirportWithoutAbout.List()
+EndEvent</pre>
+
+<p>Usually, Lists don't need parameters, but this is not a general rule.</p>
+
+<h2><a id="Calling+Detail" class="HashLink" href="#Calling+Detail">Calling Detail</a></h2>
+
+<h3><a id="To+view+information" class="HashLink" href="#To+view+information">To view information</a></h3>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em>.<strong>Detail( </strong>[<em>parm1</em><strong>,</strong><i> </i><em>...</em><strong>,</strong><i> </i><em>parmN</em><i> </i>] <strong>)</strong></p>
+
+<p>In this example, from the Section(General) of the Airport Work With you will have to navigate to the AirportDetails Work With (which has no associated BCs, that is, it was not created from a Transaction but from scratch) showing ancillary data of an airport. So, in the events of the first one you will write the following code:</p>
+
+<p><img src="./images/17107.JPG" id="17107" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'MoreDetails'</pre>
+
+<p>AirportDetails.AirportDetails.Detail(AirportOACI) EndEvent</p>
+
+<p>In this case, the parameter sent is the primary key of the Airport transaction. Therefore, the object called AirportDetails will have to have it stated in the Rules of the Section(General) node (not in the Detail Rules):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+parm(AirportOACI);</pre>
+
+<p>In this case, because you want GeneXus to infer the record directly, you receive it in the primary key attribute of the transaction.</p>
+
+<p><strong>Note: </strong>This example is also applicable to a Detail with an associated BC (that is, associated with a transaction object), in which case it would be called in View mode.</p>
+
+<h3><a id="To+edit+information" class="HashLink" href="#To+edit+information">To edit information</a></h3>
+
+<h4><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h4>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Insert( </strong><i>&amp;</i><em>BC </em><strong>)</strong></p>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Update( </strong><em>pk_parameters </em><strong>)</strong></p>
+
+<p><em>WorkWithDevicesObject</em><strong>.</strong><em>levelname</em><strong>.Detail.Delete( </strong><em>pk_parameters </em><strong>)</strong></p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>Calling the Detail of a WorkWith with an associated BC may only imply performing one of the three actions shown in the syntax (Insert, Update and Delete).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'InsertCompany'
+    WorkWithDevicesCompanies.Companies.Detail.Insert(&amp;Companies)
+EndEvent</pre>
+
+<h3><a id="Videos" class="HashLink" href="#Videos">Videos</a></h3>
+
+<p><img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/grammar-of-events-on-the-client-side-and-composite-command?p=3682'>Grammar of Events on the Client Side and Composite Command</a><br />
+<img src="./images/20668.png" id="20668" class="WikiImage"/> <a href='https://training.genexus.com/en/learning/courses/genexus-for-mobile/mobile-applications-with-genexus-course-v16/events-in-mobile-applications-6103211?p=3673'>Events in Mobile Applications</a></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="17489.html">Call Variable</a></TD><TD><a href="24332.html">Client-side Events in Native Mobile Applications</a></TD></TR><TR><TD><a href="17411.html">Dynamic Calls in Smart Devices</a></TD><TD><a href="17042.html">Category:Native Mobile Applications Events</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/06/20 07:06 PM</em></font></td></TR></table></font>

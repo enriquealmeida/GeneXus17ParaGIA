@@ -1,0 +1,94 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="View Web Form" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Include Name="WebFormScript.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+<%@ SubTemplate Name="ViewAbstractForm" File="ViewAbstractForm.dkt" MergeProperties="True"%>
+
+<Part type="<%= PartType.WebForm %>">
+	<Source><![CDATA[<%
+
+	WorkWithInstance wwInstance = WorkWithInstance.Load(Instance);
+	WorkWithSettings settings = wwInstance.Settings;
+
+	if (wwInstance.UseAbstractForm)
+	{
+%>
+<%@ CallSubTemplate ViewAbstractForm %>
+<%
+	}
+	else
+	{
+		ViewElement view = wwInstance.GetElement<ViewElement>(Element);
+		SelectionElement selection = view.Parent.Selection;
+
+%>
+<BODY>
+	<%= WebForm.BeginTable("ViewTable", settings.Theme.ViewTable, 0, 0) %>
+		<TR>
+			<TD>
+				<%= WebForm.BeginTable("TitleTable", settings.Theme.Table100, 0, 0) %>
+					<TR>
+						<TD>
+							<%= WebForm.TextBlock("ViewTitle", settings.Theme.Subtitle, view.Description) %>
+						</TD>
+<%
+		if (view.BackToSelection && selection != null)	
+		{
+%>
+						<TD align="right" colSpan="1">
+							<%= WebForm.TextBlock("ViewAll", settings.Theme.TextToLink, selection.Description) %>
+						</TD>
+<%
+		}		
+%>
+					</TR>
+				<%= WebForm.EndTable() %>
+			</TD>
+		</TR>
+		<TR>
+			<TD>
+				<%-- Fixed Data --%>
+				<%= WebForm.BeginTable() %>
+<% 
+		if (view.FixedData != null)
+		{
+			foreach (IAttributesItem fixedAtt in view.FixedData.Attributes.Attributes)
+			{
+				if (fixedAtt.Visible)
+				{
+%>
+					<TR>
+						<TD>
+							<%= WebForm.TextBlock("FixText" + fixedAtt.Id, settings.Theme.Label, fixedAtt.Description) %>
+						</TD>
+						<TD>
+							<%= WebFormScript.Item(fixedAtt) %>
+						</TD>
+					</TR>
+<%
+				}
+			}
+		}
+%>
+				<%= WebForm.EndTable() %>
+				<%= WebForm.TextBlock("SpaceSeparator", settings.Theme.Separator, String.Empty) %>
+			</TD>
+		</TR>
+		<TR vAlign="bottom">
+			<TD>
+				<%-- Tabs --%>
+				<%= WebForm.WebComponent(Constants.TabbedViewName, null) %>
+			</TD>
+		</TR>
+	<%= WebForm.EndTable() %>
+</BODY>
+<%
+	}
+%>]]>
+	</Source>
+</Part>

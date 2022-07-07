@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Scenario of multi-tenant application with GXflow and GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44766,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Scenario of multi-tenant application with GXflow and GAM</h1>
+<!--Scenario of multi-tenant application with GXflow and GAM--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The purpose of this document is to provide a solution for the scenario of a multi-tenant application that uses GXflow and GAM, where the application is also to be deployed in the same Web Application, using the same database with the system’s and the GAM’s tables for all Tenants in the application.</p>
+
+<h3><a id="Architecture" class="HashLink" href="#Architecture">Architecture</a></h3>
+
+<p>Since GXflow does not support a multi-tenant schema where all tenants share the same database, the architecture recommended for such a scenario is the following:</p>
+
+<ul>
+	<li>There is a database with the tables corresponding to the system and the GAM.</li>
+	<li>A GXflow database is necessary for each tenant.</li>
+	<li>The application’s binaries are deployed in the same Web Application, meaning that, the binaries of the application, and of the GAM and GXflow will be executed on the same Web Application.</li>
+</ul>
+
+<h4><a id="Notes%3A" class="HashLink" href="#Notes%3A">Notes:</a></h4>
+
+<ul>
+	<li>For this scenario, it is recommended to set up the GXflow licenses on a protection server, in order to centralize their administration.</li>
+	<li>It is not possible to use the SQL statement cache in this scenario.</li>
+</ul>
+
+<p> </p>
+
+<h3><a id="Setting+up+the+development+environment" class="HashLink" href="#Setting+up+the+development+environment">Setting up the development environment</a></h3>
+
+<p>Below is a description of the steps to follow in setting up the development environment.</p>
+
+<ol>
+	<li>Activate GAM and create a database with tables in the application and the GAM.</li>
+	<li>Modify the connection.gam to allow the possibility of creating multiple repositories.
+	<ol>
+		<li>Go to the option: Tools\GeneXus Access Manager\Update connection file, enter with user gamadmin, and select both repositories. (For further details on how to set up the GAM in this scenario, read <a href="https://wiki.genexus.com/commwiki/wiki?18710,," target="_blank">Multiple Repositories Scenario: The same application installation is shared by many companies</a>).</li>
+		<li>This will enable the possibility of access with user gamadmin to create new repositories for each Tenant.</li>
+	</ol>
+	</li>
+	<li>Create GXflow datastore and indicate a database name different from that of the Default datastore.</li>
+	<li>Create some process diagrams to enable GXflow in the KB.</li>
+	<li>In the Environment properties, set up the &quot;Deploy business processes on build&quot; property with value No.</li>
+	<li>Export the processes created with the BPDeployer tool.</li>
+	<li>Execute the BPDeployer tool and import the exported processes. This tool will create the database the first time, as well as the GXflow tables, in addition to impacting the exported processes.</li>
+	<li>A procedure must be created to associate the Before Connect event, where information on the session is read to define the company, and based on it, you obtain the logic on which is the name of the GXflow database that corresponds to that company.<br />
+	 
+	<ol>
+		<li>This is an example of how this procedure could be done, assuming that the session variable 'CompanyId' was previously set up in the system’s login screen and that the name of the GXflow database is parameterized for each company.</li>
+		<li>
+		<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CompanyId = val(&amp;Session.Get('CompanyId'))
+
+For Each
+Where CompanyId = &amp;CompanyId
+      &amp;Database = CompanyDatabaseName
+Endfor
+
+If not &amp;Database.IsEmpty()
+   &amp;dbconn = GetDatastore('GXflow')
+   &amp;dbconn.ConnectionData = 'DATABASE=' + &amp;Database.Trim()
+Endif</pre>
+		</li>
+	</ol>
+	</li>
+	<li>Disabling the automatic synchronization that the IDE does between the GAM and GXflow is recommended. To that end, a config.gx file must be created in the KB’s root directory, with content  DisableGamRolesSync= True</li>
+	<li>Edit the file client.exe.config with the information of the GXflow datastore so that it will point to the new database.</li>
+	<li>Execute, by commands line, the <strong>apwfinitializegam.exe</strong> program, passing, as a parameter, the name of the repository created in step 1. This will be initiating the roles of GXflow, the permits, and the subscriptions to events within the GAM.</li>
+</ol>
+
+<h3><a id="Impact+of+changes+on+the+processes" class="HashLink" href="#Impact+of+changes+on+the+processes">Impact of changes on the processes</a></h3>
+
+<p style="margin-left: 80.0px;">When you want to include changes at the process level, the following is required:<br />
+<br />
+1.    Create an export of the changes with the option <strong>Tools &gt; Workflow &gt; Create business deploy file</strong> and select the processes to be exported. This will also take the information of the Roles defined in the IDE.<br />
+2.    Use the Business Process Deployer tool to import the file generated in the previous step, connecting to the GXflow base.<br />
+3.    To synchronize the new roles with the GAM you must:</p>
+
+<p style="margin-left: 120.0px;">1.    Edit the client.exe.config file with the information of the GXflow datastore so that it will point at the GXflow database.<br />
+2.    Execute, commands line, the apwfmigraterolestogam.exe program, passing, as a parameter, the name of the GAM’s repository against which you want to synchronize. </p>
+
+<h3><a id="Process+for+adding+a+new+Tenant" class="HashLink" href="#Process+for+adding+a+new+Tenant">Process for adding a new Tenant</a></h3>
+
+<p>The following steps indicate what must be done on the GAM side and on the GXflow in order to add a new Tenant to the system:</p>
+
+<ol>
+	<li style="margin-left: 40.0px;">Create a new repository in the GAM.</li>
+	<li style="margin-left: 40.0px;">Export, with the BPDeployer tool, the corresponding processes for the new Tenant.</li>
+	<li style="margin-left: 40.0px;">Use the BPDeployer tool and select the file generated in step 2.
+	<ol>
+		<li style="margin-left: 40.0px;">This tool will create the database if it does not exist, as well as the GXflow tables for the first time. It will also impact the processes and roles within the GXflow tables.</li>
+	</ol>
+	</li>
+	<li style="margin-left: 40.0px;">Edit the client.exe.config file with the information of the GXflow datastore so that it will point at the new GXflow database.</li>
+	<li style="margin-left: 40.0px;">Execute, by commands line, the apwfinitializegam.exe program, passing, as a parameter, the name of the repository created in step 1. </li>
+	<li style="margin-left: 40.0px;">Execute, by commands line, the apwfmigraterolestogam.exe program, passing, as a parameter, the name of the repository created in step 1, to synchronize the roles defined in GXflow towards the GAM repository. </li>
+	<li style="margin-left: 40.0px;">Go to the GXflow License Manager Web and set up the licenses. </li>
+	<li style="margin-left: 40.0px;">Following the previous steps, you may start creating users that will be part of the processes and assign to them the &quot;GXflow Public&quot; role, in addition to the typical roles of the processes. </li>
+</ol>
+
+<p style="margin-left: 40.0px;"> </p>
+
+<p><br />
+ </p>
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

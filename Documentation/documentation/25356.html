@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Security concerns in Smooth models</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?25356,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Security concerns in Smooth models</h1>
+<!--Security concerns in Smooth models--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>A common practice used to be for the Start event of the <a href="17088.html">What is a Master Page</a> to include a code for verifying if the user was authenticated or authorized to execute a web page. And consequently, the execution of user events did not include any security check, because it always followed the execution of the Start event where the security had already been checked.</p>
+
+<p>This is the common scenario for Kbs which do not use <a href="19888.html">GeneXus Access Manager</a>.</p>
+
+<p>However, programming security checks in the Start event is not a good security solution for applications generated to use <a href="https://wiki.genexus.com/commwiki/wiki?25801,," target="_blank">Web Smooth UX</a>, and this is due to the <a href="22472.html">Event Execution Scheme</a>. In such cases, we must consider a different solution.</p>
+
+<p>Despite the fact that using GAM is the best solution for this, GeneXus introduces an automatic solution to help those who haven't Integrated Security in their Kbs, and are converting from versions prior to GeneXus Evolution 3 to a Smooth model.</p>
+
+<h2><a id="Challenge" class="HashLink" href="#Challenge">Challenge</a></h2>
+
+<p>When <a href="22449.html">Web User Experience property</a>  = Smooth, the Start, Refresh and Load Events are not triggered in the execution of a user event, as explained in the <a href="22472.html">Event Execution Scheme</a>.</p>
+
+<p>This means that this code is vulnerable as far as security is concerned:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+        &amp;context = LoadContext()
+        if (not &amp;context.IsAdministrator)
+                  NotAuthorized.Link()
+        endif    
+Endevent
+
+Event 'RemoveData'
+    RemoveData.call()
+Endevent</pre>
+
+<p>Note that, in a Smooth model, the execution of user event 'RemoveData' is separated from the Start event. So, the security check inside the Start event is not triggered when the user event is executed.<br />
+This security problem only occurs in Kbs which do not use GAM, have <a href="22449.html">Web User Experience property</a>= Smooth, and delegate the security checks only to the Start or Refresh Event.</p>
+
+<p>If security checks are included in every user event, then the problem will not exist.</p>
+
+<p>However, there is no need to consider the change of user events code because an automatic solution is available to solve such security issues.</p>
+
+<h2><a id="Solution" class="HashLink" href="#Solution">Solution</a></h2>
+
+<p>To avoid delegating the responsibility of this task onto the GeneXus user, a solution has been implemented to automatically prevent intruders from executing the user event without beingg logged in at least once.</p>
+
+<p>This solution applies for all cases (using GAM or not), but it's specially usefull when GAM is not active in the KB, or when it is active - <a href="14706.html">Enable Integrated Security property</a> = True, but the Integrated Security level is none at the object level:</p>
+
+<ul>
+	<li><a href="22449.html">Web User Experience property</a>= Smooth</li>
+	<li><a href="15214.html">Integrated Security Level property</a> = none</li>
+</ul>
+
+<p>Only when the user has logged in the application (having executed the web panel for the first time) a token will be granted to be used in executing the page's user events.The token is valid only for the web page executed.</p>
+
+<p>The security solution scope is as follows:</p>
+
+<p>1. Allow execution of user events when the user is authenticated, and not for non-authenticated users.<br />
+2. Allow execution of a web object only when authenticated user has permits to execute it.</p>
+
+<p>As since GeneXus 15, the <a href='https://tools.ietf.org/html/rfc7519'>JWT</a> standard is used for the implementation of the token mechanism. </p>
+
+<h3><a id="Restrictions+to+the+solution" class="HashLink" href="#Restrictions+to+the+solution">Restrictions to the solution</a></h3>
+
+<ul>
+	<li>The security token will remain valid while the end user is executing a web page, even if a permit for that user is revoked or if the user is deleted. So, depending on the application's strictness and features, we might need to program the security checks for each user event.</li>
+</ul>
+
+<h3><a id="Note" class="HashLink" href="#Note">Note</a></h3>
+
+<p>In addition to the solution described above, an automatic security check is also available for each HTTP Post, for detecting whether the read-only data has been changed. In case it has, a 403 Forbidden Error is informed. A more detailed explanation of this mechanism is explained in <a href="31506.html">Security Web Development tips</a>.</p>
+
+<p> </p>
+
+<h2><a id="+" class="HashLink" href="#+"> </a></h2>
+
+<p> </p>
+
+<p><br />
+</p>
+
+<p><br />
+ </p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+
+<p><br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31506.html">Security Web Development tips</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:20 PM</em></font></td></TR></table></font>

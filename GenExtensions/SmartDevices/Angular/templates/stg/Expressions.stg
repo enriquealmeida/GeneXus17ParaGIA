@@ -1,0 +1,167 @@
+delimiters "$", "$"
+import "Expressions_Functions.stg"
+import "Expressions_Properties.stg"
+import "Expressions_Methods.stg"
+import "Expressions_Logical.stg"
+
+expressionTypeToTemplate ::= [
+    "number":		"g_expression_constant",
+    "string":		"g_expression_string",
+    "constant":		"g_expression_constant",
+    "gxobject":		"g_expression_gxobject",
+    "keyword":		"g_expression_keyword",
+    "boolean":		"g_expression_constant",
+    "property":		"g_expression_property",
+    "method":		"g_expression_method",
+    "variable":		"g_expression_variable",
+    "attribute":	"g_expression_variable",
+    "arithmetic":	"g_expression_arithmetic",
+    "logic":		"g_expression_logical",
+    "function":		"g_expression_function",
+    "control":		"g_expression_control",
+    "constructor":	"g_expression_new",
+    "datatype":		"g_expression_type",
+	"self":			"g_expression_self",
+	"comment":		"g_expression_comment",
+	"async":		"g_expression_async",
+    default:		"g_expression_default" // anything else
+ ]
+
+ arithmeticOperatorsTemplate ::= [
+  "^" : "g_expression_arithmetic_power",
+  default : "g_expression_arithmetic_default"
+]
+
+g_expression(expr) ::=<%
+$if (expr)$
+$if (expr.ExprType)$
+$(expressionTypeToTemplate.(expr.ExprType))(expr)$
+$endif$
+$endif$
+%>
+
+g_expression_variable(expression) ::=<<
+$g_self()$.$expression.ExprValue$
+>>
+
+g_expression_control(expression) ::=<<
+$g_self()$.$expression.ExprValue$
+>>
+
+g_call_parameters( expression) ::=<%
+$if(expression.Parameters)$
+    $g_call_parameters_collection( expression.Parameters)$
+$endif$
+%>
+
+g_call_parameters_collection( parameters) ::=<%
+  $parameters.Parameter:g_call_parameter();separator=", "$
+%>
+g_call_parameter( parameter) ::=<%
+$g_convert_to(parameter.expression.ExprDataType, parameter.GeneratorType, parameter.expression:g_expression())$
+%>
+
+g_call_inputparameters( expression) ::=<%
+$if(expression.InputParameters)$
+$expression.InputParameters.Parameter:g_call_parameter();separator=", "$
+$endif$
+%>
+
+
+g_call_parameters_as_object( expression) ::=<%
+$if(expression.Parameters)$
+{$expression.Parameters.Parameter:g_call_parameter_as_object();separator=", "$}
+$endif$
+%>
+
+g_call_parameter_as_object( parameter) ::=<%
+$parameter.Name$:$g_convert_to(parameter.expression.ExprDataType, parameter.GeneratorType, parameter.expression:g_expression())$
+%>
+
+g_querystring_parameter( parameter) ::=<%
+$gx.ToLower.(parameter.Name)$:$g_convert_to( parameter.expression.ExprDataType, {VarChar}, parameter.expression:g_expression())$
+%>
+
+g_declare_parameters( expression) ::=<%
+$if(expression.Parameters)$
+$expression.Parameters.Parameter:g_declare_parameter();separator=", "$
+$endif$
+%>
+
+g_declare_parameter( parameter) ::=<%
+$parameter.Name$ : $parameter.GeneratorType:g_type_name()$
+%>
+
+g_expression_string(expression) ::=<<
+$expression.ExprValue$
+>>
+
+g_expression_constant(expression) ::=<<
+$expression.ExprValue$
+>>
+
+g_expression_gxobject(expression) ::=<<
+$expression.ExprDataType:g_type_name()$
+>>
+
+g_expression_keyword(expression) ::=<<
+'$expression.ExprValue$'
+>>
+
+g_expression_new( expression) ::=<%
+new $expression.ExprDataType:g_type_name()$($expression:g_call_parameters()$)
+%>
+
+g_expression_type( expression) ::=<%
+$expression.ExprDataType:g_type_name()$
+%>
+
+g_expression_arithmetic(expression) ::= <<
+$(arithmeticOperatorsTemplate.(expression.operator))(expression)$
+>>
+
+g_expression_arithmetic_power(expression) ::=<<
+Math.pow( $g_expression( expression.Left)$ , $g_expression(expression.Right)$)
+>>
+
+g_expression_arithmetic_default(expression) ::=<<
+($g_expression( expression.Left)$ $expression.operator$ $g_expression(expression.Right)$)
+>>
+
+g_expression_self(expression) ::=<%
+$g_self()$
+%>
+
+g_self() ::= <%
+this
+%>
+
+g_expression_comment(expression) ::= <<
+null /*$expression.ExprValue$*/
+>>
+
+g_expression_async(expression) ::= <%
+await $expression.AsyncExpr:g_expression()$
+%>
+g_expression_default(expression) ::=<<
+  // Cannot generate $expression$
+>>
+
+g_translate( text) ::=<%
+$if(text)$
+{{'$text$' | translate}}
+$endif$
+%>
+
+g_expression_or_null(expr) ::= <%
+$if(expr)$
+$if(expr.ExprType)$
+$expr:g_expression()$
+$else$
+null
+$endif$
+$else$
+null
+$endif$
+%>
+

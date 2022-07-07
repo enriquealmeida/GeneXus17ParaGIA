@@ -1,0 +1,81 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prepare Transaction event code" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Helpers.Strings" %>
+<%@ Import Namespace="Artech.Architecture.Common.Objects" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="Attributes" Type="System.Collections.IEnumerable" %>
+<%@ Property Name="LinkAssocToImage" Type="System.Boolean" %>
+<%@ Property Name="LinksEvent" Type="System.String" %>
+<%@ Property Name="HasLoadEventLinks" Type="System.Boolean[]" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%
+	bool filterLoadEvent = (LinksEvent == "Load");
+	bool filterNotLoadEvent = (LinksEvent == "NotLoad");
+	WorkWithPlusSettings settings = null;
+	foreach (IWorkWithPlusInstanceElement item in Attributes)
+	{
+		if (item is IAttributesItem)
+		{
+			IAttributesItem attItem = (IAttributesItem)item;
+			if (settings == null)
+			{
+				settings = attItem.Instance.Settings;
+			}
+			PredefinedDomain? predefinedDomain = null;
+			if ((attItem.Link != null && attItem.Link.LinkExpression != String.Empty)
+				 || (attItem.AddPredefinedDomainlink(LinkAssocToImage, out predefinedDomain)))
+			{
+				if (attItem.SupportsLink)
+				{
+					if (LinkElement.IncludeFilter(attItem, filterLoadEvent, filterNotLoadEvent, HasLoadEventLinks))
+					{
+						if (attItem.Link != null && attItem.Link.LinkExpression != String.Empty)
+						{
+							if (!attItem.Link.HasAdvancedSecurityCondition())
+							{
+%>
+<%= attItem.LinkControlName %>.Link = <%= attItem.Link.LinkExpression %>
+<%
+							}
+							else
+							{
+%>
+<%= attItem.Link.GetAdvancedSecurityLinkExpression() %>
+<%
+							}
+						}
+						else if (predefinedDomain == PredefinedDomain.URL)
+						{
+%>
+<%= attItem.LinkControlName %>.LinkTarget = !'_blank'
+<%= attItem.LinkControlName %>.Link = <%= attItem.ControlName %>				
+<%					
+						}
+						else if (predefinedDomain == PredefinedDomain.Email)
+						{
+%>
+<%= attItem.LinkControlName %>.Link = !'mailto:' + <%= attItem.ControlName %>				
+<%
+						}
+						else if (predefinedDomain == PredefinedDomain.Address || predefinedDomain == PredefinedDomain.Geolocation)
+						{
+%>
+if null(<%= attItem.ControlName %>)
+	<%= attItem is VariableElement ? ((VariableElement)attItem).Name : attItem.ControlName %>Image.Class = !'Invisible'
+endif
+<%
+						}
+					}
+				}
+				else
+				{
+%>
+// Cannot add link to <%= attItem.Name %>. Control type does not support links.
+<%
+				}
+			}
+		}
+	}
+%>

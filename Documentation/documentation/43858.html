@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Aspects to consider when using GeneXus BPM Suite with GAM</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?43858,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Aspects to consider when using GeneXus BPM Suite with GAM</h1>
+<!--Aspects to consider when using GeneXus BPM Suite with GAM--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><h2><a id="Introduction" class="HashLink" href="#Introduction">Introduction</a></h2>
+
+<p>The objective of this document is to centralize the information related to the simultaneous use of GXflow and GAM.</p>
+
+<h2><a id="Initialization+of+GXflow+entities+in+GAM+Repository" class="HashLink" href="#Initialization+of+GXflow+entities+in+GAM+Repository">Initialization of GXflow entities in GAM Repository</a></h2>
+
+<p>GXflow uses certain default roles and permissions that must be available in the GAM repository for the runtime to work correctly. For this purpose, there is an initialization utility that must be executed.<br />
+To learn more, read <a href="33095.html">GXflow - GAM Initialization</a>.</p>
+
+<h2><a id="Synchronization+of+Users+and+Roles" class="HashLink" href="#Synchronization+of+Users+and+Roles">Synchronization of Users and Roles</a></h2>
+
+<p>The information of users and roles is duplicated in the GAM and GXflow tables. Any change on one side, either from the backend or via API, is automatically synchronized on the other. For more information, read <a href="18454.html">GXflow - GAM Integration</a>.</p>
+
+<h2><a id="Authentication+and+Session+Management" class="HashLink" href="#Authentication+and+Session+Management">Authentication and Session Management</a></h2>
+
+<p>In a system based on GAM or GXflow, an active user session is required.<br />
+GAM and GXflow sessions are independent of each other and each system requires the corresponding session.</p>
+
+<p>The way to obtain a session is by means of an Authentication mechanism, for which different scenarios are presented.</p>
+
+<h3>Login Scenarios<br />
+ </h3>
+
+<h4><a id="1.+GAM+Login" class="HashLink" href="#1.+GAM+Login">1.    GAM Login</a></h4>
+
+<p>If the user authenticates using the GAM login (either the example or any other that uses the GAMRepository.Login API), a GAM session is automatically created. If the user then logs in to the GXflow Client, it detects the GAM session and tries to create its own session based on the previous one. The success of such an operation will depend on whether it meets any of the following conditions:</p>
+
+<p>A.    The user already exists in GXflow and is nominated.<br />
+B.    The user doesn't exist in GXflow but has the GXflow Public role assigned in GAM, and there are nominated licenses available in GXflow.<br />
+If the client, instead of using the standard GXflow Client, uses a proprietary one based on the Custom Client, he/she can enable this mechanism by following <a href="https://wiki.genexus.com/commwiki/wiki?29533,," target="_blank">these steps</a>.</p>
+
+<h4><a id="2.+GXflow+Login" class="HashLink" href="#2.+GXflow+Login">2.    GXflow Login</a></h4>
+
+<p>When the GXflow Client login is used, internally authentication is delegated to GAM, sending the credentials (username and password) entered (*). In case of success, both GAM and GXflow sessions are created.</p>
+
+<p>(*) Remember that the GXflow login does not allow specifying the type of GAM authentication, so the login will try to authenticate the user with the type of authentication configured as default in GAM.</p>
+
+<h4><a id="3.+API+WorkflowServer.Connect" class="HashLink" href="#3.+API+WorkflowServer.Connect">3.    API WorkflowServer.Connect</a></h4>
+
+<p>When the API WorkflowServer.Connect is used, authentication is also delegated to GAM, but in this case, only the GXflow session is created.<br />
+If there is an active GAM session for the same user indicated in the method parameter, the authentication is skipped and the session is immediately created. This means that when there is an active session the password doesn't have to be entered unless you want to create a connection with a different user.<br />
+This can be confirmed in the code mentioned <a href="https://wiki.genexus.com/commwiki/wiki?29533,," target="_blank">here</a>.<br />
+<br />
+<br />
+<br />
+</p>
+<br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43435.html">Toc:GeneXus BPM Suite</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

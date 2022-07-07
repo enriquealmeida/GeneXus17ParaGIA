@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Stripe Card Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?37950,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Stripe Card Control</h1>
+<!--Stripe Card Control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Credit card sensitive information should never be sent to your server. This is why there is a UserControl, which allows users to enter their credit card information securely, sends it directly to Stripe’s servers, and returns a card token. This token will be used when creating a charge, subscription, etc. It can only be used once, although a credit card token can be associated with a customer for later use.<br />
+ </p>
+
+<p>This User Control can be downloaded from <a href='https://marketplace.genexus.com/product.aspx?stripecardcontrol'>https://marketplace.genexus.com/product.aspx?stripecardcontrol</a> </p>
+
+<h2><a id="How+to+use+Stripe+Card+Control" class="HashLink" href="#How+to+use+Stripe+Card+Control">How to use Stripe Card Control</a></h2>
+
+<p>StripeCardControl has two properties: </p>
+
+<ul>
+	<li>PublishableKey</li>
+	<li>StripeCardToken</li>
+</ul>
+
+<p>The first one is needed for the control to charge to the correct account. You need to initialize a variable (Varchar(100)) with that key in the start event. Next, in the control properties(WebForm), under DataBinding, set the Publishable Key property to the variable you just initialized.</p>
+
+<p><img src="./images/38021.png" id="38021" class="WikiImage"/></p>
+
+<p>Now the control is linked to your Stripe account.</p>
+
+<p>The second property is the one that returns the token used to make a payment, create a client, etc. </p>
+
+<p>The User Control has an event:</p>
+
+<ul>
+	<li>SubmitPayment</li>
+</ul>
+
+<p>which is fired when the Submit button is clicked. The payment process should be programmed using this event.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event StripeCardControl1.SubmitPayment
+    &amp;stripeChargeCreateOptions.Amount = 4500
+    &amp;stripeChargeCreateOptions.Currency = &quot;usd&quot;
+    &amp;stripeChargeCreateOptions.SourceTokenOrExistingSourceId = StripeCardControl1.StripeCardToken //Using the returned token to create charge options
+    &amp;JSON = &amp;stripeChargeCreateOptions.ToJson()
+    &amp;StripeSDKMain.CreateCharge(&amp;Api_Key,&amp;JSON,&amp;Response,&amp;Errors,&amp;ErrorCode)
+    
+    if(&amp;ErrorCode = 0)
+        &amp;StripeChargeCreateResponse.FromJson(&amp;Response)
+        Msg(&amp;StripeChargeCreateResponse.ToJson())
+    else
+        &amp;StripeError.FromJson(&amp;Errors)
+        Msg(&amp;StripeError.ToJson())
+    endif
+EndEvent</pre>
+
+<p></p>
+
+<p></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="37967.html">Toc:GeneXus SDK for Stripe</a></TD><TD><a href="37949.html">Install GeneXus SDK for Stripe</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:21 PM</em></font></td></TR></table></font>

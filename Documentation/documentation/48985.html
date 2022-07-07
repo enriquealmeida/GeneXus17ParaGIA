@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Comparison between Theme and Design System objects</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?48985,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Comparison between Theme and Design System objects</h1>
+<!--Comparison between Theme and Design System objects--><div class="TableWikiBody" id="tblwikibody"><p>The <a href="47375.html">Design System Object</a> (DSO) implies a change of paradigm for design definition in GeneXus. Its objective is to address all the weaknesses of the <a href="4375.html">Theme</a>s and increase the impact of design on the generated application. It has been created to replace the Theme, of which it is an evolution.</p>
+
+<p>In its first version, just like a Theme, a Design System impacts the style of on-screen controls, but is designed to include the rendering of those controls as well. In sum, it is intended to be the ultimate source of design truth for applications.</p>
+
+<p>Which Theme weaknesses are being referred to? How does the Design System Object improve them? These are the questions that will be examined in this article.</p>
+
+<h3><a id="Weaknesses+of+the+Themes+scheme" class="HashLink" href="#Weaknesses+of+the+Themes+scheme">Weaknesses of the Themes scheme</a></h3>
+
+<p>When developing an application in the <a href="1836.html">Knowledge Base</a> with a small set of controls (<a href="24817.html">Grid</a>, Edit, <a href="5948.html">Text Block</a>, <a href="6073.html">Error Viewer</a>, etc.), having an object that handled <a href="6246.html">classes</a> for all these controls was a great improvement over defining the style of each one of them on each screen. This is how Themes came about. The place in the Knowledge Base for defining the style of the application was based on a scheme known to the GeneXus developer: it was done through the use of properties.</p>
+
+<p>Due to the evolution of technology, you no longer generate only for Web but also for Mobile. This involves new applications with new styles, which are different from Web applications. The Theme concept is then extended to also include these types of applications.</p>
+
+<p>In this way, Knowledge Bases have evolved and today they implement more than one application – for example, a Back-office application and a <a href='https://www.youtube.com/watch?v=J1FWKGMzRRE&amp;t=350s&amp;ab_channel=GeneXusTraining'>Customer-facing application</a>. In addition, all these applications are <a href="46592.html">multi-experience</a>; that is, developed for both native Web and Mobile platforms. One Theme is not enough, and at least two will be needed: for Web and Mobile.</p>
+
+<p>In addition, the UI has started to play a more significant role. As a result, more eye-catching and customized applications are needed; also, <a href="2814.html">Patterns</a> and frameworks emerge that extend the Knowledge Base and generate great visual impact and experience for the end user. In general, these extensions already provide a design for the objects they share or generate. This implies that they define their own classes, thus increasing the size of the Theme object because these classes must be added.</p>
+
+<p>First weakness: Themes are not articulable, which means they cannot be divided and assembled. They all have the same structure defined; those providing a design (Theme) will have an impact on the other Themes defined in the Knowledge Base. The resulting object with the design definition (a CSS file for Web) will contain the combination of all the classes defined by each of the Themes, even if they are not used. This directly impacts the generated applications' performance when calculating the screen to be displayed to the client (the larger the resource, the longer the render calculation time).</p>
+
+<p>At some point, this Theme feature was considered an advantage: the ability to change a Theme at runtime with the peace of mind of knowing that each Theme had the necessary class structure. But then there was an explosion in the creation of classes and what used to be a strength suddenly became a weakness.</p>
+
+<p>In light of this experience, packaging a Theme to facilitate its distribution is something that has been discarded. Dividing the generated CSS in order to have the minimum number of classes required to render a certain page is currently a priority to generate applications with good UX.</p>
+
+<p>Second weakness: Different classes are handled according to the type of control.</p>
+
+<p><img src="./images/48986.jpg" id="48986" class="WikiImage"/></p>
+
+<p>This is useful when selecting a certain class for a control: since each control has its own characteristics (for example, you know a Combo box has a border and a Text block usually doesn’t), having a group of classes that apply to the Combo box instead of listing all the classes defined seemed like a good idea (typed classes). However, the drawback of this scheme is that a class cannot be reused in different types of controls. For example, to change the Font type of different controls, you have to do it in the classes of each type instead of simply referencing the class with the Font in any control type; this ends up affecting the size of the generated resource.</p>
+
+<p>Third weakness: Difficulty understanding inheritance between classes. Class inheritance helps to generate a smaller resource by defining, for example, the Font in the parent class and then having all the child classes inherit that value so that you don't have to define it in each of them. However, this scheme involving a hierarchy tree and set of properties for each node doesn't allow viewing which property values are defined for a particular class; sharing a structure of fixed properties, which are mostly unspecified, makes it difficult to understand which properties are effectively defining a certain class or if the value is inherited.</p>
+
+<p>A problem derived from this is that the tree tends to grow; since the structure is not understood, when adding a style to a control a new class is usually created so as not to potentially affect the design of other controls.</p>
+
+<p><img src="./images/48987.gif" id="48987" class="WikiImage"/></p>
+
+<p>Fourth weakness: change of classes at runtime, which is not clear to the developer. Every class inheriting from the Attribute class defined in a Web Theme—for example, “AttributeX”—will automatically have a child class defined, “ReadonlyAttributeX,” without it being very clear why. When generated in Java or .Net, if an attribute/variable control is readonly and has an AttributeX class assigned to it, at runtime the class will be changed to ReadonlyAttributeX, and it will not be obvious at design time. In addition, when an Attribute/Variable control is readonly, the characteristics are likely to be identical, regardless of the specific class of the control. For example, in that case you may want the control to have the characteristics of its defined class, but with a different background color and a less visible border that is the same for all. With the Theme solution, you have to repeat exactly the same background color and border characteristics in each Readonly subclass. <br />
+Read <a href="49912.html">Readonly Class Comparison between Theme and Design System Object</a></p>
+
+<p>Fifth weakness: Class maintenance when trying to change a certain color, font type or other feature at the global Theme level. One of the latest evolutions of the Theme was the definition of a <a href="31262.html">Color Palette object</a>: an abstraction of design constants (‘<a href="47378.html">tokens</a>’ in the Design System) that allows defining a name for what will be, for example, the background color and then use that name in the classes instead of the name of a color. Thus, changing the background color only implies modifying the color palette. However, you can't do the same with the font or font size; instead, you will have to go to each class and change this feature in each definition. Fonts, including their sizes, radius, spacing, borders, etc. can't be abstracted. Another limitation of the color palette is that it can't be switched at runtime.</p>
+
+<p>Sixth weakness: Designers don't understand the Theme because the language they use is different. For the Web platform, designers who are also front-end developers work with CSS and it is the GeneXus developer who must translate the CSS to the Theme. In complex scenarios, there is no translation between them and a Custom node in the Theme will have to be used to define CSS language directly. In other cases, when designers don't have front-end design skills, they design at a high level in a tool such as <a href="46882.html">Sketch</a>, from which the CSS code is obtained if it is a web design, but the communication between designers and GeneXus developers is even more difficult. The gap between these two languages sometimes becomes a significant obstacle.</p>
+
+<h3><a id="Summary" class="HashLink" href="#Summary">Summary</a></h3>
+
+<p>●    Themes make understanding and maintenance more complicated:<br />
+                           ○    There is duplication between Mobile and Web;<br />
+                           ○    Some classes are in a Theme, but are not involved at all in the design of the objects to which the Theme applies;<br />
+                           ○    Even though most of the properties of a class are not used, they are displayed in the editor.</p>
+
+<p style="margin-left: 80.0px;">     ○    in some cases, classes are defined at design time, but at runtime other classes are assigned and that is obscure to the developer.</p>
+
+<p>●    They negatively affect object load performance at runtime due to their size.<br />
+●    They are difficult to translate from a file given by the designer or directly from the CSS for Web.<br />
+●    They are not modular.</p>
+
+<h3><a id="Design+System+Object" class="HashLink" href="#Design+System+Object">Design System Object</a></h3>
+
+<p>Design System Objects are designed to keep the well-known qualities of Themes:<br />
+●    Definition of control styles in one place.<br />
+●    Ability to change the design at runtime.<br />
+●    CSS rules support for changing the design according to screen size, orientation, and so on.</p>
+
+<p>In addition, they target all the Theme's weaknesses:<br />
+●    They are multi-experience; that is, the same DSO can be used for both Web and Mobile objects.<br />
+●    Improved understanding of the style, with a more granular definition where inheritance between classes is explicit, , as well as the classes that will be applied to each control at runtime.<br />
+●    Generation of smaller CSS files containing:<br />
+                              ○    The definition of classes defined by the DSO, avoiding the generation of entries for classes not used in that design. Defining a class in the DSO only affects the generation of that object and not the other DSO in the Knowledge Base.<br />
+                              ○    Reuse of a class for any type of control.<br />
+●    They can also be composed, importing another or several DSO and even only some of their sections, or a CSS if it is Web. This provides much greater flexibility.<br />
+●    The language is much closer to that of the designer. In fact, for the Web case, the CSS classes can be copied directly.</p>
+
+<p>To achieve all these improvements, some strong aspects of Themes had to be given up. For example, cross-referencing of classes is not strict in DSO, which means that you can have a control referencing a class that may not be defined in the DSO being used.</p>
+
+<p>However, they also bring other qualities of their own:<br />
+●    A larger number of tokens (not only colors) can be defined, including fonts, borders, radius, zindex, etc., and their values can be changed at runtime through options. For example, some colors for dark mode and others for light mode. <br />
+●    Since the design is contained in them, you can think about modularizing DSO.</p>
+
+<p>As already mentioned, the objective is for DSO to become the ultimate source for design truth in the near future.</p>
+
+<p>To meet this objective, what is missing in its first version is the determination of control types at the global level of the Knowledge Base. In addition to the Tokens and Styles parts already defined in the object, a third section has been designed: Elements. This will allow us, among other things, to define a default for each type of control. For example, when using an Attribute on screen, GeneXus uses an Edit control by default to handle that entity. To show that entity with another type of control, you have to go to the properties of the control on screen to change it, for example, to a <a href="5273.html">User Control</a>. This change is made at the control level on each screen, and there is no way to make it at the global application level. What if you could also change the type of control using a class? This will be another evolution of the DSO, which will allow having a global impact on the application with a complete Design System.</p>
+
+<h3><a id="Converting+a+Theme+into+a+Design+System" class="HashLink" href="#Converting+a+Theme+into+a+Design+System">Converting a Theme into a Design System</a></h3>
+
+<p>Themes and Design Systems will coexist for a while because we want GeneXus developers to be able to upgrade GeneXus without having their Knowledge Base impacted by unintentional design changes.</p>
+
+<p>A Design System can now be referenced wherever a Theme can be used.</p>
+
+<p>In addition, to assist in the migration of existing Knowledge Bases, you have the option to convert a Theme object into a Design System object through the option “Save as Design System.” From now on, when replacing the Knowledge Base style from the Theme with the converted Design System, the application should continue working in the same way.</p>
+
+<p><img src="./images/48988.gif" id="48988" class="WikiImage"/></p>
+
+<h3><a id="Comparison+of+main+features" class="HashLink" href="#Comparison+of+main+features">Comparison of main features</a></h3>
+
+<div style="overflow-x:auto"><table border="1" cellpadding="0" cellspacing="0" width="0">
+	<tbody>
+		<tr>
+			<td style="width: 170.0px;height: 22.0px;">
+			<p style="text-align: center;"><strong>CONCEPT</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 22.0px;">
+			<p style="text-align: center;"><strong>THEME</strong></p>
+			</td>
+			<td style="width: 186.0px;height: 22.0px;">
+			<p style="text-align: center;"><strong>DSO</strong></p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 62.0px;">
+			<p><strong>STRUCTURE</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 62.0px;">
+			<p>Not all Themes have the same structure.</p>
+			</td>
+			<td style="width: 186.0px;height: 62.0px;">
+			<p>They don't have the same structure, which simplifies the .css and resources, taking only what is necessary (granularity is allowed).</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 62.0px;">
+			<p><strong>INHERITANCE</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 62.0px;">
+			<p>There is inheritance through the “Base Theme” property: a Theme can have only one parent.</p>
+			</td>
+			<td style="width: 186.0px;height: 62.0px;">
+			<p>There is inheritance through the Design System Object @import rule. A DSO can have N parents or inherit only part of another DSO.</p>
+
+			<p>Note that it is possible to define the Design System Object @import rule within a #region.</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 22.0px;">
+			<p><strong>PLATFORM</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 22.0px;">
+			<p>ThemeWeb and ThemeSD are different.</p>
+			</td>
+			<td style="width: 186.0px;height: 22.0px;">
+			<p>One DSO for any platform.</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 22.0px;">
+			<p><strong>MODULAR</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 22.0px;">
+			<p>No</p>
+			</td>
+			<td style="width: 186.0px;height: 22.0px;">
+			<p>Yes</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 62.0px;">
+			<p><strong>PREDEFINED CLASSES</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 62.0px;">
+			<p>Yes (set of base classes; each control type has one of these classes defined). They must be defined in every Theme.</p>
+			</td>
+			<td style="width: 186.0px;height: 62.0px;">
+			<p>No</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 22.0px;">
+			<p><strong>CLASS INHERITANCE</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 22.0px;">
+			<p>Yes</p>
+			</td>
+			<td style="width: 186.0px;height: 22.0px;">
+			<p>Yes. Through the Design System Object @include rule.</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 22.0px;">
+			<p><strong>CLASS COMPOSITION</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 22.0px;">
+			<p>No</p>
+			</td>
+			<td style="width: 186.0px;height: 22.0px;">
+			<p>Yes</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 42.0px;">
+			<p><strong>CLASS CROSS REFERENCE</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 42.0px;">
+			<p>Yes</p>
+			</td>
+			<td style="width: 186.0px;height: 42.0px;">
+			<p>Yes</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 42.0px;">
+			<p><strong>CLASS REFERENCE IN CODE </strong></p>
+			</td>
+			<td style="width: 192.0px;height: 42.0px;">
+			<p>Yes (expression “ThemeClass:ClassName”).</p>
+			</td>
+			<td style="width: 186.0px;height: 42.0px;">
+			<p>Yes (expression “StyleClass:ClassName”).</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 22.0px;">
+			<p><strong>CONSUME CSS</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 22.0px;">
+			<p>Yes (option &quot;Import CSS...&quot; in the Theme).</p>
+			</td>
+			<td style="width: 186.0px;height: 22.0px;">
+			<p>Yes (copy &amp; paste from CSS directly to Styles).</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 42.0px;">
+			<p><strong>CHANGE COLORS AT GLOBAL LEVEL</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 42.0px;">
+			<p>Yes, through the Color Palette.</p>
+			</td>
+			<td style="width: 186.0px;height: 42.0px;">
+			<p>Yes, by defining Tokens.</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 42.0px;">
+			<p><strong>CHANGE TYPOGRAPHY AT GLOBAL LEVEL</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 42.0px;">
+			<p>No, the “Font” property must be changed at the level of each child class of the Root node in the Styles.</p>
+			</td>
+			<td style="width: 186.0px;height: 42.0px;">
+			<p>Yes, by defining Tokens.</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 170.0px;height: 42.0px;">
+			<p><strong>CHANGE STYLE AT RUNTIME</strong></p>
+			</td>
+			<td style="width: 192.0px;height: 42.0px;">
+			<p>Yes. Function SetTheme().</p>
+			</td>
+			<td style="width: 186.0px;height: 42.0px;">
+			<p>Yes. Function SetTheme(), which will soon be renamed to SetStyle() and can be used for both.</p>
+			</td>
+		</tr>
+	</tbody>
+</table></div>
+
+<p> </p>
+
+<p>Restrictions regarding the coexistence of Themes and DSO: </p>
+
+<p>●    You can't have a DSO and a Theme with the same name since both can generate the same physical resource (for the Web platform, they both generate a .css with the name of the object). </p>
+
+<p>●    Since DSO can be modularized, it is possible to have more than one DSO with the same name in different modules.</p>
+
+<p>●    There are cases where if you generate an object to use a DSO, at runtime you can’t change it to use a Theme, because the way selectors are generated in HTML is different. See, for example, how Readonly class handling is changed in DSO (<a href="49912.html">ref.</a>).</p>
+
+<h3><a id="Browser+support" class="HashLink" href="#Browser+support">Browser support</a></h3>
+
+<p>Applications using DSO do not support Internet Explorer. To take the most out of modern browsers some features of CSS like CSS variables are used when using DSO. <br />
+More information about browser support at <a href="30900.html">GeneXus 17 hardware and software requirements</a>.</p>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="48684.html">GeneXus 17 Upgrade 6</a>.</p>
+
+<p></p>
+</div><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="47375.html">Category:Design System Object</a></TD><TD><a href="40108.html">Toc:Design Systems</a></TD><TD><a href="49212.html">How To: Convert Theme to Design System</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/07/22 03:41 PM</em></font></td></TR></table></font>

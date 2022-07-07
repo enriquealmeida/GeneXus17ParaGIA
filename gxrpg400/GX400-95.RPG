@@ -1,0 +1,149 @@
+ ************************************************************** 
+C           SYSMSG    BEGSR
+ ************************************************************** 
+ *
+ *
+ * SEND SYSTEM MESAGE
+ *
+C                     Z-ADD0         $GXRTM  10
+C                     Z-ADD0         $GXABR  10
+C                     Z-ADD0         #1
+C           *IN97     IFEQ *ON
+C                     EXSR SYSERR
+C           *IN97     IFEQ *ON
+C                     Z-ADD1         $GXERR  10
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR
+ ************************************************************** 
+C           SYSERR    BEGSR
+ ************************************************************** 
+ *
+ *
+ * SEND SYSTEM MESAGE
+ *
+C                     Z-ADD0         $GXABR  10
+C                     Z-ADD2         #1
+C                     MOVE '1'       $MSGIN  1
+C                     MOVE *BLANKS   $MSG
+C                     SELEC
+C           @PGMST    WHEQ '00202'                     CALL ERROR
+C           @PGMST    OREQ '00211'
+C           @PGMST    OREQ '00221'
+C           @EXCMS    IFEQ *BLANKS                     #12
+C                     MOVEL#5        $MSG
+C           $MSG      CAT  @EXRUT:1  $MSG
+C                     ELSE                             #12
+C                     MOVEL@EXCMS    $MSG              #12
+C                     ENDIF                            #12
+C                     Z-ADD1         $GXABR  10        #13
+C           @PGMST    WHEQ '00000'                     RECORD LOCKED
+C           @EXFER    ANDEQ'01218'
+C                     Z-ADD1         $GXRTM  
+C                     SUB  1         $GXCNT  20        
+C           $GXCNT    IFLE 0
+C                     ENDIF
+C           #10       CAT  @EXFNM:1  $MSG
+C           @PGMST    WHEQ '00000'                     FILE LOCKED
+C           @EXFER    ANDEQ'01217'
+C                     Z-ADD1         $GXRTM  
+C                     SUB  1         $GXCNT  20        
+C           $GXCNT    IFLE 0
+C                     Z-ADD1         $       40
+C           @EXFNM    LOKUP$TBLIN,$                 98
+C           *IN98     IFEQ *ON
+C           #9        CAT  $TBLEX,$:1$MSG
+C           $IDXEX,$  IFNE *BLANKS   
+C           $MSG      CAT  #15       $MSG
+C           $MSG      CAT  $IDXEX,$:1$MSG
+C                     ENDIF
+C                     ELSE
+C           #9        CAT  @EXFNM:1  $MSG
+C                     ENDIF
+C                     ENDIF
+C           @PGMST    WHEQ '00000'                     FILE ERROR (WRITE DUPL)
+C           @EXFER    ANDEQ'01021'
+C                     MOVEL#14       $MSG
+C           @PGMST    WHEQ '00000'                     FILE ERROR
+C                     Z-ADD1         $       40
+C           @EXFNM    LOKUP$TBLIN,$                 98
+C           *IN98     IFEQ *ON
+C           #9        CAT  $TBLEX,$:1$MSG
+C           $IDXEX,$  IFNE *BLANKS   
+C           $MSG      CAT  #15       $MSG
+C           $MSG      CAT  $IDXEX,$:1$MSG
+C                     ENDIF
+C                     ELSE
+C           #9        CAT  @EXFNM:1  $MSG
+C                     ENDIF
+C           $MSG      CAT  #16       $MSG
+C           $MSG      CAT  @EXFER:1  $MSG
+C                     Z-ADD1         $GXABR  10
+C           @PGMST    WHEQ '00100'                     ARRAY ERROR
+C           @PGMST    OREQ '00121'
+C           @EXCTP    OREQ 'MCH'
+C           @EXCNM    ANDEQ'0603'
+C                     MOVEL#6        $MSG
+C                     Z-ADD1         $GXABR  10
+C           @PGMST    WHEQ '00101'                     DIVIDE BY 0
+C                     MOVEL#7        $MSG
+C                     Z-ADD1         $GXABR  10
+C           @PGMST    WHEQ '00102'                     NUMERR
+C                     MOVEL#8        $MSG
+C                     Z-ADD1         $GXABR  10
+C           @EXCMS    WHNE *BLANKS
+C                     MOVE *BLANKS   $MSG  
+C                     MOVEL@EXCMS    $MSG  
+C                     OTHER
+C                     MOVE *BLANKS   $MSG
+C           'ERROR: ' CAT  @EXCTP:1  $$TMP  20
+C           $$TMP     CAT  @EXCNM:0  $MSG
+C                     Z-ADD1         $GXABR  10
+C                     ENDSL
+C           $GXABR    IFEQ 1
+C                     MOVE *BLANKS   $MSGP  
+C                     MOVEL$MSG      $MSGP  
+C                     EXSR PGMMSG
+C                     #11                              ABNORMAL TERMINATION
+C                     Z-ADD1         @INPSR
+C                     EXSR *PSSR
+C                     ENDIF
+C           $MSG      IFNE *BLANKS
+C                     MOVE *BLANKS   #2  
+C                     MOVEL$MSG      #2  
+C           $GXRTM    IFEQ 1
+C           $GXCNT    ANDEQ0
+C                     MOVE *BLANKS   $GXARM256
+C                     MOVEL$MSG      $GXARM  
+C                     CALL 'GXAR'
+C                     PARM           $GXARM
+C                     PARM           $GXARR  1
+C           $GXARR    IFNE 'R'
+C                     #11                              ABNORMAL TERMINATION
+C                     Z-ADD1         @INPSR
+C                     EXSR *PSSR
+C                     ENDIF
+C                     Z-ADD10        $GXCNT          
+C                     ELSE
+ * SEND MESSAGE
+C                     EXSR SNDMSG
+C                     ENDIF
+C                     ENDIF
+C                     ENDSR
+ ************************************************************** 
+C           *PSSR     BEGSR
+ ************************************************************** 
+ *
+ *
+ * GLOBAL ERROR HANDLING
+ *
+C                     MOVE *BLANKS   @PSRLB  6 
+C           @INPSR    IFEQ 1
+C                     SETON                       H1
+C                     RETRN
+C                     ELSE
+C                     Z-ADD1         @INPSR  10
+C                     #11                              ABNORMAL TERMINATION
+C                     Z-ADD0         @INPSR
+C                     ENDIF
+C                     ENDSR@PSRLB

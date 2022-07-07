@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>How to implement a dictionary data type using JS and server side code</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?31066,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">How to implement a dictionary data type using JS and server side code</h1>
+<!--How to implement a dictionary data type using JS and server side code--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Let's implement a dictionary (a data type composed of a collection of (key, value) pairs, so that each possible key appears just once in the collection).</p>
+
+<p>The operations associated with this data type include adding a pair to the collection, removing a pair from the collection, changing an existing pair and searching for a value associated with a particular key.</p>
+
+<p>This implementation is done using external resources, and the interaction is solved in GeneXus using <a href="6148.html">External Objects</a>.</p>
+
+<p>One of the most interesting aspects of this example is that it runs NET or Java code on the server-side and Javascript code on the client-side. See <a href="22529.html">Event execution on the client and server side</a> for details on this topic.</p>
+
+<p>So, if the code is<span style="background-color: rgb(245,246,245);"> </span><span style="background-color: rgb(245,246,245);">generated</span> server-side, it executes the NET or Java code (depending on the platform it runs); otherwise, if it's generated client-side, it executes the Javascript code.</p>
+
+<h2><a id="Purposes+of+this+example" class="HashLink" href="#Purposes+of+this+example">Purposes of this example</a></h2>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />Learn about <a href="31064.html">External Objects for Javascript</a></p>
+
+<p><img alt="enlightened" height="23" src="http://wiki.genexus.com/commwiki/static/CKEditor/ckeditor/plugins/smiley/images/lightbulb.png" title="enlightened" width="23" />Understand the two options available for running External Objects (server-side vs. client-side), depending on where the code is generated.</p>
+
+<p>Note that this is an example of using a Native External Object, and the implementation of the solution is not the main aspect to consider.</p>
+
+<p>Some aspects to consider first:</p>
+
+<h4><a id="Server-side+code" class="HashLink" href="#Server-side+code">Server-side code</a></h4>
+
+<p>In this case, the server-side code is part of the platform data type definitions. For the .NET Framework, it's the <a>Dictionary data type</a> (note that the namespace is System.Collections.Generic). For Java, the data type used is <a href='https://docs.oracle.com/javase/8/docs/api/java/util/Hashtable.html'>Hashtable</a>. All this is reflected in the External object definition, in the <em>.Net External Name</em> and <em>Java External Name</em> properties. See the picture below.</p>
+
+<h4><a id="Client-side+code+" class="HashLink" href="#Client-side+code+">Client-side code </a></h4>
+
+<p>The Javascript code is defined in this case as an external source (Dictionary.js) and it is referenced in the <em>Javascript External Name</em> property of the External Object. As in Javascript, an object is an associative array (called hash in some languages); it stores key-value pairs, so the JS source uses the <a href='https://developer.mozilla.org/es/docs/Web/JavaScript/Referencia/Objetos_globales/Object/keys'>Javascript object key list</a> to implement the solution. </p>
+
+<p><br />
+See the picture below that shows EO properties definition:</p>
+
+<p><img src="./images/31079.png" id="31079" class="WikiImage"/></p>
+
+<h2><a id="Client-side+definition+of+the+EO" class="HashLink" href="#Client-side+definition+of+the+EO">Client-side definition of the EO</a></h2>
+
+<p>From now on, let's focus on the client-side definition of the External Object. The Javascript source which defines the Dictionary object looks as follows (note the properties and method definitions to map them to the properties and methods definitions of the EO afterward).</p>
+
+<p><img src="./images/31081.png" id="31081" class="WikiImage"/></p>
+
+<p>To publish those properties and methods, we need to define them in the EO.<br />
+For example, the Keys property is defined as non-static, and its <em>Javascript External Name</em> property is set to &quot;Keys&quot;.<br />
+Inside the Dictionary.js source, the &quot;Keys&quot; is defined as follows:</p>
+
+<p>  <em>  get keys () {<br />
+            return Object.keys(dictionary);<br />
+        },</em></p>
+
+<p>Note that this is an example and the JS code can be programmed in many different ways.</p>
+
+<p><img src="./images/31082.png" id="31082" class="WikiImage"/></p>
+
+<p>In the same manner, the methods to be published are defined in the EO. For example, GetItem is a non-static method, mapped to the getItem Javascript method (through the <em>Javascript External Name</em> property).</p>
+
+<p><em>getItem: function (key) {<br />
+            return dictionary[key];<br />
+        },</em></p>
+
+<p><img src="./images/31083.png" id="31083" class="WikiImage"/></p>
+
+<p> </p>
+
+<h2><a id="How+to+use+the+EO+in+GeneXus+Code" class="HashLink" href="#How+to+use+the+EO+in+GeneXus+Code">How to use the EO in GeneXus Code</a></h2>
+
+<p>First, to use the external JS resource, you have to add the reference to the HTML header, as shown in the code below:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+    Form.HeaderRawHTML += '&lt;script type=&quot;text/javascript&quot; src=&quot;Dictionary.js&quot;&gt;&lt;/script&gt;'
+EndEvent</pre>
+
+<p>Since the following code runs client-side, the Javascript is invoked to execute it:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &quot;X&quot;
+&amp;Dictionary.SetItem(&quot;Evolution3CodeName&quot;, &quot;Tilo&quot;) //&amp;Dictionary is a variable based on Dictionary EO data type.
+&amp;Dictionary.SetItem(&quot;GeneXus15CodeName&quot;, &quot;Salto&quot;)
+EndEvent</pre>
+
+<p>And the following, by definition, runs server-side, so it executes Java or Net depending on the platform.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event &quot;X&quot;
+For each Versions
+//code here
+Endfor 
+&amp;Dictionary.SetItem(&quot;Evolution3CodeName&quot;, &quot;Tilo&quot;)
+&amp;Dictionary.SetItem(&quot;GeneXus15CodeName&quot;, &quot;Salto&quot;)
+EndEvent</pre>
+
+<p>Download sample from <a href="https://wiki.genexus.com/commwiki/wiki?31085,," target="_blank">Dictionary Sample</a>.</p>
+
+<p><br />
+<br />
+<br />
+<br />
+</p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31064.html">External Objects for Javascript</a></TD><TD><a href="31075.html">How to execute GeneXus events from JS code using External Objects</a></TD><TD><a href="31086.html">How to interact with the Window Object's Methods</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

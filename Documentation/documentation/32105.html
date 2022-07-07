@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Cache API</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?32105,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Cache API</h1>
+<!--Cache API--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Applications often have a set of data that is accessed globally; i.e. data that is the same for any user, which is the result of an initialization process. Once calculated, it is useful to have this data accessible and updated only when the application requires it. </p>
+
+<p>A possible use scenario is one in which the data does not change too often (it can be obtained from the database or by calling a service), and accessing the database or retrieving the data by calling a web service is too expensive.</p>
+
+<p>The Web Session could be a solution, but it is defined for each user of the application. On the contrary, the Cache API is defined and accessible for all the users of the application.</p>
+
+<p>The Cache API allows storing global data of an application, access the data and invalidate it when necessary. The Cache can be local to the application server, or it can be a <a href="28136.html">distributed cache</a> depending on the <a href="31147.html">Cache Provider property</a>. </p>
+
+<h2><a id="How+to+use+the+Server+Cache+API" class="HashLink" href="#How+to+use+the+Server+Cache+API">How to use the Server Cache API</a></h2>
+
+<p>Cache is a data type and it exposes different methods to manage the application server or the distributed cache. Below are the methods exposed:</p>
+
+<table border="1" cellpadding="1" cellspacing="0" style="">
+	<tbody>
+		<tr>
+			<td style="">
+			<h3><a id="Method+name" class="HashLink" href="#Method+name">Method name</a></h3>
+			</td>
+			<td style="">
+			<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="background-color: rgb(221,255,221);"><strong>Server Cache static methods</strong></td>
+		</tr>
+		<tr>
+			<td style="">Cache.GetCache(Character:Name): Cache</td>
+			<td style="">Retrieves a cache instance or creates a new one if it does not exist.</td>
+		</tr>
+		<tr>
+			<td style="">Cache.ClearAllCaches()</td>
+			<td style="">Clears all the caches, both the ones created by the user and the others (the Smart Devices cache and the Database Cache <sup>(*)</sup>).</td>
+		</tr>
+		<tr>
+			<td style="background-color: rgb(221,255,221);"><strong>Server Cache non static methods</strong></td>
+			<td style=""> </td>
+		</tr>
+		<tr>
+			<td style="">&amp;Cache.Set(Character: Key, Character: Value, [Numeric: DurationMinutes])</td>
+			<td style="">
+			<p>Stores the value in the cache under the specified key. If the duration value is 0 (the default), the item never expires (although it may be deleted from the server to make room for other items).</p>
+
+			<p><span style="">The function can be called in two ways:</span></p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span style="">&amp;Cache.Set(&quot;key&quot;, &quot;value&quot;, 1)
+&amp;Cache.Set(&quot;key&quot;, &quot;value&quot;)</span></pre>
+
+			<p><span style="">In the second case, the duration will be set to the default value 0 and the item won't expire.</span></p>
+			</td>
+		</tr>
+		<tr>
+			<td style="">&amp;Cache.Get(Character:Key): Character</td>
+			<td style="">If the item is found it returns the item that was previously stored under the key. Otherwise, an empty string is returned. </td>
+		</tr>
+		<tr>
+			<td style="">&amp;Cache.Contains(Character:Key): Boolean</td>
+			<td style="">If the item is found it returns true; otherwise, false is returned.</td>
+		</tr>
+		<tr>
+			<td style="">&amp;Cache.Remove(Character:Key)</td>
+			<td style="">Removes an item from the cache.</td>
+		</tr>
+		<tr>
+			<td style="">&amp;Cache.Clear()</td>
+			<td style="">Clears the cache, removing all the items from it.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<p>Consider an application which shows the value of the currency.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;CacheName = &quot;CurrencyValueCache&quot;  
+&amp;Cache=Cache.GetCache(&amp;CacheName)  //&amp;Cache is Cache data type
+
+if(&amp;Cache.Contains(&quot;Dollar&quot;))
+    &amp;Value=&amp;Cache.Get(&quot;Dollar&quot;)
+else
+    //Here call a service which returns the currency value and loads the &amp;value variable.
+    &amp;Cache.Set(&quot;Dollar&quot;,&amp;value,&amp;expTime)
+endif
+</pre>
+
+<h2><a id="%28*%29Smart+devices+and+database+Cache+API" class="HashLink" href="#%28*%29Smart+devices+and+database+Cache+API"><sup>(*)</sup>Smart devices and database Cache API</a></h2>
+
+<p>In GeneXus, there is a caching mechanism, explained in detail in <a href="https://wiki.genexus.com/commwiki/wiki?28166,," target="_blank">Caching in GeneXus applications</a>. For the <a href="18602.html">Smart Devices caching</a> as well as the <a href="https://wiki.genexus.com/commwiki/wiki?28167,," target="_blank">ResultSet caching</a> there are also some useful methods to manage the cache expiration.</p>
+
+<p>In some cases, it may be necessary to forcefully clear the cache (for example, if you need the SQL query to be re-executed and not to retrieve the data from the database cache). This is especially useful when using any <a href="28136.html">distributed cache</a> mechanism.</p>
+
+<p>In order to reset the cache, you can use the <em>Cache.SmartDevices.Clear</em> method and the <em>Cache.Database.</em><em>Clear</em> method for SD and ResultSet caching respectively.<br />
+ </p>
+
+<table border="1" cellpadding="1" cellspacing="0" style="">
+	<tbody>
+		<tr>
+			<td style="">
+			<h3><a id="Method+name" class="HashLink" href="#Method+name">Method name</a></h3>
+			</td>
+			<td style="">
+			<h3><a id="Description" class="HashLink" href="#Description">Description</a></h3>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="background-color: rgb(221,255,221);"><b>SmartDevices</b></td>
+		</tr>
+		<tr>
+			<td style="">Cache.SmartDevices.Clear()</td>
+			<td style="">Clears the smart devices cache, removing all the items from it.</td>
+		</tr>
+		<tr>
+			<td style="">Cache.SmartDevices.Remove(Character:Key)</td>
+			<td style="">
+			<p>Removes the SD cache of the indicated Key. The Key is a table name.</p>
+
+			<p>e.g: Cache.SmartDevices.Remove(&amp;TableName)</p>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="background-color: rgb(221,255,221);"><strong>Database</strong></td>
+		</tr>
+		<tr>
+			<td style=""><span style="">Cache.Database.Clear()</span></td>
+			<td style="">Clears the database cache, removing all the items from it.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<h3><a id="Example" class="HashLink" href="#Example">Example</a></h3>
+
+<h3><a id="Clearing+the+database+cache" class="HashLink" href="#Clearing+the+database+cache">Clearing the database cache</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Cache.Database.Clear()</pre>
+
+<p> </p>
+
+<p>Download the sample from <a href="https://wiki.genexus.com/commwiki/wiki?32113,," target="_blank">Cache API sample</a>.</p>
+
+<p><br />
+<br />
+</p>
+
+<p><span style="color: rgb(255,255,255);">Keyword : global session </span></p>
+<br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31147.html">Cache Provider property</a></TD></TR><TR><TD><a href="28136.html">Distributed cache in GeneXus applications</a></TD><TD><a href="18602.html">Smart Devices caching</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:16 PM</em></font></td></TR></table></font>

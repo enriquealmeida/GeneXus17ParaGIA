@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>RestPath annotation</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?50360,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">RestPath annotation</h1>
+<!--RestPath annotation--><div class="TableWikiBody" id="tblwikibody"><p>Customizes the path of a service declared in <a href="46151.html">API object</a>.</p>
+
+<h3><a id="Syntax" class="HashLink" href="#Syntax">Syntax</a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&lt;RestPath&gt;::=<strong>'['RestPath</strong>("/&lt;<em>SubPath<sub>1</sub></em>&gt;[/<strong>'{'</strong>&amp;Var<sub>1</sub><strong>'}'</strong>/<strong>'{</strong>'&amp;Var<sub>2</sub><strong>'}'</strong>/&lt;<em>SubPath<sub>2</sub></em>&gt;]")<strong>']'</strong> </pre>
+
+<p style="text-align: right;">View <a href="6626.html">Syntax conventions</a></p>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: The number of SubPaths and variables may vary as necessary and they may be interspersed..</div>
+<br />
+<strong>Where:</strong></p>
+
+<p><em>SubPath<sub>1</sub>,..., SubPath<sub>N</sub></em><br />
+     Are part of the path to access the service. They are automatically added after the Service base path.</p>
+
+<p><em>&amp;Var<sub>1</sub>,..., &amp;Var<sub>N</sub></em><br />
+    Are optional variables defined within the API object, which must be parameters in the service defined with the <a href="8220.html">in operator</a>.</p>
+
+<h3><br />
+Description</h3>
+
+<p>The path of a service includes, in a predetermined manner, the <a href="46383.html">Services base path</a> followed by the name of the service. This annotation allows you to customize the path and to even include the in parameters within it.</p>
+
+<p>By default, the Services base path property has the name assigned to the API object during its definition, as shown below:</p>
+
+<p><img src="./images/50368.png" id="50368" class="WikiImage"/></p>
+
+<p>That means that, for this example, when you <a href="50008.html">execute the API object</a>, the default path to access the service is:</p>
+
+<p><span style="font-family: courier new;">http://&lt;AppPath&gt;/APICustomer/ListCustomers</span></p>
+
+<p>With RestPath you can customize the service’s path. For instance, to change it from ListCustomers to Customers:</p>
+
+<p><span style="font-family: courier new;">http://&lt;AppPath&gt;/APICustomer/Customers</span></p>
+
+<p>To achieve this, you add [RestPath("/Customers”)] before the service definition.</p>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<p><br />
+<strong>1. Obtain a list of clients.</strong></p>
+
+<p>Consider the following <a href="1908.html">Transaction</a>:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+    CustomerId*                  (Autonumber property = Yes)
+    CustomerName
+    CustomerLastName          
+}</pre>
+
+<p>Create an <a href="10021.html">Structured Data Type (SDT) object</a> with the name SDTCustomer. Drag the Customer Transaction from the <a href="3210.html">KB Explorer</a> to the SDT Structure. Define the SDT to be a collection by clicking the checkbox Is Collection. Substitute the name SDTCustomersItem with Customer:</p>
+
+<p><img src="./images/50369.png" id="50369" class="WikiImage"/></p>
+
+<p>Create a <a href="5270.html">Data Provider object</a> called DPCustomerList and fill out as shown below:</p>
+
+<p><img src="./images/50370.png" id="50370" class="WikiImage"/></p>
+
+<p>After dragging the SDT to the Data Provider Source, the <a href="41037.html">Output property</a> will automatically be configured with the SDTCustomer value.</p>
+
+<p>Create an <a href="46151.html">API object</a> called APICustomer and define the following:</p>
+
+<p>Variables:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SDTCustomer    (Type:SDTCustomer)</pre>
+
+<p>Service Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{       
+     [RestPath("/Customers")]
+     ListCustomers(out:&amp;SDTCustomer) =&gt; DPCustomerList(&amp;SDTCustomer);
+}
+</pre>
+
+<p>The DPCustomerList object is published as a service called ListCustomers.</p>
+
+<p>And last, if you want to expose the service with the OpenAPI format, you need to set in the API object the <a href="31859.html">Generate OpenAPI interface property</a> to Yes.</p>
+
+<p>Upon executing the API object, you will see the following:</p>
+
+<p><img src="./images/50371.png" id="50371" class="WikiImage"/></p>
+
+<p><br />
+<strong>2. Obtain information about a client.</strong></p>
+
+<p>Now consider the same Customer Transaction of the previous example and define it as <a href="5846.html">Business Component</a>.</p>
+
+<p>Then, create a <a href="6293.html">Procedure object</a> called ReturnOneCustomerData, with the following definition:</p>
+
+<p>Variables:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer          (Type: Customer)
+&amp;CustomerId        (Type:Attribute:CustomerId)</pre>
+
+<p>Rule:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+​​Parm(in:&amp;CustomerId, out:&amp;Customer);
+</pre>
+
+<p>Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer.Load(&amp;CustomerId)
+if &amp;Customer.Fail()
+     &amp;Customer.CustomerId = 0
+     &amp;Customer.CustomerLastName = "Invalid Customer"
+Endif</pre>
+
+<p><strong>Note:</strong> Keep in mind that CustomerId has its <a href="6798.html">Autonumber property</a> = Yes.</p>
+
+<p>This Procedure receives a customer’s Id and then accesses the database using the <a href="23211.html">Load method</a> to then return the information that corresponds to the customer required. When no information is found, the customer Id is assigned and returned with value 0 and the client name with "Invalid Customer".</p>
+
+<p>Then, create an API object (called, for example, APICustomer), and define:</p>
+
+<p>Variables:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Customer                       (Type: Customer)
+&amp;CustomerId                     (Type: Attribute:CustomerId)
+&amp;Message                        (Type: Messages.Message, GeneXus.Common)
+&amp;Messages                       (Type: Messages, GeneXus.Common)</pre>
+
+<p class="Code">Service Source:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+      [RestPath("/Customer/{&amp;CustomerId}")]
+      GetCustomer(in:&amp;CustomerId, out:&amp;Customer, out:&amp;Messages) =&gt; ReturnOneCustomerData(&amp;CustomerId, &amp;Customer);
+}
+
+</pre>
+
+<p>The ReturnOneCustomerData Procedure is published as a service called GetCustomer.</p>
+
+<p>Events:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event GetCustomer.Before
+      if &amp;CustomerId &lt; 0
+         &amp;RestCode = 412
+         return
+      Endif
+EndEvent
+
+
+Event GetCustomer.After
+      if &amp;Customer.CustomerId = 0
+         &amp;Message.Type = MessageTypes.Error
+         &amp;Message.Description = format("Customer %1 not found", &amp;CustomerId)
+         &amp;Messages.Add(&amp;Message)
+         &amp;RestCode = 404
+      Endif
+EndEvent</pre>
+
+<p>The trigger <a href="46151.html">event</a> GetCustomer.Before verifies if the Id entered is less than zero. In this case, the ReturnOneCustomerData procedure is not executed, returning error 412 (access to the destination resource denied).</p>
+
+<p>Additionally, the GetCustomer.After event returns the error and description following the execution of the ReturnOneCustomerData procedure and obtaining Id 0. Otherwise, it shows the data of the customer entered, on screen.</p>
+
+<p>And last, if you want to expose the service with the OpenAPI format, you need to set in the API object the <a href="31859.html">Generate OpenAPI interface property</a> to Yes.</p>
+
+<p>Upon executing the API object, you will see the following:</p>
+
+<p><img src="./images/50372.png" id="50372" class="WikiImage"/></p>
+
+<p>If you want, you can add another variable to RestPaht. For example, you can add CustomerName:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Customer
+{
+      [RestPath("/Customer/{&amp;CustomerId}/{&amp;CustomerName}")]
+      GetCustomer(in:&amp;CustomerId, in:&amp;CustomerName, out:&amp;Customer, out:&amp;Messages) =&gt; ReturnOneCustomerData(&amp;CustomerId, &amp;CustomerName, &amp;Customer);
+}</pre>
+
+<p>Note:</p>
+
+<ul>
+	<li>The annotation ResPath may be combined, for example, with the annotation <a href="50508.html">RestMethod</a>:  [RestMethod(GET),RestPath("/Customer/{&amp;CustomerId}/{&amp;CustomerName}")]</li>
+	<li>The RestPath annotation affects the service directly below it.</li>
+</ul>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>Since <a href="49956.html">GeneXus 17 Upgrade 9</a>.</p>
+
+<p><br />
+</p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="46151.html">Category:API object</a></TD><TD><a href="50879.html">API Object Syntax</a></TD><TD><a href="49754.html">Toc:First Steps with API Objects</a></TD></TR><TR><TD><a href="49956.html">GeneXus 17 Upgrade 9</a></TD><TD><a href="50508.html">RestMethod annotation</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 06/20/22 05:23 PM</em></font></td></TR></table></font>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Video data type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?16608,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Video data type</h1>
+<!--Video data type--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Stores or references any type of video files (avi, mp4, etc). Video can be stored in any of the databases supported by GeneXus without having to specify the file name or type (avi, wmv, etc.).</p>
+
+<p>A Video attribute or variable can be loaded from both the FromUrl method (specifying an URL, local or remote, where the video file is stored) and setting its VideoURI property.</p>
+
+<p>If the value sent to FromURL is a remote URL, the video will be downloaded and saved in the DB upon making an Insert. If what is needed is just a reference to the Video stored in a local or remote location, the VideoURI property has to be assigned.</p>
+
+<p>Therefore, any video file can be reproduced by dragging any variable or attribute defined with the Video data type to the form. </p>
+
+<p><strong>Properties</strong></p>
+
+<table border="1" cellpadding="5" cellspacing="0" style="width: 1000.0px;">
+	<tbody>
+		<tr>
+			<td>VideoName</td>
+			<td>Gets the Video name</td>
+		</tr>
+		<tr>
+			<td>VideoType</td>
+			<td>Gets the Video Type. The VideoType is the extension of the video file. For example: avi, wmv, etc.</td>
+		</tr>
+		<tr>
+			<td>VideoURI</td>
+			<td>
+			<p>Sets/Gets the Video URL</p>
+
+			<div>
+			<p><strong>Set</strong></p>
+
+			<p>You can set a relative path, which will be resolved with the current host.</p>
+
+			<p>You can set an absolute path to an external video on the web.</p>
+			</div>
+
+			<p>You can set a local path by using file:// protocol</p>
+
+			<p>When you set the VideoURI property, the internal Blob with the video will be set to empty.</p>
+
+			<div>
+			<p>For example:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span style="color: rgb(0,0,0);">&amp;video.FromUrl(myVideoWillbeErasedInNextLine)
+&amp;video.VideoURI = &quot;http://www.myvideofiles/video.avi&quot;</span></pre>
+
+			<p>In this case, video.avi will be the video in the data.</p>
+
+			<p><strong>Get</strong></p>
+
+			<p>GeneXus always returns the absolute URL to the Video.</p>
+
+			<div> </div>
+			</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p><b><span style="font-family: Arial;color: black;font-size: 9.0pt;">Methods</span></b></p>
+
+<table border="1" cellpadding="5" cellspacing="0">
+	<tbody>
+		<tr>
+			<td>FromURL(videoURI)</td>
+			<td>
+			<p>Loads the current instance with the video given in the videoURI parameter.</p>
+
+			<p>This indicates that the internal Blob holding the video must be loaded from the URI indicated in the videoURI parameter.</p>
+
+			<p>After calling this method, the VideoURI property has the absolute URL specified.</p>
+
+			<p>For example:</p>
+
+			<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<span style="color: rgb(0,0,0);">&amp;video.FromURL('www.myband.com/video.avi')
+msg(&amp;video.VideoURI)  // will print </span><span style="color: rgb(0,0,0);">www.myband.com/video.avi</span></pre>
+
+			<p><strong>Note</strong>: The video will be downloaded from the URL specified and will be automatically stored in the database (applies only to attributes).</p>
+			</td>
+		</tr>
+		<tr>
+			<td>SetEmpty/IsEmpty</td>
+			<td>Returns True if there isn't a video or a reference to an a stored video.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<ul>
+	<li>Videos are not <a href="18602.html">cached</a> in Smart Devices.</li>
+	<li>Videos are always broadcasted via streaming. There is only an exception when the Smart Device application has an <a href="22228.html">Offline architecture</a> and the VideoURI is not a direct link to the video file (for instance: a link to a Youtube video). If that is the case, the Video files are stored inside the device, so that they can be played in the device whether it is connected or not to the internet.</li>
+	<li><a href='https://developer.apple.com/library/ios/documentation/miscellaneous/conceptual/iphoneostechoverview/MediaLayer/MediaLayer.html'>Reference for video formats supported in iOS</a></li>
+	<li><a href='http://developer.android.com/guide/appendix/media-formats.html'>Reference for video formats supported in Android</a></li>
+</ul>
+
+<h3><a id="Examples" class="HashLink" href="#Examples">Examples</a></h3>
+
+<h4><a id="1.+Structuring" class="HashLink" href="#1.+Structuring">1. Structuring</a></h4>
+
+<p>A company wants to save songs of its bands albums; to do so, you only have to write the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SongId     Numeric(4.0)
+SongName   Character
+SongVideo  Video
+</pre>
+
+<p>In the SongVideo field, any type of video can be stored (avi, mp4, etc).</p>
+
+<h4><a id="2.+Inserting+a+video+into+the+DB+from+an+existing+URL" class="HashLink" href="#2.+Inserting+a+video+into+the+DB+from+an+existing+URL">2. Inserting a video into the DB from an existing URL</a></h4>
+
+<p>Suppose you have a video file in your file system or in a web URL and you want to store it in your database. Your video file is file:///c:/myfolder/video.avi (the URL must be accessible from your server if it is a local URL).</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Song.SongId = 1
+&amp;Song.SongVideo.FromURL('file:///c:/myfolder/video.avi')
+&amp;Song.Save()</pre>
+
+<h4><a id="3.+Inserting+a+reference+into+the+DB+from+an+external+video" class="HashLink" href="#3.+Inserting+a+reference+into+the+DB+from+an+external+video">3. Inserting a reference into the DB from an external video</a></h4>
+
+<p>You want to reference an external video, for example:  http://myband/myalbum/myvideo.avi</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Song.SongId = 1
+&amp;Song.SongVideo.VideoURI = 'http://myband/myalbum/myvideo.avi'
+&amp;Song.Save()
+</pre>
+
+<h4><a id="4.+How+to+convert+from+Blob+to+Video+in+your+DB" class="HashLink" href="#4.+How+to+convert+from+Blob+to+Video+in+your+DB">4. How to convert from Blob to Video in your DB</a></h4>
+
+<p>Most likely, you have many Blob attributes in your DB to store video and you want to start using the new data type.</p>
+
+<p>The only thing you have to do is change the type from Blob to Video in your attribute definition and GeneXus will perform a reorganization, taking into account the FileType, FileTypeAttribute and FileNameAttribute properties.</p>
+
+<h4><a id="5.+How+to+convert+from+Blob+to+Video+and+vice+versa+programmatically" class="HashLink" href="#5.+How+to+convert+from+Blob+to+Video+and+vice+versa+programmatically">5. How to convert from Blob to Video and vice versa programmatically</a></h4>
+
+<p>You can directly assign a Blob to a Video and vice versa. Remember that the conversion from Blob to Video will work depending on the kind of mime type of your Blob and the FileType, FileTypeAttribute and FileNameAttribute properties. In some cases, it may happen that the Video is not reproduced in the user interface.</p>
+
+<h4><a id="6.+How+to+convert+from+Char+VarChar+to+Video+in+my+DB" class="HashLink" href="#6.+How+to+convert+from+Char+VarChar+to+Video+in+my+DB">6. How to convert from Char|VarChar to Video in my DB</a></h4>
+
+<p>In some cases we could have a Character attribute in our DB with URL. What would happen if you wanted to start using the new Video Data Type without losing your existing data?</p>
+
+<p>GeneXus supports the reorganization from Char|VarChar to Video and vice versa.</p>
+
+<h3><a id="Scope" class="HashLink" href="#Scope">Scope</a></h3>
+
+<table border="0" cellpadding="1" cellspacing="1" style="width: 250.0px;">
+	<tbody>
+		<tr>
+			<td><strong>Objects</strong></td>
+			<td>Attributes, Variables</td>
+		</tr>
+		<tr>
+			<td><strong>Generators</strong></td>
+			<td>.NET, .NET Core, Java</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="25576.html">Embedded Android native video player</a></li>
+	<li><a href="21923.html">HowTo: Embedding YouTube videos in an Android application</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+<span style="line-height: 1.6em;"><br />
+</span><br />
+<span style="line-height: 1.6em;"></span></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="6704.html">Blob data type</a></TD><TD><a href="40420.html">BlobFile data type</a></TD><TD><a href="31296.html">Camera external object</a></TD></TR><TR><TD><a href="20117.html">Customization of Multimedia Fields</a></TD><TD><a href="40654.html">Data Type Filter property</a></TD><TD><a href="7232.html">Data Type property</a></TD><TD><a href="6779.html">Data types list</a></TD></TR><TR><TD><a href="25576.html">Embedded Android native video player</a></TD><TD><a href="31120.html">External Storage for Multimedia</a></TD><TD><a href="38432.html">Facebook external object</a></TD><TD><a href="21923.html">HowTo: Embedding YouTube videos in an Android application</a></TD></TR><TR><TD><a href="26933.html">HowTo: Using PhotoLibrary external object for Smart Devices</a></TD><TD><a href="15986.html">HowTo: Using PlayVideo from Interop in SDApi for Smart Devices</a></TD><TD><a href="45291.html">Load balancing considerations</a></TD><TD><a href="39397.html">PhotoLibrary external object</a></TD></TR><TR><TD><a href="41042.html">Process procedure</a></TD><TD><a href="32755.html">Purpose Strings properties group</a></TD><TD><a href="47028.html">Video Operations External Object</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 03/11/21 06:42 PM</em></font></td></TR></table></font>

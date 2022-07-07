@@ -1,0 +1,221 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Grid Selected Objects SDT" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Packages.Patterns.Objects.PatternInstance" %>
+<%@ Property Name="Element" Type="Artech.Packages.Patterns.Objects.PatternInstanceElement" %>
+
+<%
+	WorkWithPlusInstance wwInstance = WorkWithPlusInstance.Load(Instance);
+	WPRootElement wpRoot = wwInstance.GetElement<WPRootElement>(Element);
+	string sdtName = Object.Name;
+
+%>
+<Part type="<%= PartType.SDTStructure %>">
+	<Level Name="<%= sdtName %>">
+<%
+	List<string> addedBCs = new List<string>();
+	foreach (StepElement step in wpRoot.Steps)
+	{
+		bool levelAdded = false;
+		List<string> addedSDTs = new List<string>();
+		if (!step.WizardShareBCsAcrossSteps)
+		{
+			addedBCs = new List<string>();
+		}
+		foreach (VariableElement var in step.Table.GetTableVariables())
+		{
+			bool bcAlreadyAdded = var.IsBasedOnTransaction() && addedBCs.Contains(var.Name);
+			bool isDVComboAndNeedDsc = (step.IsSummarized && LoadDVComboProcedureHelper.IsIAttributeItemDVelopComboAndNeedSummaryDescription(var));
+			if (bcAlreadyAdded && !isDVComboAndNeedDsc)
+			{
+				continue;
+			}
+			if (!levelAdded)
+			{
+				levelAdded = true;
+%>
+          <Level Name="<%= step.Name %>">
+<%
+			}
+			if (isDVComboAndNeedDsc)
+			{
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= var.ControlName.Substring(6) %>_Description">
+				<Properties><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property></Properties>
+			</Item>
+<%
+			}
+			if (bcAlreadyAdded)
+			{
+				continue;
+			}
+			string collectionDef = (LoadDVComboProcedureHelper.IsIAttributeItemDVelopCombo(var) && var.ControlAllowMultipleSelection ? "<Property><Name>AttCollection</Name><Value>True</Value></Property>" : "");
+			if (var.IsDataTypeBasedOn())
+			{
+				if (var.Domain is Artech.Genexus.Common.Objects.Transaction)
+				{
+					addedBCs.Add(var.Name);
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= var.Id %>Json">
+				<Properties><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:LongVarChar</Value></Property></Properties>
+			</Item>
+<%
+				}
+				else if (var.Domain is Artech.Genexus.Common.Objects.SDT)
+				{
+					if (!addedSDTs.Contains(var.Name) && var.Name.ToLower() != "wizarddata")
+					{
+						addedSDTs.Add(var.Name);
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= var.Id %>">
+				<Properties><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:<%= var.Domain.Name + (var.Domain.Module.IsRoot ? "" : ", " + var.Domain.QualifiedName.ModuleName) %></Value></Property></Properties>
+			</Item>
+<%
+					}
+				}
+				else if (var.Domain is Artech.Genexus.Common.Objects.Domain)
+				{
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= var.Id %>">
+				<Properties><Property><Name><%= Properties.ATT.BasedOn %></Name><Value>Domain:<%= ArtechGetSetObjectsUtilities.GetDomainNameForVariableDefinition((Artech.Genexus.Common.Objects.Domain)var.Domain) %></Value></Property><%= collectionDef %></Properties>
+			</Item>
+<%
+				}
+				else
+				{
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= var.Id %>">
+				<Properties><Property><Name><%= Properties.ATT.BasedOn %></Name><Value>Domain:<%= var.Domain.Name %></Value></Property><%= collectionDef %></Properties>
+			</Item>
+<%
+				}
+			}
+			else
+			{
+				System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+				doc.LoadXml(var.GetDefinitionNotIsDataTypeBasedOn());
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= var.Id %>">
+				<%= collectionDef != "" ? doc.FirstChild.LastChild.OuterXml.Replace("</Properties>", collectionDef + "</Properties>") : doc.FirstChild.LastChild.OuterXml %>
+			</Item>
+<%
+			}
+			if (DateRangePickerHelper.IsIAttributeItemDateRange(var) && !var.IsBasedOnSDTOrTransaction())
+			{
+				System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+				doc.LoadXml(Artech.Genexus.Common.Helpers.Variables.Basic(var.Id + "_To", null, var.eDBType));
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= var.Id %>_To">
+				<%= doc.FirstChild.LastChild.OuterXml %>
+			</Item>
+<%
+			}
+		}
+		foreach (IGrid grid in step.Table.AllGrids())
+		{
+			if (!string.IsNullOrEmpty(grid.GetSDTCollection()))
+			{
+				foreach (VariableElement var in grid.GetAllAttributesAndVariablesOfThisGrid(false, true))
+				{
+					if (grid.GetSDTCollection().Substring(1).ToLower().Equals(var.Name.ToLower())
+						&& var.Domain is Artech.Genexus.Common.Objects.SDT)
+					{
+						if (!levelAdded)
+						{
+							levelAdded = true;
+%>
+          <Level Name="<%= step.Name %>">
+<%
+						}
+						bool isCollection = false;
+						if ((grid.GetSDTCollection().ToLower().TrimStart('&') + ".item(0)").StartsWith(var.Name.ToLower() + ".item(0)")
+							&& !((Artech.Genexus.Common.Objects.SDT)var.Domain).SDTStructure.Root.IsCollection)
+						{
+							isCollection = true;
+						}
+%>
+			<Item guid="<%= Guid.NewGuid() %>" name="<%= grid.GetSDTCollection().Substring(1) %>">
+				<Properties><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:<%= var.Domain.Name + (var.Domain.Module.IsRoot ? "" : ", " + var.Domain.QualifiedName.ModuleName) %></Value></Property><%= isCollection ? "<Property><Name>AttCollection</Name><Value>True</Value></Property>" : "" %></Properties>
+			</Item>
+<%
+						break;
+					}
+				}
+			}
+			else
+			{
+				bool gridLevelDefined = false;
+				foreach (IAttributesItem gridItem in grid.GetAllAttributesAndVariablesOfThisGrid(grid.HasMultiRowActions(), true))
+				{
+					if (!gridLevelDefined)
+					{
+						gridLevelDefined = true;
+						if (!levelAdded)
+						{
+							levelAdded = true;
+%>
+          <Level Name="<%= step.Name %>">
+<%
+						}
+%>
+			<Level Name="<%= grid.GetControlName() %>">
+				<LevelInfo guid="<%= Guid.NewGuid() %>" name="<%= grid.GetControlName() %>">
+					<Properties>
+						<Property><Name>AttCollection</Name><Value>True</Value></Property>
+					</Properties>
+				</LevelInfo>
+<%
+					}
+					if (!(gridItem is VariableElement) || ((VariableElement)gridItem).IsDataTypeBasedOn())
+					{
+%>
+				<Item guid="<%= Guid.NewGuid() %>" name="<%= gridItem.Id %>">
+					<Properties><Property><Name><%= Properties.ATT.BasedOn %></Name><Value><%= gridItem.BasedOn %></Value></Property></Properties>
+				</Item>
+<%
+					}
+					else
+					{
+			System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+			doc.LoadXml(((VariableElement)gridItem).GetDefinitionNotIsDataTypeBasedOn());
+%>
+				<Item guid="<%= Guid.NewGuid() %>" name="<%= gridItem.Id %>">
+					<%= doc.FirstChild.LastChild.OuterXml %>
+				</Item>
+<%
+					}
+					bool isDVComboAndNeedDsc = (step.IsSummarized && LoadDVComboProcedureHelper.IsIAttributeItemDVelopComboAndNeedSummaryDescription(gridItem));
+					if (isDVComboAndNeedDsc)
+					{
+%>
+				<Item guid="<%= Guid.NewGuid() %>" name="<%= gridItem.ControlName.TrimStart('&') %>_Description">
+					<Properties><Property><Name>ATTCUSTOMTYPE</Name><Value>bas:VarChar</Value></Property></Properties>
+				</Item>
+<%
+					}
+				}
+				if (gridLevelDefined)
+				{
+%>
+			</Level>
+<%
+				}
+			}
+		}
+		if (levelAdded)
+		{
+%>
+          </Level>
+<%
+		}
+	}
+
+%>
+        <Item guid="<%= Guid.NewGuid() %>" name="AuxiliarData">
+			<Properties><Property><Name>Name</Name><Value>AuxiliarData</Value></Property><Property><Name>ATTCUSTOMTYPE</Name><Value>sdt:WizardAuxiliarData</Value></Property></Properties>
+        </Item>
+	</Level>
+</Part>

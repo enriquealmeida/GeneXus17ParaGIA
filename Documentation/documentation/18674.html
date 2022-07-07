@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Creating User Controls for Android</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?18674,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Creating User Controls for Android</h1>
+<!--Creating User Controls for Android--><div class="TableWikiBody" id="tblwikibody"><p>In a few steps, to create User controls for the <a href="14453.html">Android platform</a> you will have take care of the following issues.</p>
+
+<ol>
+	<li>Create the Control Definition in GeneXus so it will be available on the toolbox.</li>
+	<li>Implement the control in the Target platform; you need to create an Android Studio project.</li>
+	<li>Create a <a href="33546.html">library</a> definition to match the GeneXus control definition to the target implementation.</li>
+</ol>
+
+<p>Follow the steps bellow</p>
+
+<h3><a id="1.+Control+Definition+in+GeneXus" class="HashLink" href="#1.+Control+Definition+in+GeneXus">1. Control Definition in GeneXus</a></h3>
+
+<p>Follow the steps detailed in <a href="18338.html">Creating a User Control Definition for Smart Devices</a> article to create a User Control definition for Smart Devices.</p>
+
+<p>Execute GeneXus with the <a href="6740.html">/install</a> option and make sure it is available in the <em>Extension Manager</em> dialog.</p>
+
+<p>Create a Smart Device object and bind an attribute or variable to the new User Control definition, generate the model.</p>
+
+<p>The application will be deployed to the Android emulator, now you have to implement the User Control in the Androidplatform.</p>
+
+<h3><a id="2.+Implement+the+control+in+the+Target+Platform" class="HashLink" href="#2.+Implement+the+control+in+the+Target+Platform">2. Implement the control in the Target Platform</a></h3>
+
+<p>To get your hands dirty and get an introduction to the Android framework you can check some of the Tutorials, for example:</p>
+
+<ul>
+	<li>Go through the <a href='http://developer.android.com/resources/index.html'>tutorials</a></li>
+	<li><a href='http://developer.android.com/resources/tutorials/notepad/index.html'>Notepad Tutorial</a></li>
+	<li>Check out an <a href='http://code.google.com/p/apps-for-android/'>open source app</a></li>
+</ul>
+
+<p>To get started from an existing sample check this <a href='https://github.com/genexuslabs/AndroidExtensionsSample'>repository</a>.</p>
+
+<p>There are two types of user control for smart devices: <em>Item</em> and <em>List</em>.</p>
+
+<h4><a id="Item+User+Controls" class="HashLink" href="#Item+User+Controls">Item User Controls</a></h4>
+
+<ul>
+	<li>Deploy your Base Class which will subclass any <em>android.widget.*</em> class.</li>
+	<li>The class must implement the <em>IGxEdit</em> interface from the <em>com.artech.controls</em> package. This means overiding the following methods:
+	<ul>
+		<li><em>String getGx_Value()</em>: Returns the value associated to this control in string format.</li>
+		<li><em>void setGx_Value(String value)</em>: Set the value associated to the control.</li>
+		<li><em>String getGx_Tag()</em>: return the <em>Tag</em> property as String, in general <em>return (String)this.getTag();</em></li>
+		<li><em>void setGx_Tag(String tag)</em>: Set the Tag property as String, in general <em>this.setTag(stringData);</em></li>
+		<li><em>void setValueFromIntent(Intent data)</em>: if the user control implements a picker control, implement this method.</li>
+		<li><em>void setEnabled(boolean enabled)</em>: Set the enabled state of the control.</li>
+		<li><em>IGxEdit getListControl()</em>: Return the control reference; default implementation should return this.</li>
+		<li><em>IGxEdit getViewControl()</em>: Return the control view reference; default implementation should return this.</li>
+		<li><em>IGxEdit getEditControl()</em>: Return the control to use when editing; default implementation should return this.</li>
+	</ul>
+	</li>
+</ul>
+
+<p>For learning purposes check the following classes in the FlexibleClient  <em>com.artech.controls</em> and <em>com.artech.extendedcontrols</em> packages; all GeneXus standard controls are created internally as User Controls:</p>
+
+<ul>
+	<li>GxButton</li>
+	<li>RadioGroupControl</li>
+	<li>GxCheckBox</li>
+	<li>GxDateTimePicker</li>
+	<li>GxEditText</li>
+	<li>GxImage</li>
+	<li>GxTextView</li>
+	<li>SpinnerControl</li>
+	<li>DynamicSpinnerControl</li>
+	<li>SeekBarControl</li>
+	<li>ScannerControl</li>
+	<li>RatingControl</li>
+	<li>GxWheelControl</li>
+	<li>GxMeasuresControl</li>
+	<li>GxSDGeoLocation</li>
+</ul>
+
+<h4><a id="List+User+Controls" class="HashLink" href="#List+User+Controls">List User Controls</a></h4>
+
+<ul>
+	<li>Deploy your Base Class which will subclass any android.widget.* class.</li>
+	<li>The class will have to implement the <em>IGridView</em> interface from the <em>com.artech.controls</em> package.</li>
+	<li>This means overriding the following methods and implementing the <em>GridEventsListener</em> interface (Event handlers for requesting data, default action and buttons):
+	<ul>
+		<li><em>void addListener(GridEventsListener listener)</em>: define the User Control listeners used to react to specific events.</li>
+		<li><em>void update(ViewData data)</em>: populate the User Control with the data provided.</li>
+		<li><em>public void requestMoreData()</em>: used to request more data, for example when scrolling.</li>
+		<li><em>public boolean runAction(UIContext context, ActionDefinition action, Entity entity)</em>: execute an action associated to a grid item.</li>
+		<li><em>public boolean runDefaultAction(UIContext context, Entity entity)</em>: execute the default action for the Grid.</li>
+	</ul>
+	</li>
+	<li>You can use the <em>GridHelper</em> class from the <em>com.artech.controls.grids</em> package, it contains common functionality for grid controls.</li>
+	<li>When the User Control Constructor is executed with the following arguments <em>(Context context, LayoutItemDefinition def)</em> make sure to inflate your layout, for example:</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+LayoutInflater inflater = LayoutInflater.from(context);
+     if (inflater != null)
+        inflater.inflate(com.artech.R.layout.myusercontrol_layout, this, true);</pre>
+
+<ul>
+	<li>the <em>myusercontrol_layout.xml</em> file will contain the layout to hold the list (XML markup).</li>
+	<li>To access the control properties defined,  you can use helper methods from the <em>ControlInfo</em> class (<em>com.artech.base.metadata.layout</em> package):</li>
+</ul>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+ControlInfo info = layoutItemDefinition.getControlInfo();
+controlItemValues = info.optStringProperty(&quot;@ControlItemValues&quot;); //$NON-NLS-1$
+controlItemDescription = info.optStringProperty(&quot;@ControlItemDescription&quot;); //$NON-NLS-1$
+addEmptyItem = info.optBooleanProperty(&quot;@AddEmptyItem&quot;);   //$NON-NLS-1$
+emptyItemText = info.getTranslatedProperty(&quot;@EmptyItemText&quot;); //$NON-NLS-1$
+</pre>
+
+<ul>
+	<li>Depending on your control, you may need to specialize the <em>BaseAdapter</em> class to populate your <em>View</em>. An Adapter object acts as a bridge between an AdapterView and the underlying data for that view. The Adapter provides access to the data items. The Adapter is also responsible for making a View for each item in the data set.<br />
+	To define how each row should be inflated, getView is implemented in the custom adapter which inherits from <a href='http://developer.android.com/reference/android/widget/BaseAdapter.html'>BaseAdapter</a>. A baseadapter is required if you don’t want to use anything that is provided by default in Android like <em>simple_list_item_1</em>, <em>simple_list_item_2</em>. You have to define how to iterate over the list by implementing following methods:
+
+	<ul>
+		<li><em>public int getCount()</em></li>
+		<li><em>public Object getItem(int position)</em></li>
+		<li><em>public long getItemId(int position)</em></li>
+	</ul>
+	</li>
+	<li>Define the method <em>getView</em>, where you will describe how to inflate the custom view, basically bind the data from the data structure (<em>UserControlName</em> class) to the view (<em>UserControlNameView</em> class).
+	<ul>
+		<li><em>public View getView(final int position, View convertView, ViewGroup parent)</em></li>
+	</ul>
+	</li>
+</ul>
+
+<p>For learning purposes check the following classes in the FlexibleClient  <em>com.artech.controls</em>, <em>com.artech.controls.grid</em> and <em>com.extensions.controls</em> packages:</p>
+
+<ul>
+	<li>ImageGallery</li>
+	<li>GxMapView</li>
+	<li>GxMagazineViewer</li>
+	<li>GxViewPager</li>
+</ul>
+
+<p>Once you are done, make sure to execute <em>gradlew publishDebugPublicationToLocalRepository</em> to upload your implementation to a local repository used by GeneXus.  it is ready you need to execute</p>
+
+<h3><a id="3.+Create+a+Library" class="HashLink" href="#3.+Create+a+Library">3. Create a Library</a></h3>
+
+<p>Create a <a href="33546.html">library</a> definition to match the GeneXus control definition to the target implementation.</p>
+
+<h3><a id="Samples" class="HashLink" href="#Samples">Samples</a></h3>
+
+<ul>
+	<li><a href='https://github.com/genexuslabs/AndroidExtensionsSample'>AndroidExtensionsSample</a></li>
+</ul>
+
+<p>How To's</p>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?18712,," target="_blank">Creating Item User Controls for Android</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?18714,," target="_blank">Creating List User Controls for Android</a></li>
+	<li><img src="./images/20668.png" id="20668" class="WikiImage"/>  <a href='https://www5.genexus.com/meeting2016/gx26.search.aspx?Diana#es/Develando-los-secretos-para-el-desarrollo-de-estupendas-extensiones-Android-para-GeneXus'>Develando los secretos para el desarrollo de estupendas extensiones Android para GeneXus 15</a></li>
+</ul>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?48117,," target="_blank">Android Flexible Client Deprecations</a></li>
+</ul>
+
+<p><br />
+<br />
+</p>
+<br />
+<br />
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="24799.html">Toc:Native Mobile Applications Development</a></TD></TR><TR><TD><a href="15301.html">Category:User Controls for Smart Devices</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 01/21/22 06:29 PM</em></font></td></TR></table></font>

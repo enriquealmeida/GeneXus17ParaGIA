@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Howto: Integrate a new WhatsApp partner into a GeneXus Chatbot</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?46271,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Howto: Integrate a new WhatsApp partner into a GeneXus Chatbot</h1>
+<!--Howto: Integrate a new WhatsApp partner into a GeneXus Chatbot--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This document shows how to integrate into a new WhatsApp provider with a <a href="37113.html">Conversational Flows object</a> of your knowledge base.</p>
+
+<p>Note that for some WhatsApp partners, the solution is already built-in in GeneXus (i.e: Twilio, Botmaker) - for more information, see <a href="44346.html">Howto: Chatbots using WhatsApp</a>. However, the solution is extensible for any partner you want to integrate into, and this document shows how to do it.</p>
+
+<p>Here you can use <a href='https://messagebird.com/'>MessageBird</a> as an example, but almost every WhatsApp Provider works the same way, providing two key features.</p>
+
+<ol>
+	<li>A placeholder for your webhook's URL </li>
+	<li>A web (rest) API where you will post back messages to your users.</li>
+</ol>
+
+<p><img src="./images/46272.png" id="46272" class="WikiImage"/></p>
+
+<p>First, create the webhook. This webhook will be called by the WhatsApp provider every time someone sends a message to your WhatsApp number. <br />
+Most of the time, providers have well-written documentation with every possible structure being sent to you. If that's not your case, you can always log whatever reaches your webhook and create the needed <a href="10021.html">Structured Data Type (SDT) object</a> from there.</p>
+
+<p>Create a Procedure and make sure you set the <a href="7947.html">Call protocol property</a> to <strong>HTTP</strong>; next, set the <a href="7407.html">Main program property</a> to <strong>True</strong> so you can Run it.</p>
+
+<p>Your first line in this proc should be getting the actual body. Providers sometimes use the body of a request and sometimes parameters are sent as URL parameters. With the <a href="6933.html">HttpRequest</a> object you can find out what is being sent.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;body = &amp;HttpRequest.ToString()</pre>
+
+<p>If you already have the Structured Data Type needed to handle this payload, you can create an instance of this SDT and load it.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;MessageBirdRequest.FromJson(&amp;body)</pre>
+
+<p>And that’s it. You already have a structure with the data sent by the provider, which has been sent by your user via WhatsApp.</p>
+
+<p>Now you want to know what to respond to that text sent. In order to do that, call the <em>SendMessageFromChannel</em> procedure.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+SendMessageFromChannel(&amp;MessageBirdRequest.message.content.text, &amp;MessageBirdRequest.message.from,&quot;CitizenEnergyService&quot;, &amp;AnalyzeResponse)</pre>
+
+<p>The first parameter is the text of the message, that is, what the user actually wrote on WhatsApp. The second parameter is something that identifies this user, in this case, you can use their phone number. Then comes the name of the ConversationalFlows instance, and finally an instance of the <em>AnalyzeResponse</em> SDT.</p>
+
+<p>The <em>AnalyzeRensponse </em>instance has the texts (in the GXResponse collection) needed to be sent to the user according to the Conversational Flow model.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+for &amp;gxresponse in &amp;AnalyzeResponse.GXResponse
+    if &amp;i &lt;&gt; 0
+        &amp;ReplySDT.content.text += NewLine()
+    endif
+    &amp;i += 1
+    &amp;ReplySDT.content.text += &amp;gxresponse.GXOutput
+endfor</pre>
+
+<p><br />
+Now comes the second part, in which you need to “reply” to the user. In order to do that you need to create an HTTP request to the API provided by the WhatsApp provider.</p>
+
+<p>Most providers have samples on how to call their API. In GeneXus, you can use the cURL Inspector, which allows you to create a Procedure with the necessary code to reproduce a cURL command sample.</p>
+
+<p>In your case, this is the sample provided:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+curl -X &quot;POST&quot; &quot;https://conversations.messagebird.com/v1/send&quot; -H &quot;Authorization: AccessKey YOUR-API-KEY&quot; -H &quot;Content-Type: application/json&quot; --data '{ &quot;to&quot;:&quot;+31XXXXXXXXX&quot;, &quot;from&quot;:&quot;WHATSAPP-CHANNEL-ID&quot;, &quot;type&quot;:&quot;text&quot;, &quot;content&quot;:{ &quot;text&quot;:&quot;Hello!&quot; }, &quot;reportUrl&quot;:&quot;https://example.com/reports&quot; }'</pre>
+
+<p>And after using GeneXus’ cURL Inspector, this is the generated code:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;HttpClient.AddHeader(!&quot;Authorization&quot;, !&quot;AccessKey YOUR-API-KEY&quot;)
+&amp;HttpClient.AddHeader(!&quot;Content-Type&quot;, !&quot;application/json&quot;)
+
+&amp;HttpClient.AddString('{ &quot;to&quot;:&quot;+31XXXXXXXXX&quot;, &quot;from&quot;:&quot;WHATSAPP-CHANNEL-ID&quot;, &quot;type&quot;:&quot;text&quot;, &quot;content&quot;:{ &quot;text&quot;:&quot;Hello!&quot; }, &quot;reportUrl&quot;:&quot;https://example.com/reports&quot; }')
+
+&amp;HttpClient.Execute(!&quot;POST&quot;, !&quot;https://conversations.messagebird.com/v1/send&quot;)</pre>
+
+<p>You only need to include the API Key, although it is a good practice to store that key separately from your source code, and parametrize the JSON to be sent with a custom SDT.</p>
+
+<p>Note that if you don't have cURL Inspector yet, you'll have to write that code yourself.</p>
+
+<p>And that’s it! After calling the SendMessageFromChannel you can call this newly generated Procedure with your own data.</p>
+
+<p>Here's an xpz file with the code:</p>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?46273,," target="_blank">MessageBirdXPZ</a></p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="44121.html">Chatbots using Whatsapp: How to set up Twilio</a></li>
+	<li><a href="45899.html">Chatbots using WhatsApp: How to set up Botmaker</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p> </p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38520.html">Toc:Chatbots in GeneXus</a></TD><TD><a href="44346.html">Howto: Chatbots using WhatsApp</a></TD></TR><TR><TD><a href="46592.html">Multi-experience with GeneXus 17</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/28/21 02:53 PM</em></font></td></TR></table></font>

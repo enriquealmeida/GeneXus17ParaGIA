@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Load balancing considerations</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?45291,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Load balancing considerations</h1>
+<!--Load balancing considerations--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This article states several considerations to take into account to run a web application or service in a load-balancing environment.</p>
+
+<p>Those considerations must be taken into account by architects, developers, and the operations team.</p>
+
+<h2><a id="Scenario" class="HashLink" href="#Scenario">Scenario</a></h2>
+
+<p>The scenario that is covered here is the one of (a) Browsers or other applications (clients) connecting (or making requests) to (b) a Load balancer that 'balances the load' of (c) a Web application or service running in several instances of a farm or cluster and that connect to (d) one or several databases and other external resources or services.</p>
+
+<h2><a id="Considerations+and+Recommendations" class="HashLink" href="#Considerations+and+Recommendations">Considerations and Recommendations</a></h2>
+
+<p>The following considerations and recommendations may affect</p>
+
+<ul>
+	<li>architecture decisions (eg.: using a distributed caching engine or not)</li>
+	<li>how you develop your application (eg.: decide if you use Blobs or not)</li>
+	<li>the configuration of your application (eg.: how you handle Logging),</li>
+	<li>the configuration of the Load Balancer (eg.: using sticky sessions or not)</li>
+	<li>the configuration of each instance of the farm (eg.: configuring containers to allow storing temporary files or not)</li>
+</ul>
+
+<h3><a id="Session+state" class="HashLink" href="#Session+state">Session state</a></h3>
+
+<p>Handling this is required in applications that need to maintain session information between requests.</p>
+
+<p>The following GeneXus features or feature options require session state handling:</p>
+
+<ul>
+	<li><a href="6321.html">WebSession data type</a></li>
+	<li><a href="8068.html">Encrypt URL parameters property</a> with a value different than 'Site key'</li>
+	<li><a href="17458.html">On session timeout property</a> with value 'WARN'</li>
+	<li><a href="6226.html">PopUp command</a></li>
+	<li><a href="46017.html">Save State property</a> with value 'True'</li>
+</ul>
+
+<p>If you use one or more of those options, then use some way of session replication, persistence or Server Affinity (Sticky Sessions).<br />
+More information at <a href="45308.html">Session state handling</a>.</p>
+
+<h3><a id="URLs" class="HashLink" href="#URLs">URLs</a></h3>
+
+<p>All links to local resources or objects that GeneXus returns are relative to the web app, so you do not need to do anything unless you want to explicitly create and return an absolute URL to the browser or client. If you need an absolute URL you must get the base path from the database or from a configuration file and then create the string with the absolute URL using the base path + the relative path using the <a href="8444.html">Link Function</a>.</p>
+
+<h3><a id="wiki%3F6915%2CFile%2Bdata%2Btype+File+data+type" class="HashLink" href="#wiki%3F6915%2CFile%2Bdata%2Btype+File+data+type"><a href="6915.html">File data type</a></a></h3>
+
+<p>Avoid using the local file system for persisting files. Use an external storage provider, specifically the <a href="32087.html">Storage Provider API</a> for that.</p>
+
+<p>If you can not avoid it, then use <a href="https://wiki.genexus.com/commwiki/wiki?45282,," target="_blank">Server Affinity (Sticky Sessions)</a>.</p>
+
+<p>Note that storing files may not be allowed by the <a href="https://wiki.genexus.com/commwiki/wiki?32096,," target="_blank">PaaS</a> or given infrastructure configuration.</p>
+
+<h3><a id="wiki%3F6704%2CBlob%2Bdata%2Btype+Blob+data+type" class="HashLink" href="#wiki%3F6704%2CBlob%2Bdata%2Btype+Blob+data+type"><a href="6704.html">Blob data type</a></a></h3>
+
+<p>Avoid using this data type, use <a href="40420.html">BlobFile data type</a> instead.</p>
+
+<p>If you can not avoid it, then use <a href="https://wiki.genexus.com/commwiki/wiki?45282,," target="_blank">Server Affinity (Sticky Sessions)</a>.<br />
+Note that when this data type is used, temporary files are stored and this may not be allowed by the PaaS or given infrastructure configuration.</p>
+
+<h3><a id="wiki%3F40420%2CBlobFile%2Bdata%2Btype+BlobFile+data+type%2C+wiki%3F15204%2CImage%2Bdata%2Btype+Image+data+type%2C+wiki%3F16529%2CAudio%2Bdata%2Btype+Audio+data+type%2C+wiki%3F16608%2CVideo%2Bdata%2Btype+Video+data+type" class="HashLink" href="#wiki%3F40420%2CBlobFile%2Bdata%2Btype+BlobFile+data+type%2C+wiki%3F15204%2CImage%2Bdata%2Btype+Image+data+type%2C+wiki%3F16529%2CAudio%2Bdata%2Btype+Audio+data+type%2C+wiki%3F16608%2CVideo%2Bdata%2Btype+Video+data+type"><a href="40420.html">BlobFile data type</a>, <a href="15204.html">Image data type</a>, <a href="16529.html">Audio data type</a>, <a href="16608.html">Video data type</a></a></h3>
+
+<p>Use Object storage to persist those, by setting the <a href="31121.html">Storage Provider property</a> to an external storage provider or using <a href="32087.html">Storage Provider API</a>. Using an external storage provider, you avoid overloading the database with these binaries and also reduce the workload of the database and application servers since the traffic that results from requests that the browsers do to those resources will not affect them.</p>
+
+<p>If you can not use Object storage to persist those, then use <a href="https://wiki.genexus.com/commwiki/wiki?45282,," target="_blank">Server Affinity (Sticky Sessions)</a>.</p>
+
+<h3><a id="Sockets" class="HashLink" href="#Sockets">Sockets</a></h3>
+
+<p>When using web notification features (<a href="41299.html">Client.Socket External Object</a>, <a href="22442.html">Server.Socket external object</a>), use an independent socket server, if not, broadcasts will not reach the browsers as expected.</p>
+
+<p>More information: <a href="33633.html">HowTo: Receiving and processing a notification message from an external app</a></p>
+
+<h3><a id="Caching" class="HashLink" href="#Caching">Caching</a></h3>
+
+<p>As stated in <a href="https://wiki.genexus.com/commwiki/wiki?28166,," target="_blank">Caching in GeneXus applications</a>, the applications use caching mechanisms in several cases. Set up and use <a href="28136.html">Distributed cache in GeneXus applications</a>.</p>
+
+<p>If you can not use a distributed caching provider, then use <a href="https://wiki.genexus.com/commwiki/wiki?45282,," target="_blank">Server Affinity (Sticky Sessions)</a>.</p>
+
+<h3><a id="Logging" class="HashLink" href="#Logging">Logging</a></h3>
+
+<p>Log information is created by generated programs and by <a href="37872.html">Log external object</a>.</p>
+
+<p>Use agents to capture and send it to an external or centralized repository.</p>
+
+<p>eg.:</p>
+
+<ul>
+	<li><a href='https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-getting-started.html '>FileBeat for Elastic Stack (ELK Stack)</a></li>
+	<li><a href='https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/download-cloudwatch-agent-commandline.html'>Cloudwatch on AWS</a>      </li>
+</ul>
+
+<h3><a id="Smart+Devices+applications" class="HashLink" href="#Smart+Devices+applications">Smart Devices applications</a></h3>
+
+<p>All the above-mentioned considerations apply to the rest services that are on the server-side of Smart Devices Applications. </p>
+
+<p>If <a href="18370.html">Smart Devices Cache Management property</a> is set 'On' (which is the default setting), refer to the above-mentioned recommendations for Caching.</p>
+
+<p>Additionally, avoid reading in a Load Event or User Event variables assigned in the Start. If you can not avoid it, refer to the above-mentioned recommendations for <a href="45308.html">Session state handling</a>.</p>
+
+<h3><a id="Applications+with+wiki%3F24746%2CToc%253AGeneXus%2BAccess%2BManager%2B%2528GAM%2529+Integrated+Security+or+wiki%3F17835%2CCategory%253AGXflow%2BClient+GXflow" class="HashLink" href="#Applications+with+wiki%3F24746%2CToc%253AGeneXus%2BAccess%2BManager%2B%2528GAM%2529+Integrated+Security+or+wiki%3F17835%2CCategory%253AGXflow%2BClient+GXflow">Applications with <a href="24746.html">Integrated Security</a> or <a href="17835.html">GXflow</a></a></h3>
+
+<p>GAM and GXflow internally use </p>
+
+<ul>
+	<li><a href="6321.html">WebSession data type</a></li>
+	<li><a href="15204.html">Image data type</a></li>
+	<li><a href="https://wiki.genexus.com/commwiki/wiki?28166,," target="_blank">Caching in GeneXus applications</a></li>
+	<li><a href="37872.html">Log external object</a></li>
+</ul>
+
+<p>So take into account the considerations stated in the corresponding sections of this document.</p>
+
+<h3><a id="+" class="HashLink" href="#+"> </a></h3>
+
+<p></p>
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="45309.html">Considerations for building and deploying applications to containers</a></TD><TD><a href="45416.html">How to Deploy an Application to a Kubernetes cluster</a></TD><TD><a href="45280.html">Toc:Scalability and Performance of GeneXus Applications</a></TD></TR><TR><TD><a href="45284.html">Stateless vs Statefull</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 08/07/20 09:28 PM</em></font></td></TR></table></font>

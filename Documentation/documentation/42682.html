@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Symmetric Stream Encryption</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?42682,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Symmetric Stream Encryption</h1>
+<!--Symmetric Stream Encryption--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>: This is part of <a href="43917.html">GeneXus Cryptography Module</a>.</div>
+</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Not all available stream encryptions and modes of operation are safe. Most of them are included for legacy integration compatibility. If you are planning to select an algorithm for a brand new application, </span></span></span><span style="font-size: small;"><span style="font-family: courier new;"><span style="color: rgb(255,0,0);">choose</span></span></span><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;"> wisely. Read the OWASP or NIST bibliography and recommendations if you are not certain about what to choose for your application.</span></span></span></p>
+
+<h2><a id="SymmetricStreamAlgorithm+Domain" class="HashLink" href="#SymmetricStreamAlgorithm+Domain">SymmetricStreamAlgorithm Domain</a></h2>
+
+<p><u>Values</u>:</p>
+
+<pre>
+RC4, HC128, CHACHA20, SALSA20, XSALSA20, ISAAC, VMPC</pre>
+
+<h2><a id="SymmetricStreamCipher" class="HashLink" href="#SymmetricStreamCipher">SymmetricStreamCipher</a></h2>
+
+<h3><a id="DoEncrypt" class="HashLink" href="#DoEncrypt">DoEncrypt</a></h3>
+
+<pre>
+SymmetricStreamCipher.DoEncrypt(symmetricStreamAlgorithm, key, iv, plainText)</pre>
+
+<ul>
+	<li>Input symmetricStreamAlgorithm: SymmetricStreamAlgorithm Domain value</li>
+	<li>Input key: VarChar(256) hexadecimal</li>
+	<li>Input IV: VarChar(256) hexadecimal</li>
+	<li>Input plainText: VarChar(256) It uses UTF-8 by default unless <a href="43502.html">CryptographyEncodingUtil</a> is used.</li>
+	<li>Returns: VarChar(256) Base64 encoded</li>
+</ul>
+
+<p>Encrypts the plain text with the given parameters using a stream cipher type.</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Key values in this document are just examples; do not use them in your applications.</span></span></span></p>
+
+<pre>
+Example:
+
+&amp;plainText = &quot;Lorem ipsum dolor sit amet&quot;
+&amp;key = &quot;2e46d078d3c4fc21b389a9625ec603894bbea7c35f0a352da56e0c65f52f47798a933b7e06b26249c0374e0f563c14d3edda85c89105dcc7317c77135ece62c4acb07322a32b717939bd8255c979ec310abe7dab16beca41bb8473f1e7c413e20d435a73748c71e702b88160be1516e9c9ce32f770ffa817d2928fec4c7fcaf4a409dca776353a5ea3fda72531fd46fecf059b628e8012720db8d25fd6306ab3321205f9732a2ffee0abb99e317f9d59dcf833b3486aaa940891ea506a607d05fe621eca69476acb6aace42ddb99faf59c355d9e79b9df199e5091fc7f67eea9ca827c6a9a346a7d2eb54069a8974406f9e389abf9fa1e10064e0b1c05761dcc&quot;
+
+&amp;encrypted = &amp;SymmetricStreamCipher.DoEncrypt(SymmetricStreamAlgorithm.RC4, &amp;key, &amp;IV, &amp;plainText)</pre>
+
+<h3><a id="DoDecrypt" class="HashLink" href="#DoDecrypt">DoDecrypt</a></h3>
+
+<pre>
+SymmetricStreamCipher.DoDecrypt(symmetricStreamAlgorithm, key, IV, encryptedInput)
+</pre>
+
+<ul>
+	<li>Input symmetricStreamAlgorithm: SymmetricStreamAlgorithm Domain value</li>
+	<li>Input key: VarChar(256) hexadecimal</li>
+	<li>Input IV: VarChar(256) hexadecimal</li>
+	<li>Input encryptedInput: VarChar(256) Base64 encoded</li>
+	<li>Returns: VarChar(256) It uses UTF-8 by default unless <a href="43502.html">CryptographyEncodingUtil</a> is used.</li>
+</ul>
+
+<p>Decrypts the encrypted input with the given parameters using a stream cipher type.</p>
+
+<p><span style="color: rgb(255,0,0);"><span style="font-size: small;"><span style="font-family: courier new;">Warning! Key and nonce values in this document are just examples; do not use them in your applications.</span></span></span></p>
+
+<pre>
+Example:
+
+&amp;encrypted = &quot;oxJY9ID8pMxQ3P0C39EY044K18gTSa3iMBg=&quot;
+&amp;plainText = &quot;Lorem ipsum dolor sit amet&quot;
+&amp;key = &quot;2e46d078d3c4fc21b389a9625ec603894bbea7c35f0a352da56e0c65f52f47798a933b7e06b26249c0374e0f563c14d3edda85c89105dcc7317c77135ece62c4acb07322a32b717939bd8255c979ec310abe7dab16beca41bb8473f1e7c413e20d435a73748c71e702b88160be1516e9c9ce32f770ffa817d2928fec4c7fcaf4a409dca776353a5ea3fda72531fd46fecf059b628e8012720db8d25fd6306ab3321205f9732a2ffee0abb99e317f9d59dcf833b3486aaa940891ea506a607d05fe621eca69476acb6aace42ddb99faf59c355d9e79b9df199e5091fc7f67eea9ca827c6a9a346a7d2eb54069a8974406f9e389abf9fa1e10064e0b1c05761dcc&quot;
+
+&amp;decrypted = &amp;SymmetricStreamCipher.DoDecrypt(SymmetricStreamAlgorithm.RC4, &amp;key, &amp;encrypted)</pre>
+
+<h3><a id="Implementation+-+specific+details" class="HashLink" href="#Implementation+-+specific+details">Implementation - specific details</a></h3>
+
+<table border="1" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<thead>
+		<tr>
+			<th scope="col">Algorithm</th>
+			<th scope="col">Key Size (bits)</th>
+			<th scope="col">IV Size (bits) </th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>RC4</td>
+			<td>1024</td>
+			<td>N/A</td>
+		</tr>
+		<tr>
+			<td>HC128</td>
+			<td>128</td>
+			<td>N/A</td>
+		</tr>
+		<tr>
+			<td>HC256</td>
+			<td>256</td>
+			<td>128 or 256</td>
+		</tr>
+		<tr>
+			<td>SALSA20</td>
+			<td>128 or 256 </td>
+			<td>64</td>
+		</tr>
+		<tr>
+			<td>CHACHA20</td>
+			<td>128 or 256</td>
+			<td>64</td>
+		</tr>
+		<tr>
+			<td>XSALSA20</td>
+			<td>256</td>
+			<td>192</td>
+		</tr>
+		<tr>
+			<td>ISAAC</td>
+			<td>32 or 6144</td>
+			<td>N/A</td>
+		</tr>
+		<tr>
+			<td>VMPC</td>
+			<td>8 or 6144</td>
+			<td>up to 6144</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+</p>
+<br />
+</td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="43916.html">Toc:GeneXus Security API</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/06/21 03:36 PM</em></font></td></TR></table></font>

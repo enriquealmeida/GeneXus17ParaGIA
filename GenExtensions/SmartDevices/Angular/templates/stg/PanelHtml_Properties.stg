@@ -1,0 +1,106 @@
+delimiters "$", "$"
+
+g_assign_html_property_or_default(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName, delim, defaultValue) ::= <%
+$if(propertyUIName)$
+    [$propertyHtmlName$]="$uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$ | default:$delim$$defaultValue$$delim$"
+$else$
+    $if(defaultValue)$
+    $propertyHtmlName$=$delim$$defaultValue$$delim$
+    $endif$
+$endif$
+%>
+
+g_assign_html_property(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName) ::= <%
+$if(propertyUIName)$
+    [$propertyHtmlName$]="$uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$"
+$endif$
+%>
+
+
+g_assign_html_property_boolean_not(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName, defaultValue) ::= <%
+$if(propertyUIName)$
+    [$propertyHtmlName$]="$uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$ | default:$defaultValue$ | not"
+$endif$
+%>
+
+g_assign_html_property_boolean_not_cond(propertyHtmlName, uiModelContextExpression, uiModelControlName, propertyUIName, defaultValue, conditionTemplate) ::= <%
+$if(propertyUIName)$
+    [$propertyHtmlName$]="($conditionTemplate$ && $uiModelContextExpression:g_expression()$.$uiModelControlName$?.$propertyUIName$) | default:$defaultValue$ | not"
+$else$
+    [$propertyHtmlName$]="$conditionTemplate$ | default:$defaultValue$ | not"
+$endif$
+%>
+
+g_visible_property(control, defaultValue) ::= <%
+$if (control.VisibleProperty)$
+  $g_assign_html_property_boolean_not({hidden}, control.UIElementContextExpression, control.UIElementControlName, control.VisibleProperty, defaultValue)$
+$else$
+$if (!defaultValue)$
+  hidden = true  
+$endif$
+$endif$
+%>
+
+g_enabled_property(control, defaultValue) ::= <%
+    $if (control.DisabledOnLoad)$
+        $g_assign_html_property_boolean_not_cond({disabled}, control.UIElementContextExpression, control.UIElementControlName, control.EnabledProperty, defaultValue, {_actionsEnabled})$
+    $else$
+        $g_assign_html_property_boolean_not({disabled}, control.UIElementContextExpression, control.UIElementControlName, control.EnabledProperty, defaultValue)$
+    $endif$
+%>
+
+g_caption_property(control, defaultValue) ::= <%
+$if (control.CaptionProperty)$
+	{{$control.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.CaptionProperty$ | default:translate('$defaultValue$')}}
+$else$
+	{{translate('$defaultValue$')}}
+$endif$
+%>
+
+g_class_property(control, defaultValue) ::= <%
+    $g_assign_html_property_or_default({ngClass}, control.UIElementContextExpression, control.UIElementControlName, control.ClassProperty, {'}, defaultValue)$
+%>
+
+g_system_class_property(control) ::= <%
+$if (control.SystemClassProperty)$
+	class="$control.SystemClassProperty$"
+$endif$
+%>
+
+g_activepage_property(control, defaultValue) ::= <%
+    $g_assign_html_property_or_default({activePage}, control.UIElementContextExpression, control.UIElementControlName, control.ActivePageProperty, { }, defaultValue)$
+%>
+
+g_custom_numeric_property(control, htmlPtyName, metadataPtyName, modelPtyName) ::= <%
+    $g_assign_html_property_or_default(htmlPtyName, control.UIElementContextExpression, control.UIElementControlName, modelPtyName, { }, control.CustomProperties.({@$metadataPtyName$}))$
+%>
+
+g_custom_string_property(control, htmlPtyName, metadataPtyName, modelPtyName) ::= <%
+    $g_assign_html_property_or_default(htmlPtyName, control.UIElementContextExpression, control.UIElementControlName, modelPtyName, {'}, control.CustomProperties.({@$metadataPtyName$}))$
+%>
+
+g_componentobject_property(control, defaultValue) ::= <%
+$if (defaultValue)$
+$if (control.ObjectProperty)$
+  [componentUri] = "$control.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.ObjectProperty$ | default:'$defaultValue$'"
+$else$
+  componentUri = "$defaultValue$"
+$endif$
+$else$
+$if (control.ObjectProperty)$
+  [componentUri] = "$control.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.ObjectProperty$"
+$endif$
+$endif$
+%>
+
+g_form_caption_property(control) ::= <%
+$if (control.CaptionProperty)$
+gx-form-properties [formCaption]="$control.UIElementContextExpression:g_expression()$.$control.UIElementControlName$.$control.CaptionProperty$"
+$endif$
+%>
+
+g_multiline_property(control) ::= <%
+$if (control.Multiline)$
+  multiline
+$endif$
+%>

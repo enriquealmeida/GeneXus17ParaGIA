@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Train procedure</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44246,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Train procedure</h1>
+<!--Train procedure--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>Creates and starts training a custom model from a given dataset.</p>
+
+<h2><a id="Parameters" class="HashLink" href="#Parameters">Parameters</a></h2>
+
+<ul>
+	<li>
+	<p><strong>in</strong>:&amp;definition :: <a href="44427.html">Definition, GeneXusAI.Custom</a><br />
+	The definition of your custom model.</p>
+	</li>
+	<li>
+	<p><strong>in</strong>:&amp;provider :: <a href="40197.html">Provider, GeneXusAI.Configuration</a><br />
+	Provider settings.</p>
+	</li>
+	<li>
+	<p><strong>inout</strong>:&amp;Messages :: <a href="40335.html">Messages, GeneXus.Common</a><br />
+	A collection of warning and error messages returned by the task. You should check in your code if an error was returned. Refer to <a href="40188.html">error codes and descriptions</a> for more information.</p>
+	</li>
+	<li>
+	<p><strong>out</strong>:&amp;Model :: <a href="44240.html">Model data type</a><br />
+	Model information.</p>
+	</li>
+</ul>
+
+<h2><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h2>
+
+<p>The following table resumes the configuration properties (access credentials) you must set in order to use this AI task.</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"> </td>
+			<td colspan="1" rowspan="1" style="border-bottom: 1.0px solid black;text-align: center;vertical-align: top;"><strong><a href="40196.html">PropertyKey</a></strong></td>
+		</tr>
+		<tr style="border-bottom: 1.0px solid black;">
+			<td style="vertical-align: top;"><strong><a href="40195.html">ProviderType</a></strong></td>
+			<td style="text-align: right;vertical-align: top;"><strong>Key</strong></td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Alibaba</strong></td>
+			<td style="text-align: right;vertical-align: top;">-</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Amazon</strong></td>
+			<td style="text-align: right;vertical-align: top;">-</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Baidu</strong></td>
+			<td style="text-align: right;vertical-align: top;">-</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Google </strong></td>
+			<td style="text-align: right;vertical-align: top;">Service Account JSON</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>IBM</strong></td>
+			<td style="text-align: right;vertical-align: top;">Visual Recognition Key</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Microsoft</strong></td>
+			<td style="text-align: right;vertical-align: top;">Custom Vision Training Key</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>SAP</strong></td>
+			<td style="text-align: right;vertical-align: top;">-</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Tencent</strong></td>
+			<td style="text-align: right;vertical-align: top;">-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Sample" class="HashLink" href="#Sample">Sample</a></h2>
+
+<p>Suppose you want to create a model to classify different types of flowers.</p>
+
+<p>First, you must get your tagged data. In this case, we will use the <a href='https://www.kaggle.com/alxmamaev/flowers-recognition'>Mamaevs' Flowers Recognition dataset</a>.</p>
+
+<p>Then, you must provide a GeneXus' 'generator' object that must satisfy two conditions:<br />
+1) Returns a collection of <a href="44237.html">Data data type</a>.<br />
+2) Allows pagination through two input parameters: page number and page size.</p>
+
+<p>In this context, you have two alternatives:</p>
+
+<ol>
+	<li>Use a Data Provider<br />
+	e.g. if you load the dataset in a Transaction object, you can create a Data Provider object using <a href="25410.html">Skip/Count clauses</a>.
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Properties:</strong>
+  Output = Data
+  Collection = True
+
+<strong>Rules:</strong>
+  parm(in:&amp;pageNum, in:&amp;pageSize);
+
+<strong>Variables</strong>:
+  &amp;pageSize: Numeric(4.0)
+  &amp;pageNum: Numeric(4.0)
+  &amp;inputMediaBlob: Blob
+  &amp;outputCategory: VarChar(40)
+
+<strong>Source:</strong>
+  DataCollection [COUNT = &amp;pageSize] [SKIP = (&amp;pageNum - 1) * &amp;pageSize]
+  { 
+      Dummy [NoOutput]
+      {
+          // get dataset involved attributes
+          &amp;inputMediaBlob = TransactionImage 
+          &amp;outputCaregory = TransactionCategory.ToString() 
+          
+          // load item
+          Data
+          {
+              Input
+              {
+                 Features
+                 {
+                      Value = &amp;inputMediaBlob
+                 }
+              }
+              Output
+              {
+                 Label = &amp;outputCaregory
+              }
+          }
+      }
+​​​​​  }
+</pre>
+	</li>
+	<li>Use a Procedure<br />
+	e.g. if you have your dataset in a directory and every image follows the format '{category}_{index}.png', you can scan the directory with the following Procedure object.
+	<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>Rules:</strong>
+  parm(in:&amp;pageNum, in:&amp;pageSize, out:&amp;DataCollection);
+
+<strong>Variables</strong>:
+  &amp;pageSize: Numeric(4.0) 
+  &amp;pageNum: Numeric(4.0)
+  &amp;i: Numeric(4.0)
+  &amp;BTM: Numeric(4.0)
+  &amp;TOP: Numeric(4.0)
+  &amp;directory: Directory
+  &amp;file: File
+  &amp;mediaFilePath: VarChar(512)
+  &amp;mediaCategory: VarChar(32)
+  &amp;data: Data, GeneXusAI.Custom
+  &amp;DataCollection: Data, GeneXusAI.Custom (collection)
+
+<strong>Source:
+ </strong> &amp;i = 0
+  &amp;BTM = (&amp;pageNum - 1) * &amp;pageSize + 1
+  &amp;TOP = &amp;pageSize * &amp;pageNum
+  &amp;directory.Source = !&quot;{path}/dataset&quot; 
+
+  // look for every image in directory
+  for &amp;file in &amp;directory.GetFiles()
+     &amp;i += 1
+     do case
+
+        case &amp;i &gt; &amp;TOP // exclude upper index in range [&amp;BTM,&amp;TOP]
+           exit 
+
+        case &amp;i &lt; &amp;BTM // exclude lower index in range [&amp;BTM,&amp;TOP]
+           // skip
+
+        otherwise
+          
+          // get dataset involved values
+          &amp;mediaFilePath = &amp;file.GetAbsoluteName()
+          &amp;mediaCategory = &amp;file.GetName()
+              .ReplaceRegEx(!&quot;_\d+\.png$&quot;,!&quot;&quot;) // e.g. &quot;cat1_0001.png&quot; --&gt; &quot;cat1&quot;
+          
+          // load item
+          &amp;data = new()
+          &amp;data.Input.Featrues.Add(&amp;mediaFilePath)
+          &amp;data.Output.Label = &amp;mediaCategory
+          &amp;DataCollection.Add(&amp;data)
+
+     endCase
+  endFor</pre>
+	</li>
+</ol>
+
+<p>Finally, you can define your model and start the training process as follows:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;definition = new()
+
+// define model name
+&amp;definition.Name = !&quot;Flowers model&quot;
+
+// define model dataset (link to generator object previously defined)
+&amp;definition.Dataset.Loader = link(MyGeneratorObject)
+
+// define model input
+&amp;feature = new()
+&amp;feature.Name = !&quot;IMAGE&quot;
+&amp;feature.Type = DataInputType.Media
+&amp;definition.Input.Features.Add(&amp;feature)
+
+// define model output
+&amp;definition.Output.Type = DataOutputType.Label
+
+// call train process
+&amp;Model = GeneXusAI.Custom.Train(&amp;definition, &amp;provider, &amp;Messages)
+</pre>
+
+<p><div style="background-color: rgb(242,242,242);border-left: 6.0px solid rgb(128,128,128);margin-bottom: 15.0px;padding: 4.0px 12.0px;"><b>Note</b>:  Don not forget to include at least <strong>10 samples</strong> per class: 8 for  training, 1 for testing and 1 for validation.<br />
+In case you don't have enaugh samples on your dataset, it is most probably you do not satisfy the mentioned conditions. You can use the Purpose field of <a href="44237.html">Data data type</a> to achieve this aim when you code your generator object.</div>
+</p>
+
+<h2><a id="Requirments" class="HashLink" href="#Requirments">Requirments</a></h2>
+
+<h3><a id="Google+provider" class="HashLink" href="#Google+provider">Google provider</a></h3>
+
+<ol>
+	<li>
+	<p>Your <em>service-account.json</em> file must be accessible from the web app in case you set the Provider's Key property with its file path.</p>
+	</li>
+	<li>
+	<p>You must install <a href='https://www.openssl.org/'>OpenSSL command-line tool</a>.<br />
+	Check the successful installation by typing the following command in the command-line interface.<br />
+	<span style="font-family: courier new;">&gt; openssl version</span><br />
+	Do not forget to add the directory containing the <em>openssl.exe</em> to your PATH environment variable in case you are working on Windows OS.</p>
+	</li>
+	<li>
+	<p>You must set the <a href="31121.html">Storage Provider property</a> to '<em>Google Cloud Storage</em>' and set <a href="31121.html">the associated properties</a> according to your <em>service-account.json</em> file. Ensure your bucket region is '<em>us-central1</em>'; otherwise, you must create it and recreate your <em>service-account.json</em> file.</p>
+	</li>
+</ol>
+
+<h2><a id="Notes" class="HashLink" href="#Notes">Notes</a></h2>
+
+<ul>
+	<li>This process executes silently (in the provider's server). You can poll the training status by calling the <a href="44242.html">Check procedure</a>.</li>
+	<li>The training process time may vary depending on your input dataset.</li>
+	<li>It is highly important your 'generator' object follows these two rules:<br />
+	1) Returns a collection of <a href="44237.html">Data data type</a>.<br />
+	2) Allows pagination through two input parameters: page number and page size.<br />
+	Also, your 'generator' object must be reachable from your main object because it will be <a href="8260.html">dynamically called</a> from GeneXusAI.</li>
+</ul>
+
+<h2><a id="Scope" class="HashLink" href="#Scope">Scope</a></h2>
+
+<table border="0" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="vertical-align: top;"><strong>Platforms </strong></td>
+			<td style="vertical-align: top;">Web(.NET,.NETCore,Java), SmartDevices(Android,iOS)</td>
+		</tr>
+		<tr>
+			<td style="vertical-align: top;"><strong>Connectivity </strong></td>
+			<td style="vertical-align: top;">Online</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2><a id="Availability" class="HashLink" href="#Availability">Availability</a></h2>
+
+<p>This procedure is available as of <a href="https://wiki.genexus.com/commwiki/wiki?43978,," target="_blank">GeneXus 16 upgrade 6</a>.</p>
+
+<ul>
+	<li>As of <a href="https://wiki.genexus.com/commwiki/wiki?44913,," target="_blank">GeneXus 16 upgrade 8</a><br />
+	-  Google Auto ML is available.</li>
+</ul>
+
+<h2><a id="See+also" class="HashLink" href="#See+also">See also</a></h2>
+
+<ul>
+	<li><a href="44237.html">Data data type</a></li>
+	<li><a href="44242.html">Check procedure</a></li>
+	<li><a href="43665.html">HowTo: Build a custom model for GeneXusAI</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+<br />
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="44242.html">Check procedure</a></TD><TD><a href="44237.html">Data data type</a></TD><TD><a href="44427.html">Definition data type</a></TD></TR><TR><TD><a href="44243.html">Delete procedure</a></TD><TD><a href="44247.html">Deploy procedure</a></TD><TD><a href="44244.html">Evaluate procedure</a></TD><TD><a href="40167.html">Toc:GeneXus Artificial Intelligence</a></TD></TR><TR><TD><a href="40315.html">GeneXusAI Overview</a></TD><TD><a href="43665.html">HowTo: Build a custom model for GeneXusAI</a></TD><TD><a href="40204.html">HowTo: Get credentials from a cloud provider for GeneXusAI</a></TD><TD><a href="44240.html">Model data type</a></TD></TR><TR><TD><a href="44245.html">Predict procedure</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 09/07/20 03:22 PM</em></font></td></TR></table></font>

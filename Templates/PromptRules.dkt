@@ -1,0 +1,60 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Prompt Rules" %>
+<%@ Include Name="PromptScripts.cs"%>
+<%@ Assembly Name="Artech.Common" %>
+<%@ Assembly Name="Artech.Udm.Framework" %>
+<%@ Assembly Name="Artech.Common.Properties" %>
+<%@ Assembly Name="Artech.Architecture.Common" %>
+<%@ Assembly Name="Artech.Genexus.Common" %>
+<%@ Assembly Name="Artech.Specifier.Helper" %>
+<%@ Assembly Name="Artech.Architecture.Interfaces" %>
+<%@ Import Namespace="Artech.Common.Diagnostics" %>
+<%@ Import Namespace="Artech.Genexus.Common" %>
+<%@ Import Namespace="Artech.Genexus.Common.Objects" %>
+<%@ Import Namespace="Artech.Specifier.Helper.Prompts" %>
+<%@ Property Name="Model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="Definition" Type="Artech.Specifier.Helper.Prompts.Prompt" %>
+<%
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>
+      <Part type="<%= PartType.Rules.ToString() %>">
+        <Source> 
+          <![CDATA[<%
+	}
+
+	string parmRule = String.Empty;
+	bool isWebPrompt = (ObjClass.FromShortObjClass(Definition.Info.Class) == ObjClass.WebPanel);
+	
+	foreach (PromptRulesParm parmAtt in Definition.Rules.Parms)
+	{
+		if (parmAtt.ParType.ToLower() == "extra")
+			continue; // Ignore these for now.
+
+		Artech.Genexus.Common.Objects.Attribute att = GetAttribute(parmAtt.AttriId);
+		string parmType = (parmAtt.ParType.ToLower() == "out" ? "out" : "in");
+		string parmMember = parmType + ":&" + GetParameterVarName(att.Name);
+		 
+		if (parmRule != String.Empty)
+			parmRule += ", ";
+			
+		parmRule += parmMember;
+	}
+%>		
+parm(<%= parmRule %>);
+<%
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel && Definition.Order.Length > 0)
+	{
+%>
+<%= RuleAttributeList("order", Definition.Order) %> 
+<%
+	}
+
+	if (ObjClass.FromShortObjClass(Definition.Info.Class) != ObjClass.SDPanel)
+	{
+%>
+]]>
+        </Source>
+      </Part>
+<%
+	}
+%>

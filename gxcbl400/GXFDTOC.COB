@@ -1,0 +1,4 @@
+GX-DTOC.
+
+    MOVE CORR GX-DTOC-D TO GX-DTOC-C.
+

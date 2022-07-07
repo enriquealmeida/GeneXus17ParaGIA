@@ -1,0 +1,14 @@
+IF WS-KEY-ENTER
+   PERFORM #1
+   IF NO-ERRORS-FOUND
+      MOVE #2 TO MSG-DESCRIPTION
+      PERFORM #3
+      IF GX-CONFIRMED
+         PERFORM #4
+            THRU #5
+         IF NO-ERRORS-FOUND
+            PERFORM #6
+         END-IF
+      END-IF
+   END-IF
+END-IF

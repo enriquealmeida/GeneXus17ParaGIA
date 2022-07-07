@@ -1,0 +1,64 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selection and Grid Tabs Rules" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="Artech.Common.Collections" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="GridObject" Type="DVelop.Patterns.WorkWithPlus.IGridObject" %>
+
+<%= GridObject.GetParm() %>
+<%
+	foreach (IRegularFilter filter in GridObject.GetFilters())
+	{
+		if (filter is FilterAttributeWithConditionElement && ((FilterAttributeWithConditionElement)filter).Prompt != null)
+		{
+			FilterAttributeWithConditionElement filterAtt = (FilterAttributeWithConditionElement)filter;
+%>
+prompt(<%= filterAtt.Prompt.PromptName %>, <%= filterAtt.GetPromptParametersList() %>) on Prompt_<%= filterAtt.Name %>;
+<%
+			if (filterAtt.HasRange())
+			{
+				if (!((IFilterWithRange)filterAtt).IsPickerSeparateDates())
+				{
+					throw new Exception("Prompt is not allowed in Date Range Picker filters.");
+				}
+%>
+prompt(<%= filterAtt.Prompt.PromptName %>, <%= filterAtt.GetPromptParameterList_To() %>) on Prompt_<%= filterAtt.Name %>_To;
+<%
+			}
+		}
+	}
+	string generalRules = GridObject.Table.GetGeneralRules();
+	if (generalRules != "")
+	{
+%>
+<%= generalRules %>
+<%
+	}
+
+	DynamicFilterAttributesElement dynamicFilters = GridObject.Table.GetDynamicFilters();
+	if (dynamicFilters != null)
+	{
+		for (int i = 1; i <= dynamicFilters.MaxFilters; i++)
+		{
+			foreach (IFilter filterAux in dynamicFilters.Items)
+			{
+				if (filterAux is DynamicFilterAttributeElement && ((DynamicFilterAttributeElement)filterAux).Prompt != null)
+				{
+					DynamicFilterAttributeElement filter = (DynamicFilterAttributeElement)filterAux;
+%>
+prompt(<%= filter.Prompt.PromptName %>, <%= filter.GetPromptParametersList(i) %>) on Prompt_<%= dynamicFilters.Name + filter.Name + i %>;
+<%
+					if (filter.HasRange())
+					{
+%>
+prompt(<%= filter.Prompt.PromptName %>, <%= filter.GetPromptParametersList_To(i) %>) on Prompt_<%= dynamicFilters.Name + filter.Name + "_To" + i %>;
+<%
+					}
+				}
+			}
+		}
+	}
+%>

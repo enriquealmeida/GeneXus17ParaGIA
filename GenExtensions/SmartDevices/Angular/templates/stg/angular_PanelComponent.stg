@@ -1,0 +1,165 @@
+delimiters "$", "$"
+
+panelTypeToActionsTemplate ::= [
+	"list":			"g_list_panel_actions",
+	"detail":		"g_detail_panel_actions",
+	"section":		"g_section_panel_actions",
+	default:		"g_panel_actions"
+]
+
+component(page, gx)::=<<
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, Input$if (page.PanelUserControls)$, ViewChild$endif$ } from '@angular/core';
+import { Routes, ActivatedRoute } from '@angular/router';
+import { AppContainer } from 'app/gx/base/app-container';
+import { CompositeNavigation } from 'app/gx/navigation/composite-navigation';
+import { PanelComponent } from 'app/gx/base/panel.component';
+import { BcPanelComponent} from 'app/gx/base/bc-panel.component';
+import { GAMService} from "app/gx/auth/gam.service";
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { AppBarService } from "app/gx/base/app-bar.service";
+import { NavigationStyle } from "app/gx/base/view-manager";
+import { Settings } from "app/app.settings";
+
+import { $page.FullName$Service $page.Data:g_dataprovider_reference()$ } from './$gx.ToLower.(page.ComponentName)$.service';
+$page.Imports:g_imports();separator="\r\n"$
+
+@Component({
+  selector: '$page.FullName$',
+  templateUrl: './$gx.ToLower.(page.ComponentName)$.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    $page.LocalProviders:{comp|$comp.GeneratorType:g_type_name()$,}$
+    $page.FullName$Service,
+  ],
+  styles: [":host { display: flex; flex: 1; }"]
+})
+export class $page.FullName$Component extends $g_panel_superclass(page)$ {
+
+  $page.PanelUsedVars:g_properties_definitions()$
+
+  stateMembers = [
+    [$page.PanelUsedVars:g_component_state_parameters()$],
+    [$page.PanelUsedVars:g_component_state_fields()$] 
+  ];
+
+  _routingPath = '$page.RoutingPath$';
+  views = [
+    $page.PanelLayoutVariants:g_panel_layout_variant();separator=","$
+  ];
+
+
+  $page.PanelUserControls:{uc|@ViewChild('$uc.ControlName$', {static: false\}) $uc.ControlName$;};separator="\r\n"$
+  
+  constructor(
+      private panelService: $page.FullName$Service,
+      $page.LocalProviders:{comp|private $g_declare_parameter(comp)$,}$
+      $page.GlobalProviders:{comp|private $g_declare_parameter(comp)$,};separator="\r\n"$
+      protected gam: GAMService,
+      public app:AppContainer,
+      protected nvg:CompositeNavigation,
+      protected activatedRoute: ActivatedRoute,
+      private appBarService: AppBarService,
+      protected cdr: ChangeDetectorRef
+  ) {
+    super( app, nvg, activatedRoute, cdr);
+    $page.PanelUsedVars:g_init_component_item()$
+    this.canControlAppBar = activatedRoute.component === $page.FullName$Component;
+    this.showAsCard = !this.canControlAppBar;
+    this.initState(null);
+  }
+
+  initState(params) {
+    $page.PanelUsedVars:g_init_state_item()$
+    this.loadParams(params);
+    $page.GridControllers:g_component_init_controller()$
+
+    $if(page.UpdateUIModel)$
+    this.viewManager.update(this.Mode);
+    this.updateUIModel( this.uiModel, this.viewManager.getUIModelDefaults());
+    $endif$
+
+    this.panelService.start();
+  }
+
+  $page.Layout: { layout | $g_init_appbar(page.FullName, page.Caption, layout, layout.ActionBar)$ };separator="\r\n"$
+
+  $page.Layout:g_init_UIModel()$
+
+  // Actions
+  $page.Actions.Action:{ action | $g_action(action)$ };separator="\r\n"$
+
+  $page.rules.prompt:g_prompt_action()$
+
+  $(panelTypeToActionsTemplate.(page.PanelType))(page)$
+
+  $g_component_init(page)$
+
+  $g_component_refresh(page)$
+
+  $g_component_load_methods(page)$
+
+  $g_component_controllers_methods(page)$
+
+  $g_subscriptions(page)$
+}
+
+$g_uimodel( page)$
+
+$g_uiactions( page)$
+>>
+
+component_init( page) ::= <<
+// Load and refresh
+loadParams(params) {
+  if (params) {
+    $g_component_init_start( page)$
+  }
+}
+
+$if(page.InitializationStatements || page.IntegratedSecurity.Enable)$
+async initPanel() {
+  await this.checkAuthentication(this.gam);
+  $page.InitializationStatements:{stmt|$stmt:g_one_statement()$};separator="\r\n"$
+}
+$endif$
+
+async loadPanel() {
+  $page:g_component_load_data()$
+  $page:g_component_load_bc()$
+  $page.NavigationStyle:g_navigationstyle_event()$
+}
+>>
+
+component_refresh( page) ::= <<
+async Refresh(type?: string) {
+  $page:g_component_load_data()$
+  $page:g_component_load_bc()$
+  $page.ContainedLayoutComponents:g_layoutcomponent_refresh();separator="\r\n"$
+  this.cdr.markForCheck();
+}
+>>
+
+panel_layout_variant(variant) ::= <<
+{
+  name: "$variant.Id$",
+  type: "$variant.Type$",
+  os: "$variant.OS$",
+  minShortestBound: $variant.MinShortestBound$,
+  maxShortestBound: $variant.MaxShortestBound$,
+  minLongestBound: $variant.MinLongestBound$,
+  maxLongestBound: $variant.MaxLongestBound$,
+  navigationStyle: "$variant.NavigationStyle$",
+  appBarInitFn: this.initAppBar_$variant.Id$.bind(this),
+  appBarBindFn: this.bindAppBar_$variant.Id$.bind(this),
+  appBarResetFn: this.resetAppBar_$variant.Id$.bind(this),
+  UIModelDefaults: this.getUIModelDefaults_$variant.Id$.bind(this)
+
+}
+
+>>
+
+init_appbar_initfn(layout) ::=<<
+initAppBar_$layout.LayoutId$() {
+}
+>>

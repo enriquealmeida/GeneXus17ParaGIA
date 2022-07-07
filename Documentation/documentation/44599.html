@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>Message types supported for Facebook Messenger Channels API</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?44599,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">Message types supported for Facebook Messenger Channels API</h1>
+<!--Message types supported for Facebook Messenger Channels API--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>This article shows the different message types supported by the Facebook Messenger <a href="44072.html">Channels API</a>. For specific information on this API, see <a href="44358.html">Howto: Chatbots using Facebook Messenger</a>.</p>
+
+<p>In all the examples, the <strong>GeneXusChannels.Message.SendMessage</strong> API is used.</p>
+
+<p><ul><li><a class="HashLink" href="#Text+Message">Text Message</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li></ul></li><li><a class="HashLink" href="#Grid+Message">Grid Message</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li></ul></li><li><a class="HashLink" href="#Media+Message">Media Message</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li></ul></li><li><a class="HashLink" href="#Web+View+Message">Web View Message</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li></ul></li><li><a class="HashLink" href="#Quick+replies+message">Quick replies message</a></li><ul><li><a class="HashLink" href="#Example">Example</a></li><li><a class="HashLink" href="#Example+2">Example 2</a></li></ul></li><li><a class="HashLink" href="#See+also">See also</a></li></ul></ul></p>
+
+<h3><a id="Text+Message" class="HashLink" href="#Text+Message">Text Message</a></h3>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Message.Text = !&quot;Hello world&quot; //&amp;Message is GeneXusChannels.Message data type.
+GeneXusChannels.Message.SendMessage(&amp;ChannelConfiguration, &amp;Message, &amp;Messages) //&amp;ChannelConfiguration is of ChannelConfiguration SDT. &amp;Messages is GeneXus.Common.Messages.</pre>
+
+<h3><a id="Grid+Message" class="HashLink" href="#Grid+Message">Grid Message</a></h3>
+
+<p>It's mapped with <a href='https://developers.facebook.com/docs/messenger-platform/reference/template/generic'>Generic Template</a> data type.</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>In the <a href="44586.html">Chatbots sample using Facebook Messenger</a> see the <em>SendMessagesFb </em>object.</p>
+
+<p>Basically, it does the following:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;ChannelConfiguration = GetConfiguration() //Gets the configuration of the channnel.
+&amp;Message = GetGOTCharacters()
+Do 'SendMessage'
+
+Sub 'SendMessage'
+    GeneXusChannels.Message.SendMessage(&amp;ChannelConfiguration, &amp;Message, &amp;Messages)
+    msg(Format(!&quot;%1 result: %2&quot;, &amp;Message.Text, &amp;Messages.ToJson()), status)    
+EndSub
+</pre>
+
+<p>The <em>GetGOTCharacters </em>procedure calls a data provider (<em>GOTCharacters</em>) which returns a GeneXusChannels.Message parameter (&amp;GridMessage in the example).</p>
+
+<p>Note that the &amp;Message payload Type is &quot;PayloadTypes.Grid&quot; and Body has to be assigned to the JSON data of the message.</p>
+
+<p><em>GetGOTCharacters procedure:</em></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;GridMessage = GOTCharacters()
+
+&amp;Message.Text = !&quot;The winter is here ;)&quot;
+&amp;Message.Payload.Type = PayloadTypes.Grid
+&amp;Message.Payload.Body = &amp;GridMessage.ToJson()</pre>
+
+<p>Take a look at the <em>GOTCharacters</em> data provider to understand how it should be implemented:</p>
+
+<p><img src="./images/44601.png" id="44601" class="WikiImage"/></p>
+
+<p>The following domains are used in the example:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>FacebookGridProperties</strong></td>
+			<td>Domain that contains the definition of specific properties for the type of Grid message on Facebook. They are specified to help mapping between the data and the grid.</td>
+		</tr>
+		<tr>
+			<td><strong>FacebookGridProperties.Title</strong></td>
+			<td>Represents the title of an item (page) of the grid.</td>
+		</tr>
+		<tr>
+			<td><strong>FacebookGridProperties.Subtitle</strong></td>
+			<td>Represents the subtitle or description of a grid item.</td>
+		</tr>
+		<tr>
+			<td><strong>FacebookGridProperties.Image</strong></td>
+			<td>Represents the image that can be seen in the grid item.</td>
+		</tr>
+		<tr>
+			<td><strong>FacebookGridProperties.Button</strong></td>
+			<td>Represents a button that can be added to the grid.</td>
+		</tr>
+		<tr>
+			<td><strong>PayloadTypes</strong></td>
+			<td>Domain that contains the different message types.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p><br />
+At runtime, you'll see the following:</p>
+
+<p><img src="./images/44600.png" id="44600" class="WikiImage"/></p>
+
+<p>For more information on how to configure the channel, take a look at <a href="44358.html">Howto: Chatbots using Facebook Messenger</a>.</p>
+
+<h3><a id="Media+Message" class="HashLink" href="#Media+Message">Media Message</a></h3>
+
+<p>It allows sending images and videos. It maps with <a href='https://developers.facebook.com/docs/messenger-platform/reference/template/media'>Media Template</a> on Facebook.</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>In the <a href="44586.html">Chatbots sample using Facebook Messenger</a> see the SendMessagesFb object.</p>
+
+<p>Take a look at this code. </p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Message = GetGOTAppVideo()
+Do 'SendMessage'
+
+Sub 'SendMessage'
+    GeneXusChannels.Message.SendMessage(&amp;ChannelConfiguration, &amp;Message, &amp;Messages)
+    msg(Format(!&quot;%1 result: %2&quot;, &amp;Message.Text, &amp;Messages.ToJson()), status)    
+EndSub
+</pre>
+
+<p>Open the <em>GetGOTAppVideo </em>object to understand more in detail how it works:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Message.Text = !&quot;Let me introduce you to the GOT app!&quot;
+
+&amp;MediaMessage = GOTAppVideo()
+&amp;Message.Payload.Type = PayloadTypes.Media
+&amp;Message.Payload.Body = &amp;MediaMessage.ToJson()</pre>
+
+<h3><a id="Web+View+Message" class="HashLink" href="#Web+View+Message">Web View Message</a></h3>
+
+<p>It allows rendering a web site to the chat. It maps with <a href='https://developers.facebook.com/docs/messenger-platform/reference/buttons/url'>URL button</a> on Facebook.</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>In the <a href="44586.html">Chatbots sample using Facebook Messenger</a> see the SendMessagesFb object.</p>
+
+<p>Take a look at this code.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Message = GetGOTWiki()
+Do 'SendMessage'
+
+Sub 'SendMessage'
+    GeneXusChannels.Message.SendMessage(&amp;ChannelConfiguration, &amp;Message, &amp;Messages)
+    msg(Format(!&quot;%1 result: %2&quot;, &amp;Message.Text, &amp;Messages.ToJson()), status)    
+EndSub
+</pre>
+
+<p>Open the GetGOTWiki object to understand more in detail how it works (it calls a data provider that returns the WebViewMessage):</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Message.Text = !&quot;This is the wiki of GOT:&quot;
+
+&amp;WebViewMessage = GOTWiki()
+&amp;Message.Payload.Type = PayloadTypes.WebView
+&amp;Message.Payload.Body = &amp;WebViewMessage.ToJson()</pre>
+
+<p>The <em>GOTWiki </em>data provider is as shown below. Note that the output of the data provider is <em>WebViewMessage</em>.</p>
+
+<p><img src="./images/44602.png" id="44602" class="WikiImage"/></p>
+
+<p><img src="./images/44603.png" id="44603" class="WikiImage"/></p>
+
+<p>The following domains are used in the example:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>FacebookWebViewProperties</strong></td>
+			<td>Domain that contains specific properties of the Web View for Facebook.</td>
+		</tr>
+		<tr>
+			<td><strong>FacebookHeightRatio</strong></td>
+			<td>Domain that contains the different Height Ratio options.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p>At runtime:</p>
+
+<p><img src="./images/44604.png" id="44604" class="WikiImage"/></p>
+
+<h3><a id="Quick+replies+message" class="HashLink" href="#Quick+replies+message">Quick replies message</a></h3>
+
+<p>It allows the user to answer based on quick answers. It maps with <a href='https://developers.facebook.com/docs/messenger-platform/reference/send-api/quick-replies'>Quick replies</a> on Facebook.</p>
+
+<h4><a id="Example" class="HashLink" href="#Example">Example</a></h4>
+
+<p>See at the <a href="44586.html">Chatbots sample using Facebook Messenger</a> the <em>SendMessagesFb </em>object.</p>
+
+<p>Take a look at this code.</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Message = GetGOTFavorites()
+Do 'SendMessage'
+
+Sub 'SendMessage'
+    GeneXusChannels.Message.SendMessage(&amp;ChannelConfiguration, &amp;Message, &amp;Messages)
+    msg(Format(!&quot;%1 result: %2&quot;, &amp;Message.Text, &amp;Messages.ToJson()), status)    
+EndSub
+</pre>
+
+<p>The <em>GetGOTFavorites </em>procedure looks as shown below. It calls a data provider called <em>GOTFavorites.</em></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;Message.Text = !&quot;Think fast!&quot;
+
+&amp;QuickRepliesMessage = GOTFavorites()
+&amp;Message.Payload.Type = PayloadTypes.QuickReplies
+&amp;Message.Payload.Body = &amp;QuickRepliesMessage.ToJson()</pre>
+
+<p>The <em>GOTFavorites </em>data provider has an output based on <em>QuickRepliesMessage </em>SDT.</p>
+
+<p><img src="./images/44605.png" id="44605" class="WikiImage"/></p>
+
+<p><img src="./images/44606.png" id="44606" class="WikiImage"/></p>
+
+<p>The following domains are used in the example:</p>
+
+<table border="0" cellpadding="1" cellspacing="1" style="border-collapse: collapse;">
+	<tbody>
+		<tr>
+			<td><strong>FacebookQuickRepliesProperties</strong></td>
+			<td>Domain that contains the specific properties for Facebook Quick Replies.</td>
+		</tr>
+		<tr>
+			<td><strong>FacebookQuickRepliesContentTypes</strong></td>
+			<td>Domain that contains the different Content Type options for Quick Replies.</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>At runtime:</p>
+
+<p><img src="./images/44607.png" id="44607" class="WikiImage"/></p>
+
+<h4><a id="Example+2" class="HashLink" href="#Example+2">Example 2</a></h4>
+
+<pre>
+&amp;Message.Text = !&quot;Send QuickReplies&quot;
+
+&amp;QuickRepliesMessage.Text = !&quot;¿Are you sure?&quot;
+
+//Yes
+&amp;QuickReply = new()
+&amp;QuickReply.Text = !&quot;Yes&quot;
+
+&amp;QuickReplyProperty = new()
+&amp;QuickReplyProperty.Key = FacebookQuickRepliesProperties.ContentType
+&amp;QuickReplyProperty.Value = FacebookQuickRepliesContentTypes.Text
+&amp;QuickReply.Properties.Add(&amp;QuickReplyProperty)
+
+&amp;QuickReplyProperty = new()
+&amp;QuickReplyProperty.Key = FacebookQuickRepliesProperties.ImageUrl
+&amp;QuickReplyProperty.Value = !&quot;http://pngimg.com/uploads/image.png&quot;
+&amp;QuickReply.Properties.Add(&amp;QuickReplyProperty)
+
+&amp;QuickRepliesMessage.Replies.Add(&amp;QuickReply)
+
+//No
+&amp;QuickReply = new()
+&amp;QuickReply.Text = !&quot;No&quot;
+
+&amp;QuickReplyProperty = new()
+&amp;QuickReplyProperty.Key = FacebookQuickRepliesProperties.ContentType
+&amp;QuickReplyProperty.Value = FacebookQuickRepliesContentTypes.Text
+&amp;QuickReply.Properties.Add(&amp;QuickReplyProperty)
+
+&amp;QuickRepliesMessage.Replies.Add(&amp;QuickReply)
+
+//Location
+&amp;QuickReply = new()
+&amp;QuickReply.Text = !&quot;Location&quot;
+
+&amp;QuickReplyProperty = new()
+&amp;QuickReplyProperty.Key = FacebookQuickRepliesProperties.ContentType
+&amp;QuickReplyProperty.Value = FacebookQuickRepliesContentTypes.Location
+&amp;QuickReply.Properties.Add(&amp;QuickReplyProperty)
+
+&amp;QuickRepliesMessage.Replies.Add(&amp;QuickReply)
+
+//Phone
+&amp;QuickReply = new()
+&amp;QuickReply.Text = !&quot;Call&quot;
+
+&amp;QuickReplyProperty = new()
+&amp;QuickReplyProperty.Key = FacebookQuickRepliesProperties.ContentType
+&amp;QuickReplyProperty.Value = FacebookQuickRepliesContentTypes.PhoneNumber
+&amp;QuickReply.Properties.Add(&amp;QuickReplyProperty)
+
+&amp;QuickRepliesMessage.Replies.Add(&amp;QuickReply)
+
+//Email
+&amp;QuickReply = new()
+&amp;QuickReply.Text = !&quot;Email&quot;
+
+&amp;QuickReplyProperty = new()
+&amp;QuickReplyProperty.Key = FacebookQuickRepliesProperties.ContentType
+&amp;QuickReplyProperty.Value = FacebookQuickRepliesContentTypes.Email
+&amp;QuickReply.Properties.Add(&amp;QuickReplyProperty)
+
+&amp;QuickRepliesMessage.Replies.Add(&amp;QuickReply)
+
+&amp;Message.Payload.Type = PayloadTypes.QuickReplies
+&amp;Message.Payload.Body = &amp;QuickRepliesMessage.ToJson()</pre>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="44358.html">Howto: Chatbots using Facebook Messenger</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p></p>
+</td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="38520.html">Toc:Chatbots in GeneXus</a></TD><TD><a href="44586.html">KB:Chatbots sample using Facebook Messenger</a></TD><TD><a href="44358.html">Howto: Chatbots using Facebook Messenger</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/31/21 01:44 PM</em></font></td></TR></table></font>

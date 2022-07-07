@@ -1,0 +1,11 @@
+01  GX-SYSDATE-CVT-INFMT           PIC  X(010).
+01  GX-SYSDATE-CVT-INVAL           PIC  X(017).
+01  GX-SYSDATE-CVT-OUTFMT          PIC  X(010).
+01  GX-SYSDATE-CVT-OUTVAL          PIC  X(017).
+01  GX-SYSDATE-CVT-ERROR.
+    05 GX-BYTES-PROVIDED           PIC S9(009) BINARY.
+    05 GX-BYTES-AVAILABLE          PIC S9(009) BINARY.
+    05 GX-EXCEPTION-ID             PIC  X(007).
+    05 FILLER                      PIC  X(001).
+    05 GX-EXCEPTION-DATA           PIC  X(001).
+01  GX-SYSDATE-D                   PIC  X(008).

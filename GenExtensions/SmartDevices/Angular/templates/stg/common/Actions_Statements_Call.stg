@@ -1,0 +1,68 @@
+delimiters "$", "$"
+import "Actions_Statements_Call_SD.stg"
+import "Actions_Statements_Call_Interop.stg"
+import "Expressions.stg"
+
+callTypeToTemplate ::= [
+  "server" : "g_call_server_statement",
+  "navigate" : "g_call_navigate_statement",
+  "navigate_bc" : "g_call_navigate_bc_statement",
+  "sd" : "g_call_sd_statement",
+  "interop" : "g_call_interop_statement",
+  "bc" : "g_call_bc_statement",
+  "self" : "g_call_self_statement",
+  "dynamic" : "g_call_dynamic_statement",
+  default: "g_call_default_statement"
+]
+
+foreachlineIteratorMap ::= [
+  "all" : "GetLines",
+  "selected" : "GetSelectedLines",
+  default : "GetLines"
+]
+
+g_call_statement(stmt) ::= <%
+$(callTypeToTemplate.(stmt.CallType))(stmt)$
+%>
+
+g_call_server_statement(stmt) ::= <<
+this.panelService.$gx.CallToObjectName.(stmt.TargetName)$($stmt:g_call_inputparameters()$);
+>>
+
+g_call_navigate_statement(stmt) ::= <%
+$call_navigate_statement(stmt)$
+%>
+
+g_call_navigate_bc_statement(stmt) ::= <%
+$call_navigate_bc_statement(stmt)$
+%>
+
+g_query_parameters(stmt)::= <%
+$if (stmt.Parameters.Parameter)$
+, { queryParams: { $stmt.Parameters.Parameter:g_querystring_parameter();separator=", "$ }}
+$endif$
+%>
+
+g_route_parameters(stmt)::= <%
+$route_parameters(stmt)$
+%>
+
+
+g_call_bc_statement( stmt) ::= <%
+this.$stmt.BcVariable$.$stmt.BcMode$($stmt:g_call_parameters()$);
+%>
+
+g_call_self_statement( stmt) ::= <%
+this.$stmt.TargetName$($stmt:g_call_parameters()$);
+%>
+
+g_call_dynamic_statement( stmt) ::= <%
+this.nvg.dynamicCall( __aSt, $stmt:g_call_parameters()$);
+%>
+
+g_call_default_statement( stmt) ::= <%
+%>
+
+g_calloption_statement(stmt) ::= <%
+this.nvg.navigateOption('$stmt.TargetRoute$', '$stmt.OptionName$', $stmt.OptionValue$);
+%>

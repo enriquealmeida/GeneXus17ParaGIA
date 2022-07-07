@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HistoryManager User Control</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?22724,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HistoryManager User Control</h1>
+<!--HistoryManager User Control--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>
+	The HistoryManager User Control listens for changes in the URL. Every time a change occurs, it triggers the event URLChanged. Changes in the URL that are monitored are those that occur after the # (hash).</p>
+<h3>
+	Using the control</h3>
+<p>
+	The HistoryManager User Control is widely used in the <a href="5636.html">Work With Pattern</a> (<a href="4796.html">TabbedView Web Component</a>) to dynamically load a GeneXus object based on the user tab selection without losing the <a href='http://en.wikipedia.org/wiki/Deep_linking'>deep linking</a>, ie without losing the browser back and forward options and the ability to copy the link as is and pass it to another user to access exactly the same page.</p>
+<h3>
+	Methods</h3>
+<p>
+	URLChanged: Notifies that the URL changed.</p>
+<h3>
+	Example</h3>
+<p>
+	Suppose the following WebPanel definition</p>
+<p>
+	<img src="./images/22725.gif" id="22725" class="WikiImage"/></p>
+<p>
+	The Tabs Textblock will be in charge of loading a list of three tabs (Start Event, Init and DummyTabs subroutines).</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event Start
+  Do 'Init'
+  Do 'DummyTabs'
+EndEvent
+
+Sub 'DummyTabs'
+&amp;Tabs = new()
+for &amp;i = 1 to 3 // 3 tabs
+  &amp;Tab = new()
+  &amp;Tab.Code = &amp;i.toString().Trim()
+  &amp;Tab.Description = &amp;i.ToString().Trim()
+  &amp;Tabs.Add(&amp;Tab)
+endfor
+  &amp;LastTab = &amp;Tabs.Count
+EndSub
+
+Sub 'Init'
+&amp;TabTemplate = !'&lt;li class=&quot;%1&quot;&gt;'
+&amp;TabTemplate +=  !'&lt;a id=&quot;%2Tab&quot; %3%7 class=&quot;%4&quot;&gt;'
+&amp;TabTemplate +=    !'&lt;span class=&quot;%5&quot;&gt;'
+&amp;TabTemplate +=      !'&lt;span class=&quot;TabBackground&quot;&gt;'
+&amp;TabTemplate +=        !'&lt;span class=&quot;TabText&quot;&gt;%6&lt;/span&gt;'
+&amp;TabTemplate +=      !'&lt;/span&gt;'
+&amp;TabTemplate +=    !'&lt;/span&gt;'
+&amp;TabTemplate +=  !'&lt;/a&gt;'
+&amp;TabTemplate +=!'&lt;/li&gt;'
+EndSub</pre>
+<p>
+	Every time the user clicks on a tab, the HistoryManager will trigger the URLChanged method to notify the change; you need to update the component displaying the desired content and update the tab strip (the list of tabs) to reflect the selection (Draw Tabs subroutine).</p>
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event HistoryManager1.URLChanged
+msg(format(!&quot;URLChanged, Hash %2 Url %1&quot;,HistoryManager1.URL,HistoryManager1.Hash))
+Do 'Draw Tabs'
+&amp;URLChangedEvent = True // check the refresh code
+EndEvent
+
+Event Refresh
+If not &amp;URLChangedEvent
+  Do 'Draw Tabs'
+EndIf
+EndEvent
+
+Sub 'Draw Tabs'
+Do 'FindTabIndex'
+
+&amp;IsFirstTab = True
+&amp;TabsMarkup = &quot;&quot;
+For &amp;Index = 1 To 3
+  &amp;Tab = &amp;Tabs.Item(&amp;Index)
+  Do 'LoadItem'
+  &amp;IsFirstTab = False
+Endfor
+Tabs.Caption = Format(!'&lt;ul class=&quot;Tabs&quot;&gt;%1&lt;/ul&gt;', &amp;TabsMarkup)
+EndSub
+
+Sub 'FindTabIndex'
+// Searches for the tab with the specified code.
+// If not found, or code is empty, returns first tab.
+&amp;Found = False
+For &amp;Index = 1 to &amp;Tabs.Count
+  If (HistoryManager1.Hash = &quot;&quot; And (&amp;Tabs.Item(&amp;Index).Code = &amp;TabCode)) Or (&amp;Tabs.Item(&amp;Index).Code = HistoryManager1.Hash)
+   &amp;SelectedTab = &amp;Index
+   &amp;Found = True
+   Exit
+  EndIf
+EndFor
+
+If (not &amp;Found and &amp;Tabs.Count &gt; 0)
+  &amp;SelectedTab = 1
+EndIf
+EndSub
+
+Sub 'LoadItem'
+&amp;TabLeftCls = !&quot;TabLeft&quot;
+if &amp;Index = &amp;FirstTab
+  &amp;TabLeftCls = !&quot;TabFirst&quot;
+EndIf
+
+&amp;TabRightCls = !&quot;TabRight&quot;
+If &amp;Index = &amp;LastTab
+  &amp;TabRightCls = !&quot;TabLast&quot;
+EndIf
+
+If &amp;Index = &amp;SelectedTab
+  &amp;TabsMarkup += Format(&amp;TabTemplate, !&quot;Tab TabSelected&quot;, &amp;Tab.Code, &quot;&quot;, &amp;TabLeftCls, &amp;TabRightCls, &amp;Tab.Description, &quot;&quot;)
+Else
+  // Add the item as an entry point in the HistoryManager to enable the browser go back and forward.
+  &amp;OnClickTemplate = !' onclick=&quot;return HistoryManager.AddHistoryPoint(' + !&quot;'%1'&quot; + !')&quot;'
+  &amp;TabsMarkup += Format(&amp;TabTemplate, !&quot;Tab&quot;, &amp;Tab.Code, Format(!'href=&quot;%1&quot;', &amp;Tab.Link), &amp;TabLeftCls, &amp;TabRightCls, &amp;Tab.Description, Format(&amp;OnClickTemplate, &amp;Tab.Code))
+EndIf
+EndSub</pre>
+<p>
+	At runtime, 3 tabs will be created:</p>
+<p>
+	<img src="./images/22726.gif" id="22726" class="WikiImage"/></p>
+<p>
+	and when clicking on each tab, the hashtag will be updated with the &amp;Tab.Code value (#1,#2,#3).</p>
+<p>
+	</p>
+<br />   <br />    <br /> <br /><br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="5928.html">Category:Common Controls</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:18 PM</em></font></td></TR></table></font>

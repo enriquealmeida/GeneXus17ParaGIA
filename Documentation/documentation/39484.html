@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>GAM - Oauth 2.0 Authentication Type</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?39484,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">GAM - Oauth 2.0 Authentication Type</h1>
+<!--GAM - Oauth 2.0 Authentication Type--><div class="TableWikiBody" id="tblwikibody"><p><a href="19888.html">GeneXus Access Manager</a> allows you to authenticate using any OAuth 2.0 provider, just by following these steps.</p>
+
+<p>The definition of this <a href="16508.html">GAM Authentication Type</a> is the same as any other type of authentication already existing in GAM, only that this type of authentication requires detailed configuration of the protocol used by the Provider.<br />
+So, to configure the OAuth 2.0 Authentication Type in GAM you need to follow the documentation of the Identity Provider to which you want to connect.</p>
+
+<p>At runtime, the operation is similar to that for Facebook / Google authentication, for example. When you select this type of authentication, the login is redirected to the Identity Provider configured. <br />
+The Login is displayed by the Provider; there, users enter their credentials and they are redirected back to the application.</p>
+
+<p>In addition, the scenario of renewing the GAM session when the Access token of the Provider is refreshed is automatically solved. This behavior is optional. Otherwise, the GAM session expires at the same time as the Token provided. See below for more information <strong>(<sup>1</sup>)</strong>.</p>
+
+<p>Some Providers are as follows:</p>
+
+<ul>
+	<li>Office 365</li>
+	<li>Mercado Libre</li>
+	<li>Instagram</li>
+	<li>LinkedIn</li>
+	<li>Google</li>
+	<li>Facebook</li>
+	<li>WeChat</li>
+</ul>
+
+<p><iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/H4w1lkF_2W0?start=156" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></p>
+
+<h3><a id="Configuration" class="HashLink" href="#Configuration">Configuration</a></h3>
+
+<p>The configuration of this type of authentication is divided into Tabs.</p>
+
+<p><img src="./images/48576.png" id="48576" class="WikiImage"/></p>
+
+<h3><a id="General" class="HashLink" href="#General">General</a></h3>
+
+<p>Basic information identifying the application in OAuth 2.0 (Client ID, Client Secret, and Redirect URL).<br />
+The Client ID and Client Secret are obtained from the Identity Provider.<br />
+If &quot;Custom Redirect URL?&quot; is selected, GAM will not modify the URL. Therefore, the developer must correctly handle the response received.<br />
+Clearing the option &quot;Redirect to authenticate?&quot; allows authentication with OAuth 2.0 using REST without redirection to the Identity Provider.</p>
+
+<h3><a id="Authorization" class="HashLink" href="#Authorization">Authorization</a></h3>
+
+<p>Here, configure the URL for users to enter their credentials.</p>
+
+<p>Some parameters are needed to call this URL and should be specified in this section. The same happens with the response parameters.<br />
+Once the user is authenticated, the Identity Provider returns the Access Code. With the Access Code received, GAM requests the Access Token.</p>
+
+<h3><a id="Token" class="HashLink" href="#Token">Token</a></h3>
+
+<p>Configure the URL<strong>(*)</strong> of the service to request the Token; this call is in the background and tries to obtain an Access Token.<br />
+The response to this call is configured in the Response section.</p>
+
+<p>Include Authorization header with Basic value: When performing an Oauth 2.0 authentication with a provider, it regularly requests only the Content-Type header to obtain the Token. However, some Oauth 2.0 providers (for example, Oracle Access Management - OAM) requests the Authorization header. This checkbox is for adding the Authorization header in base 64 (ClientId:ClientSecret in base 64).<br />
+<br />
+<strong>(<sup>1</sup>) </strong>Optionally, you can select that GAM validates the expiration of the Identity Provider's Access Token. In that case, when the Access token is refreshed, GAM renews the session automatically and the user doesn't need to log in again. This is done through the &quot;Validate ExternalToken&quot; checkbox.<br />
+When the Provider returns a Refresh Token, you can configure the URL for this action (Refresh Token URL). If you don't configure a Refresh Token URL, the same URL<strong>(*)</strong> configured above is used to request a Token. </p>
+
+<p><img src="./images/39487.png" id="39487" class="WikiImage"/><br />
+<br />
+If the Token is renewed, you can access it using the <em>GAMSession.ExternalToken</em> method. If the Token expires and doesn't refresh, the application logs out the user (the GAM Session ends).</p>
+
+<h3><a id="User+Information" class="HashLink" href="#User+Information">User Information</a></h3>
+
+<p>Configure the service URL to obtain the authenticated user's data. This service is essential to be able to complete the application's authentication.<br />
+The response is a JSON in which the user's data is obtained.</p>
+
+<p>In some cases, the Provider fields need to be mapped to the GAM fields. For example, Gender Values: a string that maps the user's gender to the GAM conventions.</p>
+
+<p>In GAM, M=male and F=female.</p>
+
+<h4><a id="Custom+User+Attributes" class="HashLink" href="#Custom+User+Attributes">Custom User Attributes</a></h4>
+
+<p>For those attributes that cannot be mapped to any of the fields included in the User Information form, you can add a pair (Attribute Name, Attribute Tag). These attributes will be saved as <a href="19634.html">extended attributes</a> of the GAM user.</p>
+
+<ul>
+	<li>Attribute Name: ID of the GAM extended user attribute, to be saved in the GAM database (you can retrieve the information using that ID).</li>
+	<li>Attribute Tag: JSON service response tag that returns the user information corresponding to the attribute to be retrieved.</li>
+</ul>
+
+<p>For example, the pair (Attribute Name = Amount, Attribute Tag = salaryAmount), means that the tag &quot;salaryAmount&quot; will be extracted from the response of the IDP, and that information will be saved as an extended attribute of the user using the &quot;Amount&quot; ID in the GAM table. This information can be retrieved using the <a href="19634.html">GAM User object extended attribute methods</a>.</p>
+
+<h3><a id="Office+365" class="HashLink" href="#Office+365"><strong>Office 365</strong></a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>General:</strong>
+Client ID:     client_id        Value: &lt;clientid&gt;
+Client Secret: client_secret    Value: &lt;clientsecret&gt;
+Redirect URL:  redirect_uri     Value: https://&lt;server&gt;/webapp
+
+<strong>Authorization:</strong>
+URL: https://login.windows.net/common/oauth2/authorize
+Response type TAG:  response_type      Value: code
+Scope TAG:          scope              Value: https://graph.microsoft.com/user.read
+State TAG:          state
+Include ClientID and RedirectURL
+Response:
+Access code TAG: code
+Error description TAG: message
+
+<strong>Token:</strong>
+URL: https://login.windows.net/common/oauth2/token
+Header Cotent type: Content-type      Value: application/x-www-form-urlencoded
+Grant type:         grant_type        Value: authorization_code
+Include = All
+Aditional Parameters:  resource=https://graph.microsoft.com
+Response:
+Access token TAG: access_token
+Token type TAG: token_type
+Expires in TAG: expires_in
+Error description TAG: message
+Validate external token = False
+
+<strong>User Information:</strong>
+URL:  https://graph.microsoft.com/v1.0/me
+Method: Get
+Header Content type: Content-type      Value: application/json;charset=utf-8
+Do not include anything
+Email TAG: mail
+External ID TAG: id
+Name TAG:  userPrincipalName
+First name TAG: givenName
+Last name TAG: surname
+Language TAG: preferredLanguage
+Error description TAG: message
+
+</pre>
+
+<h3><a id="Mercado+Libre" class="HashLink" href="#Mercado+Libre"><strong>Mercado Libre</strong></a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>General:</strong>
+Client ID:     client_id      Value: &lt;clientid&gt;
+Client Secret: client_secret  Value: &lt;clientsecret&gt;
+Redirect URL:  redirect_uri   Value: https://&lt;server&gt;/webapp
+
+<strong>Authorization:</strong>
+URL: http://auth.mercadolibre.com/authorization
+Response type:  response_type    Value: code
+Scope:          scope            Value: read
+State:          state
+Include ClientID and RedirectURL
+Response:
+Access code TAG: code
+Error description TAG: error_description
+
+<strong>Token:</strong>
+URL: https://api.mercadolibre.com/oauth/token
+Header Cotent type: Content-type    Value: application/x-www-form-urlencoded
+Grant type:         grant_type      Value: authorization_code
+Include All
+Response:
+Access token TAG: access_token
+Token type TAG: token_type
+Expires in TAG: expires_in
+User Id TAG: user_id
+Refresh Token TAG: refresh_token 
+Error description TAG: error_description 
+Validate external token = True
+Refresh token URL = leave it empty 
+
+<strong>User Information:</strong>
+URL:  https://api.mercadolibre.com/users/me
+Method: Get
+Header Content type: Content-type     Value: application/json;charset=utf-8
+Include Acces Token: access_token
+Email TAG: email
+External ID TAG: id
+Name TAG:  nickname
+First name TAG: first_name
+Last name TAG: last_name
+URL profile TAG: permalink
+Error description TAG: error_description
+
+</pre>
+
+<h3><a id="Instagram" class="HashLink" href="#Instagram"><strong>Instagram</strong></a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>General:</strong>
+Client ID:     client_id        Value: &lt;clientid&gt;
+Client Secret: client_secret    Value: &lt;clientsecret&gt;
+Redirect URL:  redirect_uri     Value: https://&lt;server&gt;/webapp (ie.  https://gamidentityprovider.com/v15_IPServerNetSQL)
+
+<strong>Authorization:</strong>
+URL: https://api.instagram.com/oauth/authorize
+Response type: response_type    Value: code
+Scope:         scope            Value: basic
+State:         state
+Include ClientID and RedirectURL 
+Response:
+Access code TAG: code
+Error description TAG: error_description
+
+<strong>Token:</strong>
+URL: https://api.instagram.com/oauth/access_token
+Header Cotent type: Content-type    Value: application/x-www-form-urlencoded
+Grant type:         grant_type      Value: authorization_code
+Include All
+Response:
+Access token TAG: access_token
+Token type TAG: token_type
+Expires in TAG: expires_in
+Refresh Token TAG: Not available for this Provider. When the token expires, it cannot be refreshed.
+Error description TAG: error_description
+Validate external token = True  // When the token expires, the GAM session ends.
+Refresh token URL = leave it empty. Uses the same URL used to ask for a Token.
+
+<strong>User Information:</strong>
+URL:  https://api.instagram.com/v1/users/self
+Method: Get
+Header Content type: Content-type    Value: application/json;charset=utf-8
+Do not include anything.
+Email TAG: 
+External ID TAG: id
+Name TAG:  username
+First name TAG: full_name
+Generate automatic Last name : True
+Birthday TAG: birthday
+URL image TAG: profile_picture
+Error description TAG: error_description 
+
+</pre>
+
+<h3><a id="LinkedIn" class="HashLink" href="#LinkedIn"><strong>LinkedIn</strong></a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>General:</strong>
+Client ID:     client_id       Value: &lt;clientid&gt;
+Client Secret: client_secret   Value: &lt;clientsecret&gt;
+Redirect URL:  redirect_uri    Value: https://&lt;server&gt;/webapp
+
+<strong>Authorization:</strong>
+URL: https://www.linkedin.com/oauth/v2/authorization
+Response type:  response_type    Value: code
+Scope:          scope            Value: r_emailaddress+r_basicprofile
+State:          state
+Include ClientID and RedirectURL
+Response:
+Access code TAG: code
+Error description TAG: error_description
+
+<strong>Token:</strong>
+URL: https://www.linkedin.com/oauth/v2/accessToken
+Header Cotent type: Content-type   Value: application/x-www-form-urlencoded
+Grant type:         grant_type     Value: authorization_code
+Include All
+Response:
+Access token TAG: access_token
+Expires in TAG: expires_in
+Refresh Token TAG: Not available for this Provider. When the token expires, it cannot be refreshed.
+Error description TAG: error_description 
+Validate external token = True   // When the token expires, the GAM session ends.
+Refresh token URL = leave it empty. Uses the same URL used to ask for a Token. 
+
+<strong>User Information:</strong>
+URL:  https://api.linkedin.com/v1/people/:(id,email-address,first-name,last-name,headline,picture-url)
+Method: Get
+Header Content type: Content-type    Value: application/json;charset=utf-8
+NOTHING is included
+Additional parameters: format=json
+Email TAG: emailAddress
+External ID TAG: id
+Name TAG:  emailAddress
+First name TAG: firstName
+Last name TAG: lastname
+URL image TAG: pictureUrl
+Error description TAG: error_description
+
+</pre>
+
+<h3><a id="Google" class="HashLink" href="#Google"><strong>Google</strong></a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>General:</strong>
+Client ID:     client_id       Value: &lt;clientid&gt;
+Client Secret: client_secret   Value: &lt;clientsecret&gt;
+Redirect URL:  redirect_uri    Value: https://&lt;server&gt;/webapp
+
+<strong>Authorization:</strong>
+URL: https://accounts.google.com/o/oauth2/auth
+Response type:  response_type    Value: code
+Scope:          scope            Value: https://www.googleapis.com/auth/userinfo.email+https://www.googleapis.com/auth/userinfo.profile
+State:          state
+Include ClientID and RedirectURL
+Additional Parameters for Smart Devices: access_type=offline
+Response:
+Access code TAG: code
+Error description TAG: error_description
+
+<strong>Token:</strong>
+URL: https://accounts.google.com/o/oauth2/token
+Header Cotent type: Content-type   Value: application/x-www-form-urlencoded
+Grant type:         grant_type     Value: authorization_code
+Include All
+Aditional Parameters: 
+Response:
+Access token TAG: access_token
+Token type TAG: token_type
+Expires in TAG: expires_in
+Refresh Token TAG: refresh_token
+Error description TAG: error_description
+Validate external token = True
+Refresh token URL = leave it empty. Uses the same URL used to ask for a Token. 
+
+<strong>User Information:</strong>
+URL:  https://www.googleapis.com/oauth2/v1/userinfo
+Method: Get
+Header Content type: Content-type    Value: application/json;charset=utf-8
+Do not include anything.
+Email TAG: email
+Verified Email Tag: verified_email
+External ID TAG: id
+Name TAG:  email
+First name TAG: given_name
+Last name TAG: family_name
+Gender TAG: gender    Values: M=male&amp;M=hombre&amp;F=female&amp;F=mujer
+URL Image TAG: picture
+URL Profile TAG: link
+Language TAG: locale
+Error description TAG: error_description </pre>
+
+<h3><br />
+<strong>Facebook</strong></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>General:</strong>
+Client ID:     client_id         Value: &lt;clientid&gt;
+Client Secret: client_secret     Value: &lt;clientsecret&gt;
+Redirect URL:  redirect_uri      Value: https://&lt;server&gt;/webapp
+
+<strong>Authorization:</strong>
+URL: https://graph.facebook.com/v2.12/oauth/authorize
+Response type:  response_type    Value: code
+Scope:          scope            Value: email+user_birthday
+State:          state
+Include ClientID and RedirectURL
+Additional Parameters for Smart Devices: display=touch
+Response:
+Access code TAG: code
+Error description TAG: message
+
+<strong>Token:</strong>
+URL: https://graph.facebook.com/v2.12/oauth/access_token
+Header Cotent type: Content-type   Value: application/x-www-form-urlencoded
+Grant type TAG:     grant_type     Value: authorization_code
+Include = todo
+Aditional Parameters: 
+Response:
+Access token TAG: access_token
+Token type TAG: token_type
+Expires in TAG: expires_in
+Refresh Token TAG: refresh_token 
+Error description TAG: message
+Validate external token = True
+Refresh token URL = leave it empty. Uses the same URL used to ask for a Token. 
+
+<strong>User Information:</strong>
+URL:  https://graph.facebook.com/me
+Method: Get
+Header Content type: Content-type    Value: application/json;charset=utf-8
+Include Access Token: access_token
+Additional Parameters: fields=id,email,first_name,last_name,birthday,gender,link,locale,timezone,verified,updated_time,picture
+Email TAG: email
+External ID TAG: id
+Name TAG:  id
+First name TAG: first_name
+Last name TAG: last_name
+Gender TAG: gender     Values: M=male&amp;M=hombre&amp;F=female&amp;F=mujer
+Birthday TAG: birthday
+URL Image TAG: url
+URL Profile TAG: link
+Language TAG: locale
+Time zone TAG: timezone
+Error description TAG: message </pre>
+
+<h3><a id="WeChat" class="HashLink" href="#WeChat"><strong>WeChat</strong></a></h3>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+<strong>General:</strong>
+Client ID:     appid        Value: &lt;appid&gt;
+Client Secret: secret    Value: &lt;secret&gt;
+Redirect URL:  redirect_uri     Value: https://&lt;server&gt;/webapp
+
+<strong>Authorization:</strong>
+URL: https://open.weixin.qq.com/connect/qrconnect
+Response type TAG:  response_type      Value: code
+Scope TAG:          scope              Value: snsapi_login
+State TAG:          state
+Include ClientID and RedirectURL
+Additional parameters:
+Response:
+Access code TAG: code
+Error description TAG: errmsg
+
+<strong>Token:</strong>
+URL: https://api.weixin.qq.com/sns/oauth2/access_token
+Token Method: POST
+Header Cotent type: Content-type      Value: application/x-www-form-urlencoded
+Grant type:         grant_type        Value: authorization_code
+Include Access Code:  True
+Include Client Id:  True
+Include Client Secret:  True
+Include Redirect URL:  True
+Response:
+Access token TAG: access_token
+Token type TAG:
+Expires in TAG: expires_in
+Scope Tag: scope
+User Id Tag: openid
+Refresh token Tag: refresh_token
+Error Description Tag: errmsg
+
+<strong>Refresh Token:
+</strong>Validate external token:  True
+Refresh token URL:  https://api.wechat.com/sns/oauth2/refresh_token
+
+<strong>User Information:</strong>
+URL: https://api.weixin.qq.com/sns/userinfo
+Method: Post
+Header Content type: Content-type      Value: application/json;charset=utf-8
+Include Access Token:  True   Tag: access_token
+Include Client Id:  False
+Include Client Secret:  False
+Include User Id:  True
+Additional Parameters:  lang=en # Other options are zh_CN for Simplified Chinese, zh_TW for Traditional Chinese
+<strong>Response</strong>
+User Email Tag:  unionid
+User External Id Tag:  unionid
+User Name Tag:  unionid
+User First Name: nickname  Generate automatic Last Name:  True
+User Language Tag: language
+Error Description Tag: errmsg</pre>
+
+<h3><a id="Availability" class="HashLink" href="#Availability">Availability</a></h3>
+
+<p>As of GeneXus 15 upgrade 11.</p>
+
+<h3><a id="See+Also" class="HashLink" href="#See+Also">See Also</a></h3>
+
+<p><a href="https://wiki.genexus.com/commwiki/wiki?45493,," target="_blank">HowTo: Use GAM as an Oauth 2.0 provider</a><br />
+<a href="39166.html">Office 365 Authentication using GAM</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?48906,," target="_blank">HowTo: Authenticate to Azure Active Directory using GAM</a><br />
+<a href="https://wiki.genexus.com/commwiki/wiki?21734,," target="_blank">ExternalId property of GAMUser object</a></p>
+
+<p> </p>
+</div><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="16508.html">GAM Authentication Types</a></TD></TR><TR><TD><a href="48575.html">GAM Oauth 2.0 Authentication Type (GeneXus 17 upgrade 4 or prior)</a></TD><TD><a href="24746.html">Toc:GeneXus Access Manager (GAM)</a></TD></TR><TR><TD><a href="39166.html">Office 365 Authentication using GAM</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 05/27/22 07:19 PM</em></font></td></TR></table></font>

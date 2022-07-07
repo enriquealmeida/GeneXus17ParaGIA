@@ -1,0 +1,34 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Selectiond and Grid Tab Conditions" %>
+<%@ Include Name="Constants.cs" %>
+<%@ Assembly Name="Artech.Patterns.WorkWith" %>
+<%@ Import Namespace="Artech.Patterns.WorkWith" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="Instance" Type="Artech.Patterns.WorkWith.WorkWithInstance" %>
+<%@ Property Name="GridObject" Type="Artech.Patterns.WorkWith.IGridObject" %>
+
+<Part type="<%= PartType.Conditions %>">
+	<Source><![CDATA[<%
+	foreach (ParameterElement parameter in GridObject.Parameters)
+	{
+		if (parameter.IsAttribute)
+		{
+%>
+<%= parameter.ParameterCondition %>;
+<%
+		}
+	}
+
+	if (GridObject.Filter != null)
+	{
+		foreach (ConditionElement filterCondition in GridObject.Filter.Conditions)
+		{
+%>
+<%= filterCondition.Value.TrimEnd(';') %>;
+<%
+		}
+	}
+%>
+]]>
+	</Source>
+</Part>

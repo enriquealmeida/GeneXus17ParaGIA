@@ -1,0 +1,642 @@
+<%@ Template Language="C#" TargetLanguage="GX" Description="Append transaction redirection" %>
+<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Helpers" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.Object_Utilities" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="DynamicFilters" Type="DynamicFilterAttributesElement" %>
+<%@ Property Name="ActualFilter" Type="System.Int32" %>
+<%@ Property Name="SourceType" Type="System.Int32" %>
+<%@ Property Name="ExcelWriteFilter" Type="System.Boolean" %>
+<%@ Property Name="ExcelFilterColor" Type="System.Int32" %>
+<%@ Property Name="Instance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="Settings" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusSettings" %>
+<%@ Property Name="Template" Type="DVelop.Patterns.WorkWithPlus.SettingsTemplateElement" %>
+<%@ SubTemplate Name="DynamicFiltersLoadState" File="DynamicFiltersLoadState.dkt" MergeProperties="True"%>
+If &GridState.DynamicFilters.Count >= <%= ActualFilter.ToString() %>
+<%
+	SettingsTemplateElement template = Instance.GetAppropiateTemplate();
+	bool isWebPanelSourceType = (SourceType == 0);
+	bool isExcelSourceType = (SourceType == 1);
+	bool isPDFSourceType = (SourceType == 2);
+	if (ActualFilter > 1)
+	{
+		if (isWebPanelSourceType)
+		{
+			if (ActualFilter == 2)
+			{
+%>
+	JSDynamicFilters.Caption = !'<script type="text/javascript"><%= Settings.IsOptimizationNumber(7) ? "$(document).ready(function() {" : "" %>'
+<%
+			}
+			if (DynamicFilters.IsAL())
+			{
+%>
+	JSDynamicFilters.Caption += format(!"WWPDynFilterShow_AL('%1', <%= ActualFilter.ToString() %>, <%= DynamicFilters.FixedFilters != null ? DynamicFilters.FixedFilters.Items.Count : 0 %>);", Table<%= DynamicFilters.Name %>.InternalName)
+<%
+			}
+			else
+			{
+%>
+	JSDynamicFilters.Caption += !'WWPDynFilterShow(<%= ActualFilter.ToString() %>);'
+<%
+			}
+			if (ActualFilter > 1)
+			{
+%>
+	AddDynamicFilters<%= (ActualFilter - 1).ToString() %>.Visible = False
+<%
+				if (!Settings.StandardFilters.IsDynFiltersClearFilterVisibilityAlways())
+				{
+%>
+	RemoveDynamicFilters<%= (ActualFilter - 1).ToString() %>.Visible = True
+<%
+				}
+			}
+		}
+%>
+	&DynamicFiltersEnabled<%= ActualFilter.ToString() %> = True
+<%
+	}
+%>
+	&GridStateDynamicFilter = &GridState.DynamicFilters.Item(<%= ActualFilter.ToString() %>)
+	&DynamicFiltersSelector<%= ActualFilter.ToString() %> = &GridStateDynamicFilter.Selected
+	Do Case
+<%
+	int filterIndex = 0;
+	bool includeNamesInSDTGridState = Settings.IncludeNamesInSDTGridState;
+	bool saveGridLoadSaveCompatible = includeNamesInSDTGridState && Settings.Grid.SaveGridLoadSaveCompatible;
+    foreach (IFilter filter in DynamicFilters.Items)
+    {
+		bool printFilterValue = true;
+		bool usePrintFilterValueVar = false;
+		bool usePrintFilterRangeValueVar = false;
+%>
+		Case &DynamicFiltersSelector<%= ActualFilter.ToString() %> = <%= includeNamesInSDTGridState ? "!'" + filter.Name.ToUpper() + "'" + (saveGridLoadSaveCompatible ? " OR &DynamicFiltersSelector" + ActualFilter + ".Trim() = !'" + filterIndex + "'" : "") : filterIndex.ToString() %>
+<%
+		if (saveGridLoadSaveCompatible)
+		{
+%>
+			&DynamicFiltersSelector<%= ActualFilter.ToString() %> = !'<%= filter.Name.ToUpper() %>'
+<%
+		}
+		if (filter.HasOperators())
+		{
+%>
+			&DynamicFiltersOperator<%= ActualFilter.ToString() %> = &GridStateDynamicFilter.Operator
+<%
+		}
+		
+		if (filter is FilterAttributeMultipleGeneralElement)
+		{
+%>
+			&<%= filter.Name + ActualFilter %>Values.From<%= template.SerializationFormat %>(&GridStateDynamicFilter.Value)
+<%
+			bool addDDOSet = isWebPanelSourceType && ((FilterAttributeMultipleGeneralElement)filter).IsTypeDropDownSelector();
+			if (addDDOSet)
+			{
+%>
+			DDO_FilterMultiple<%= filter.Name + ActualFilter %>.SelectedValue_set = &<%= filter.Name + ActualFilter %>Values.ToJson()
+<%
+				if (((FilterAttributeMultipleGeneralElement)filter).HasFixedDescriptionsToLoad())
+				{
+%>
+			&<%= filter.Name %>Values = &<%= filter.Name + ActualFilter %>Values
+			Do 'Load<%= filter.Name %>DescriptionsFromValues'
+			&<%= filter.Name + ActualFilter %>Descriptions = &<%= filter.Name %>Descriptions
+<%
+				}
+			}
+			if (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null)
+			{
+%>
+			&<%= filter.Name + ActualFilter %>Descriptions.From<%= template.SerializationFormat %>(&GridStateDynamicFilter.ValueTo)
+<%
+				if (addDDOSet)
+				{
+%>
+			DDO_FilterMultiple<%= filter.Name + ActualFilter %>.SelectedText_set = &<%= filter.Name + ActualFilter %>Descriptions.ToJson()
+<%
+				}
+			}
+		}
+		else if (filter.IsDVCombo_Multiple())
+		{
+%>
+			&<%= filter.Name + ActualFilter %>.FromJson(&GridStateDynamicFilter.Value)
+<%
+		}
+		else
+		{
+%>
+			&<%= filter.Name + ActualFilter %>.FromString(&GridStateDynamicFilter.Value)
+<%
+		}
+		if (filter.HasRange() || filter.HasRangeOperator())
+		{
+%>
+			<%= filter.RangeVariableName + ActualFilter %>.FromString(&GridStateDynamicFilter.ValueTo)
+<%
+		}
+		if (!isWebPanelSourceType && ExcelWriteFilter)
+		{
+			if (filter is FilterAttributeGeneralElement && filter.HasOperators())
+			{
+				if (isExcelSourceType && ((FilterAttributeGeneralElement)filter).HasOperatorWithoutFixedValue())
+				{
+					if (((FilterAttributeGeneralElement)filter).HasFixedValueOperator())
+					{
+						usePrintFilterValueVar = true;
+%>
+			&PrintFilterValue = False
+<%
+					}
+					if (((FilterAttributeGeneralElement)filter).HasSimpleOperator() && ((FilterAttributeGeneralElement)filter).HasRangeOperatorNotFixed(null))
+					{
+						usePrintFilterRangeValueVar = true;
+%>
+			&PrintFilterRangeValue = False
+<%
+					}
+				}
+				else
+				{
+					printFilterValue = false;
+				}
+			}
+			Artech.Genexus.Common.ITypedObject typeInfo = null;
+			if (filter.IsDataTypeBasedOn())
+			{
+				typeInfo = (Artech.Genexus.Common.ITypedObject)filter.Domain;
+				if (typeInfo == null)
+				{
+					typeInfo = (Artech.Genexus.Common.ITypedObject)Artech.Genexus.Common.Objects.Attribute.Get(Settings.Model, filter.Name);
+				}
+			}
+			
+			string emptyCondition;
+			if (filter.IsDVCombo_Multiple())
+			{
+				emptyCondition = "&" + filter.Name + ActualFilter + ".Count = 0";
+			}
+			else if (filter is FilterAttributeMultipleGeneralElement)
+			{
+				emptyCondition = "&" + filter.Name + ActualFilter + "Values.Count = 0";
+			}
+			else
+			{
+				emptyCondition = filter.VariableName + ActualFilter + ".IsEmpty()";
+			}
+%>
+			If not <%= emptyCondition %>
+<%
+			if (isExcelSourceType)
+			{
+				if (filter.HasRange() || filter.HasRangeOperator())
+				{
+%>
+				OR not <%= filter.RangeVariableName + ActualFilter %>.IsEmpty()
+<%
+				}
+%>
+				&CellRow += 1
+				&ExcelDocument.Cells(&CellRow, &FirstColumn).Bold = True
+				&ExcelDocument.Cells(&CellRow, &FirstColumn).Color = <%= ExcelFilterColor %>
+<%
+				if (filter.HasOperators())
+				{
+%>
+				Do Case
+<%
+					int operIndex = 0;
+					foreach (FilterAttributeOperatorElement oper in filter.GetOperators())
+					{
+						string descriptionCaption = filter.Description;
+						if (oper.IsCustomTypeSimple() || oper.IsCustomTypeRange())
+						{
+							if (Settings.HasMultilanguage)
+							{
+								descriptionCaption = "format('%1 (%2)', " + WorkWithStringValues.StringWithQuotes(descriptionCaption) + ", " + WorkWithStringValues.StringWithQuotes(oper.Caption) + ")";
+							}
+							else
+							{
+								descriptionCaption = WorkWithStringValues.StringWithQuotes(descriptionCaption + " (" + oper.Caption + ")");
+							}
+						}
+						else
+						{
+							descriptionCaption = WorkWithStringValues.StringWithQuotes(descriptionCaption);
+						}
+%>
+					Case &DynamicFiltersOperator<%= ActualFilter.ToString() %> = <%= operIndex %>
+						&ExcelDocument.Cells(&CellRow, &FirstColumn).Text = <%= descriptionCaption %>
+<%
+						if (oper.IsCustomTypeSimple() || oper.IsCustomTypeRange())
+						{
+							if (usePrintFilterValueVar)
+							{
+%>
+						&PrintFilterValue = True
+<%
+							}
+							if (oper.IsCustomTypeRange())
+							{
+%>
+						&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Bold = True
+						&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Color = <%= ExcelFilterColor %>
+						&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Text = <%= WorkWithStringValues.StringWithQuotes(oper.MiddleText != "" ? oper.MiddleText : " - ") %>
+<%
+								if (usePrintFilterRangeValueVar)
+								{
+%>
+						&PrintFilterRangeValue = True
+<%
+								}
+							}
+						}
+						else
+						{
+%>
+						&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Italic = True
+						&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text = <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>
+<%
+						}
+						operIndex++;
+					}
+%>
+				EndCase
+<%
+				}
+				else
+				{
+%>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn).Text = <%= WorkWithStringValues.StringWithQuotes(filter.Description) %>
+<%
+				}
+				if (printFilterValue)
+				{
+				if (usePrintFilterValueVar)
+				{
+%>
+				If &PrintFilterValue
+<%
+				}
+%>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Italic = True
+<%
+				int indentation = 4;
+				bool checkEmpty = DynamicFilters.Instance.AddEmptyCheck();
+				Artech.Genexus.Common.eDBType eDBType = filter.eDBType;
+				if (checkEmpty && (eDBType == eDBType.DATE || eDBType == eDBType.DATETIME))
+				{
+					indentation = 5;
+%>
+				If Not <%= filter.VariableName + ActualFilter %>.IsEmpty()
+<%						
+				}
+				else
+				{
+					checkEmpty = false;
+				}
+				if (filter is FilterAttributeMultipleGeneralElement)
+				{
+					string forVarName = "&" + filter.Name + (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null ? "Description" : "Value");
+					string forVarsName = "&" + filter.Name + ActualFilter + (((FilterAttributeMultipleGeneralElement)filter).DescriptionsAttribute != null ? "Descriptions" : "Values");
+					if (((FilterAttributeMultipleGeneralElement)filter).HasFixedDescriptionsToLoad() && ((FilterAttributeMultipleGeneralElement)filter).IsDataListFixedValues() && ((FilterAttributeMultipleGeneralElement)filter).DataListFixedValuesNotBasedOnEnumerated())
+					{
+						forVarName = "&" + filter.Name + "Description";
+						forVarsName = "&" + filter.Name + "Descriptions";
+%>
+				&<%= filter.Name %>Values = &<%= filter.Name + ActualFilter %>Values
+				Do 'Load<%= filter.Name %>DescriptionsFromValues'
+<%
+					}
+%>
+				&i = 1
+				For <%= forVarName %> in <%= forVarsName %>
+					If &i = 1
+						&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text = ''
+					Else
+						&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text += ', '
+					EndIf
+<%
+					if (((FilterAttributeMultipleGeneralElement)filter).HasFixedDescriptionsToLoad() && ((FilterAttributeMultipleGeneralElement)filter).IsDataListFixedValues() && ((FilterAttributeMultipleGeneralElement)filter).DataListFixedValuesNotBasedOnEnumerated())
+					{
+%>
+					&ExcelDocument.Cells(&CellRow, &FirstColumn + 1).Text += <%= forVarName %>
+<%
+					}
+					else
+					{
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, filter, forVarName, "1", filter.AllValue, Settings), indentation + 1) %>
+<%
+					}
+%>
+					&i += 1
+				EndFor
+<%
+				}
+				else
+				{
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, filter, filter.VariableName + ActualFilter, "1", filter.AllValue, Settings), indentation) %>		
+<%
+				}
+				if (checkEmpty)
+				{
+%>
+				EndIf
+
+<%
+				}
+				if (filter.HasRange() || filter.HasRangeOperatorNotFixed(null))
+				{
+					if (filter.HasRange())
+					{
+%>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Bold = True
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Color = <%= ExcelFilterColor %>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 2).Text = <%= SettingsExportActionElement.GetRangeFilterMiddleDescription(Settings, filter, false, true) %>
+<%
+					}
+					else if (usePrintFilterValueVar || usePrintFilterRangeValueVar)
+					{
+%>
+				If &PrintFilter<%= usePrintFilterRangeValueVar ? "Range" : "" %>Value
+<%
+					}
+%>
+				&ExcelDocument.Cells(&CellRow, &FirstColumn + 3).Italic = True
+<%
+					if (checkEmpty)
+					{
+%>
+				If Not <%= filter.RangeVariableName + ActualFilter %>.IsEmpty()
+<%						
+					}
+%>
+<%= Indentation.Indent(SettingsExportActionElement.PrintFieldExpression(typeInfo, filter, filter.RangeVariableName + ActualFilter, "3", filter.AllValue, Settings), indentation) %>		
+<%
+					if (checkEmpty)
+					{
+%>
+				EndIf
+
+<%
+					}
+					if (usePrintFilterValueVar || usePrintFilterRangeValueVar)
+					{
+%>
+				EndIf
+<%
+					}
+				}
+				if (usePrintFilterValueVar)
+				{
+%>
+				EndIf
+<%
+				}
+				}//cierre de if (printFilterValue)
+			}
+			else
+			{
+				bool hasRangeOrFixedValueOperator = false;
+				if (filter.HasOperators())
+				{
+					if (filter.HasRangeOperator())
+					{
+						hasRangeOrFixedValueOperator = true;
+%>
+				OR not <%= filter.RangeVariableName + ActualFilter %>.IsEmpty()
+<%
+					}
+					if (((FilterAttributeGeneralElement)filter).HasFixedValueOperator())
+					{
+						hasRangeOrFixedValueOperator = true;
+%>
+				&FixedValueOperatorDsc = <%= WorkWithStringValues.StringWithQuotes(filter.Description) %>
+<%
+					}
+%>
+				Do Case
+<%
+					int operIndex = 0;
+					foreach (FilterAttributeOperatorElement oper in filter.GetOperators())
+					{
+%>
+					Case &DynamicFiltersOperator<%= ActualFilter.ToString() %> = <%= operIndex %>
+<%
+						if (oper.IsCustomTypeSimple() || oper.IsCustomTypeRange())
+						{
+							string descriptionCaption = filter.Description;
+							if (Settings.HasMultilanguage)
+							{
+								descriptionCaption = "format('%1 (%2)', " + WorkWithStringValues.StringWithQuotes(descriptionCaption) + ", " + WorkWithStringValues.StringWithQuotes(oper.Caption) + ")";
+							}
+							else
+							{
+								descriptionCaption = WorkWithStringValues.StringWithQuotes(descriptionCaption + " (" + oper.Caption + ")");
+							}
+%>
+						&Filter<%= filter.Name %>Description = <%= descriptionCaption %>
+<%
+							if (hasRangeOrFixedValueOperator)
+							{
+								string attFilterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, filter as IItemWithControlInfo, filter.Name + ActualFilter, true, true, Settings);			
+								if (attFilterName == "&Filter" + filter.Name + ActualFilter + "ValueDescription")
+								{
+%>
+<%= Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, filter, attFilterName, filter.Name + ActualFilter, true, Settings), 6) %>
+
+						&Filter<%= filter.Name %>ValueDescription = <%= attFilterName %>
+<%
+								}
+								else
+								{				
+%>
+						&<%= filter.Name %> = <%= filter.VariableName + ActualFilter %>
+<%
+								}
+%>
+						<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFilter" + filter.Name, (Procedure)Object, Settings.HasRTL, 6) %>
+<%
+								if (oper.IsCustomTypeRange())
+								{
+									if (Settings.HasMultilanguage)
+									{
+										descriptionCaption = "format('%1 (%2) %3', " + WorkWithStringValues.StringWithQuotes(filter.Description) + ", " + WorkWithStringValues.StringWithQuotes(oper.Caption) + ", " + WorkWithStringValues.StringWithQuotes(oper.MiddleText) + ")";
+									}
+									else
+									{
+										descriptionCaption = WorkWithStringValues.StringWithQuotes(filter.Description + " (" + oper.Caption + ") " + oper.MiddleText);
+									}
+%>
+						&Filter<%= filter.Name %>Description = <%= descriptionCaption %>
+						<%= filter.VariableName %> = <%= filter.RangeVariableName + ActualFilter %>
+						<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFilter" + filter.Name, (Procedure)Object, Settings.HasRTL, 6) %>
+<%
+								}
+							}
+						}
+						else
+						{
+%>
+						&FixedValueOperatorValue = <%= WorkWithStringValues.StringWithQuotes(oper.Caption) %>
+						<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFixedValueOperator", (Procedure)Object, Settings.HasRTL, 6) %>
+<%
+						}
+						operIndex++;
+					}
+%>
+				EndCase
+<%
+				}
+				else if (filter.HasRange())
+				{
+%>
+				&Filter<%= filter.Name %>Description = <%= WorkWithStringValues.StringWithQuotes(filter.Description) %>
+<%
+				}
+				if (!hasRangeOrFixedValueOperator)
+				{
+				if (filter is FilterAttributeMultipleGeneralElement)
+				{
+					string forVarName = filter.Name;
+					string forVarsName;
+					FilterAttributeMultipleGeneralElement filterPrompt = (FilterAttributeMultipleGeneralElement)filter;
+					if (filterPrompt.DescriptionsAttribute != null)
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)filterPrompt.DescriptionsAttribute;
+						forVarName += "Description";
+						forVarsName = filter.Name + ActualFilter + "Descriptions";
+					}
+					else if (filterPrompt.HasFixedDescriptionsToLoad() && filterPrompt.IsDataListFixedValues() && filterPrompt.DataListFixedValuesNotBasedOnEnumerated())
+					{
+						forVarName += "Description";
+						forVarsName = filter.Name + "Descriptions";
+%>
+				&<%= filter.Name %>Values = &<%= filter.Name + ActualFilter %>Values
+				Do 'Load<%= filter.Name %>DescriptionsFromValues'
+<%
+					}
+					else
+					{
+						typeInfo = (Artech.Genexus.Common.ITypedObject)filterPrompt.ValuesAttribute;
+						forVarName += "Value";
+						forVarsName = filter.Name + ActualFilter + "Values";
+					}
+%>
+				&i = 1
+				For &<%= forVarName %> in &<%= forVarsName %>
+					If &i = 1
+						&Filter<%= filter.Name %>Dsc = ''
+					Else
+						&Filter<%= filter.Name %>Dsc += ', '
+					EndIf
+<%
+					if (filterPrompt.HasFixedDescriptionsToLoad() && filterPrompt.IsDataListFixedValues() && filterPrompt.DataListFixedValuesNotBasedOnEnumerated())
+					{
+%>
+					&Filter<%= filter.Name %>Dsc += &<%= forVarName %>
+<%
+					}
+					else
+					{
+%>
+<%= Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, filter, "&Filter" + filter.Name + "Dsc", forVarName, true, Settings), 5) %>
+
+<%
+					}
+%>
+					&i += 1
+				EndFor
+<%
+				}
+				else if (filter.IsDVCombo() && (((IItemWithControlInfo)filter).ControlAllowMultipleSelection && ((IItemWithControlInfo)filter).ControlInputDS != AttributeElement.ControlInputDSValue.FixedValues || LoadDVComboProcedureHelper.HasDescription((IItemWithControlInfo)filter)))
+				{
+					if (((IItemWithControlInfo)filter).ControlLoadDynamically)
+					{
+%>
+				&<%= filter.Name %>Description = <%= LoadDVComboProcedureHelper.GetProcedureCall(Instance, (IItemWithControlInfo)filter, "'GET_DSC" + (((IItemWithControlInfo)filter).ControlAllowMultipleSelection || ((IItemWithControlInfo)filter).Style != "Regular" ? "_TEXT" : "") + "'", "&" + filter.Name + ActualFilter + ".To" + (((IItemWithControlInfo)filter).ControlAllowMultipleSelection ? "Json()" : "String()"), null) %>
+<%
+					}
+					else
+					{
+%>
+				&<%= filter.Name %>Description = &GridStateDynamicFilter.ValueTo
+<%
+					}
+				}
+				else
+				{
+					string attFilterName = SettingsExportReportActionElement.GetAttributeName(typeInfo, filter as IItemWithControlInfo, filter.Name + ActualFilter, true, true, Settings);			
+					if (attFilterName == "&Filter" + filter.Name + ActualFilter + "ValueDescription"
+						|| attFilterName == "&Filter" + filter.Name + "ValueDescription")
+					{
+%>
+<%= Indentation.Indent(SettingsExportReportActionElement.GetAttributeDescriptionCode(typeInfo, filter, attFilterName, filter.Name + ActualFilter, true, Settings), 4) %>
+<%
+						if (attFilterName == "&Filter" + filter.Name + ActualFilter + "ValueDescription")
+						{
+%>
+
+				<%= "&Filter" + filter.Name + "ValueDescription" %> = <%= attFilterName %>
+<%
+						}
+					}
+					else
+					{				
+%>
+				&<%= filter.Name %> = <%= filter.VariableName + ActualFilter %>
+<%
+					}
+				}
+%>
+				<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFilter" + filter.Name, (Procedure)Object, Settings.HasRTL, 4) %>
+<%
+				if (filter.HasRange())
+				{
+%>
+			EndIf
+			If not <%= filter.RangeVariableName + ActualFilter %>.IsEmpty()
+				&Filter<%= filter.Name %>Description = <%= SettingsExportActionElement.GetRangeFilterMiddleDescription(Settings, filter, true, true) %>
+				<%= filter.VariableName %> = <%= filter.RangeVariableName + ActualFilter %>
+				<%= SettingsExportReportActionElement.GetPrintBlockName("printBlockFilter" + filter.Name, (Procedure)Object, Settings.HasRTL, 4) %>
+<%
+				}
+				}
+			}	
+%>
+			EndIf			
+<%
+			
+		}
+		filterIndex++;
+	}
+%>
+	EndCase
+<%
+	if (isWebPanelSourceType)
+	{
+%>
+	Do 'EnableDynamicFilters<%= ActualFilter.ToString() %>'
+<%
+	}
+	if (ActualFilter + 1 <= DynamicFilters.MaxFilters)
+	{
+		int newActualFilter = ActualFilter + 1;
+		int indentLevel = (!isWebPanelSourceType ? newActualFilter : newActualFilter + 1);
+%>
+<%@ CallSubTemplate DynamicFiltersLoadState ActualFilter='newActualFilter' IndentLevel='indentLevel' IndentLevelChar='"\t"' %>
+<%
+	}
+	if (isWebPanelSourceType && ActualFilter == 2)
+	{
+%>
+	JSDynamicFilters.Caption += !'<%= Settings.IsOptimizationNumber(7) ? "});" : "" %></script>'
+<%
+	}
+%>
+EndIf

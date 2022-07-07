@@ -1,0 +1,261 @@
+﻿<%@ Assembly Name="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus" %>
+<%@ Import Namespace="DVelop.Patterns.WorkWithPlus.GXtest" %>
+<%@ Property Name="Object" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="wwObject" Type="Artech.Architecture.Common.Objects.KBObject" %>
+<%@ Property Name="Part" Type="Artech.Architecture.Common.Objects.KBObjectPart" %>
+<%@ Property Name="myInstance" Type="DVelop.Patterns.WorkWithPlus.WorkWithPlusInstance" %>
+<%@ Property Name="model" Type="Artech.Architecture.Common.Objects.KBModel" %>
+<%@ Property Name="value" Type="System.String" %>
+<%@ Property Name="wwName" Type="System.String" %>
+<%@ Property Name="basicElements" Type="WebFormBasicElements" %>
+<%@ Property Name="selection" Type="DVelop.Patterns.WorkWithPlus.SelectionGeneralElement" %>
+<%@ SubTemplate Name="ClickEvent" File="ClickEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="AppearTextValidation" File="AppearTextValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="InsertItemInForm" File="InsertItemInForm.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ClickTableEvent" File="ClickTableEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="VerifyControlTextTableValidation" File="VerifyControlTextTableValidation.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPResetAction" File="DPResetAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="ConcatenationAction" File="ConcatenationAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="UpdateCommon" File="UpdateCommon.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DummyEvent" File="DummyEvent.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="FillInput" File="FillInput.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SelectComboAction" File="SelectComboAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="DPNextAction" File="DPNextAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="GetValueAction" File="GetValueAction.dkt" MergeProperties="True"%>
+<%@ SubTemplate Name="SelectRowAction" File="SelectRowAction.dkt" MergeProperties="True"%>
+<%
+	string controlGXName = basicElements.DescriptionAttribute;
+	string controlSelector = "DynamicFiltersSelector1";
+	List<DVelop.Patterns.WorkWithPlus.FilterAttributeWithConditionElement> filtros = selection.GetFiltersOrdered();
+	DVelop.Patterns.WorkWithPlus.DynamicFilterAttributesElement dynamicFilters = selection.Table.GetDynamicFilters();
+	DVelop.Patterns.WorkWithPlus.Helpers.IStandardActionElement standardActionUpdate = selection.Table.GetStandardActionGXTest(DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Update);
+	string buttonUpdate = "";
+	if (standardActionUpdate is DVelop.Patterns.WorkWithPlus.ActionElement)
+	{
+		if (((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionUpdate).IsControlTypeGeneralImage())
+			buttonUpdate = DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Update;
+		else
+			buttonUpdate = ((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionUpdate).ControlName();
+	}
+	else if (standardActionUpdate is DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)
+	{
+		buttonUpdate = ((DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)standardActionUpdate).ControlName();
+	}
+%>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Name%> to update">
+<%@ CallSubTemplate DummyEvent IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+</Node>
+<Node Object="<%=wwObject.Name%>" ObjectType="<%=wwObject.TypeDescriptor.Name%>" title="<%=wwObject.Name%> to update">
+<%@ CallSubTemplate DPNextAction dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='basicElements.DescriptionAttribute' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%	
+	if(selection.DescriptionAttributeIsDynamicFilter)
+	{				
+		foreach (DVelop.Patterns.WorkWithPlus.IFilter dynamicFil in dynamicFilters)
+        {
+			if (dynamicFil is DVelop.Patterns.WorkWithPlus.FilterAttributeGeneralElement)
+			{
+				DVelop.Patterns.WorkWithPlus.FilterAttributeGeneralElement dynFil = (DVelop.Patterns.WorkWithPlus.FilterAttributeGeneralElement)dynamicFil;
+				if (dynFil.Name.Equals(basicElements.DescriptionAttribute))
+				{
+					//Dsc. att. es dynamic filter
+					controlGXName = basicElements.DescriptionAttribute + "1";
+
+					Artech.Genexus.Common.eDBType eDBType = dynFil.eDBType;
+					bool isDateType = (eDBType == Artech.Genexus.Common.eDBType.DATE || eDBType == Artech.Genexus.Common.eDBType.DATETIME);
+
+					Artech.Genexus.Common.Types.RuntimeControlType type = TransactionHelper.GetVariableControlType(selection, model, Object, controlGXName);
+
+					if (!WebFormHelper.IsControlComboListBox(type) && isDateType)
+					{
+						continue;
+					}
+
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlSelector' model='model' variable='""' value='dynFil.Description' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+					if (dynFil.HasOperators())
+					{
+						foreach(FilterAttributeOperatorElement oper in dynFil.GetOperators())
+						{
+							if (oper.Caption == "=")
+							{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='"DynamicFiltersOperator1"' model='model' variable='""' value='oper.Caption' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+								break;
+							}
+						}
+					}
+					if (!WebFormHelper.IsControlComboListBox(type))
+					{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' value='""' variable='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='basicElements.DescriptionAttribute' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+					}				
+					else
+					{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' value='""' model='model' variable='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='basicElements.DescriptionAttribute' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%						
+					}
+%>
+<%@ CallSubTemplate GetValueAction Object='wwObject' model='model' controlGXName='controlGXName' variableName='basicElements.DescriptionAttribute' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+					break;
+				}
+			}
+		}
+	}
+						
+	foreach (DVelop.Patterns.WorkWithPlus.FilterAttributeWithConditionElement filtro in filtros)
+	{
+		controlGXName = filtro.Name;
+		string emptyValue = "";
+		string filtervalue = filtro.Name;
+		
+		Artech.Genexus.Common.eDBType eDBType = filtro.eDBType;
+		bool isDateType = (eDBType == Artech.Genexus.Common.eDBType.DATE || eDBType == Artech.Genexus.Common.eDBType.DATETIME);
+
+		Artech.Genexus.Common.Types.RuntimeControlType type = TransactionHelper.GetVariableControlType(selection, model, Object, controlGXName);
+
+		if (!WebFormHelper.IsControlComboListBox(type) && isDateType)
+		{
+			continue;
+		}
+
+		if (filtro.HasOperators())
+		{
+			foreach(FilterAttributeOperatorElement oper in filtro.GetOperators())
+			{
+				if (oper.Caption == "=")
+				{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='filtro.Name + "Operator"' model='model' variable='""' value='oper.Caption' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+					break;
+				}
+			}
+		}
+					
+		if (!WebFormHelper.IsControlComboListBox(type))
+		{
+%>
+<%@ CallSubTemplate FillInput Object='wwObject' controlGXName='controlGXName' model='model' variable='' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='filtro.Name' value='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%					
+		}
+		else
+		{
+%>
+<%@ CallSubTemplate SelectComboAction Object='wwObject' controlGXName='controlGXName' model='model' variable='' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='filtro.Name' value='""' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+		if (controlGXName.Equals(basicElements.DescriptionAttribute))
+		{
+%>
+<%@ CallSubTemplate GetValueAction Object='wwObject' model='model' controlGXName='filtro.Name' variableName='filtro.Name' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+	}
+%>
+	<!--Update Success-->
+<%@ CallSubTemplate InsertItemInForm Object='wwObject' controlGXName='GXTestConstants.GridName' model='model' value='""' variable='basicElements.DescriptionAttribute' dataPoolName='""' dataPoolColumnName='""' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+	if (WebFormHelper.IsWWActionInGrid(selection, DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Update))
+	{
+		if (!selection.DescriptionAttributeIsClickableInWW || !selection.DescriptionAttributeIsInFilters)
+		{
+%>
+<%@ CallSubTemplate ClickTableEvent Object='wwObject' byRow='true' gridName='GXTestConstants.GridName' controlGXName='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='GXTestConstants.DataPoolRowNumber' value='""' variable='""' returnControl='GXTestConstants.WWUpdateAction' model='model' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+		else
+		{
+%>
+<%@ CallSubTemplate ClickTableEvent Object='wwObject' byRow='false' gridName='GXTestConstants.GridName' controlGXName='basicElements.DescriptionAttribute' dataPoolName='""' dataPoolColumnName='""' value='""' variable='basicElements.DescriptionAttribute' returnControl='GXTestConstants.WWUpdateAction' model='model' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+	}
+	else
+	{
+		if (!selection.DescriptionAttributeIsClickableInWW || !selection.DescriptionAttributeIsInFilters)
+		{
+%>
+<%@ CallSubTemplate SelectRowAction controlGXName='""' gridName='GXTestConstants.GridName' value='""' variable='""' dataPoolName='myInstance.GXTest.DataPoolName' dataPoolColumnName='GXTestConstants.DataPoolRowNumber' returnControl='""' Object='wwObject' model='model' myInstance='' byRow='true' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='buttonUpdate' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+		else
+		{
+%>
+<%@ CallSubTemplate SelectRowAction controlGXName='basicElements.DescriptionAttribute' gridName='GXTestConstants.GridName' value='""' variable='basicElements.DescriptionAttribute' dataPoolName='""' dataPoolColumnName='""' returnControl='""' Object='wwObject' model='model' myInstance='' byRow='false' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%@ CallSubTemplate ClickEvent Object='wwObject' model='model' ControlGXName='buttonUpdate' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%
+		}
+%>
+	<DummyEvent Type="Event"></DummyEvent>
+<%
+	}
+	
+	DVelop.Patterns.WorkWithPlus.Helpers.IStandardActionElement standardActionEnter = myInstance.Transaction.Table.GetStandardActionGXTest(DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Trn_Enter);
+	string buttonEnter = "";
+	if (standardActionEnter is DVelop.Patterns.WorkWithPlus.ActionElement)
+	{
+		if (((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionEnter).IsControlTypeGeneralImage())
+			buttonEnter = DVelop.Patterns.WorkWithPlus.Helpers.StandardAction.Trn_Enter;			
+		else
+			buttonEnter = ((DVelop.Patterns.WorkWithPlus.ActionElement)standardActionEnter).ControlName();
+	}
+	else if (standardActionEnter is DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)
+	{
+		buttonEnter = ((DVelop.Patterns.WorkWithPlus.ActionGroupStandardActionElement)standardActionEnter).ControlName();
+	}
+	
+%>
+</Node>
+<Node Object="<%=Object.Name%>" ObjectType="<%=Object.TypeDescriptor.Name%>" title="<%=Object.Description%> update">
+<%@ CallSubTemplate UpdateCommon Object='Object' model='model' Part='Part' myInstance='myInstance' basicElements='basicElements' IndentLevel='IndentLevel' IndentLevelChar='"\t"' %>
+<%
+	if (basicElements.IsDescriptionAttributeEditable)
+	{
+%>
+<%@ CallSubTemplate GetValueAction Object='Object' model='model' controlGXName='basicElements.DescriptionAttribute' variableName='basicElements.DescriptionAttribute' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"'  %>
+<%
+	}
+%>
+<%@ CallSubTemplate ClickEvent Object='Object' model='model' ControlGXName='buttonEnter' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<% 	
+	if (selection.DescriptionAttributeIsClickableInWW)
+	{
+		if (selection.DescriptionAttributeIsInFilters)
+		{
+			if (selection.DescriptionAttributeIsDynamicFilter)
+			{					
+%>
+<%@ CallSubTemplate VerifyControlTextTableValidation byRow='false' Object='wwObject' model='model' gridName='GXTestConstants.GridName' ControlGXName='basicElements.DescriptionAttribute' variable1='basicElements.DescriptionAttribute' value1='""' dataPoolName1='""' dataPoolColumnName1='""' variable2='basicElements.DescriptionAttribute' value2='""' dataPoolName2='""' dataPoolColumnName2='""' AttType='basicElements.DescriptionAttributeType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%			
+			}
+			else
+			{
+%>
+<%@ CallSubTemplate VerifyControlTextTableValidation byRow='false' Object='wwObject' model='model' gridName='GXTestConstants.GridName' ControlGXName='basicElements.DescriptionAttribute' variable1='basicElements.DescriptionAttribute' value1='""' dataPoolName1='""' dataPoolColumnName1='""' variable2='basicElements.DescriptionAttribute' value2='""' dataPoolName2='""' dataPoolColumnName2='""' AttType='basicElements.DescriptionAttributeType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%			
+			}
+		}
+		else
+		{	
+			if(selection.DescriptionAttributeIsDynamicFilter)
+			{
+%>
+<%@ CallSubTemplate VerifyControlTextTableValidation byRow='true' Object='wwObject' model='model' gridName='GXTestConstants.GridName' ControlGXName='basicElements.DescriptionAttribute' variable1='""' value1='""' dataPoolName1='myInstance.GXTest.DataPoolName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' variable2='basicElements.DescriptionAttribute' value2='""' dataPoolName2='""' dataPoolColumnName2='""'  AttType='basicElements.DescriptionAttributeType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%			
+			}
+			else
+			{
+%>
+<%@ CallSubTemplate VerifyControlTextTableValidation byRow='true' Object='wwObject' model='model' gridName='GXTestConstants.GridName' ControlGXName='basicElements.DescriptionAttribute' variable1='""' value1='""' dataPoolName1='myInstance.GXTest.DataPoolName' dataPoolColumnName1='GXTestConstants.DataPoolRowNumber' variable2='basicElements.DescriptionAttribute' value2='""' dataPoolName2='""' dataPoolColumnName2='""'  AttType='basicElements.DescriptionAttributeType' IndentLevel='IndentLevel + 1' IndentLevelChar='"\t"' %>
+<%			
+			}
+		}
+	}
+%>

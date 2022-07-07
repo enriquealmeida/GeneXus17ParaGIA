@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using the Connectivity Support property</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?23558,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using the Connectivity Support property</h1>
+<!--HowTo: Using the Connectivity Support property--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>As explained in the <a href="20911.html">Connectivity Support property</a>'s documentation, this property has 3 possible values: Online, Offline and Inherit.</p>
+
+<p>By changing this property's value in a per-object basis, it is possible to decide whether some sections of the application are going to work with the local database (Offline) or by calling REST services to get the panel's data (Online).</p>
+
+<h3><a id="How+it+works" class="HashLink" href="#How+it+works">How it works</a></h3>
+
+<p>As an example, we will be using a simple Event application, were we have information about Session and Speakers, but also we'll display a list of Tweets related to the Event.</p>
+
+<p>So in our simple Event application we have the following 3 transaction objects with their corresponding Work With for Smart Devices objects:</p>
+
+<p><img src="./images/23562.jpg" id="23562" class="WikiImage"/></p>
+
+<p>Now that we have designed the app, we want to make this application an Offline application. To do that all we have to do is set the <a href="20911.html">Connectivity Support property</a> of the main Dashboard object to &quot;Offline&quot;.</p>
+
+<p><strong>Note</strong>: Remember that for all non-Main objects the <a href="20911.html">Connectivity Support property</a> is set to Inherit by default.</p>
+
+<p><img src="./images/23563.png" id="23563" class="WikiImage"/></p>
+
+<p>After building the Dashboard object, the <a href="22509.html">Offline Database object</a> is created with the Speakers, Session and Tweets tables, as explained in the <a href="22509.html">Offline Database object</a> documentation, because those are the tables that are accessed by the offline objects.</p>
+
+<p><img src="./images/23564.jpg" id="23564" class="WikiImage"/></p>
+
+<p>After this, the Event application will have all the tables stored locally and all the database access will be performed on the local database.</p>
+
+<p>But what if it we don't want to store the Tweets locally, and instead we want that WWSD to work Online? This is for a very simple reason: Tweets will vary much more often than the rest of the application's information, and we want to have them available as soon as they are published. We don't want to wait for a synchronization to get the latest tweets, nor do we want to synchronize more often just to get the tweets.</p>
+
+<p>Having this configuration is as simple as setting the <a href="20911.html">Connectivity Support property</a> of the Tweets' Work With for Smart Device object to &quot;Online&quot;.</p>
+
+<p>Then the tables that are going to be in the OfflineDatabase are only &quot;Speakers&quot; and &quot;Sessions&quot; as shown in the image bellow:</p>
+
+<p><img src="./images/23565.jpg" id="23565" class="WikiImage"/></p>
+
+<h3><a id="Using+the+Connectivity+Support+property+over+Procedures+or+Data+Providers" class="HashLink" href="#Using+the+Connectivity+Support+property+over+Procedures+or+Data+Providers">Using the Connectivity Support property over Procedures or Data Providers</a></h3>
+
+<p>As explained in the <a href="20911.html">Connectivity Support property</a> documentation, this property is also available for <a href="6293.html">Procedures</a> and <a href="5270.html">Data Providers</a>. This makes much easier for the developer to call Online Procedures or Data Providers from Offline objects.</p>
+
+<p>An intricate way of calling an online Procedure, which is exposed as a REST service, from an offline panel is by using the <a href="6932.html">HttpClient data type</a>. On the other hand, a much simplier way of doing the same is to set the Connectivity Support property of the Procedure into &quot;Online&quot;. This forces the offline application to always call this procedure via REST services. The device executes the same process as if the HttpClient data type is used instead, however this property gives a cleaner and simplier solution.</p>
+
+<p>Following the scenario mentioned in this document, suppose you want to call a Procedure, which is exposed as a REST service, and which also returns all new Tweets that mention your event.<br />
+As mentioned in the <a href="22221.html">Offline Native Mobile applications architecture</a>, if an application is set into offline architecture, by default, it calls all procedures locally. To avoid this behavior when calling our Tweets procedure you just need to change the Connectivity Support property of that procedure into &quot;Online&quot;.</p>
+
+<h3><a id="About+Connectivity+Support%27s+%22Inherit%22+value" class="HashLink" href="#About+Connectivity+Support%27s+%22Inherit%22+value">About Connectivity Support's &quot;Inherit&quot; value</a></h3>
+
+<p>Inherit value adds flexibility to your solution since It makes possible that an object &quot;A&quot; works either Online or Offline, depending on the Connectivity Support property of the caller object.</p>
+
+<p>For instance, if there are three smart devices objects: objectA, objectB, and objectC that have the following properties configuration:</p>
+
+<ul>
+	<li>Object A connectivity Support : Inherit</li>
+	<li>Object B connectivity Support : Online</li>
+	<li>Object C connectivity Support : Offline</li>
+</ul>
+
+<p>If B calls A, then A will work as an Online object ( Works with data of the web server )<br />
+If C calls A, then A will work as an Offline object ( Works with data of the offline database )</p>
+
+<p>Note: This applies only to the case that the connectivity Support of the Main object is Offline. If that is online, the whole architecture changes and, in the sample above, B cannot call C. So you cannot call an offline object in an online application.</p>
+
+<h3><a id="See+also" class="HashLink" href="#See+also">See also</a></h3>
+
+<ul>
+	<li><a href="20911.html">Connectivity Support property</a></li>
+	<li><a href="22509.html">Offline Database object</a></li>
+	<li><a href="23561.html">Offline Database Object Table selection</a></li>
+</ul>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+<br /><br /></td></tr></tbody></table><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="20911.html">Connectivity Support property</a></TD><TD><a href="24591.html">HowTo: Converting online applications into offline applications</a></TD></TR><TR><TD><a href="20249.html">My first Offline Native Mobile application</a></TD><TD><a href="23561.html">Offline Database Object Table selection</a></TD><TD><a href="22228.html">Toc:Offline Native Mobile Applications</a></TD></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>

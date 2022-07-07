@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="./images/WikiTheme2.css"/>
+<link rel="stylesheet" type="text/css" href="./images/bootstrap.min.css"/>
+<title>HowTo: Using Confirm method from Interop in Smart Devices API</title>
+</head>
+<body bgcolor="#FFFFFF" style="display: block;margin: 8px;"><span id="W0004BODY" class="WikiBody"><table border=0 width=100%><tr><td><div align="right"><FONT face=Verdana size=2><a href =https://wiki.genexus.com/commwiki/wiki?17334,, target=_"blank">Newest Version</a></FONT></div></td></tr></table><h1 class="WikiName">HowTo: Using Confirm method from Interop in Smart Devices API</h1>
+<!--HowTo: Using Confirm method from Interop in Smart Devices API--><table class="TableWikiBody" id="tblwikibody"><tbody><tr><td><p>The Confirm method is a very useful user interaction feature that makes possible the execution of actions according to the users confirmation or denial of a message. This method will prompt a message dialogue with two buttons that the user should tap: The Yes button and the No button.<br />
+If this method is executed on a <a href="17389.html">Composite command</a> and the user confirms the prompted messag, the following actions in the Composite command are going to be executed,  otherwise the execution of the Composite command stops.<br />
+Also, this method accepts a <a href="6778.html">VarChar(200)</a> parameter that defines the message shown on the prompt dialogue.</p>
+
+<p>In this article is shown an example of how this feature is used and it behaves depending on the selected option. For this purpose, the <a href="https://wiki.genexus.com/commwiki/wiki?21779,," target="_blank">LightCRM (X Evolution 2)</a> sample is going to be used.</p>
+
+<h3><a id="How+it+works" class="HashLink" href="#How+it+works">How it works</a></h3>
+
+<p>Lets say it is needed to confirm the insertion of a meeting every time the user wants to. For that reason, the Confirm method is going to be called in the same Event that is used for inserting new meetings.</p>
+
+<p>First, open the WorkWithDevicesMeeting and go to Section(General) Events section.</p>
+
+<p><img src="./images/24511.png" id="24511" class="WikiImage"/></p>
+
+<p>This is the default Save event of a meeting:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Save'
+    SDActions.Save()
+EndEvent</pre>
+
+<p>… but as confirmation is needed by the user, the second step is to call for confirmation right before the Save action is executed:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Save'
+    Composite
+        Confirm(&quot;Confirm this meeting?&quot;)
+        SDActions.Save()
+    EndComposite
+EndEvent</pre>
+
+<p><strong>Note</strong>: The composite block was added because more than one action are going to be executed in the same event.</p>
+
+<p>Alternatively, it is also available to call the Confirm method as a method of the <a href="23734.html">Interop external object</a>. For instance:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Save'
+    Composite
+        Interop.Confirm(&quot;Confirm this meeting?&quot;)
+        SDActions.Save()
+    EndComposite
+EndEvent</pre>
+
+<p>And that is all, whenever the user tries to save a meeting, the application is going to prompt for confirmation of the user first.</p>
+
+<table border="0" cellpadding="15" cellspacing="1">
+	<tbody>
+		<tr>
+			<td style="vertical-align: middle;"><img src="./images/24516.PNG" id="24516" class="WikiImage"/></td>
+			<td style="vertical-align: middle;"><img src="./images/23846.jpg" id="23846" class="WikiImage"/></td>
+			<td style="vertical-align: middle;"><img src="./images/24512.PNG" id="24512" class="WikiImage"/></td>
+			<td style="vertical-align: middle;"><img src="./images/23846.jpg" id="23846" class="WikiImage"/></td>
+			<td style="vertical-align: middle;"><img src="./images/24513.PNG" id="24513" class="WikiImage"/></td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><a id="Considerations" class="HashLink" href="#Considerations">Considerations</a></h3>
+
+<p>As from <a href="https://wiki.genexus.com/commwiki/wiki?24351,," target="_blank">GeneXus X Evolution 2 Upgrade 5</a> it is available to use the Confirm method as a function that returns True or False whether the user confirms or not the prompted message. The important fact of this is that in case of the user  denies the confirmation, the Composite command is still going to continue its execution.</p>
+
+<p>For example:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Save'
+    Composite
+        &amp;HasConfirmed = Interop.Confirm(&quot;Confirm this meeting?&quot;)
+
+        If &amp;HasConfirmed
+            SDActions.Save()
+        Else
+            Msg(&quot;Your meeting was not saved&quot;)
+        EndIf
+    EndComposite
+EndEvent</pre>
+
+<p><br />
+As of <a href="https://wiki.genexus.com/commwiki/wiki?45275,," target="_blank">GeneXus 16 upgrade 9</a>, you can configure messages of the buttons, for example: </p>
+
+<p><img src="./images/45399.jpg" id="45399" class="WikiImage"/></p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+Event 'Save'
+    Composite
+        &amp;HasConfirmed = Interop.Confirm(&quot;Confirm this meeting?&quot;, &quot;Yes, sure&quot;, &quot;No, thanks&quot;)
+
+        If &amp;HasConfirmed
+            SDActions.Save()
+        Else
+            Msg(&quot;Your meeting was not saved&quot;)
+        EndIf
+    EndComposite
+EndEvent</pre>
+
+<p> </p>
+
+<p><strong>Note</strong>: It is needed to call the Confirm method from the Interop API to make this code work.<br />
+For instance, this line of code is <strong>not</strong> valid:</p>
+
+<pre class="prettyprint lang-genexus" style="max-width: 100%">
+&amp;HasConfirmed = Confirm(&quot;Confirm this meeting?&quot;)</pre>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+
+<p><br />
+</p>
+
+<p><br />
+</p>
+<br />
+<br /></td></tr></tbody></table><script src="./images/run_prettify.js?lang=genexus"></script><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><TD><b>Backlinks</b></TD></TR><TR><TD><a href="31634.html">Confirm function</a></TD><TD><a href="23734.html">Interop external object</a></TD></TR><TR></TR></table>
+</span></body>
+</html><hr /><table id="Pages" class="Table" cellpadding="1" cellspacing="2" style=" width: 100%;" ><TR><td align="left"><font face="Verdana" size="1"><em>Source: <a href="https://wiki.genexus.com" target=_blank>wiki.genexus.com</a></em></font></td><td align="right"><font face="Verdana" size="1"><em>Last modification: 07/31/20 01:19 PM</em></font></td></TR></table></font>
